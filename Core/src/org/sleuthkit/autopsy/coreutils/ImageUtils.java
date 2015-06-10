@@ -24,7 +24,6 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,11 +35,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -56,18 +53,44 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class ImageUtils {
 
+    private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
+
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
-    private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
-    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
+
+    private static final Logger logger = LOGGER;
+    private static final BufferedImage DEFAULT_ICON;
     private static final List<String> SUPP_IMAGE_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes())); //final
     private static final List<String> SUPP_IMAGE_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
-    private static final List<String> SUPP_VIDEO_EXTENSIONS = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp", "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265", "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg", "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf", "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc", "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg", "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm", "flm", "tmv", "4xm");
-    private static final List<String> SUPP_VIDEO_MIME_TYPES = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo", "video/mp4", "video/x-ms-wmv", "mpeg", "asf");
+    private static final List<String> SUPP_VIDEO_EXTENSIONS
+            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
+                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
+                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
+                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
+                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp",
+                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265",
+                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg",
+                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf",
+                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
+                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
+                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
+                    "flm", "tmv", "4xm");  //NON-NLS
+    private static final List<String> SUPP_VIDEO_MIME_TYPES
+            = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo",
+                    "video/mp4", "video/x-ms-wmv", "mpeg", "asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
     static {
+        BufferedImage tempImage;
+        try {
+            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex);
+            tempImage = null;
+        }
+        DEFAULT_ICON = tempImage;
+
         SUPP_IMAGE_MIME_TYPES.add("image/x-ms-bmp");
 
         //load opencv libraries
@@ -83,7 +106,7 @@ public class ImageUtils {
             openCVLoadedTemp = true;
         } catch (UnsatisfiedLinkError e) {
             openCVLoadedTemp = false;
-            Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "OpenCV Native code library failed to load", e);
+            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e);
             //TODO: show warning bubble
 
         }
@@ -163,15 +186,15 @@ public class ImageUtils {
         // If a thumbnail file is already saved locally
         // @@@ Bug here in that we do not refer to size in the cache. 
 
-        File file = getFile(content.getId());
+        File iconFile = getCachedThumbnailLocation(content.getId());
         // If a thumbnail file is already saved locally
-        if (file.exists()) {
+        if (iconFile.exists()) {
             try {
-                BufferedImage bicon = ImageIO.read(file);
+                BufferedImage bicon = ImageIO.read(iconFile);
                 if (bicon == null) {
                     icon = DEFAULT_ICON;
                 } else if (bicon.getWidth() != iconSize) {
-                    icon = generateAndSaveIcon(content, iconSize, file);
+                    icon = generateAndSaveIcon(content, iconSize, iconFile);
                 } else {
                     icon = bicon;
                 }
@@ -179,16 +202,13 @@ public class ImageUtils {
                 logger.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
                 icon = DEFAULT_ICON;
             }
-        } else { // Make a new icon
-
-            AbstractFile f = (AbstractFile) content;
-            final String extension = f.getNameExtension();
+        } else {
+            final String extension = ((AbstractFile) content).getNameExtension();
 
             if (SUPP_VIDEO_EXTENSIONS.contains(extension) || SUPP_IMAGE_EXTENSIONS.contains(extension)) {
-                icon = generateAndSaveIcon(content, iconSize, file);
+                icon = generateAndSaveIcon(content, iconSize, iconFile);
             }
         }
-
         if (icon == null) {
             return DEFAULT_ICON;
         }
@@ -293,7 +313,7 @@ public class ImageUtils {
                 && ((fileHeaderBuffer[7] & 0xff) == 0x0A));
     }
 
-    private static Image generateVideoIcon(AbstractFile file, int iconSize) {
+    private static BufferedImage generateVideoIcon(AbstractFile file, int iconSize) {
 
         final String extension = file.getNameExtension();
 
@@ -380,7 +400,7 @@ public class ImageUtils {
     private static Image generateAndSaveIcon(Content content, int iconSize, File saveFile) {
         AbstractFile f = (AbstractFile) content;
         final String extension = f.getNameExtension();
-        Image icon = null;
+        BufferedImage icon = null;
         try {
             if (SUPP_VIDEO_EXTENSIONS.contains(extension)) {
                 if (openCVLoaded) {
@@ -399,9 +419,9 @@ public class ImageUtils {
                 if (saveFile.exists()) {
                     saveFile.delete();
                 }
-                ImageIO.write((RenderedImage) icon, "png", saveFile); //NON-NLS
+                ImageIO.write(icon, "png", saveFile); //NON-NLS
             }
-        } catch (IOException ex) {
+        } catch (NullPointerException | IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }
         return icon;
@@ -424,7 +444,7 @@ public class ImageUtils {
             }
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
             if (biScaled == null) {
-                return (BufferedImage) DEFAULT_ICON;
+                return DEFAULT_ICON;
             }
             return biScaled;
         } catch (IllegalArgumentException e) {
