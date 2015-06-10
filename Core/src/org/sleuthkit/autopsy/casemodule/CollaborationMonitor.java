@@ -24,8 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -511,7 +509,7 @@ final class CollaborationMonitor {
     private final static class CrashDetectionTask implements Runnable {
 
         private static boolean dbServerIsRunning = true;
-        private static boolean solrServerIsRunning = true;
+//        private static boolean solrServerIsRunning = true;
         private static boolean messageServerIsRunning = true;
         private static final Object lock = new Object();
 
@@ -522,19 +520,18 @@ final class CollaborationMonitor {
         public void run() {
             synchronized (lock) {
                 CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-                try {
-                    DriverManager.getConnection("jdbc:postgresql://" + dbInfo.getHost() + ":" + dbInfo.getPort() + "/" + "postgres", dbInfo.getUserName(), dbInfo.getUserName()); // NON-NLS
+                if (dbInfo.canConnect()) {
                     if (!dbServerIsRunning) {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
-                    }
-                } catch (SQLException ex) {
+                    }                    
+                } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
-                        logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-                    }
+                    }                    
                 }
 
                 /**
@@ -561,6 +558,7 @@ final class CollaborationMonitor {
 //                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
 //                }
 //            }
+//                
                 MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
                 try {
                     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
