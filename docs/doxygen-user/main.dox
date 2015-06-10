@@ -24,7 +24,7 @@ The following topics are available here:
  - \subpage recent_activity_page
  - \subpage hash_db_page 
  - \subpage file_type_identification_page
- - \subpage archive_extractor_page
+ - \subpage embedded_file_extractor_page
  - \subpage EXIF_parser_page
  - \subpage keyword_search_page
  - \subpage email_parser_page

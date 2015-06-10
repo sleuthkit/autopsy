@@ -203,9 +203,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         groupBy = DrawableAttribute.PATH;
         sortOrder = SortOrder.ASCENDING;
         Platform.runLater(() -> {
-            synchronized (unSeenGroups) {
-                unSeenGroups.clear();
-            }
+            unSeenGroups.clear();
             analyzedGroups.clear();
         });
         synchronized (groupMap) {
@@ -258,14 +256,14 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * 'mark' the given group as seen. This removes it from the queue of groups
      * to review, and is persisted in the drawable db.
      *
-     *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
+    @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group) {
-        synchronized (unSeenGroups) {
-            unSeenGroups.remove(group);
-        }
-        db.markGroupSeen(group.groupKey);
+        db.markGroupSeen(group.getGroupKey());
+        group.setSeen();
+        unSeenGroups.removeAll(group);
+
     }
 
     /**
@@ -283,20 +281,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             group.removeFile(fileID);
 
             // If we're grouping by category, we don't want to remove empty groups.
-            if (group.groupKey.getValueDisplayName().startsWith("CAT-")) {
-                return;
-            } else {
+            if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                 if (group.fileIds().isEmpty()) {
                     synchronized (groupMap) {
                         groupMap.remove(groupKey, group);
                     }
                     Platform.runLater(() -> {
                         analyzedGroups.remove(group);
-                        synchronized (unSeenGroups) {
-                            unSeenGroups.remove(group);
-                        }
+                        unSeenGroups.remove(group);
                     });
                 }
+            } else {
             }
         }
     }
@@ -322,24 +317,26 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
             DrawableGroup g = makeGroup(groupKey, filesInGroup);
-
             populateAnalyzedGroup(g, task);
         }
     }
 
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<A> task) {
+    private synchronized void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<?> task) {
 
         if (task == null || (task.isCancelled() == false)) {
-            final boolean groupSeen = db.isGroupSeen(g.groupKey);
+            final boolean groupSeen = db.isGroupSeen(g.getGroupKey());
+            if (groupSeen) {
+                g.setSeen();
+            }
             Platform.runLater(() -> {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
                 }
-                synchronized (unSeenGroups) {
-                    if (groupSeen == false && unSeenGroups.contains(g) == false) {
-                        unSeenGroups.add(g);
-                        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-                    }
+                if (groupSeen) {
+                    unSeenGroups.removeAll(g);
+                } else if (unSeenGroups.contains(g) == false) {
+                    unSeenGroups.add(g);
+                    FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
                 }
             });
         }
@@ -350,7 +347,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @param groupKey
      *
-     * @return null if this group is not analyzed or a list of file ids in this
+     * @return null if this group is not analyzed or a list of file ids in
+     *         this
      *         group if they are all analyzed
      */
     public List<Long> checkAnalyzed(final GroupKey<?> groupKey) {
@@ -492,7 +490,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -504,7 +502,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                    if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
 
                         files.add(ct.getContent().getId());
                     }
@@ -538,7 +536,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isDrawableFile(((AbstractFile) ct.getContent()).getId())) {
 
                     files.add(ct.getContent().getId());
                 }
@@ -700,9 +698,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         }
                     }
                 }
-                if (evt.getChangedAttribute() == DrawableAttribute.CATEGORY) {
-                    Category.fireChange(fileIDs);
-                }
+
+                //we fire this event for all files so that the category counts get updated during initial db population
+                Category.fireChange(fileIDs);
+
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);
                 }

@@ -28,14 +28,17 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 
 /**
- * A cell in the NavPanel tree that listens to its associated group's fileids.
- * Manages visual representation of TreeNode in Tree. Listens to properties of
- * group that don't impact hierarchy and updates ui to reflect them
+ * A cell in the NavPanel tree that listens to its associated group's fileids
+ * and seen status,and updates GUI to reflect them.
+ *
+ * TODO: we should use getStyleClass().add() rather than setStyle but it didn't
+ * seem to work properly
  */
 class GroupTreeCell extends TreeCell<TreeNode> {
 
@@ -43,18 +46,36 @@ class GroupTreeCell extends TreeCell<TreeNode> {
      * icon to use if this cell's TreeNode doesn't represent a group but just a
      * folder(with no DrawableFiles) in the file system hierarchy.
      */
-    private static final Image EMPTY_FOLDER_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/folder.png");
+    private static final Image EMPTY_FOLDER_ICON
+            = new Image(GroupTreeCell.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/folder.png"));
 
     /**
-     * reference to listener that allows us to remove it from a group when a new
-     * group is assigned to this Cell
+     * reference to group files listener that allows us to remove it from a
+     * group when a new group is assigned to this Cell
      */
-    private InvalidationListener listener;
+    private final InvalidationListener fileCountListener = (Observable o) -> {
+        final String text = getGroupName() + getCountsText();
+        Platform.runLater(() -> {
+            setText(text);
+            setTooltip(new Tooltip(text));
+        });
+    };
+
+    /**
+     * reference to group seen listener that allows us to remove it from a group
+     * when a new group is assigned to this Cell
+     */
+    private final InvalidationListener seenListener = (Observable o) -> {
+        final String style = getSeenStyleClass();
+        Platform.runLater(() -> {
+            setStyle(style);
+        });
+    };
 
     public GroupTreeCell() {
-        //TODO: move this to .css file
-        //adjust indent, default is 10 which uses up a lot of space.
-        setStyle("-fx-indent:5;");
+        getStylesheets().add(GroupTreeCell.class.getResource("GroupTreeCell.css").toExternalForm());
+        getStyleClass().add("groupTreeCell");        //reduce  indent to 5, default is 10 which uses up a lot of space.
+
         //since end of path is probably more interesting put ellipsis at front
         setTextOverrun(OverrunStyle.LEADING_ELLIPSIS);
         Platform.runLater(() -> {
@@ -63,65 +84,94 @@ class GroupTreeCell extends TreeCell<TreeNode> {
 
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
-    protected synchronized void updateItem(final TreeNode tNode, boolean empty) {
-        //if there was a previous group, remove the listener
+    protected synchronized void updateItem(final TreeNode treeNode, boolean empty) {
+        //if there was a previous group, remove the listeners
         Optional.ofNullable(getItem())
                 .map(TreeNode::getGroup)
-                .ifPresent((DrawableGroup t) -> {
-                    t.fileIds().removeListener(listener);
+                .ifPresent(group -> {
+                    group.fileIds().removeListener(fileCountListener);
+                    group.seenProperty().removeListener(seenListener);
                 });
 
-        super.updateItem(tNode, empty);
+        super.updateItem(treeNode, empty);
 
-        if (isNull(tNode) || empty) {
+        if (isNull(treeNode) || empty) {
             Platform.runLater(() -> {
                 setTooltip(null);
                 setText(null);
                 setGraphic(null);
+                setStyle("");
             });
         } else {
-            final String groupName = StringUtils.defaultIfBlank(tNode.getPath(), DrawableGroup.UNKNOWN);
 
-            if (isNull(tNode.getGroup())) {
+            if (isNull(treeNode.getGroup())) {
+                final String groupName = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
                 Platform.runLater(() -> {
                     setTooltip(new Tooltip(groupName));
                     setText(groupName);
                     setGraphic(new ImageView(EMPTY_FOLDER_ICON));
+                    setStyle("");
                 });
 
             } else {
-                listener = (Observable o) -> {
-                    final String countsText = getCountsText();
-                    Platform.runLater(() -> {
-                        setText(groupName + countsText);
-                    });
-                };
-                //if number of files in this group changes (eg file is recategorized), update counts via listener
-                tNode.getGroup().fileIds().addListener(listener);
+                //if number of files in this group changes (eg a file is recategorized), update counts via listener
+                treeNode.getGroup().fileIds().addListener(fileCountListener);
 
-                //... and use icon corresponding to group type
-                final Image icon = tNode.getGroup().groupKey.getAttribute().getIcon();
-                final String countsText = getCountsText();
+                //if the seen state of this group changes update its style
+                treeNode.getGroup().seenProperty().addListener(seenListener);
+
+                //and use icon corresponding to group type
+                final Image icon = treeNode.getGroup().groupKey.getAttribute().getIcon();
+                final String text = getGroupName() + getCountsText();
+                final String style = getSeenStyleClass();
                 Platform.runLater(() -> {
-                    setTooltip(new Tooltip(groupName));
+                    setTooltip(new Tooltip(text));
                     setGraphic(new ImageView(icon));
-                    setText(groupName + countsText);
+                    setText(text);
+                    setStyle(style);
                 });
             }
         }
     }
 
-    private synchronized String getCountsText() {
-        final String counts = Optional.ofNullable(getItem())
-                .map(TreeNode::getGroup)
-                .map((DrawableGroup t) -> {
-                    return " (" + ((t.groupKey.getAttribute() == DrawableAttribute.HASHSET)
-                            ? Integer.toString(t.getSize())
-                            : t.getFilesWithHashSetHitsCount() + "/" + t.getSize()) + ")";
-                }).orElse(""); //if item is null or group is null
+    private String getGroupName() {
+        return StringUtils.defaultIfBlank(getItem().getPath(), DrawableGroup.getBlankGroupName());
+    }
 
-        return counts;
+    /**
+     * return the styleClass to apply based on the assigned group's seen status
+     *
+     * @return the style class to apply
+     */
+    @Nonnull
+    private String getSeenStyleClass() {
+        return Optional.ofNullable(getItem())
+                .map(TreeNode::getGroup)
+                .map(DrawableGroup::isSeen)
+                .map(seen -> seen ? "" : "-fx-font-weight:bold;")
+                .orElse(""); //if item is null or group is null
+    }
+
+    /**
+     * get the counts part of the text to apply to this cell, including
+     * parentheses
+     *
+     * @return get the counts part of the text to apply to this cell
+     */
+    @Nonnull
+    private String getCountsText() {
+        return Optional.ofNullable(getItem())
+                .map(TreeNode::getGroup)
+                .map(group -> " ("
+                        + ((group.getGroupByAttribute() == DrawableAttribute.HASHSET)
+                                ? Integer.toString(group.getSize())
+                                : group.getHashSetHitsCount() + "/" + group.getSize())
+                        + ")"
+                ).orElse(""); //if item is null or group is null
     }
 }

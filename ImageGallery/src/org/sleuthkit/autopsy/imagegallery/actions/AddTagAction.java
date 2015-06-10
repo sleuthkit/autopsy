@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
@@ -33,30 +32,37 @@ import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for Actions that allow users to tag SleuthKit data
+ * An abstract base class for actions that allow users to tag SleuthKit data
  * model objects.
+ *
+ * //TODO: this class started as a cut and paste from
+ * org.sleuthkit.autopsy.actions.AddTagAction and needs to be
+ * refactor or reintegrated to the AddTagAction hierarchy of Autopysy.
  */
 abstract class AddTagAction {
 
+    @SuppressWarnings("deprecation")
     protected void refreshDirectoryTree() {
-        // The way the "directory tree" currently works, a new tags sub-tree 
-        // needs to be made to reflect the results of invoking tag Actions. 
-        SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
 
+        /* Note: this is a hack. In an ideal world, TagsManager would fire
+         * events so that the directory tree would refresh. But, we haven't
+         * had a chance to add that so, we fire these events and the tree
+         * refreshes based on them.
+         */
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
     }
-
     protected static final String NO_COMMENT = "";
 
-    AddTagAction() {
-    }
-
     /**
-     * Template method to allow derived classes to provide a string for for a
+     * Template method to allow derived classes to provide a string for a
      * menu item label.
      */
     abstract protected String getActionDisplayName();
@@ -66,12 +72,12 @@ abstract class AddTagAction {
      * comment to one or more a SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
-    
+
     /**
      * Template method to allow derived classes to add the indicated tag and
      * comment to a list of one or more file IDs.
      */
-    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);    
+    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);
 
     /**
      * Instances of this class implement a context menu user interface for
