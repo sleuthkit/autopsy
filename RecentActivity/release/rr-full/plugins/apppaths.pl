@@ -53,7 +53,8 @@ sub pluginmain {
 
 # used a list of values to address the need for parsing the App Paths key
 # in the Wow6432Node key, if it exists.
-	my @paths = ("Microsoft\\Windows\\CurrentVersion\\App Paths");
+	my @paths = ("Microsoft\\Windows\\CurrentVersion\\App Paths",
+	             "Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths");
 	
 	foreach my $key_path (@paths) {
 		my $key;

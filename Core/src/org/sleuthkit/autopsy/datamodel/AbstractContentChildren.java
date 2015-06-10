@@ -21,8 +21,9 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -32,6 +33,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -114,13 +116,17 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
     }
 
     /**
-     * Creates appropriate Node for each supported artifact category / grouping
+     * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy 
+     * tree view from each type of AutopsyVisitableItem visited. There are 
+     * AutopsyVisitableItems for the Data Sources, Views, Results, and Reports 
+     * subtrees, and for the subtrees of Results (e.g., Extracted Content, 
+     * Hash Set Hits, etc.). 
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
         @Override
-        public ExtractedContentNode visit(ExtractedContent ec) {
-            return new ExtractedContentNode(ec.getSleuthkitCase());
+        public ExtractedContent.RootNode visit(ExtractedContent ec) {
+            return ec.new RootNode(ec.getSleuthkitCase());
         }
 
         @Override
@@ -145,34 +151,34 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(KeywordHits kh) {
-            return kh.new KeywordHitsRootNode();
+            return kh.new RootNode();
         }
 
         @Override
         public AbstractNode visit(HashsetHits hh) {
-            return hh.new HashsetHitsRootNode();
+            return hh.new RootNode();
         }
 
         @Override
         public AbstractNode visit(InterestingHits ih) {
-            return ih.new InterestingHitsRootNode();
+            return ih.new RootNode();
         }
 
         @Override
         public AbstractNode visit(EmailExtracted ee) {
-            return ee.new EmailExtractedRootNode();
+            return ee.new RootNode();
         }
 
         @Override
-        public AbstractNode visit(TagsNodeKey tagsNodeKey) {
-            return new TagsNode();
+        public AbstractNode visit(Tags tagsNodeKey) {
+            return tagsNodeKey.new RootNode();
         }
 
         @Override
         public AbstractNode visit(DataSources i) {
             try {
-                return new DataSourcesNode(i.getSleuthkitCase().getRootObjects());
-            } catch (TskException ex) {
+                return new DataSourcesNode(Case.getCurrentCase().getDataSources());
+            } catch (TskCoreException ex) {
                 return defaultVisit(i);
             }
         }
@@ -185,6 +191,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractNode visit(Results r) {
             return new ResultsNode(r.getSleuthkitCase());
+        }
+
+        @Override
+        public AbstractNode visit(Reports reportsItem) {
+            return new Reports.ReportsListNode();
         }
 
         @Override

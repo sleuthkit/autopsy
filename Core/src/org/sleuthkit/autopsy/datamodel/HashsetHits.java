@@ -18,29 +18,40 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Hash set hits node support
+ * Hash set hits node support.  Inner classes have all of the nodes in the tree.
  */
 public class HashsetHits implements AutopsyVisitableItem {
 
@@ -48,65 +59,85 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     private SleuthkitCase skCase;
-    private Map<String, Set<Long>> hashSetHitsMap;
-
+    private final HashsetResults hashsetResults;
+   
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
-        hashSetHitsMap = new LinkedHashMap<>();
+        hashsetResults = new HashsetResults();
     }
-
-    @SuppressWarnings("deprecation")
-    private void initArtifacts() {
-        hashSetHitsMap.clear();
-        ResultSet rs = null;
-        try {
-            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + setNameId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
-            rs = skCase.runQuery(query);
-            while (rs.next()) {
-                String value = rs.getString("value_text");
-                long artifactId = rs.getLong("artifact_id");
-                if (!hashSetHitsMap.containsKey(value)) {
-                    hashSetHitsMap.put(value, new HashSet<Long>());
-                }
-                hashSetHitsMap.get(value).add(artifactId);
-
-            }
-
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
-                }
-            }
-        }
-    }
+    
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
+    
+    /**
+     * Stores all of the hashset results in a single class that is observable for the 
+     * child nodes
+     */
+    private class HashsetResults extends Observable {
+        // maps hashset name to list of artifacts for that set
+        private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
+        
+        HashsetResults() {
+            update();
+        }
+        
+        List<String> getSetNames() {
+            List<String> names = new ArrayList<>(hashSetHitsMap.keySet());
+            Collections.sort(names);
+            return names;
+        }
+        
+        Set<Long> getArtifactIds(String hashSetName) {
+            return hashSetHitsMap.get(hashSetName);
+        }
+        @SuppressWarnings("deprecation")
+        final void update() {
+            hashSetHitsMap.clear();
+            
+            if (skCase == null) {
+                return;   
+            }
+            
+            int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
+            int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + setNameId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    String setName = resultSet.getString("value_text"); //NON-NLS
+                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                    if (!hashSetHitsMap.containsKey(setName)) {
+                        hashSetHitsMap.put(setName, new HashSet<Long>());
+                    }
+                    hashSetHitsMap.get(setName).add(artifactId);
+                }
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
+            } 
+            
+            setChanged();
+            notifyObservers();
+        }
+    }
 
     /**
-     * Node for the hash set hits
+     * Top-level node for all hash sets
      */
-    public class HashsetHitsRootNode extends DisplayableItemNode {
+    public class RootNode extends DisplayableItemNode {
 
-        public HashsetHitsRootNode() {
-            super(Children.create(new HashsetHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
+        public RootNode() {
+            super(Children.create(new HashsetNameFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(HASHSET_HITS);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
-            initArtifacts();
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
         }
 
         @Override
@@ -137,27 +168,92 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
     }
 
-    private class HashsetHitsRootChildren extends ChildFactory<String> {
+    /**
+     * Creates child nodes for each hashset name
+     */
+    private class HashsetNameFactory extends ChildFactory.Detachable<String> implements Observer {
+
+        /* This should probably be in the HashsetHits class, but the factory has nice methods
+         * for its startup and shutdown, so it seemed like a cleaner place to register the
+         * property change listener.
+         */
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                    if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == ARTIFACT_TYPE.TSK_HASHSET_HIT) {
+                        hashsetResults.update();
+                    }
+                }
+                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    hashsetResults.update();
+                }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
+            }
+        };
 
         @Override
-        protected boolean createKeys(List<String> list) {
-            list.addAll(hashSetHitsMap.keySet());
+        protected void addNotify() {
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
+            hashsetResults.update();
+            hashsetResults.addObserver(this);
+        }
+
+        @Override
+        protected void removeNotify() {
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
+            hashsetResults.deleteObserver(this);
+        }
+        
+        @Override
+        protected boolean createKeys(List<String> list) {   
+            list.addAll(hashsetResults.getSetNames());
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new HashsetHitsSetNode(key, hashSetHitsMap.get(key));
+            return new HashsetNameNode(key);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 
-    public class HashsetHitsSetNode extends DisplayableItemNode {
-
-        public HashsetHitsSetNode(String name, Set<Long> children) {
-            super(Children.create(new HashsetHitsSetChildren(children), true), Lookups.singleton(name));
-            super.setName(name);
-            super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
+    /**
+     * Node for a hash set name
+     */
+    public class HashsetNameNode extends DisplayableItemNode implements Observer {
+        private final String hashSetName;
+        public HashsetNameNode(String hashSetName) {
+            super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
+            super.setName(hashSetName);
+            this.hashSetName = hashSetName;
+            updateDisplayName();
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
+            hashsetResults.addObserver(this);
+        }
+        
+        /**
+         * Update the count in the display name
+         */
+        private void updateDisplayName() {
+            super.setDisplayName(hashSetName + " (" + hashsetResults.getArtifactIds(hashSetName).size() + ")");  
         }
 
         @Override
@@ -186,33 +282,58 @@ public class HashsetHits implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
     }
 
-    private class HashsetHitsSetChildren extends ChildFactory<BlackboardArtifact> {
-
-        private Set<Long> children;
-
-        private HashsetHitsSetChildren(Set<Long> children) {
+    /**
+     * Creates the nodes for the hits in a given set.
+     */
+    private class HitFactory extends ChildFactory.Detachable<Long> implements Observer {
+        private String hashsetName;
+        
+        private HitFactory(String hashsetName) {
             super();
-            this.children = children;
+            this.hashsetName = hashsetName;
+        }
+                
+        @Override
+        protected void addNotify() {
+            hashsetResults.addObserver(this);
         }
 
         @Override
-        protected boolean createKeys(List<BlackboardArtifact> list) {
-            for (long l : children) {
-                try {
-                    //TODO: bulk artifact gettings
-                    list.add(skCase.getBlackboardArtifact(l));
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
-                }
-            }
+        protected void removeNotify() {
+            hashsetResults.deleteObserver(this);
+        }
+
+        @Override
+        protected boolean createKeys(List<Long> list) {
+            list.addAll(hashsetResults.getArtifactIds(hashsetName));
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact);
+        protected Node createNodeForKey(Long id) {
+            if (skCase == null) {
+                return null;            
+            }
+            
+            try {
+                BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                return new BlackboardArtifactNode(art);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+            }
+            return null;
+        }
+        
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 }

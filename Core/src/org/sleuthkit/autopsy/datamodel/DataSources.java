@@ -18,25 +18,17 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Images nodes support
  */
 public class DataSources implements AutopsyVisitableItem{
     
-    private SleuthkitCase skCase;
-    
-    public DataSources(SleuthkitCase skCase) {
-        this.skCase = skCase;
+    public DataSources() {
     }
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
-    }
-
-    public SleuthkitCase getSleuthkitCase(){
-        return skCase;
     }
 }

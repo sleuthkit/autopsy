@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
 import javax.swing.JComboBox;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -48,17 +50,19 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         int unit = this.getComponent().getSizeUnitComboBox().getSelectedIndex();
         int divider = (int) Math.pow(2, (unit * 10));
         size = size * divider;
-        return "size " + operator + " " + size;
+        return "size " + operator + " " + size; //NON-NLS
     }
 
     private String compareComboBoxToOperator(JComboBox<String> compare) {
         String compareSize = compare.getSelectedItem().toString();
 
-        if (compareSize.equals("equal to")) {
+        if (compareSize.equals(NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.equalTo"))) {
             return "=";
-        } else if (compareSize.equals("greater than")) {
+        } else if (compareSize.equals(
+                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.greaterThan"))) {
             return ">";
-        } else if (compareSize.equals("less than")) {
+        } else if (compareSize.equals(
+                NbBundle.getMessage(this.getClass(), "SizeSearchPanel.sizeCompareComboBox.lessThan"))) {
             return "<";
         } else {
             throw new IllegalArgumentException();

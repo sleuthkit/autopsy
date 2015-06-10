@@ -95,8 +95,8 @@ import org.openide.util.NbPreferences;
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        wiz.putProperty("tagStates", getComponent().getTagStates());
-        wiz.putProperty("artifactStates", getComponent().getArtifactStates());
-        wiz.putProperty("isTagsSelected", getComponent().isTaggedResultsRadioButtonSelected());
+        wiz.putProperty("tagStates", getComponent().getTagStates()); //NON-NLS
+        wiz.putProperty("artifactStates", getComponent().getArtifactStates()); //NON-NLS
+        wiz.putProperty("isTagsSelected", getComponent().isTaggedResultsRadioButtonSelected()); //NON-NLS
     }
 }

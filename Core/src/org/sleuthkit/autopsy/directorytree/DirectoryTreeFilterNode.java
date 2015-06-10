@@ -33,12 +33,13 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.ingest.IngestDialog;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -49,6 +50,7 @@ class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction(
             NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
+
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
 
     /**
@@ -56,8 +58,8 @@ class DirectoryTreeFilterNode extends FilterNode {
      */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
-                new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
-                arg.getLookup()));
+              new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
+                              arg.getLookup()));
     }
 
     @Override
@@ -75,7 +77,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                     final int numChildren = file.getChildrenCount();
                     name = name + " (" + numChildren + ")";
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex);
+                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
                 }
 
             }
@@ -88,6 +90,7 @@ class DirectoryTreeFilterNode extends FilterNode {
      * Right click action for the nodes in the directory tree.
      *
      * @param popup
+     *
      * @return
      */
     @Override
@@ -104,23 +107,35 @@ class DirectoryTreeFilterNode extends FilterNode {
                 actions.add(ExtractAction.getInstance());
             }
 
-            // file search action
             final Image img = this.getLookup().lookup(Image.class);
-            if (img != null) {
-                actions.add(new FileSearchAction(
-                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
+
+            VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
+            // determine if the virtualDireory is at root-level (Logical File Set).
+            boolean isRootVD = false;
+            if (virtualDirectory != null) {
+                try {
+                    if (virtualDirectory.getParent() == null) {
+                        isRootVD = true;
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
+                }
             }
 
-            //ingest action
-            actions.add(new AbstractAction(
-                    NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final IngestDialog ingestDialog = new IngestDialog();
-                    ingestDialog.setContent(Collections.<Content>singletonList(content));
-                    ingestDialog.display();
-                }
-            });
+            // 'run ingest' action and 'file search' action are added only if the
+            // selected node is img node or a root level virtual directory.
+            if (img != null || isRootVD) {
+                actions.add(new FileSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
+                actions.add(new AbstractAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                                ingestDialog.display();
+                            }
+                        });
+            }
         }
 
         //check if delete actions should be added
@@ -141,23 +156,24 @@ class DirectoryTreeFilterNode extends FilterNode {
     }
 
     private static List<Action> getDetailActions(Content c) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         actions.addAll(ExplorerNodeActionVisitor.getActions(c));
 
         return actions;
     }
-}
 
-class OriginalNode {
+    //FIXME: this seems like a big hack -jm
+    public static class OriginalNode {
 
-    private Node original;
+        private final Node original;
 
-    OriginalNode(Node original) {
-        this.original = original;
-    }
+        OriginalNode(Node original) {
+            this.original = original;
+        }
 
-    Node getNode() {
-        return original;
+        Node getNode() {
+            return original;
+        }
     }
 }

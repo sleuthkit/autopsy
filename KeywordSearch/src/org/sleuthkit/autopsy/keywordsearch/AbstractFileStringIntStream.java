@@ -34,15 +34,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * object, extract international strings from the file and read output as a
  * stream of UTF-8 strings as encoded bytes.
  *
- * Currently not-thread safe (reusing static buffers for efficiency)
  */
  class AbstractFileStringIntStream extends InputStream {
-
+    private static final Logger logger = Logger.getLogger(AbstractFileStringIntStream.class.getName());
+    private static final int FILE_BUF_SIZE = 1024 * 1024;
     private AbstractFile content;
     private final byte[] oneCharBuf = new byte[1];
-    private final StringExtract stringExtractor;
-    private static final int FILE_BUF_SIZE = 1024 * 1024;
-    private static final byte[] fileReadBuff = new byte[FILE_BUF_SIZE]; //NOTE: need to run all stream extraction in same thread
+    private final StringExtract stringExtractor;    
+    private final byte[] fileReadBuff = new byte[FILE_BUF_SIZE];
     private long fileReadOffset = 0L;
     private byte[] convertBuff; //stores extracted string encoded as bytes, before returned to user
     private int convertBuffOffset = 0; //offset to start returning data to user on next read()
@@ -51,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     private boolean extractUTF8;
     private boolean extractUTF16;
     private Charset outCharset;
-    private static final Logger logger = Logger.getLogger(AbstractFileStringIntStream.class.getName());
+    
     private StringExtractResult lastExtractResult;
 
     /**

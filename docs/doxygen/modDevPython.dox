@@ -1,0 +1,67 @@
+/*! \page mod_dev_py_page Python Development Setup
+
+<!-- NOTE: This doc contains the concepts that apply when developing
+any type of module. Information about specific types of modules should
+go into the page for that module type. -->
+
+This page describes the basic concepts and setup that are needed for all types of Python modules. It is not needed for Java module development.
+
+Autopsy uses Jython (http://www.jython.org) to enable Python scripting. Jython looks like Python and gets converted into Java byte code and run on the JVM.  Its biggest limitations are:
+- Limited to Python 2.5
+- Can't use Python libraries that have native code
+- You can't make any UIs.  This means that you can't make content viewer modules or have configuration settings for your ingest modules. 
+
+Using it is very easy though in Autopsy and it allows you to access all of the Java services and classes that you need. 
+
+To develop a module, you should follow this section to get your environment setup and then read the later sections on the different types of modules. 
+
+
+\section mod_dev_py_setup Basic Setup
+
+You don't really need anything to develop a python Autopsy module except for the standard Autopsy and your favorite text editor. 
+
+
+\section mod_dev_py_create Creating a Basic Python Module
+
+\subsection mod_dev_py_create_dir Packaging Structure
+
+Autopsy requires that you have a self-contained folder for each Python module.  This prevents naming collisions with other modules. You can name the folder what ever you want. You'll need to put all of the libraries that you depend on in there too. 
+
+You will need to copy this folder into Autopsy's Python script folder. It will scan this folder each time it looks for modules. You can find the location of this folder from the "Tools -> Python Scripts" menu item.  
+
+\subsection mod_dev_py_create_create Module Creation
+
+-# Create a folder
+-# Add a .py file to it (see later sections for details on its contents)
+-# Copy the folder to the previously mentioned folder to make updates during development.
+
+That's it. Autopsy will find the module each time it needs it and you can make updates without having to restart Autopsy each time. 
+
+While it may be tempting to use the Python Scripts folder as a development folder, be warned that if you do a 'Clean' from the Java development environment (NetBeans), you could lose your script.  If do not have NetBeans installed for Autopsy development, then you could be fine because you won't be able to do a 'Clean'.
+
+\subsection mod_dev_py_library Using External Libraries
+
+If you need to bring in a library that is not part of the standard jython distribution, then do the following:
+
+-# Copy the library file or folder into the folder that you made in the previous section.  For example, you may copy in folder called 'neededLib' that has a file named mylib.py in it.  The end result be a folder structure such as myModuleFolder/neededLib/mylib.py.
+-# In your Python code, if you needed a class from mylib, then you'd have a line such as:
+\code{.py}
+from neededLib.mylib import neededClass
+\endcode  
+
+Jython will look in the module's folder to resolve these libraries. 
+
+
+\section mod_dev_py_distribute Distribution
+To distribute and share your Python module, ZIP up the folder and send it around.  Other users of the module should expand the ZIP file and drop the folder into their Autopsy Python folder. 
+
+\section mod_dev_py_dev Developing Modules
+
+Jython allows you to access all of the Java classes.  So, you should read the following sections of this document.  All you should ignore is the Java environment setup sections.
+
+There are only two types of modules that you can make with Python.  Those (along with a sample file) are listed below:
+- Ingest Modules (both file-level and data source-level): https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/
+- Report Modules: https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/reportmodule.py
+
+*/
+

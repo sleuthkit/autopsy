@@ -36,6 +36,4 @@ It is up to the user to distinguish between the paths when adding to this file.
     <!--image value="This provokes an error." /-->
     <!--image value="X:\Invalid\Path\Does\Not\Exist.img" /-->
 	<!--build value="X:\Path\To\Build\File.xml"-->
-	<!--email value="address@provider.com"/-->
-	<!--mail_server value="mail.localhost.com" /-->
 </Properties>

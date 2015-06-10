@@ -39,7 +39,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
     private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
     //prefix for special VirtualDirectory root nodes grouping local files
-    public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet";
+    public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet"; //NON-NLS
 
     public static String nameForLayoutFile(VirtualDirectory ld) {
         return ld.getName();
@@ -54,13 +54,13 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
         //set icon for name, special case for some built-ins
         if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
         } else if (name.startsWith(LOGICAL_FILE_SET_PREFIX)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
         } else if (name.equals(VirtualDirectory.NAME_CARVED)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO NON-NLS
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
         }
 
     }

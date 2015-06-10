@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -34,13 +35,14 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Transaction;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
+import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.CarvedFileContainer;
 
 /**
  * Abstraction to facilitate access to files and directories.
@@ -71,7 +73,7 @@ public class FileManager implements Closeable {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error initializing FileManager and getting number of local file sets");
+            logger.log(Level.SEVERE, "Error initializing FileManager and getting number of local file sets"); //NON-NLS
         }
 
 
@@ -90,7 +92,7 @@ public class FileManager implements Closeable {
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles.exception.msg"));
         }
         return tskCase.findFiles(dataSource, fileName);
     }
@@ -111,7 +113,7 @@ public class FileManager implements Closeable {
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String dirName) throws TskCoreException {
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles2.exception.msg"));
         }
         return tskCase.findFiles(dataSource, fileName, dirName);
     }
@@ -131,7 +133,7 @@ public class FileManager implements Closeable {
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parentFile) throws TskCoreException {
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles3.exception.msg"));
         }
         return findFiles(dataSource, fileName, parentFile.getName());
     }
@@ -146,7 +148,7 @@ public class FileManager implements Closeable {
      */
     public synchronized List<AbstractFile> openFiles(Content dataSource, String filePath) throws TskCoreException {
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.openFiles.exception.msg"));
         }
         return tskCase.openFiles(dataSource, filePath);
     }
@@ -156,7 +158,7 @@ public class FileManager implements Closeable {
      *
      * @param fileName        file name the derived file
      * @param localPath       local path of the derived file, including the file
-     *                        name. The path is relative to the database path.
+     *                        name. The path is relative to the case folder.
      * @param size            size of the derived file in bytes
      * @param ctime
      * @param crtime
@@ -187,7 +189,7 @@ public class FileManager implements Closeable {
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
 
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addDerivedFile.exception.msg"));
         }
 
         return tskCase.addDerivedFile(fileName, localPath, size,
@@ -196,8 +198,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume
-     * or file system given by systemId.
+     * Adds a carved file to the VirtualDirectory '$CarvedFiles' in the volume or image given by systemId.
      *
      * @param carvedFileName the name of the carved file (containing appropriate
      *                       extension)
@@ -213,13 +214,31 @@ public class FileManager implements Closeable {
             long systemId, List<TskFileRange> sectors) throws TskCoreException {
 
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addCarvedFile.exception.msg"));
         }
 
         return tskCase.addCarvedFile(carvedFileName, carvedFileSize, systemId, sectors);
     }
 
     /**
+     * Adds a collection of carved files to the VirtualDirectory '$CarvedFiles' in the volume or image given by
+     * systemId. Creates $CarvedFiles if it does not exist already.
+     *
+     * @param filesToAdd a list of CarvedFileContainer files to add as carved files
+     * @return List<LayoutFile> This is a list of the files added to the database
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<LayoutFile> addCarvedFiles(List<CarvedFileContainer> filesToAdd) throws TskCoreException {
+     if (tskCase == null) {
+         throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.addCarvedFile.exception.msg"));
+     }
+     else {
+         return tskCase.addCarvedFiles(filesToAdd);
+     }
+    }
+
+    /**
+     * 
      * Interface for receiving notifications on folders being added via a
      * callback
      */
@@ -256,14 +275,16 @@ public class FileManager implements Closeable {
         for (String absPath : localAbsPaths) {
             java.io.File localFile = new java.io.File(absPath);
             if (!localFile.exists() || !localFile.canRead()) {
-                String msg = "One of the local files/dirs to add is not readable: " + localFile.getAbsolutePath() + ", aborting the process before any files added";
+                String msg = NbBundle
+                        .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.notReadable.msg",
+                                    localFile.getAbsolutePath());
                 logger.log(Level.SEVERE, msg);
                 throw new TskCoreException(msg);
             }
             rootsToAdd.add(localFile);
         }
 
-        Transaction trans = tskCase.createTransaction();
+        CaseDbTransaction trans = tskCase.beginTransaction();
         // make a virtual top-level directory for this set of files/dirs
         final VirtualDirectory fileSetRootDir = addLocalFileSetRootDir(trans);
 
@@ -273,7 +294,9 @@ public class FileManager implements Closeable {
                 AbstractFile localFileAdded = addLocalDirInt(trans, fileSetRootDir, localRootToAdd, addProgressUpdater);
 
                 if (localFileAdded == null) {
-                    String msg = "One of the local files/dirs could not be added: " + localRootToAdd.getAbsolutePath();
+                    String msg = NbBundle
+                            .getMessage(this.getClass(), "FileManager.addLocalFilesDirs.exception.cantAdd.msg",
+                                        localRootToAdd.getAbsolutePath());
                     logger.log(Level.SEVERE, msg);
                     throw new TskCoreException(msg);
                 } else {
@@ -282,15 +305,13 @@ public class FileManager implements Closeable {
                     //for now reusing ingest events, in future this will be replaced by datamodel / observer sending out events
                     // @@@ Is this the right place for this? A directory tree refresh will be triggered, so this may be creating a race condition
                     // since the transaction is not yet committed.   
-                    IngestServices.getDefault().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
+                    IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(localFileAdded));
                 }
             }
 
             trans.commit();
         } catch (TskCoreException ex) {
             trans.rollback();
-        } finally {
-            trans.close();
         }
         return fileSetRootDir;
     }
@@ -303,7 +324,7 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException
      */
-    private VirtualDirectory addLocalFileSetRootDir(Transaction trans) throws TskCoreException {
+    private VirtualDirectory addLocalFileSetRootDir(CaseDbTransaction trans) throws TskCoreException {
 
         VirtualDirectory created = null;
 
@@ -314,7 +335,9 @@ public class FileManager implements Closeable {
             created = tskCase.addVirtualDirectory(0, fileSetName, trans);
             curNumFileSets = newFileSetCount;
         } catch (TskCoreException ex) {
-            String msg = "Error creating local file set dir: " + fileSetName;
+            String msg = NbBundle
+                    .getMessage(this.getClass(), "FileManager.addLocalFileSetRootDir.exception.errCreateDir.msg",
+                                fileSetName);
             logger.log(Level.SEVERE, msg, ex);
             throw new TskCoreException(msg, ex);
         }
@@ -335,24 +358,29 @@ public class FileManager implements Closeable {
      * directory.
      * @throws TskCoreException
      */
-    private AbstractFile addLocalDirInt(Transaction trans, VirtualDirectory parentVd,
+    private AbstractFile addLocalDirInt(CaseDbTransaction trans, VirtualDirectory parentVd,
             java.io.File localFile, FileAddProgressUpdater addProgressUpdater) throws TskCoreException {
 
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(
+                    NbBundle.getMessage(this.getClass(), "FileManager.addLocalDirInt.exception.closed.msg"));
         }
 
         //final String localName = localDir.getName();
         if (!localFile.exists()) {
-            throw new TskCoreException("Attempted to add a local dir that does not exist: " + localFile.getAbsolutePath());
+            throw new TskCoreException(
+                    NbBundle.getMessage(this.getClass(), "FileManager.addLocalDirInt.exception.doesntExist.msg",
+                                        localFile.getAbsolutePath()));
         }
         if (!localFile.canRead()) {
-            throw new TskCoreException("Attempted to add a local dir that is not readable: " + localFile.getAbsolutePath());
+            throw new TskCoreException(
+                    NbBundle.getMessage(this.getClass(), "FileManager.addLocalDirInt.exception.notReadable.msg",
+                                        localFile.getAbsolutePath()));
         }
 
 
         if (localFile.isDirectory()) {
-            //create virtual folder
+            //create virtual folder (we don't have a notion of a 'local folder')
             final VirtualDirectory childVd = tskCase.addVirtualDirectory(parentVd.getId(), localFile.getName(), trans);
             if (childVd != null && addProgressUpdater != null) {
                 addProgressUpdater.fileAdded(childVd);
@@ -386,10 +414,11 @@ public class FileManager implements Closeable {
      *                          due to a critical system error or of the file
      *                          manager has already been closed
      */
-    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, Transaction trans) throws TskCoreException {
+    private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, CaseDbTransaction trans) throws TskCoreException {
 
         if (tskCase == null) {
-            throw new TskCoreException("Attempted to use FileManager after it was closed.");
+            throw new TskCoreException(
+                    NbBundle.getMessage(this.getClass(), "FileManager.addLocalDirInt2.exception.closed.msg"));
         }
 
         long size = localFile.length();

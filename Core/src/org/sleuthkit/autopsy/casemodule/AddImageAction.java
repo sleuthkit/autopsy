@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
@@ -36,12 +35,12 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -58,21 +57,21 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
     // String: time zone that the image is from
-    static final String TIMEZONE_PROP = "timeZone";
+    static final String TIMEZONE_PROP = "timeZone"; //NON-NLS
     // String[]: array of paths to each data source selected
-    static final String DATASOURCEPATH_PROP = "dataSrcPath";
+    static final String DATASOURCEPATH_PROP = "dataSrcPath"; //NON-NLS
     // String data source type selected
-    static final String DATASOURCETYPE_PROP = "dataSrcType";
+    static final String DATASOURCETYPE_PROP = "dataSrcType"; //NON-NLS
     // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
-    static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup";
+    static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup"; //NON-NLS
     // int: the next availble id for a new image
-    static final String IMAGEID_PROP = "imageId";
+    static final String IMAGEID_PROP = "imageId"; //NON-NLS
     // AddImageProcess: the next availble id for a new image
-    static final String PROCESS_PROP = "process";
+    static final String PROCESS_PROP = "process"; //NON-NLS
     // boolean: whether or not to lookup files in the hashDB
-    static final String LOOKUPFILES_PROP = "lookupFiles";
+    static final String LOOKUPFILES_PROP = "lookupFiles"; //NON-NLS
     // boolean: whether or not to skip processing orphan files on FAT filesystems
-    static final String NOFATORPHANS_PROP = "nofatorphans";
+    static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
@@ -107,10 +106,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(AddImageAction.class);
-        
-        final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        if (null != ingestConfig && ingestConfig.isIngestRunning()) {
+        if (IngestManager.getInstance().isIngestRunning()) {
             final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
             if (JOptionPane.showConfirmDialog(null, msg,
                                               NbBundle.getMessage(this.getClass(),
@@ -196,7 +192,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_add_image.png"));
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_add_image.png")); //NON-NLS
         toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
@@ -263,7 +259,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
                 cleanup();
             } catch (Exception ex) {
                 Logger logger = Logger.getLogger(this.getClass().getName());
-                logger.log(Level.WARNING, "Error cleaning up from wizard.", ex);
+                logger.log(Level.WARNING, "Error cleaning up from wizard.", ex); //NON-NLS
             } finally {
                 disable(); // cleanup tasks should only run once.
             }

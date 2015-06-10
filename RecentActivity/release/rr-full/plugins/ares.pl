@@ -3,6 +3,7 @@
 # 
 #
 # Change History
+#   20140730 - updated search terms detection (G. Neives)
 #   20130312 - updated based on data provided by J. Weg
 #   20120507 - modified to remove the traversing function, to only get
 #              a limited amount of data.
@@ -25,7 +26,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130312);
+              version       => 20140730);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -83,7 +84,7 @@ sub getSearchTerms {
 	
 	my $count = 0;
 	::rptMsg("Search Terms:");
-	my @subkeys = ("audio\.gen","gen\.gen","image\.gen","video\.gen");
+	my @subkeys = ("audio\.gen","gen\.gen","image\.gen","video\.aut","video\.dat","video\.gen","video\.tit");
 	
 	foreach my $sk (@subkeys) {
 		my $gen = $key->get_subkey("Search\.History")->get_subkey($sk);
@@ -91,7 +92,7 @@ sub getSearchTerms {
 		if (scalar(@vals) > 0) {
 			$count = 1;
 			::rptMsg($gen->get_name());
-			::rptMsg("LastWrite: ".gmtime($gen->get_timestamp()));
+			::rptMsg("LastWrite: ".gmtime($gen->get_timestamp())." (UTC)");
 			foreach my $v (@vals) {
 				next if ($v->get_name() eq "");
 				::rptMsg("  ".hex2ascii($v->get_name()));
@@ -99,7 +100,6 @@ sub getSearchTerms {
 		}
 	}
 	::rptMsg("No search terms found\.") if ($count == 0);
-	
 }
 
 sub hex2ascii {

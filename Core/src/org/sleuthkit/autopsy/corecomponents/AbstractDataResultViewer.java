@@ -111,7 +111,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             this.em.setSelectedNodes(selected);
         } catch (PropertyVetoException ex) {
-            logger.log(Level.WARNING, "Couldn't set selected nodes.", ex);
+            logger.log(Level.WARNING, "Couldn't set selected nodes.", ex); //NON-NLS
         }
     }
 

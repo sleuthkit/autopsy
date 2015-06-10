@@ -1,4 +1,4 @@
-                   Last Updated: March 23, 2013
+                   Last Updated: Sept 17, 2014
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -11,7 +11,7 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install JDK version 1.7.  You can now use 32-bit or 64-bit, but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 32-bit is easier. 
+1a) Download and install JDK version 1.8.  You can now use 32-bit or 64-bit, but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 32-bit is easier. 
 
 Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
 (http://www.oracle.com/technetwork/java/javase/downloads/index.html).
@@ -100,22 +100,29 @@ BACKGROUND:
 Here are some notes to shed some light on what is going on during
 the build process.
 
-- The Sleuth Kit Java datamodel JAR file has native libraries
-that are copied into it. 
+- The Sleuth Kit Java datamodel JAR file has native JNI libraries
+that are copied into it.   These JNI libraries have dependencies on
+libewf and zlib.  On non-Windows platforms, the JNI library also has
+a dependency on libtsk (on Windows, it is compiled into libtsk_jni).
 
 - NetBeans uses ant to build Autopsy.  The build target copies the
 TSK datamodel JAR file into the project.  If you want to use the
 debug version of the TSK dll, then there is a different ant target
-in TSK to copy the debug versions of the dlls. 
+in the TSK datamodel to copy the debug versions of the dlls. 
 
-- On a Windows system, the ant target copies all needed libraries
-to the autopsy folder.  On a Unix system, the ant taget copies only
-the JNI library and then relies on the other libraries (libtsk,
-libewf, zilb, etc.) to be installed on the system in their standard
-locations (i.e. /usr/local).
+- On a Windows system, the compile-time ant target copies the 
+dependency libraries into the Autopsy code structure so that they can
+be found when Autopsy is run and packaged.  At run-time, the native
+library inside of the JAR file will be extracted and used. 
+
+- On a Unix system, the ant taget copies only the JNI library and
+then relies on the other libraries (libtsk, libewf, zilb, etc.) to
+be installed on the system in their standard locations (i.e.
+/usr/local).
 
 - Everytime that you do a source code update of TSK, make sure you
-rebuild both the dll and the JAR file.
+rebuild both the libtsk_dll, the JAR file, and then rebuild Autopsy 
+so that it copies the latest data model JAR file. 
 
 
 ---------------

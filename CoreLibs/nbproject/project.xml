@@ -46,85 +46,6 @@
                 <package>com.google.gson.reflect</package>
                 <package>com.sun.activation.registries</package>
                 <package>com.sun.activation.viewers</package>
-                <package>com.sun.browser.plugin</package>
-                <package>com.sun.deploy.uitoolkit.impl.fx</package>
-                <package>com.sun.deploy.uitoolkit.impl.fx.ui</package>
-                <package>com.sun.deploy.uitoolkit.impl.fx.ui.resources</package>
-                <package>com.sun.glass.events</package>
-                <package>com.sun.glass.ui</package>
-                <package>com.sun.glass.ui.delegate</package>
-                <package>com.sun.glass.ui.gtk</package>
-                <package>com.sun.glass.ui.mac</package>
-                <package>com.sun.glass.ui.win</package>
-                <package>com.sun.glass.ui.x11</package>
-                <package>com.sun.glass.utils</package>
-                <package>com.sun.javafx</package>
-                <package>com.sun.javafx.animation</package>
-                <package>com.sun.javafx.animation.transition</package>
-                <package>com.sun.javafx.applet</package>
-                <package>com.sun.javafx.application</package>
-                <package>com.sun.javafx.beans</package>
-                <package>com.sun.javafx.beans.annotations</package>
-                <package>com.sun.javafx.beans.event</package>
-                <package>com.sun.javafx.binding</package>
-                <package>com.sun.javafx.charts</package>
-                <package>com.sun.javafx.collections</package>
-                <package>com.sun.javafx.collections.annotations</package>
-                <package>com.sun.javafx.collections.transformation</package>
-                <package>com.sun.javafx.css</package>
-                <package>com.sun.javafx.css.converters</package>
-                <package>com.sun.javafx.css.parser</package>
-                <package>com.sun.javafx.cursor</package>
-                <package>com.sun.javafx.effect</package>
-                <package>com.sun.javafx.embed</package>
-                <package>com.sun.javafx.event</package>
-                <package>com.sun.javafx.font</package>
-                <package>com.sun.javafx.fxml</package>
-                <package>com.sun.javafx.fxml.builder</package>
-                <package>com.sun.javafx.fxml.expression</package>
-                <package>com.sun.javafx.geom</package>
-                <package>com.sun.javafx.geom.transform</package>
-                <package>com.sun.javafx.iio</package>
-                <package>com.sun.javafx.iio.bmp</package>
-                <package>com.sun.javafx.iio.common</package>
-                <package>com.sun.javafx.iio.gif</package>
-                <package>com.sun.javafx.iio.jpeg</package>
-                <package>com.sun.javafx.iio.png</package>
-                <package>com.sun.javafx.image</package>
-                <package>com.sun.javafx.image.impl</package>
-                <package>com.sun.javafx.jmx</package>
-                <package>com.sun.javafx.logging</package>
-                <package>com.sun.javafx.menu</package>
-                <package>com.sun.javafx.perf</package>
-                <package>com.sun.javafx.property</package>
-                <package>com.sun.javafx.property.adapter</package>
-                <package>com.sun.javafx.robot</package>
-                <package>com.sun.javafx.robot.impl</package>
-                <package>com.sun.javafx.runtime</package>
-                <package>com.sun.javafx.runtime.async</package>
-                <package>com.sun.javafx.runtime.eula</package>
-                <package>com.sun.javafx.scene</package>
-                <package>com.sun.javafx.scene.control</package>
-                <package>com.sun.javafx.scene.control.behavior</package>
-                <package>com.sun.javafx.scene.control.skin</package>
-                <package>com.sun.javafx.scene.control.skin.resources</package>
-                <package>com.sun.javafx.scene.input</package>
-                <package>com.sun.javafx.scene.layout.region</package>
-                <package>com.sun.javafx.scene.paint</package>
-                <package>com.sun.javafx.scene.shape</package>
-                <package>com.sun.javafx.scene.text</package>
-                <package>com.sun.javafx.scene.transform</package>
-                <package>com.sun.javafx.scene.traversal</package>
-                <package>com.sun.javafx.scene.web</package>
-                <package>com.sun.javafx.scene.web.behavior</package>
-                <package>com.sun.javafx.scene.web.skin</package>
-                <package>com.sun.javafx.sg</package>
-                <package>com.sun.javafx.sg.prism</package>
-                <package>com.sun.javafx.stage</package>
-                <package>com.sun.javafx.tk</package>
-                <package>com.sun.javafx.tk.desktop</package>
-                <package>com.sun.javafx.tk.quantum</package>
-                <package>com.sun.javafx.util</package>
                 <package>com.sun.jna</package>
                 <package>com.sun.jna.platform</package>
                 <package>com.sun.jna.platform.dnd</package>
@@ -143,100 +64,7 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
-                <package>com.sun.media.jfxmedia</package>
-                <package>com.sun.media.jfxmedia.control</package>
-                <package>com.sun.media.jfxmedia.effects</package>
-                <package>com.sun.media.jfxmedia.events</package>
-                <package>com.sun.media.jfxmedia.locator</package>
-                <package>com.sun.media.jfxmedia.logging</package>
-                <package>com.sun.media.jfxmedia.track</package>
-                <package>com.sun.media.jfxmediaimpl</package>
-                <package>com.sun.media.jfxmediaimpl.platform</package>
-                <package>com.sun.media.jfxmediaimpl.platform.gstreamer</package>
-                <package>com.sun.media.jfxmediaimpl.platform.java</package>
-                <package>com.sun.media.jfxmediaimpl.platform.osx</package>
-                <package>com.sun.openpisces</package>
-                <package>com.sun.prism</package>
-                <package>com.sun.prism.camera</package>
-                <package>com.sun.prism.d3d</package>
-                <package>com.sun.prism.image</package>
-                <package>com.sun.prism.impl</package>
-                <package>com.sun.prism.impl.packrect</package>
-                <package>com.sun.prism.impl.paint</package>
-                <package>com.sun.prism.impl.ps</package>
-                <package>com.sun.prism.impl.shape</package>
-                <package>com.sun.prism.j2d</package>
-                <package>com.sun.prism.j2d.paint</package>
-                <package>com.sun.prism.paint</package>
-                <package>com.sun.prism.ps</package>
-                <package>com.sun.prism.render</package>
-                <package>com.sun.prism.shader</package>
-                <package>com.sun.prism.shape</package>
-                <package>com.sun.prism.tkal</package>
-                <package>com.sun.prism.util.tess</package>
-                <package>com.sun.prism.util.tess.impl.tess</package>
-                <package>com.sun.scenario</package>
-                <package>com.sun.scenario.animation</package>
-                <package>com.sun.scenario.animation.shared</package>
-                <package>com.sun.scenario.effect</package>
-                <package>com.sun.scenario.effect.impl</package>
-                <package>com.sun.scenario.effect.impl.hw</package>
-                <package>com.sun.scenario.effect.impl.hw.d3d</package>
-                <package>com.sun.scenario.effect.impl.prism</package>
-                <package>com.sun.scenario.effect.impl.prism.ps</package>
-                <package>com.sun.scenario.effect.impl.prism.sw</package>
-                <package>com.sun.scenario.effect.impl.state</package>
-                <package>com.sun.scenario.effect.impl.sw</package>
-                <package>com.sun.scenario.effect.impl.sw.java</package>
-                <package>com.sun.scenario.effect.impl.sw.sse</package>
-                <package>com.sun.scenario.effect.light</package>
-                <package>com.sun.t2k</package>
-                <package>com.sun.webpane.perf</package>
-                <package>com.sun.webpane.platform</package>
-                <package>com.sun.webpane.platform.event</package>
-                <package>com.sun.webpane.platform.graphics</package>
-                <package>com.sun.webpane.sg</package>
-                <package>com.sun.webpane.sg.prism</package>
-                <package>com.sun.webpane.sg.prism.theme</package>
-                <package>com.sun.webpane.sg.theme</package>
-                <package>com.sun.webpane.webkit</package>
-                <package>com.sun.webpane.webkit.dom</package>
-                <package>com.sun.webpane.webkit.network</package>
-                <package>com.sun.webpane.webkit.network.about</package>
-                <package>com.sun.webpane.webkit.network.data</package>
-                <package>com.sun.webpane.webkit.unicode</package>
-                <package>javafx.animation</package>
-                <package>javafx.application</package>
-                <package>javafx.beans</package>
-                <package>javafx.beans.binding</package>
-                <package>javafx.beans.property</package>
-                <package>javafx.beans.property.adapter</package>
-                <package>javafx.beans.value</package>
-                <package>javafx.collections</package>
-                <package>javafx.concurrent</package>
-                <package>javafx.embed.swing</package>
-                <package>javafx.embed.swt</package>
-                <package>javafx.event</package>
-                <package>javafx.fxml</package>
-                <package>javafx.geometry</package>
-                <package>javafx.scene</package>
-                <package>javafx.scene.canvas</package>
-                <package>javafx.scene.chart</package>
                 <package>javafx.scene.control</package>
-                <package>javafx.scene.control.cell</package>
-                <package>javafx.scene.effect</package>
-                <package>javafx.scene.image</package>
-                <package>javafx.scene.input</package>
-                <package>javafx.scene.layout</package>
-                <package>javafx.scene.media</package>
-                <package>javafx.scene.paint</package>
-                <package>javafx.scene.shape</package>
-                <package>javafx.scene.text</package>
-                <package>javafx.scene.transform</package>
-                <package>javafx.scene.web</package>
-                <package>javafx.stage</package>
-                <package>javafx.util</package>
-                <package>javafx.util.converter</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -325,6 +153,14 @@
                 <package>javax.xml.ws.http</package>
                 <package>javax.xml.ws.soap</package>
                 <package>javax.xml.ws.spi</package>
+                <package>jfxtras.animation</package>
+                <package>jfxtras.css.converters</package>
+                <package>jfxtras.fxml</package>
+                <package>jfxtras.internal.scene.control.fxml</package>
+                <package>jfxtras.internal.scene.control.skin</package>
+                <package>jfxtras.scene.control</package>
+                <package>jfxtras.scene.layout</package>
+                <package>jfxtras.util</package>
                 <package>net.sourceforge.jcalendarbutton</package>
                 <package>org.apache.avalon.framework</package>
                 <package>org.apache.avalon.framework.activity</package>
@@ -640,6 +476,22 @@
                 <package>org.apache.xmlbeans.xml.stream.events</package>
                 <package>org.apache.xmlbeans.xml.stream.utils</package>
                 <package>org.apache.xmlcommons</package>
+                <package>org.controlsfx</package>
+                <package>org.controlsfx.control</package>
+                <package>org.controlsfx.control.action</package>
+                <package>org.controlsfx.control.cell</package>
+                <package>org.controlsfx.control.decoration</package>
+                <package>org.controlsfx.control.spreadsheet</package>
+                <package>org.controlsfx.control.table</package>
+                <package>org.controlsfx.control.table.model</package>
+                <package>org.controlsfx.control.textfield</package>
+                <package>org.controlsfx.dialog</package>
+                <package>org.controlsfx.glyphfont</package>
+                <package>org.controlsfx.property</package>
+                <package>org.controlsfx.property.editor</package>
+                <package>org.controlsfx.tools</package>
+                <package>org.controlsfx.validation</package>
+                <package>org.controlsfx.validation.decoration</package>
                 <package>org.dom4j</package>
                 <package>org.dom4j.bean</package>
                 <package>org.dom4j.datatype</package>
@@ -685,6 +537,13 @@
                 <package>org.hyperic.sigar.win32</package>
                 <package>org.imgscalr</package>
                 <package>org.jbundle.thin.base.screen.jcalendarbutton</package>
+                <package>org.joda.time</package>
+                <package>org.joda.time.base</package>
+                <package>org.joda.time.chrono</package>
+                <package>org.joda.time.convert</package>
+                <package>org.joda.time.field</package>
+                <package>org.joda.time.format</package>
+                <package>org.joda.time.tz</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.main</package>
@@ -746,112 +605,24 @@
                 <package>schemasMicrosoftComVml.impl</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/activation-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/activation-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/platform-3.4.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/ant-1.8.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmlbeans-2.3.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/reflections-0.9.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/reflections-0.9.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/imgscalr-lib-4.2-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imgscalr-lib-4.2-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
+                <runtime-relative-path>ext/commons-logging-1.1.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/ant-launcher-1.8.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ant-launcher-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
+                <runtime-relative-path>ext/logkit-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
+                <runtime-relative-path>ext/openjfx-dialogs-1.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xml-apis-1.0.b2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xml-apis-1.0.b2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
+                <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
@@ -862,72 +633,212 @@
                 <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxrt.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxrt.jar</binary-origin>
+                <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlbeans-2.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sigar-1.6.4-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sigar-1.6.4-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
+                <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/logkit-1.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-controls-8.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-8.0-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xml-apis-1.0.b2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xml-apis-1.0.b2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0-sources.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.0-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2-sources.jar</binary-origin>
+                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-common-8.0-r1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-8.0-r1-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/activation-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activation-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/joda-time-2.4-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/joda-time-2.4-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-fxml-8.0-r1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sigar-1.6.4-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sigar-1.6.4-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/avalon-framework-4.1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/avalon-framework-4.1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/joda-time-2.4-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/joda-time-2.4-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-fxml-8.0-r1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.20.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.20.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-fxml-8.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-common-8.0-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-8.0-r1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-controls-8.0-r1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-8.0-r1-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/platform-3.4.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/reflections-0.9.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/reflections-0.9.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ant-1.8.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-common-8.0-r1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-8.0-r1-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-controls-8.0-r1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-8.0-r1-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/imgscalr-lib-4.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imgscalr-lib-4.2-sources.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

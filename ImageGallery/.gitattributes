@@ -1,0 +1,13 @@
+*.java                   text diff=java
+
+*.txt                   text
+*.sh                   text
+*.mf                   text
+*.xml                   text
+*.form                   text
+*.properties                   text
+*.html                   text diff=html
+*.dox                   text
+Doxyfile                text
+
+*.py                  text diff=python

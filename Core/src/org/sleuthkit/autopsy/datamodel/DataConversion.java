@@ -27,7 +27,7 @@ import java.util.Formatter;
  */
 public class DataConversion {
 
-    final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    final private static char[] hexArray = "0123456789ABCDEF".toCharArray(); //NON-NLS
     
     /**
      * Return the hex-dump layout of the passed in byte array.
@@ -67,7 +67,7 @@ public class DataConversion {
                 
                 // print the offset column
                 //outputStringBuilder.append("0x");
-                outputStringBuilder.append(String.format("0x%08x: ", arrayOffset + curOffset));
+                outputStringBuilder.append(String.format("0x%08x: ", arrayOffset + curOffset)); //NON-NLS
                 //outputStringBuilder.append(": ");
 
                 // print the hex columns                

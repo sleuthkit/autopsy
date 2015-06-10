@@ -4,6 +4,7 @@
 # Gets IE settings
 #
 # Change history
+#  20130731 - added check for "ClearBrowsingHistoryOnExit"
 #  20130328 - added "AutoConfigURL" value info
 #  20130223 - updated
 #  20091016 - created
@@ -23,7 +24,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 1,
               osmask        => 22,
-              version       => 20130328);
+              version       => 20130731);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -71,6 +72,13 @@ sub pluginmain {
 		if ($@) {
 			::rptMsg("DaysToKeep value not found - default is 20 days");
 		}
+# added check for "delete history on exit" setting 20130731
+		my $clear;
+		eval {
+			$clear = $key->get_subkey("Privacy")->get_value("ClearBrowsingHistoryOnExit")->get_data();
+			::rptMsg("ClearBrowsingHistoryOnExit = ".$clear);
+# 1 = enabled			
+		};		
 
 # AutoConfigURL
 # ref: http://technet.microsoft.com/en-us/library/cc736412%28v=ws.10%29.aspx

@@ -36,7 +36,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
 
     
     private boolean directoryBrowseMode;
-    public static final String HIDE_PARENT = "hide_parent";
+    public static final String HIDE_PARENT = "hide_parent"; //NON-NLS
 
     AbstractFsContentNode(T fsContent) {
         this(fsContent, true);

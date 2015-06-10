@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.beans.PropertyChangeListener;
@@ -31,11 +30,11 @@ public interface DataExplorer extends PropertyChangeListener {
 
     /**
      * Gets the TopComponent for rendering this DateExplorer
-     * 
+     *
      * @return the DataExplorer's TopComponent
      */
     public TopComponent getTopComponent();
-    
+
     public boolean hasMenuOpenAction();
 
 }

@@ -39,7 +39,7 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching realplayer6 v.".$VERSION);
 	::rptMsg("realplayer6 v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
@@ -68,12 +68,10 @@ sub pluginmain {
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

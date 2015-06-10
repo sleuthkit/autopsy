@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
  class ReportHTML implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
-    private static final String THUMBS_REL_PATH = "thumbs" + File.separator;
+    private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
     private static ReportHTML instance;
     private static final int MAX_THUMBS_PER_PAGE = 1000;
     private Case currentCase;
@@ -78,7 +78,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private Writer out;
     
 
-    private ReportBranding reportBranding;
+    private final ReportBranding reportBranding;
     
     // Get the default instance of this report
     public static synchronized ReportHTML getDefault() {
@@ -140,7 +140,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         InputStream in;
         OutputStream output = null;
         
-        logger.log(Level.INFO, "useDataTypeIcon: dataType = {0}", dataType);
+        logger.log(Level.INFO, "useDataTypeIcon: dataType = {0}", dataType); //NON-NLS
         
         // find the artifact with matching display name
         BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
@@ -153,93 +153,122 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         if (null != artifactType)
         {        
             // set the icon file name
-            iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png";
+            iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
 
             // determine the source image to use
              switch (artifactType) {
                 case TSK_WEB_BOOKMARK:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png"); //NON-NLS
                     break;   
                 case TSK_WEB_COOKIE:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png"); //NON-NLS
                      break;
                 case TSK_WEB_HISTORY:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png"); //NON-NLS
                     break;
                 case TSK_WEB_DOWNLOAD:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png"); //NON-NLS
                     break;     
                 case TSK_RECENT_OBJECT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png"); //NON-NLS
                     break;
                 case TSK_INSTALLED_PROG:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
                     break;
                 case TSK_KEYWORD_HIT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png"); //NON-NLS
                     break;
                 case TSK_HASHSET_HIT:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png"); //NON-NLS
                     break;
                 case TSK_DEVICE_ATTACHED:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png"); //NON-NLS
                     break;
                 case TSK_WEB_SEARCH_QUERY:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/search.png"); //NON-NLS
                     break;
                 case TSK_METADATA_EXIF:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/exif.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/exif.png"); //NON-NLS
                     break;
                 case TSK_TAG_FILE:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png"); //NON-NLS
                     break;
                 case TSK_TAG_ARTIFACT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png"); //NON-NLS
                     break;        
                 case TSK_SERVICE_ACCOUNT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png"); //NON-NLS
                     break;
                 case TSK_CONTACT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/contact.png"); //NON-NLS
                     break;
                 case TSK_MESSAGE:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png");
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png"); //NON-NLS
                     break;
                 case TSK_CALLLOG:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png"); //NON-NLS
                     break;
                 case TSK_CALENDAR_ENTRY:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png"); //NON-NLS
                     break;
                 case TSK_SPEED_DIAL_ENTRY:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png"); //NON-NLS
                     break;
                 case TSK_BLUETOOTH_PAIRING:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png"); //NON-NLS
                      break;
                 case TSK_GPS_BOOKMARK:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png"); //NON-NLS
                      break;
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png"); //NON-NLS
                      break;
                 case TSK_GPS_SEARCH:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png");
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png"); //NON-NLS
                      break;
-
+                case TSK_OS_INFO:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/computer.png"); //NON-NLS
+                     break;
+                case TSK_GPS_TRACKPOINT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps_trackpoint.png"); //NON-NLS
+                    break;
+                case TSK_GPS_ROUTE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps_trackpoint.png"); //NON-NLS
+                    break;
+                case TSK_EMAIL_MSG:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
+                    break;
+                case TSK_ENCRYPTION_DETECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/encrypted-file.png"); //NON-NLS
+                    break;
+                case TSK_EXT_MISMATCH_DETECTED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mismatch-16.png"); //NON-NLS
+                    break;
+                case TSK_INTERESTING_ARTIFACT_HIT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
+                    break;
+                case TSK_INTERESTING_FILE_HIT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
+                    break;
+                case TSK_PROG_RUN:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
+                    break;
+                case TSK_REMOTE_DRIVE:
+                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
+                    break;    
                 default:
-                    logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType);
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png");
-                    iconFileName = "star.png";
+                    logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
+                    iconFileName = "star.png"; //NON-NLS
                     iconFilePath = path + File.separator +  iconFileName;
                     break;
              }
         } 
         else {  // no defined artifact found for this dataType 
-            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType);
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png");
-            iconFileName = "star.png";
+            logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType); //NON-NLS
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
+            iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator +  iconFileName;   
         }
         
@@ -249,7 +278,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
              in.close();
              output.close();
           } catch (IOException ex) {
-             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
+             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
         } finally {
              if (output != null) {
                  try {
@@ -270,20 +299,20 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     /**
      * Start this report by setting the path, refreshing member variables,
      * and writing the skeleton for the HTML report.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      */
     @Override
-    public void startReport(String path) {
+    public void startReport(String baseReportDir) {
         // Refresh the HTML report
         refresh();
         // Setup the path for the HTML report
-        this.path = path + "HTML Report" + File.separator;
-        this.thumbsPath = this.path + "thumbs" + File.separator;
+        this.path = baseReportDir + "HTML Report" + File.separator; //NON-NLS
+        this.thumbsPath = this.path + "thumbs" + File.separator; //NON-NLS
         try {
             FileUtil.createFolder(new File(this.path));
             FileUtil.createFolder(new File(this.thumbsPath));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to make HTML report folder.");
+            logger.log(Level.SEVERE, "Unable to make HTML report folder."); //NON-NLS
         }
         // Write the basic files
         writeCss();
@@ -302,7 +331,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             try {
                 out.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not close the output writer when ending report.", ex);
+                logger.log(Level.WARNING, "Could not close the output writer when ending report.", ex); //NON-NLS
             }
         }
     }
@@ -319,27 +348,27 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void startDataType(String name, String description) {
         String title = dataTypeToFileName(name);
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + getExtension()), "UTF-8"));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + ".html"), "UTF-8")); //NON-NLS
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "File not found: {0}", ex);
+            logger.log(Level.SEVERE, "File not found: {0}", ex); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Unrecognized encoding");
+            logger.log(Level.SEVERE, "Unrecognized encoding"); //NON-NLS
         }
         
         try {
             StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n");
-            page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n");
+            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
+            page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n"); //NON-NLS
             if (!description.isEmpty()) {
-                page.append("<p><strong>");
+                page.append("<p><strong>"); //NON-NLS
                 page.append(description);
-                page.append("</string></p>\n");
+                page.append("</string></p>\n"); //NON-NLS
             }
             out.write(page.toString());
             currentDataType = name;
             rowCount = 0;
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write page head: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write page head: {0}", ex); //NON-NLS
         }
     }
               
@@ -351,7 +380,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public void endDataType() {
         dataTypes.put(currentDataType, rowCount);
         try {
-            out.write("</div>\n</body>\n</html>\n");
+            out.write("</div>\n</body>\n</html>\n"); //NON-NLS
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
@@ -360,7 +389,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     out.flush();
                     out.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close the output writer when ending data type.", ex);
+                    logger.log(Level.WARNING, "Could not close the output writer when ending data type.", ex); //NON-NLS
                 }
                 out = null;
             }
@@ -374,13 +403,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void startSet(String setName) {   
         StringBuilder set = new StringBuilder();
-        set.append("<h1><a name=\"").append(setName).append("\">").append(setName).append("</a></h1>\n");
-        set.append("<div class=\"keyword_list\">\n");
+        set.append("<h1><a name=\"").append(setName).append("\">").append(setName).append("</a></h1>\n"); //NON-NLS
+        set.append("<div class=\"keyword_list\">\n"); //NON-NLS
         
         try {
             out.write(set.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write set: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write set: {0}", ex); //NON-NLS
         }
     }
     
@@ -390,9 +419,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void endSet() {
         try {
-            out.write("</div>\n");
+            out.write("</div>\n"); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write end of set: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write end of set: {0}", ex); //NON-NLS
         }
     }
 
@@ -403,15 +432,15 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void addSetIndex(List<String> sets) {
         StringBuilder index = new StringBuilder();
-        index.append("<ul>\n");
+        index.append("<ul>\n"); //NON-NLS
         for (String set : sets) {
-            index.append("\t<li><a href=\"#").append(set).append("\">").append(set).append("</a></li>\n");
+            index.append("\t<li><a href=\"#").append(set).append("\">").append(set).append("</a></li>\n"); //NON-NLS
         }
-        index.append("</ul>\n");
+        index.append("</ul>\n"); //NON-NLS
         try {
             out.write(index.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to add set index: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to add set index: {0}", ex); //NON-NLS
         }
     }
 
@@ -422,9 +451,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void addSetElement(String elementName) {
         try {
-            out.write("<h4>" + elementName + "</h4>\n");
+            out.write("<h4>" + elementName + "</h4>\n"); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write set element: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write set element: {0}", ex); //NON-NLS
         }
     }
 
@@ -435,16 +464,16 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void startTable(List<String> titles) {
         StringBuilder ele = new StringBuilder();        
-        ele.append("<table>\n<thead>\n\t<tr>\n");
+        ele.append("<table>\n<thead>\n\t<tr>\n"); //NON-NLS
         for(String title : titles) {
-            ele.append("\t\t<th>").append(title).append("</th>\n");
+            ele.append("\t\t<th>").append(title).append("</th>\n"); //NON-NLS
         }
-        ele.append("\t</tr>\n</thead>\n");
+        ele.append("\t</tr>\n</thead>\n"); //NON-NLS
         
         try {
             out.write(ele.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write table start: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write table start: {0}", ex); //NON-NLS
         }
     }
 
@@ -457,22 +486,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
      */
     public void startContentTagsTable(List<String> columnHeaders) {
         StringBuilder htmlOutput = new StringBuilder();        
-        htmlOutput.append("<table>\n<thead>\n\t<tr>\n");
+        htmlOutput.append("<table>\n<thead>\n\t<tr>\n"); //NON-NLS
        
         // Add the specified columns.
         for(String columnHeader : columnHeaders) {
-            htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n");
+            htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n"); //NON-NLS
         }
         
         // Add a column for a hyperlink to a local copy of the tagged content.
-        htmlOutput.append("\t\t<th></th>\n");        
+        htmlOutput.append("\t\t<th></th>\n"); //NON-NLS
         
-        htmlOutput.append("\t</tr>\n</thead>\n");
+        htmlOutput.append("\t</tr>\n</thead>\n"); //NON-NLS
         
         try {
             out.write(htmlOutput.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write table start: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write table start: {0}", ex); //NON-NLS
         }
     }
     
@@ -482,9 +511,9 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void endTable() {
         try {
-            out.write("</table>\n");
+            out.write("</table>\n"); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write end of table: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write end of table: {0}", ex); //NON-NLS
         }
     }
 
@@ -495,19 +524,19 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     @Override
     public void addRow(List<String> row) {
         StringBuilder builder = new StringBuilder();
-        builder.append("\t<tr>\n");
+        builder.append("\t<tr>\n"); //NON-NLS
         for (String cell : row) {
-            builder.append("\t\t<td>").append(cell).append("</td>\n");
+            builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
         }
-        builder.append("\t</tr>\n");
+        builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
         
         try {
             out.write(builder.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex); //NON-NLS
         } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
     
@@ -526,7 +555,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             addRow(row);
             return;
         }
-        
         AbstractFile file = (AbstractFile) content;
         // Don't make a local copy of the file if it is a directory or unallocated space.
         if (file.isDir() ||
@@ -535,33 +563,51 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             row.add("");
             return;
         }
-
+        
+        // Add metadata about the file to HTML output
+        row.add(file.getMtimeAsDate());
+        row.add(file.getCtimeAsDate());
+        row.add(file.getAtimeAsDate());
+        row.add(file.getCrtimeAsDate());
+        row.add(Long.toString(file.getSize()));
+        row.add(file.getMd5Hash());
+        
         // save it in a folder based on the tag name
         String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
         
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
-        localFileLink.append("<a href=\"");
+        localFileLink.append("<a href=\""); //NON-NLS
         localFileLink.append(localFilePath);
-        localFileLink.append("\">").append(NbBundle.getMessage(this.getClass(), "ReportHTML.link.viewFile")).append("</a>");
-        row.add(localFileLink.toString());              
+        localFileLink.append("\">");
         
         StringBuilder builder = new StringBuilder();
-        builder.append("\t<tr>\n");
+        builder.append("\t<tr>\n"); //NON-NLS
+        int positionCounter=0;
         for (String cell : row) {
-            builder.append("\t\t<td>").append(cell).append("</td>\n");
+            // position-dependent code used to format this report. Not great, but understandable for formatting.
+            if(positionCounter==1) { // Convert the file name to a hyperlink and left-align it
+                builder.append("\t\t<td class=\"left_align_cell\">").append(localFileLink.toString()).append(cell).append("</a></td>\n"); //NON-NLS
+            }
+            else if (positionCounter==7) { // Right-align the bytes column.
+                builder.append("\t\t<td class=\"right_align_cell\">").append(cell).append("</td>\n"); //NON-NLS
+            }
+            else { // Regular case, not a file name nor a byte count
+                builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+            }
+            ++positionCounter;
         }
-        builder.append("\t</tr>\n");
+        builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
         
         try {
             out.write(builder.toString());
         } 
         catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write row to out.", ex);
-        } 
+            logger.log(Level.SEVERE, "Failed to write row to out.", ex); //NON-NLS
+        }
         catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex);
+            logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
     
@@ -608,7 +654,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             if (thumbnailPath == null) {
                 continue;
             }
-            String contentPath = saveContent(file, "thumbs_fullsize");
+            String contentPath = saveContent(file, "thumbs_fullsize"); //NON-NLS
             String nameInImage;
             try {
                 nameInImage = file.getUniquePath();
@@ -617,12 +663,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
             
             StringBuilder linkToThumbnail = new StringBuilder();
-            linkToThumbnail.append("<a href=\"");
+            linkToThumbnail.append("<a href=\""); //NON-NLS
             linkToThumbnail.append(contentPath);
             linkToThumbnail.append("\">");
-            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>");
-            linkToThumbnail.append("</a><br>");
-            linkToThumbnail.append(file.getName()).append("<br>");
+            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>"); //NON-NLS
+            linkToThumbnail.append("</a><br>"); //NON-NLS
+            linkToThumbnail.append(file.getName()).append("<br>"); //NON-NLS
             
             Services services = currentCase.getServices();
             TagsManager tagsManager = services.getTagsManager();
@@ -639,7 +685,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Could not find get tags for file.", ex);
+                logger.log(Level.WARNING, "Could not find get tags for file.", ex); //NON-NLS
             }
 
             currentRow.add(linkToThumbnail.toString());
@@ -734,8 +780,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     
     @Override
-    public String getFilePath() {
-        return "HTML Report" + File.separator + "index.html";
+    public String getRelativeFilePath() {
+        return "HTML Report" + File.separator + "index.html"; //NON-NLS
     }
 
     
@@ -748,12 +794,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     public String getDescription() {
         return NbBundle.getMessage(this.getClass(), "ReportHTML.getDesc.text");
     }
-
-    
-    @Override
-    public String getExtension() {
-        return ".html";
-    }
     
     /**
      * Write the stylesheet for this report.
@@ -761,30 +801,32 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private void writeCss() {
         Writer cssOut = null;
         try {
-            cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.css"), "UTF-8"));
-            String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n" +
-                         "#content {padding: 30px;}\n" +
-                         "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" +
-                         "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n" +
-                         "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" +
-                         "h3 {font-size: 16px; color: #07A;}\n" +
-                         "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n" + 
-                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" +
-                         "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" +
-                         "ul li a:hover {text-decoration: underline;}\n" +
-                         "p {margin: 0 0 20px 0;}\n" +
-                         "table {max-width: 100%; min-width: 700px; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" +
-                         ".keyword_list table {width: 100%; margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" +
-                         "table th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" +
-                         "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; max-width: 500px; min-width: 125px; word-break: break-all; overflow: auto;}\n" +
-                         "table tr:nth-child(even) td {background: #f3f3f3;}";
+            cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.css"), "UTF-8")); //NON-NLS NON-NLS
+            String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n" + //NON-NLS
+                         "#content {padding: 30px;}\n" + //NON-NLS
+                         "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" + //NON-NLS
+                         "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n" + //NON-NLS
+                         "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" + //NON-NLS
+                         "h3 {font-size: 16px; color: #07A;}\n" + //NON-NLS
+                         "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n" +  //NON-NLS
+                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" + //NON-NLS
+                         "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" + //NON-NLS
+                         "ul li a:hover {text-decoration: underline;}\n" + //NON-NLS
+                         "p {margin: 0 0 20px 0;}\n" + //NON-NLS
+                         "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                         ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
+                         "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                         "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
+                         "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
+                         "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n" + //NON-NLS
+                         "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex);
+            logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.", ex);
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing index.css.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for index.css.", ex);
+            logger.log(Level.SEVERE, "Error creating Writer for index.css.", ex); //NON-NLS
         } finally {
             try {
                 if(cssOut != null) {
@@ -801,25 +843,31 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
      */
     private void writeIndex() {
         Writer indexOut = null;
+        String indexFilePath = path + "index.html"; //NON-NLS
         try {
-            indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.html"), "UTF-8"));
+            indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
-            index.append("<head>\n<title>").append(
+            index.append("<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
-                    "</title>\n");
-            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n");
-            index.append("</head>\n");
-            index.append("<frameset cols=\"350px,*\">\n");
-            index.append("<frame src=\"nav.html\" name=\"nav\">\n");
-            index.append("<frame src=\"summary.html\" name=\"content\">\n");
-            index.append("<noframes>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.msg")).append("<br />\n");
-            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.seeNav")).append("<br />\n");
-            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.seeSum")).append("</noframes>\n");
-            index.append("</frameset>\n");
-            index.append("</html>");
+                    "</title>\n"); //NON-NLS
+            index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS
+            index.append("</head>\n"); //NON-NLS
+            index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS
+            index.append("<frame src=\"nav.html\" name=\"nav\">\n"); //NON-NLS
+            index.append("<frame src=\"summary.html\" name=\"content\">\n"); //NON-NLS
+            index.append("<noframes>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.msg")).append("<br />\n"); //NON-NLS
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.seeNav")).append("<br />\n"); //NON-NLS
+            index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.seeSum")).append("</noframes>\n"); //NON-NLS
+            index.append("</frameset>\n"); //NON-NLS
+            index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
+            Case.getCurrentCase().addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
+                                                                               "ReportHTML.writeIndex.srcModuleName.text"), "");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex);
+            logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            String errorMessage = String.format("Error adding %s to case as a report", indexFilePath); //NON-NLS
+            logger.log(Level.SEVERE, errorMessage, ex);
         } finally {
             try {
                 if(indexOut != null) {
@@ -837,38 +885,38 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private void writeNav() {
         Writer navOut = null;
         try {
-            navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "nav.html"), "UTF-8"));
+            navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "nav.html"), "UTF-8")); //NON-NLS
             StringBuilder nav = new StringBuilder();
-            nav.append("<html>\n<head>\n\t<title>").append(
+            nav.append("<html>\n<head>\n\t<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
-               .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n");
-            nav.append("<div id=\"content\">\n<h1>").append(
-                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n");
-            nav.append("<ul class=\"nav\">\n");
-            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">")
-               .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n");
+               .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n"); //NON-NLS
+            nav.append("<div id=\"content\">\n<h1>").append( //NON-NLS
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n"); //NON-NLS
+            nav.append("<ul class=\"nav\">\n"); //NON-NLS
+            nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">") //NON-NLS
+               .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n"); //NON-NLS
             
             for (String dataType : dataTypes.keySet()) {
                 String dataTypeEsc = dataTypeToFileName(dataType);
                 String iconFileName = useDataTypeIcon(dataType);
-                nav.append("<li style=\"background: url('").append(iconFileName)
-                        .append("') left center no-repeat;\"><a href=\"")
-                        .append(dataTypeEsc).append(".html\" target=\"content\">")
+                nav.append("<li style=\"background: url('").append(iconFileName) //NON-NLS
+                        .append("') left center no-repeat;\"><a href=\"") //NON-NLS
+                        .append(dataTypeEsc).append(".html\" target=\"content\">") //NON-NLS
                         .append(dataType).append(" (").append(dataTypes.get(dataType))
-                        .append(")</a></li>\n");
+                        .append(")</a></li>\n"); //NON-NLS
             }
-            nav.append("</ul>\n");
-            nav.append("</div>\n</body>\n</html>");
+            nav.append("</ul>\n"); //NON-NLS
+            nav.append("</div>\n</body>\n</html>"); //NON-NLS
             navOut.write(nav.toString());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write end of report navigation menu: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to write end of report navigation menu: {0}", ex); //NON-NLS
         } finally {
             if (navOut != null) {
                 try {
                     navOut.flush();
                     navOut.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close navigation out writer.");
+                    logger.log(Level.WARNING, "Could not close navigation out writer."); //NON-NLS
                 }
             }
         }
@@ -882,23 +930,23 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             if (generatorLogoPath != null && ! generatorLogoPath.isEmpty()) {
                 File from = new File(generatorLogoPath);
                 File to = new File(path);
-                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo");
+                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo"); //NON-NLS
             }
             
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
             if (agencyLogoPath != null && ! agencyLogoPath.isEmpty() ) {
                 File from = new File(agencyLogoPath);
                 File to = new File(path);
-                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo");
+                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo"); //NON-NLS
             }
             
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico");
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico"); //NON-NLS
             output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
             
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png");
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png"); //NON-NLS
             output = new FileOutputStream(new File(path + File.separator + "summary.png"));
             FileUtil.copy(in, output);
             in.close();
@@ -906,7 +954,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             
            
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex);
+            logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
         } finally {
             if (output != null) {
                 try {
@@ -929,27 +977,27 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private void writeSummary() {
         Writer out = null;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "summary.html"), "UTF-8"));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "summary.html"), "UTF-8")); //NON-NLS
             StringBuilder head = new StringBuilder();
-            head.append("<html>\n<head>\n<title>").append(
-                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n");
-            head.append("<style type=\"text/css\">\n");
-            head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n");
-            head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n");
-            head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n");
-            head.append("h1 span { color: #F00; display: block; font-size: 16px; font-weight: bold; line-height: 22px;}\n");
-            head.append("h2 { padding: 0 0 3px 0; margin: 0px; color: #07A; font-weight: normal; border-bottom: 1px dotted #81B9DB; }\n");
-            head.append("table td { padding-right: 25px; }\n");
-            head.append("p.subheadding { padding: 0px; margin: 0px; font-size: 11px; color: #B5B5B5; }\n");
-            head.append(".title { width: 660px; margin-bottom: 50px; }\n");
-            head.append(".left { float: left; width: 250px; margin-top: 20px; text-align: center; }\n");
-            head.append(".left img { max-width: 250px; max-height: 250px; min-width: 200px; min-height: 200px; }\n");
-            head.append(".right { float: right; width: 385px; margin-top: 25px; font-size: 14px; }\n");
-            head.append(".clear { clear: both; }\n");
-            head.append(".info p { padding: 3px 10px; background: #e5e5e5; color: #777; font-size: 12px; font-weight: bold; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede; }\n");
-            head.append(".info table { margin: 0 25px 20px 25px; }\n");
-            head.append("</style>\n");
-            head.append("</head>\n<body>\n");
+            head.append("<html>\n<head>\n<title>").append( //NON-NLS
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
+            head.append("<style type=\"text/css\">\n"); //NON-NLS
+            head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n"); //NON-NLS
+            head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n"); //NON-NLS
+            head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n"); //NON-NLS
+            head.append("h1 span { color: #F00; display: block; font-size: 16px; font-weight: bold; line-height: 22px;}\n"); //NON-NLS
+            head.append("h2 { padding: 0 0 3px 0; margin: 0px; color: #07A; font-weight: normal; border-bottom: 1px dotted #81B9DB; }\n"); //NON-NLS
+            head.append("table td { padding-right: 25px; }\n"); //NON-NLS
+            head.append("p.subheadding { padding: 0px; margin: 0px; font-size: 11px; color: #B5B5B5; }\n"); //NON-NLS
+            head.append(".title { width: 660px; margin-bottom: 50px; }\n"); //NON-NLS
+            head.append(".left { float: left; width: 250px; margin-top: 20px; text-align: center; }\n"); //NON-NLS
+            head.append(".left img { max-width: 250px; max-height: 250px; min-width: 200px; min-height: 200px; }\n"); //NON-NLS
+            head.append(".right { float: right; width: 385px; margin-top: 25px; font-size: 14px; }\n"); //NON-NLS
+            head.append(".clear { clear: both; }\n"); //NON-NLS
+            head.append(".info p { padding: 3px 10px; background: #e5e5e5; color: #777; font-size: 12px; font-weight: bold; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede; }\n"); //NON-NLS
+            head.append(".info table { margin: 0 25px 20px 25px; }\n"); //NON-NLS
+            head.append("</style>\n"); //NON-NLS
+            head.append("</head>\n<body>\n"); //NON-NLS
             out.write(head.toString());
             
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -959,11 +1007,16 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             String caseName = currentCase.getName();
             String caseNumber = currentCase.getNumber();
             String examiner = currentCase.getExaminer();
-            int imagecount = currentCase.getImageIDs().length;
+            int imagecount;
+            try {
+                imagecount = currentCase.getDataSources().size();
+            } catch (TskCoreException ex) {
+                imagecount = 0;
+            }
             
             StringBuilder summary = new StringBuilder();
             boolean running = false;
-            if (IngestManager.getDefault().isIngestRunning() || IngestManager.getDefault().areModulesRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 running = true;
             }
             
@@ -972,77 +1025,78 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
             
-            summary.append("<div id=\"wrapper\">\n");
-            summary.append("<h1>").append(reportTitle)
+            summary.append("<div id=\"wrapper\">\n"); //NON-NLS
+            summary.append("<h1>").append(reportTitle) //NON-NLS
                    .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
-                   .append("</h1>\n");
-            summary.append("<p class=\"subheadding\">").append(
-                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.reportGenOn.text", datetime)).append("</p>\n");
-            summary.append("<div class=\"title\">\n");
+                   .append("</h1>\n"); //NON-NLS
+            summary.append("<p class=\"subheadding\">").append( //NON-NLS
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.reportGenOn.text", datetime)).append("</p>\n"); //NON-NLS
+            summary.append("<div class=\"title\">\n"); //NON-NLS
             if (agencyLogoSet) {
-                summary.append("<div class=\"left\">\n");
-                summary.append("<img src=\"agency_logo.png\" />\n");
-                summary.append("</div>\n");
+                summary.append("<div class=\"left\">\n"); //NON-NLS
+                summary.append("<img src=\"agency_logo.png\" />\n"); //NON-NLS
+                summary.append("</div>\n"); //NON-NLS
             }
-            final String align = agencyLogoSet?"right":"left";
-            summary.append("<div class=\"").append(align).append("\">\n");
-            summary.append("<table>\n");
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName"))
-                   .append("</td><td>").append(caseName).append("</td></tr>\n");
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum"))
-                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : "<i>No case number</i>").append("</td></tr>\n");
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>")
+            final String align = agencyLogoSet?"right":"left"; //NON-NLS NON-NLS
+            summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
+            summary.append("<table>\n"); //NON-NLS
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
+                   .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
+                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
+                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
                    .append(!examiner.isEmpty() ? examiner : NbBundle
                            .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
-                   .append("</td></tr>\n");
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages"))
-                   .append("</td><td>").append(imagecount).append("</td></tr>\n");
-            summary.append("</table>\n");
-            summary.append("</div>\n");
-            summary.append("<div class=\"clear\"></div>\n");
-            summary.append("</div>\n");
+                   .append("</td></tr>\n"); //NON-NLS
+            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
+                   .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+            summary.append("</table>\n"); //NON-NLS
+            summary.append("</div>\n"); //NON-NLS
+            summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
+            summary.append("</div>\n"); //NON-NLS
             summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
-            summary.append("<div class=\"info\">\n");
+            summary.append("<div class=\"info\">\n"); //NON-NLS
             try {
-                Image[] images = new Image[imagecount];
-                for(int i=0; i<imagecount; i++) {
-                    images[i] = skCase.getImageById(currentCase.getImageIDs()[i]);
-                }
-                for(Image img : images) {
-                    summary.append("<p>").append(img.getName()).append("</p>\n");
-                    summary.append("<table>\n");
-                    summary.append("<tr><td>").append(
-                            NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
-                           .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n");
-                    for(String imgPath : img.getPaths()) {
-                        summary.append("<tr><td>").append(
-                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
-                               .append("</td><td>").append(imgPath).append("</td></tr>\n");
+                for (Content c : currentCase.getDataSources()) {
+                    summary.append("<p>").append(c.getName()).append("</p>\n"); //NON-NLS
+                    if (c instanceof Image) {
+                        Image img = (Image) c;
+                    
+                        summary.append("<table>\n"); //NON-NLS
+                        summary.append("<tr><td>").append( //NON-NLS
+                                NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
+                               .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n"); //NON-NLS
+                        for(String imgPath : img.getPaths()) {
+                            summary.append("<tr><td>").append( //NON-NLS
+                                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
+                                   .append("</td><td>").append(imgPath).append("</td></tr>\n"); //NON-NLS
+                        }
+                        summary.append("</table>\n"); //NON-NLS
                     }
-                    summary.append("</table>\n");
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get image information for the HTML report.");
+                logger.log(Level.WARNING, "Unable to get image information for the HTML report."); //NON-NLS
             }
-            summary.append("</div>\n");
+            summary.append("</div>\n"); //NON-NLS
             if (generatorLogoSet) {
-                summary.append("<div class=\"left\">\n");
-                summary.append("<img src=\"generator_logo.png\" />\n");
-                summary.append("</div>\n");
+                summary.append("<div class=\"left\">\n"); //NON-NLS
+                summary.append("<img src=\"generator_logo.png\" />\n"); //NON-NLS
+                summary.append("</div>\n"); //NON-NLS
             }
-            summary.append("<div class=\"clear\"></div>\n");
+            summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
             if (reportFooter != null) {
-                summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n");
+                summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n"); //NON-NLS
             }
-            summary.append("</div>\n");
-            summary.append("</body></html>");
+            summary.append("</div>\n"); //NON-NLS
+            summary.append("</body></html>"); //NON-NLS
             out.write(summary.toString());
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find summary.html file to write to.");
+            logger.log(Level.SEVERE, "Could not find summary.html file to write to."); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Did not recognize encoding when writing summary.hmtl.");
+            logger.log(Level.SEVERE, "Did not recognize encoding when writing summary.hmtl."); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for summary.html.");
+            logger.log(Level.SEVERE, "Error creating Writer for summary.html."); //NON-NLS
         } finally {
             try {
                 if(out != null) {
@@ -1065,7 +1119,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex);
+            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
         }
         
         return THUMBS_REL_PATH + thumbFile.getName();

@@ -18,6 +18,13 @@
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
+        <file name="org-sleuthkit-autopsy-corecomponents-AutopsyOptionsPanelController.instance">
+            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox.png"/>
+            <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
+            <attr name="keywordsCategory" stringvalue="General"/>
+            <attr name="position" intvalue="1"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-corecomponents-GeneralOptionsPanelController.instance_hidden"/>
     </folder>
     <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
     
@@ -122,12 +129,7 @@
         </folder>
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.instance_hidden"/>
-            <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.corecomponents.CustomAboutAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.corecomponents.Bundle#CTL_CustomAboutAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
+            <file name="org-sleuthkit-autopsy-actions-OpenLogFolder.instance_hidden"/>
         </folder>
         <folder name="Toolbars">
              <folder name="QuickSearch_hidden"/>
@@ -152,8 +154,9 @@
                 <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
                 <attr name="position" intvalue="101"/>
             </file>
-            <folder name="Open Recent Case">
+            <folder name="OpenRecentCase">
                 <attr name="position" intvalue="102"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
@@ -258,10 +261,6 @@
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
             <attr name="master-help.xml/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow" boolvalue="true"/>
-            <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Help/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance"/>
-                <attr name="position" intvalue="3000"/>
-            </file>
         </folder>
     </folder>
 
@@ -315,6 +314,16 @@
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.FileReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.FileReportText.getDefault"/>
             <attr name="position" intvalue="903"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-report-ReportKML.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportKML.getDefault"/>
+            <attr name="position" intvalue="904"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-modules-stix-STIXReportModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.modules.stix.STIXReportModule.getDefault"/>
+            <attr name="position" intvalue="910"/>
         </file>
         <!--<folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">

@@ -26,6 +26,8 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
+
+import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -86,10 +88,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
         ingestMessagesButton.setFocusPainted(false);
         ingestMessagesButton.setContentAreaFilled(false);
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png")));
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png"))); //NON-NLS
         ingestMessagesButton.setRolloverEnabled(true);
-        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25-rollover.png")));
-        ingestMessagesButton.setToolTipText("Ingest Messages");
+        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25-rollover.png"))); //NON-NLS
+        ingestMessagesButton.setToolTipText(
+                NbBundle.getMessage(this.getClass(), "IngestMessagesToolbar.customizeButton.toolTipText"));
         ingestMessagesButton.setBorder(null);
         ingestMessagesButton.setBorderPainted(false);
         ingestMessagesButton.setEnabled(false);
@@ -156,7 +159,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
     void showIngestMessages() {
         IngestMessageTopComponent tc = IngestMessageTopComponent.findInstance();
 
-        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
+        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom"); //NON-NLS
         if (mode != null) {
             //TopComponent[] tcs = mode.getTopComponents();
             mode.dockInto(tc);
@@ -174,7 +177,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
     private static class IngestMessagesButton extends JButton {
 
         private static final int fontSize = 9;
-        private static final Font messagesFont = new java.awt.Font("Tahoma", Font.PLAIN, fontSize);
         private int messages = 0;
 
         @Override
@@ -185,6 +187,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
                 return;
             }
             //paint text
+            Font messagesFont = g.getFont().deriveFont(Font.PLAIN, fontSize);
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
             g.setFont(messagesFont);

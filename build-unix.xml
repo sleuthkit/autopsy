@@ -4,7 +4,10 @@
         <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" property="tsk_dylib.present"/>
         <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" property="tsk_so.present"/>
     </target>
-    
+   
+    <!-- BC: NOTE I'm not sure this copying is required anymore because the
+      TSK Data model JAR file should have the libraries inside of it.  We've 
+      made that change w/out really maintaining the non-Windows platforms. -->
     <!-- OS X -->
     <target name="copyTskLibs_dylib" depends="testTSKLibs" if="tsk_dylib.present">
         <property environment="env"/>
@@ -22,8 +25,9 @@
         <!-- This assumes that TSK, libewf, and zlib have been installed on the system and those libraries will be with normal loading approaches -->
     </target>
     
-    <target name="copyExternalLibsToZip">
-    </target>
+    <target name="copyLibsToZip" />
+    
+    <target name="copyLibsToBaseDir" />
     
     <target name="build-installer-unix">
         <echo>Unix installer creation not supported at this time</echo>

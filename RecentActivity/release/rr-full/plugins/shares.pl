@@ -3,12 +3,17 @@
 #
 # Retrieve information about shares from a System hive file
 #
+# History
+#  20140730 - added collection of NullSessionShares
+#  20090112 - created
+#
 # References:
 #   http://support.microsoft.com/kb/556023
 #   For info about share types, see the Win32_Share  WMI class:
 #      http://msdn.microsoft.com/en-us/library/aa394435(VS.85).aspx
 #
-# copyright 2009 H. Carvey, keydet89@yahoo.com
+# copyright 2014 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package shares;
 use strict;
@@ -18,7 +23,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20090112);
+              version       => 20140730);
 
 sub getConfig{return %config}
 
@@ -38,7 +43,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching shares v.".$VERSION);
 	::rptMsg("shares v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	$root_key = $reg->get_root_key;
 
@@ -107,6 +112,13 @@ sub pluginmain {
 			::rptMsg("  AutoShareWks = ".$auto_wks);
 		}
 	};
+	
+	eval {
+		if ($key = $root_key->get_subkey($path."\\".$para)) {
+			my $auto_nss = $key->get_value("NullSessionShares")->get_data();
+			::rptMsg("  NullSessionShares = ".$auto_nss);
+    }
+  };
 }
 
 # On different versions of Windows, subkeys such as lanmanserver

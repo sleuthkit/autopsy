@@ -6,34 +6,9 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
     
-    <target name="quickstart-add-builddir">
-         <!-- additional docs for quickstart -->
-        <echo message="building quick start guide" />
-        <mkdir dir="build/classes/org/sleuthkit/autopsy/casemodule/docs" />
-        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/index.html" tofile="build/classes/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html"/>
-        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/screenshot.png" tofile="build/classes/org/sleuthkit/autopsy/casemodule/docs/screenshot.png"/>
-         
-    </target>
     
-      <target name="quickstart-add-src">
-         <!-- additional docs for quickstart -->
-        <echo message="building quick start guide 1" />
-        <mkdir dir="src/org/sleuthkit/autopsy/casemodule/docs" />
-        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/index.html" tofile="src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html"/>
-        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/screenshot.png" tofile="src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png"/>
-         
-    </target>
+    
 
-    <target name="quickstart-remove-src">
-         <!-- cleanup additional docs for quickstart -->
-        <echo message="building quick start guide 2" />
-        <delete file="src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html"/>
-        <delete file="src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png"/>
-    </target>
-    
-    <target name="javahelp">
-         <antcall target="quickstart-remove-src" />
-    </target>
      
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
@@ -48,17 +23,12 @@
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.0-SNAPSHOT.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.15-M1.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.7.15-M1.jar"/>
     </target>
 
   
     <target name="init" depends="basic-init,files-init,build-init,-javac-init">
-
         <!-- get additional deps -->
         <antcall target="getTSKJars" />
-        
-        <antcall target="quickstart-add-src" />
     </target>
-    
- 
 </project>

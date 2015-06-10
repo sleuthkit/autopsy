@@ -243,7 +243,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e);
+            logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
                                           MessageNotifyUtil.MessageType.ERROR);

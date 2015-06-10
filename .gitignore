@@ -34,8 +34,6 @@
 /Ingest/nbproject/*
 !/Ingest/nbproject/project.xml
 !/Ingest/nbproject/project.properties
-/branding_spear
-/installer_spear
 */genfiles.properties
 genfiles.properties
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
@@ -53,14 +51,22 @@ genfiles.properties
 !/test/output/gold
 /test/output/gold/tmp
 /test/script/ScriptLog.txt
+/test/script/__pycache__/
+/test/script/*.pyc
+/test/script/DBDump-Diff.txt
+/test/script/DBDump.txt
+/test/script/SortedData-Diff.txt
+/test/script/SortedData.txt
 /test/build/
 /test/dist/
 /test/nbproject/*
+
 !/Testing/nbproject/project.xml
 !/Testing/nbproject/project.properties
 *~
 /netbeans-plat
 /docs/doxygen/doxygen_docs
+/docs/doxygen-user/user-docs
 /jdiff-javadocs/*
 /jdiff-logs/*
 /gen_version.txt
@@ -69,3 +75,5 @@ Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
 Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
 /test/script/myconfig.xml
 /test/script/*/*.xml
+.DS_Store
+.*.swp

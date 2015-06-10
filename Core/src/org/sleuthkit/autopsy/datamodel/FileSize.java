@@ -53,9 +53,9 @@ public class FileSize implements AutopsyVisitableItem {
 
     public enum FileSizeFilter implements AutopsyVisitableItem {
 
-        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"),
-        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"),
-        SIZE_1000_(2, "SIZE_1000+", "1GB+");
+        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
+        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"), //NON-NLS
+        SIZE_1000_(2, "SIZE_1000+", "1GB+"); //NON-NLS
         private int id;
         private String name;
         private String displayName;
@@ -106,7 +106,7 @@ public class FileSize implements AutopsyVisitableItem {
             super(Children.create(new FileSizeRootChildren(skCase), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
         }
 
         @Override
@@ -168,7 +168,7 @@ public class FileSize implements AutopsyVisitableItem {
 
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
 
                 //get count of children without preloading all children nodes
                 final long count = new FileSizeChildren(filter, skCase).calculateItems();
@@ -229,22 +229,22 @@ public class FileSize implements AutopsyVisitableItem {
                 String query;
                 switch (filter) {
                     case SIZE_50_200:
-                        query = "(size >= 50000000 AND size < 200000000)";
+                        query = "(size >= 50000000 AND size < 200000000)"; //NON-NLS
                         break;
                     case SIZE_200_1000:
-                        query = "(size >= 200000000 AND size < 1000000000)";
+                        query = "(size >= 200000000 AND size < 1000000000)"; //NON-NLS
                         break;
 
                     case SIZE_1000_:
-                        query = "(size >= 1000000000)";
+                        query = "(size >= 1000000000)"; //NON-NLS
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: {0}", filter);
+                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: {0}", filter); //NON-NLS
                         return null;
                 }
                 // ignore unalloc block files
-                query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")";
+                query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
 
                 return query;
             }
@@ -260,7 +260,7 @@ public class FileSize implements AutopsyVisitableItem {
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the file size view using: " + query, e);
+                    logger.log(Level.SEVERE, "Error getting files for the file size view using: " + query, e); //NON-NLS
                 }
 
                 return ret;
@@ -276,7 +276,7 @@ public class FileSize implements AutopsyVisitableItem {
                 try {
                     return skCase.countFilesWhere(makeQuery());
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting files by size search view count", ex);
+                    logger.log(Level.SEVERE, "Error getting files by size search view count", ex); //NON-NLS
                     return 0;
                 }
             }

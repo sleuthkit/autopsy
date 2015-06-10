@@ -1,0 +1,10 @@
+/*! \page workflow_page Autopsy Workflow
+
+Analyzing data in Autopsy uses the following workflow:
+-# <b>Create a Case</b>: A case is a container for one or more data sources.  One must be created before data is analyzed. See \ref cases_page for more details. 
+-# <b>Adding a Data Source</b>: One or more data sources are added to the case. Data sources include disk images and local files. See \ref ds_page for more details. 
+-# <b>Analyze with Ingest Modules</b>: After the data source is added, ingest modules operate in the background to analyze the data.  Results are posted to the interface in real time and provide alerts as necessary. Example ingest modules include \ref hash_db_page "hash calculation and lookup", \ref keyword_search_page "keyword searching", and \ref recent_activity_page "web artifact extraction". 3rd-party modules can be developed and added to the pipelines.  See \ref ingest_page. 
+-# <b>Manual Analysis</b>: The user navigates the interface, file contents, and ingest module results to identify the evidence.  Interesting items can be tagged for later reporting and analysis. 
+-# <b>Report Generation</b>: The user initiates a final report based on selected tags or results. 
+
+*/

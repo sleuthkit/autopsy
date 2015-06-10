@@ -94,30 +94,19 @@ sub getShortDescr {
 				my $path;
 				eval {
 					$path = $s->get_value("Path")->get_data();
-									};
+					::rptMsg("Path      	: ".$path);
+					::rptMsg("Dynamicinfo  	: ".$s->get_name());
+					::rptMsg("LastWrite : ".gmtime($s->get_timestamp())." (UTC)");
+					::rptMsg("");
+				};
 				
-				::rptMsg("Path      	: ".$path);
-				::rptMsg("Dynamicinfo  	: ".$s->get_name());
-				::rptMsg("LastWrite : ".gmtime($s->get_timestamp())." (UTC)");
-				
-				
-				}
-				
-			
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
-
+	}
 }
-
-
-
-
-
-
 
 
 1;

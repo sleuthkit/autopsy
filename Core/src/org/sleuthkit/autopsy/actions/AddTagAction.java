@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenu;
@@ -81,9 +82,10 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             List<TagName> tagNames = null;
             try {
                 tagNames = tagsManager.getAllTagNames();
+                Collections.sort(tagNames);
             }
             catch (TskCoreException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
                         
             // Create a "Quick Tag" sub-menu.

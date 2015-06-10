@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskData;
         @Override
         public String getValue(AbstractFile file) {
             if (file.getMetaFlagsAsString().equals(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString())) {
-                return "yes";
+                return "yes"; //NON-NLS
             }
             return "";
         }

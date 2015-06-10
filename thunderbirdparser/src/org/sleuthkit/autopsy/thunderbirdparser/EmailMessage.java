@@ -168,104 +168,112 @@ class EmailMessage {
             this.localPath = localPath;
         }
     }
-}
 
-/**
- * A Record to hold generic information about attachments.
- * 
- * Used to populate the fields of a derived file.
- * @author jwallace
- */
-class Attachment {
-    private String name = "";
-    private String localPath = "";
-    private long size = 0L;
-    private long crTime = 0L;
-    private long cTime = 0L;
-    private long aTime = 0L;
-    private long mTime = 0L;
+    /**
+     * A Record to hold generic information about attachments.
+     *
+     * Used to populate the fields of a derived file.
+     *
+     * @author jwallace
+     */
+    static class Attachment {
 
-    String getName() {
-        return name;
-    }
+        private String name = "";
 
-    void setName(String name) {
-        if (name != null) {
-            this.name = name;
+        private String localPath = "";
+
+        private long size = 0L;
+
+        private long crTime = 0L;
+
+        private long cTime = 0L;
+
+        private long aTime = 0L;
+
+        private long mTime = 0L;
+
+        String getName() {
+            return name;
         }
-    }
 
-    String getLocalPath() {
-        return localPath;
-    }
-
-    void setLocalPath(String localPath) {
-        if (localPath != null) {
-            this.localPath = localPath;
+        void setName(String name) {
+            if (name != null) {
+                this.name = name;
+            }
         }
-    }
 
-    long getSize() {
-        return size;
-    }
-
-    void setSize(long size) {
-        this.size = size;
-    }
-
-    long getCrTime() {
-        return crTime;
-    }
-
-    void setCrTime(long crTime) {
-        this.crTime = crTime;
-    }
-    
-    void setCrTime(Date crTime) {
-        if (crTime != null) {
-            this.crTime = crTime.getTime() / 1000;
+        String getLocalPath() {
+            return localPath;
         }
-    }
 
-    long getcTime() {
-        return cTime;
-    }
-
-    void setcTime(long cTime) {
-        this.cTime = cTime;
-    }
-    
-    void setcTime(Date cTime) {
-        if (cTime != null) {
-            this.cTime = cTime.getTime() / 1000;
+        void setLocalPath(String localPath) {
+            if (localPath != null) {
+                this.localPath = localPath;
+            }
         }
-    }
 
-    long getaTime() {
-        return aTime;
-    }
-
-    void setaTime(long aTime) {
-        this.aTime = aTime;
-    }
-    
-    void setaTime(Date aTime) {
-        if (aTime != null) {
-            this.aTime = aTime.getTime() / 1000;
+        long getSize() {
+            return size;
         }
-    }
 
-    long getmTime() {
-        return mTime;
-    }
+        void setSize(long size) {
+            this.size = size;
+        }
 
-    void setmTime(long mTime) {
-        this.mTime = mTime;
-    }
-    
-    void setmTime(Date mTime) {
-        if (mTime != null) {
-            this.mTime = mTime.getTime() / 1000;
+        long getCrTime() {
+            return crTime;
+        }
+
+        void setCrTime(long crTime) {
+            this.crTime = crTime;
+        }
+
+        void setCrTime(Date crTime) {
+            if (crTime != null) {
+                this.crTime = crTime.getTime() / 1000;
+            }
+        }
+
+        long getcTime() {
+            return cTime;
+        }
+
+        void setcTime(long cTime) {
+            this.cTime = cTime;
+        }
+
+        void setcTime(Date cTime) {
+            if (cTime != null) {
+                this.cTime = cTime.getTime() / 1000;
+            }
+        }
+
+        long getaTime() {
+            return aTime;
+        }
+
+        void setaTime(long aTime) {
+            this.aTime = aTime;
+        }
+
+        void setaTime(Date aTime) {
+            if (aTime != null) {
+                this.aTime = aTime.getTime() / 1000;
+            }
+        }
+
+        long getmTime() {
+            return mTime;
+        }
+
+        void setmTime(long mTime) {
+            this.mTime = mTime;
+        }
+
+        void setmTime(Date mTime) {
+            if (mTime != null) {
+                this.mTime = mTime.getTime() / 1000;
+            }
         }
     }
 }

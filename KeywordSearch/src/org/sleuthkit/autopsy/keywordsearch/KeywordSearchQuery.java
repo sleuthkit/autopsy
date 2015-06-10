@@ -18,10 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -30,6 +26,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * is created for each query. 
  */
 interface KeywordSearchQuery {
+    
+    KeywordList getKeywordList();
 
     /**
      * validate the query pre execution
@@ -44,7 +42,7 @@ interface KeywordSearchQuery {
      * @throws NoOpenCoreException if query failed due to server error, this could be a notification to stop processing
      * @return 
      */
-    public Map<String,List<ContentHit>> performQuery() throws NoOpenCoreException;
+    public QueryResults performQuery() throws NoOpenCoreException;
     
     
     /**
@@ -95,23 +93,8 @@ interface KeywordSearchQuery {
      * @return the escaped query string, or original string if no escaping done
      */
     public String getEscapedQueryString();
-    
-    /**
-     * get terms associated with the query if any
-     * @return collection of terms associated with the query
-     */
-    public Collection<Term>getTerms();
-    
-    /**
-     * write results to blackboard per single term and file hit
-     * this method is useful if something else should keep track of partial results to write
-     * @param termHit term for only which to write results
-     * @param newFsHit AbstractFile for which to write results for this hit
-     * @param snippet snippet preview with hit context, or null if there is no snippet
-     * @param listName listname
-     * @return collection of results (with cached bb artifacts/attributes) created and written
-     */
-    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName);
-       
+        
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName);
+
 }
 

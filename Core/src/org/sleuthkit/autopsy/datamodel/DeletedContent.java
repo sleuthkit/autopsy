@@ -53,10 +53,10 @@ public class DeletedContent implements AutopsyVisitableItem {
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
         FS_DELETED_FILTER(0,
-        "FS_DELETED_FILTER",
+        "FS_DELETED_FILTER", //NON-NLS
         NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
         ALL_DELETED_FILTER(1,
-        "ALL_DELETED_FILTER",
+        "ALL_DELETED_FILTER", //NON-NLS
         NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
         private int id;
         private String name;
@@ -111,7 +111,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.skCase = skCase;
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
         }
 
         @Override
@@ -173,7 +173,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
 
                 //get count of children without preloading all children nodes
                 final long count = new DeletedContentChildren(filter, skCase).calculateItems();
@@ -226,6 +226,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
+                    queryList.remove(queryList.size() - 1);
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
@@ -235,8 +236,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                         }
                     });
                 }
-
-                queryList.remove(queryList.size() - 1);
                 list.addAll(queryList);
                 return true;
             }
@@ -245,21 +244,21 @@ public class DeletedContent implements AutopsyVisitableItem {
                 String query = "";
                 switch (filter) {
                     case FS_DELETED_FILTER:
-                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType();
+                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
 
                         break;
                     case ALL_DELETED_FILTER:
                         query = " ( "
                                 + "( "
-                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " OR "
-                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue()
+                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                                + " OR " //NON-NLS
+                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
                                 + ")"
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()
+                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
                                 + " )"
-                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType()
+                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
                                 + " )";
                         //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
                         //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
@@ -270,11 +269,11 @@ public class DeletedContent implements AutopsyVisitableItem {
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: {0}", filter);
+                        logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: {0}", filter); //NON-NLS
 
                 }
 
-                query += " LIMIT " + MAX_OBJECTS;
+                query += " LIMIT " + MAX_OBJECTS; //NON-NLS
                 return query;
             }
 
@@ -285,7 +284,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + query, e);
+                    logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + query, e); //NON-NLS
                 }
 
                 return ret;
@@ -301,7 +300,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 try {
                     return skCase.countFilesWhere(makeQuery());
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting deleted files search view count", ex);
+                    logger.log(Level.SEVERE, "Error getting deleted files search view count", ex); //NON-NLS
                     return 0;
                 }
             }

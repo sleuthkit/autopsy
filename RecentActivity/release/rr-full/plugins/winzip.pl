@@ -1,7 +1,12 @@
 #-----------------------------------------------------------
 # WinZip
-#
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# 
+# History
+#  20140730 - updated to include mru/archives info
+#  20080325 - created
+# 
+# copyright 2014 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winzip;
 use strict;
@@ -11,7 +16,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080325);
+              version       => 20140730);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -29,7 +34,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching WinZip v.".$VERSION);
 	::rptMsg("winzip v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Software\\Nico Mak Computing\\WinZip";
@@ -82,10 +87,30 @@ sub pluginmain {
 		else {
 			::rptMsg("filemenu key not found.");
 		}
+		::rptMsg("");
+# added 20140730
+		my $archives;
+		if ($archives = $key->get_subkey("mru\\archives")) {
+			::rptMsg("mru\\archives subkey  [".gmtime($archives->get_timestamp())."]");
+			
+			my @vals = $archives->get_list_of_values();
+			if (scalar @vals > 0) {
+				foreach my $v (@vals) {
+					my $name = $v->get_name();
+					next if ($name eq "MRUList");
+					::rptMsg(sprintf "%-4s  %s",$name, $v->get_data());
+				}
+			}
+			else {
+				::rptMsg("No values found.");
+			}
+		}
+		else {
+			::rptMsg("mru\\archives key not found.");
+		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

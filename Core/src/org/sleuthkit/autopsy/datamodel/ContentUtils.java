@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,13 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
-
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -50,9 +50,21 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public final class ContentUtils {
 
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
+    private static boolean displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    private static boolean displayInLocalTime;
+
+    static {
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                if (evt.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
+                    displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
+                }
+            }
+        });
+    }
+        
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -68,17 +80,21 @@ public final class ContentUtils {
     public static String getStringTime(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00 00:00:00";
         if (epochSeconds != 0) {
-            dateFormatter.setTimeZone(tzone);
-            time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+            synchronized (dateFormatter) {
+                dateFormatter.setTimeZone(tzone);
+                time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+            }
         }
         return time;
     }
 
     public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
-        String time = "0000-00-00T00:00:00Z";
+        String time = "0000-00-00T00:00:00Z"; //NON-NLS
         if (epochSeconds != 0) {
-            dateFormatterISO8601.setTimeZone(tzone);
-            time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
+            synchronized (dateFormatterISO8601) {
+                dateFormatterISO8601.setTimeZone(tzone);
+                time = dateFormatterISO8601.format(new java.util.Date(epochSeconds * 1000));
+            }
         }
 
         return time;
@@ -110,12 +126,13 @@ public final class ContentUtils {
     public static TimeZone getTimeZone(Content c) {
         
         try {
-            if (!getDisplayInLocalTime()) {
+            if (!shouldDisplayTimesInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
             }
             else {
-                final Image image = c.getImage();
-                if (image != null) {
+                final Content dataSource = c.getDataSource();
+                if ((dataSource != null) && (dataSource instanceof Image)) {
+                    Image image = (Image)dataSource;
                     return TimeZone.getTimeZone(image.getTimeZone());
                 } else {
                     //case such as top level VirtualDirectory
@@ -259,7 +276,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting file to " + dest.getAbsolutePath(),
+                        "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -271,7 +288,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(),
+                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -283,7 +300,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(df, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting derived file to " + dest.getAbsolutePath(),
+                        "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -295,7 +312,7 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(lf, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting local file to " + dest.getAbsolutePath(),
+                        "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;
@@ -349,7 +366,7 @@ public final class ContentUtils {
                 }
             } catch (TskException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble fetching children to extract.", ex);
+                        "Trouble fetching children to extract.", ex); //NON-NLS
             }
 
             return null;
@@ -362,18 +379,13 @@ public final class ContentUtils {
                                                                         cntnt.getClass().getSimpleName()));
         }
     }
-    /**sets displayInlocalTime value based on button in GeneralPanel.java
+
+    /**
+     * Indicates whether or not times should be displayed using local time.
      * 
-     * @param flag 
+     * @return True or false.
      */
-    public static void setDisplayInLocalTime(boolean flag) {
-    displayInLocalTime = flag;
-    }
-    /** get global timezone setting for displaying time values 
-     *  
-     * @return 
-     */
-    public static boolean getDisplayInLocalTime(){
-        return displayInLocalTime;
+    public static boolean shouldDisplayTimesInLocalTime(){
+        return displayTimesInLocalTime;
     }
 }

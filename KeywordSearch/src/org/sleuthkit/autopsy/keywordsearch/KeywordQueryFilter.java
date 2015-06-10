@@ -73,7 +73,7 @@ class KeywordQueryFilter {
             }
             sb.append(id);
             sb.append(":");
-            sb.append(Long.toString(idVal));
+            sb.append(KeywordSearchUtil.escapeLuceneQuery(Long.toString(idVal)));
             if (filterType == FilterType.CHUNK) {
                 sb.append("_*");
             }

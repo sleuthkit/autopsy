@@ -18,13 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.Box;
 import javax.swing.JOptionPane;
 
@@ -33,7 +28,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
  class ReportGenerationPanel extends javax.swing.JPanel {
     private GridBagConstraints c;
-    private List<ReportProgressPanel> progressPanels;
+    ReportProgressPanel progressPanel;
     private Component glue;
     private ActionListener actionListener;
 
@@ -47,7 +42,6 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     
     private void customInit() {
         reportPanel.setLayout(new GridBagLayout());
-        progressPanels = new ArrayList<ReportProgressPanel>();
         c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.gridx = 0;
@@ -67,12 +61,10 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         // Remove the glue
         reportPanel.remove(glue);
         
-        // Add the new panel
-        ReportProgressPanel panel = new ReportProgressPanel(reportName, reportPath);
-        progressPanels.add(panel);
+        progressPanel = new ReportProgressPanel(reportName, reportPath);
         c.weighty = 0.0;
         c.anchor = GridBagConstraints.NORTH;
-        reportPanel.add(panel, c);
+        reportPanel.add(progressPanel, c);
         c.gridy++;
         
         // Add the glue back to the bottom
@@ -80,9 +72,10 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         c.anchor = GridBagConstraints.PAGE_END;
         reportPanel.add(glue, c);
         
-        reportPanel.setPreferredSize(new Dimension(600, progressPanels.size() * 80));
+        // 80 px per progressPanel.
+        reportPanel.setPreferredSize(new Dimension(600, 1 * 80));
         reportPanel.repaint();
-        return panel;
+        return progressPanel;
     }
     
     /**
@@ -90,10 +83,8 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
      */
     void close() {
         boolean closeable = true;
-        for (ReportProgressPanel panel : progressPanels) {
-            if (panel.getStatus() != ReportStatus.CANCELED && panel.getStatus() != ReportStatus.COMPLETE) {
-                closeable = false;
-            }
+        if (progressPanel.getStatus() != ReportStatus.CANCELED && progressPanel.getStatus() != ReportStatus.COMPLETE && progressPanel.getStatus() != ReportStatus.ERROR) {
+            closeable = false;
         }
         if (closeable) {
             actionListener.actionPerformed(null);
@@ -105,20 +96,12 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
                                                                            "ReportGenerationPanel.confDlg.title.closing"),
                                                        JOptionPane.YES_NO_OPTION);
             if (result == 0) {
-                cancelAllReports();
+                progressPanel.cancel();
                 actionListener.actionPerformed(null);
             }
         }
     }
     
-    /**
-     * Cancel all reports.
-     */
-    private void cancelAllReports() {
-        for (ReportProgressPanel panel : progressPanels) {
-            panel.cancel();
-        }
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -130,7 +113,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     private void initComponents() {
 
         closeButton = new javax.swing.JButton();
-        cancelAllButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
         reportScrollPane = new javax.swing.JScrollPane();
         reportPanel = new javax.swing.JPanel();
         titleLabel = new javax.swing.JLabel();
@@ -146,10 +129,11 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelAllButton, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.cancelAllButton.text")); // NOI18N
-        cancelAllButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.cancelButton.text")); // NOI18N
+        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(ReportGenerationPanel.class, "ReportGenerationPanel.cancelButton.actionCommand")); // NOI18N
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelAllButtonActionPerformed(evt);
+                cancelButtonActionPerformed(evt);
             }
         });
 
@@ -192,8 +176,8 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
                         .addComponent(titleLabel)
                         .addGap(0, 522, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 380, Short.MAX_VALUE)
-                        .addComponent(cancelAllButton)
+                        .addGap(0, 546, Short.MAX_VALUE)
+                        .addComponent(cancelButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(closeButton)))
                 .addContainerGap())
@@ -212,7 +196,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
-                    .addComponent(cancelAllButton))
+                    .addComponent(cancelButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -221,23 +205,25 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         close();
     }//GEN-LAST:event_closeButtonActionPerformed
 
-    private void cancelAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelAllButtonActionPerformed
-        int result = JOptionPane.showConfirmDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                             "ReportGenerationPanel.confDlg.cancelReports.msg"),
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        if(progressPanel.getStatus() == ReportStatus.QUEUING || progressPanel.getStatus() == ReportStatus.RUNNING) {
+            int result = JOptionPane.showConfirmDialog(null, NbBundle.getMessage(this.getClass(),
+                                                                             "ReportGenerationPanel.confDlg.cancelReport.msg"),
                                                    NbBundle.getMessage(this.getClass(),
-                                                                       "ReportGenerationPanel.cancelAllButton.text"),
-                                                   JOptionPane.YES_NO_OPTION);
+                                                                       "ReportGenerationPanel.cancelButton.text"),
+                                                  JOptionPane.YES_NO_OPTION);
             if (result == 0) {
-                cancelAllReports();
+                progressPanel.cancel();
             }
-    }//GEN-LAST:event_cancelAllButtonActionPerformed
+        }
+    }//GEN-LAST:event_cancelButtonActionPerformed
 
     void addCloseAction(ActionListener l) {
         this.actionListener = l;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cancelAllButton;
+    private javax.swing.JButton cancelButton;
     private javax.swing.JButton closeButton;
     private javax.swing.JSeparator optionSeparator;
     private javax.swing.JPanel reportPanel;

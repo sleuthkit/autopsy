@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public interface BlackboardResultViewer {
     
-    public static final String FINISHED_DISPLAY_EVT = "FINISHED_DISPLAY_EVT";
+    public static final String FINISHED_DISPLAY_EVT = "FINISHED_DISPLAY_EVT"; //NON-NLS
     
     
     /**

@@ -45,7 +45,6 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -129,25 +128,25 @@ import org.sleuthkit.datamodel.TskCoreException;
 
         pagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagesLabel.text")); // NOI18N
 
-        pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+        pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N NON-NLS
         pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagePrevButton.text")); // NOI18N
-        pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N NON-NLS
         pagePrevButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         pagePrevButton.setPreferredSize(new java.awt.Dimension(55, 23));
-        pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+        pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N NON-NLS
         pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pagePrevButtonActionPerformed(evt);
             }
         });
 
-        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N NON-NLS
         pageNextButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNextButton.text")); // NOI18N
-        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
         pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         pageNextButton.setMaximumSize(new java.awt.Dimension(27, 23));
         pageNextButton.setMinimumSize(new java.awt.Dimension(27, 23));
-        pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N NON-NLS
         pageNextButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pageNextButtonActionPerformed(evt);
@@ -171,7 +170,10 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
         });
 
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Small Thumbnails", "Medium Thumbnails", "Large Thumbnails" }));
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.smallThumbnails"),
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.mediumThumbnails"),
+                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.comboBox.largeThumbnails") }));
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
@@ -438,10 +440,14 @@ import org.sleuthkit.datamodel.TskCoreException;
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
                     NotifyDescriptor d =
-                        new NotifyDescriptor.Message("Error making thumbnails: " + ex.getMessage(), 
+                        new NotifyDescriptor.Message(
+                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                                    ex.getMessage()),
                             NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
-                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage());
+                    logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage()); //NON-NLS
+                } // catch and ignore if we were cancelled
+                catch (java.util.concurrent.CancellationException ex) {
                 }
             }
         }.execute();
@@ -574,7 +580,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                                 filePathLabel.setToolTipText(uPath);
                             }
                             catch (TskCoreException e){
-                                logger.log(Level.WARNING, "Could not get unique path for content: {0}", af.getName());
+                                logger.log(Level.WARNING, "Could not get unique path for content: {0}", af.getName()); //NON-NLS
                             }
                         }                        
                     }

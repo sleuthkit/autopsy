@@ -63,12 +63,12 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     /**
      * Populate the list of artifacts with all important artifacts.
      */
+    @SuppressWarnings("deprecation")    
     private void populateList() {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE); // Obsolete artifact type
-            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT); // Obsolete artifact type
+            doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT);  // output is too unstructured for table review. 
 
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
             artifacts.removeAll(doNotReport);
@@ -84,7 +84,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                 artifactStates.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage());
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
         }
     }
 
@@ -98,11 +98,10 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         artifactList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                JList list = (JList) evt.getSource();
-                int index = list.locationToIndex(evt.getPoint());
+                int index = artifactList.locationToIndex(evt.getPoint());
                 BlackboardArtifact.ARTIFACT_TYPE type = model.getElementAt(index);
                 artifactStates.put(type, !artifactStates.get(type));
-                list.repaint();
+                artifactList.repaint();
             }
         });
     }

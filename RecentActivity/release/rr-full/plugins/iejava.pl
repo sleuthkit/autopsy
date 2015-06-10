@@ -1,6 +1,6 @@
 #-----------------------------------------------------------
 # iejava.pl
-# checks contents of Multimedia\Other key
+# 
 # Category: Malware
 # 
 # History
@@ -24,6 +24,7 @@ use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
               osmask        => 22,
+              category      => "malware",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,

@@ -1,0 +1,55 @@
+/*! \page ingest_page Ingest Modules
+
+Ingest modules analyze the data in a data source.  They perform all of the analysis of the files and parse their contents.  Examples include \ref hash_db_page "hash calculation and lookup", \ref keyword_search_page "keyword searching", and \ref recent_activity_page "web artifact extraction". 
+
+Immediately after you add a data source to a case (see \ref ds_page), you will be presented with a dialog to configure the ingest modules to run on it.  Once configured, they will run in the background and provide you real-time results when they find relevant information.  
+
+This page covers the use of ingest modules.  Specific pages will cover the configuration of specific modules.   See \ref module_install_page for details on installing 3rd-party ingest modules. 
+
+\section ingest_performance Multi-threaded and Priority
+
+Ingest modules are configured to find user content quickly.  The ingest modules are grouped into pipelines and each file goes down the pipeline, module by module. A pipeline may have modules in the following order: 
+
+\image html ingest_pipeline.png
+
+Multiple pipelines may be running at the same time.  By default, two pipelines are running, but you can add more depending on how many cores you have on your system.   You can configure the number of pipelines to make in the "Tools", "Options", "General" area. 
+
+Autopsy prioritizes user content over other types of files and will send data from the "Documents and Settings" folder or "Users" folder into the pipelines before the "Windows" folder.  It prioritizes each folder in the system to ensure that user content is analyzed before other content. 
+
+
+\section ingest_running Running Ingest Modules
+
+There are two ways to start ingest modules:
+-# Immediately after you add a data source
+-# By right-clicking on a data source from the tree in the main interface and choosing "Run Ingest Modules"
+
+Once ingest is started, you can review the currently running ingest tasks in the task bar on the bottom-right corner of the main window. The ingest tasks can be canceled by the user if so desired.
+
+<b>Note: sometimes the cancellation process may take several seconds or more to complete cleanly, depending on what the ingest module was currently doing. </b>
+
+\section ingest_configure Configuring Ingest Modules
+
+You will be presented with an interface to configure the ingest modules. From here, you can choose to enable or disable each module and some modules will have further configuration settings. 
+
+\image html select-ingest-modules.png
+
+There are two places to configure ingest modules. When you select the module name, you may have some "run time" options to configure in the panel to the right.  These are generally settings that you may want to change from image to image. 
+
+There may also be an "Advanced" button that is enabled in the lower corner.  Pressing this button allows you to change global settings that are not specific to a single image.  This advanced configuration panel can often be found in the "Tools", "Options" menu too. 
+
+As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash databases from the Autopsy configuration. 
+
+
+\section ingest_results Viewing Ingest Module Results
+
+Ingest modules run in the background.  An ingest module can provide you results in a variety of ways, but we recommend specific methods:
+
+-# If they post results to the Blackboard, then you will find them in the "Results" area of the tree in the main interface.
+-# They can send a message to the Ingest Inbox so that you get a message each time something really important is found. 
+\image html inbox-button.PNG
+\image html inbox-main-screen.PNG
+-# If the module is a wrapper around another forensics tool, they may simply provide a link to the output of that tool, in which case you will see a new entry in the "Reports" area of the tree.
+
+All of the official Autopsy modules send results to the blackboard, but if you install third-party apps, then they may choose any approach -- including a pop-up window each time they find something.  
+
+*/

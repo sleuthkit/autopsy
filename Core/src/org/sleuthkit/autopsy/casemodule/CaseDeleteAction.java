@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.logging.Level;;
+import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -31,17 +31,8 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.Action;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -86,8 +77,6 @@ import org.openide.util.actions.CallableSystemAction;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         Case currentCase = Case.getCurrentCase();
         File configFile = new File(currentCase.getConfigFilePath());
         File caseFolder = new File(configFile.getParent());
@@ -95,7 +84,7 @@ import org.openide.util.actions.CallableSystemAction;
         if(!caseFolder.exists()){
             // throw an error
             
-            logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist."));
+            logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist.")); //NON-NLS
         }
         else{
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -114,7 +103,7 @@ import org.openide.util.actions.CallableSystemAction;
                     Case.getCurrentCase().deleteCase(caseFolder); // delete the current case
                     success = true;
                 } catch (CaseActionException ex) {
-                    logger.log(Level.WARNING, "Could not delete the case folder: " + caseFolder);
+                    logger.log(Level.WARNING, "Could not delete the case folder: " + caseFolder); //NON-NLS
                 }
 
                 // show notification whether the case has been deleted or it failed to delete...

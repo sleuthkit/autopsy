@@ -1,8 +1,5 @@
 <project name="AutopsyTSKTargets">
     
-    <!-- Need a way to specify TSK Debug versus Release -->
-    <property name="TSK_BUILD_TYPE">Release</property>
-    
     <!-- Directory paths -->
     <property name="amd64" location="${basedir}/Core/release/modules/lib/amd64" />
     <property name="x86" location="${basedir}/Core/release/modules/lib/x86" />
@@ -12,10 +9,9 @@
     <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
     <property name="crt" location="${basedir}/thirdparty/crt" />
         
-    <!-- NATIVE LIB TARGETS -->
-    <target name="copyLibs" depends="copyWinLibs64,copyWinLibs32" description="Copy windows dlls to the correct location." />
-
-    <target name="init-lib-path" description="Set up folder hierarchy under release/modules/lib">
+    <import file="build-windows-installer.xml" />
+    
+    <target name="makeBaseLibDirs" description="Set up folder hierarchy under release/modules/lib">
         <mkdir dir="${amd64}"/>
         <mkdir dir="${x86_64}"/>
         <mkdir dir="${x86}"/>
@@ -24,23 +20,25 @@
         <mkdir dir="${i686}"/>
     </target>
     
-    <target name="checkLibDirs" depends="init-lib-path">
+    <target name="checkTskLibDirs">
         <property environment="env"/>
         <condition property="ewfFound">
             <isset property="env.LIBEWF_HOME"/>
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
         
-        <property name="win64.lib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
-        <property name="win32.lib.path" value="${env.TSK_HOME}/win32/Release" />
-        <available property="win64.exists" type="dir" file="${win64.lib.path}" />
-        <available property="win32.exists" type="dir" file="${win32.lib.path}" />
+        <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
+        <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />
+        <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
+        <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
     </target>
 
-    <target name="copyWinLibs64" depends="checkLibDirs" if="win64.exists">
-        <property name="win64dir" location="${win64.lib.path}" />
-
-        <fileset dir="${win64dir}" id="win64dlls">
+    <!-- The following copy the libtsk_jni dependencies to the Autopsy
+         folder structure.  libtsk_jni is inside of the JAR file and contains
+         libtsk and the JNI code. -->
+    <!-- copy 64-bit dlls into the installer folder -->
+    <target name="copyWinTskLibs64ToBaseDir" if="win64.TskLib.exists">
+        <fileset dir="${win64.TskLib.path}" id="win64dlls">
             <include name="libewf.dll" />
             <include name="zlib.dll"/>
         </fileset>
@@ -55,9 +53,9 @@
         
     </target>
 
-    <target name="copyWinLibs32" depends="checkLibDirs" if="win32.exists">
-        <property name="win32dir" location="${win32.lib.path}" />
-        <fileset dir="${win32dir}" id="win32dlls">
+    <!-- copy 32-bit dlls into the installer folder -->
+    <target name="copyWinTskLibs32ToBaseDir" if="win32.TskLib.exists">
+        <fileset dir="${win32.TskLib.path}" id="win32dlls">
             <include name="zlib.dll" />
             <include name="libewf.dll"/>
         </fileset>
@@ -79,10 +77,18 @@
         </copy>
     </target>
     
-    <!-- CRT LIBS TO ZIP -->
-    <target name="copyExternalLibsToZip" depends="copyCRT32,copyCRT64"/>
+    <!-- This gets called from the main build.xml -->
+    <target name="copyLibsToBaseDir" depends="checkTskLibDirs" description="Copy windows dlls to the correct location." >
+        <antcall target="makeBaseLibDirs" inheritRefs="true" />
+        <antcall target="copyWinTskLibs32ToBaseDir" inheritRefs="true" />
+        <antcall target="copyWinTskLibs64ToBaseDir" inheritRefs="true" />
+    </target>
+
     
-    <target name="copyCRT32">
+    <!-- CRT LIBS TO ZIP  - gets called from build.xml -->
+    <target name="copyLibsToZip" depends="copyCRT32ToZIP,copyCRT64ToZIP"/>
+    
+    <target name="copyCRT32ToZIP">
 
         <!-- verify we have the 32-bit dlls -->
         <property name="CRT32.path" value="${thirdparty.dir}/crt/win32"/>
@@ -112,7 +118,7 @@
         </copy>
     </target>
     
-    <target name="copyCRT64">
+    <target name="copyCRT64ToZIP">
         <!-- Verify we have the 64-bit -->
         <property name="CRT64.path" value="${thirdparty.dir}/crt/win64"/>
         <available file="${CRT64.path}"  property="crtFound"/>
@@ -133,234 +139,5 @@
         </copy>
     </target>
     
-    <!-- ADVANCED INSTALLER TARGETS -->
-    <target name="build-installer-windows" depends="init-advanced-installer"
-            description="Makes an installer from the opened ZIP file">
-        <antcall target="run-advanced-installer" /> 
-        <!--<delete dir="${nbdist.dir}/${app.name}-installer"/>-->
-    </target>
 
-    <target name="init-advanced-installer" depends="autoAIPath,inputAIPath"
-        description="Find AdvancedInstaller executable.">
-        <fail unless="ai-exe-path" message="Could not locate Advanced Installer."/>
-        <property environment="env"/>
-        <!-- Copy the template file to add details to -->
-        <copy file="${basedir}/installer_${app.name}/installer_${app.name}.aip" tofile="${nbdist.dir}/installer_${app.name}_32.aip" overwrite="true"/>
-        <copy file="${basedir}/installer_${app.name}/installer_${app.name}.aip" tofile="${nbdist.dir}/installer_${app.name}_64.aip" overwrite="true"/>
-        <property name="inst-path" value="${nbdist.dir}\${app.name}-installer"/>
-        <property name="aip-path-32" value="${nbdist.dir}\installer_${app.name}_32.aip"/>
-        <property name="aip-path-64" value="${nbdist.dir}\installer_${app.name}_64.aip"/>
-        <echo message="${ai-exe-path}" /> 
-        <condition property="jre.home.32">
-            <isset property="env.JRE_HOME_32"/>
-        </condition>
-        <condition property="jre.home.64">
-            <isset property="env.JRE_HOME_64"/>
-        </condition>
-        
-        <!-- Update configuration file to include jre -->
-        <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx512m -J-XX:MaxPermSize=128M -J-Xverify:none &quot;" />
-        <propertyfile file="${inst.property.file}">
-            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
-            <entry key="default_options" value="@JVM_OPTIONS" />
-            <entry key="jdkhome" value="&quot;jre7&quot;" />
-        </propertyfile>
-        <!-- workaround for ant escaping : and = when setting properties -->
-        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.options}" />
-    </target>
-    
-    <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
-        <property name="AI.path" value="C:\Program Files (x86)\Caphyon\Advanced Installer 10.3\bin\x86\AdvancedInstaller.com" />
-        <available file="${AI.path}"
-                    property="ai-exe-path"
-                    value="${AI.path}"/>
-        <echo message="${ai-exe-path}" /> 
-    </target>
-   
-    <target name="inputAIPath" unless="ai-exe-path" description="Have the user input the path to the AI executable">
-        <input addProperty="ai-exe-path"
-            message="Enter the location of AdvancedInstaller.com"/>
-    </target>
-
-    <target name="run-advanced-installer" depends="ai-diog-msg,check-ai-32,check-ai-64" />
-    
-    <target name="ai-diog-msg" description="Print information about installers to be built.">
-        <if>
-            <isset property="jre.home.32" />
-            <then>
-                <echo message="32-bit JRE found, 32 bit installer will be built."/>
-            </then>
-            <else>
-                <echo message="32-bit JRE not found. No 32 bit installer will be build. Set the JRE_HOME_32 environment variable to generate a 32-bit installer."/>
-            </else>
-        </if>
-        <if>
-            <isset property="jre.home.64" />
-            <then>
-                <echo message="64-bit JRE found, 64 bit installer will be built."/>
-            </then>
-            <else>
-                <echo message="64-bit JRE not found. No 64 bit installer will be build. Set the JRE_HOME_64 environment variable to generate a 64-bit installer."/>
-            </else>
-        </if>
-    </target>
-    
-    <target name="check-ai-32" if="jre.home.32" description="Builds the 32 bit installer IF JRE_HOME_32 is set.">
-        <property environment="env"/>
-        <var name="aip-path" value="${aip-path-32}"/>
-        <var name="extra-bin-name" value="${app.name}64.exe"/>
-        <var name="aut-bin-name" value="${app.name}.exe"/>
-        <var name="jre-path" value="${env.JRE_HOME_32}"/>
-        <var name="package-type" value="x86" />
-        <var name="jvm.max.mem" value="512" />
-        <var name="new-jre-path" value="${inst-path}\jre"/>
-        <delete failonerror="false" dir="${new-jre-path}"/>
-        <mkdir dir="${new-jre-path}"/>
-        <copy todir="${new-jre-path}" overwrite="true">  
-            <fileset dir="${jre-path}">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
-        </exec>
-        <antcall target="run-ai-32" inheritAll="true" inheritRefs="true" />
-        <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
-        <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-32bit.msi" />
-    </target>
-    
-    <target name="run-ai-32" depends="add-ai-productinfo,add-ai-files,add-ai-shortcuts,add-ai-env,ai-build" description="Builds the 32 bit installer."/>
-
-    <target name="check-ai-64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
-        <property environment="env"/>
-        <var name="aip-path" value="${aip-path-64}"/>
-        <var name="extra-bin-name" value="${app.name}.exe"/>
-        <var name="aut-bin-name" value="${app.name}64.exe"/>
-        <var name="jre-path" value="${env.JRE_HOME_64}"/>
-        <var name="package-type" value="x64" />
-        <var name="jvm.max.mem" value="2048"/>
-        <var name="new-jre-path" value="${inst-path}\jre"/>
-        <delete failonerror="false" dir="${new-jre-path}"/>
-        <mkdir dir="${new-jre-path}"/>
-        <copy todir="${new-jre-path}" overwrite="true">  
-            <fileset dir="${jre-path}">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
-        <echo message="aip-path: ${aip-path}" />
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /SetAppdir -buildname DefaultBuild -path [ProgramFiles64Folder][ProductName]-${app.version}"/>
-        </exec>
-        <antcall target="run-ai-64" inheritAll="true" inheritRefs="true" />
-        <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
-        <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
-    </target>
-    
-    <target name="run-ai-64" depends="add-ai-productinfo,add-ai-files,add-ai-shortcuts,ai-set-type,ai-build" description="Builds the 64 bit installer."/>
-   
-    <target name="add-ai-productinfo" description="Add product information to the aip file">
-        <scriptdef name="generateguid" language="javascript">
-            <attribute name="property" />
-            <![CDATA[
-            importClass( java.util.UUID );
-    
-            project.setProperty( attributes.get( "property" ), UUID.randomUUID() );
-            ]]>
-        </scriptdef>
-        <generateguid property="guid1" />
-        <!-- automatically replace version name and productcode in the .aip file -->
-        <echo>Product Code: ${guid1}</echo>
-        <echo>Product Version: ${app.version}</echo>
-        
-        <!-- Edit the API file to update versions: manual approach allows us to use non-X.Y.Z versions -->
-        <replaceregexp  file="${aip-path}"
-                        match="ProductCode&quot; Value=&quot;(\d{4}+:.)\w{8}+-\w{4}+-\w{4}+-\w{4}+-\w{12}+"
-                        replace="ProductCode&quot; Value=&quot;\1${guid1}" />
-                        
-        <replaceregexp  file="${aip-path}"
-                        match="ProductVersion&quot; Value=&quot;\d+\.{1}\d+\.{1}\d+"
-                        replace="ProductVersion&quot; Value=&quot;${app.version}" />   
-    </target>
-   
-    <target name="update-config" description="Updates configuration file with correct JVM args.">
-        <!-- Update configuration file to include jre -->
-        <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
-        <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none &quot;" />
-        <propertyfile file="${inst.property.file}">
-            <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
-            <entry key="default_options" value="@JVM_OPTIONS" />
-            <entry key="jdkhome" value="&quot;jre&quot;" />
-        </propertyfile>
-        <!-- workaround for ant escaping : and = when setting properties -->
-        <replace file="${inst.property.file}" token="@JVM_OPTIONS" value="${jvm.args}" />
-    </target>
-    
-    
-    <target name="add-ai-files" depends="update-config" description="Add the files in the installation path to the installer file">
-        <foreach target="add-file-or-dir" param="theFile" inheritall="true" inheritrefs="true">
-            <path> 
-                <fileset dir="${inst-path}">
-                    <include name="*" /> 
-                </fileset>
-                <dirset dir="${inst-path}">
-                    <include name="*"/> 
-                </dirset>
-            </path>
-        </foreach>
-        <echo message="Removing extra executable..."/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /DelFile APPDIR\bin\${extra-bin-name}"/>
-        </exec>
-    </target>
-
-    <target name="add-file-or-dir" depends="is-file-or-folder">
-        <echo message="Adding ${file-or-folder} to installer: ${theFile}"/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /Add${file-or-folder} APPDIR ${theFile}" />
-        </exec>
-    </target>
-
-    <target name="is-file-or-folder">
-        <condition property="file-or-folder" value="File" else="Folder">
-            <available file="${theFile}" type="file" />
-        </condition>
-    </target>
-
-    <target name="add-ai-shortcuts" description="Add shortcuts to the aip file">
-        <echo message="Adding desktop/menu shortcuts..."/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${aut-bin-name} -icon ${inst-path}\icon.ico"/>
-        </exec>
-    </target>
-
-    <!-- TODO: does this always need to be done, or just for 64 bit files? -->
-    <target name="add-ai-env" description="Add the enviornment variables to the aip file">
-        <echo message="Setting environment variables..."/>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-    </target>
-    
-    <target name="ai-build" description="Build the installer.">
-        <exec executable="${ai-exe-path}">
-            <arg line="/build ${aip-path}"/>
-        </exec>
-    </target>
-    
-    <target name="ai-set-type" description="Set the installer to only install on 64 bit machines.">
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /SetPackageType ${package-type}"/>
-        </exec>
-    </target>
 </project>

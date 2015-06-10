@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 class Keyword {
     private String keywordString;   // keyword to search for
     private boolean isLiteral;  // false if reg exp
+    private boolean isWholeword; // false if match a substring
     private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
 
     /**
@@ -38,6 +39,19 @@ class Keyword {
     Keyword(String query, boolean isLiteral) {
         this.keywordString = query;
         this.isLiteral = isLiteral;
+        this.isWholeword = true;
+    }
+    
+    /**
+     * 
+     * @param query Keyword to search for
+     * @param isLiteral false if reg exp
+     * @param isWholeword false to match substring (undefined behavior if regexp is true)
+     */
+    Keyword(String query, boolean isLiteral, boolean isWholeword) {
+        this.keywordString = query;
+        this.isLiteral = isLiteral;
+        this.isWholeword = isWholeword;
     }
     
     /**
@@ -70,14 +84,16 @@ class Keyword {
     boolean isLiteral() {
         return isLiteral;
     }
+    
+    boolean isWholeword() {
+        return isWholeword;
+    }
 
     @Override
     public String toString() {
         return NbBundle.getMessage(this.getClass(), "Keyword.toString.text", keywordString, isLiteral, keywordType);
     }
     
-    
-
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

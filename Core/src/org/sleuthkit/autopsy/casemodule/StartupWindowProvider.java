@@ -59,10 +59,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
             int windowsCount = startupWindows.size();
             if (windowsCount > 2) {
-                logger.log(Level.WARNING, "More than 2 (" + windowsCount + ") start up windows discovered, will use the first custom one");
+                logger.log(Level.WARNING, "More than 2 (" + windowsCount + ") start up windows discovered, will use the first custom one"); //NON-NLS
             } else if (windowsCount == 1) {
                 startupWindowToUse = startupWindows.iterator().next();
-                logger.log(Level.INFO, "Will use the default startup window: " + startupWindowToUse.toString());
+                logger.log(Level.INFO, "Will use the default startup window: " + startupWindowToUse.toString()); //NON-NLS
             } else {
                 //pick the non default one
                 Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
@@ -70,14 +70,14 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     StartupWindowInterface window = it.next();
                     if (!org.sleuthkit.autopsy.casemodule.StartupWindow.class.isInstance(window)) {
                         startupWindowToUse = window;
-                        logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString());
+                        logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString()); //NON-NLS
                         break;
 
                     }
                 }
                 
                 if (startupWindowToUse == null) {
-                    logger.log(Level.SEVERE, "Unexpected error, no custom startup window found, using the default");
+                    logger.log(Level.SEVERE, "Unexpected error, no custom startup window found, using the default"); //NON-NLS
                     startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
                 }
                 

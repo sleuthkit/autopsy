@@ -151,7 +151,7 @@ class Util {
 
     public static String getFileName(String value) {
         String filename = "";
-        String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$";
+        String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$"; //NON-NLS
 
         Pattern p = Pattern.compile(filematch, Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.COMMENTS);
         Matcher m = p.matcher(value);
@@ -168,7 +168,7 @@ class Util {
         String path = "";
 
         //String drive ="([a-z]:\\\\(?:[-\\w\\.\\d]+\\\\)*(?:[-\\w\\.\\d]+)?)";	// Windows drive
-        String drive = "([a-z]:\\\\\\S.+)";
+        String drive = "([a-z]:\\\\\\S.+)"; //NON-NLS
         Pattern p = Pattern.compile(drive, Pattern.CASE_INSENSITIVE | Pattern.COMMENTS);
         Matcher m = p.matcher(txt);
         if (m.find()) {
@@ -176,7 +176,7 @@ class Util {
 
         } else {
 
-            String network = "(\\\\(?:\\\\[^:\\s?*\"<>|]+)+)";	// Windows network
+            String network = "(\\\\(?:\\\\[^:\\s?*\"<>|]+)+)";    // Windows network NON-NLS
 
             Pattern p2 = Pattern.compile(network, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
             Matcher m2 = p2.matcher(txt);
@@ -202,7 +202,7 @@ class Util {
         try {
             files = fileManager.findFiles(dataSource, name, parent_path);
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
         }
         
         if (files == null || files.isEmpty()) {
@@ -212,19 +212,19 @@ class Util {
     }
 
     public static boolean checkColumn(String column, String tablename, String connection) {
-        String query = "PRAGMA table_info(" + tablename + ")";
+        String query = "PRAGMA table_info(" + tablename + ")"; //NON-NLS
         boolean found = false;
         ResultSet temprs;
         try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
             temprs = tempdbconnect.executeQry(query);
             while (temprs.next()) {
-                if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) {
+                if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) { //NON-NLS
                     found = true;
                 }
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);
+            logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
         }
         return found;
     }
@@ -232,11 +232,11 @@ class Util {
     public static ResultSet runQuery(String query, String connection) {
         ResultSet results = null;
         try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
             results = tempdbconnect.executeQry(query);
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to run sql query: " + query + " : " + connection, ex);
+            logger.log(Level.WARNING, "Error while trying to run sql query: " + query + " : " + connection, ex); //NON-NLS
         }
         return results;
     }

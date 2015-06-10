@@ -37,9 +37,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 public class ScalpelCarver {
 
-    private static final String SCALPEL_JNI_LIB = "libscalpel_jni";
-    private static final String SCALPEL_OUTPUT_FILE_NAME = "audit.txt";
-    private static boolean initialized = false;
+    private static final String SCALPEL_JNI_LIB = "libscalpel_jni"; //NON-NLS
+    private static final String SCALPEL_OUTPUT_FILE_NAME = "audit.txt"; //NON-NLS
+    private static volatile boolean initialized = false;
     private static final Logger logger = Logger.getLogger(ScalpelCarver.class.getName());
 
     private static native void carveNat(String carverInputId, ReadContentInputStream input, String configFilePath, String outputFolderPath) throws ScalpelException;
@@ -48,21 +48,21 @@ public class ScalpelCarver {
         
     }
 
-    public static boolean init() {
+    public static synchronized boolean init() {
         if (initialized) {
             return true;
         }
         initialized = true;
-        for (String library : Arrays.asList("libtre-4", "pthreadGC2", SCALPEL_JNI_LIB)) {
+        for (String library : Arrays.asList("libtre-4", "pthreadGC2", SCALPEL_JNI_LIB)) { //NON-NLS
             if (!loadLib(library)) {
                 initialized = false;
-                logger.log(Level.SEVERE, "Failed initializing " + ScalpelCarver.class.getName() + " due to failure loading library: " + library);
+                logger.log(Level.SEVERE, "Failed initializing " + ScalpelCarver.class.getName() + " due to failure loading library: " + library); //NON-NLS
                 break;
             }
         }
         
         if (initialized) {
-            logger.log(Level.INFO, ScalpelCarver.class.getName() + " JNI initialized successfully. ");
+            logger.log(Level.INFO, ScalpelCarver.class.getName() + " JNI initialized successfully. "); //NON-NLS
         }
         
         return initialized;
@@ -147,14 +147,14 @@ public class ScalpelCarver {
             carveNat(carverInputId, carverInput, configFilePath, outputFolderPath);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "Error while caving file " + file, e);
+            logger.log(Level.SEVERE, "Error while caving file " + file, e); //NON-NLS
             throw new ScalpelException(e);
         }
         finally {
             try {
                 carverInput.close();
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error closing input stream after carving, file: " + file, ex);
+                logger.log(Level.SEVERE, "Error closing input stream after carving, file: " + file, ex); //NON-NLS
             }
         }
         
@@ -166,9 +166,9 @@ public class ScalpelCarver {
         try {
             output = ScalpelOutputParser.parse(outputFile);
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Could not find scalpel output file.", ex);
+            logger.log(Level.SEVERE, "Could not find scalpel output file.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "IOException while processing scalpel output file.", ex);
+            logger.log(Level.SEVERE, "IOException while processing scalpel output file.", ex); //NON-NLS
         }
         
         return output;

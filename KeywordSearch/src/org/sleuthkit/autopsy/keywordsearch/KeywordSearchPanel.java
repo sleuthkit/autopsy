@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,274 +16,110 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * KeywordSearchPanel
- *
- */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Level;
+import java.util.List;
 
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.SwingUtilities;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
+import org.openide.util.NbBundle;
 
 /**
- * Keyword search toolbar (in upper right, by default) which allows to search for single terms or phrases
- * 
+ * Common functionality among keyword search widgets / panels.
+ * This is extended by the various panels and interfaces that perform the keyword searches.
+ * This class and extended classes model the user's intentions, not necessarily how the 
+ * search manager and 3rd party tools actually perform the search.
  */
-class KeywordSearchPanel extends javax.swing.JPanel {
+abstract class KeywordSearchPanel extends javax.swing.JPanel {
+    private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
+    protected int filesIndexed;
 
-    private static final Logger logger = Logger.getLogger(KeywordSearchPanel.class.getName());
-    private KeywordPropertyChangeListener listener;
-    private boolean active = false;
-    private static KeywordSearchPanel instance;
-    private DropdownSearchPanel dropPanel = null;
+    KeywordSearchPanel() {
+        initListeners();
+    }
 
-    /** Creates new form KeywordSearchPanel */
-    private KeywordSearchPanel() {
-        initComponents();
-        customizeComponents();
+    private void initListeners() {
+        KeywordSearch.addNumIndexedFilesChangeListener(
+                new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        String changed = evt.getPropertyName();
+                        Object newValue = evt.getNewValue();
+
+                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                            int newFilesIndexed = ((Integer) newValue).intValue();
+                            filesIndexed = newFilesIndexed;
+                            postFilesIndexedChange();
+                        }
+                    }
+                });
     }
 
     /**
-     * @return the default instance KeywordSearchPanel
+     * Hook to run after indexed files number changed
      */
-    public static KeywordSearchPanel getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchPanel();
-        }
-        return instance;
-    }
+    protected abstract void postFilesIndexedChange();
 
-    private void customizeComponents() {
-        listener = new KeywordPropertyChangeListener();
-        KeywordSearch.getServer().addServerActionListener(listener);
-        Case.addPropertyChangeListener(listener);
-
-        KeywordSearchListsViewerPanel listsPanel = KeywordSearchListsViewerPanel.getDefault();
-        listsPanel.addSearchButtonActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                listsMenu.setVisible(false);
-            }
-        });
-        // Adding border of six to account for menu border
-        listsMenu.setSize(listsPanel.getPreferredSize().width + 6, listsPanel.getPreferredSize().height + 6);
-        listsMenu.add(listsPanel);
-        listsMenu.addPopupMenuListener(new PopupMenuListener() {
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                listsButton.setSelected(true);
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                listsButton.setSelected(false);
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-                listsButton.setSelected(false);
-            }
-        });
-        
-        dropPanel = DropdownSearchPanel.getDefault();
-        dropPanel.addSearchButtonActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                searchMenu.setVisible(false);
-            }
-        });        
-        searchMenu.setSize(dropPanel.getPreferredSize().width + 6, dropPanel.getPreferredSize().height + 6);
-        searchMenu.add(dropPanel);
-        searchMenu.addPopupMenuListener(new PopupMenuListener() {
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                searchDropButton.setSelected(true);
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                searchDropButton.setSelected(false);
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-                searchDropButton.setSelected(false);
-            }
-        });        
-        
-    }
-
-
-
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        listsMenu = new javax.swing.JPopupMenu();
-        searchMenu = new javax.swing.JPopupMenu();
-        listsButton = new javax.swing.JButton();
-        searchDropButton = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
-
-        setOpaque(false);
-
-        listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png"))); // NOI18N
-        listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleName")); // NOI18N
-        listsButton.setBorderPainted(false);
-        listsButton.setContentAreaFilled(false);
-        listsButton.setEnabled(false);
-        listsButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png"))); // NOI18N
-        listsButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-pressed.png"))); // NOI18N
-        listsButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                listsButtonMousePressed(evt);
-            }
-        });
-        listsButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                listsButtonActionPerformed(evt);
-            }
-        });
-
-        searchDropButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/searchbutton-icon.png"))); // NOI18N
-        searchDropButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchDropButton.text")); // NOI18N
-        searchDropButton.setBorderPainted(false);
-        searchDropButton.setContentAreaFilled(false);
-        searchDropButton.setEnabled(false);
-        searchDropButton.setMaximumSize(new java.awt.Dimension(146, 27));
-        searchDropButton.setMinimumSize(new java.awt.Dimension(146, 27));
-        searchDropButton.setPreferredSize(new java.awt.Dimension(146, 27));
-        searchDropButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/searchbutton-icon-rollover.png"))); // NOI18N
-        searchDropButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/searchbutton-icon-pressed.png"))); // NOI18N
-        searchDropButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                searchDropButtonMousePressed(evt);
-            }
-        });
-
-        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(listsButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(listsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(searchDropButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSeparator1)))
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void listsButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listsButtonMousePressed
-        maybeShowListsPopup(evt);
-    }//GEN-LAST:event_listsButtonMousePressed
-
-    private void listsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listsButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_listsButtonActionPerformed
-
-    private void searchDropButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchDropButtonMousePressed
-        maybeShowSearchPopup(evt);
-    }//GEN-LAST:event_searchDropButtonMousePressed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JButton listsButton;
-    private javax.swing.JPopupMenu listsMenu;
-    private javax.swing.JButton searchDropButton;
-    private javax.swing.JPopupMenu searchMenu;
-    // End of variables declaration//GEN-END:variables
-
-    private class KeywordPropertyChangeListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
-
-            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                dropPanel.resetSearchBox();
-                if (newValue == null) {
-                    setFields(false);
-                } else {
-                    setFields(true);
-                }
-            } else if (changed.equals(Server.CORE_EVT)) {
-                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) newValue;
-                switch (state) {
-                    case STARTED:
-                        try {
-                            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-                            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
-                            //setFilesIndexed(numIndexedFiles);
-                        } 
-                        catch (NoOpenCoreException ex) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, " + ex);
-                        }
-                        catch (KeywordSearchModuleException se) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
-                        }
-                        break;
-                    case STOPPED:
-                        break;
-                    default:
-                }
-            }
-        }
-
-        private void setFields(boolean enabled) {
-            searchDropButton.setEnabled(enabled);
-            listsButton.setEnabled(enabled);
-            active = enabled;
-        }
-    }
-
-    private void maybeShowListsPopup(MouseEvent evt) {
-        if (!active) {
-            return;
-        }
-        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
-            return;
-        }
-        listsMenu.show(listsButton, listsButton.getWidth() - listsMenu.getWidth(), listsButton.getHeight() - 1);
-    }
     
-    private void maybeShowSearchPopup(MouseEvent evt) {
-        if (!active) {
+    /**
+     * Returns the list of Keyword objects that the user entered/selected
+     * @return 
+     */
+    abstract List<KeywordList> getKeywordLists();
+
+    /**
+     * Set the number of files that have been indexed
+     * @param filesIndexed 
+     */
+    public void setFilesIndexed(int filesIndexed) {
+        this.filesIndexed = filesIndexed;
+    }
+
+    /**
+     * Performs the search using the selected keywords.  
+     * Creates a DataResultTopComponent with the results. 
+     */
+    public void search() {
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
+
+        if (filesIndexed == 0) {
+            if (isIngestRunning) {
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
+                        KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            } else {
+                KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                        "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            }
             return;
         }
-        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
+
+        //check if keyword search module  ingest is running (indexing, etc)
+        if (isIngestRunning) {
+            if (KeywordSearchUtil.displayConfirmDialog(org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.searchIngestInProgressTitle"),
+                    NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.ingestInProgressBody"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
+                return;
+            }
+        }
+        
+        KeywordSearchQueryDelegator man = null;
+        
+        final List<KeywordList> keywordLists = getKeywordLists();
+        if (keywordLists.isEmpty()) {
+            KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                    "AbstractKeywordSearchPerformer.search.emptyKeywordErrorBody"),
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        searchMenu.show(searchDropButton, searchDropButton.getWidth() - searchMenu.getWidth(), searchDropButton.getHeight() - 1);
-    }    
+        man = new KeywordSearchQueryDelegator(keywordLists);
+        
+        if (man.validate()) {
+            man.execute();
+        } else {
+            KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
+                    "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+        }
+    }
 }

@@ -48,32 +48,32 @@ import org.xml.sax.SAXException;
  */
  class XMLCaseManagement implements CaseConfigFileInterface {
 
-    final static String XSDFILE = "CaseSchema.xsd";
-    final static String TOP_ROOT_NAME = "AutopsyCase";
-    final static String CASE_ROOT_NAME = "Case";
+    final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
+    final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
+    final static String CASE_ROOT_NAME = "Case"; //NON-NLS
     // general metadata about the case file
-    final static String NAME = "Name";
-    final static String NUMBER = "Number";
-    final static String EXAMINER = "Examiner";
-    final static String CREATED_DATE_NAME = "CreatedDate";
-    final static String MODIFIED_DATE_NAME = "ModifiedDate";
-    final static String SCHEMA_VERSION_NAME = "SchemaVersion";
-    final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion";
-    final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion";
+    final static String NAME = "Name"; //NON-NLS
+    final static String NUMBER = "Number"; //NON-NLS
+    final static String EXAMINER = "Examiner"; //NON-NLS
+    final static String CREATED_DATE_NAME = "CreatedDate"; //NON-NLS
+    final static String MODIFIED_DATE_NAME = "ModifiedDate"; //NON-NLS
+    final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
+    final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
+    final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
     // folders inside case directory
-    final static String LOG_FOLDER_NAME = "LogFolder";
-    final static String LOG_FOLDER_RELPATH = "Log";
-    final static String TEMP_FOLDER_NAME = "TempFolder";
-    final static String TEMP_FOLDER_RELPATH = "Temp";
-    final static String EXPORT_FOLDER_NAME = "ExportFolder";
-    final static String EXPORT_FOLDER_RELPATH = "Export";
-    final static String CACHE_FOLDER_NAME = "CacheFolder";
-    final static String CACHE_FOLDER_RELPATH = "Cache";
+    final static String LOG_FOLDER_NAME = "LogFolder"; //NON-NLS
+    final static String LOG_FOLDER_RELPATH = "Log"; //NON-NLS
+    final static String TEMP_FOLDER_NAME = "TempFolder"; //NON-NLS
+    final static String TEMP_FOLDER_RELPATH = "Temp"; //NON-NLS
+    final static String EXPORT_FOLDER_NAME = "ExportFolder"; //NON-NLS
+    final static String EXPORT_FOLDER_RELPATH = "Export"; //NON-NLS
+    final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
+    final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
     // folders attribute
-    final static String RELATIVE_NAME = "Relative";	// relevant path info
+    final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
     // folder attr values
-    final static String RELATIVE_TRUE = "true";     // if it's a relative path
-    final static String RELATIVE_FALSE = "false";   // if it's not a relative path
+    final static String RELATIVE_TRUE = "true";     // if it's a relative path NON-NLS
+    final static String RELATIVE_FALSE = "false";   // if it's not a relative path NON-NLS
     // the document
     private Document doc;
     // general info
@@ -504,22 +504,22 @@ import org.xml.sax.SAXException;
 
         Element exportElement = doc.createElement(EXPORT_FOLDER_NAME); // <ExportFolder> ... </ExportFolder>
         exportElement.appendChild(doc.createTextNode(EXPORT_FOLDER_RELPATH));
-        exportElement.setAttribute(RELATIVE_NAME, "true");
+        exportElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(exportElement);
 
         Element logElement = doc.createElement(LOG_FOLDER_NAME); // <LogFolder> ... </LogFolder>
         logElement.appendChild(doc.createTextNode(LOG_FOLDER_RELPATH));
-        logElement.setAttribute(RELATIVE_NAME, "true");
+        logElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(logElement);
 
         Element tempElement = doc.createElement(TEMP_FOLDER_NAME); // <TempFolder> ... </TempFolder>
         tempElement.appendChild(doc.createTextNode(TEMP_FOLDER_RELPATH));
-        tempElement.setAttribute(RELATIVE_NAME, "true");
+        tempElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(tempElement);
 
         Element cacheElement = doc.createElement(CACHE_FOLDER_NAME); // <CacheFolder> ... </CacheFolder>
         cacheElement.appendChild(doc.createTextNode(CACHE_FOLDER_RELPATH));
-        cacheElement.setAttribute(RELATIVE_NAME, "true");
+        cacheElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(cacheElement);
 
         // write more code if needed ...
@@ -551,19 +551,19 @@ import org.xml.sax.SAXException;
         try {
             xformer = tfactory.newTransformer();
         } catch (TransformerConfigurationException ex) {
-            logger.log(Level.SEVERE, "Could not setup tranformer and write case file");
+            logger.log(Level.SEVERE, "Could not setup tranformer and write case file"); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
 
         //Setup indenting to "pretty print"
-        xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        xformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        xformer.setOutputProperty(OutputKeys.INDENT, "yes"); //NON-NLS
+        xformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2"); //NON-NLS
 
         try {
             xformer.transform(source, result);
         } catch (TransformerException ex) {
-            logger.log(Level.SEVERE, "Could not run tranformer and write case file");
+            logger.log(Level.SEVERE, "Could not run tranformer and write case file"); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
@@ -579,8 +579,9 @@ import org.xml.sax.SAXException;
             bw.flush();
             bw.close();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error writing to case file");
-            throw new CaseActionException("Error writing to case file", ex);
+            logger.log(Level.SEVERE, "Error writing to case file"); //NON-NLS
+            throw new CaseActionException(
+                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.writeFile.exception.errWriteToFile.msg"), ex);
         }
     }
 
@@ -620,7 +621,7 @@ import org.xml.sax.SAXException;
         doc.getDocumentElement().normalize();
 
         if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
-            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate");
+            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
         }
 
         Element rootEl = doc.getDocumentElement();
@@ -658,7 +659,7 @@ import org.xml.sax.SAXException;
             // set the case Directory and Name
             setCaseDirPath(file.getParent());
             String fullFileName = file.getName();
-            String fileName = fullFileName.substring(0, fullFileName.indexOf(".")); // remove the extension
+            String fileName = fullFileName.substring(0, fullFileName.lastIndexOf(".")); // remove the extension
             setName(fileName);
         }
     }

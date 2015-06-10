@@ -53,7 +53,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
             JMenuItem item = new JMenuItem(explorerWin.getName());
             item.addActionListener(new OpenTopComponentAction(explorerWin));
 
-            if(!Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0){
+            if(!Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false){
                 item.setEnabled(false); // disable the menu when no case is opened
             }
             else{

@@ -49,9 +49,9 @@ public class MessageNotifyUtil {
 
     public enum MessageType {
 
-        INFO(NotifyDescriptor.INFORMATION_MESSAGE, "info-icon-16.png"),
-        ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"),
-        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png");
+        INFO(NotifyDescriptor.INFORMATION_MESSAGE, "info-icon-16.png"), //NON-NLS
+        ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"), //NON-NLS
+        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"); //NON-NLS
         private int notifyDescriptorType;
         private Icon icon;
 
@@ -65,10 +65,10 @@ public class MessageNotifyUtil {
         }
 
         private static Icon loadIcon(String resourceName) {
-            Icon icon = ImageUtilities.loadImageIcon("org/sleuthkit/autopsy/images/" + resourceName, false);
+            Icon icon = ImageUtilities.loadImageIcon("org/sleuthkit/autopsy/images/" + resourceName, false); //NON-NLS
             if (icon == null) {
                 Logger logger = Logger.getLogger(org.sleuthkit.autopsy.coreutils.MessageNotifyUtil.MessageType.class.getName());
-                logger.log(Level.SEVERE, "Failed to load icon resource: " + resourceName + ". Using blank image.");
+                logger.log(Level.SEVERE, "Failed to load icon resource: " + resourceName + ". Using blank image."); //NON-NLS NON-NLS
                 icon = new ImageIcon();
             }
             return icon;

@@ -165,7 +165,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             int to = from + showImages - 1;
             setDisplayName(from + "-" + to);
 
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
 
         }
     }

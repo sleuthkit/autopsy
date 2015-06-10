@@ -20,8 +20,9 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Dimension;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -34,10 +35,10 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
     
     // 64 bit architectures
-    private static final String[] ARCH64 = new String[]{"amd64", "x86_64"};
+    private static final String[] ARCH64 = new String[]{"amd64", "x86_64"}; //NON-NLS NON-NLS
     
     // 32 bit architectures
-    private static final String[] ARCH32 = new String[]{"x86"};
+    private static final String[] ARCH32 = new String[]{"x86"}; //NON-NLS
     
     /**
      * Factory Method to create a MediaViewVideoPanel. 
@@ -48,10 +49,10 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      */
     public static MediaViewVideoPanel createVideoPanel() {
         if (is64BitJVM()) {
-            logger.log(Level.INFO, "64 bit JVM detected. Creating JavaFX Video Player.");
+            logger.log(Level.INFO, "64 bit JVM detected. Creating JavaFX Video Player."); //NON-NLS
             return getFXImpl();
         } else {
-            logger.log(Level.INFO, "32 bit JVM detected. Creating GStreamer Video Player.");
+            logger.log(Level.INFO, "32 bit JVM detected. Creating GStreamer Video Player."); //NON-NLS
             return getGstImpl();
         }
     }
@@ -108,4 +109,8 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * Return the extensions supported by this video panel.
      */
     abstract public String[] getExtensions();
+    /**
+     * Return the MimeTypes supported by this video panel.
+     */
+    abstract public List<String> getMimeTypes();
 }

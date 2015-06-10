@@ -38,21 +38,21 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Monitor health of the system and stop ingest if necessary
  */
- public class IngestMonitor {
+public final class IngestMonitor {
 
+    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
-    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor");
+    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
     private MonitorAction monitor;
-    public static final int DISK_FREE_SPACE_UNKNOWN = -1;
 
     IngestMonitor() {
 
         //setup the custom memory logger
         try {
             final int MAX_LOG_FILES = 3;
-            FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log",
+            FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log", //NON-NLS
                     0, MAX_LOG_FILES);
             monitorLogHandler.setFormatter(new SimpleFormatter());
             monitorLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
@@ -103,7 +103,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
         try {
             return monitor.getFreeSpace();
         } catch (SecurityException e) {
-            logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e);
+            logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e); //NON-NLS
             return DISK_FREE_SPACE_UNKNOWN;
         }
     }
@@ -146,12 +146,12 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
                 curDir = tempF;
             }
             root = curDir;
-            logger.log(Level.INFO, "Monitoring disk space of case root: " + curDir.getAbsolutePath());
+            logger.log(Level.INFO, "Monitoring disk space of case root: " + curDir.getAbsolutePath()); //NON-NLS
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            final IngestManager manager = IngestManager.getDefault();
+            final IngestManager manager = IngestManager.getInstance();
 
             //runs checks only if ingest is running
             if (manager.isIngestRunning() == false) {
@@ -163,10 +163,10 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
             if (checkDiskSpace() == false) {
                 //stop ingest if running
                 final String diskPath = root.getAbsolutePath();
-                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
-                logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
-                manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerErrorMessage(
+                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk {0}", diskPath); //NON-NLS
+                logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk {0}", diskPath); //NON-NLS
+                manager.cancelAllIngestJobs();
+                IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
             }
@@ -204,7 +204,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
             try {
                 freeSpace = getFreeSpace();
             } catch (SecurityException e) {
-                logger.log(Level.WARNING, "Unable to check for free disk space (permission issue)", e);
+                logger.log(Level.WARNING, "Unable to check for free disk space (permission issue)", e); //NON-NLS
                 return true; //OK
             }
 

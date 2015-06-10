@@ -94,7 +94,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
             currentTagNames = tagsManager.getAllTagNames();        
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }        
         if (null != currentTagNames && currentTagNames.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);

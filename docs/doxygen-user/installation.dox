@@ -1,0 +1,34 @@
+/*! \page installation_page Installation 
+
+Installation
+-----
+
+Download Autopsy from the website:
+
+http://sleuthkit.org/autopsy/download.php
+
+The current version of Autopsy 3 runs only on Microsoft Windows.
+We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
+
+The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
+
+
+Optimizing Performance
+-----
+
+After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
+
+1) Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
+- Run Autopsy from the Start Menu or desktop
+- When presented with the case creation splash screen, cancel/close the window
+- Select "Tools", "Options"
+- On the "Autopsy" tab, there is a drop down for "Number of thread to use for file ingest". We recommend that you set this value to be smaller than the number of cores minus two.  If you set this number too high, performance can degrade because the pipelines are fighting for the same resources. Individual testing should be done to find an optimal setting. 
+- After each change, restart Autopsy to let this setting take effect.
+
+\image html threadcount.PNG
+
+2) When making a case, use different drives to store the case and the images. The case directory is where the SQLite database and keyword search index are stored.  This allows the maximum amount of data to be read and written at the same time. 
+
+3) We have had best performance using either local solid state drives or fibre channel-attached SAN storage. 
+
+*/

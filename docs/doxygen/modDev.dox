@@ -1,10 +1,10 @@
-/*! \page mod_dev_page Development Setup
+/*! \page mod_dev_page Java Development Setup
 
 <!-- NOTE: This doc contains the concepts that apply when developing
 any type of module. Information about specific types of modules should
 go into the page for that module type. -->
 
-This page describes the basic concepts and setup that are needed regardless of the module type that you are building. 
+This page describes the basic concepts and setup that are needed for all types of Java modules. It is not needed for Python module development. 
 
 \section mod_dev_setup Basic Setup
 
@@ -12,7 +12,7 @@ This page describes the basic concepts and setup that are needed regardless of t
 
 Autopsy is built on top of the NetBeans Rich Client Platform, which makes it easy to make plug-in infrastructures. To do any development, you really need to download NetBeans first. You can in theory develop modules by command line only, but this document assumes that you are using the IDE. Download and install the latest version of the IDE from http://www.netbeans.org. 
 
-Autopsy currently requires Java 1.7.  Ensure that it is installed.
+Autopsy currently requires Java 1.8.  Ensure that it is installed.
 
 \subsection mod_dev_setup_platform Obtain the Autopsy Platform
 
@@ -40,24 +40,26 @@ The Autopsy modules are encapsulated inside of NetBeans modules. A NetBeans modu
 
 \subsection mod_dev_mod_nb Creating a NetBeans Module
 
-If this is your first module, then  you will need to make a NetBeans module. If you have already made an Autopsy module and are now working on a second one, you can consider adding it to your pevious NetBeans module. 
+If this is your first module, then  you will need to make a NetBeans module. If you have already made an Autopsy module and are now working on a second one, you can consider adding it to your previous NetBeans module. 
 
 To make a NetBeans module:
 - Open the NetBeans IDE and go to File -> New Project.
 - From the list of categories, choose "NetBeans Modules" and then "Module" from the list of "Projects".  Click Next. 
 - In the next panel of the wizard, give the module a name and directory. Select Standalone Module (the default is typically "Add to Suite") so that you build the module as an external module against Autopsy.  You will need to tell NetBeans about the Autopsy platform, so choose the "Manage" button.  Choose the "Add Platform" button and browse to the location of the platform discussed in the previous sections (as a reminder this will either be the location that you installed Autopsy into or where you opened up the ZIP file you created from source).  Click Next.
-- Finally, enter the code base name.  Press Finish. 
+- Finally, enter the code base name.  We use the same naming convention as used for naming packages (http://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).  Press Finish. 
 
 \subsubsection mod_dev_mod_nb_config Configuring the NetBeans Module
 
 After the module is created, you will need to do some further configuration. 
 - Right click on the newly created module and choose "Properties".
-- You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the "Autopsy-core" library. You now have access to the Autopsy services.
+- You will need to configure the module to be dependent on modules from within the Autopsy platform. Go to the "Libraries" area and choose "Add" in the "Module Dependencies" section.  Choose the:
+-- "Autopsy-core" library to get access to the Autopsy services.
+-- "NetBeans Lookup" library so that your module can be discovered by Autopsy. 
 - If you later determine that you need to pull in external JAR files, then you will use the "Wrapped Jar" section to add them in.  
 - Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
 - Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
 
-You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides (such as \ref platform_details). 
+You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides (such as \ref services_page). 
 
 
 \subsubsection mod_dev_mod_config_other Optional Settings

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 
@@ -43,17 +41,12 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-
-        Logger logger = Logger.getLogger(Installer.class.getName());
-        logger.log(Level.INFO, "Initializing ingest manager");
-        final IngestManager manager = IngestManager.getDefault();
+        final IngestManager manager = IngestManager.getInstance();
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 //at this point UI top component is present for sure, ensure manager has it
-                manager.initUI();
-                //force ingest inbox closed, even if previous state was open
-                //IngestMessageTopComponent.findInstance().close();
+                manager.initIngestMessageInbox();
             }
         });
 
@@ -63,7 +56,6 @@ public class Installer extends ModuleInstall {
     public boolean closing() {
         //force ingest inbox closed on exit and save state as such
         IngestMessageTopComponent.findInstance().close();
-
         return true;
     }
 }

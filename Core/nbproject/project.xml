@@ -25,30 +25,21 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.netbeans.core.startup</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <implementation-version/>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.netbeans.modules.javahelp</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>2.27.1</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
                     <code-name-base>org.netbeans.modules.options.api</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
                         <specification-version>1.26.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.sendopts</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>2</release-version>
+                        <specification-version>2.25.1</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -201,15 +192,35 @@
                 <package>org.sleuthkit.autopsy.coreutils</package>
                 <package>org.sleuthkit.autopsy.datamodel</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
+                <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
+                <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
+                <package>org.sleuthkit.autopsy.modules.filetypeid</package>
+                <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+                <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython-standalone-2.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
@@ -218,6 +229,30 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.8.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/metadata-extractor-2.6.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmpcore.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmpcore.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

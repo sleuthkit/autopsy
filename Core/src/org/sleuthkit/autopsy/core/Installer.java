@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,25 +18,27 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Wrapper over Installers in packages in Core module This is the main
- * registered installer in the MANIFEST.MF
+ * Wrapper over Installers in packages in Core module. This is the main
+ * registered installer in the MANIFEST.MF.
  */
 public class Installer extends ModuleInstall {
 
-    private List<ModuleInstall> packageInstallers;
+    private final List<ModuleInstall> packageInstallers;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static volatile boolean javaFxInit = false;
 
@@ -61,39 +63,37 @@ public class Installer extends ModuleInstall {
                 //Note: if shipping with a different CRT version, this will only print a warning
                 //and try to use linker mechanism to find the correct versions of libs.
                 //We should update this if we officially switch to a new version of CRT/compiler
-                System.loadLibrary("msvcr100");
-                System.loadLibrary("msvcp100");
-                logger.log(Level.INFO, "MS CRT libraries loaded");
+                System.loadLibrary("msvcr100"); //NON-NLS
+                System.loadLibrary("msvcp100"); //NON-NLS
+                logger.log(Level.INFO, "MS CRT libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e);
+                logger.log(Level.SEVERE, "Error loading ms crt libraries, ", e); //NON-NLS
             }
 
             try {
-               System.loadLibrary("zlib");
-               logger.log(Level.INFO, "ZLIB library loaded loaded");
+               System.loadLibrary("zlib"); //NON-NLS
+               logger.log(Level.INFO, "ZLIB library loaded loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e);
+               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e); //NON-NLS
             }
 
             try {
-               System.loadLibrary("libewf");
-               logger.log(Level.INFO, "EWF library loaded");
+               System.loadLibrary("libewf"); //NON-NLS
+               logger.log(Level.INFO, "EWF library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading EWF library, ", e);
+               logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
          }
      }
     
     public Installer() {
-        logger.log(Level.INFO, "core installer created");
+        logger.log(Level.INFO, "core installer created"); //NON-NLS
         javaFxInit = false;
-        packageInstallers = new ArrayList<ModuleInstall>();
-
+        packageInstallers = new ArrayList<>();
         packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
-
     }
 
     /**
@@ -128,32 +128,35 @@ public class Installer extends ModuleInstall {
         }
     }
 
+    private static void ensurePythonModulesFolderExists() {
+        File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
+        pythonModulesDir.mkdir();
+    }
+    
     @Override
     public void restored() {
-        super.restored();
-
-        logger.log(Level.INFO, "restored()");
-
+        super.restored();        
+        ensurePythonModulesFolderExists();        
         initJavaFx();
-
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " restored()");
             try {
                 mi.restored();
+                logger.log(Level.INFO, "{0} restore succeeded", mi.getClass().getName()); //NON-NLS
             } catch (Exception e) {
-                logger.log(Level.WARNING, "", e);
+                String msg = mi.getClass().getName() + " restore failed"; //NON-NLS
+                logger.log(Level.WARNING, msg, e);
             }
         }
-
+        logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS        
     }
 
     @Override
     public void validate() throws IllegalStateException {
         super.validate();
 
-        logger.log(Level.INFO, "validate()");
+        logger.log(Level.INFO, "validate()"); //NON-NLS
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " validate()");
+            logger.log(Level.INFO, "{0} validate()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.validate();
             } catch (Exception e) {
@@ -166,26 +169,23 @@ public class Installer extends ModuleInstall {
     public void uninstalled() {
         super.uninstalled();
 
-        logger.log(Level.INFO, "uninstalled()");
+        logger.log(Level.INFO, "uninstalled()"); //NON-NLS
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " uninstalled()");
+            logger.log(Level.INFO, "{0} uninstalled()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.uninstalled();
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
         }
-
-
-
     }
 
     @Override
     public void close() {
         super.close();
 
-        logger.log(Level.INFO, "close()");
+        logger.log(Level.INFO, "close()"); //NON-NLS
 
         //exit JavaFx plat
         if (javaFxInit) {
@@ -193,12 +193,15 @@ public class Installer extends ModuleInstall {
         }
 
         for (ModuleInstall mi : packageInstallers) {
-            logger.log(Level.INFO, mi.getClass().getName() + " close()");
+            logger.log(Level.INFO, "{0} close()", mi.getClass().getName()); //NON-NLS
             try {
                 mi.close();
             } catch (Exception e) {
                 logger.log(Level.WARNING, "", e);
             }
+        }
+        for (Handler h : logger.getHandlers()) {
+            h.close();   //must call h.close or a .LCK file will remain.
         }
     }
 }

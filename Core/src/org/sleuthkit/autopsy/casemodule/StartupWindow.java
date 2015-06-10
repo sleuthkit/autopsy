@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -39,9 +40,10 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static StartupWindow instance;
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static Dimension DIMENSIONS = new Dimension(750, 400);
+    private static CueBannerPanel welcomeWindow;
 
     public StartupWindow() {
-        super(new JFrame(TITLE), TITLE, true);
+        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         init();
     }
 
@@ -61,7 +63,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
-        CueBannerPanel welcomeWindow = new CueBannerPanel();
+        welcomeWindow = new CueBannerPanel();
 
         // add the command to close the window to the button on the Volume Detail Panel
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
@@ -80,6 +82,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     
     @Override
     public void open() {
+        welcomeWindow.refresh();
         setVisible(true);
     }
 

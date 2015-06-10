@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.*;
+
 /**
  * The panel shown for all TableReportModules when configuring report modules.
  */
@@ -41,7 +43,7 @@ public class DefaultReportConfigurationPanel extends javax.swing.JPanel {
 
         infoLabel = new javax.swing.JLabel();
 
-        infoLabel.setFont(new java.awt.Font("Tahoma", 2, 11)); // NOI18N
+        infoLabel.setFont(infoLabel.getFont().deriveFont(Font.ITALIC, 11));
         org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(DefaultReportConfigurationPanel.class, "DefaultReportConfigurationPanel.infoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

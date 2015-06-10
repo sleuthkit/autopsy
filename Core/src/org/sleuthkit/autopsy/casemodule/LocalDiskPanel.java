@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -41,22 +40,29 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+
 /**
- * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or  C:.
+ * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
+ * C:.
  */
- final class LocalDiskPanel extends JPanel  {
+final class LocalDiskPanel extends JPanel {
+
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
-    
+
     private static LocalDiskPanel instance;
+
     private PropertyChangeSupport pcs = null;
+
     private List<LocalDisk> disks;
+
     private LocalDiskModel model;
+
     private boolean enableNext = false;
 
     /**
@@ -66,11 +72,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         this.disks = new ArrayList<>();
         initComponents();
         customInit();
-        
+
         createTimeZoneList();
-        
+
     }
-    
+
     /**
      * Get the default instance of this panel.
      */
@@ -80,16 +86,16 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         }
         return instance;
     }
-    
-    
+
+    @SuppressWarnings("unchecked")
     private void customInit() {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
-        
+
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-        
+
     }
 
     /**
@@ -161,7 +167,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -176,15 +182,15 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
     /**
      * Return the currently selected disk path.
+     *
      * @return String selected disk path
      */
     //@Override
     public String getContentPaths() {
-        if(disks.size() > 0) {
+        if (disks.size() > 0) {
             LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
             return selected.getPath();
-        } 
-        else {
+        } else {
             return "";
         }
     }
@@ -192,21 +198,21 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     /**
      * Set the selected disk.
      */
-   // @Override
+    // @Override
     public void setContentPath(String s) {
-        for(int i=0; i<disks.size(); i++) {
-            if(disks.get(i).getPath().equals(s)) {
+        for (int i = 0; i < disks.size(); i++) {
+            if (disks.get(i).getPath().equals(s)) {
                 diskComboBox.setSelectedIndex(i);
             }
         }
     }
-    
+
     public String getTimeZone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
         return tz.substring(tz.indexOf(")") + 2).trim();
-        
+
     }
-    
+
     boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
     }
@@ -214,54 +220,53 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
     /**
      * Should we enable the wizard's next button?
      * Always return true because we control the possible selections.
+     *
      * @return true
      */
     //@Override
     public boolean validatePanel() {
         return enableNext;
     }
-    
+
     //@Override
     public void reset() {
         //nothing to reset
-        
+
     }
-    
-   
-    
-   /**
+
+    /**
      * Set the focus to the diskComboBox and refreshes the list of disks.
      */
-   // @Override
+    // @Override
     public void select() {
         diskComboBox.requestFocusInWindow();
-        model.loadDisks();   
-        
-    }
-    
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
-	super.addPropertyChangeListener(pcl);
+        model.loadDisks();
 
-	if (pcs == null) {
-	    pcs = new PropertyChangeSupport(this);
-	}
+    }
+
+    @Override
+    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
+        super.addPropertyChangeListener(pcl);
+
+        if (pcs == null) {
+            pcs = new PropertyChangeSupport(this);
+        }
 
         pcs.addPropertyChangeListener(pcl);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-	super.removePropertyChangeListener(pcl);
+        super.removePropertyChangeListener(pcl);
 
         pcs.removePropertyChangeListener(pcl);
     }
-    
-     /**
+
+    /**
      * Creates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
      */
-     public void createTimeZoneList() {
+    public void createTimeZoneList() {
         // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
         for (String id : ids) {
@@ -269,7 +274,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
             int offset = zone.getRawOffset() / 1000;
             int hour = offset / 3600;
             int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
 
             /*
              * DateFormat dfm = new SimpleDateFormat("z");
@@ -287,34 +292,41 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         int thisOffset = thisTimeZone.getRawOffset() / 1000;
         int thisHour = thisOffset / 3600;
         int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID()); //NON-NLS
 
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
     }
-     
+
+    @SuppressWarnings("rawtypes")
     private class LocalDiskModel implements ComboBoxModel, ListCellRenderer {
+
         private Object selected;
+
         private boolean ready = false;
+
         private volatile boolean loadingDisks = false;
-        List<LocalDisk> physical = new ArrayList<>();
+
+        List<LocalDisk> physicalDrives = new ArrayList<>();
         List<LocalDisk> partitions = new ArrayList<>();
-        
+
         //private String SELECT = "Select a local disk:";
         private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
-        LocalDiskThread worker = null;
+        private String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.nodrives.msg");
         
+        LocalDiskThread worker = null;
+
         private void loadDisks() {
-           
+
             // if there is a worker already building the lists, then cancel it first.
-            if (loadingDisks && worker != null) {   
+            if (loadingDisks && worker != null) {
                 worker.cancel(false);
             }
-            
+
             // Clear the lists
             errorLabel.setText("");
             disks = new ArrayList<>();
-            physical = new ArrayList<>();
+            physicalDrives = new ArrayList<>();
             partitions = new ArrayList<>();
             diskComboBox.setEnabled(false);
             ready = false;
@@ -323,21 +335,19 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
             worker = new LocalDiskThread();
             worker.execute();
-            
-            
+
         }
 
         @Override
         public void setSelectedItem(Object anItem) {
-            if(ready) {
+            if (ready) {
                 selected = (LocalDisk) anItem;
                 enableNext = true;
-                
+
                 try {
                     pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-                }
-                catch (Exception e) {
-                    logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e);
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
                                                   NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
                                                   MessageNotifyUtil.MessageType.ERROR);
@@ -347,17 +357,41 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
         @Override
         public Object getSelectedItem() {
-            return ready ? selected : LOADING;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return NO_DRIVES;
+                }
+                return selected;
+            }
+            else {
+                return LOADING;
+            }
         }
 
         @Override
         public int getSize() {
-            return ready ? disks.size() : 1;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return 1;
+                }
+                return disks.size();
+            }
+            else {
+                return 1;
+            }
         }
 
         @Override
         public Object getElementAt(int index) {
-            return ready ? disks.get(index) : LOADING;
+            if (ready) {
+                if (disks.isEmpty()) {
+                    return NO_DRIVES;
+                }
+                return disks.get(index);
+            }
+            else {
+                return LOADING;
+            }
         }
 
         @Override
@@ -367,15 +401,16 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-        
+
+        @SuppressWarnings("rawtypes")
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
-            if(index == physical.size() - 1) {
+            if ((index == physicalDrives.size() - 1) && (physicalDrives.size() > 0)) {
                 panel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
             }
-            
+
             if (isSelected) {
                 label.setBackground(list.getSelectionBackground());
                 label.setForeground(list.getSelectionForeground());
@@ -383,38 +418,38 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                 label.setBackground(list.getBackground());
                 label.setForeground(list.getForeground());
             }
-            
-            String localDiskString = value.toString();
-            if(localDiskString.equals(LOADING)) {
-                Font font = new Font(label.getFont().getName(), Font.ITALIC, label.getFont().getSize()); 
-                label.setText(LOADING);
-                label.setFont(font);
-                label.setBackground(Color.GRAY);
-            } else {
+
+            if (value != null) {
+                String localDiskString = value.toString();
                 label.setText(value.toString());
+                if ((localDiskString.equals(LOADING)) || (localDiskString.equals(NO_DRIVES))) {
+                    label.setFont(label.getFont().deriveFont(Font.ITALIC));
+                    label.setBackground(Color.GRAY);
+                }
             }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
-            
+
             panel.add(label, BorderLayout.CENTER);
             return panel;
         }
-        
-        class LocalDiskThread extends SwingWorker<Object,Void> {
+
+        class LocalDiskThread extends SwingWorker<Object, Void> {
+
             private Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
 
             @Override
             protected Object doInBackground() throws Exception {
                 // Populate the lists
-                physical = PlatformUtil.getPhysicalDrives();
+                physicalDrives = PlatformUtil.getPhysicalDrives();
                 partitions = PlatformUtil.getPartitions();
-                
+
                 return null;
             }
-        
+
             private void displayErrors() {
-                if(physical.isEmpty() && partitions.isEmpty()) {
-                    if(PlatformUtil.isWindowsOS()) {
+                if (physicalDrives.isEmpty() && partitions.isEmpty()) {
+                    if (PlatformUtil.isWindowsOS()) {
                         errorLabel.setText(
                                 NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.disksNotDetected.text"));
                         errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
@@ -426,41 +461,42 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
                                                                       "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText"));
                     }
                     diskComboBox.setEnabled(false);
-                } else if(physical.isEmpty()) {
+                } else if (physicalDrives.isEmpty()) {
                     errorLabel.setText(
                             NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.someDisksNotDetected.text"));
                     errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
                                                                   "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText"));
                 }
             }
-        
+
             @Override
             protected void done() {
                 try {
                     super.get(); //block and get all exceptions thrown while doInBackground()
                 } catch (CancellationException ex) {
-                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                 } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, "Loading local disks was interrupted.");
+                    logger.log(Level.INFO, "Loading local disks was interrupted."); //NON-NLS
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Fatal error when loading local disks", ex);
+                    logger.log(Level.SEVERE, "Fatal error when loading local disks", ex); //NON-NLS
                 } finally {
                     if (!this.isCancelled()) {
                         enableNext = false;
                         displayErrors();
-                        ready = true;
+                        
                         worker = null;
                         loadingDisks = false;
-                        
-                         disks.addAll(physical);
-                         disks.addAll(partitions);
-                        
-                        if(disks.size() > 0) {
+
+                        disks.addAll(physicalDrives);
+                        disks.addAll(partitions);
+
+                        if (disks.size() > 0) {
                             diskComboBox.setEnabled(true);
                             diskComboBox.setSelectedIndex(0);
                         }
+                        ready = true;
                     } else {
-                        logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                        logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                     }
                 }
             }

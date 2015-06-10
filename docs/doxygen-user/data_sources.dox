@@ -1,0 +1,86 @@
+/*! \page ds_page Data Sources
+
+
+A data source the thing you want to analyze. It can be a disk image, some logical files, a local drive, etc. You must open a case prior to adding a data source to Autopsy. 
+
+Autopsy supports three types of data sources:
+- Disk Image: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card.  (see \ref ds_img)
+- Local Drive: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
+- Logical Files: Local files or folders. (see \ref ds_log)
+
+
+
+\section ds_add Adding a Data Source
+
+You can add a data source in several ways:
+- After you create a case, it automatically prompts you to add a data source.
+- There is a toolbar item to add a Data Source when a case is open.
+- The "File", "Add Data Source" menu item when a case is open.
+
+The data source must remain accessible for the duration of the analysis because the case contains a reference to the data source.  It does <b>not</b> copy the data source into the case folder. 
+
+Regardless of the type of data source, there are some common steps in the process:
+
+1) You will be prompted to specify the data source to add (details are provided below)
+
+\image html select-data-source-type.PNG
+
+2) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
+
+3) While it is examining the data source, you will be prompted with a list of ingest modules to enable. 
+
+\image html select-ingest-modules.PNG
+
+4) After you configure the ingest modules, you may need to wait for Autopsy to finish its basic examination of the data source. 
+
+\image html data-source-progress-bar.PNG
+
+5) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
+
+You cannot remove a data source from a case.
+
+\section ds_img Adding a Disk Image
+
+Autopsy supports disk images in the following formats: 
+- Raw Single (For example: *.img, *.dd, *.raw, etc)
+- Raw Split (For example: *.001, *.002, *.aa, *.ab, etc)
+- EnCase (For example: *.e01, *e02, etc)
+
+To add a disk image:
+
+-# Choose "Image File" from the pull down.
+-# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
+-# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
+-# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
+
+
+\section ds_local Adding a Local Drive
+
+Autopsy can analyze a local drive without needing to first make an image copy of it. This is most useful when analyzing a USB-attached device through a write blocker.  
+
+Note that if you are analyzing a local drive that is being updated, then Autopsy will not see files that are added after you add it as a data source.  
+
+You will need to be running Autopsy as an Administrator to view all devices.  
+
+To add a local drive:
+-# Choose "Local Drive" from the pull down.
+-# Choose the device from the pull down list.
+-# Choose to perform orphan file finding.  See comment in \ref ds_img about this setting.
+
+
+\section ds_log Adding a Logical File
+
+You can add files or folders that are on your local computer (or on a shared drive) without putting them into a disk image.  This is useful if you have only a collection of files that you want to analyze.  
+
+Some things to note when doing this:
+- Autopsy ignores the time stamps on files that it adds this way because they could be the timestamps when they were copied onto your examination device.
+- If you have a USB-attached device that you are analyzing and you choose to add the device's contents using this method, then note that it will not look at unallocated space or deleted files.  Autopsy will only be able to see the allocated files.  You should add the device as a "Logical Drive" to analyze the unallocated space.
+
+To add logical files:
+-# Choose "Logical Files" from the pull down.
+-# Press the "Add" button and navigate to a folder or file to add.  Choosing a folder will cause all of its contents (including sub-folders) to be added.
+-# Continue to press "Add" until all files and folders have been selected.
+
+All of the files that you added in the panel will be grouped together into a single data source, called "LogicalFileSet" in the main UI. 
+
+*/

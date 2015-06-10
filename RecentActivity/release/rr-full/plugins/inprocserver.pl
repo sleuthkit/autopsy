@@ -1,9 +1,13 @@
 #-----------------------------------------------------------
 # inprocserver.pl
-# Plugin to extract file association data from the Software hive file
-# Can take considerable time to run; recommend running it via rip.exe
+# 
 #
 # History
+#   20141112 - added support for Wow6432Node
+#   20141103 - updated to include detection for PowerLiks
+#   20141030 - added GDataSoftware reference
+#   20140808 - updated to scan Software & NTUSER.DAT/USRCLASS.DAT hives
+#   20130603 - updated alert functionality
 #   20130429 - added alertMsg() functionality
 #   20130212 - fixed retrieving LW time from correct key
 #   20121213 - created
@@ -17,22 +21,27 @@
 #   points to a WMI component.  The key identifier is that it employs a path to 
 #   "\\.\globalroot...", hence the match function.
 #
-# copyright 2012, Quantum Analytics Research, LLC
+#   http://www.secureworks.com/cyber-threat-intelligence/threats/malware-analysis-of-the-lurk-downloader/
+#   https://blog.gdatasoftware.com/blog/article/com-object-hijacking-the-discreet-way-of-persistence.html  
+#
+# copyright 2012-2014, QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package inprocserver;
 use strict;
 
-my %config = (hive          => "Software",
+my %config = (hive          => "Software","NTUSER\.DAT","USRCLASS\.DAT",
               osmask        => 22,
+              category      => "malware",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130429);
+              version       => 20141103);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Checks CLSID InProcServer32 values for indications of ZeroAccess infection";	
+	return "Checks CLSID InProcServer32 values for indications of malware";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -49,52 +58,78 @@ sub pluginmain {
 	
 	::logMsg("Launching inprocserver v.".$VERSION);
 	::rptMsg("inprocserver v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
-
-	my $key_path = "Classes\\CLSID";
-	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg($key_path);
+  my @paths = ("Classes\\CLSID","Wow6432Node\\Classes\\CLSID","CLSID","Wow6432Node\\CLSID");
+  foreach my $key_path (@paths) {
+		my $key;
+		if ($key = $root_key->get_subkey($key_path)) {
+			::rptMsg($key_path);
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
-		::rptMsg("");
+			::rptMsg("");
 # First step will be to get a list of all of the file extensions
-		my %ext;
-		my @sk = $key->get_list_of_subkeys();
-		if (scalar(@sk) > 0) {
-			foreach my $s (@sk) {
-				my $name = $s->get_name();
-				eval {
-					my $n = $s->get_subkey("InprocServer32")->get_value("")->get_data();
-					if (($n =~ m/^C:\\Users/) || grep(/Recycle/,$n) || grep(/RECYCLE/,$n) || grep(/globalroot/,$n) || $n =~ m/\\n\.$/) {
-						my $lw = $s->get_subkey("InprocServer32")->get_timestamp();
-						$susp{$lw}{name} = $name;
-						$susp{$lw}{data} = $n;
+			my %ext;
+			my @sk = $key->get_list_of_subkeys();
+			if (scalar(@sk) > 0) {
+				foreach my $s (@sk) {
+					my $name = $s->get_name();
+					
+#Check for Lurk infection (see Dell SecureWorks ref link)					
+					if ($name eq "{A3CCEDF7-2DE2-11D0-86F4-00A0C913F750}" || $name eq "{a3ccedf7-2de2-11d0-86f4-00a0c913f750}") {
+						
+						my $l = $s->get_subkey("InprocServer32")->get_value("")->get_data();
+						$l =~ tr/[A-Z]/[a-z]/;
+						::rptMsg("Possible Lurk infection found!") unless ($l eq "c:\\windows\\system32\\pngfilt\.dll");
+
 					}
-				};
+					
+					eval {
+						my $n = $s->get_subkey("InprocServer32")->get_value("")->get_data();
+						alertCheckPath($n);
+					};
+
+# Powerliks
+# http://www.symantec.com/connect/blogs/trojanpoweliks-threat-inside-system-registry		
+# http://msdn.microsoft.com/en-us/library/windows/desktop/ms683844(v=vs.85).aspx			
+					eval {
+						my $local = $s->get_subkey("localserver32");
+						my $powerliks = $local->get_value("")->get_data();
+						::rptMsg($s->get_name()."\\LocalServer32 key found\.");
+						::rptMsg("  LastWrite: ".gmtime($local->get_timestamp()));
+						if ($powerliks =~ m/^rundll32/) {
+							::rptMsg("**Possible PowerLiks found\.");
+							::rptMsg("  ".$powerliks);
+						}
+					};
 				
-			}
-			
-			if (scalar(keys %susp) > 0) {
-				foreach my $t (sort {$a <=> $b} keys %susp) {
-					::rptMsg("Key path: ".$key_path."\\".$susp{$t}{name});
-					::rptMsg("LastWrite: ".gmtime($t));
-					::rptMsg("Value Data: ".$susp{$t}{data});
-					::alertMsg($key_path."\\".$susp{$t}{name}.": ".$susp{$t}{data});
-					::rptMsg("");
 				}
 			}
 			else {
-				::rptMsg("No suspicious InprocServer32 values found.");
+#				::rptMsg($key_path." has no subkeys.");
 			}
 		}
 		else {
-			::rptMsg($key_path." has no subkeys.");
+#			::rptMsg($key_path." not found.");
 		}
 	}
-	else {
-		::rptMsg($key_path." not found.");
+}
+
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path =~ tr/[A-Z]/[a-z]/;
+	
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data","c:\\users");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: inprocserver: ".$a." found in path: ".$path);              
+		}
 	}
 }
+
 1;

@@ -31,6 +31,6 @@ final class KeywordSearchAction extends AbstractAction implements Presenter.Tool
 
     @Override
     public Component getToolbarPresenter() {
-        return KeywordSearchPanel.getDefault();
+        return DropdownToolbar.getDefault();
     }
 }

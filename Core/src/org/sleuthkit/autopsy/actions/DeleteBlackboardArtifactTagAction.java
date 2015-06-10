@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 
 import org.openide.util.NbBundle;
@@ -61,7 +61,7 @@ public class DeleteBlackboardArtifactTagAction extends TagAction {
                 Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex);                
+                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(this.getClass(),
                                                                   "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",

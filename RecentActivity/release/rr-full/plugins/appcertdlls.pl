@@ -5,12 +5,8 @@
 #  20120912 - created
 #
 # References:
-#  Blog post: https://blog.mandiant.com/archives/2459
-#  Whitepaper: http://fred.mandiant.com/Whitepaper_ShimCacheParser.pdf
-#  Tool: https://github.com/mandiant/ShimCacheParser
+#  
 #
-# This plugin is based solely on the work and examples provided by Mandiant;
-# thanks to them for sharing this information, and making the plugin possible.
 # 
 # copyright 2012 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com

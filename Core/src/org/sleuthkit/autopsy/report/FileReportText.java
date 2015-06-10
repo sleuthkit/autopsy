@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.AbstractFile;
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;
     private Writer out;
-    private static final String FILE_NAME = "file-report.txt";
+    private static final String FILE_NAME = "file-report.txt"; //NON-NLS
     
     private static FileReportText instance;
     
@@ -54,12 +54,12 @@ import org.sleuthkit.datamodel.AbstractFile;
     }
     
     @Override
-    public void startReport(String path) {
-        this.reportPath = path + FILE_NAME;
+    public void startReport(String baseReportDir) {
+        this.reportPath = baseReportDir + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to create report text file", ex);
+            logger.log(Level.WARNING, "Failed to create report text file", ex); //NON-NLS
         }
     }
 
@@ -69,7 +69,7 @@ import org.sleuthkit.datamodel.AbstractFile;
             try {
                 out.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not close output writer when ending report.", ex);
+                logger.log(Level.WARNING, "Could not close output writer when ending report.", ex); //NON-NLS
             }
         }
     }
@@ -92,7 +92,7 @@ import org.sleuthkit.datamodel.AbstractFile;
         try {
             out.write(getTabDelimitedList(titles));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error when writing headers to report file: {0}", ex);
+            logger.log(Level.WARNING, "Error when writing headers to report file: {0}", ex); //NON-NLS
         }
     }
 
@@ -105,7 +105,7 @@ import org.sleuthkit.datamodel.AbstractFile;
         try {
             out.write(getTabDelimitedList(cells));
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error when writing row to report file: {0}", ex);
+            logger.log(Level.WARNING, "Error when writing row to report file: {0}", ex); //NON-NLS
         }
     }
 
@@ -114,7 +114,7 @@ import org.sleuthkit.datamodel.AbstractFile;
         try {
             out.write(System.lineSeparator());
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error when closing table: {0}", ex);
+            logger.log(Level.WARNING, "Error when closing table: {0}", ex); //NON-NLS
         }
     }
 
@@ -129,12 +129,7 @@ import org.sleuthkit.datamodel.AbstractFile;
     }
 
     @Override
-    public String getExtension() {
-        return ".txt";
-    }
-
-    @Override
-    public String getFilePath() {
+    public String getRelativeFilePath() {
         return FILE_NAME;
     }
 }

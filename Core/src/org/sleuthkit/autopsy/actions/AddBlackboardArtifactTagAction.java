@@ -67,7 +67,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
                 Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
+                Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(this.getClass(),
                                                                   "AddBlackboardArtifactTagAction.unableToTag.msg",

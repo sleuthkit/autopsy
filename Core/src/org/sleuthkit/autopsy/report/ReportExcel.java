@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +23,12 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskCoreException;
 
  class ReportExcel implements TableReportModule {
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private CellStyle elementStyle;
     private int rowIndex = 0;
     private int sheetColCount = 0;
-    private int artifactsCount = 0;
     private String reportPath;
     
     // Get the default instance of this report
@@ -59,12 +58,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * Start the Excel report by creating the Workbook, initializing styles,
      * and writing the summary.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      */
     @Override
-    public void startReport(String path) {        
+    public void startReport(String baseReportDir) {        
         // Set the path and save it for when the report is written to disk.
-        this.reportPath = path + getFilePath();
+        this.reportPath = baseReportDir + getRelativeFilePath();
                 
         // Make a workbook.
         wb = new XSSFWorkbook();
@@ -110,8 +109,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             out = new FileOutputStream(reportPath);
             wb.write(out);
+            Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                                                                            "ReportExcel.endReport.srcModuleName.text"), "");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write Excel report.", ex);
+            logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+            logger.log(Level.SEVERE, errorMessage, ex);
         } finally {
             if (out != null) {
                 try {
@@ -136,31 +140,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
         rowIndex = 0;
-        artifactsCount = 0;
-        
-        // Add a title row to the worksheet.
-        Row row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue(name);
-        ++rowIndex;
-        
-        // Add an artifacts count row. The actual count will be filled in later.
-        row = sheet.createRow(rowIndex);
-        row.setRowStyle(setStyle);
-        row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.numAartifacts.text"));
-        ++rowIndex;
-
-        // Add a comment row, if a comment was supplied.
-        if (!description.isEmpty()) {
-            row = sheet.createRow(rowIndex);
-            row.setRowStyle(setStyle);
-            row.createCell(0).setCellValue(description);
-            ++rowIndex;
-        }
-        
-        // Add an empty row as a separator.
-        sheet.createRow(rowIndex);
-        ++rowIndex;
                 
         // There will be at least two columns, one each for the artifacts count and its label.
         sheetColCount = 2;
@@ -170,12 +149,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      * End the current data type and sheet.
      */
     @Override
-    public void endDataType() {
-        // Fill in the artifact count cell in row 0.
-        Row row = sheet.getRow(1);
-        row.setRowStyle(setStyle);
-        row.createCell(1).setCellValue(artifactsCount);
-    
+    public void endDataType() {  
         // Now that the sheet is complete, size the columns to the content.
         for (int i = 0; i < sheetColCount; ++i) {
             sheet.autoSizeColumn(i);
@@ -262,7 +236,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             row.createCell(i).setCellValue(rowData.get(i));
         }
         ++rowIndex;
-        ++artifactsCount;
     }
 
     /**
@@ -287,13 +260,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     }
 
     @Override
-    public String getExtension() {
-        return ".xlsx";
-    }
-
-    @Override
-    public String getFilePath() {
-        return NbBundle.getMessage(this.getClass(), "ReportExcel.getFilePath.text");
+    public String getRelativeFilePath() {
+        return "Excel.xlsx"; //NON-NLS
     }
     
     /**
@@ -341,7 +309,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.numImages"));
-        row.createCell(1).setCellValue(currentCase.getImageIDs().length);
+        int numImages;
+        try {
+            numImages = currentCase.getDataSources().size();
+        } catch (TskCoreException ex) {
+            numImages = 0;
+        }
+        row.createCell(1).setCellValue(numImages);
         ++rowIndex;
         
         sheet.autoSizeColumn(0);

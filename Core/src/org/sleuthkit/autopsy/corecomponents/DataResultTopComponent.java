@@ -239,15 +239,15 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
             //putClientProperty("TopComponentAllowDockAnywhere", Boolean.TRUE);
             Mode mode = WindowManager.getDefault().findMode(customModeName);
             if (mode != null) {
-                StringBuilder message = new StringBuilder("Found custom mode, setting: ");
+                StringBuilder message = new StringBuilder("Found custom mode, setting: "); //NON-NLS
                 message.append(customModeName);
                 logger.log(Level.INFO, message.toString());
                 mode.dockInto(this);
 
             } else {
-                StringBuilder message = new StringBuilder("Could not find mode: ");
+                StringBuilder message = new StringBuilder("Could not find mode: "); //NON-NLS
                 message.append(customModeName);
-                message.append(", will dock into the default one");
+                message.append(", will dock into the default one"); //NON-NLS
                 logger.log(Level.WARNING, message.toString());
             }
         }
@@ -298,7 +298,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public boolean canClose() {
-        return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
+        return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
     }
 
     /**

@@ -1,0 +1,32 @@
+/*! \page photorec_carver_page PhotoRec Carver Module
+
+What Does It Do
+========
+
+The PhotoRec Carver module carves files from unallocated space in the data source and sends the files found through the ingest processing chain.
+
+This can help a reviewer discover more information about files that used to be on the device and were subsequently deleted. These are simply extra files that were found in "empty" portions of the device storage.
+
+
+Configuration
+=======
+
+There is nothing to configure for this module.
+
+
+Using the Module
+======
+Select the checkbox in the Ingest Modules settings screen to enable the PhotoRec Carver. Ensure that "Process Unallocated Space" is selected.
+
+Ingest Settings
+------
+There are no run-time settings for this module, but the global setting to "Process Unallocated Space" needs to be selected to make this work.
+
+Seeing Results
+------
+The results of carving show up on the tree under the appropriate data source with the heading "$CarvedFiles".
+
+\image html photorec_output.PNG
+
+Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
+*/

@@ -1,3 +1,45 @@
+---------------- VERSION 3.1.2  --------------
+Improvements:
+- New PhotoRec carving ingest module
+- Regripper output is avaiable as a report instead of TOOL_OUTPUT artifact
+- Updated version of RegRipper
+- New STIX/Cybox report module (manually run after image has been analyzed)
+- File type module supports user defined file types and can alert when they are found
+- More artifacts are extracted from registry
+- Metadata tab in lower right now also shows istat (TSK) output for more metadata details
+- User docs were moved online (http://sleuthkit.org/autopsy/docs/user-docs/3.1/)
+
+---------------- VERSION 3.1.1  --------------
+Improvements:
+- New time line feature
+- New Interesting Files module
+- Added support for Python modules
+- Updated HTML report
+- Media Content viewer uses blackboard artifacts and detects PNG by sig.
+- New logo
+
+Bug Fixes:
+- Adding local disk errors
+- ZIP files inside of RAR files are properly extracted
+ 
+
+---------------- VERSION 3.1.0  --------------
+Numerous changes have gone into this long-awaited major release.
+
+Improvements:
+- Multi-threaded pipelines
+- File type ingest module
+- File extension mismatch ingest module
+- Android ingest module
+- KML report module
+- Tags can be deleted
+- Hash databases can be created and maintained
+
+
+
+---------------- VERSION 3.0.10  --------------
+Bug Fixes:
+- Fixed 64-bit CRT dlls.  No other logic changes. 
 
 ---------------- VERSION 3.0.9  --------------
 Bug Fixes:

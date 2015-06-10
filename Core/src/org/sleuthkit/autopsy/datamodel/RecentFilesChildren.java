@@ -29,6 +29,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -62,11 +64,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
     }
 
     private long getLastTime() {
-        String query = createMaxQuery("crtime");
+        String query = createMaxQuery("crtime"); //NON-NLS
         long maxcr = runTimeQuery(query);
-        query = createMaxQuery("ctime");
+        query = createMaxQuery("ctime"); //NON-NLS
         long maxc = runTimeQuery(query);
-        query = createMaxQuery("mtime");
+        query = createMaxQuery("mtime"); //NON-NLS
         long maxm = runTimeQuery(query);
         //query = createMaxQuery("atime");
         //long maxa = runTimeQuery(query);
@@ -76,27 +78,20 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
     //TODO add a generic query to SleuthkitCase
     private String createMaxQuery(String attr) {
-        return "SELECT MAX(" + attr + ") from tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000;
+        return "SELECT MAX(" + attr + ") from tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000; //NON-NLS
     }
 
     @SuppressWarnings("deprecation")
     private long runTimeQuery(String query) {
         long result = 0;
-        ResultSet rs = null;
-        try {
-            rs = skCase.runQuery(query);
-            result = rs.getLong(1);
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Couldn't get recent files results", ex);
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Error closing result set after getting recent files results", ex);
-                }
-            }
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            result = resultSet.getLong(1);
+        } catch (TskCoreException | SQLException ex) {
+            logger.log(Level.WARNING, "Couldn't get recent files results: ", ex); //NON-NLS
         }
+        
         return result;
     }
 }

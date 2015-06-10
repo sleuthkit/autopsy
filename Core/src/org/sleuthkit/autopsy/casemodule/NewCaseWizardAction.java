@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.awt.Dialog;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
@@ -47,9 +46,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     @Override
     public void performAction() {
-        Logger.noteAction(this.getClass());
-
-
         // there's a case open
         if (Case.existsCurrentCase()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -67,7 +63,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                     Case.getCurrentCase().closeCase(); // close the current case
                     newCaseAction(); // start the new case creation process
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex);
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             }
         } else {
@@ -101,9 +97,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
         // if Cancel button is pressed
         if (isCancelled) {
-            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory");
+            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
             if(createdDirectory != null) {
-                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory);
+                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
                 Case.deleteCaseDirectory(new File(createdDirectory));
             }
             // if there's case opened, close the case

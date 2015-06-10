@@ -36,11 +36,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -84,9 +85,26 @@ import org.sleuthkit.datamodel.TskData;
     
     private String reportPath;
     private ReportGenerationPanel panel = new ReportGenerationPanel();
+     
+    static final String REPORTS_DIR = "Reports"; //NON-NLS
     
-    static final String REPORTS_DIR = "Reports";
-        
+    private List<String> errorList;
+    /**
+     * Displays the list of errors during report generation in user-friendly way.
+     * MessageNotifyUtil used to display bubble notification.
+     * @param listOfErrors List of strings explaining the errors.
+     */
+    private void displayReportErrors(){
+        if(!errorList.isEmpty()){
+            String errorString = "";
+            for(String error : errorList)
+                errorString += error + "\n";
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(this.getClass(), "ReportGenerator.notifyErr.errsDuringRptGen"), errorString);
+            return;
+        }        
+    }
+    
     ReportGenerator(Map<TableReportModule, Boolean> tableModuleStates, Map<GeneralReportModule, Boolean> generalModuleStates, Map<FileReportModule, Boolean> fileListModuleStates) {
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
@@ -94,11 +112,15 @@ import org.sleuthkit.datamodel.TskData;
         String dateNoTime = dateFormat.format(date);
         this.reportPath = currentCase.getCaseDirectory() + File.separator + REPORTS_DIR + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
         
+        this.errorList = new ArrayList<String>();
+        
         // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(this.reportPath));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex);
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
+            logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
+            return;
         }
         
         // Initialize the progress panels
@@ -120,9 +142,9 @@ import org.sleuthkit.datamodel.TskData;
             for (Entry<TableReportModule, Boolean> entry : tableModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     TableReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        tableProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         tableProgress.put(module, panel.addReport(module.getName(), null));                        
@@ -135,9 +157,9 @@ import org.sleuthkit.datamodel.TskData;
             for (Entry<GeneralReportModule, Boolean> entry : generalModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        generalProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         generalProgress.put(module, panel.addReport(module.getName(), null));                        
@@ -150,9 +172,9 @@ import org.sleuthkit.datamodel.TskData;
             for(Entry<FileReportModule, Boolean> entry : fileListModuleStates.entrySet()) {
                 if (entry.getValue()) {
                     FileReportModule module = entry.getKey();
-                    String moduleFilePath = module.getFilePath();
-                    if (moduleFilePath != null) {
-                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + moduleFilePath));
+                    String reportFilePath = module.getRelativeFilePath();
+                    if (reportFilePath != null) {
+                        fileProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     }
                     else {
                         fileProgress.put(module, panel.addReport(module.getName(), null));                        
@@ -260,7 +282,13 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "failed to generate reports", ex);
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
+            finally{
+                displayReportErrors();
+                errorList.clear();
             }
         }
         
@@ -331,7 +359,7 @@ import org.sleuthkit.datamodel.TskData;
             for (FileReportModule module : fileModules) {
                 module.endTable();
                 module.endReport();
-                fileProgress.get(module).complete();
+                fileProgress.get(module).complete(ReportStatus.COMPLETE);
             }
             
             return 0;
@@ -345,10 +373,14 @@ import org.sleuthkit.datamodel.TskData;
             List<AbstractFile> absFiles;
             try {
                 SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-                absFiles = skCase.findAllFilesWhere("NOT meta_type = 2");
+                absFiles = skCase.findAllFilesWhere("NOT meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
                 return absFiles;
             } catch (TskCoreException ex) {
-                // TODO
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+                logger.log(Level.SEVERE, "failed to generate reports. Unable to get all files in the image.", ex); //NON-NLS
                 return Collections.<AbstractFile>emptyList();
             }
         }
@@ -362,7 +394,13 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "failed to generate reports", ex);
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
+            finally{
+                displayReportErrors();
+                errorList.clear();
             }
         }
     }
@@ -414,20 +452,19 @@ import org.sleuthkit.datamodel.TskData;
                 }
             }
                       
-            
             // report on the blackboard results
             makeBlackboardArtifactTables();
-            
+
             // report on the tagged files and artifacts
             makeContentTagsTables();
             makeBlackboardArtifactTagsTables();
-            
+
             // report on the tagged images
             makeThumbnailTable();
-            
+
             // finish progress, wrap up
             for (TableReportModule module : tableModules) {
-                tableProgress.get(module).complete();
+                tableProgress.get(module).complete(ReportStatus.COMPLETE);
                 module.endReport();
             }
             
@@ -459,7 +496,7 @@ import org.sleuthkit.datamodel.TskData;
                                                 type.getDisplayName()));
                 }
                 
-                // Keyword hits and hashset hit artifacts get sepcial handling.                
+                // Keyword hits and hashset hit artifacts get special handling.
                 if (type.equals(ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
                     writeKeywordHits(tableModules, comment.toString(), tagNamesFilter);
                     continue;
@@ -488,10 +525,6 @@ import org.sleuthkit.datamodel.TskData;
                 List<String> columnHeaders = getArtifactTableColumnHeaders(type.getTypeID());
                 if (columnHeaders == null) {
                     // @@@ Hack to prevent system from hanging.  Better solution is to merge all attributes into a single column or analyze the artifacts to find out how many are needed.
-                    MessageNotifyUtil.Notify.show(
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.title", type),
-                            NbBundle.getMessage(this.getClass(), "ReportGenerator.msgShow.skippingArtType.msg"),
-                            MessageNotifyUtil.MessageType.ERROR);
                     continue;
                 }
                 
@@ -535,6 +568,7 @@ import org.sleuthkit.datamodel.TskData;
         /**
          * Make table for tagged files
          */
+        @SuppressWarnings("deprecation")
         private void makeContentTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -548,18 +582,29 @@ import org.sleuthkit.datamodel.TskData;
                 tags = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
             }
             catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "failed to get content tags", ex);
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
+                logger.log(Level.SEVERE, "failed to get content tags", ex); //NON-NLS
                 return;
             }
                         
             // Tell the modules reporting on content tags is beginning.
-            for (TableReportModule module : tableModules) {            
+             for (TableReportModule module : tableModules) {            
                 // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                 // @@@ Alos Using the obsolete ARTIFACT_TYPE.TSK_TAG_FILE is also an expedient hack.
                 tableProgress.get(module).updateStatusLabel(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName()));
-                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList("File", "Tag", "Comment"));                
+                ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeCreated"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.size"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.hash")));
+                
                 StringBuilder comment = new StringBuilder();
                 if (!tagNamesFilter.isEmpty()) {
                     comment.append(
@@ -591,7 +636,7 @@ import org.sleuthkit.datamodel.TskData;
                     fileName = tag.getContent().getName();
                 }
                 
-                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(fileName, tag.getName().getDisplayName(), tag.getComment()));
+                ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName(), fileName, tag.getComment()));
                 for (TableReportModule module : tableModules) {                                                                                       
                     // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
                     if (module instanceof ReportHTML) {
@@ -624,13 +669,20 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
                         MessageNotifyUtil.MessageType.ERROR);
-                logger.log(Level.SEVERE, "failed to generate reports", ex);
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
+            }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
+            finally{
+                displayReportErrors();
+                errorList.clear();
             }
         }
         
         /**
          * Generate the tables for the tagged artifacts
          */
+        @SuppressWarnings("deprecation")
         private void makeBlackboardArtifactTagsTables() {
             // Check for cancellaton.
             removeCancelledTableReportModules();
@@ -643,7 +695,8 @@ import org.sleuthkit.datamodel.TskData;
                 tags = Case.getCurrentCase().getServices().getTagsManager().getAllBlackboardArtifactTags();
             }
             catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "failed to get blackboard artifact tags", ex);
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
+                logger.log(Level.SEVERE, "failed to get blackboard artifact tags", ex); //NON-NLS
                 return;
             }
 
@@ -748,10 +801,15 @@ import org.sleuthkit.datamodel.TskData;
             try {
                 file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(artifactTag.getArtifact().getObjectID());
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex);
+                errorList.add(
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.errGetContentFromBBArtifact"));
+                logger.log(Level.WARNING, "Error while getting content from a blackboard artifact to report on.", ex); //NON-NLS
                 return;
             }
-            checkIfFileIsImage(file);
+            
+            if(file != null){
+                checkIfFileIsImage(file);
+            }
         }
         
         /**
@@ -820,12 +878,14 @@ import org.sleuthkit.datamodel.TskData;
                  try {
                      artifacts.add(new ArtifactData(artifact, skCase.getBlackboardAttributes(artifact), uniqueTagNames));
                  } catch (TskCoreException ex) {
-                     logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex);
+                     errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBAttribs"));
+                     logger.log(Level.SEVERE, "Failed to get Blackboard Attributes when generating report.", ex); //NON-NLS
                  }
              }
          } 
          catch (TskCoreException ex) {
-             logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex);
+             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifacts"));
+             logger.log(Level.SEVERE, "Failed to get Blackboard Artifacts when generating report.", ex); //NON-NLS
          }
         return artifacts;
     }
@@ -836,18 +896,25 @@ import org.sleuthkit.datamodel.TskData;
      */
     @SuppressWarnings("deprecation")
     private void writeKeywordHits(List<TableReportModule> tableModules, String comment, HashSet<String> tagNamesFilter) {
-        ResultSet listsRs = null;
-        try {
-            // Query for keyword lists
-            listsRs = skCase.runQuery("SELECT att.value_text AS list " +
-                                                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " +
-                                                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " +
-                                                    "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " +
-                                                    "AND att.artifact_id = art.artifact_id " + 
-                                                "GROUP BY list");
+        
+        // Query for keyword lists-only so that we can tell modules what lists
+        // will exist for their index.
+        // @@@ There is a bug in here.  We should use the tags in the below code
+        // so that we only report the lists that we will later provide with real
+        // hits.  If no keyord hits are tagged, then we make the page for nothing.
+        String keywordListQuery = 
+                "SELECT att.value_text AS list " + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " + //NON-NLS
+                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
+                "GROUP BY list"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(keywordListQuery)) {
+            ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                String list = listsRs.getString("list");
+                String list = listsRs.getString("list"); //NON-NLS
                 if(list.isEmpty()) {
                     list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
@@ -863,34 +930,32 @@ import org.sleuthkit.datamodel.TskData;
                                             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
             }
         }
-        catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to query keyword lists.", ex);
-        } finally {
-            if (listsRs != null) {
-                try {
-                    skCase.closeRunQuery(listsRs);
-                } catch (SQLException ex) {
-                }
-            }
+        catch (TskCoreException | SQLException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
+            logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
+            return;
         }
         
-        ResultSet rs = null;
-        try {
-            // Query for keywords
-            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name " +
-                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " +
-                                           "WHERE (att1.artifact_id = art.artifact_id) " +
-                                                 "AND (att2.artifact_id = art.artifact_id) " + 
-                                                 "AND (att3.artifact_id = art.artifact_id) " + 
-                                                 "AND (f.obj_id = art.obj_id) " +
-                                                 "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " +
-                                                 "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " +
-                                                 "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " +
-                                                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " +
-                                           "ORDER BY list, keyword, name");
+        // Query for keywords, grouped by list
+        String keywordsQuery = 
+                "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path " + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f " + //NON-NLS
+                "WHERE (att1.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) " +  //NON-NLS
+                "AND (att3.artifact_id = art.artifact_id) " +  //NON-NLS
+                "AND (f.obj_id = art.obj_id) " + //NON-NLS
+                "AND (att1.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " + //NON-NLS
+                "AND (att2.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + //NON-NLS
+                "AND (att3.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + //NON-NLS
+                "ORDER BY list, keyword, parent_path, name"; //NON-NLS
+        
+        try (CaseDbQuery dbQuery = skCase.executeQuery(keywordsQuery)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            
             String currentKeyword = "";
             String currentList = "";
-            while (rs.next()) {
+            while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
                 if (tableModules.isEmpty()) {
                     break;
@@ -903,27 +968,28 @@ import org.sleuthkit.datamodel.TskData;
                     }
                 }
  
-               // Get any tags that associated with this artifact and apply the tag filter.
-               HashSet<String> uniqueTagNames = new HashSet<>();
-               ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id"));
-               while (tagNameRows.next()) {
-                   uniqueTagNames.add(tagNameRows.getString("display_name"));
-               }
-               if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
-                   continue;
-               }                    
-               String tagsList = makeCommaSeparatedList(uniqueTagNames);
+                // Get any tags that associated with this artifact and apply the tag filter.
+                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
+                if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                    continue;
+                }                    
+                String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                         
-                Long objId = rs.getLong("obj_id");
-                String keyword = rs.getString("keyword");
-                String preview = rs.getString("preview");
-                String list = rs.getString("list");
+                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                String keyword = resultSet.getString("keyword"); //NON-NLS
+                String preview = resultSet.getString("preview"); //NON-NLS
+                String list = resultSet.getString("list"); //NON-NLS
                 String uniquePath = "";
 
-                 try {
-                    uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                try {
+                    AbstractFile f = skCase.getAbstractFileById(objId);
+                    if(f != null){
+                        uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
+                    logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
                 }
 
                 // If the lists aren't the same, we've started a new list
@@ -969,15 +1035,9 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).increment();
                 module.endDataType();
             }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to query keywords.", ex);
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                }
-            }
+        } catch (TskCoreException | SQLException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
+            logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
         }
     }
     
@@ -987,18 +1047,20 @@ import org.sleuthkit.datamodel.TskData;
      */
     @SuppressWarnings("deprecation")
     private void writeHashsetHits(List<TableReportModule> tableModules,  String comment, HashSet<String> tagNamesFilter) {
-        ResultSet listsRs = null;
-        try {
+        String hashsetsQuery =
+                "SELECT att.value_text AS list " + //NON-NLS
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " + //NON-NLS
+                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + //NON-NLS
+                "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " + //NON-NLS
+                "AND att.artifact_id = art.artifact_id " +  //NON-NLS
+                "GROUP BY list"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetsQuery)) {
             // Query for hashsets
-            listsRs = skCase.runQuery("SELECT att.value_text AS list " +
-                                                "FROM blackboard_attributes AS att, blackboard_artifacts AS art " +
-                                                "WHERE att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " +
-                                                    "AND art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + " " +
-                                                    "AND att.artifact_id = art.artifact_id " + 
-                                                "GROUP BY list");
+            ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while(listsRs.next()) {
-                lists.add(listsRs.getString("list"));
+                lists.add(listsRs.getString("list")); //NON-NLS
             }
             
             for (TableReportModule module : tableModules) {
@@ -1008,29 +1070,26 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processing",
                                             ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()));
             }
-        } catch (SQLException ex) {        
-            logger.log(Level.SEVERE, "Failed to query hashset lists.", ex);
-        } finally {
-            if (listsRs != null) {
-                try {
-                    skCase.closeRunQuery(listsRs);
-                } catch (SQLException ex) {
-                }
-            }
+        } catch (TskCoreException | SQLException ex) {     
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetLists"));
+            logger.log(Level.SEVERE, "Failed to query hashset lists: ", ex); //NON-NLS
+            return;
         }
         
-        ResultSet rs = null;
-        try {
+        String hashsetHitsQuery =
+                "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path " + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " + //NON-NLS
+                "WHERE (att.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (f.obj_id = art.obj_id) " + //NON-NLS
+                "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " + //NON-NLS
+                "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " + //NON-NLS
+                "ORDER BY setname, parent_path, name, size"; //NON-NLS
+
+        try (CaseDbQuery dbQuery = skCase.executeQuery(hashsetHitsQuery)) {
             // Query for hashset hits
-            rs = skCase.runQuery("SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size " +
-                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f " +
-                                           "WHERE (att.artifact_id = art.artifact_id) " +
-                                                 "AND (f.obj_id = art.obj_id) " +
-                                                 "AND (att.attribute_type_id = " + ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " +
-                                                 "AND (art.artifact_type_id = " + ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + ") " +
-                                           "ORDER BY setname, name, size");
+            ResultSet resultSet = dbQuery.getResultSet();
             String currentSet = "";
-            while (rs.next()) {
+            while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
                 if (tableModules.isEmpty()) {
                     break;
@@ -1044,25 +1103,27 @@ import org.sleuthkit.datamodel.TskData;
                 }
                 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = new HashSet<>();
-                ResultSet tagNameRows = skCase.runQuery("SELECT display_name FROM tag_names WHERE artifact_id = " + rs.getLong("artifact_id"));
-                while (tagNameRows.next()) {
-                    uniqueTagNames.add(tagNameRows.getString("display_name"));
-                }
+                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
                 if(failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }                    
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
                                                                         
-                Long objId = rs.getLong("obj_id");
-                String set = rs.getString("setname");
-                String size = rs.getString("size");
+                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                String set = resultSet.getString("setname"); //NON-NLS
+                String size = resultSet.getString("size"); //NON-NLS
                 String uniquePath = "";
                 
                 try {
-                    uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    AbstractFile f = skCase.getAbstractFileById(objId);
+                    if(f != null){
+                        uniquePath = skCase.getAbstractFileById(objId).getUniquePath();
+                    }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Failed to get Abstract File from ID.", ex);
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileFromID"));
+                    logger.log(Level.WARNING, "Failed to get Abstract File from ID.", ex); //NON-NLS
+                    return;
                 }
 
                 // If the sets aren't the same, we've started a new set
@@ -1094,15 +1155,9 @@ import org.sleuthkit.datamodel.TskData;
                 tableProgress.get(module).increment();
                 module.endDataType();
             }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to query hashsets hits.", ex);
-        } finally {
-            if (rs != null) {
-                try {
-                    skCase.closeRunQuery(rs);
-                } catch (SQLException ex) {
-                }
-            }
+        } catch (TskCoreException | SQLException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryHashsetHits"));
+            logger.log(Level.SEVERE, "Failed to query hashsets hits: ", ex); //NON-NLS
         }
     }
         
@@ -1141,6 +1196,7 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.referrer"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.title"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.urlDomainDecoded"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_WEB_DOWNLOAD: 
@@ -1173,9 +1229,10 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.size")}));
                 break;
-            case TSK_DEVICE_ATTACHED: 
+            case TSK_DEVICE_ATTACHED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devMake"),    
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.deviceId"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
@@ -1195,6 +1252,7 @@ import org.sleuthkit.datamodel.TskData;
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.devModel"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_CONTACT: 
@@ -1211,6 +1269,7 @@ import org.sleuthkit.datamodel.TskData;
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.msgType"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.readStatus"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromEmail"),
@@ -1223,7 +1282,8 @@ import org.sleuthkit.datamodel.TskData;
             case TSK_CALLLOG:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.personName"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.phoneNumber"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.fromPhoneNum"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.toPhoneNum"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.direction"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
@@ -1255,11 +1315,8 @@ import org.sleuthkit.datamodel.TskData;
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitude"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.altitude"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.locationAddress"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")  }));
+                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
                 break;
             case TSK_GPS_BOOKMARK:
                  columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
@@ -1305,16 +1362,79 @@ import org.sleuthkit.datamodel.TskData;
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                          NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile") }));
                 break;
-            case TSK_TOOL_OUTPUT: 
-                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.text"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
-                break;
             case TSK_ENCRYPTION_DETECTED:
                 columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                break;
+            case TSK_EXT_MISMATCH_DETECTED:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.file"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.extension.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mimeType.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path")}));
+                break;    
+            case TSK_OS_INFO:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.processorArchitecture.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osName.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.osInstallDate.text"),
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")}));
+                break;    
+            case TSK_EMAIL_MSG:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[] {
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailTo"), //TSK_EMAIL_TO
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailFrom"), //TSK_EMAIL_FROM
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSubject"), //TSK_SUBJECT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeSent"), //TSK_DATETIME_SENT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskDateTimeRcvd"), //TSK_DATETIME_RCVD
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),  //TSK_PATH
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailCc"), //TSK_EMAIL_CC
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskEmailBcc"), //TSK_EMAIL_BCC
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskMsgId")})); //TSK_MSG_ID
+                break;        
+            case TSK_INTERESTING_FILE_HIT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"), //TSK_SET_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskInterestingFilesCategory"), //TSK_CATEGORY
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath")})); //TSK_PATH
+                break;
+            case TSK_GPS_ROUTE:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskGpsRouteCategory"), //TSK_CATEGORY
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"), //TSK_DATETIME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeEnd"), //TSK_GEO_LATITUDE_END
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeEnd"), //TSK_GEO_LONGITUDE_END
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.latitudeStart"), //TSK_GEO_LATITUDE_START
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.longitudeStart"), //TSK_GEO_LONGITUDE_START
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"), //TSK_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.location"), //TSK_LOCATION
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program")}));//TSK_PROG_NAME
+                break;
+            case TSK_INTERESTING_ARTIFACT_HIT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"), //TSK_SET_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"), //TSK_ASSOCIATED_ARTIFACT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program")})); //TSK_PROG_NAME
+                break;
+            case TSK_PROG_RUN:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"), //TSK_PROG_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"), //TSK_ASSOCIATED_ARTIFACT
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"), //TSK_DATETIME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.count")})); //TSK_COUNT
+                break;
+                
+            case TSK_OS_ACCOUNT:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userName"), //TSK_USER_NAME
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.userId")})); //TSK_USER_ID
+                break;
+                
+            case TSK_REMOTE_DRIVE:
+                columnHeaders = new ArrayList<>(Arrays.asList(new String[]{
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.localPath"), //TSK_LOCAL_PATH
+                        NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath")})); //TSK_REMOTE_PATH
                 break;
             default:
                 return null;
@@ -1356,13 +1476,11 @@ import org.sleuthkit.datamodel.TskData;
                     SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
                 }
-            } else if(type.equals(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()) ||
-                    type.equals(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()) ||
-                    type.equals(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())) {
-                value = Double.toString(tempatt.getValueDouble());
-            } else {
-                value = tempatt.getValueString();
+            } 
+            else {
+                value = tempatt.getDisplayString();
             }
+            
             if (value == null) {
                 value = "";
             }
@@ -1394,9 +1512,17 @@ import org.sleuthkit.datamodel.TskData;
      */
     private String getFileUniquePath(long objId) {
         try {
-            return skCase.getAbstractFileById(objId).getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex);
+            AbstractFile af = skCase.getAbstractFileById(objId);
+            if(af!=null) {
+                return af.getUniquePath();
+            }
+            else {
+                return "";
+            }
+        }
+        catch (TskCoreException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
+            logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
         }
         return "";
     }
@@ -1457,8 +1583,15 @@ import org.sleuthkit.datamodel.TskData;
             if (rowData == null) {
                 try {
                     rowData = getOrderedRowDataAsStrings();
+                    // replace null values if attribute was not defined
+                    for (int i = 0; i < rowData.size(); i++) {
+                        if (rowData.get(i) == null) 
+                            rowData.set(i, "");
+                    }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Core exception while generating row data for artifact report.", ex);
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.coreExceptionWhileGenRptRow"));
+                    logger.log(Level.WARNING, "Core exception while generating row data for artifact report.", ex); //NON-NLS
                     rowData = Collections.<String>emptyList();
                 }
             }
@@ -1467,9 +1600,9 @@ import org.sleuthkit.datamodel.TskData;
         
        /**
         * Get a list of Strings with all the row values for the Artifact in the
-        * correct order to be written to the report.
+        * correct order to be written to the report.  
         * 
-        * @return List<String> row values
+        * @return List<String> row values.  Values could be null if attribute is not defined in artifact
         * @throws TskCoreException 
         */
        private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
@@ -1497,6 +1630,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1518,6 +1652,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                 case TSK_DEVICE_ATTACHED:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
@@ -1530,16 +1665,17 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
-                case TSK_METADATA_EXIF: 
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                case TSK_METADATA_EXIF:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                  case TSK_CONTACT:
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE.getTypeID()));
@@ -1550,6 +1686,7 @@ import org.sleuthkit.datamodel.TskData;
                  case TSK_MESSAGE:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
@@ -1560,9 +1697,10 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
                   case TSK_CALLLOG:
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1589,9 +1727,6 @@ import org.sleuthkit.datamodel.TskData;
                   case TSK_GPS_TRACKPOINT:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
-                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
@@ -1635,7 +1770,7 @@ import org.sleuthkit.datamodel.TskData;
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SERVER_NAME.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
                     break;
-                 case TSK_TOOL_OUTPUT: 
+                 case TSK_TOOL_OUTPUT:
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     orderedRowData.add(getFileUniquePath(getObjectID()));
@@ -1644,6 +1779,83 @@ import org.sleuthkit.datamodel.TskData;
                      orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                      orderedRowData.add(getFileUniquePath(getObjectID()));
                      break;
+                case TSK_EXT_MISMATCH_DETECTED:
+                    AbstractFile file = skCase.getAbstractFileById(getObjectID());
+                    if(file != null){
+                        orderedRowData.add(file.getName());
+                        orderedRowData.add(file.getNameExtension());
+                        List<BlackboardAttribute> attrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+                        if (!attrs.isEmpty()) {
+                            orderedRowData.add(attrs.get(0).getValueString());
+                        } else {
+                            orderedRowData.add("");
+                        }                   
+                        orderedRowData.add(file.getUniquePath());
+                    } else {
+                        // Make empty rows to make sure the formatting is correct
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                        orderedRowData.add(null);
+                    }
+                    break;
+                case TSK_OS_INFO:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(getFileUniquePath(getObjectID()));
+                    break;
+                case TSK_EMAIL_MSG:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID()));
+                    break; 
+                case TSK_INTERESTING_FILE_HIT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                    String pathToShow=mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PATH.getTypeID());
+                    if (pathToShow.isEmpty())
+                    {
+                        pathToShow=getFileUniquePath(getObjectID());
+                    }
+                    orderedRowData.add(pathToShow); 
+                    break; 
+                case TSK_GPS_ROUTE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCATION.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    break;
+                case TSK_INTERESTING_ARTIFACT_HIT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    break;
+                case TSK_PROG_RUN:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_COUNT.getTypeID()));
+                    break;
+                case TSK_OS_ACCOUNT:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_USER_ID.getTypeID()));
+                    break;
+                case TSK_REMOTE_DRIVE:
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_LOCAL_PATH.getTypeID()));
+                    orderedRowData.add(mappedAttributes.get(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID()));
+                    break;
             }
             orderedRowData.add(makeCommaSeparatedList(getTags()));
 
@@ -1658,6 +1870,32 @@ import org.sleuthkit.datamodel.TskData;
             return ReportGenerator.this.getMappedAttributes(attributes);
         }
     }
-}
+    
+    /**
+     * Get any tags associated with an artifact 
+     * @param artifactId
+     * @return hash set of tag display names
+     * @throws SQLException 
+     */
+     @SuppressWarnings("deprecation")
+    private HashSet<String> getUniqueTagNames(long artifactId) throws TskCoreException {
+        HashSet<String> uniqueTagNames = new HashSet<>();
+        
+        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat " + //NON-NLS 
+            "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId; //NON-NLS
+        
+        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            ResultSet tagNameRows = dbQuery.getResultSet();
+            while (tagNameRows.next()) {
+                uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+            }            
+        }
+        catch (TskCoreException | SQLException ex) {
+            throw new TskCoreException("Error getting tag names for artifact: ", ex);
+        }
 
+        return uniqueTagNames;
+    }    
+    
+}
 

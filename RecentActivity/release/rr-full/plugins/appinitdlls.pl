@@ -17,6 +17,7 @@ package appinitdlls;
 use strict;
 
 my %config = (hive          => "Software",
+							category      => "autostart",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,

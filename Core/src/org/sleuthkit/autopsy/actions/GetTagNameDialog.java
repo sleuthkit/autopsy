@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameDialog extends JDialog {
-    private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png";
+    private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagName tagName = null;
 
@@ -79,7 +79,7 @@ public class GetTagNameDialog extends JDialog {
             currentTagNames = tagsManager.getAllTagNames();        
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);                    
+            Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }         
         if (null != currentTagNames) {
             for (TagName name : currentTagNames) {
@@ -299,7 +299,7 @@ public class GetTagNameDialog extends JDialog {
                     dispose();
                 }
                 catch (TskCoreException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "GetTagNameDialog.unableToAddTagNameToCase.msg",
@@ -309,7 +309,7 @@ public class GetTagNameDialog extends JDialog {
                     tagName = null;
                 }        
                 catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex);
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                                                   NbBundle.getMessage(this.getClass(),
                                                                       "GetTagNameDialog.tagNameAlreadyDef.msg",

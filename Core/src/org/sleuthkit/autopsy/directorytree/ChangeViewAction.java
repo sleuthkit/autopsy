@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The actions to change between the "Hex View" and "String View".
@@ -57,8 +56,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         DataContentTopComponent dctc = DataContentTopComponent.findInstance();
         int totalTabs = dctc.getTabPanels().getTabCount();
 

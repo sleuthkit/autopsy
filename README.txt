@@ -20,6 +20,8 @@ INSTALLATION
 All Autopsy dependencies are bundled with the installer provided.
 There is no need for manual installation of additional dependencies if the installer is used.
 
+If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
+
 Refer to the next section for additional info on third-party software requirements to run Autopsy without installer.
 
 Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
@@ -27,8 +29,7 @@ Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation
 
 SUPPORT
 
-There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that came
-with the installer. 
+There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that came with the installer.
 
 Send any bug reports or feature requests to the sleuthkit-users e-mail list.
     http://www.sleuthkit.org/support.php
@@ -44,7 +45,7 @@ EMBEDDED SOFTWARE
 This section lists the software components and libraries that are used inside of
 Autopsy.   These tools are bundled with the installer, unless specified otherwise.
 
-JRE (Java Runtime Environment) 1.7, 32 bit
+JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
@@ -114,3 +115,22 @@ ImgScalr 4.2 for image resizing in image viewers
 - Web page: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/
 - License: http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/#license
 
+
+EMBEDED RESOURCES
+
+This section lists other resources, such as icons, that are used by Autopsy.   
+
+FAMFAMFAM Silk Icons v1.3
+- Web page: http://www.famfamfam.com/lab/icons/silk/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+Fugue Icons v3.5.6
+- Web page: http://p.yusukekamiyamane.com/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+WebHostingHub Glyphs
+- Web page: http://www.webhostinghub.com/glyphs/
+- License: http://creativecommons.org/licenses/by/3.0/
+
+Splashy Icons (free as in free) 
+- Web page: http://splashyfish.com/icons/

@@ -18,6 +18,7 @@ use strict;
 my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
+              category      => "program execution",
               hasRefs       => 0,
               osmask        => 22,
               version       => 20120613);

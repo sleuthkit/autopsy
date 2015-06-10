@@ -45,13 +45,17 @@ sub pluginmain {
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		::rptMsg("");
 		
-		my $install;
 		eval {
-			$install = $key->get_subkey("Installer")->get_value("DonwloadLastModified")->get_data();
-			::rptMsg("DonwloadLastModified = ".$install);
+			my $v1 = $install = $key->get_subkey("Installer")->get_value("DonwloadLastModified");
+                        if (defined $v1) {
+                            my $install = $v1->get_data()
+                            ::rptMsg("DonwloadLastModified = ".$install);
+                        }
+                        else {
+                            ::rptMsg("DonwloadLastModified value not found");
+                        }
 		};
 		::rptMsg("DonwloadLastModified value not found: ".$@) if ($@);
-		
 	}
 	else {
 		::rptMsg($key_path." not found.");

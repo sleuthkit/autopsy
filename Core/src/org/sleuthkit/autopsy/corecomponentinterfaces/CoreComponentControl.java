@@ -55,22 +55,22 @@ public class CoreComponentControl {
         Collection<? extends DataExplorer> dataExplorers = Lookup.getDefault().lookupAll(DataExplorer.class);
         for (DataExplorer de : dataExplorers) {
             TopComponent explorerWin = de.getTopComponent();
-            Mode m = WindowManager.getDefault().findMode("explorer");
+            Mode m = WindowManager.getDefault().findMode("explorer"); //NON-NLS
             if (m != null) {
                 m.dockInto(explorerWin); // redock into the explorer mode
             } else {
-                logger.log(Level.WARNING, "Could not find explorer mode and dock explorer window");
+                logger.log(Level.WARNING, "Could not find explorer mode and dock explorer window"); //NON-NLS
             }
             explorerWin.open(); // open that top component
         }
 
         // find the data content top component
         TopComponent contentWin = DataContentTopComponent.findInstance();
-        Mode m = WindowManager.getDefault().findMode("output");
+        Mode m = WindowManager.getDefault().findMode("output"); //NON-NLS
         if (m != null) {
             m.dockInto(contentWin); // redock into the output mode
         } else {
-            logger.log(Level.WARNING, "Could not find output mode and dock content window");
+            logger.log(Level.WARNING, "Could not find output mode and dock content window"); //NON-NLS
         }
 
         contentWin.open(); // open that top component
@@ -98,7 +98,7 @@ public class CoreComponentControl {
             for (TopComponent tc : mode.getTopComponents()) {
                 tcName = tc.getName();
                 if (tcName == null) {
-                    logger.log(Level.INFO, "tcName was null");
+                    logger.log(Level.INFO, "tcName was null"); //NON-NLS
                     tcName = "";
                 }
                 // switch requires constant strings, so converted to if/else.

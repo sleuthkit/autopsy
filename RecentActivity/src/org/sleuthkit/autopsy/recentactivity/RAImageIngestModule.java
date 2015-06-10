@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -26,72 +26,93 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
-import org.sleuthkit.autopsy.ingest.IngestDataSourceWorkerController;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModuleDataSource;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
 /**
  * Recent activity image ingest module
- *
  */
-public final class RAImageIngestModule extends IngestModuleDataSource {
+public final class RAImageIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
-    private static RAImageIngestModule defaultInstance = null;
-    private IngestServices services;
-    private static int messageId = 0;
+    private final List<Extract> extracters = new ArrayList<>();
+    private final List<Extract> browserExtracters = new ArrayList<>();
+    private IngestServices services = IngestServices.getInstance();
+    private IngestJobContext context;
     private StringBuilder subCompleted = new StringBuilder();
-    private ArrayList<Extract> modules;
-    private List<Extract> browserModules;
-    final private static String MODULE_VERSION = Version.getVersion();
 
-    //public constructor is required
-    //as multiple instances are created for processing multiple images simultenously
-    public RAImageIngestModule() {
+    RAImageIngestModule() {
     }
 
-
     @Override
-    public void process(PipelineContext<IngestModuleDataSource>pipelineContext, Content dataSource, IngestDataSourceWorkerController controller) {
-        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        
+        Extract registry = new ExtractRegistry();
+        Extract iexplore = new ExtractIE();
+        Extract recentDocuments = new RecentDocumentsByLnk();
+        Extract chrome = new Chrome();
+        Extract firefox = new Firefox();
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+
+        extracters.add(chrome);
+        extracters.add(firefox);
+        extracters.add(iexplore);
+        extracters.add(recentDocuments);
+        extracters.add(SEUQA); // this needs to run after the web browser modules
+        extracters.add(registry); // this runs last because it is slowest
+
+        browserExtracters.add(chrome);
+        browserExtracters.add(firefox);
+        browserExtracters.add(iexplore);
+        
+       for (Extract extracter : extracters) {
+            extracter.init();
+        }        
+    }
+    
+    @Override
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
                                                          NbBundle.getMessage(this.getClass(),
                                                                              "RAImageIngestModule.process.started",
                                                                              dataSource.getName())));
+
+        progressBar.switchToDeterminate(extracters.size());
         
-        controller.switchToDeterminate(modules.size());
-        controller.progress(0);
         ArrayList<String> errors = new ArrayList<>();
-        
-        for (int i = 0; i < modules.size(); i++) {
-            Extract module = modules.get(i);
-            if (controller.isCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", module.getName());
+
+        for (int i = 0; i < extracters.size(); i++) {
+            Extract extracter = extracters.get(i);
+            if (context.dataSourceIngestIsCancelled()) {
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
             
+            progressBar.progress(extracter.getName(), i);
+
             try {
-                module.process(pipelineContext, dataSource, controller);
+                extracter.process(dataSource, context);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
-                                                        module.getName()));
+                                                        extracter.getName()));
                 errors.add(
-                        NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", module.getName()));
+                        NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
-            controller.progress(i + 1);
-            errors.addAll(module.getErrorMessages());
+            progressBar.progress(i + 1);
+            errors.addAll(extracter.getErrorMessages());
         }
-        
+
         // create the final message for inbox
         StringBuilder errorMessage = new StringBuilder();
         String errorMsgSubject;
@@ -101,9 +122,9 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             errorMessage.append(
                     NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.errsEncountered"));
             for (String msg : errors) {
-                errorMessage.append("<li>").append(msg).append("</li>\n");
+                errorMessage.append("<li>").append(msg).append("</li>\n"); //NON-NLS
             }
-            errorMessage.append("</ul>\n");
+            errorMessage.append("</ul>\n"); //NON-NLS
 
             if (errors.size() == 1) {
                 errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.oneErr");
@@ -115,145 +136,80 @@ public final class RAImageIngestModule extends IngestModuleDataSource {
             errorMessage.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.noErrs"));
             errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.noErrs");
         }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, msgLevel, this,
+        final IngestMessage msg = IngestMessage.createMessage(msgLevel, RecentActivityExtracterModuleFactory.getModuleName(),
                                                               NbBundle.getMessage(this.getClass(),
                                                                                   "RAImageIngestModule.process.ingestMsg.finished",
                                                                                   dataSource.getName(), errorMsgSubject),
                                                               errorMessage.toString());
         services.postMessage(msg);
-        
+
         StringBuilder historyMsg = new StringBuilder();
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
-        for (Extract module : browserModules) {
-            historyMsg.append("<li>").append(module.getName());
+        for (Extract module : browserExtracters) {
+            historyMsg.append("<li>").append(module.getName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
-            historyMsg.append("</li>");
+            historyMsg.append("</li>"); //NON-NLS
         }
-        historyMsg.append("</ul>");
-        final IngestMessage inboxMsg = IngestMessage.createMessage(++messageId, MessageType.INFO, this,
+        historyMsg.append("</ul>"); //NON-NLS
+        final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
                                                                    NbBundle.getMessage(this.getClass(),
                                                                                        "RAImageIngestModule.process.ingestMsg.results",
                                                                                        dataSource.getName()),
                                                                    historyMsg.toString());
         services.postMessage(inboxMsg);
-    }
 
-    @Override
-    public void complete() {
-        logger.log(Level.INFO, "complete() " + this.toString());
+        if (context.dataSourceIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
         
-        // close modules 
-        for (int i = 0; i < modules.size(); i++) {
-            Extract module = modules.get(i);
+        for (int i = 0; i < extracters.size(); i++) {
+            Extract extracter = extracters.get(i);
             try {
-                module.complete();
+                extracter.complete();
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred when completing " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
-                                                        module.getName()));
+                                                        extracter.getName()));
             }
         }
-
-        //module specific cleanup due to completion here
-    }
-
-    @Override
-    public String getName() {
-        return NbBundle.getMessage(this.getClass(), "RAImageIngestModule.getName");
-    }
-
-    @Override
-    public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "RAImageIngestModule.getDesc");
-    }
-
-    @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        modules = new ArrayList<>();
-        browserModules = new ArrayList<>();
-        logger.log(Level.INFO, "init() {0}", this.toString());
-        services = IngestServices.getDefault();
-
-        final Extract registry = new ExtractRegistry();
-        final Extract iexplore = new ExtractIE();
-        final Extract recentDocuments= new RecentDocumentsByLnk(); 
-        final Extract chrome = new Chrome();
-        final Extract firefox = new Firefox();
-        final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-
-        modules.add(chrome);
-        modules.add(firefox);
-        modules.add(iexplore);
-        modules.add(recentDocuments);
-        // this needs to run after the web browser modules
-        modules.add(SEUQA);
-        
-        // this runs last because it is slowest
-        modules.add(registry);
-        
-        browserModules.add(chrome);
-        browserModules.add(firefox);
-        browserModules.add(iexplore);
-
-        for (Extract module : modules) {
-            try {
-                module.init(initContext);
-            } catch (IngestModuleException ex) {
-                logger.log(Level.SEVERE, "Exception during init() of " + module.getName(), ex);
-            }
-        }
-    }
-
-    @Override
-    public void stop() {
-        logger.log(Level.INFO, "RAImageIngetModule::stop()");
-        for (Extract module : modules) {
-            try {
-                module.stop();
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception during stop() of " + module.getName(), ex);
-            }
-        }
-        logger.log(Level.INFO, "Recent Activity processes has been shutdown.");
+                
+        return ProcessResult.OK;
     }
 
 
-    @Override
-    public String getVersion() {
-        return MODULE_VERSION;
-    }
 
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
-    }
-    
     /**
-     * Get the temp path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * Get the temp path for a specific sub-module in recent activity. Will
+     * create the dir if it doesn't exist.
+     *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @param mod Module name that will be used for a sub folder in the temp
+     * folder to prevent name collisions
      * @return Path to directory
      */
     protected static String getRATempPath(Case a_case, String mod) {
-        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod;
+        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
         }
         return tmpDir;
     }
-    
+
     /**
-     * Get the output path for a specific sub-module in recent activity.  Will create the dir if it doesn't exist.
+     * Get the output path for a specific sub-module in recent activity. Will
+     * create the dir if it doesn't exist.
+     *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp folder to prevent  name collisions
+     * @param mod Module name that will be used for a sub folder in the temp
+     * folder to prevent name collisions
      * @return Path to directory
      */
     protected static String getRAOutputPath(Case a_case, String mod) {
-        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod;
+        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();

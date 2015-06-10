@@ -43,7 +43,4 @@ public class ModuleContentEvent extends ChangeEvent {
     public String getModuleName() {
         return moduleName;
     }
-    
-    
-    
 }

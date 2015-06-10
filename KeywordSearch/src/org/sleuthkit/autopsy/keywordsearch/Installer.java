@@ -53,19 +53,19 @@ class Installer extends ModuleInstall {
         //TODO revise this logic, handle other server types, move some logic to Server class
         try {
             //check if running from previous application instance and try to shut down
-            logger.log(Level.INFO, "Checking if server is running");
+            logger.log(Level.INFO, "Checking if server is running"); //NON-NLS
             if (server.isRunning()) {
                 //TODO this could hang if other type of server is running 
-                logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort()
-                        + " port, maybe leftover from a previous run. Trying to shut it down.");
+                logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort() //NON-NLS
+                        + " port, maybe leftover from a previous run. Trying to shut it down."); //NON-NLS
                 //stop gracefully
                 server.stop();
-                logger.log(Level.INFO, "Re-checking if server is running");
+                logger.log(Level.INFO, "Re-checking if server is running"); //NON-NLS
                 if (server.isRunning()) {
                     int serverPort = server.getCurrentSolrServerPort();
                     int serverStopPort = server.getCurrentSolrStopPort();
-                    logger.log(Level.SEVERE, "There's already a server running on "
-                            + serverPort + " port that can't be shutdown.");
+                    logger.log(Level.SEVERE, "There's already a server running on " //NON-NLS
+                            + serverPort + " port that can't be shutdown."); //NON-NLS
                     if (!Server.isPortAvailable(serverPort)) {
                         reportPortError(serverPort);
                     } else if (!Server.isPortAvailable(serverStopPort)) {
@@ -78,13 +78,13 @@ class Installer extends ModuleInstall {
                     //in this case give up
 
                 } else {
-                    logger.log(Level.INFO, "Old Solr server shutdown successfully.");
+                    logger.log(Level.INFO, "Old Solr server shutdown successfully."); //NON-NLS
                     //make sure there really isn't a hang Solr process, in case isRunning() reported false
                     server.killSolr();
                 }
             }
         } catch (KeywordSearchModuleException e) {
-            logger.log(Level.SEVERE, "Starting server failed, will try to kill. ", e);
+            logger.log(Level.SEVERE, "Starting server failed, will try to kill. ", e); //NON-NLS
             server.killSolr();
         }
 
@@ -94,13 +94,13 @@ class Installer extends ModuleInstall {
             //Try to bind to the port 4 times at 1 second intervals. 
             //TODO move some of this logic to Server class
             for (int i = 0; i <= 3; i++) {
-                logger.log(Level.INFO, "Checking if port available.");
+                logger.log(Level.INFO, "Checking if port available."); //NON-NLS
                 if (Server.isPortAvailable(server.getCurrentSolrServerPort())) {
-                    logger.log(Level.INFO, "Port available, trying to start server.");
+                    logger.log(Level.INFO, "Port available, trying to start server."); //NON-NLS
                     server.start();
                     break;
                 } else if (i == 3) {
-                    logger.log(Level.INFO, "No port available, done retrying.");
+                    logger.log(Level.INFO, "No port available, done retrying."); //NON-NLS
                     reportPortError(server.getCurrentSolrServerPort());
                     retries = 0;
                     break;
@@ -108,16 +108,16 @@ class Installer extends ModuleInstall {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException iex) {
-                        logger.log(Level.WARNING, "Timer interrupted");
+                        logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                     }
                 }
             }
         } catch (SolrServerNoPortException npe) {
-            logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe);
+            logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe); //NON-NLS
             //try to kill it
 
         } catch (KeywordSearchModuleException e) {
-            logger.log(Level.SEVERE, "Starting server failed. ", e);
+            logger.log(Level.SEVERE, "Starting server failed. ", e); //NON-NLS
         }
 
 
@@ -127,25 +127,25 @@ class Installer extends ModuleInstall {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Timer interrupted.");
+                logger.log(Level.WARNING, "Timer interrupted."); //NON-NLS
             }
 
             try {
-                logger.log(Level.INFO, "Ensuring the server is running, retries remaining: " + retries);
+                logger.log(Level.INFO, "Ensuring the server is running, retries remaining: " + retries); //NON-NLS
                 if (!server.isRunning()) {
-                    logger.log(Level.WARNING, "Server still not running");
+                    logger.log(Level.WARNING, "Server still not running"); //NON-NLS
                     try {
-                        logger.log(Level.WARNING, "Trying to start the server. ");
+                        logger.log(Level.WARNING, "Trying to start the server. "); //NON-NLS
                         server.start();
                     } catch (SolrServerNoPortException npe) {
-                        logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe);
+                        logger.log(Level.SEVERE, "Starting server failed due to no port available. ", npe); //NON-NLS
                     }
                 } else {
-                    logger.log(Level.INFO, "Server appears now running. ");
+                    logger.log(Level.INFO, "Server appears now running. "); //NON-NLS
                     break;
                 }
             } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.SEVERE, "Starting server failed. ", ex);
+                logger.log(Level.SEVERE, "Starting server failed. ", ex); //NON-NLS
                 //retry if has retries
             }
 
@@ -156,12 +156,12 @@ class Installer extends ModuleInstall {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, "Timer interrupted.");
+            logger.log(Level.WARNING, "Timer interrupted."); //NON-NLS
         }
         try {
-            logger.log(Level.INFO, "Last check if server is running. ");
+            logger.log(Level.INFO, "Last check if server is running. "); //NON-NLS
             if (!server.isRunning()) {
-                logger.log(Level.SEVERE, "Server is still not running. ");
+                logger.log(Level.SEVERE, "Server is still not running. "); //NON-NLS
                 //check if port is taken or some other reason
                 int serverPort = server.getCurrentSolrServerPort();
                 int serverStopPort = server.getCurrentSolrStopPort();
@@ -175,7 +175,7 @@ class Installer extends ModuleInstall {
                 }
             }
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Starting server failed. ", ex);
+            logger.log(Level.SEVERE, "Starting server failed. ", ex); //NON-NLS
             reportInitError();
         }
 

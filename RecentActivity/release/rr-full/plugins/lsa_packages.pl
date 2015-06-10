@@ -3,25 +3,27 @@
 # 
 #
 # Change history
+#   20140730 - added "EveryoneIncludesAnonymous"
 #   20130307 - created
 # 
 # Reference: 
-#   
+#   http://carnal0wnage.attackresearch.com/2013/09/stealing-passwords-every-time-they.html
 #
 # Category: Autostart
 # 
 #
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2014 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package lsa_packages;
 
 my %config = (hive          => "System",
               hasShortDescr => 1,
+              category      => "malware",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130307);
+              version       => 20140730);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -34,7 +36,8 @@ sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
 
-my @pkgs = ("Authentication Packages", "Notification Packages", "Security Packages");
+my @pkgs = ("Authentication Packages", "Notification Packages", "Security Packages",
+            "EveryoneIncludesAnonymous");
 
 sub pluginmain {
 	my $class = shift;

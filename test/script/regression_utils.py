@@ -38,14 +38,14 @@ def wgetcwd():
 def file_exists(file):
 	try:
 		if os.path.exists(file):
-			return os.path.isfile(file)
+			return os.path.exists(file) and os.path.isfile(file)
 	except:
 		return False
 
 # Verifies a directory's existance
 def dir_exists(dir):
 	try:
-		return os.path.exists(dir)
+		return os.path.exists(dir) and os.path.isdir(dir)
 	except:
 		return False
 
@@ -71,6 +71,8 @@ def required_input_file(name):
 		return False
 
 def image_type(image_file):
+    if (dir_exists(image_file)):
+        return IMGTYPE.LOGICAL
     ext_start = image_file.rfind(".")
     if (ext_start == -1):
         return IMGTYPE.UNKNOWN
@@ -86,12 +88,15 @@ def image_type(image_file):
 
 # Returns the type of image file, based off extension
 class IMGTYPE:
-    RAW, ENCASE, SPLIT, UNKNOWN = range(4)
+    RAW, ENCASE, SPLIT, LOGICAL, UNKNOWN = range(5)
 
 def get_image_name(image_file):
     path_end = image_file.rfind("/")
     path_end2 = image_file.rfind("\\")
     ext_start = image_file.rfind(".")
+    if (image_type(image_file) == IMGTYPE.LOGICAL):
+        name = image_file[path_end2+1:]
+        return name
     if(ext_start == -1):
         name = image_file
     if(path_end2 != -1):

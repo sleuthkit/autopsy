@@ -35,9 +35,9 @@ import java.util.List;
      * Start the report. Open any output streams, initialize member variables,
      * write summary and navigation pages. Considered the "constructor" of the report.
      * 
-     * @param path String path to save the report
+     * @param baseReportDir Directory to save the report file into.  Report should go into baseReportDir + getRelativeFilePath().
      */
-    public void startReport(String path);
+    public void startReport(String baseReportDir);
     
     /**
      * End the report. Close all output streams and write any end-of-report
@@ -112,7 +112,7 @@ import java.util.List;
     
     /**
      * Returns a String date, created by the module. All date values will query
-     * the module for it's interpretation of the date before sending it a row 
+     * the module for its interpretation of the date before sending it a row 
      * with the date value.
      * 
      * @param date long date as long

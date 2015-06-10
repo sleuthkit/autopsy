@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -50,7 +50,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     }
 
     private void customizeComponents() {
-        messageDetailsPane.setContentType("text/html");
+        messageDetailsPane.setContentType("text/html"); //NON-NLS
         viewArtifactButton.setEnabled(false);
         viewContentButton.setEnabled(false);
         HTMLEditorKit kit = new HTMLEditorKit();
@@ -58,12 +58,12 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         StyleSheet styleSheet = kit.getStyleSheet();
         /* I tried to define the font-size only on body to have it inherit, 
          * it didn't work in all cases. */
-        styleSheet.addRule("body {font-family:Arial;font-size:10pt;}");
-        styleSheet.addRule("p {font-family:Arial;font-size:10pt;}");
-        styleSheet.addRule("li {font-family:Arial;font-size:10pt;}");
-        styleSheet.addRule("table {table-layout:fixed;}");
-        styleSheet.addRule("td {white-space:pre-wrap;overflow:hidden;}");
-        styleSheet.addRule("th {font-weight:bold;}");
+        styleSheet.addRule("body {font-family:Arial;font-size:10pt;}"); //NON-NLS
+        styleSheet.addRule("p {font-family:Arial;font-size:10pt;}"); //NON-NLS
+        styleSheet.addRule("li {font-family:Arial;font-size:10pt;}"); //NON-NLS
+        styleSheet.addRule("table {table-layout:fixed;}"); //NON-NLS
+        styleSheet.addRule("td {white-space:pre-wrap;overflow:hidden;}"); //NON-NLS
+        styleSheet.addRule("th {font-weight:bold;}"); //NON-NLS
         
         BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
         v.addOnFinishedListener(new PropertyChangeListener() {
@@ -123,23 +123,25 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setEditable(false);
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
         messageDetailsPane.setBorder(null);
-        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
+        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
+                                                                               "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
+        messageDetailsPane.setFont(messageDetailsPane.getFont().deriveFont(Font.PLAIN, 10));
+        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class,
+                                                                               "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
         jScrollPane1.setViewportView(messageDetailsPane);
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back.png"))); // NOI18N
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back.png"))); // NOI18N NON-NLS
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
         backButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         backButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         backButton.setMaximumSize(new java.awt.Dimension(23, 23));
         backButton.setMinimumSize(new java.awt.Dimension(23, 23));
         backButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        backButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
-        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
+        backButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N NON-NLS
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N NON-NLS
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
@@ -148,7 +150,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         jToolBar1.add(backButton);
         jToolBar1.add(filler1);
 
-        viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
+        viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N NON-NLS
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setIconTextGap(2);
         viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
@@ -159,7 +161,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         });
         jToolBar1.add(viewArtifactButton);
 
-        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
+        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N NON-NLS
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setIconTextGap(2);
         viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
@@ -260,10 +262,10 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             String details = messageGroup.getDetails();
             if (details != null) {
                 StringBuilder b = new StringBuilder();
-                if (details.startsWith("<html><body>") == false) {
-                    b.append("<html><body>");
+                if (details.startsWith("<html><body>") == false) { //NON-NLS
+                    b.append("<html><body>"); //NON-NLS
                     b.append(details);
-                    b.append("</body></html>");
+                    b.append("</body></html>"); //NON-NLS
                 }
                 else { 
                     b.append(details);

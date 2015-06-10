@@ -3,6 +3,8 @@
 # RR plugin to parse (Vista, Win7/Win2008R2) shell bags
 #
 # History:
+#   20140728 - updated shell item 0x01 parsing
+#   20131216 - updated to support shell item type 0x52
 #   20130102 - updated to include type 0x35
 #   20120824 - updated parseFolderEntry() for XP (extver == 3)
 #   20120810 - added support for parsing Network types; added handling of 
@@ -162,6 +164,7 @@ my %folder_types = ("{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative 
     "{9e52ab10-f80d-49df-acb8-4330f5687855}" => "Temporary Burn Folder",
     "{f3ce0f7c-4901-4acc-8648-d5d44b04ef8f}" => "Users Files",
     "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" => "Users",
+    "{b5947d7f-b489-4fde-9e77-23780cc610d1}" => "Virtual Machines",
     "{f38bf404-1d43-42f2-9305-67de0b28fc23}" => "Windows");
 
 sub pluginmain {
@@ -182,8 +185,8 @@ sub pluginmain {
 		$item{path} = "Desktop\\";
 		$item{name} = "";
 # Print header info
-		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |Resource","MRU Time","Modified","Accessed","Created","Zip_Subfolder");
-		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |"."-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12);
+		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s | %-12s |Resource","MRU Time","Modified","Accessed","Created","Zip_Subfolder", "MFT File Ref");
+		::rptMsg(sprintf "%-20s |%-20s | %-20s | %-20s | %-20s | %-12s |"."-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12,"-" x 12);
 		traverse($key,\%item);
 	}
 	else {
@@ -225,6 +228,7 @@ sub traverse {
  		elsif ($type == 0x00) {
 # Variable/Property Sheet 			
  			%item = parseVariableEntry($values{$v});	
+# 			probe($values{$v});	
  		}
  		elsif ($type == 0x01) {
 #  			
@@ -236,7 +240,7 @@ sub traverse {
  		}
  		elsif ($type == 0x2e) {
 # Device
-			%item = parseDeviceEntry($values{$v}); 			
+			%item = parseDeviceEntry($values{$v}); 		
  		}
  		elsif ($type == 0x2F) {
 # Volume (Drive Letter) 			
@@ -259,6 +263,7 @@ sub traverse {
  		}
  		elsif ($type == 0x35) {
  			%item = parseFolderEntry2($values{$v});
+ 			probe($values{$v});
  		}
  		elsif ($type == 0x71) {
 # Control Panel
@@ -268,9 +273,13 @@ sub traverse {
 # URI type
 			%item = parseURIEntry($values{$v});		
  		}
+ 		elsif ($type == 0x52) {
+ 			%item = shellItem0x52($values{$v});
+ 		}
  		else {
 # Unknown type
 			$item{name} = sprintf "Unknown Type (0x%x)",$type; 	
+			probe($values{$v});
  		}
  		
  		if ($item{name} =~ m/\.zip$/ && $type == 0x32) {
@@ -293,12 +302,21 @@ sub traverse {
  		(exists $item{ctime_str} && $item{ctime_str} ne "0") ? ($c = $item{ctime_str}) : ($c = "");
  		(exists $item{datetime} && $item{datetime} ne "N/A") ? ($o = $item{datetime}) : ($o = "");
  		
- 		my $resource = ${$parent}{path}.$item{name};
+# 		my $resource = ${$parent}{path}.$item{name};
+		$item{name} = ${$parent}{name}.$item{name};
+ 		$item{path} = ${$parent}{path}.$v."\\";
+		my $resource = $item{name};
  		if (exists $item{filesize}) {
  			$resource .= " [".$item{filesize}."]";
  		}
  		
- 		my $str = sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |".$resource,$item{mrutime_str},$m,$a,$c,$o;
+ 		my $mft = "";
+ 		if (exists $item{mft_rec_num}) {
+ 			$mft = $item{mft_rec_num}."/".$item{mft_seq_num};
+ 		}
+ 		
+# 		my $str = sprintf "%-20s |%-20s | %-20s | %-20s | %-20s |".$resource,$item{mrutime_str},$m,$a,$c,$o;
+		my $str = sprintf "%-20s |%-20s | %-20s | %-20s | %-20s | %-12s |".$resource." [".$item{path}."]",$item{mrutime_str},$m,$a,$c,$o,$mft;
  		::rptMsg($str);
  		
  		if ($item{name} eq "" || $item{name} =~ m/\\$/) {
@@ -307,7 +325,7 @@ sub traverse {
  		else {
  			$item{name} = $item{name}."\\";
  		}
- 		$item{path} = ${$parent}{path}.$item{name};
+# 		$item{path} = ${$parent}{path}.$item{name};
  		traverse($key->get_subkey($v),\%item);
  	}
 }
@@ -479,15 +497,39 @@ sub parseZipSubFolderItem {
 
 #-----------------------------------------------------------
 # parse01ShellItem()
-# I honestly have no idea what to do with this data; there's really
-# no reference for or description of the format of this data.  For
-# now, this is just a place holder
+#
+# Updated 20140728
+# https://5c36fb3a2584d3bd2f8d3924d56b4d00d70e8000.googledrive.com/host/0B3fBvzttpiiSajVqblZQT3FYZzg/Windows%20Shell%20Item%20format.pdf
+# http://msdn.microsoft.com/en-us/library/windows/desktop/cc144183(v=vs.85).aspx
 #-----------------------------------------------------------
 sub parse01ShellItem {
 	my $data = shift;
 	my %item = ();
-	$item{type} = unpack("C",substr($data,2,1));;
-	$item{name} = "";
+	
+	my %cat = (0 => "All Control Panel Items",
+	           1 => "Appearance/Personalization",
+	           2 => "Hardware and Sound",
+	           3 => "Network and Internet",
+	           4 => "Sound/Audio",
+	           5 => "System and Security",
+	           6 => "Clock, Lang, Region",
+	           7 => "Ease of Access",
+	           8 => "Programs",
+	           9 => "User Accounts",
+	           10 => "Security Center",
+	           11 => "Mobile PC");
+	           
+	$item{size} = unpack("v",substr($data,0,2));
+	$item{type} = unpack("C",substr($data,2,1));
+	$item{sig} = unpack("V",substr($data,4,4));
+	$item{cat} = unpack("V",substr($data,8,4));
+	if (exists $cat{$item{cat}}) {
+		$item{name} = $cat{$item{cat}};
+	}
+	else {
+		$item{name} = "Unknown Category (".$item{cat}.")";
+	}
+	
 #	($item{val0},$item{val1}) = unpack("VV",substr($data,2,length($data) - 2));
 	return %item;
 }
@@ -693,6 +735,16 @@ sub parseFolderEntry {
 	}
 	else {}
 	
+	if ($item{type} == 0x31 && $item{extver} >= 0x07) {
+		my @n = unpack("Vvv",substr($data,$ofs + 8, 8));
+		if ($n[2] != 0) {
+			$item{mft_rec_num} = getNum48($n[0],$n[1]);
+			$item{mft_seq_num} = $n[2];	
+#			::rptMsg("MFT: ".$item{mft_rec_num}."/".$item{mft_seq_num});
+#			probe($data);
+		}
+	}
+	
 	$ofs += $jmp;
 	
 	my $str = substr($data,$ofs,length($data) - 30);
@@ -781,12 +833,12 @@ sub parseFolderEntry2 {
 	
 	my $str = substr($data,$ofs,length($data) - 30);
 	
-	::rptMsg(" --- parseFolderEntry2 --- ");
-	my @d = printData($str);
-	foreach (0..(scalar(@d) - 1)) {
-		::rptMsg($d[$_]);
-	}
-	::rptMsg("");
+#	::rptMsg(" --- parseFolderEntry2 --- ");
+#	my @d = printData($str);
+#	foreach (0..(scalar(@d) - 1)) {
+#		::rptMsg($d[$_]);
+#	}
+#	::rptMsg("");
 	
 	$item{name} = (split(/\00\00/,$str,2))[0];
 	$item{name} =~ s/\13\20/\2D\00/;
@@ -805,50 +857,150 @@ sub parseNetworkEntry {
 	$item{name} = $names[0];
 	return %item;
 }
+
+#-----------------------------------------------------------
+#
+#-----------------------------------------------------------
+sub parseDatePathItem {
+	my $data = shift;
+	my %item = ();
+	$item{datestr} = substr($data,0x18,30);
+	my ($file,$dir) = split(/\00\00/,substr($data,0x44,length($data) - 0x44));
+	$file =~ s/\00//g;
+	$dir =~ s/\00//g;
+	$item{name} = $dir.$file;
+	return %item;	
+}
+
+#-----------------------------------------------------------
+# parseTypex53()
+#-----------------------------------------------------------
+sub parseTypex53 {
+	my $data = shift;
+	my %item = ();
+	
+	my $item1 = parseGUID(substr($data,0x14,16));
+	my $item2 = parseGUID(substr($data,0x24,16));
+	
+	$item{name} = $item1."\\".$item2;
+	
+	return %item;
+}
+
+#-----------------------------------------------------------
+#
+#-----------------------------------------------------------
+sub shellItem0x52 {
+	my $data = shift;
+	my %item = ();
+	my ($d, $ofs,$sz);
+	
+	$item{type}    = unpack("C",substr($data,0x02,1));
+	$item{subtype} = unpack("v",substr($data,0x06,2));
+# First, start at offset 0x32, read 2 bytes at a time until the null
+# terminator is reached.
+	my $tag = 1;
+	my $cnt = 0;
+	
+	while ($tag) {
+		$d = substr($data,0x32 + $cnt,2);
+		if (unpack("v",$d) == 0) {
+			$tag = 0;
+		}
+		else {
+			$item{name} .= $d;
+			$cnt += 2;
+		}
+	}	
+	$item{name} =~ s/\00//g;
+	
+	if ($item{subtype} < 3) {
+		$ofs = 0x32 + $cnt + 2;
+	}
+	else {
+		$ofs = 0x32 + $cnt + 8;
+	}
+	$sz = unpack("V",substr($data,$ofs,4));
+	$item{str} = substr($data,$ofs + 4,$sz * 2);
+	$item{str} =~ s/\00//g;
+	return %item;
+}
+
+#-----------------------------------------------------------
+# probe()
+#
+# Code the uses printData() to insert a 'probe' into a specific
+# location and display the data
+#
+# Input: binary data of arbitrary length
+# Output: Nothing, no return value.  Displays data to the console
+#-----------------------------------------------------------
+sub probe {
+	my $data = shift;
+	my @d = printData($data);
+	::rptMsg("");
+	foreach (0..(scalar(@d) - 1)) {
+		::rptMsg($d[$_]);
+	}
+	::rptMsg("");	
+}
+
 #-----------------------------------------------------------
 # printData()
 # subroutine used primarily for debugging; takes an arbitrary
 # length of binary data, prints it out in hex editor-style
 # format for easy debugging
+#
+# Usage: see probe()
 #-----------------------------------------------------------
 sub printData {
 	my $data = shift;
 	my $len = length($data);
-	my $tag = 1;
-	my $cnt = 0;
+	
 	my @display = ();
 	
 	my $loop = $len/16;
 	$loop++ if ($len%16);
 	
 	foreach my $cnt (0..($loop - 1)) {
-#	while ($tag) {
+# How much is left?
 		my $left = $len - ($cnt * 16);
 		
 		my $n;
 		($left < 16) ? ($n = $left) : ($n = 16);
 
 		my $seg = substr($data,$cnt * 16,$n);
-		my @str1 = split(//,unpack("H*",$seg));
-
-		my @s3;
-		my $str = "";
-
-		foreach my $i (0..($n - 1)) {
-			$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
-			
-			if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
-				$str .= chr(hex($s3[$i]));
-			}
-			else {
-				$str .= "\.";
-			}
+		my $lhs = "";
+		my $rhs = "";
+		foreach my $i ($seg =~ m/./gs) {
+# This loop is to process each character at a time.
+			$lhs .= sprintf(" %02X",ord($i));
+			if ($i =~ m/[ -~]/) {
+				$rhs .= $i;
+    	}
+    	else {
+				$rhs .= ".";
+     	}
 		}
-		my $h = join(' ',@s3);
-#		::rptMsg(sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h);
-		$display[$cnt] = sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h;
+		$display[$cnt] = sprintf("0x%08X  %-50s %s",$cnt,$lhs,$rhs);
 	}
 	return @display;
+}
+
+#-----------------------------------------------------------
+# getNum48()
+# borrowed from David Cowen's code
+#-----------------------------------------------------------
+sub getNum48 {
+	my $n1 = shift;
+	my $n2 = shift;
+	if ($n2 == 0) {
+		return $n1;
+	}
+	else {
+		$n2 = ($n2 *16777216);
+		return $n1 + $n2;
+	}
 }
 
 1;

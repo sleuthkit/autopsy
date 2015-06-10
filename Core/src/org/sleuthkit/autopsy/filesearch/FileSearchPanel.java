@@ -156,7 +156,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
                 } catch (TskCoreException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());
-                    logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex);
+                    logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex); //NON-NLS
                 }
                 
                 if (contentList == null) {
@@ -209,7 +209,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         String query = " 1";
 
         for (FileSearchFilter f : this.getEnabledFilters()) {
-            query += " and (" + f.getPredicate() + ")";
+            query += " and (" + f.getPredicate() + ")"; //NON-NLS
         }
 
         return query;

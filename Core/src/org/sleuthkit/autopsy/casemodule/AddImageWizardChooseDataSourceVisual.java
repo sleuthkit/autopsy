@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -30,15 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.event.DocumentEvent;
 import javax.swing.ListCellRenderer;
+import javax.swing.event.DocumentEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -48,9 +48,13 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
     static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+
     private AddImageWizardChooseDataSourcePanel wizPanel;
+
     private JPanel currentPanel;
+
     private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
+
     List<String> coreDSPTypes = new ArrayList<>();
 
     /**
@@ -65,6 +69,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         customInit();
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void customInit() {
 
         typePanel.setLayout(new BorderLayout());
@@ -94,6 +99,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         }
 
         typeComboBox.setRenderer(new ComboboxSeparatorRenderer(typeComboBox.getRenderer()) {
+
             @Override
             protected boolean addSeparatorAfter(JList list, Object value, int index) {
                 return (index == coreDSPTypes.size() - 1);
@@ -118,7 +124,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
                 datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
             } else {
-                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType());
+                logger.log(Level.SEVERE, "discoverDataSourceProcessors(): A DataSourceProcessor already exists for type = {0}", dsProcessor.getDataSourceType()); //NON-NLS
             }
         }
     }
@@ -159,7 +165,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      * Returns the currently selected DS Processor
      *
      * @return DataSourceProcessor the DataSourceProcessor corresponding to the
-     * data source type selected in the combobox
+     *         data source type selected in the combobox
      */
     protected DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
@@ -197,13 +203,14 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
         typeComboBox = new javax.swing.JComboBox<String>();
-        imgInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.jLabel2.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(588, 328));
 
         org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.nextLabel.text")); // NOI18N
+        nextLabel.setPreferredSize(new java.awt.Dimension(514, 35));
+        nextLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
         inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -250,9 +257,6 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 .addContainerGap())
         );
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageWizardChooseDataSourceVisual.class, "AddImageWizardChooseDataSourceVisual.imgInfoLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -262,27 +266,22 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(imgInfoLabel))
+                        .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 54, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(imgInfoLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(39, 39, 39)
                 .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JLabel imgInfoLabel;
     private javax.swing.JPanel inputPanel;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel nextLabel;
@@ -304,16 +303,20 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
         this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
     }
 
+    @SuppressWarnings("rawtypes")
     public abstract class ComboboxSeparatorRenderer implements ListCellRenderer {
 
         private ListCellRenderer delegate;
+
         private JPanel separatorPanel = new JPanel(new BorderLayout());
+
         private JSeparator separator = new JSeparator();
 
         public ComboboxSeparatorRenderer(ListCellRenderer delegate) {
             this.delegate = delegate;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             Component comp = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

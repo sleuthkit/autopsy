@@ -3,6 +3,7 @@
 # Plugin for Registry Ripper; 
 # 
 # Change history
+#   20131007 - updated with Sticky Keys info
 #   20130307 - updated with autostart locations
 #   20100713 - Updated to include additional values, based on references
 #   20100119 - updated
@@ -147,7 +148,19 @@ sub pluginmain {
 				::rptMsg("Analysis Tip: Maybe be empty; appears as '{blank}'");
 			};
 			::rptMsg(" InitialProgram value not found\.") if ($@);
-			
+
+# Sticky Keys info, added 20131007
+# ref: http://www.room362.com/blog/2012/5/25/sticky-keys-and-utilman-against-nla.html					
+			eval {
+				::rptMsg("");
+				my $ua = $ts->get_subkey("WinStations\\RDP-Tcp")->get_value("UserAuthentication")->get_data();
+				::rptMsg("WinStations\\RDP-Tcp key");
+				::rptMsg("  UserAuthentication: ".$ua);
+				::rptMsg("Analysis Tip: If the UserAuthentication value is 0, the system may be");
+				::rptMsg("susceptible to a priv escalation exploitation via Sticky Keys.  See:");
+				::rptMsg("http://www.room362.com/blog/2012/5/25/sticky-keys-and-utilman-against-nla.html");
+			};
+			::rptMsg("UserAuthentication value not found\.") if ($@);
 	
 		}
 		else {

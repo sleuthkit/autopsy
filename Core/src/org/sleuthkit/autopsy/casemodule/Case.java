@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -58,16 +57,17 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
+@SuppressWarnings("deprecation") // TODO: Remove this when ErrorObserver is replaced.
 public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static String appName = null;
-    
+
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
      */
-    public static final String propStartup = "LBL_StartupDialog";
+    public static final String propStartup = "LBL_StartupDialog"; //NON-NLS
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
 
@@ -76,6 +76,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * name by using String returned by toString() method on a specific event.
      */
     public enum Events {
+
         /**
          * Property name that indicates the name of the current case has
          * changed. When a case is opened, "old name" is empty string and "new
@@ -119,21 +120,30 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * closed, the "new value" will be null and the "old value" will be the
          * instance of the Case object being closed.
          */
-        CURRENT_CASE;
+        CURRENT_CASE,
+        /**
+         * Name for property change events fired when a report is added to the
+         * case. The old value supplied by the event object is null and the new
+         * value is a reference to a Report object representing the new report.
+         */
+        REPORT_ADDED;
     };
 
     private String name;
     private String number;
     private String examiner;
     private String configFilePath;
-    private XMLCaseManagement xmlcm;
-    private SleuthkitCase db;
+    private final XMLCaseManagement xmlcm;
+    private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
-    private Services services;
+    private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
-    static final String CASE_EXTENSION = "aut";
+    static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
+
+    // we cache if the case has data in it yet since a few places ask for it and we dont' need to keep going to DB
+    private boolean hasData = false;
 
     /**
      * Constructor for the Case class
@@ -146,6 +156,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
         this.xmlcm = xmlcm;
         this.db = db;
         this.services = new Services(db);
+    }
+
+    /**
+     * Does initialization that would leak a reference to this if done in the
+     * constructor.
+     */
+    private void init() {
         db.addErrorObserver(this);
     }
 
@@ -178,7 +195,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * property-change
      *
      * @param newCase the new current case or null if case is being closed
-     * 
+     *
      */
     private static void changeCase(Case newCase) {
 
@@ -190,58 +207,56 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             try {
                 pcs.firePropertyChange(Events.CURRENT_CASE.toString(), oldCase, null);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                                              NbBundle.getMessage(Case.class,
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(Case.class,
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange("");
-            
+
             try {
                 pcs.firePropertyChange(Events.NAME.toString(), oldCase.name, "");
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                                              NbBundle.getMessage(Case.class,
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(Case.class,
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         }
 
         if (newCase != null) {
             currentCase = newCase;
 
-            
+            Logger.setLogDirectory(currentCase.getLogDirectoryPath());
+
             try {
                 pcs.firePropertyChange(Events.CURRENT_CASE.toString(), null, currentCase);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                                              NbBundle.getMessage(Case.class,
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(Case.class,
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseChange(currentCase);
 
-            
             try {
                 pcs.firePropertyChange(Events.NAME.toString(), "", currentCase.name);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(Case.class, "Case.moduleErr"),
-                                              NbBundle.getMessage(Case.class,
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(Case.class,
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange(currentCase.name);
 
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+        } else {
+            Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
     }
 
@@ -252,16 +267,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir    The directory to store case data in. Will be created if
-     *                   it doesn't already exist. If it exists, it should have
-     *                   all of the needed sub dirs that createCaseDirectory()
-     *                   will create.
-     * @param caseName   the name of case
+     * @param caseDir The directory to store case data in. Will be created if it
+     * doesn't already exist. If it exists, it should have all of the needed sub
+     * dirs that createCaseDirectory() will create.
+     * @param caseName the name of case
      * @param caseNumber the case number
-     * @param examiner   the examiner for this case
+     * @param examiner the examiner for this case
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
-        logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
+        logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
 
         // create case directory if it doesn't already exist.
         if (new File(caseDir).exists() == false) {
@@ -274,17 +288,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
         xmlcm.writeFile();
 
-        String dbPath = caseDir + File.separator + "autopsy.db";
+        String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
         SleuthkitCase db = null;
         try {
             db = SleuthkitCase.newCase(dbPath);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex);
+            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
         }
 
+        /**
+         * Two-stage initialization to avoid leaking reference to "this" in
+         * constructor.
+         */
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+        newCase.init();
 
         changeCase(newCase);
     }
@@ -297,7 +316,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws CaseActionException
      */
     public static void open(String configFilePath) throws CaseActionException {
-        logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
+        logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath); //NON-NLS
 
         try {
             XMLCaseManagement xmlcm = new XMLCaseManagement();
@@ -314,24 +333,29 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
 
             String caseDir = xmlcm.getCaseDirectory();
-            String dbPath = caseDir + File.separator + "autopsy.db";
+            String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
             if (null != db.getBackupDatabasePath()) {
                 JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                                                        db.getBackupDatabasePath()),
-                                              NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                                              JOptionPane.INFORMATION_MESSAGE);
+                        NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                db.getBackupDatabasePath()),
+                        NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                        JOptionPane.INFORMATION_MESSAGE);
             }
-            
+
             checkImagesExist(db);
 
+            /**
+             * Two-stage initialization to avoid leaking reference to "this" in
+             * constructor.
+             */
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
+            openedCase.init();
 
             changeCase(openedCase);
 
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error opening the case: ", ex);
+            logger.log(Level.SEVERE, "Error opening the case: ", ex); //NON-NLS
             // close the previous case if there's any
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
@@ -339,13 +363,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION), ex);
             } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg"), ex);
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
             }
         }
     }
 
     static Map<Long, String> getImagePaths(SleuthkitCase db) { //TODO: clean this up
-        Map<Long, String> imgPaths = new HashMap<Long, String>();
+        Map<Long, String> imgPaths = new HashMap<>();
         try {
             Map<Long, List<String>> imgPathsList = db.getImagePaths();
             for (Map.Entry<Long, List<String>> entry : imgPathsList.entrySet()) {
@@ -354,7 +378,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 }
             }
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error getting image paths", ex);
+            logger.log(Level.WARNING, "Error getting image paths", ex); //NON-NLS
         }
         return imgPaths;
     }
@@ -371,18 +395,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     || driveExists(path));
             if (!fileExists) {
                 int ret = JOptionPane.showConfirmDialog(null,
-                                                        NbBundle.getMessage(Case.class,
-                                                                            "Case.checkImgExist.confDlg.doesntExist.msg",
-                                                                            appName, path),
-                                                        NbBundle.getMessage(Case.class,
-                                                                            "Case.checkImgExist.confDlg.doesntExist.title"),
-                                                        JOptionPane.YES_NO_OPTION);
+                        NbBundle.getMessage(Case.class,
+                                "Case.checkImgExist.confDlg.doesntExist.msg",
+                                appName, path),
+                        NbBundle.getMessage(Case.class,
+                                "Case.checkImgExist.confDlg.doesntExist.title"),
+                        JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
-                   
+
                     MissingImageDialog.makeDialog(obj_id, db);
-                    
+
                 } else {
-                    logger.log(Level.WARNING, "Selected image files don't match old files!");
+                    logger.log(Level.WARNING, "Selected image files don't match old files!"); //NON-NLS
                 }
 
             }
@@ -394,26 +418,25 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId    the ID of the image that being added
+     * @param imgId the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
-        logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
+        logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone}); //NON-NLS
 
         try {
             Image newImage = db.getImageById(imgId);
-           
-                    try {
-                        pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newImage); // the new value is the instance of the image
-                    }
-                    catch (Exception e) {
-                        logger.log(Level.SEVERE, "Case listener threw exception", e);
-                        MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "Case.changeCase.errListenToCaseUpdates.msg"),
-                                                      MessageNotifyUtil.MessageType.ERROR);
-                    }
+
+            try {
+                pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newImage); // the new value is the instance of the image
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
+                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                        NbBundle.getMessage(this.getClass(),
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
             CoreComponentControl.openCoreWindows();
             return newImage;
         } catch (Exception ex) {
@@ -427,33 +450,32 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param newDataSource new data source added
      */
-   @Deprecated
+    @Deprecated
     void addLocalDataSource(Content newDataSource) {
-        
+
         notifyNewDataSource(newDataSource);
     }
 
     /**
      * Notifies the UI that a new data source has been added.
-     * 
+     *
      *
      * @param newDataSource new data source added
      */
     void notifyNewDataSource(Content newDataSource) {
-        
+
         try {
             pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newDataSource);
-        }
-        catch (Exception e) {
-            logger.log(Level.SEVERE, "Case threw exception", e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "Case.changeCase.errListenToCaseUpdates.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(),
+                            "Case.changeCase.errListenToCaseUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
         CoreComponentControl.openCoreWindows();
     }
-    
+
     /**
      * @return The Services object for this case.
      */
@@ -494,7 +516,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws CaseActionException exception throw if case could not be deleted
      */
     void deleteCase(File caseDir) throws CaseActionException {
-        logger.log(Level.INFO, "Deleting case.\ncaseDir: {0}", caseDir);
+        logger.log(Level.INFO, "Deleting case.\ncaseDir: {0}", caseDir); //NON-NLS
 
         try {
 
@@ -508,7 +530,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                         NbBundle.getMessage(this.getClass(), "Case.deleteCase.exception.msg", caseDir));
             }
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error deleting the current case dir: " + caseDir, ex);
+            logger.log(Level.SEVERE, "Error deleting the current case dir: " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "Case.deleteCase.exception.msg2", caseDir), ex);
         }
@@ -518,9 +540,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Updates the case name.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath     the old path that wants to be updated
+     * @param oldPath the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath     the new path
+     * @param newPath the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -529,13 +551,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
             RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
             try {
                 pcs.firePropertyChange(Events.NAME.toString(), oldCaseName, newCaseName);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(this.getClass(),
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
             doCaseNameChange(newCaseName);
 
@@ -553,16 +574,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
     void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
         try {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
-            examiner = newExaminer;      
+            examiner = newExaminer;
             try {
                 pcs.firePropertyChange(Events.EXAMINER.toString(), oldExaminer, newExaminer);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(this.getClass(),
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateExaminer.exception.msg"), e);
@@ -579,16 +599,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
-    
+
             try {
                 pcs.firePropertyChange(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "Case listener threw exception", e);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Case listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "Case.changeCase.errListenToCaseUpdates.msg"),
-                                              MessageNotifyUtil.MessageType.ERROR);
+                        NbBundle.getMessage(this.getClass(),
+                                "Case.changeCase.errListenToCaseUpdates.msg"),
+                        MessageNotifyUtil.MessageType.ERROR);
             }
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseNum.exception.msg"), e);
@@ -723,6 +742,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
+     * Gets the full path to the log directory for this case.
+     *
+     * @return The log directory path.
+     */
+    public String getLogDirectoryPath() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getLogDir();
+        }
+    }
+
+    /**
      * get the created date of this case
      *
      * @return case creation date
@@ -753,7 +785,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return relative path to the module output dir
      */
     public static String getModulesOutputDirRelPath() {
-        return "ModuleOutput";
+        return "ModuleOutput"; //NON-NLS
     }
 
     /**
@@ -765,44 +797,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return pcs;
     }
 
-    String getImagePaths(Long imgID) {
-        return getImagePaths(db).get(imgID);
-    }
-
-    /**
-     * get all the image id in this case
-     *
-     * @return imageIDs
-     */
-    public Long[] getImageIDs() {
-        Set<Long> ids = getImagePaths(db).keySet();
-        return ids.toArray(new Long[ids.size()]);
-    }
-
-    public List<Image> getImages() throws TskCoreException {
-        return db.getImages();
-    }
-
-    /**
-     * Count the root objects.
-     *
-     * @return The number of total root objects in this case.
-     */
-    public int getRootObjectsCount() {
-        return getRootObjects().size();
-    }
-
     /**
      * Get the data model Content objects in the root of this case's hierarchy.
      *
      * @return a list of the root objects
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<Content> getRootObjects() {
-        try {
-            return db.getRootObjects();
-        } catch (TskException ex) {
-            throw new RuntimeException(NbBundle.getMessage(this.getClass(), "Case.exception.errGetRootObj"), ex);
-        }
+    public List<Content> getDataSources() throws TskCoreException {
+        List<Content> list = db.getRootObjects();
+        hasData = (list.size() > 0);
+        return list;
     }
 
     /**
@@ -811,16 +815,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return time zones the set of time zones
      */
     public Set<TimeZone> getTimeZone() {
-        Set<TimeZone> timezones = new HashSet<TimeZone>();
-        for (Content c : getRootObjects()) {
-            try {
-                final Image image = c.getImage();
-                if (image != null) {
+        Set<TimeZone> timezones = new HashSet<>();
+        try {
+            for (Content c : getDataSources()) {
+                final Content dataSource = c.getDataSource();
+                if ((dataSource != null) && (dataSource instanceof Image)) {
+                    Image image = (Image) dataSource;
                     timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
                 }
-            } catch (TskException ex) {
-                logger.log(Level.INFO, "Error getting time zones", ex);
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
         }
         return timezones;
     }
@@ -846,8 +851,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Does the given string refer to a physical drive?
      */
-    private static final String pdisk = "\\\\.\\physicaldrive";
-    private static final String dev = "/dev/";
+    private static final String pdisk = "\\\\.\\physicaldrive"; //NON-NLS
+    private static final String dev = "/dev/"; //NON-NLS
 
     static boolean isPhysicalDrive(String path) {
         return path.toLowerCase().startsWith(pdisk)
@@ -876,10 +881,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             File tmp = new File(path);
             br = new BufferedInputStream(new FileInputStream(tmp));
             int b = br.read();
-            if (b != -1) {
-                return true;
-            }
-            return false;
+            return b != -1;
         } catch (Exception ex) {
             return false;
         } finally {
@@ -902,7 +904,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return
      */
     public static String convertTimeZone(String timezoneID) {
-        String result = "";
 
         TimeZone zone = TimeZone.getTimeZone(timezoneID);
         int offset = zone.getRawOffset() / 1000;
@@ -915,7 +916,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String first = dfm.format(new GregorianCalendar(2010, 1, 1).getTime()).substring(0, 3); // make it only 3 letters code
         String second = dfm.format(new GregorianCalendar(2011, 6, 6).getTime()).substring(0, 3); // make it only 3 letters code
         int mid = hour * -1;
-        result = first + Integer.toString(mid);
+        String result = first + Integer.toString(mid);
         if (min != 0) {
             result = result + ":" + Integer.toString(min);
         }
@@ -933,7 +934,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * to create the case directory
      *
-     * @param caseDir  Path to the case directory (typically base + case name)
+     * @param caseDir Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -987,7 +988,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             if (result == false) {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateModDir",
-                                            modulesOutDir));
+                                modulesOutDir));
             }
 
         } catch (Exception e) {
@@ -1004,7 +1005,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @return boolean whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
-        logger.log(Level.INFO, "Deleting case directory: " + casePath.getAbsolutePath());
+        logger.log(Level.INFO, "Deleting case directory: {0}", casePath.getAbsolutePath()); //NON-NLS
         return FileUtil.deleteDir(casePath);
     }
 
@@ -1047,11 +1048,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
         if (tempFolder.isDirectory()) {
             File[] files = tempFolder.listFiles();
             if (files.length > 0) {
-                for (int i = 0; i < files.length; i++) {
-                    if (files[i].isDirectory()) {
-                        deleteCaseDirectory(files[i]);
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteCaseDirectory(file);
                     } else {
-                        files[i].delete();
+                        file.delete();
                     }
                 }
             }
@@ -1067,21 +1068,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
         String modulesOutputDir = openedCase.getModulesOutputDirAbsPath();
         File modulesOutputDirF = new File(modulesOutputDir);
         if (!modulesOutputDirF.exists()) {
-            logger.log(Level.INFO, "Creating modules output dir for the case.");
+            logger.log(Level.INFO, "Creating modules output dir for the case."); //NON-NLS
 
             try {
                 if (!modulesOutputDirF.mkdir()) {
-                    logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir);
+                    logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: {0}", modulesOutputDir); //NON-NLS
                 }
             } catch (SecurityException e) {
-                logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e);
+                logger.log(Level.SEVERE, "Error creating modules output dir for the case, dir: " + modulesOutputDir, e); //NON-NLS
             }
         }
     }
 
     //case change helper
     private static void doCaseChange(Case toChangeTo) {
-        logger.log(Level.INFO, "Changing Case to: " + toChangeTo);
+        logger.log(Level.INFO, "Changing Case to: {0}", toChangeTo); //NON-NLS
         if (toChangeTo != null) { // new case is open
 
             // clear the temp folder when the case is created / opened
@@ -1094,7 +1095,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
             CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-            if (toChangeTo.getRootObjectsCount() > 0) {
+            if (toChangeTo.hasData()) {
                 // open all top components
                 CoreComponentControl.openCoreWindows();
             } else {
@@ -1114,7 +1115,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             //clear pending notifications
             MessageNotifyUtil.Notify.clear();
 
-
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
 
@@ -1125,7 +1125,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         //log memory usage after case changed
         logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-
 
     }
 
@@ -1141,7 +1140,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     //delete image helper
     private void doDeleteImage() {
         // no more image left in this case
-        if (currentCase.getRootObjectsCount() == 0) {
+        if (currentCase.hasData()) {
             // close all top components
             CoreComponentControl.closeCoreWindows();
         }
@@ -1150,5 +1149,46 @@ public class Case implements SleuthkitCase.ErrorObserver {
     @Override
     public void receiveError(String context, String errorMessage) {
         MessageNotifyUtil.Notify.error(context, errorMessage);
+    }
+
+    /**
+     * Adds a report to the case.
+     *
+     * @param [in] localPath The path of the report file, must be in the case
+     * directory or one of its subdirectories.
+     * @param [in] sourceModuleName The name of the module that created the
+     * report.
+     * @param [in] reportName The report name, may be empty.
+     * @return A Report data transfer object (DTO) for the new row.
+     * @throws TskCoreException
+     */
+    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        Report report = this.db.addReport(localPath, srcModuleName, reportName);
+        try {
+            Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
+        } catch (Exception ex) {
+            String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_ADDED.toString()); //NON-NLS
+            logger.log(Level.SEVERE, errorMessage, ex);
+        }
+    }
+
+    public List<Report> getAllReports() throws TskCoreException {
+        return this.db.getAllReports();
+    }
+
+    /**
+     * Returns if the case has data in it yet.
+     *
+     * @return
+     */
+    public boolean hasData() {
+        // false is also the initial value, so make the DB trip if it is still false
+        if (!hasData) {
+            try {
+                hasData = (getDataSources().size() > 0);
+            } catch (TskCoreException ex) {
+            }
+        }
+        return hasData;
     }
 }

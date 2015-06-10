@@ -1,0 +1,23 @@
+/*! \page content_viewer_page Content Viewer
+
+The Content Viewer lives in the lower right-hand side of the Autopsy main screen and show pictures, video, hex, text, extracted strings, metadata, etc. They are enabled when you select a file in the file list above it.
+
+The Content Viewer is context-aware, meaning it will present different views of the content based on the type of file selected. For example, a .JPG would show up as a picture, a text file would show up as text, and a .bin file would show up as hex output.
+
+The screenshots below show some examples of content viewers in action.
+<br>
+\image html content-viewer-1.PNG
+<br>
+<br>
+\image html content-viewer-2.PNG
+<br>
+<br>
+\image html content-viewer-3.PNG
+<br>
+<br>
+\image html content-viewer-4.PNG
+<br>
+<br>
+\image html content-viewer-5.PNG
+<br>
+*/

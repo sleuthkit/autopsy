@@ -19,15 +19,19 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -109,11 +113,25 @@ public class AddContentTagAction extends AddTagAction {
                         continue;
                     }                    
                 }
-                
-                Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);            
+                // check if the same tag is being added for the same abstract file.
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                List<ContentTag> contentTagList = tagsManager.getContentTagsByContent(file);
+                for (ContentTag contentTag : contentTagList) {
+                    if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName())) {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "AddContentTagAction.tagExists",
+                                        file.getName(), tagName.getDisplayName()),
+                                NbBundle.getMessage(this.getClass(),
+                                        "AddContentTagAction.cannotApplyTagErr"),
+                                JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+                tagsManager.addContentTag(file, tagName, comment);
             }
             catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex);                
+                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                                               NbBundle.getMessage(this.getClass(),
                                                                   "AddContentTagAction.unableToTag.msg2",

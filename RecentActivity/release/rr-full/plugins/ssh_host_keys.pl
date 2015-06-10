@@ -42,11 +42,11 @@ sub pluginmain {
 	::rptMsg("ssh_host_keys v.".$VERSION); # banner
     ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
     unless ($reg = Parse::Win32Registry->new($hive)) {
-	::logMsg("Failed to open $hive: $!");
+#	::logMsg("Failed to open $hive: $!");
 	return();
     }
     unless ($root = $reg->get_root_key()) {
-	::logMsg("Failed to get root key from $hive: $!");
+#	::logMsg("Failed to get root key from $hive: $!");
 	return();
     }
 
@@ -54,7 +54,7 @@ sub pluginmain {
 	display_key_data($key);
     }
     else {
-	::logMsg('"Software\SimonTatham\Putty\SshHostKeys" does not exist' . "\n");
+#	::logMsg('"Software\SimonTatham\Putty\SshHostKeys" does not exist' . "\n");
 	::rptMsg('"Software\SimonTatham\Putty\SshHostKeys" does not exist' . "\n"); # line added on 04/02/2013
     }
 
@@ -62,7 +62,7 @@ sub pluginmain {
 	display_key_data($key);
     }
     else {
-	::logMsg('"Software\Martin Prikryl\WinSCP 2\SshHostKeys" does not exist');
+#	::logMsg('"Software\Martin Prikryl\WinSCP 2\SshHostKeys" does not exist');
 	::rptMsg('"Software\Martin Prikryl\WinSCP 2\SshHostKeys" does not exist'); # line added on 04/02/2013
     }
 }

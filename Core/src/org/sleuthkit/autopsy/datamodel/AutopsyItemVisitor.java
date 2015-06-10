@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-/**
- *
- * @author dfickling
- */
  interface AutopsyItemVisitor<T> {
 
     T visit(ExtractedContent ec);
@@ -52,7 +48,7 @@ package org.sleuthkit.autopsy.datamodel;
 
     T visit(EmailExtracted ee);
 
-    T visit(TagsNodeKey tagsNodeKey);
+    T visit(Tags tagsNodeKey);
     
     T visit(InterestingHits ih);
         
@@ -61,7 +57,9 @@ package org.sleuthkit.autopsy.datamodel;
     T visit(Views v);
 
     T visit(Results r);
-    
+
+    T visit(Reports reportsItem);
+        
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -141,7 +139,7 @@ package org.sleuthkit.autopsy.datamodel;
         }
 
         @Override
-        public T visit(TagsNodeKey tagsNodeKey) {
+        public T visit(Tags tagsNodeKey) {
             return defaultVisit(tagsNodeKey);
         }
 
@@ -158,6 +156,11 @@ package org.sleuthkit.autopsy.datamodel;
         @Override
         public T visit(Results r) {
             return defaultVisit(r);
+        }
+
+        @Override
+        public T visit(Reports reportsItem) {
+            return defaultVisit(reportsItem);
         }
     }
 }

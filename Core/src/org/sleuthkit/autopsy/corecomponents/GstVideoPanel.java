@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -51,8 +52,6 @@ import org.gstreamer.elements.RGBDataSink;
 import org.gstreamer.swing.VideoComponent;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -70,8 +69,8 @@ import org.sleuthkit.datamodel.TskData;
     @ServiceProvider(service = FrameCapture.class)
 })
 public class GstVideoPanel extends MediaViewVideoPanel {
-
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"};
+    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"}; //NON-NLS 
+    private static final List<String> MIMETYPES = Arrays.asList("video/quicktime", "audio/mpeg", "audio/x-mpeg", "video/mpeg", "video/x-mpeg", "audio/mpeg3", "audio/x-mpeg-3", "video/x-flv", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
     
     private static final Logger logger = Logger.getLogger(GstVideoPanel.class.getName());
     private boolean gstInited;
@@ -87,8 +86,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
-    private Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
-
+    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
+    
     /**
      * Creates new form MediaViewVideoPanel
      */
@@ -143,12 +142,12 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                     if (gstPlaybin2 != null && !autoTracking) {
                         State orig = gstPlaybin2.getState();
                         if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
-                            logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed."); //NON-NLS
                             infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                             return;
                         }
                         if (gstPlaybin2.seek(ClockTime.fromMillis(time)) == false) {
-                            logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed.");
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.seek() failed."); //NON-NLS
                             infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                             return;
                         }
@@ -161,19 +160,19 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
     private boolean initGst() {
         try {
-            logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing");
+            logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing"); //NON-NLS
             Gst.init();
             gstInited = true;
         } catch (GstException e) {
             gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e);
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e); //NON-NLS
             MessageNotifyUtil.Notify.error(
                     NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.gstException.msg"),
                     e.getMessage());
             return false;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
             gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e);
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e); //NON-NLS
             MessageNotifyUtil.Notify.error(
                     NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.otherException.msg"),
                     e.getMessage());
@@ -201,7 +200,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         try {
             path = file.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Cannot get unique path of video file");
+            logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
         }
         infoLabel.setText(path);
         infoLabel.setToolTipText(path);
@@ -215,7 +214,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             if (gstPlaybin2 != null) {
                 gstPlaybin2.dispose();
             }
-            gstPlaybin2 = new PlayBin2("VideoPlayer");
+            gstPlaybin2 = new PlayBin2("VideoPlayer"); //NON-NLS
             gstPlaybin2.setVideoSink(gstVideoComponent.getElement());
 
             videoPanel.removeAll();
@@ -229,7 +228,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             gstPlaybin2.setInputFile(ioFile);
             
             if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
-                logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
+                logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed."); //NON-NLS
                 infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
             }
         }
@@ -255,13 +254,13 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             if (gstPlaybin2 != null) {
                 if (gstPlaybin2.isPlaying()) {
                     if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                         return;
                     }
                 }
                 if (gstPlaybin2.setState(State.NULL) == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.NULL) failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.NULL) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
@@ -324,8 +323,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         }
 
         // set up a PlayBin2 object
-        RGBDataSink videoSink = new RGBDataSink("rgb", rgbListener);
-        PlayBin2 playbin = new PlayBin2("VideoFrameCapture");
+        RGBDataSink videoSink = new RGBDataSink("rgb", rgbListener); //NON-NLS
+        PlayBin2 playbin = new PlayBin2("VideoFrameCapture"); //NON-NLS
         playbin.setInputFile(file);
         playbin.setVideoSink(videoSink);
 
@@ -373,7 +372,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
             //System.out.println("Seeking to " + timeStamp + "milliseconds.");
             if (!playbin.seek(timeStamp, unit)) {
-                logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase());
+                logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase()); //NON-NLS
             }
             
             ret = playbin.play();
@@ -389,7 +388,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 try {
                     lock.wait(FRAME_CAPTURE_TIMEOUT_MILLIS);
                 } catch (InterruptedException e) {
-                    logger.log(Level.INFO, "InterruptedException occurred while waiting for frame capture.", e);
+                    logger.log(Level.INFO, "InterruptedException occurred while waiting for frame capture.", e); //NON-NLS
                 }
             }
             Image image = rgbListener.getImage();
@@ -403,7 +402,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             }
             
             if (image == null) {
-                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName());
+                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName()); //NON-NLS
                 badVideoFiles.add(file.getName());
                 break;
             }
@@ -533,27 +532,27 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             State state = gstPlaybin2.getState();
             if (state.equals(State.PLAYING)) {
                 if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 pauseButton.setText("►");
                 // Is this call necessary considering we just called gstPlaybin2.pause()?
                 if (gstPlaybin2.setState(State.PAUSED) == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PAUSED) failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PAUSED) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
             } else if (state.equals(State.PAUSED)) {
                 if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 pauseButton.setText("||");
                 // Is this call necessary considering we just called gstPlaybin2.play()?
                 if (gstPlaybin2.setState(State.PLAYING) == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PLAYING) failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.PLAYING) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
@@ -576,7 +575,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
 
-        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  ";
+        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
         private long millisElapsed = 0;
         private final long INTER_FRAME_PERIOD_MS = 20;
         private final long END_TIME_MARGIN_MS = 50;
@@ -592,12 +591,12 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             synchronized (playbinLock) {
                 if (gstPlaybin2 != null) {
                     if (gstPlaybin2.stop() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed.");
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.stop() failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     // ready to be played again
                     if (gstPlaybin2.setState(State.READY) == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed.");
+                        logger.log(Level.WARNING, "Attempt to call PlayBin2.setState(State.READY) failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     gstPlaybin2.getState(); //NEW
@@ -675,9 +674,12 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage());
-                infoLabel.setText("Error updating video progress: " + ex.getMessage());
+                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage()); //NON-NLS
+                infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.infoLabel.updateErr",
+                                                      ex.getMessage()));
             }
+            // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex ) { }
         }
     } //end class progress worker
 
@@ -704,7 +706,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         @Override
         protected Object doInBackground() throws Exception {
             success = false;
-            progress = ProgressHandleFactory.createHandle("Buffering " + sFile.getName(), new Cancellable() {
+            progress = ProgressHandleFactory.createHandle(
+                    NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sFile.getName()),
+                    new Cancellable() {
                 @Override
                 public boolean cancel() {
                     return ExtractMedia.this.cancel(true);
@@ -716,7 +720,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             try {
                 extractedBytes = ContentUtils.writeToFile(sFile, jFile, progress, this, true);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error buffering file", ex);
+                logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
             }
             success = true;
             return null;
@@ -728,11 +732,11 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             try {
                 super.get(); //block and get all exceptions thrown while doInBackground()
             } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Media buffering was canceled.");
+                logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
             } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Media buffering was interrupted.");
+                logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex);
+                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
             } finally {
                 progress.finish();
                 if (!this.isCancelled()) {
@@ -750,12 +754,12 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             synchronized (playbinLock) {
                 // must play, then pause and get state to get duration.
                 if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
                 if (gstPlaybin2.pause() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed.");
+                    logger.log(Level.WARNING, "Attempt to call PlayBin2.pause() failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
@@ -781,7 +785,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
                     synchronized (playbinLock) {
                         if (gstPlaybin2.play() == StateChangeReturn.FAILURE) {
-                            logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed.");
+                            logger.log(Level.WARNING, "Attempt to call PlayBin2.play() failed."); //NON-NLS
                             infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                         }
                     }
@@ -796,5 +800,10 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     @Override
     public String[] getExtensions() {
         return EXTENSIONS;
+    }
+
+    @Override
+    public List<String> getMimeTypes() {
+        return MIMETYPES;
     }
 }

@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestConfigurator;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
@@ -33,11 +31,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
  *
@@ -46,8 +46,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private static final Logger logger = Logger.getLogger(AddImageWizardIngestConfigPanel.class.getName());
-    private IngestConfigurator ingestConfig;
+
+    private IngestJobSettingsPanel ingestJobSettingsPanel;
+    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -61,10 +62,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupTask; 
    
-    private AddImageAction addImageAction;
+    private final AddImageAction addImageAction;
     
-    private AddImageWizardAddingProgressPanel progressPanel;
-    private AddImageWizardChooseDataSourcePanel dataSourcePanel;
+    private final AddImageWizardAddingProgressPanel progressPanel;
+    private final AddImageWizardChooseDataSourcePanel dataSourcePanel;
     
     private DataSourceProcessor dsProcessor;
     
@@ -74,15 +75,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
         
-        ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-        List<String> messages = ingestConfig.setContext(AddImageWizardIngestConfigPanel.class.getCanonicalName());
-        if (messages.isEmpty() == false) {
-            StringBuilder warning = new StringBuilder();
-            for (String message : messages) {
-                warning.append(message).append("\n");
-            }
-            JOptionPane.showMessageDialog(null, warning.toString());
-        }
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());        
+        showWarnings(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
     }
 
     /**
@@ -96,7 +91,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageWizardIngestConfigVisual(ingestConfig.getIngestConfigPanel());
+            component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
         }
         return component;
     }
@@ -164,7 +159,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        JButton cancel = new JButton("Cancel");
+        JButton cancel = new JButton(
+                NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupTask = null;
@@ -188,13 +184,26 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //save previously selected config
-        ingestConfig.save();
+        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        ingestJobSettings.save();
+        showWarnings(ingestJobSettings);
+        
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();
     }
 
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder();
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
+        }
+    }
+    
     /**
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
@@ -202,10 +211,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            ingestConfig.setContent(newContents);
-            ingestConfig.start();
+            IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettingsPanel.getSettings());
             progressPanel.setStateFinished();
-
         }
     }
     

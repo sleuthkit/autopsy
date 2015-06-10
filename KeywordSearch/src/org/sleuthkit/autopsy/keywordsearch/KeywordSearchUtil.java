@@ -141,6 +141,6 @@ class KeywordSearchUtil {
      */
     static boolean isXMLList(String absPath) {
         //TODO: make this more robust, if necessary
-        return new File(absPath).getName().endsWith(".xml");
+        return new File(absPath).getName().endsWith(".xml"); //NON-NLS
     }
 }

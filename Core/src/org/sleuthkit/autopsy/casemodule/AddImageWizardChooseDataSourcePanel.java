@@ -48,8 +48,8 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     private AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
-    private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH";
-    private static final String PROP_LASTDATASOURCE_TYPE = "LBL_LastDataSource_TYPE";
+    private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH"; //NON-NLS
+    private static final String PROP_LASTDATASOURCE_TYPE = "LBL_LastDataSource_TYPE"; //NON-NLS
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
 
@@ -198,7 +198,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
                     cleanupTask.cleanup();
                 } catch (Exception ex) {
                     Logger logger = Logger.getLogger(AddImageWizardChooseDataSourcePanel.class.getName());
-                    logger.log(Level.WARNING, "Error cleaning up image task", ex);
+                    logger.log(Level.WARNING, "Error cleaning up image task", ex); //NON-NLS
                 } finally {
                     cleanupTask.disable();
                 }

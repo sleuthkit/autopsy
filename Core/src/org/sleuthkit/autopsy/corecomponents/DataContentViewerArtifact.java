@@ -19,33 +19,32 @@
 
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
 import javax.swing.SwingWorker;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ArtifactStringContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the Content represented by a Node.
@@ -106,7 +105,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             jPanel1.setPreferredSize(new java.awt.Dimension(622, 424));
 
             outputViewPane.setEditable(false);
-            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
             outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(outputViewPane);
 
@@ -124,14 +122,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
             pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
-            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N NON-NLS
             nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.nextPageButton.text")); // NOI18N
             nextPageButton.setBorderPainted(false);
             nextPageButton.setContentAreaFilled(false);
-            nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+            nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N NON-NLS
             nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N NON-NLS
             nextPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     nextPageButtonActionPerformed(evt);
@@ -143,14 +141,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
             pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
-            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N NON-NLS
             prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.prevPageButton.text")); // NOI18N
             prevPageButton.setBorderPainted(false);
             prevPageButton.setContentAreaFilled(false);
-            prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+            prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N NON-NLS
             prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
             prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N NON-NLS
             prevPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     prevPageButtonActionPerformed(evt);
@@ -325,7 +323,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 return content.getAllArtifactsCount() > 0;
             } 
             catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex);
+                logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
             }
         }
         return false;
@@ -334,7 +332,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     @Override
     public int isPreferred(Node node) {
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if(artifact == null) {
+        // low priority if node doesn't have an artifact (meaning it was found from normal directory
+        // browsing, or if the artifact is something that means the user really wants to see the original
+        // file and not more details about the artifact
+        if ((artifact == null) || 
+                (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) ||
+                (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
             return 3;
         } 
         else {
@@ -450,7 +453,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 artifacts = content.getAllArtifacts();
             } 
             catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get artifacts", ex);
+                logger.log(Level.WARNING, "Couldn't get artifacts", ex); //NON-NLS
                 return new ViewUpdate(getArtifactContentStrings().size(), currentPage, ERROR_TEXT); 
             }
             
@@ -493,7 +496,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                         }
                     } 
                     catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Couldn't get associated artifact to display in Content Viewer.", ex);
+                        logger.log(Level.WARNING, "Couldn't get associated artifact to display in Content Viewer.", ex); //NON-NLS
                     }
                }
                     
@@ -530,7 +533,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     }
                 }
                 catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                
+                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
                 }                
             }
         }        
@@ -577,7 +580,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     }
                 }
                 catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                
+                    logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
                 }                
             }
         }

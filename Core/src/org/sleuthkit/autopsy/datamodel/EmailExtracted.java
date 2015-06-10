@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -25,25 +27,32 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree
+ * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
  * Email messages are grouped into parent folders, and the folders are grouped
  * into parent accounts if TSK_PATH is available to define the relationship
- * structure for every message
+ * structure for every message.
  */
 public class EmailExtracted implements AutopsyVisitableItem {
 
@@ -54,64 +63,86 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
     private static final String MAIL_PATH_SEPARATOR = "/";
     private SleuthkitCase skCase;
-    private Map<String, Map<String, List<Long>>> accounts;
+    private final EmailResults emailResults;
+    
 
     public EmailExtracted(SleuthkitCase skCase) {
         this.skCase = skCase;
-        accounts = new LinkedHashMap<>();
+        emailResults = new EmailResults();
     }
-
-    @SuppressWarnings("deprecation")
-    private void initArtifacts() {
-        accounts.clear();
-        try {
+    
+    private final class EmailResults extends Observable {
+        
+        private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
+        
+        EmailResults() {
+            update();
+        }
+        
+        public Set<String> getAccounts() {
+            return accounts.keySet();
+        }
+        
+        public Set<String> getFolders(String account) {
+            return accounts.get(account).keySet();
+        }
+        
+        public List<Long> getArtifactIds(String account, String folder) {
+            return accounts.get(account).get(folder);
+        }
+        @SuppressWarnings("deprecation")
+        public void update() {
+            accounts.clear();
+            if (skCase == null) {
+                return;   
+            }
+            
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + pathAttrId
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
-            ResultSet rs = skCase.runQuery(query);
-            while (rs.next()) {
-                final String path = rs.getString("value_text");
-                final long artifactId = rs.getLong("artifact_id");
-                final Map<String, String> parsedPath = parsePath(path);
-                final String account = parsedPath.get(MAIL_ACCOUNT);
-                final String folder = parsedPath.get(MAIL_FOLDER);
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
+                    + "attribute_type_id=" + pathAttrId //NON-NLS
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
 
-                Map<String, List<Long>> folders = accounts.get(account);
-                if (folders == null) {
-                    folders = new LinkedHashMap<>();
-                    accounts.put(account, folders);
+            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                while (resultSet.next()) {
+                    final String path = resultSet.getString("value_text"); //NON-NLS
+                    final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                    final Map<String, String> parsedPath = parsePath(path);
+                    final String account = parsedPath.get(MAIL_ACCOUNT);
+                    final String folder = parsedPath.get(MAIL_FOLDER);
+
+                    Map<String, List<Long>> folders = accounts.get(account);
+                    if (folders == null) {
+                        folders = new LinkedHashMap<>();
+                        accounts.put(account, folders);
+                    }
+                    List<Long> messages = folders.get(folder);
+                    if (messages == null) {
+                        messages = new ArrayList<>();
+                        folders.put(folder, messages);
+                    }
+                    messages.add(artifactId);
                 }
-                List<Long> messages = folders.get(folder);
-                if (messages == null) {
-                    messages = new ArrayList<>();
-                    folders.put(folder, messages);
-                }
-                messages.add(artifactId);
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
-            skCase.closeRunQuery(rs);
-
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Cannot initialize email extraction", ex);
         }
-    }
-
-    private static Map<String, String> parsePath(String path) {
-        Map<String, String> parsed = new HashMap<>();
-        String[] split = path.split(MAIL_PATH_SEPARATOR);
-        if (split.length < 4) {
-            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: {0}, will use defaults", split.length);
-            parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
-            parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
+    
+        private  Map<String, String> parsePath(String path) {
+            Map<String, String> parsed = new HashMap<>();
+            String[] split = path.split(MAIL_PATH_SEPARATOR);
+            if (split.length < 4) {
+                parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
+                parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
+                return parsed;
+            }
+            parsed.put(MAIL_ACCOUNT, split[2]);
+            parsed.put(MAIL_FOLDER, split[3]);
             return parsed;
         }
-
-        parsed.put(MAIL_ACCOUNT, split[2]);
-        parsed.put(MAIL_FOLDER, split[3]);
-        return parsed;
     }
 
     @Override
@@ -120,96 +151,17 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
 
     /**
-     * Mail root node showing all emails
-     */
-    public class EmailExtractedRootNodeFlat extends DisplayableItemNode {
-
-        public EmailExtractedRootNodeFlat() {
-            super(Children.create(new EmailExtractedRootChildrenFlat(), true), Lookups.singleton(DISPLAY_NAME));
-            super.setName(LABEL_NAME);
-            super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
-            initArtifacts();
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return false;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            //return v.visit(this);
-            return null;
-        }
-
-        @Override
-        protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
-            }
-
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.displayName"),
-                    NbBundle.getMessage(this.getClass(), "EmailExtracted.createSheet.name.desc"),
-                    getName()));
-            return s;
-        }
-    }
-
-    /**
-     * Mail root child node showing flattened emails
-     */
-    private class EmailExtractedRootChildrenFlat extends ChildFactory<BlackboardArtifact> {
-
-        private EmailExtractedRootChildrenFlat() {
-            super();
-        }
-
-        @Override
-        protected boolean createKeys(List<BlackboardArtifact> list) {
-            //flatten all emails            
-            List<BlackboardArtifact> tempList = new ArrayList<>();
-            for (String account : accounts.keySet()) {
-                Map<String, List<Long>> folders = accounts.get(account);
-                for (String folder : folders.keySet()) {
-                    List<Long> messages = folders.get(folder);
-                    for (long l : messages) {
-                        try {
-                            //TODO: bulk artifact gettings
-                            tempList.add(skCase.getBlackboardArtifact(l));
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
-                        }
-                    }
-                }
-            }
-
-            list.addAll(tempList);
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact);
-        }
-    }
-
-    /**
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class EmailExtractedRootNode extends DisplayableItemNode {
+    public class RootNode extends DisplayableItemNode {
 
-        public EmailExtractedRootNode() {
-            super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
+        public RootNode() {
+            super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
-            initArtifacts();
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
+            emailResults.update();
         }
 
         @Override
@@ -220,7 +172,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
-            //return null;
         }
 
         @Override
@@ -244,30 +195,87 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root child node creating each account node
      */
-    private class EmailExtractedRootChildren extends ChildFactory<String> {
+    private class AccountFactory extends ChildFactory.Detachable<String> implements Observer {
+
+        /* The pcl is in the class because it has the easiest mechanisms to add and remove itself
+         * during its life cycles.
+         */
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                
+                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                    if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
+                        emailResults.update();
+                    }
+                }
+                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    emailResults.update();
+                }
+                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeNotify();
+                        skCase = null;
+                    }
+                }
+            }
+        };
+        
+        @Override
+        protected void addNotify() {
+            IngestManager.getInstance().addIngestJobEventListener(pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            Case.addPropertyChangeListener(pcl);
+            emailResults.update();
+            emailResults.addObserver(this);
+        }
 
         @Override
+        protected void removeNotify() {
+            IngestManager.getInstance().removeIngestJobEventListener(pcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+            Case.removePropertyChangeListener(pcl);
+            emailResults.deleteObserver(this);
+        }
+        
+        @Override
         protected boolean createKeys(List<String> list) {
-            list.addAll(accounts.keySet());
+            list.addAll(emailResults.getAccounts());
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new EmailExtractedAccountNode(key, accounts.get(key));
+            return new AccountNode(key);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 
     /**
      * Account node representation
      */
-    public class EmailExtractedAccountNode extends DisplayableItemNode {
-
-        public EmailExtractedAccountNode(String name, Map<String, List<Long>> children) {
-            super(Children.create(new EmailExtractedAccountChildrenNode(children), true), Lookups.singleton(name));
-            super.setName(name);
-            super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png");
+    public class AccountNode extends DisplayableItemNode implements Observer {
+        
+        private final String accountName;
+        
+        public AccountNode(String accountName) {
+            super(Children.create(new FolderFactory(accountName), true), Lookups.singleton(accountName));
+            super.setName(accountName);
+            this.accountName = accountName;
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png"); //NON-NLS
+            updateDisplayName();
+            emailResults.addObserver(this);
+        }
+        
+        private void updateDisplayName() {
+            super.setDisplayName(accountName + " (" + emailResults.getFolders(accountName) + ")");
         }
 
         @Override
@@ -296,43 +304,64 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
     }
 
     /**
      * Account node child creating sub nodes for every folder
      */
-    private class EmailExtractedAccountChildrenNode extends ChildFactory<String> {
+    private class FolderFactory extends ChildFactory<String> implements Observer {
 
-        private Map<String, List<Long>> folders;
+        private final String accountName;
 
-        private EmailExtractedAccountChildrenNode(Map<String, List<Long>> folders) {
+        private FolderFactory(String accountName) {
             super();
-            this.folders = folders;
+            this.accountName = accountName;
+            emailResults.addObserver(this);
         }
 
         @Override
         protected boolean createKeys(List<String> list) {
-            list.addAll(folders.keySet());
-
+            list.addAll(emailResults.getFolders(accountName));
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(String key) {
-            return new EmailExtractedFolderNode(key, folders.get(key));
+        protected Node createNodeForKey(String folderName) {
+            return new FolderNode(accountName, folderName);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 
     /**
      * Node representing mail folder
      */
-    public class EmailExtractedFolderNode extends DisplayableItemNode {
-
-        public EmailExtractedFolderNode(String name, List<Long> children) {
-            super(Children.create(new EmailExtractedFolderChildrenNode(children), true), Lookups.singleton(name));
-            super.setName(name);
-            super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png");
+    public class FolderNode extends DisplayableItemNode implements Observer {
+        
+        private final String accountName;
+        private final String folderName;
+        
+        public FolderNode(String accountName, String folderName) {
+            super(Children.create(new MessageFactory(accountName, folderName), true), Lookups.singleton(accountName));
+            super.setName(folderName);
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png"); //NON-NLS
+            this.accountName = accountName;
+            this.folderName = folderName;
+            updateDisplayName();
+            emailResults.addObserver(this);
+        }
+        
+        private void updateDisplayName() {
+            super.setDisplayName(folderName + " (" + emailResults.getArtifactIds(accountName, folderName).size() + ")");
+            
         }
 
         @Override
@@ -361,38 +390,51 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
     }
 
     /**
      * Node representing mail folder content (mail messages)
      */
-    private class EmailExtractedFolderChildrenNode extends ChildFactory<BlackboardArtifact> {
+    private class MessageFactory extends ChildFactory<Long> implements Observer {
 
-        private List<Long> messages;
+        private final String accountName;
+        private final String folderName;
 
-        private EmailExtractedFolderChildrenNode(List<Long> messages) {
+        private MessageFactory(String accountName, String folderName) {
             super();
-            this.messages = messages;
+            this.accountName = accountName;
+            this.folderName = folderName;
+            emailResults.addObserver(this);
         }
 
         @Override
-        protected boolean createKeys(List<BlackboardArtifact> list) {
-            List<BlackboardArtifact> tempList = new ArrayList<>();
-            for (long l : messages) {
-                try {
-                    //TODO: bulk artifact gettings
-                    tempList.add(skCase.getBlackboardArtifact(l));
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Error creating mail messages nodes", ex);
-                }
-            }
-            list.addAll(tempList);
+        protected boolean createKeys(List<Long> list) {   
+            list.addAll(emailResults.getArtifactIds(accountName, folderName));
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact);
+        protected Node createNodeForKey(Long artifactId) {
+            if (skCase == null) {
+                return null;            
+            }
+            try {
+                BlackboardArtifact artifact = skCase.getBlackboardArtifact(artifactId);
+                return new BlackboardArtifactNode(artifact);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error creating mail messages nodes", ex); //NON-NLS
+            }
+            return null;
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 }

@@ -37,7 +37,7 @@ public class RecentFilesNode extends DisplayableItemNode {
         super.setName(NAME);
         super.setDisplayName(NAME);
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png"); //NON-NLS
     }
 
     @Override

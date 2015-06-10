@@ -2,6 +2,7 @@
 # appcompatcache_tln.pl
 #
 # History:
+#  20130509 - added additional alert/warn checks
 #  20130425 - added alertMsg() functionality
 #  20120817 - updated to address extra data in XP data blocks
 #  20120722 - updated %config hash
@@ -33,7 +34,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 31,  #XP - Win7
-              version       => 20130425);
+              version       => 20130509);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -108,14 +109,14 @@ sub pluginmain {
 				else {
 					$str = "M... AppCompatCache - ".$f;
 				}
-				$str .= " [Size = ".$files{$f}{size}."] bytes" if (exists $files{$f}{size});
+				$str .= " [Size = ".$files{$f}{size}." bytes]" if (exists $files{$f}{size});
 #				$str .= " [Executed]" if (exists $files{$f}{executed}); 
 				::rptMsg($files{$f}{modtime}."|REG|||".$str);
-# alert added 20130425				
-				if (grep(/[Tt]emp/,$f) {
-					::alertMsg($files{$f}{modtime}."|ALERT|||\"Temp\" found in path - ".$str);
-				}
-			
+
+# added 20130603				
+				alertCheckPathTLN($f,$files{$f}{modtime});
+				alertCheckADSTLN($f,$files{$f}{modtime});
+				::alertMsg($files{$f}{modtime}."|WARN|||Use of calcs\.exe. appcompatcache_tln: ".$f) if ($f =~ m/cacls\.exe$/);
 			}
 		}
 		else {
@@ -271,5 +272,33 @@ sub appWin7 {
 			$files{$file}{executed} = 1 if ($f0 & 0x2);
 		}
 	}
+}
+
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPathTLN {
+	my $path = shift;
+	my $tln  = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg($tln."|ALERT|||appcompatcache_tln: ".$a." found in path: ".$path);              
+		}
+	}
+}
+
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADSTLN {
+	my $path = shift;
+	my $tln  = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg($tln."|ALERT|||appcompatcache_tln: Poss. ADS found in path: ".$path) if grep(/:/,$last);
 }
 1;

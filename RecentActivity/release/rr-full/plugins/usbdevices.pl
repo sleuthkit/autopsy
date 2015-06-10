@@ -1,12 +1,13 @@
 #-----------------------------------------------------------
-# usbdevices.pl
-# Parses contents of Enum\USB key for USB storage devices
+# usbdevices.pl 
+# Parses contents of Enum\USB key for USB devices (not only USB storage devices)
 # 
 # History
+# 	20140416 - updated to include WPD devices (Jasmine Chau)
 #   20120522 - updated to report only USBStor devices
 #   20100219 - created
 #
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2014 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package usbdevices;
 use strict;
@@ -16,12 +17,12 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120522);
+              version       => 20140416);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Parses Enum\\USB key for devices";	
+	return "Parses Enum\\USB key for USB & WPD devices";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -64,7 +65,7 @@ sub pluginmain {
 				if (scalar @sk > 0) {
 					foreach my $s2 (@sk) {
 
-						my ($desc,$class,$serv,$loc,$mfg);
+						my ($desc,$class,$serv,$loc,$mfg,$fname);
 						
 						eval {
 							$desc = $s2->get_value("DeviceDesc")->get_data();
@@ -87,6 +88,10 @@ sub pluginmain {
 							$mfg = $s2->get_value("Mfg")->get_data();
 						};
 						
+						eval {
+							$fname = $s2->get_value("FriendlyName")->get_data();
+						};
+						
 						if ($serv eq "USBSTOR") {
 							::rptMsg($s->get_name());
 							::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
@@ -97,9 +102,16 @@ sub pluginmain {
 #							::rptMsg("Location  : ".$loc);
 #							::rptMsg("MFG       : ".$mfg);
 							::rptMsg("");
-							
 						}
-
+						elsif (($class eq "WPD") && ($serv eq "WUDFRd")) {
+							::rptMsg($s->get_name());
+							::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+							::rptMsg("  SN       : ".$s2->get_name());
+							::rptMsg("  LastWrite: ".gmtime($s2->get_timestamp()));
+							::rptMsg("MFG       : ".$mfg);
+							::rptMsg("FriendlyName: ".$fname);
+							::rptMsg("");
+						}
 					}
 				}
 			}

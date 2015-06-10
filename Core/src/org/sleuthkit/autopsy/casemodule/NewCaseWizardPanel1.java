@@ -51,7 +51,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     private NewCaseVisualPanel1 component;
     private Boolean isFinish = false;
     private static String createdDirectory;
-    private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(NewCaseWizardPanel1.class.getName());
 
     /**
@@ -171,13 +171,13 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         try {
             String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
             component.getCaseParentDirTextField().setText(lastBaseDirectory);
-            createdDirectory = (String) settings.getProperty("createdDirectory");
+            createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
             if (createdDirectory != null && !createdDirectory.equals("")) {
-                logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory);
+                logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory); //NON-NLS
                 Case.deleteCaseDirectory(new File(createdDirectory));
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel1, ", e);
+            logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel1, ", e); //NON-NLS
         }
     }
 
@@ -192,9 +192,9 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        settings.putProperty("caseName", getComponent().getCaseName());
-        settings.putProperty("caseParentDir", getComponent().getCaseParentDir());
-        settings.putProperty("createdDirectory", createdDirectory);
+        settings.putProperty("caseName", getComponent().getCaseName()); //NON-NLS
+        settings.putProperty("caseParentDir", getComponent().getCaseParentDir()); //NON-NLS
+        settings.putProperty("createdDirectory", createdDirectory); //NON-NLS
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
@@ -202,7 +202,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public void validate() throws WizardValidationException {
         String caseName = getComponent().getCaseName();
         String caseParentDir = getComponent().getCaseParentDir();
-        String caseDirPath = caseParentDir + File.separator + caseName;
+        String caseDirPath = caseParentDir + caseName;
 
         // check if case Name contain one of this following symbol:
         //  \ / : * ? " < > |
@@ -286,7 +286,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             Case.createCaseDirectory(caseDirPath);
             success = true;
         } catch (CaseActionException ex) {
-            logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex);
+            logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex); //NON-NLS
         }
 
         // check if the directory is successfully created
@@ -309,7 +309,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             try {
                 StartupWindowProvider.getInstance().close();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Startup window didn't close as expected.", ex);
+                logger.log(Level.WARNING, "Startup window didn't close as expected.", ex); //NON-NLS
 
             }
 

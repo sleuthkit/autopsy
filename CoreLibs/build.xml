@@ -49,24 +49,14 @@
                  uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
         
-    
-    <target name="retrieve-deps-local" description="build library dependencies that are stored local-only"> 
-        <!-- javafx: note: this a workaround, needs to match the one from jre/jdk and ideally be automatically included -->
-        <!-- javafx native libs are always on runtime classpath from jre -->
-        <copy file="${thirdparty.dir}/jfxrt/1.7.21/jfxrt.jar" todir="release/modules/ext/" />
-    </target>
-    
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        
-         <antcall target="retrieve-deps-local" />
-	</target>
+        <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+    </target>
     
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
         <!-- overrode depends attribute -->
         
     </target>
-    
 </project>

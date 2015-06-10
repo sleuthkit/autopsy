@@ -52,7 +52,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     // contains a list of the undocked TCs
     private static ArrayList<DataContentTopComponent> newWindowList = new ArrayList<DataContentTopComponent>();
-    private static final String PREFERRED_ID = "DataContentTopComponent";
+    private static final String PREFERRED_ID = "DataContentTopComponent"; //NON-NLS
     private static final String DEFAULT_NAME = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
     private static final String TOOLTIP_TEXT = NbBundle.getMessage(DataContentTopComponent.class, "HINT_DataContentTopComponent");
     
@@ -67,7 +67,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         add(dataContentPanel);
         
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isDefault)); // prevent option to close compoment in GUI
-        logger.log(Level.INFO, "Created DataContentTopComponent instance: " + this);
+        logger.log(Level.INFO, "Created DataContentTopComponent instance: " + this); //NON-NLS
     }
 
     /**
@@ -119,15 +119,15 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public static synchronized DataContentTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (win == null) {
-            logger.warning("Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
+            logger.warning("Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
         if (win instanceof DataContentTopComponent) {
             return (DataContentTopComponent) win;
         }
         logger.warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
+                "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
+                + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
         return getDefault();
     }
 
@@ -166,7 +166,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public boolean canClose() {
-        return (!this.isDefault) || !Case.existsCurrentCase() || Case.getCurrentCase().getRootObjectsCount() == 0; // only allow this window to be closed when there's no case opened or no image in this case
+        return (!this.isDefault) || !Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
     }
 
     @Override

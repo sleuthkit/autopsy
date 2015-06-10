@@ -4,12 +4,15 @@
 # MountedDevices
 # 
 # Change history
-#
+#  20130530 - updated to output Disk Signature in correct format, thanks to
+#             info provided by Tom Yarrish (see ref.)
+#  20080324 - created
 #
 # References
-#
+#  http://blogs.technet.com/b/markrussinovich/archive/2011/11/08/3463572.aspx
 # 
-# copyright 2008 H. Carvey
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package mountdev;
 use strict;
@@ -19,7 +22,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20130530);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -56,7 +59,8 @@ sub pluginmain {
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
 					::rptMsg($v->get_name());
-					::rptMsg("\tDrive Signature = ".$sig);
+					::rptMsg("  Drive Signature = ".$sig);
+					
 				}
 				elsif ($len > 12) {
 					$data =~ s/\00//g;
@@ -71,19 +75,17 @@ sub pluginmain {
 			foreach my $m (keys %md) {
 				::rptMsg("Device: ".$m);
 				foreach my $item (@{$md{$m}}) {
-					::rptMsg("\t".$item);
+					::rptMsg("  ".$item);
 				}
 				::rptMsg("");
 			}
 		}
 		else {
 			::rptMsg($key_path." has no values.");
-		::logMsg($key_path." has no values.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 
@@ -95,7 +97,7 @@ sub _translateBinary {
 	foreach (0..($len/2)) {
 		push(@list,$nstr[$_*2].$nstr[($_*2)+1]);
 	}
-	return join(' ',@list);
+	return join(' ',reverse @list);
 }
 
 1;

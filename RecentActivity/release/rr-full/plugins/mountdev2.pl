@@ -4,26 +4,55 @@
 # MountedDevices
 # 
 # Change history
+#   20140721 - update provided by Espen Øyslebø <eoyslebo@gmail.com>
+#   20130530 - updated to output Disk Signature in correct format, thanks to
+#              info provided by Tom Yarrish (see ref.)
 #   20120403 - commented out time stamp info from volume GUIDs, added
 #              listing of unique MAC addresses
 #   20120330 - updated to parse the Volume GUIDs to get the time stamps
 #   20091116 - changed output
 #
 # References
-#
+#   http://blogs.technet.com/b/markrussinovich/archive/2011/11/08/3463572.aspx
 # 
-# copyright 2012 Quantum Analytics Research, LLC
-# Author: H. Carvey
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package mountdev2;
 use strict;
+
+# Required for 32-bit versions of perl that don't support unpack Q
+# update provided by Espen Øyslebø <eoyslebo@gmail.com>
+my $little;
+BEGIN { $little= unpack "C", pack "S", 1; }
+sub squad {
+	my $str = @_;
+	my $big;
+	if(! eval { $big= unpack( "Q", $str ); 1; }) {
+		my($lo, $hi)= unpack $little ? "Ll" : "lL", $str;
+		($hi, $lo)= ($lo, $hi) if (!$little);
+		if ($hi < 0) {
+			$hi = ~$hi;
+			$lo = ~$lo;
+			$big = -1 -$lo - $hi*(1 + ~0);
+		} 
+		else {
+			$big = $lo + $hi*(1 + ~0);
+		}
+		if($big+1 == $big) {
+			warn "Forced to approximate!\n";
+		}
+	}
+	return $big;
+}
+
 
 my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20120403);
+              version       => 20140721);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -47,7 +76,7 @@ sub pluginmain {
 	my $root_key = $reg->get_root_key;
 	my $key_path = 'MountedDevices';
 	my $key;
-	my (%md,%dos,%vol,%macs);
+	my (%md,%dos,%vol,%offset,%macs);
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite time = ".gmtime($key->get_timestamp())."Z");
@@ -59,8 +88,20 @@ sub pluginmain {
 				my $len = length($data);
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
-#					my $sig = _translateBinary($data);
+
+# Section added by Espen Øyslebø <eoyslebo@gmail.com>
+# gets the offset, which can be a value larger than what
+# can be handled by 32-bit Perl
+					my $o; #offset
+					eval {
+						$o = ( unpack ("Q", substr($data,4,8)) ); 
+					};
+					if ($@) {
+						$o = (squad(substr($data,4,8)));
+					}
+
 					$vol{$v->get_name()} = $sig;
+					$offset{$v->get_name()} = $o;
 				}
 				elsif ($len > 12) {
 					$data =~ s/\00//g;
@@ -71,10 +112,10 @@ sub pluginmain {
 				}
 			}
 			
-			::rptMsg(sprintf "%-50s  %-20s","Volume","Disk Sig");
-			::rptMsg(sprintf "%-50s  %-20s","-------","--------");
+			::rptMsg(sprintf "%-50s  %-20s  %20s","Volume","Disk Sig","Offset");
+			::rptMsg(sprintf "%-50s  %-20s  %20s","-------","--------","--------");
 			foreach my $v (sort keys %vol) {
-				my $str = sprintf "%-50s  %-20s",$v,$vol{$v};
+				my $str = sprintf "%-50s  %-20s  %20s",$v,$vol{$v},$offset{$v};
 				::rptMsg($str);
 			}
 			::rptMsg("");
@@ -144,7 +185,7 @@ sub _translateBinary {
 	foreach (0..($len/2)) {
 		push(@list,$nstr[$_*2].$nstr[($_*2)+1]);
 	}
-	return join(' ',@list);
+	return join(' ',reverse @list);
 }
 
 1;

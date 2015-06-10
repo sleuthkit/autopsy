@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
@@ -107,7 +108,7 @@ import java.awt.event.ActionListener;
 
         lastInumValue.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.lastInumValue.text")); // NOI18N
 
-        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 18));
         genInfoLabel.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.genInfoLabel.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
@@ -210,7 +211,7 @@ import java.awt.event.ActionListener;
         detailInfoPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         detailInfoPanel.setPreferredSize(new java.awt.Dimension(516, 293));
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD, 18));
         jLabel1.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout detailInfoPanelLayout = new javax.swing.GroupLayout(detailInfoPanel);

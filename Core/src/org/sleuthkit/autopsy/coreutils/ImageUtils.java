@@ -24,17 +24,22 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.highgui.VideoCapture;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -44,37 +49,43 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.opencv.highgui.VideoCapture;
-import org.opencv.core.Mat;
-import org.opencv.core.Core;
+
 /**
  * Utilities for creating and manipulating thumbnail and icon images.
+ *
  * @author jwallace
  */
 public class ImageUtils {
+
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
     private static final Logger logger = Logger.getLogger(ImageUtils.class.getName());
-    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
-    private static List<String> SUPP_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes())); //final
-    private static List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
-    private static List<String> SUPP_VIDEO_EXTENSIONS = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", "mpeg","asf", "divx","rm","moov","wmv","vob","dat","m1v","m2v","m4v","mkv","mpe","yop","vqa","xmv","mve","wtv","webm","vivo","vc1","seq","thp","san","mjpg","smk","vmd","sol","cpk","sdp","sbg","rtsp","rpl","rl2","r3d","mlp","mjpeg","hevc","h265","265","h264","h263","h261","drc","avs","pva","pmp","ogg","nut","nuv","nsv","mxf","mtv","mvi","mxg","lxf","lvf","ivf","mve","cin","hnm","gxf","fli","flc","flx","ffm","wve","uv2","dxa","dv","cdxl","cdg","bfi","jv","bik","vid","vb","son","avs","paf","mm","flm","tmv","4xm");
-    private static List<String> SUPP_VIDEO_MIME_TYPES = Arrays.asList("video/avi","video/msvideo", "video/x-msvideo", "video/mp4", "video/x-ms-wmv", "mpeg","asf");
+    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
+    private static final List<String> SUPP_IMAGE_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes())); //final
+    private static final List<String> SUPP_IMAGE_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
+    private static final List<String> SUPP_VIDEO_EXTENSIONS = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp", "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265", "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg", "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf", "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc", "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg", "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm", "flm", "tmv", "4xm");
+    private static final List<String> SUPP_VIDEO_MIME_TYPES = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo", "video/mp4", "video/x-ms-wmv", "mpeg", "asf");
+
+    static {
+        SUPP_IMAGE_MIME_TYPES.add("image/x-ms-bmp");
+    }
 
     /**
      * Get the default Icon, which is the icon for a file.
-     * @return 
+     *
+     * @return
      */
     public static Image getDefaultIcon() {
         return DEFAULT_ICON;
     }
-    
+
     /**
      * Can a thumbnail be generated for the content?
-     * 
+     *
      * @param content
-     * @return 
+     *
+     * @return
      */
     public static boolean thumbnailSupported(Content content) {
         if (content instanceof AbstractFile == false) {
@@ -87,41 +98,51 @@ public class ImageUtils {
 
         // check the blackboard for a file type attribute
         try {
+            //TODO: Use FileTypeDetector here?
             ArrayList<BlackboardAttribute> attributes = f.getGenInfoAttributes(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
             for (BlackboardAttribute attribute : attributes) {
-                if (SUPP_MIME_TYPES.contains(attribute.getValueString()) || SUPP_VIDEO_MIME_TYPES.contains(attribute.getValueString())) {
+                if (SUPP_IMAGE_MIME_TYPES.contains(attribute.getValueString()) || SUPP_VIDEO_MIME_TYPES.contains(attribute.getValueString())) {
                     return true;
                 }
             }
+
+            // if the file type is known and we don't support it, bail
+            if (attributes.size() > 0) {
+                return false;
+            }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex);
+            logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
 
-        final String extension = f.getNameExtension();
-
         // if we have an extension, check it
-        if (extension.equals("") == false) {
+        final String extension = f.getNameExtension();
+        if (extension.isEmpty() == false) {
             // Note: thumbnail generator only supports JPG, GIF, and PNG for now
-            if (SUPP_EXTENSIONS.contains(extension) || SUPP_VIDEO_EXTENSIONS.contains(extension)) {
+            if (SUPP_IMAGE_EXTENSIONS.contains(extension) || SUPP_VIDEO_EXTENSIONS.contains(extension)) {
                 return true;
             }
         }
 
         // if no extension or one that is not for an image, then read the content
-        return isJpegFileHeader(f);
+        return isJpegFileHeader(f) || isPngFileHeader(f);
     }
 
-   
     /**
-     * Get an icon of a specified size.
-     * 
+     * Get a thumbnail of a specified size. Generates the image if it is
+     * not already cached.
+     *
      * @param content
      * @param iconSize
-     * @return 
+     *
+     * @return
      */
     public static Image getIcon(Content content, int iconSize) {
-        Image icon=null;
-       
+        //TODO: why do we allow Content here if we only handle AbstractFiles?
+
+        Image icon = null;
+        // If a thumbnail file is already saved locally
+        // @@@ Bug here in that we do not refer to size in the cache. 
+
         File file = getFile(content.getId());
         // If a thumbnail file is already saved locally
         if (file.exists()) {
@@ -130,39 +151,38 @@ public class ImageUtils {
                 if (bicon == null) {
                     icon = DEFAULT_ICON;
                 } else if (bicon.getWidth() != iconSize) {
-                    icon = generateAndSaveIcon(content, iconSize);    
+                    icon = generateAndSaveIcon(content, iconSize, file);
                 } else {
-                    icon = bicon;    
+                    icon = bicon;
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error while reading image.", ex);
+                logger.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
                 icon = DEFAULT_ICON;
             }
         } else { // Make a new icon
+
             AbstractFile f = (AbstractFile) content;
             final String extension = f.getNameExtension();
 
-               if (SUPP_VIDEO_EXTENSIONS.contains(extension)) //video
-                {              
-                    icon = generateVideoIcon(content, iconSize);                   
-                }
-                else if (SUPP_EXTENSIONS.contains(extension))//image
-                {
-                    icon = generateAndSaveIcon(content, iconSize);
-                }
+            if (SUPP_VIDEO_EXTENSIONS.contains(extension) || SUPP_IMAGE_EXTENSIONS.contains(extension)) {
+                icon = generateAndSaveIcon(content, iconSize, file);
+            }
         }
-        
-        if (icon==null) return DEFAULT_ICON;
+
+        if (icon == null) {
+            return DEFAULT_ICON;
+        }
         return icon;
     }
-    
+
     /**
-     * Get the cached file of the icon. Generates the icon and its file if it 
-     * doesn't already exist, so this method guarantees to return a file that
-     * exists.
+     * Get a thumbnail of a specified size. Generates the image if it is
+     * not already cached.
+     *
      * @param content
      * @param iconSize
-     * @return 
+     *
+     * @return File object for cached image. Is guaranteed to exist.
      */
     public static File getIconFile(Content content, int iconSize) {
         if (getIcon(content, iconSize) != null) {
@@ -170,19 +190,35 @@ public class ImageUtils {
         }
         return null;
     }
-    
+
     /**
-     * Get the cached file of the content object with the given id. 
-     * 
-     * The returned file may not exist.
-     * 
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
      * @param id
-     * @return 
+     *
+     * @return
+     *
+     * @deprecated
      */
+    @Deprecated // TODO: This should be private and be renamed to something like getCachedThumbnailLocation().
     public static File getFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
+        return getCachedThumbnailLocation(id);
     }
-    
+
+    /**
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
+     * @param fileID
+     *
+     * @return
+     *
+     */
+    private static File getCachedThumbnailLocation(long fileID) {
+        return Paths.get(Case.getCurrentCase().getCacheDirectory(), fileID + ".png").toFile();
+    }
+
     /**
      * Check if is jpeg file based on header
      *
@@ -212,8 +248,34 @@ public class ImageUtils {
          */
         return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
     }
-     private static Image generateVideoIcon(Content content, int iconSize) {
-        Image icon = null;
+
+    public static boolean isPngFileHeader(AbstractFile file) {
+        if (file.getSize() < 10) {
+            return false;
+        }
+
+        byte[] fileHeaderBuffer = new byte[8];
+        int bytesRead;
+        try {
+            bytesRead = file.read(fileHeaderBuffer, 0, 8);
+        } catch (TskCoreException ex) {
+            //ignore if can't read the first few bytes, not an image
+            return false;
+        }
+        if (bytesRead != 8) {
+            return false;
+        }
+        /*
+         * Check for the header. Since Java bytes are signed, we cast them
+         * to an int first.
+         */
+        return (((fileHeaderBuffer[1] & 0xff) == 0x50) && ((fileHeaderBuffer[2] & 0xff) == 0x4E)
+                && ((fileHeaderBuffer[3] & 0xff) == 0x47) && ((fileHeaderBuffer[4] & 0xff) == 0x0D)
+                && ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A)
+                && ((fileHeaderBuffer[7] & 0xff) == 0x0A));
+    }
+
+    private static Image generateVideoIcon(Content content, int iconSize) {
 
         //load opencv libraries
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -286,72 +348,102 @@ public class ImageUtils {
         }
     }
 
-    private static Image generateAndSaveIcon(Content content, int iconSize) {
+    /**
+     * Generate an icon and save it to specified location.
+     *
+     * @param content  File to generate icon for
+     * @param iconSize
+     * @param saveFile Location to save thumbnail to
+     *
+     * @return Generated icon or null on error
+     */
+    private static Image generateAndSaveIcon(Content content, int iconSize, File saveFile) {
+        AbstractFile f = (AbstractFile) content;
+        final String extension = f.getNameExtension();
         Image icon = null;
         try {
-            icon = generateIcon(content, iconSize);
+            if (SUPP_VIDEO_EXTENSIONS.contains(extension)) {
+                icon = generateVideoIcon(content, iconSize);
+            } else if (SUPP_IMAGE_EXTENSIONS.contains(extension)) {
+                icon = generateIcon(content, iconSize);
+            }
+
             if (icon == null) {
                 return DEFAULT_ICON;
+
+            } else {
+                if (saveFile.exists()) {
+                    saveFile.delete();
+                }
+                ImageIO.write((RenderedImage) icon, "png", saveFile); //NON-NLS
             }
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex);
-        }
-        if (icon == null) {
-            return DEFAULT_ICON;
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }
         return icon;
+
     }
-    
+
     /*
-     * Generate a scaled image
+     * Generate and return a scaled image
      */
     private static BufferedImage generateIcon(Content content, int iconSize) {
 
         InputStream inputStream = null;
+        BufferedImage bi = null;
         try {
             inputStream = new ReadContentInputStream(content);
-            BufferedImage bi = ImageIO.read(inputStream);
+            bi = ImageIO.read(inputStream);
             if (bi == null) {
-                logger.log(Level.WARNING, "No image reader for file: " + content.getName());
+                logger.log(Level.WARNING, "No image reader for file: " + content.getName()); //NON-NLS
                 return null;
             }
             BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
-            if (biScaled==null) return (BufferedImage)DEFAULT_ICON;
+            if (biScaled == null) {
+                return (BufferedImage) DEFAULT_ICON;
+            }
             return biScaled;
+        } catch (IllegalArgumentException e) {
+            // if resizing does not work due to extremely small height/width ratio,
+            // crop the image instead.
+            BufferedImage biCropped = ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
+            return biCropped;
         } catch (OutOfMemoryError e) {
-            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e);
+            logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
             return null;
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e);
+            logger.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
             return null;
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex);
+                    logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex); //NON-NLS
                 }
             }
 
         }
-             
-    }
-     public static void copyFileUsingStream(Content file,java.io.File jFile) throws IOException {
-       InputStream is = new ReadContentInputStream(file);
-       // copy the file data to the temporary file
 
-       OutputStream os = new FileOutputStream(jFile);
-       byte[] buffer = new byte[8192];
-       int length;
-       int counter =0;
+    }
+
+    public static void copyFileUsingStream(Content file, java.io.File jFile) throws IOException {
+        InputStream is = new ReadContentInputStream(file);
+        // copy the file data to the temporary file
+
+        OutputStream os = new FileOutputStream(jFile);
+        byte[] buffer = new byte[8192];
+        int length;
+        int counter = 0;
         try {
-                while ((length = is.read(buffer)) != -1) 
-                {
-                    os.write(buffer, 0, length);
-                    counter++;
-                    if (counter== 63) break; //after saving 500 KB (63*8192)
+            while ((length = is.read(buffer)) != -1) {
+                os.write(buffer, 0, length);
+                counter++;
+                if (counter == 63) {
+                    break; //after saving 500 KB (63*8192)
                 }
-            
+            }
+
         } finally {
             is.close();
             os.close();

@@ -88,11 +88,11 @@ class PstParser {
             }
             return ParseResult.OK;
         } catch (PSTException | IOException ex) {
-            String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage();
+            String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage(); //NON-NLS
             logger.log(Level.WARNING, msg);
             return ParseResult.ERROR;
         } catch (IllegalArgumentException ex) {
-            logger.log(Level.INFO, "Found encrypted PST file.");
+            logger.log(Level.INFO, "Found encrypted PST file."); //NON-NLS
             return ParseResult.ENCRYPT;
         }
     }
@@ -130,7 +130,7 @@ class PstParser {
                 subFolders = folder.getSubFolders();
             } catch (PSTException | IOException ex) {
                 subFolders = new ArrayList<>();
-                logger.log(Level.INFO, "java-libpst exception while getting subfolders: {0}", ex.getMessage());
+                logger.log(Level.INFO, "java-libpst exception while getting subfolders: {0}", ex.getMessage()); //NON-NLS
             }
 
             for (PSTFolder f : subFolders) {
@@ -147,7 +147,7 @@ class PstParser {
                 }
             } catch (PSTException | IOException ex) {
                 failCount++;
-                logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: {0}", ex.getMessage());
+                logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: {0}", ex.getMessage()); //NON-NLS
             }
         }
 
@@ -174,7 +174,7 @@ class PstParser {
         try {
             rtf = msg.getRTFBody();
         } catch (PSTException | IOException ex) {
-            logger.log(Level.INFO, "Failed to get RTF content from pst email.");
+            logger.log(Level.INFO, "Failed to get RTF content from pst email."); //NON-NLS
         }
         email.setRtfBody(rtf);
         email.setLocalPath(localPath);
@@ -214,7 +214,7 @@ class PstParser {
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
-                Attachment attachment = new Attachment();
+                EmailMessage.Attachment attachment = new EmailMessage.Attachment();
 
                 long crTime = attach.getCreationTime().getTime() / 1000;
                 long mTime = attach.getModificationTime().getTime() / 1000;
@@ -229,7 +229,7 @@ class PstParser {
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
                         filename));
-                logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex);
+                logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex); //NON-NLS
             }
         }
     }
@@ -294,12 +294,12 @@ class PstParser {
             ByteBuffer bb = ByteBuffer.wrap(buffer);
             return bb.getInt() == PST_HEADER;
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Exception while detecting if a file is a pst file.");
+            logger.log(Level.WARNING, "Exception while detecting if a file is a pst file."); //NON-NLS
             return false;
         }
     }
 
     private void addErrorMessage(String msg) {
-        errors.append("<li>").append(msg).append("</li>");
+        errors.append("<li>").append(msg).append("</li>"); //NON-NLS
     }
 }

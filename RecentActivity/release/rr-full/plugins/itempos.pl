@@ -3,9 +3,11 @@
 # RR plugin to parse (Vista, Win7/Win2008R2) shell bags
 #
 # History:
+#   20130514 - added checking of ShellNoRoam\Bags subkeys for WinXP
 #   20120814 - created
 #
 # References
+#    http://c0nn3ct0r.blogspot.com/2011/11/windows-shellbag-forensics.html
 #  Andrew's Python code for Registry Decoder
 #    http://code.google.com/p/registrydecoder/source/browse/trunk/templates/template_files/ShellBag.py
 #  Joachim Metz's shell item format specification
@@ -21,7 +23,7 @@
 # assistance with some parsing.
 #
 # License: GPL v3 
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2013 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package itempos;
@@ -36,7 +38,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120814);
+              version       => 20130514);
 
 sub getConfig{return %config}
 
@@ -94,6 +96,46 @@ sub pluginmain {
 	else {
 		::rptMsg($key_path." not found.");
 	}
+#	::rptMsg("");
+# The following was added on 20130514 to address Windows XP systems	
+	my $key_path = "Software\\Microsoft\\Windows\\ShellNoRoam\\Bags";
+	my $key;
+	if ($key = $root_key->get_subkey($key_path)) {
+		my @sk = $key->get_list_of_subkeys();
+		if (scalar(@sk) > 0) {
+			foreach my $s (@sk) {
+				my %itempos = ();
+				my @vals = $s->get_subkey("Shell")->get_list_of_values();
+				
+				if (scalar(@vals) > 0) {
+					foreach my $v (@vals) {
+						my $name = $v->get_name();
+					  if ($name =~ m/^ItemPos/) {
+					  	$itempos{$name} = $v->get_data();
+					  }
+					}
+					
+					if (scalar keys %itempos > 0) {
+						::rptMsg($key_path."\\".$s->get_name()."\\Shell");
+						foreach my $i (keys %itempos) {
+							::rptMsg("Value: ".$i);
+							::rptMsg(sprintf "%-10s|%-20s|%-20s|%-20s|Name","Size","Modified","Accessed","Created");
+							::rptMsg(sprintf "%-10s|%-20s|%-20s|%-20s|"."-" x 10,"-" x 10,"-" x 20,"-" x 20,"-" x 20);
+							parseBagEntry($itempos{$i});
+							::rptMsg("");
+						}
+					}
+							
+				}
+			}
+		}
+		else {
+# No subkeys			
+		}
+	}
+	else {
+		::rptMsg($key_path." not found\.");
+	}
 }
 
 #-----------------------------------------------------------
@@ -127,7 +169,9 @@ sub parseBagEntry {
  			(exists $item{mtime_str} && $item{mtime_str} ne "0") ? ($m = $item{mtime_str}) : ($m = "");
  			(exists $item{atime_str} && $item{atime_str} ne "0") ? ($a = $item{atime_str}) : ($a = "");
  			(exists $item{ctime_str} && $item{ctime_str} ne "0") ? ($c = $item{ctime_str}) : ($c = "");
-			::rptMsg(sprintf "%-10s|%-20s|%-20s|%-20s|".$item{name},$item{size},$m,$a,$c);
+			my $str = sprintf "%-10s|%-20s|%-20s|%-20s|",$item{size},$m,$a,$c;
+			::rptMsg($str.$item{name});
+			
 		}
 		else {
 			
@@ -334,6 +378,4 @@ sub printData {
 		::rptMsg(sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h);
 	}
 }
-
-
 1;

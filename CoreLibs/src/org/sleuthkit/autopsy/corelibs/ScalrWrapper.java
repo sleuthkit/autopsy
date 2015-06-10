@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.corelibs;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
 
@@ -48,4 +49,8 @@ import org.imgscalr.Scalr.Method;
      public static synchronized BufferedImage resizeFast(BufferedImage input, int width, int height) {
         return Scalr.resize(input, Method.SPEED, Scalr.Mode.AUTOMATIC, width, height, Scalr.OP_ANTIALIAS);
     }
+
+     public static synchronized BufferedImage cropImage(BufferedImage input, int width, int height) {
+         return Scalr.crop(input, width, height, (BufferedImageOp) null);
+     }
 }

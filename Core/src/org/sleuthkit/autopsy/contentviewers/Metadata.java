@@ -24,9 +24,9 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
@@ -100,23 +100,23 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
     }
     
     private void setText(String str) {
-        jTextPane1.setText("<html><body>" + str + "</body></html>");
+        jTextPane1.setText("<html><body>" + str + "</body></html>"); //NON-NLS
     }
     
     private void startTable(StringBuilder sb) {
-        sb.append("<table>");
+        sb.append("<table>"); //NON-NLS
     }
     
     private void endTable(StringBuilder sb) {
-        sb.append("</table>");
+        sb.append("</table>"); //NON-NLS
     }
     
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td>");
+        sb.append("<tr><td>"); //NON-NLS
         sb.append(key);
-        sb.append("</td><td>");
+        sb.append("</td><td>"); //NON-NLS
         sb.append(value);
-        sb.append("</td></tr>");
+        sb.append("</td></tr>"); //NON-NLS
     }
     
     @Override
@@ -135,7 +135,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         } catch (TskCoreException ex) {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
         }
-        
+                
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), new Long(file.getSize()).toString() );
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
@@ -157,7 +158,27 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         }
         
         endTable(sb);
+        
+        /* If we have a file system file, grab the more detailed metadata text too */
+        try {
+            if (file instanceof FsContent) {
+                FsContent fsFile = (FsContent) file;
+
+                sb.append("<hr /><pre>\n"); //NON-NLS
+                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
+                sb.append(" <br /><br />"); // NON-NLS
+                for (String str : fsFile.getMetaDataText()) {
+                    sb.append(str).append("<br />"); //NON-NLS
+                }
+                sb.append("</pre>\n"); //NON-NLS
+            }
+        } catch (TskCoreException ex) {
+            sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+        }
+        
         setText(sb.toString());
+        jTextPane1.setCaretPosition(0);
+        this.setCursor(null);        
     }
 
     @Override

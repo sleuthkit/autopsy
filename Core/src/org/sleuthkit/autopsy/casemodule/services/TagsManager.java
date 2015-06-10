@@ -24,7 +24,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
+
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -40,8 +42,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * blackboard artifacts by users. 
  */
 public class TagsManager implements Closeable {
-    private static final String TAGS_SETTINGS_NAME = "Tags";
-    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; 
+    private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
+    private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS
     private final SleuthkitCase tskCase;    
     private final HashMap<String, TagName> uniqueTagNames = new HashMap<>();
     private boolean tagNamesInitialized = false; // @@@ This is part of a work around to be removed when database access on the EDT is correctly synchronized.  
@@ -198,15 +200,20 @@ public class TagsManager implements Closeable {
         
         if (beginByteOffset >= 0 && endByteOffset >= 1) {
             if (beginByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException("beginByteOffset = " + beginByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                                                                       "TagsManager.addContentTag.exception.beginByteOffsetOOR.msg",
+                                                                       beginByteOffset, content.getSize() - 1));
             }
 
             if (endByteOffset > content.getSize() - 1) {
-                throw new IllegalArgumentException("endByteOffset = " + endByteOffset + " out of content size range (0 - " + (content.getSize() - 1) + ")");            
+                throw new IllegalArgumentException(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endByteOffsetOOR.msg",
+                                            endByteOffset, content.getSize() - 1));
             }
 
             if (endByteOffset < beginByteOffset) {
-                throw new IllegalArgumentException("endByteOffset < beginByteOffset");            
+                throw new IllegalArgumentException(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
             }
         }
             
@@ -408,7 +415,7 @@ public class TagsManager implements Closeable {
             }
         }
         catch (TskCoreException ex) {
-            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex);                    
+            Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag types from the current case", ex); //NON-NLS
         }        
     }
     
@@ -428,7 +435,7 @@ public class TagsManager implements Closeable {
                         uniqueTagNames.put(tagName.getDisplayName(), tagName);
                     }
                     catch (TskCoreException ex) {
-                        Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex);                    
+                        Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add saved tag name " + tagNameAttributes[0], ex); //NON-NLS
                     }
                 }
             }
@@ -436,13 +443,14 @@ public class TagsManager implements Closeable {
     }
 
     private void getPredefinedTagNames() {
-        if (!uniqueTagNames.containsKey("Bookmark")) {        
+        if (!uniqueTagNames.containsKey(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"))) {
             try {
-                TagName tagName = tskCase.addTagName("Bookmark", "", TagName.HTML_COLOR.NONE);
+                TagName tagName = tskCase.addTagName(
+                        NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), "", TagName.HTML_COLOR.NONE);
                 uniqueTagNames.put(tagName.getDisplayName(), tagName);
             }
             catch (TskCoreException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add predefined 'Bookmark' tag name", ex);                    
+                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to add predefined 'Bookmark' tag name", ex); //NON-NLS
             }
         }
     }   

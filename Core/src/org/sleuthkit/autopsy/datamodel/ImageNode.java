@@ -54,7 +54,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         // set name, display name, and icon
         String imgName = nameForImage(img);
         this.setDisplayName(imgName);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
     }
 
     /**
@@ -88,7 +88,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
-                getName()));
+                getDisplayName()));
 
         return s;
     }

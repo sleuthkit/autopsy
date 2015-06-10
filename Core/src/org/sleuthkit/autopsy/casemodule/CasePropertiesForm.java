@@ -25,6 +25,7 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Map;
@@ -90,7 +91,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         int totalImages = imgPaths.size();
        
         // create the headers and add all the rows
-        String[] headers = {"Path"};
+        String[] headers = {"Path"}; //NON-NLS
         String[][] rows = new String[totalImages][];
         
         int i = 0;
@@ -191,7 +192,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24));
+        casePropLabel.setFont(casePropLabel.getFont().deriveFont(Font.BOLD, 24));
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
@@ -213,10 +214,11 @@ class CasePropertiesForm extends javax.swing.JPanel{
             }
         });
 
-        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
-        genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
+        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 14));
+        genInfoLabel.setText(
+                org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(Font.BOLD, 14));
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
@@ -226,7 +228,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
 
             },
             new String [] {
-                "Path", "Remove"
+                "Path", "Remove" //NON-NLS
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -404,7 +406,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
                         try {
                             current.updateCaseName(oldCaseName, oldPath , newCaseName, oldPath);
                         } catch (Exception ex) {
-                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex);
+                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
                         }
                     }
                 }

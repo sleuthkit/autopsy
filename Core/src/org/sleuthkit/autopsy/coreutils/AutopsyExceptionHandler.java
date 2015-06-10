@@ -90,7 +90,7 @@ public class AutopsyExceptionHandler extends Handler {
                     }
                 });
                 }
-                logger.log(Level.SEVERE, "Unexpected error: " + title + ", " + message );
+                logger.log(Level.SEVERE, "Unexpected error: " + title + ", " + message ); //NON-NLS
             } else {
                 // Throwable (unanticipated) error. Use built-in exception handler to offer details, stacktrace.
                 nbErrorManager.publish(record);
@@ -118,7 +118,7 @@ public class AutopsyExceptionHandler extends Handler {
     private String formatExplanation(LogRecord record) {
         final String logMessage = getFormatter().formatMessage(record);
         String explanation = record.getThrown().getMessage();
-        String causeMessage = (explanation != null) ? "\nCaused by: " + explanation : "";
+        String causeMessage = (explanation != null) ? "\nCaused by: " + explanation : ""; //NON-NLS
 
         return logMessage + causeMessage;
     }
@@ -149,11 +149,11 @@ public class AutopsyExceptionHandler extends Handler {
 
     private static String getTitleForLevelValue(int levelValue) {
         if (levelValue >= SEVERE_VALUE) {
-            return "Error";
+            return "Error"; //NON-NLS
         } else if (levelValue >= WARNING_VALUE) {
-            return "Warning";
+            return "Warning"; //NON-NLS
         } else {
-            return "Message";
+            return "Message"; //NON-NLS
         }
     }
 

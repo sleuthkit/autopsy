@@ -55,8 +55,10 @@ sub pluginmain {
 			if (scalar(@vals) > 0) {
 				my %wl;
 				foreach my $v (@vals) {
-					my $name = $v->get_name();
-					my $data = $v->get_data();
+					my $lcname = $v->get_name();
+					my $name   = $lcname;
+					$lcname    =~ tr/[A-Z]/[a-z]/;
+					my $data   = $v->get_data();
 # checks added 20130425 to winlogon.pl
 					if ($name eq "Userinit") {
 						my @ui = split(/,/,$data);

@@ -3,7 +3,6 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
     <ROW Property="AI_UPGRADE" Value="No"/>
     <ROW Property="ALLUSERS" Value="2"/>
-    <ROW Property="ARPCOMMENTS" Value="This installer database contains the logic and data required to install [|ProductName]." ValueLocId="*"/>
     <ROW Property="ARPHELPLINK" Value="http://www.sleuthkit.org/support.php"/>
     <ROW Property="ARPPRODUCTICON" Value="autopsy.exe" Type="8"/>
     <ROW Property="ARPURLINFOABOUT" Value="http://www.sleuthkit.org/"/>

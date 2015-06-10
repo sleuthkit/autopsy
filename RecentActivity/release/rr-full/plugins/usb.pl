@@ -1,9 +1,14 @@
 #-----------------------------------------------------------
 # usb
-# 
-# 
 #
-# copyright 2012 Quantum Analytics Research, LLC
+# History:
+#   20141111 - updated check for key LastWrite times
+#		20141015 - created
+#
+# Ref:
+#   http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/
+#
+# copyright 2014 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usb;
@@ -14,12 +19,12 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20121102);
-              
+              version       => 20141111);
+
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get USB device info";	
+	return "Get USB key info";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -27,14 +32,14 @@ sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
-my $reg;
-
-my %usb = ();
 
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
-	$reg = Parse::Win32Registry->new($hive);
+	::logMsg("Launching usb v.".$VERSION);
+	::rptMsg("usb v.".$VERSION); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
 # Code for System file, getting CurrentControlSet
@@ -50,73 +55,60 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 		return;
 	}
-	
+
 	my $key_path = $ccs."\\Enum\\USB";
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
-
+		::rptMsg("USBStor");
+		::rptMsg($key_path);
+		::rptMsg("");
+		
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
-				my $name = $s->get_name();
-				next unless ($name =~ m/^VID/);
-				
-				my @n = split(/&/,$name);
-				$n[0] =~ s/^VID_//;
-				$n[1] =~ s/^PID_//;
+				::rptMsg($s->get_name()." [".gmtime($s->get_timestamp())."]");
 				
 				my @sk = $s->get_list_of_subkeys();
 				if (scalar(@sk) > 0) {
 					foreach my $k (@sk) {
 						my $serial = $k->get_name();
-						my $class = "";
+						::rptMsg("  S/N: ".$serial." [".gmtime($k->get_timestamp())."]");
+# added 20141015; updated 20141111						
 						eval {
-							$class = $k->get_value("Class")->get_data();
+							::rptMsg("  Device Parameters LastWrite: [".gmtime($k->get_subkey("Device Parameters")->get_timestamp())."]");
 						};
-						next unless ($class =~ m/^USB/ || $class =~ m/^WPD/);
+						eval {
+							::rptMsg("  LogConf LastWrite          : [".gmtime($k->get_subkey("LogConf")->get_timestamp())."]");
+						};
+						eval {
+							::rptMsg("  Properties LastWrite       : [".gmtime($k->get_subkey("Properties")->get_timestamp())."]");
+						};
+						my $friendly;
+						eval {
+							$friendly = $k->get_value("FriendlyName")->get_data();
+						};
+						::rptMsg("    FriendlyName    : ".$friendly) if ($friendly ne "");
+						my $parent;
+						eval {
+							$parent = $k->get_value("ParentIdPrefix")->get_data();
+						};
+						::rptMsg("    ParentIdPrefix: ".$parent) if ($parent ne "");
+# Attempt to retrieve InstallDate/FirstInstallDate from Properties subkeys	
+# http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/					
 						
-						my $serv = "";
 						eval {
-							$serv = $k->get_value("Service")->get_data();
-						};
-						next if ($serv =~ m/^usbhub/ || $serv =~ m/^usbprint/);
-						$usb{$serial}{usb_class} = $class;
-						$usb{$serial}{usb_service} = $serv;
-						$usb{$serial}{VID} = $n[0];
-						$usb{$serial}{PID} = $n[1];
-						$usb{$serial}{sn_lastwrite} = $k->get_timestamp();
-						
-						eval {
-							my $dd = $k->get_value("DeviceDesc")->get_data();
-							my @f = split(/;/,$dd);
-							if (scalar(@f) > 1) {
-								my $n = scalar(@f) - 1;
-								$usb{$serial}{usb_devicedesc} = $f[$n];
-							}
-							else {
-								$usb{$serial}{usb_devicedesc} = $dd;
-							}
-						};
+							my $t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000064\\00000000")->get_value("Data")->get_data();
+							my ($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    InstallDate     : ".gmtime(::getTime($t0,$t1))." UTC");
 							
-						eval {
-							my $fr = $k->get_value("FriendlyName")->get_data();
-							
-							my @f = split(/;/,$fr);
-							if (scalar(@f) > 1) {
-								my $n = scalar(@f) - 1;
-								$usb{$serial}{usb_friendly} = $f[$n];
-							}
-							else {
-								$usb{$serial}{usb_friendly} = $fr;
-							}
+							$t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000")->get_value("Data")->get_data();
+							($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    FirstInstallDate: ".gmtime(::getTime($t0,$t1))." UTC");
 						};
 						
-						eval {
-							$usb{$serial}{usb_service} = 	$k->get_value("Service")->get_data();
-						};
-					
-					}
+					}					
 				}
+				::rptMsg("");
 			}
 		}
 		else {
@@ -126,71 +118,5 @@ sub pluginmain {
 	else {
 		::rptMsg($key_path." not found.");
 	}
-
-# Now, access the USBStor key
-	my $key_path = $ccs."\\Enum\\USBStor";
-	my $key;
-	my %usbstor = ();
-	if ($key = $root_key->get_subkey($key_path)) {
-
-		my @subkeys = $key->get_list_of_subkeys();
-		if (scalar(@subkeys) > 0) {
-			foreach my $s (@subkeys) {
-				my $name = $s->get_name();
-			
-				my @n = split(/&/,$name);
-				$n[1] =~ s/^Ven_//;
-				$n[2] =~ s/^Prod_//;
-				
-				my @sk = $s->get_list_of_subkeys();
-				if (scalar(@sk) > 0) {
-					foreach my $k (@sk) {
-						my $serial = $k->get_name();
-						
-						eval {
-							my $dd = $k->get_value("DeviceDesc")->get_data();
-							my @f = split(/;/,$dd);
-							if (scalar(@f) > 1) {
-								my $n = scalar(@f) - 1;
-								$usbstor{$serial}{usbstor_devicedesc} = $f[$n];
-							}
-							else {
-								$usbstor{$serial}{usbstor_devicedesc} = $dd;
-							}
-						};
-						
-						eval {
-							$usbstor{$serial}{usbstor_friendly} = $k->get_value("FriendlyName")->get_data();
-						};
-						$usbstor{$serial}{usbstor_ven} = $n[1];
-						$usbstor{$serial}{usbstor_prod} = $n[2];
-						
-					}
-					
-				}
-			}
-			
-		}
-	}
-
-# Match SNs from USBStor key against those we found in the USB key	
-	foreach my $k (keys %usb) {
-		foreach my $s (keys %usbstor) {
-			if ($s =~ m/^$k&/) {
-				$usb{$k}{usbstor_friendly} = $usbstor{$s}{usbstor_friendly};
-				$usb{$k}{usbstor_devicedesc} = $usbstor{$s}{usbstor_devicedesc};
-				$usb{$k}{usbstor_ven} = $usbstor{$s}{usbstor_ven};
-				$usb{$k}{usbstor_prod} = $usbstor{$s}{usbstor_prod};
-			}
-		}		
-	}
-	
-	foreach my $k (keys %usb) {
-		::rptMsg($k);
-		::rptMsg("  VID/PID  : ".$usb{$k}{VID}."/".$usb{$k}{PID});
-		::rptMsg("  Ven/Prod : ".$usb{$k}{usbstor_ven}."/".$usb{$k}{usbstor_prod});
-		::rptMsg("");
-	}
-	
 }
 1;

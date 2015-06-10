@@ -3,6 +3,7 @@
 # Get values from WinLogon key
 # 
 # History
+#   20130910 - added check for GinaDLL value, updated checks
 #   20130425 - added alertMsg() functionality
 #   20130411 - added specaccts.pl & notify.pl functionality
 #   20130410 - updated; added Wow6432Node support, merged TaskMan
@@ -46,7 +47,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching winlogon v.".$VERSION);
 	::rptMsg("winlogon v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	
@@ -63,8 +64,10 @@ sub pluginmain {
 			if (scalar(@vals) > 0) {
 				my %wl;
 				foreach my $v (@vals) {
-					my $name = $v->get_name();
-					my $data = $v->get_data();
+					my $lcname = $v->get_name();
+					my $name   = $lcname;
+					$lcname    =~ tr/[A-Z]/[a-z]/;
+					my $data   = $v->get_data();
 # checks added 20130425
 					if ($name eq "Userinit") {
 						my @ui = split(/,/,$data);
@@ -72,15 +75,21 @@ sub pluginmain {
 							::alertMsg("ALERT: winlogon: ".$key_path." Userinit value has multiple entries: ".$data);
 						}
 # alert if the Userinit value does not end in "userinit.exe" (after taking commas into account)						
-						::alertMsg("ALERT: winlogon: ".$key_path." Userinit value: ".$ui[0]) unless ($ui[0] =~ m/userinit\.exe$/);
+#						::alertMsg("ALERT: winlogon: ".$key_path." Userinit value: ".$ui[0]) unless ($ui[0] =~ m/userinit\.exe$/);
 					}		
-					
-					if ($name =~ m/^[Ss]hell/) {
-						::alertMsg("ALERT: winlogon: ".$key_path." Shell value not explorer\.exe: ".$data) unless ($data eq "explorer\.exe");
+# added 20130910
+# ref: http://support.microsoft.com/kb/302346
+					if ($lcname eq "ginadll") {
+						::alertMsg("WARNING: winlogon: ".$key_path." GinaDLL value found: ".$data);
+					}
+				
+					if ($lcname eq "shell") {
+						my $lcdata = $data;
+						$lcdata =~ tr/[A-Z]/[a-z]/;
+						::alertMsg("ALERT: winlogon: ".$key_path." Shell value not explorer\.exe: ".$data) unless ($lcdata =~ m/^explorer\.exe$/);
 					}			
-					
-					::alertMsg("ALERT: winlogon: ".$key_path." TaskMan value found: ".$data) if ($name eq "TaskMan");
-					::alertMsg("ALERT: winlogon: ".$key_path." System value found: ".$data) if ($name eq "System");
+					::alertMsg("ALERT: winlogon: ".$key_path." TaskMan value found: ".$data) if ($lcname eq "taskman");
+					::alertMsg("ALERT: winlogon: ".$key_path." System value found: ".$data) if ($lcname eq "system");
 # /end 20130425 additions
 				
 					my $len  = length($data);
@@ -155,7 +164,7 @@ sub checkNotifySubkey {
 			foreach my $s (@sk) {
 				my $name = $s->get_name();
 # added 20130425
-        ::alertMsg("winlogon: Notify subkey: possible Troj_Tracor infection\.") if ($name =~ m/^f0bd/);				
+        ::alertMsg("ALERT: winlogon: Notify subkey: possible Troj_Tracor infection\.") if ($name =~ m/^f0bd/);				
 				my $lw   = $s->get_timestamp();
 				::rptMsg("  ".$name." - ".gmtime($lw));
 				my $dllname;

@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
 
-import java.awt.Component;
+import java.awt.*;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -68,11 +68,17 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
 
     /**
      * Gets the base directory that the user typed on the base directory text field.
+     * Will add file separator if it was not added.
      *
      * @return baseDirectory  the base directory from the case dir text field
      */
     public String getCaseParentDir(){
-        return this.caseParentDirTextField.getText();
+        String parentDir = this.caseParentDirTextField.getText();
+        
+        if (parentDir.endsWith(File.separator) == false) {
+            parentDir = parentDir + File.separator;
+        }
+        return parentDir;
     }
     
     public JTextField getCaseParentDirTextField(){
@@ -95,8 +101,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         jLabel2 = new javax.swing.JLabel();
         caseDirTextField = new javax.swing.JTextField();
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD, 14));
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle
+                .getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameLabel.text_1")); // NOI18N
 
@@ -244,11 +251,11 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
      */
     public void updateUI(DocumentEvent e) {
 
-        String caseName = this.caseNameTextField.getText();
-        String caseDir = this.caseParentDirTextField.getText();
+        String caseName = getCaseName();
+        String parentDir = getCaseParentDir();
 
-        if(!caseName.equals("") && !caseDir.equals("")){
-            caseDirTextField.setText( caseDir + File.separator + caseName);
+        if(!caseName.equals("") && !parentDir.equals("")){
+            caseDirTextField.setText( parentDir + caseName);
             wizPanel.setIsFinish(true);
         }
         else{

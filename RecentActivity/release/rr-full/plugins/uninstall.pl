@@ -9,27 +9,30 @@
 #    http://msdn.microsoft.com/en-us/library/ms954376.aspx
 #
 # Change History:
+#    20140512 - updated to include NTUSER.DAT (recommended by 
+#               Bartosz Inglot, bartosz.inglot@uk.pwc.com)
 #    20120523 - updated to include 64-bit systems
 #    20100116 - Minor updates
 #    20090413 - Extract DisplayVersion info
 #    20090128 - Added references
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2014 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package uninstall;
 use strict;
 
-my %config = (hive          => "Software",
+my %config = (hive          => "Software, NTUSER\.DAT",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120523);
+              version       => 20140512);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Gets contents of Uninstall keys (64- & 32-bit) from Software hive";	
+	return "Gets contents of Uninstall keys from Software, NTUSER\.DAT hives";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -45,7 +48,9 @@ sub pluginmain {
 	::rptMsg("uninstall v.".$VERSION); # banner
     ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my @keys = ('Microsoft\\Windows\\CurrentVersion\\Uninstall',
-	            'Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall');
+	            'Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+	            'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall',                  # NTUSER.DAT
+	            'Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall');    # NTUSER.DAT
 	
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
@@ -89,7 +94,7 @@ sub pluginmain {
 	 		}
 		}
 		else {
-			::rptMsg($key_path." not found.");
+#			::rptMsg($key_path." not found.");
 		}
 	}
 }

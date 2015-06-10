@@ -1,0 +1,41 @@
+/*! \page file_type_identification_page File Type Identification Module
+
+What Does It Do
+========
+
+The File Type ID module identifies files based on their internal signatures and does not rely on file extensions.  Autopsy uses the <a href="http://tika.apache.org/">Tika</a> library to do its primary file ID detection and that can be customized with user-defined rules.
+
+You should enable this module because many other modules depend on its results to determine if they should analyze a file.  Some examples include:
+
+- \subpage extension_mismatch_detector_page
+- \subpage keyword_search_page
+
+
+Configuration
+=======
+
+You do not need to configure anything with this module unless you want to define your own types.  To define your own types, go to "Tools", "Options", "File Type Id" panel. 
+
+From there, you can define rules based on the offset of the signature and if the signature is a byte sequence of an ASCII string.
+
+\image html filetype.png
+
+Using the Module
+======
+
+Ingest Settings
+------
+There are no run-time settings for this module when you run it on
+a data source.  All user-defined and Tika rules are always applied.
+
+
+Seeing Results
+------
+
+This module does not have obvious impacts in the user interface, though it is used by many other modules. 
+
+To see the file type of an individual file, view the "Results" tab in the lower right when you navigate to the file. You should see a page in there that mentions the file type.
+
+The Views area of the tree does not take the results of this module into account. That part of the tree relies on extension.  We will be upating it in the future to rely on extension when there is no output from this module for the file. 
+
+*/

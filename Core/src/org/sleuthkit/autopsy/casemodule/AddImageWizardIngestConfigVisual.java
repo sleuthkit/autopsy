@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,23 +19,21 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
-
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 /**
- * visual component of 2nd panle in add image wizard. allows the user to
- * configure ingest modules. delegates most details to ingestPanel attribute.
- *
+ * UI panel for the ingest job configuration wizard panel of the add data source
+ * wizard.
  *
  */
- class AddImageWizardIngestConfigVisual extends javax.swing.JPanel {
+class AddImageWizardIngestConfigVisual extends JPanel {
 
-    //could this be something more specific than JPanel? - jm
-    private JPanel ingestPanel = null;
+    private final JPanel ingestPanel;
 
     /**
-     * Creates new form AddImageVisualPanel3
+     * Constructs a UI panel for the ingest job configuration wizard panel of
+     * the add data source wizard.
      */
     public AddImageWizardIngestConfigVisual(JPanel ingestPanel) {
         this.ingestPanel = ingestPanel;
@@ -50,10 +48,9 @@ import javax.swing.JPanel;
     }
 
     /**
-     * Returns the name of the this panel. This name will be shown on the left
-     * panel of the "Add Image" wizard panel.
+     * Returns the name of the this panel.
      *
-     * @return name the name of this panel
+     * @return A name string.
      */
     @Override
     public String getName() {
@@ -69,18 +66,14 @@ import javax.swing.JPanel;
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        titleLabel = new javax.swing.JLabel();
         subtitleLabel = new javax.swing.JLabel();
         configPanel = new javax.swing.JPanel();
 
         setPreferredSize(new java.awt.Dimension(569, 300));
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        titleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.titleLabel.text")); // NOI18N
-
         subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageWizardIngestConfigVisual.class, "AddImageWizardIngestConfigVisual.subtitleLabel.text")); // NOI18N
 
-        configPanel.setPreferredSize(new java.awt.Dimension(569, 255));
+        configPanel.setPreferredSize(new java.awt.Dimension(569, 400));
 
         javax.swing.GroupLayout configPanelLayout = new javax.swing.GroupLayout(configPanel);
         configPanel.setLayout(configPanelLayout);
@@ -90,7 +83,7 @@ import javax.swing.JPanel;
         );
         configPanelLayout.setVerticalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 246, Short.MAX_VALUE)
+            .addGap(0, 258, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -98,27 +91,23 @@ import javax.swing.JPanel;
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(titleLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(subtitleLabel)))
+                .addContainerGap()
+                .addComponent(subtitleLabel)
                 .addContainerGap(218, Short.MAX_VALUE))
             .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(titleLabel)
-                .addGap(5, 5, 5)
+                .addGap(6, 6, 6)
                 .addComponent(subtitleLabel)
-                .addGap(18, 18, 18)
-                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel configPanel;
     private javax.swing.JLabel subtitleLabel;
-    private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 }

@@ -4,6 +4,8 @@
 # 
 #
 # History:
+#  20141111 - updated check for key LastWrite times
+#  20141015 - added additional checks
 #  20120523 - Added support for a DeviceClasses subkey that includes 
 #             "WpdBusEnum" in the names; from MarkW and ColinC
 #  20120410 - created
@@ -19,7 +21,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120523);
+              version       => 20141111);
 
 sub getConfig{return %config}
 
@@ -39,7 +41,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching wpdbusenum v.".$VERSION);
 	::rptMsg("wpdbusenum v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	$reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -77,16 +79,38 @@ sub pluginmain {
 						::rptMsg("  LastWrite: ".gmtime($sn_lw));
 						
 						eval {
-							::rptMsg("DeviceDesc: ".$k->get_value("DeviceDesc")->get_data());
+							::rptMsg("  DeviceDesc: ".$k->get_value("DeviceDesc")->get_data());
 						};
 						
 						eval {
-							::rptMsg("Friendly: ".$k->get_value("FriendlyName")->get_data());
+							::rptMsg("  Friendly: ".$k->get_value("FriendlyName")->get_data());
 						};
 						
 						eval {
-							::rptMsg("Mfg: ".$k->get_value("Mfg")->get_data());
+							my $mfg = $k->get_value("Mfg")->get_data();
+							::rptMsg("  Mfg: ".$mfg) unless ($mfg eq "");
 						};
+# added 20141015; updated 20141111						
+						eval {
+							::rptMsg("  Device Parameters LastWrite: [".gmtime($k->get_subkey("Device Parameters")->get_timestamp())."]");
+						};
+						eval {
+							::rptMsg("  LogConf LastWrite          : [".gmtime($k->get_subkey("LogConf")->get_timestamp())."]");
+						};
+						eval {
+							::rptMsg("  Properties LastWrite       : [".gmtime($k->get_subkey("Properties")->get_timestamp())."]");
+						};
+						eval {
+							my $t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000064\\00000000")->get_value("Data")->get_data();
+							my ($t0,$t1) = unpack("VV",$t);
+							::rptMsg("  InstallDate     : ".gmtime(::getTime($t0,$t1))." UTC");
+							
+							$t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000")->get_value("Data")->get_data();
+							($t0,$t1) = unpack("VV",$t);
+							::rptMsg("  FirstInstallDate: ".gmtime(::getTime($t0,$t1))." UTC");
+						};
+						
+						
 						::rptMsg("");
 					}
 				}

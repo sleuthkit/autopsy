@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
     
-    private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH";
+    private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
@@ -177,7 +177,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -201,7 +201,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e);
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
                                           MessageNotifyUtil.MessageType.ERROR);
@@ -295,7 +295,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             int offset = zone.getRawOffset() / 1000;
             int hour = offset / 3600;
             int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
+            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
 
             /*
              * DateFormat dfm = new SimpleDateFormat("z");
@@ -313,7 +313,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         int thisOffset = thisTimeZone.getRawOffset() / 1000;
         int thisHour = thisOffset / 3600;
         int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
+        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID()); //NON-NLS
 
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
@@ -331,7 +331,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
         catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
                                           MessageNotifyUtil.MessageType.ERROR);
@@ -344,7 +344,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
              pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
         catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
                                           MessageNotifyUtil.MessageType.ERROR);
@@ -358,7 +358,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
         catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee);
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
                                           NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
                                           MessageNotifyUtil.MessageType.ERROR);

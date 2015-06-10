@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,10 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -41,12 +36,11 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
-    private static final String GENERATOR_LOGO_PATH_PROP = "GeneratorLogoPath";
-    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath";
-    private static final String REPORT_TITLE_PROP = "ReportTitle";
-    private static final String REPORT_FOOTER_PROP = "ReportFooter";
+    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
+    private static final String REPORT_TITLE_PROP = "ReportTitle"; //NON-NLS
+    private static final String REPORT_FOOTER_PROP = "ReportFooter"; //NON-NLS
     //default settings
-    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png";
+    private static final String DEFAULT_GENERATOR_LOGO = "/org/sleuthkit/autopsy/report/images/default_generator_logo.png"; //NON-NLS
     private static final String DEFAULT_REPORT_TITLE = NbBundle
             .getMessage(ReportBranding.class, "ReportBranding.defaultReportTitle.text");
     private static final String DEFAULT_REPORT_FOOTER = NbBundle
@@ -54,6 +48,14 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
+    
+    // this is static so that it can be set by another object
+    // before the report is actually made.  Entire class should
+    // probably become singleton. Is set to null until setPath
+    // is called to specify something other than default.
+    private static String generatorLogoPath = null;
+    
+    private String defaultGeneratorLogoPath;
 
     public ReportBranding() {
 
@@ -61,15 +63,15 @@ public final class ReportBranding implements ReportBrandingProviderI {
         synchronized (ReportBranding.class) {
 
             reportsBrandingDir = PlatformUtil.getUserConfigDirectory() + File.separator + ReportGenerator.REPORTS_DIR + File.separator
-                    + "branding";
+                    + "branding"; //NON-NLS
             File brandingDir = new File(reportsBrandingDir);
             if (!brandingDir.exists()) {
                 if (!brandingDir.mkdirs()) {
-                    logger.log(Level.SEVERE, "Error creating report branding dir for the case, will use defaults");
+                    logger.log(Level.SEVERE, "Error creating report branding dir for the case, will use defaults"); //NON-NLS
                     //TODO use defaults
                 }
             }
-            getGeneratorLogoPath();
+            extractDefaultGeneratorLogo();
             getAgencyLogoPath();
             getReportTitle();
         }
@@ -78,42 +80,46 @@ public final class ReportBranding implements ReportBrandingProviderI {
     public String getReportsBrandingDir() {
         return reportsBrandingDir;
     }
+    
+    /**
+     * extract default logo from JAR file to local file.
+     */
+    private void extractDefaultGeneratorLogo() {
+        try {
+            PlatformUtil.extractResourceToUserConfigDir(getClass(), DEFAULT_GENERATOR_LOGO, true);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error extracting report branding resource for generator logo ", ex); //NON-NLS
+        }
+        defaultGeneratorLogoPath = PlatformUtil.getUserConfigDirectory() + File.separator + DEFAULT_GENERATOR_LOGO;
+    }
 
     @Override
     public String getGeneratorLogoPath() {
-        String curPath = null;
-        try {
-            curPath = ModuleSettings.getConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP);
-            if (curPath == null || (!curPath.isEmpty() && !new File(curPath).canRead() ) ) {
-                //use default
-                logger.log(Level.INFO, "Using default report branding for generator logo");
-                curPath = reportsBrandingDir + File.separator + "logo.png";
-                InputStream in = getClass().getResourceAsStream(DEFAULT_GENERATOR_LOGO);
-                OutputStream output = new FileOutputStream(new File(curPath));
-                FileUtil.copy(in, output);
-                ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, curPath);
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error extracting report branding resources for generator logo", e);
-        }
-
-        return curPath;
+        // if no one called to change the path, use default
+        if (generatorLogoPath == null)
+            generatorLogoPath = defaultGeneratorLogoPath;
+        
+        return generatorLogoPath;
     }
 
     @Override
     public void setGeneratorLogoPath(String path) {
-        ModuleSettings.setConfigSetting(MODULE_NAME, GENERATOR_LOGO_PATH_PROP, path);
+        generatorLogoPath = path;        
     }
 
     @Override
     public String getAgencyLogoPath() {
         String curPath = null;
 
+        /* The agency logo code uses these properties to persist changes
+         * in the logo (within the same process). 
+         * This is different from the generator logo that uses a static variable. 
+        */
         curPath = ModuleSettings.getConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP);
         //if has been set, validate it's correct, if not set, return null
         if (curPath != null && new File(curPath).canRead() == false) {
             //use default
-            logger.log(Level.INFO, "Custom report branding for agency logo is not valid: " + curPath);
+            logger.log(Level.INFO, "Custom report branding for agency logo is not valid: " + curPath); //NON-NLS
             curPath = null;
         }
 
@@ -122,6 +128,8 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
     @Override
     public void setAgencyLogoPath(String path) {
+        // Use properties to persist the logo to use. 
+        // Should use static variable instead
         ModuleSettings.setConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP, path);
     }
 
@@ -132,7 +140,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         curTitle = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_TITLE_PROP);
         if (curTitle == null || curTitle.isEmpty()) {
             //use default
-            logger.log(Level.INFO, "Using default report branding for report title");
+            logger.log(Level.INFO, "Using default report branding for report title"); //NON-NLS
             curTitle = DEFAULT_REPORT_TITLE;
             ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_TITLE_PROP, curTitle);
         }
@@ -152,7 +160,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
         curFooter = ModuleSettings.getConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP);
         if (curFooter == null) {
             //use default
-            logger.log(Level.INFO, "Using default report branding for report footer");
+            logger.log(Level.INFO, "Using default report branding for report footer"); //NON-NLS
             curFooter = DEFAULT_REPORT_FOOTER;
             ModuleSettings.setConfigSetting(MODULE_NAME, REPORT_FOOTER_PROP, curFooter);
         }

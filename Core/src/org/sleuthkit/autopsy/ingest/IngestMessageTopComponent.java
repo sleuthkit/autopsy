@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -36,7 +34,6 @@ import org.openide.util.Utilities;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.Content;
@@ -44,20 +41,19 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Top component which displays something.
  */
- final class IngestMessageTopComponent extends TopComponent implements IngestUI {
+ final class IngestMessageTopComponent extends TopComponent {
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
     private IngestMessageMainPanel messagePanel;
     private IngestManager manager;
-    private static String PREFERRED_ID = "IngestMessageTopComponent";
+    private static String PREFERRED_ID = "IngestMessageTopComponent"; //NON-NLS
     private ActionListener showIngestInboxAction;
     private static final Pattern tagRemove = Pattern.compile("<.+?>");
 
     public IngestMessageTopComponent() {
         initComponents();
         customizeComponents();
-        registerListeners();
         setName(NbBundle.getMessage(IngestMessageTopComponent.class, "CTL_IngestMessageTopComponent"));
         setToolTipText(NbBundle.getMessage(IngestMessageTopComponent.class, "HINT_IngestMessageTopComponent"));
         //putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
@@ -104,7 +100,7 @@ import org.sleuthkit.datamodel.Content;
     private void initComponents() {
 
         setDisplayName(org.openide.util.NbBundle.getMessage(IngestMessageTopComponent.class, "IngestMessageTopComponent.displayName")); // NOI18N
-        setName("Ingest Inbox"); // NOI18N
+        setName(NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.initComponents.name")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -126,7 +122,7 @@ import org.sleuthkit.datamodel.Content;
         super.componentOpened();
         //create manager instance
         if (manager == null) {
-            manager = IngestManager.getDefault();
+            manager = IngestManager.getInstance();
         }
 
     }
@@ -146,7 +142,7 @@ import org.sleuthkit.datamodel.Content;
         //logger.log(Level.INFO, "SHOWING");
         super.componentShowing();
 
-        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
+        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom"); //NON-NLS
         if (mode != null) {
             TopComponent[] tcs = mode.getTopComponents();
             for (int i = 0; i < tcs.length; ++i) {
@@ -193,7 +189,7 @@ import org.sleuthkit.datamodel.Content;
     @Override
     public java.awt.Image getIcon() {
         return ImageUtilities.loadImage(
-                "org/sleuthkit/autopsy/ingest/eye-icon.png");
+                "org/sleuthkit/autopsy/ingest/eye-icon.png"); //NON-NLS
     }
 
     void writeProperties(java.util.Properties p) {
@@ -208,32 +204,6 @@ import org.sleuthkit.datamodel.Content;
         // TODO read your settings according to their version
     }
 
-    private void registerListeners() {
-        //handle case change
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    Case oldCase = (Case) evt.getOldValue();
-                    if (oldCase == null) //nothing to do, new case had been opened
-                    {
-                        return;
-                    }
-                    //stop workers if running
-                    if (manager == null) {
-                        manager = IngestManager.getDefault();
-                    }
-                    try {
-                        manager.stopAll();
-                    } finally {
-                        //clear inbox 
-                        clearMessages();
-                    }
-                }
-            }
-        });
-    }
-
     private void customizeComponents() {
         //custom GUI setup not done by builder
         messagePanel = new IngestMessageMainPanel();
@@ -246,7 +216,6 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Display ingest summary report in some dialog
      */
-    @Override
     public void displayReport(String ingestReport) {
 
         Object[] options = {NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.displayReport.option.OK"),
@@ -261,12 +230,12 @@ import org.sleuthkit.datamodel.Content;
                 options,
                 options[0]);
 
-        final String reportActionName = "org.sleuthkit.autopsy.report.ReportAction";
+        final String reportActionName = "org.sleuthkit.autopsy.report.ReportAction"; //NON-NLS
         Action reportAction = null;
 
         //find action by name from action lookup, without introducing cyclic dependency
         if (choice == JOptionPane.NO_OPTION) {
-            List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File");
+            List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File"); //NON-NLS
             for (Action a : actions) {
                 //separators are null actions
                 if (a != null) {
@@ -278,7 +247,7 @@ import org.sleuthkit.datamodel.Content;
             }
 
             if (reportAction == null) {
-                logger.log(Level.SEVERE, "Could not locate Action: " + reportActionName);
+                logger.log(Level.SEVERE, "Could not locate Action: " + reportActionName); //NON-NLS
             } else {
                 reportAction.actionPerformed(null);
             }
@@ -290,7 +259,6 @@ import org.sleuthkit.datamodel.Content;
     /**
      * Display IngestMessage from module (forwarded by IngestManager)
      */
-    @Override
     public void displayMessage(IngestMessage ingestMessage) {
         messagePanel.addMessage(ingestMessage);
 
@@ -317,17 +285,14 @@ import org.sleuthkit.datamodel.Content;
         }
     }
 
-    @Override
     public int getMessagesCount() {
         return messagePanel.getMessagesCount();
     }
 
-    @Override
     public void clearMessages() {
         messagePanel.clearMessages();
     }
 
-    @Override
     public void displayIngestDialog(final Content ingestDataSource) {
         /*
          final IngestDialog ingestDialog = new IngestDialog();
@@ -336,12 +301,6 @@ import org.sleuthkit.datamodel.Content;
          */
     }
 
-    @Override
-    public void restoreMessages() {
-        //componentShowing();
-    }
-
-    @Override
     public Action[] getActions() {
         //disable TC toolbar actions
         return new Action[0];

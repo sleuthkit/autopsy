@@ -32,7 +32,7 @@ PROJECT_NAME           = "Autopsy"
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = 3
+PROJECT_NUMBER         = 3.1
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer
@@ -113,7 +113,7 @@ ALWAYS_DETAILED_SEC    = NO
 # members were ordinary class members. Constructors, destructors and assignment
 # operators of the base classes will not be shown.
 
-INLINE_INHERITED_MEMB  = NO
+INLINE_INHERITED_MEMB  = YES
 
 # If the FULL_PATH_NAMES tag is set to YES then Doxygen will prepend the full
 # path before files name in the file list and in the header files. If set
@@ -663,25 +663,25 @@ WARN_LOGFILE           =
 
 INPUT                  = main.dox \
                          workflow.dox \
-			 services.dox \
                          modContent.dox \
                          modDev.dox \
+                         modDevPython.dox \
                          modIngest.dox \
                          modReport.dox \
                          modResult.dox \
                          modAdvanced.dox \
+                         modMobile.dox \
                          platformConcepts.dox \
                          regressionTesting.dox \
+                         native_libs.dox \
+                         modDevPython.dox \
+                         debugTsk.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
-                         ../../ExifParser/src \
-                         ../../HashDatabase/src \
                          ../../KeywordSearch/src \
                          ../../RecentActivity/src \
-                         ../../ScalpelCarver/src \
-                         ../../SevenZip/src \
+#../../ScalpelCarver/src \
                          ../../Testing/src \
-                         ../../Timeline/src \
                          ../../thunderbirdparser/src
 
 # This tag can be used to specify the character encoding of the source files
@@ -893,7 +893,7 @@ GENERATE_HTML          = YES
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
 # put in front of it. If left blank `html' will be used as the default path.
 
-HTML_OUTPUT            = api-docs
+HTML_OUTPUT            = api-docs/3.1
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for
 # each generated HTML page (for example: .htm,.php,.asp). If it is left blank
@@ -918,7 +918,7 @@ HTML_HEADER            =
 # each generated HTML page. If it is left blank doxygen will generate a
 # standard footer.
 
-HTML_FOOTER            =
+HTML_FOOTER            = footer.html
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading
 # style sheet that is used by each HTML page. It can be used to
@@ -1581,7 +1581,7 @@ SKIP_FUNCTION_MACROS   = YES
 # NOT include the path). If a tag file is not located in the directory in which
 # doxygen is run, you must also specify the path to the tagfile here.
 
-TAGFILES               = ../../../../sleuthkit/sleuthkit/tskjni_doxygen.tag=http://www.sleuthkit.org/sleuthkit/docs/jni-docs/
+TAGFILES               = $(TSK_HOME)/tskjni_doxygen.tag=http://www.sleuthkit.org/sleuthkit/docs/jni-docs/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create
 # a tag file that is based on the input files it reads.

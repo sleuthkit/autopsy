@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     private static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
 
     public static List<Action> getActions(Content c) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
 
         actions.addAll(c.accept(instance));
         //TODO: fix this
@@ -81,7 +81,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final Image img) {
-        List<Action> lst = new ArrayList<Action>();
+        List<Action> lst = new ArrayList<>();
         lst.add(new ImageDetails(
                 NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.imgDetails.title"), img));
         //TODO lst.add(new ExtractAction("Extract Image", img));
@@ -98,7 +98,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final Volume vol) {
-        List<AbstractAction> lst = new ArrayList<AbstractAction>();
+        List<AbstractAction> lst = new ArrayList<>();
         lst.add(new VolumeDetails(
                 NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.volumeDetails.title"), vol));
         lst.add(new ExtractUnallocAction(
@@ -171,11 +171,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Logger.noteAction(ExplorerNodeActionVisitor.class);
-
             final JFrame frame = new JFrame(title);
             final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
-
 
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -205,7 +202,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 // error handler if no volume matches
                 JLabel error = new JLabel(
                         NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.volDetail.noVolMatchErr"));
-                error.setFont(new Font("Arial", Font.BOLD, 24));
+                error.setFont(error.getFont().deriveFont(Font.BOLD, 24));
                 popUpWindow.add(error);
             }
 
@@ -239,8 +236,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Logger.noteAction(ExplorerNodeActionVisitor.class);
-
             final JFrame frame = new JFrame(title);
             final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
             // if we select the Image Details menu
@@ -278,7 +273,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 // error handler if no volume matches
                 JLabel error = new JLabel(
                         NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.imgDetail.noVolMatchesErr"));
-                error.setFont(new Font("Arial", Font.BOLD, 24));
+                error.setFont(error.getFont().deriveFont(Font.BOLD, 24));
                 popUpWindow.add(error);
             }
 
@@ -315,8 +310,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         public void actionPerformed(ActionEvent e) {
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
-            Logger.noteAction(ExplorerNodeActionVisitor.class);
-
             final JFrame frame = new JFrame(title);
             final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
 
@@ -331,15 +324,15 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             popUpWindow.setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
             String[] columnNames = new String[]{
-                "fs_id",
-                "img_offset",
-                "par_id",
-                "fs_type",
-                "block_size",
-                "block_count",
-                "root_inum",
-                "first_inum",
-                "last_inum"
+                "fs_id", //NON-NLS
+                "img_offset", //NON-NLS
+                "par_id", //NON-NLS
+                "fs_type", //NON-NLS
+                "block_size", //NON-NLS
+                "block_count", //NON-NLS
+                "root_inum", //NON-NLS
+                "first_inum", //NON-NLS
+                "last_inum" //NON-NLS
             };
 
             Object[][] rowValues = new Object[1][9];
@@ -394,7 +387,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
                 popUpWindow.add(fsdPanel);
             } catch (Exception ex) {
-                Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex);
+                Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex); //NON-NLS
             }
 
             popUpWindow.pack();

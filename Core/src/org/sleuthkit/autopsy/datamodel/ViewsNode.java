@@ -42,7 +42,7 @@ public class ViewsNode extends DisplayableItemNode {
                 Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png"); //NON-NLS
     }
 
     @Override

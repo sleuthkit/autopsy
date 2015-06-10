@@ -1,7 +1,13 @@
 #-----------------------------------------------------------
 # imagedev.pl
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# History:
+#  20140104 - changed "FriendlyName" to "DeviceDesc" (value)
+#  20080813 - created
+#
+#
+# copyright 2014 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package imagedev;
 use strict;
@@ -11,7 +17,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080730);
+              version       => 20140104);
 
 sub getConfig{return %config}
 
@@ -65,14 +71,13 @@ sub pluginmain {
 			foreach my $s (@sk) {
 				my $name = $s->get_name();
 				next unless ($name =~ m/^\d{4}$/);
-				my $friendly;
+				my $desc;
 				eval {
-					$friendly = $s->get_value("FriendlyName")->get_data();
-					::rptMsg("  ".$friendly);
+					$desc = $s->get_value("DeviceDesc")->get_data();
+					::rptMsg("  ".$desc);
 				};
-				if ($@) {
-					::logMsg("Error getting device FriendlyName in imagedev: ".$@);
-				}
+				
+				
 			}
 		}
 		else {
@@ -81,7 +86,6 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -47,8 +46,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
     static final int LENGTH = 5;
-    static final String NAME_PROP_KEY = "LBL_RecentCase_Name";
-    static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
+    static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
+    static final String PATH_PROP_KEY = "LBL_RecentCase_Path"; //NON-NLS
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
 
     private final static RecentCases INSTANCE = new RecentCases();
@@ -253,8 +252,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         UpdateRecentCases.hasRecentCase = false;
 
         recentCases.clear();
@@ -263,7 +260,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             // clear the properties file
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not clear the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not clear the properties file.", ex); //NON-NLS
         }
     }
 
@@ -295,7 +292,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 
@@ -322,7 +319,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 
@@ -354,7 +351,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         try {
             storeRecentCases();
         } catch (Exception ex) {
-            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
+            Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex); //NON-NLS
         }
     }
 

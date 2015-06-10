@@ -83,7 +83,7 @@ class JerichoParserWrapper {
             // Get all the tags in the source
             List<StartTag> tags = source.getAllStartTags();
             for(StartTag tag : tags) {
-                if(tag.getName().equals("script")) {
+                if(tag.getName().equals("script")) { //NON-NLS
                     // If the <script> tag has attributes
                     scripts.append(numScripts).append(") ");
                     if(tag.getTagContent().length()>0) {
@@ -92,11 +92,11 @@ class JerichoParserWrapper {
                     // Get whats between the <script> .. </script> tags
                     scripts.append(tag.getElement().getContent()).append("\n");
                     numScripts++;
-                } else if(tag.getName().equals("a")) {
+                } else if(tag.getName().equals("a")) { //NON-NLS
                     links.append(numLinks).append(") ");
                     links.append(tag.getTagContent()).append("\n");
                     numLinks++;
-                } else if(tag.getName().equals("img")) {
+                } else if(tag.getName().equals("img")) { //NON-NLS
                     images.append(numImages).append(") ");
                     images.append(tag.getTagContent()).append("\n");
                     numImages++;
@@ -118,27 +118,27 @@ class JerichoParserWrapper {
 
             out.append(text).append("\n\n");
 
-            out.append("----------NONVISIBLE TEXT----------\n\n");
+            out.append("----------NONVISIBLE TEXT----------\n\n"); //NON-NLS
             if(numScripts>1) {
-                out.append("---Scripts---\n");
+                out.append("---Scripts---\n"); //NON-NLS
                 out.append(scripts.toString()).append("\n");
             } if(numLinks>1) {
-                out.append("---Links---\n");
+                out.append("---Links---\n"); //NON-NLS
                 out.append(links.toString()).append("\n");
             } if(numImages>1) {
-                out.append("---Images---\n");
+                out.append("---Images---\n"); //NON-NLS
                 out.append(images.toString()).append("\n");
             } if(numComments>1) {
-                out.append("---Comments---\n");
+                out.append("---Comments---\n"); //NON-NLS
                 out.append(comments.toString()).append("\n");
             } if(numOthers>1) {
-                out.append("---Others---\n");
+                out.append("---Others---\n"); //NON-NLS
                 out.append(others.toString()).append("\n");
             }
             // All done, now make it a reader
             reader = new StringReader(out.toString());
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to parse the HTML file", ex);
+            logger.log(Level.WARNING, "Unable to parse the HTML file", ex); //NON-NLS
         }
     }
     

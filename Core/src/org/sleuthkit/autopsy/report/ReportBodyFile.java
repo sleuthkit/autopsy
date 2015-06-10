@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -25,8 +25,6 @@ package org.sleuthkit.autopsy.report;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -65,17 +63,17 @@ import org.sleuthkit.datamodel.*;
 
     /**
      * Generates a body file format report for use with the MAC time tool.
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
     @Override
     @SuppressWarnings("deprecation")
-    public void generateReport(String path, ReportProgressPanel progressPanel) {
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
-        reportPath = path + "BodyFile.txt";
+        reportPath = baseReportDir + "BodyFile.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
         
@@ -83,15 +81,15 @@ import org.sleuthkit.datamodel.*;
         
         try {
             // exclude non-fs files/dirs and . and .. files
-            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() 
-                               + " AND name != '.' AND name != '..'";
+            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()  //NON-NLS
+                               + " AND name != '.' AND name != '..'"; //NON-NLS
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
             List<FsContent> fs = skCase.findFilesWhere(query);
             
             // Check if ingest has finished
             String ingestwarning = "";
-            if (IngestManager.getDefault().isIngestRunning()) {
+            if (IngestManager.getInstance().isIngestRunning()) {
                 ingestwarning = NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text");
             }
             
@@ -148,18 +146,27 @@ import org.sleuthkit.datamodel.*;
                     out.write("\n");
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
+                logger.log(Level.WARNING, "Could not write the temp body file report.", ex); //NON-NLS
             } finally {
                 try {
-                    out.flush();
-                    out.close();
+                    if (out != null) {
+                        out.flush();
+                        out.close();
+                        Case.getCurrentCase().addReport(reportPath,
+                                                        NbBundle.getMessage(this.getClass(),
+                                                                            "ReportBodyFile.generateReport.srcModuleName.text"), "");
+
+                    }
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
-                }
+                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+                    logger.log(Level.SEVERE, errorMessage, ex);
+                }                    
             }
             progressPanel.complete();
         }  catch(TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
+            logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         } 
     }
 
@@ -170,14 +177,8 @@ import org.sleuthkit.datamodel.*;
     }
 
     @Override
-    public String getFilePath() {
+    public String getRelativeFilePath() {
         return NbBundle.getMessage(this.getClass(), "ReportBodyFile.getFilePath.text");
-    }
-
-    @Override
-    public String getExtension() {
-        String ext = ".txt";
-        return ext;
     }
 
     @Override

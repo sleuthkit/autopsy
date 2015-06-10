@@ -686,18 +686,18 @@ public class StringExtract {
             LATIN_1 {
                 @Override
                 public String toString() {
-                    return "Latin - Basic";
+                    return "Latin - Basic"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "English";
+                    return "English"; //NON-NLS
                 }
             },
             GREEK {
                 @Override
                 public String toString() {
-                    return "Greek";
+                    return "Greek"; //NON-NLS
                 }
 
                 @Override
@@ -708,18 +708,18 @@ public class StringExtract {
             CYRILLIC {
                 @Override
                 public String toString() {
-                    return "Cyrillic";
+                    return "Cyrillic"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Russian, Bulgarian, Serbian, Moldovan";
+                    return "Russian, Bulgarian, Serbian, Moldovan"; //NON-NLS
                 }
             },
             ARMENIAN {
                 @Override
                 public String toString() {
-                    return "Armenian";
+                    return "Armenian"; //NON-NLS
                 }
 
                 @Override
@@ -730,7 +730,7 @@ public class StringExtract {
             HEBREW {
                 @Override
                 public String toString() {
-                    return "Hebrew";
+                    return "Hebrew"; //NON-NLS
                 }
 
                 @Override
@@ -741,7 +741,7 @@ public class StringExtract {
             ARABIC {
                 @Override
                 public String toString() {
-                    return "Arabic";
+                    return "Arabic"; //NON-NLS
                 }
 
                 @Override
@@ -770,7 +770,7 @@ public class StringExtract {
             BENGALI {
                 @Override
                 public String toString() {
-                    return "Bengali";
+                    return "Bengali"; //NON-NLS
                 }
 
                 @Override
@@ -829,7 +829,7 @@ public class StringExtract {
             THAI {
                 @Override
                 public String toString() {
-                    return "Thai";
+                    return "Thai"; //NON-NLS
                 }
 
                 @Override
@@ -840,7 +840,7 @@ public class StringExtract {
             LAO {
                 @Override
                 public String toString() {
-                    return "Laotian";
+                    return "Laotian"; //NON-NLS
                 }
 
                 @Override
@@ -851,7 +851,7 @@ public class StringExtract {
             TIBETAN {
                 @Override
                 public String toString() {
-                    return "Tibetian";
+                    return "Tibetian"; //NON-NLS
                 }
 
                 @Override
@@ -868,7 +868,7 @@ public class StringExtract {
             GEORGIAN {
                 @Override
                 public String toString() {
-                    return "Georgian";
+                    return "Georgian"; //NON-NLS
                 }
 
                 @Override
@@ -879,18 +879,18 @@ public class StringExtract {
             HANGUL {
                 @Override
                 public String toString() {
-                    return "Hangul";
+                    return "Hangul"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Korean";
+                    return "Korean"; //NON-NLS
                 }
             },
             ETHIOPIC {
                 @Override
                 public String toString() {
-                    return "Ethiopic";
+                    return "Ethiopic"; //NON-NLS
                 }
 
                 @Override
@@ -925,18 +925,18 @@ public class StringExtract {
             KHMER {
                 @Override
                 public String toString() {
-                    return "Khmer";
+                    return "Khmer"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Cambodian";
+                    return "Cambodian"; //NON-NLS
                 }
             },
             MONGOLIAN {
                 @Override
                 public String toString() {
-                    return "Mongolian";
+                    return "Mongolian"; //NON-NLS
                 }
 
                 @Override
@@ -947,23 +947,23 @@ public class StringExtract {
             HIRAGANA {
                 @Override
                 public String toString() {
-                    return "Hiragana";
+                    return "Hiragana"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Japanese";
+                    return "Japanese"; //NON-NLS
                 }
             },
             KATAKANA {
                 @Override
                 public String toString() {
-                    return "Katakana";
+                    return "Katakana"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Japanese";
+                    return "Japanese"; //NON-NLS
                 }
             },
             BOPOMOFO {
@@ -975,12 +975,12 @@ public class StringExtract {
             HAN {
                 @Override
                 public String toString() {
-                    return "Han";
+                    return "Han"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "Chinese, Japanese, Korean";
+                    return "Chinese, Japanese, Korean"; //NON-NLS
                 }
             },
             YI {
@@ -1172,17 +1172,17 @@ public class StringExtract {
             LATIN_2 {
                 @Override
                 public String toString() {
-                    return "Latin - Extended";
+                    return "Latin - Extended"; //NON-NLS
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "European";
+                    return "European"; //NON-NLS
                 }
             }
         };
         private static final SCRIPT[] SCRIPT_VALUES = SCRIPT.values();
-        private static final String PROPERTY_FILE = "StringExtract.properties";
+        private static final String PROPERTY_FILE = "StringExtract.properties"; //NON-NLS
         /**
          * table has an entry for every possible 2-byte value
          */
@@ -1268,7 +1268,7 @@ public class StringExtract {
                 int toks = st.countTokens();
                 //logger.log(Level.INFO, "TABLE TOKS: " + toks);
                 if (toks != UNICODE_TABLE_SIZE) {
-                    logger.log(Level.WARNING, "Unicode table corrupt, expecting: " + UNICODE_TABLE_SIZE, ", have: " + toks);
+                    logger.log(Level.WARNING, "Unicode table corrupt, expecting: " + UNICODE_TABLE_SIZE, ", have: " + toks); //NON-NLS
                     return false;
                 }
 
@@ -1279,10 +1279,10 @@ public class StringExtract {
                     unicodeTable[tableIndex++] = code;
                 }
 
-                logger.log(Level.INFO, "initialized, unicode table loaded");
+                logger.log(Level.INFO, "initialized, unicode table loaded"); //NON-NLS
 
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not load" + PROPERTY_FILE);
+                logger.log(Level.WARNING, "Could not load" + PROPERTY_FILE); //NON-NLS
                 return false;
             }
 

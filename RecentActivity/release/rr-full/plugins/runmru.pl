@@ -52,8 +52,8 @@ sub pluginmain {
 		my $mru;
 		if (scalar(@vals) > 0) {
 			foreach my $v (@vals) {
-				$runvals{$v->get_name()} = $v->get_data() unless ($v->get_name() =~ m/^MRUList/i);
-				$mru = $v->get_data() if ($v->get_name() =~ m/^MRUList/i);
+				$runvals{$v->get_name()} = $v->get_data() unless ($v->get_name() eq "MRUList");
+				$mru = $v->get_data() if ($v->get_name() eq "MRUList");
 			}
 			::rptMsg("MRUList = ".$mru);
 			foreach my $r (sort keys %runvals) {
@@ -62,12 +62,10 @@ sub pluginmain {
 		}
 		else {
 			::rptMsg($key_path." has no values.");
-			::logMsg($key_path." has no values.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

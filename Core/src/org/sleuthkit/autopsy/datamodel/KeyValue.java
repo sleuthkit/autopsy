@@ -23,7 +23,6 @@ import java.util.Map;
 /**
  * An object that holds a map of keys and values. Also has a default StringContent
  * implementation so that the string viewer can show it's content.
- * @author alawrence
  */
 public class KeyValue implements StringContent{
     Map<String, Object> map;
@@ -31,10 +30,10 @@ public class KeyValue implements StringContent{
     String name;
 
     /**
-     * @param name name of the key value object
-     * @param map must iterate it keys and values in a consistent order
+     * @param name name of the key value object that the key/value map is associated with
+     * @param map Key to value map.  Must iterate it keys and values in a consistent order
      * (use of LinkedHashMap is recommended)
-     * @param id an arbitrary id representing the type of the thing
+     * @param id Caller-defined ID. Can represent the type of the thing. 
      */
     public KeyValue(String name, Map<String, Object> map, int id) {
         this.name = name;
@@ -43,8 +42,8 @@ public class KeyValue implements StringContent{
     }
 
     /**
-     * @param name name of the key value object
-     * @param id an arbitrary id representing the type of the thing
+     * @param name name of the key value object that the key/value map is associated with
+     * @param id Caller-defined ID. Can represent the type of the thing.
      */
     public KeyValue(String name,  int id) {
         this.name = name;
@@ -64,8 +63,11 @@ public class KeyValue implements StringContent{
         return name;
     }
     
-    public void addMap(Map<String,Object> inMap)
-    {
+    /**
+     * Add a map to an already defined object.
+     * @param inMap Key/value map
+     */
+    public void addMap(Map<String,Object> inMap) {
        this.map = inMap;
     }
 

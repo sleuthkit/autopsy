@@ -20,13 +20,15 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -38,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ContentTagNode extends DisplayableItemNode {
 
-    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png";
+    private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png"; //NON-NLS
     private final ContentTag tag;
 
     public ContentTagNode(ContentTag tag) {
@@ -51,24 +53,26 @@ class ContentTagNode extends DisplayableItemNode {
 
     @Override
     protected Sheet createSheet() {
+        Content content = tag.getContent();
+        String contentPath;
+        try {
+            contentPath = content.getUniquePath();
+        } catch (TskCoreException ex) {
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + content.getId() + ")", ex); //NON-NLS
+            contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
+        }
+        AbstractFile file = content instanceof AbstractFile ? (AbstractFile)content : null;
+        
         Sheet propertySheet = super.createSheet();
         Sheet.Set properties = propertySheet.get(Sheet.PROPERTIES);
         if (properties == null) {
             properties = Sheet.createPropertiesSet();
             propertySheet.put(properties);
         }
-
         properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.file.displayName"),
                 "",
-                tag.getContent().getName()));
-        String contentPath;
-        try {
-            contentPath = tag.getContent().getUniquePath();
-        } catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + tag.getContent().getId() + ")", ex);
-            contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
-        }
+                content.getName()));
         properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.filePath.displayName"),
                 "",
@@ -77,7 +81,26 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.comment.displayName"),
                 "",
                 tag.getComment()));
-
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
+                "",
+                file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.displayName"),
+                "",
+                file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.displayName"),
+                "",
+                file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
+                "",
+                file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
+        properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
+                "",
+                content.getSize()));
         return propertySheet;
     }
 

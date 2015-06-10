@@ -48,7 +48,7 @@ sub pluginmain {
 # First, let's find out which version of Adobe Acrobat Reader is installed
 	my $version;
 	my $tag = 0;
-	my @versions = ("4\.0","5\.0","6\.0","7\.0","8\.0","9\.0","10\.0");
+	my @versions = ("4\.0","5\.0","6\.0","7\.0","8\.0","9\.0","10\.0","11\.0","12\.0");
 	foreach my $ver (@versions) {		
 		my $key_path = "Software\\Adobe\\Acrobat Reader\\".$ver."\\AVGeneral\\cRecentFiles";
 		if (defined($root_key->get_subkey($key_path))) {

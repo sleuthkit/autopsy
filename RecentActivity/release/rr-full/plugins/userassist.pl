@@ -5,6 +5,7 @@
 # UserAssist values 
 #
 # Change history
+#  20130603 - added alert functionality
 #  20100322 - Added CLSID list reference
 #  20100308 - created, based on original userassist.pl plugin
 #  
@@ -22,7 +23,12 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20100308);
+              version       => 20130603);
+
+my @paths = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+
+my @alerts = ();
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -118,7 +124,21 @@ sub processKey {
 			::rptMsg(gmtime($t)." Z");
 			foreach my $i (@{$ua{$t}}) {
 				::rptMsg("  ".$i);
+				
+				my $lci = lc($i);
+				foreach my $a (@paths) {
+					push(@alerts,"ALERT: userassist: ".$a." found in path: ".$i) if (grep(/$a/,$lci));
+				}
+				
 			}
+		}
+	}
+	
+	if (scalar(@alerts) > 0) {
+		print "\n";
+		print "Alerts:\n";
+		foreach (@alerts) {
+			::alertMsg($_);
 		}
 	}
 }

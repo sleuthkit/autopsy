@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Logger;
+
 
 /**
  *
@@ -38,15 +38,20 @@ class CollapseAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-
         ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
         Node[] selectedNode = em.getSelectedNodes();
 
         // Collapse all
 
         BeanTreeView tree = DirectoryTreeTopComponent.findInstance().getTree();
-        collapseAll(tree, selectedNode[0]);
+        if(selectedNode.length != 0) {
+            collapseSelectedNode(tree, selectedNode[0]);
+        } else {
+            // If no node is selected, all the level-2 nodes (children of the
+            // root node) are collapsed.
+            for(Node childOfRoot: em.getRootContext().getChildren().getNodes())
+                collapseSelectedNode(tree, childOfRoot);
+        }
     }
 
     /**
@@ -55,13 +60,13 @@ class CollapseAction extends AbstractAction {
      * @param tree          the given tree
      * @param currentNode   the current selectedNode
      */
-    private void collapseAll(BeanTreeView tree, Node currentNode) {
+    private void collapseSelectedNode(BeanTreeView tree, Node currentNode) {
 
         Children c = currentNode.getChildren();
 
         for (Node next : c.getNodes()) {
             if (tree.isExpanded(next)) {
-                this.collapseAll(tree, next);
+                this.collapseSelectedNode(tree, next);
             }
         }
 

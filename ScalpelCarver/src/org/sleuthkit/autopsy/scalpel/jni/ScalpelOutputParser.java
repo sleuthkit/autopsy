@@ -96,7 +96,7 @@ public class ScalpelOutputParser {
         while (!line.isEmpty()) {
             
             // split the line into tokens
-            String[] fields = line.split("\\s+");
+            String[] fields = line.split("\\s+"); //NON-NLS
             
             // get the fields of interest
             String fileName = fields[0];

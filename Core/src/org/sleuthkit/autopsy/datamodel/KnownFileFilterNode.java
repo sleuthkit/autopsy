@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,10 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -39,26 +38,28 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class KnownFileFilterNode extends FilterNode {
     
-    /** Preference key values. */
-    private static final String DS_HIDE_KNOWN = "dataSourcesHideKnown"; // Default false
-    private static final String VIEWS_HIDE_KNOWN = "viewsHideKnown"; // Default true
+    private static boolean filterFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
+    private static boolean filterFromViews = UserPreferences.hideKnownFilesInViewsTree();
+            
+    static {
+        UserPreferences.addChangeListener(new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                switch (evt.getKey()) {
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                        filterFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
+                        break;
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
+                        filterFromViews = UserPreferences.hideKnownFilesInViewsTree();
+                        break;
+                }
+            }
+        });
+    }
     
-    /** True if Nodes selected from the Views Node should filter Known Files. */
-    private static boolean filterFromViews = true;
-    
-    /** True if Nodes selected from the DataSources Node should filter Known Files. */
-    private static boolean filterFromDataSources = false;
-    
-    /** True if a listener has not been added to the preferences. */
-    private static boolean addListener = true;
-    
-    /**
-     * Represents the top level category the Node this KnownFileFilterNode wraps
-     * is a sub-node of. (i.e. Data Sources, Views, Results)
-     */
     public enum SelectionContext {
-        DATA_SOURCES(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.dataSources")),   // Subnode of DataSources
-        VIEWS(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.views")),                 // Subnode of Views
+        DATA_SOURCES(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.dataSources")),
+        VIEWS(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.views")),
         OTHER("");                      // Subnode of another node.
         
         private final String displayName;
@@ -67,13 +68,6 @@ public class KnownFileFilterNode extends FilterNode {
             this.displayName = displayName;
         }
         
-        /**
-         * Get the SelectionContext from the display name of a Node that is a
-         * direct child of the root node.
-         * 
-         * @param name
-         * @return 
-         */
         public static SelectionContext getContextFromName(String name) {
             if (name.equals(DATA_SOURCES.getName())) {
                 return DATA_SOURCES;
@@ -97,12 +91,7 @@ public class KnownFileFilterNode extends FilterNode {
      * @param context 
      */
     public KnownFileFilterNode(Node arg, SelectionContext context) {
-        super(arg, new KnownFileFilterChildren(arg, context));
-        
-        if (addListener) {
-            addPreferenceListener();
-            addListener = false;
-        }
+        super(arg, new KnownFileFilterChildren(arg, context));        
     }
     
     private KnownFileFilterNode(Node arg, boolean filter) {
@@ -125,28 +114,6 @@ public class KnownFileFilterNode extends FilterNode {
         } else {
             return getSelectionContext(n.getParentNode());
         }
-    }
-    
-    private void addPreferenceListener() {
-        Preferences prefs = NbPreferences.root().node("/org/sleuthkit/autopsy/core");
-        // Initialize with values stored in preferences
-        filterFromViews = prefs.getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
-        filterFromDataSources = prefs.getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
-
-        // Add listener
-        prefs.addPreferenceChangeListener(new PreferenceChangeListener() {
-            @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
-                switch (evt.getKey()) {
-                    case VIEWS_HIDE_KNOWN:
-                        filterFromViews = evt.getNode().getBoolean(VIEWS_HIDE_KNOWN, filterFromViews);
-                        break;
-                    case DS_HIDE_KNOWN:
-                        filterFromDataSources = evt.getNode().getBoolean(DS_HIDE_KNOWN, filterFromDataSources);
-                        break;
-                }
-            }
-        });
     }
     
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +47,7 @@ public class NewWindowViewAction extends AbstractAction{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Logger.noteAction(this.getClass());
-        
-        String name = "DataContent";
+        String name = "DataContent"; //NON-NLS
         String s = contentNode.getLookup().lookup(String.class);
         if (s != null) {
             name = s;
@@ -59,14 +57,14 @@ public class NewWindowViewAction extends AbstractAction{
                 try {
                     name = c.getUniquePath();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + c);
+                    logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + c); //NON-NLS
                 }
             }
         }
 
         final DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, null);
 
-        Mode m = WindowManager.getDefault().findMode("outputFloat");
+        Mode m = WindowManager.getDefault().findMode("outputFloat"); //NON-NLS
         m.dockInto(dctc);
         dctc.open();
         

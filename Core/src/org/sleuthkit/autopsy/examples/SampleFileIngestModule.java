@@ -29,96 +29,97 @@
  */
 package org.sleuthkit.autopsy.examples;
 
-import org.apache.log4j.Logger;
-import org.openide.util.Exceptions;
+import java.util.HashMap;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
-import org.sleuthkit.autopsy.ingest.IngestModuleInit;
-import org.sleuthkit.autopsy.ingest.PipelineContext;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * This is a sample and simple module. It is a file-level ingest module, meaning
- * that it will get called on each file in the disk image / logical file set. It
- * does a stupid calculation of the number of null bytes in the beginning of the
- * file in order to show the basic flow.
- *
- * Autopsy has been hard coded to ignore this module based on the it's package
- * name. IngestModuleLoader will not load things from the
- * org.sleuthkit.autopsy.examples package. Either change the package or the
- * loading code to make this module actually run.
+ * Sample file ingest module that doesn't do much. Demonstrates per ingest job
+ * module settings, use of a subset of the available ingest services and
+ * thread-safe sharing of per ingest job data.
  */
-public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile {
+class SampleFileIngestModule implements FileIngestModule {
 
-    private int attrId = -1;
-    private static SampleFileIngestModule defaultInstance = null;
+    private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
+    private static int attrId = -1;
+    private final boolean skipKnownFiles;
+    private IngestJobContext context = null;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
-    // Private to ensure Singleton status
-    private SampleFileIngestModule() {
-    }
-
-    // File-level ingest modules are currently singleton -- this is required
-    public static synchronized SampleFileIngestModule getDefault() {
-        //defaultInstance is a private static class variable
-        if (defaultInstance == null) {
-            defaultInstance = new SampleFileIngestModule();
-        }
-        return defaultInstance;
+    SampleFileIngestModule(SampleModuleIngestJobSettings settings) {
+        this.skipKnownFiles = settings.skipKnownFiles();
     }
 
     @Override
-    public void init(IngestModuleInit initContext) throws IngestModuleException {
-        /* For this demo, we are going to make a private attribute to post our
-         * results to the blackbaord with. There are many standard blackboard artifact
-         * and attribute types and you should first consider using one of those before
-         * making private ones because other modules won't know about provate ones.
-         * Because our demo has results that have no real value, we do not have an 
-         * official attribute for them. 
-         */
-        Case case1 = Case.getCurrentCase();
-        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        refCounter.incrementAndGet(context.getJobId());
 
-        // see if the type already exists in the blackboard.
-        try {
-            attrId = sleuthkitCase.getAttrTypeID("ATTR_SAMPLE");
-        } catch (TskCoreException ex) {
-            // create it if not
-            try {
-                attrId = sleuthkitCase.addAttrType("ATTR_SAMPLE", "Sample Attribute");
-            } catch (TskCoreException ex1) {
-                Logger log = Logger.getLogger(SampleFileIngestModule.class);
-                log.fatal("Error adding attribute type: " + ex1.getLocalizedMessage());
-                attrId = -1;
+        synchronized (SampleFileIngestModule.class) {
+            if (attrId == -1) {
+                // For this sample, make a new attribute type to use to post 
+                // results to the blackboard. There are many standard blackboard 
+                // artifact and attribute types and you should use them instead
+                // creating new ones to facilitate use of your results by other
+                // modules.
+                Case autopsyCase = Case.getCurrentCase();
+                SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
+                try {
+                    // See if the attribute type has already been defined.
+                    attrId = sleuthkitCase.getAttrTypeID("ATTR_SAMPLE");
+                    if (attrId == -1) {
+                        attrId = sleuthkitCase.addAttrType("ATTR_SAMPLE", "Sample Attribute");
+                    }
+                } catch (TskCoreException ex) {
+                    IngestServices ingestServices = IngestServices.getInstance();
+                    Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
+                    logger.log(Level.SEVERE, "Failed to create blackboard attribute", ex);
+                    attrId = -1;
+                    throw new IngestModuleException(ex.getLocalizedMessage());
+                }
             }
         }
     }
 
     @Override
-    public ProcessResult process(PipelineContext<IngestModuleAbstractFile> pipelineContext, AbstractFile abstractFile) {
-        // skip non-files
-        if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
-            return ProcessResult.OK;
+    public IngestModule.ProcessResult process(AbstractFile file) {
+        if (attrId == -1) {
+            return IngestModule.ProcessResult.ERROR;
         }
 
-        // skip NSRL / known files
-        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
-            return ProcessResult.OK;
+        // Skip anything other than actual file system files.
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.isFile() == false)) {
+            return IngestModule.ProcessResult.OK;
         }
 
+        // Skip NSRL / known files.
+        if (skipKnownFiles && file.getKnown() == TskData.FileKnown.KNOWN) {
+            return IngestModule.ProcessResult.OK;
+        }
 
-        /* Do a non-sensical calculation of the number of 0x00 bytes
-         * in the first 1024-bytes of the file.  This is for demo
-         * purposes only.
-         */
+        // Do a nonsensical calculation of the number of 0x00 bytes
+        // in the first 1024-bytes of the file.  This is for demo
+        // purposes only.
         try {
             byte buffer[] = new byte[1024];
-            int len = abstractFile.read(buffer, 0, 1024);
+            int len = file.read(buffer, 0, 1024);
             int count = 0;
             for (int i = 0; i < len; i++) {
                 if (buffer[i] == 0x00) {
@@ -126,49 +127,64 @@ public class SampleFileIngestModule extends org.sleuthkit.autopsy.ingest.IngestM
                 }
             }
 
-            if (attrId != -1) {
-                // Make an attribute using the ID for the private type that we previously created.
-                BlackboardAttribute attr = new BlackboardAttribute(attrId, getName(), count);
+            // Make an attribute using the ID for the attribute type that 
+            // was previously created.
+            BlackboardAttribute attr = new BlackboardAttribute(attrId, SampleIngestModuleFactory.getModuleName(), count);
 
-                /* add it to the general info artifact.  In real modules, you would likely have
-                 * more complex data types and be making more specific artifacts.
-                 */
-                BlackboardArtifact art = abstractFile.getGenInfoArtifact();
-                art.addAttribute(attr);
-            }
+            // Add the to the general info artifact for the file. In a
+            // real module, you would likely have more complex data types 
+            // and be making more specific artifacts.
+            BlackboardArtifact art = file.getGenInfoArtifact();
+            art.addAttribute(attr);
 
-            return ProcessResult.OK;
+            // This method is thread-safe with per ingest job reference counted
+            // management of shared data.
+            addToBlackboardPostCount(context.getJobId(), 1L);
+
+            // Fire an event to notify any listeners for blackboard postings.
+            ModuleDataEvent event = new ModuleDataEvent(SampleIngestModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_GEN_INFO);
+            IngestServices.getInstance().fireModuleDataEvent(event);
+
+            return IngestModule.ProcessResult.OK;
+
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-            return ProcessResult.ERROR;
+            IngestServices ingestServices = IngestServices.getInstance();
+            Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
+            logger.log(Level.SEVERE, "Error processing file (id = " + file.getId() + ")", ex);
+            return IngestModule.ProcessResult.ERROR;
         }
     }
 
     @Override
-    public void complete() {
+    public void shutDown() {
+        // This method is thread-safe with per ingest job reference counted
+        // management of shared data.
+        reportBlackboardPostCount(context.getJobId());
     }
 
-    @Override
-    public void stop() {
+    synchronized static void addToBlackboardPostCount(long ingestJobId, long countToAdd) {
+        Long fileCount = artifactCountsForIngestJobs.get(ingestJobId);
+
+        // Ensures that this job has an entry
+        if (fileCount == null) {
+            fileCount = 0L;
+            artifactCountsForIngestJobs.put(ingestJobId, fileCount);
+        }
+
+        fileCount += countToAdd;
+        artifactCountsForIngestJobs.put(ingestJobId, fileCount);
     }
 
-    @Override
-    public String getVersion() {
-        return "1.0";
-    }
-
-    @Override
-    public String getName() {
-        return "SampleFileIngestModule";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Doesn't do much";
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        return false;
+    synchronized static void reportBlackboardPostCount(long ingestJobId) {
+        Long refCount = refCounter.decrementAndGet(ingestJobId);
+        if (refCount == 0) {
+            Long filesCount = artifactCountsForIngestJobs.remove(ingestJobId);
+            String msgText = String.format("Posted %d times to the blackboard", filesCount);
+            IngestMessage message = IngestMessage.createMessage(
+                    IngestMessage.MessageType.INFO,
+                    SampleIngestModuleFactory.getModuleName(),
+                    msgText);
+            IngestServices.getInstance().postMessage(message);
+        }
     }
 }

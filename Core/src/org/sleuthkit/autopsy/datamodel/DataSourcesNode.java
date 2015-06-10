@@ -36,7 +36,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         super(new RootContentChildren(images), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
 
     @Override

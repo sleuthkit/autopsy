@@ -2,6 +2,10 @@
 # appcompatcache.pl
 #
 # History:
+#  20140724 - update based on data provided by Shafik Punja
+#  20130801 - added initial Win8 support; very alpha at the moment
+#  20130603 - updated alerts
+#  20130509 - added additional alerts/warnings 
 #  20130425 - added alertMsg() functionality
 #  20120817 - updated to address issue with residual data in XP data blocks
 #  20120722 - updated the %config hash
@@ -32,7 +36,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 31,  #XP - Win7
-              version       => 20130425);
+              version       => 20140724);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -45,14 +49,13 @@ sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
 my %files;
-my @temps;
 
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching appcompatcache v.".$VERSION);
 	::rptMsg("appcompatcache v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -98,25 +101,32 @@ sub pluginmain {
 				};
 			
 			}
+			elsif ($sig == 0x80) {
+				::rptMsg("Possible Win8 system\.");
+				::rptMsg(sprintf "Data Length: 0x%08x",length($app_data));
+				appWin8($app_data);
+#				probe($app_data);
+				
+			}
 			else {
-				::rptMsg("Unknown signature");
+				::rptMsg(sprintf "Unknown signature: 0x%x",$sig);
 			}
 # this is where we print out the files
 			foreach my $f (keys %files) {
 				::rptMsg($f);
-				push(@temps,$f) if (grep(/[Tt]emp/,$f));
+
+# Warnings and alerts, updated 20130603				
+#        alertCheckPath($f);
+#        alertCheckADS($f);
+#				::alertMsg("WARN: appcompatcache: use of cacls\.exe found: ".$f) if ($f =~ m/cacls\.exe$/);
+				
 				::rptMsg("ModTime: ".gmtime($files{$f}{modtime})." Z");
 				::rptMsg("UpdTime: ".gmtime($files{$f}{updtime})." Z") if (exists $files{$f}{updtime});
 				::rptMsg("Size   : ".$files{$f}{size}." bytes") if (exists $files{$f}{size});
 				::rptMsg("Executed") if (exists $files{$f}{executed});
 				::rptMsg("");
 			}
-			
-			if (scalar(@temps) > 0) {
-				foreach (@temps) {
-					::alertMsg("ALERT: appcompatcache: Temp path found: ".$_);
-				}
-			}
+	
 		}
 		else {
 			::rptMsg($appcompat_path." not found.");
@@ -269,6 +279,94 @@ sub appWin7 {
 	}
 }
 
+#-----------------------------------------------------------
+# appWin8()
+#-----------------------------------------------------------
+sub appWin8 {
+	my $data = shift;
+	my $len = length($data);
+	my ($jmp, $t0, $t1, $sz, $name);
+	
+	my $ofs = unpack("V",substr($data,0,4));
+	
+	while($ofs < $len) {
+		my $tag = unpack("V",substr($data,$ofs,4));
+# 32-bit		
+		if ($tag == 0x73746f72) {
+			$jmp = unpack("V",substr($data,$ofs + 8,4));
+			($t0,$t1) = unpack("VV",substr($data,$ofs + 12,8));
+			$sz = unpack("v",substr($data,$ofs + 20,2));
+			$name = substr($data,$ofs + 22,$sz);
+			$name =~ s/\00//g;
+			
+			$files{$name}{modtime} = ::getTime($t0,$t1);
+			
+			$ofs += ($jmp + 12);
+		}
+# 64-bit
+		elsif ($tag == 0x73743030 || $tag == 0x73743031) {
+			$jmp = unpack("V",substr($data,$ofs + 8,4));
+			$sz = unpack("v",substr($data,$ofs + 0x0C,2));
+			$name = substr($data,$ofs + 0x0E,$sz + 2);
+			$name =~ s/\00//g;
+			
+			($t0,$t1) = unpack("VV",substr($data,($ofs + 0x0E + $sz +2 + 8),8));
+			$files{$name}{modtime} = ::getTime($t0,$t1);
+			
+			$ofs += ($jmp + 12);
+		}		
+		else {
+# Unknown tag
+		}			
+	
+	}
+
+}
+
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: appcompatcache: ".$a." found in path: ".$path);              
+		}
+	}
+}
+
+#-----------------------------------------------------------
+# alertCheckADS()
+#-----------------------------------------------------------
+sub alertCheckADS {
+	my $path = shift;
+	my @list = split(/\\/,$path);
+	my $last = $list[scalar(@list) - 1];
+	::alertMsg("ALERT: appcompatcache: Poss. ADS found in path: ".$path) if grep(/:/,$last);
+}
+
+
+#-----------------------------------------------------------
+# probe()
+#
+# Code the uses printData() to insert a 'probe' into a specific
+# location and display the data
+#
+# Input: binary data of arbitrary length
+# Output: Nothing, no return value.  Displays data to the console
+#-----------------------------------------------------------
+sub probe {
+	my $data = shift;
+	my @d = printData($data);
+	
+	foreach (0..(scalar(@d) - 1)) {
+		print $d[$_]."\n";
+	}
+}
 
 #-----------------------------------------------------------
 # printData()
@@ -279,37 +377,50 @@ sub appWin7 {
 sub printData {
 	my $data = shift;
 	my $len = length($data);
-	my $tag = 1;
-	my $cnt = 0;
+	
+	my @display = ();
 	
 	my $loop = $len/16;
 	$loop++ if ($len%16);
 	
 	foreach my $cnt (0..($loop - 1)) {
-#	while ($tag) {
+# How much is left?
 		my $left = $len - ($cnt * 16);
 		
 		my $n;
 		($left < 16) ? ($n = $left) : ($n = 16);
 
 		my $seg = substr($data,$cnt * 16,$n);
-		my @str1 = split(//,unpack("H*",$seg));
-
-		my @s3;
-		my $str = "";
-
-		foreach my $i (0..($n - 1)) {
-			$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
-			
-			if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
-				$str .= chr(hex($s3[$i]));
-			}
-			else {
-				$str .= "\.";
-			}
+		my $lhs = "";
+		my $rhs = "";
+		foreach my $i ($seg =~ m/./gs) {
+# This loop is to process each character at a time.
+			$lhs .= sprintf(" %02X",ord($i));
+			if ($i =~ m/[ -~]/) {
+				$rhs .= $i;
+    	}
+    	else {
+				$rhs .= ".";
+     	}
 		}
-		my $h = join(' ',@s3);
-		::rptMsg(sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h);
+		$display[$cnt] = sprintf("0x%08X  %-50s %s",$cnt,$lhs,$rhs);
+
+#		my @str1 = split(//,unpack("H*",$seg));
+#		my @s3;
+#		my $str = "";
+#		foreach my $i (0..($n - 1)) {
+#			$s3[$i] = $str1[$i * 2].$str1[($i * 2) + 1];
+#			
+#			if (hex($s3[$i]) > 0x1f && hex($s3[$i]) < 0x7f) {
+#				$str .= chr(hex($s3[$i]));
+#			}
+#			else {
+#				$str .= "\.";
+#			}
+#		}
+#		my $h = join(' ',@s3);
+#		$display[$cnt] = sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h;
 	}
+	return @display;
 }
 1;

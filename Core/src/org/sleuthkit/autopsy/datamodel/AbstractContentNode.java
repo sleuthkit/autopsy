@@ -52,7 +52,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         super(new ContentChildren(content), Lookups.singleton(content));
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
-        super.setName("content_" + Long.toString(content.getId()));
+        super.setName("content_" + Long.toString(content.getId())); //NON-NLS
     }
     
     /**
@@ -87,7 +87,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             try {
                 hasChildren = content.hasChildren();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + content, ex);
+                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + content, ex); //NON-NLS
             }
         }
 
@@ -107,7 +107,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             try {
                 childrenIds = content.getChildrenIds();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting children ids, for content: " + content, ex);
+                logger.log(Level.SEVERE, "Error getting children ids, for content: " + content, ex); //NON-NLS
             }
         }
 
@@ -127,7 +127,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             try {
                 children = content.getChildren();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting children, for content: " + content, ex);
+                logger.log(Level.SEVERE, "Error getting children, for content: " + content, ex); //NON-NLS
             }
         }
 
@@ -150,7 +150,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             try {
                 childrenCount = content.getChildrenCount();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error checking node content children count, for content: " + content, ex);
+                logger.log(Level.SEVERE, "Error checking node content children count, for content: " + content, ex); //NON-NLS
             }
         }
 

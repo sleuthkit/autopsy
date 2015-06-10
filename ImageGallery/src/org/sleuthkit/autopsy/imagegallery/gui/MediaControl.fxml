@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.*?>
+<?import javafx.scene.media.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<fx:root id="BorderPane" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+  <bottom>
+    <HBox fx:id="playControlBar" alignment="CENTER" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color:&#10;        linear-gradient(to bottom, derive(-fx-base,-30%), derive(-fx-base,-60%)),&#10;        linear-gradient(to bottom, derive(-fx-base,65%) 2%, derive(-fx-base,-20%) 95%);&#10;" BorderPane.alignment="CENTER">
+      <children>
+        <Button id="controlbutton" fx:id="controlButton" contentDisplay="GRAPHIC_ONLY" maxHeight="24.0" maxWidth="24.0" minHeight="24.0" minWidth="24.0" mnemonicParsing="false" HBox.hgrow="NEVER">
+               <graphic>
+                  <ImageView fx:id="controlImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/media_controls_play_small.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <HBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </HBox.margin></Button>
+            <StackPane maxHeight="-Infinity" HBox.hgrow="ALWAYS">
+               <children>
+              <Slider fx:id="timeSlider" majorTickUnit="100.0" minorTickCount="10" showTickLabels="true" showTickMarks="true" HBox.hgrow="ALWAYS" StackPane.alignment="TOP_CENTER">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                     </HBox.margin>
+                     <StackPane.margin>
+                        <Insets left="5.0" right="5.0" />
+                     </StackPane.margin>
+                  </Slider>
+                  <Label fx:id="timeLabel" alignment="BOTTOM_CENTER" text="Label" StackPane.alignment="BOTTOM_CENTER" />
+               </children>
+            </StackPane>
+            <Button fx:id="volumeButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <graphic>
+                  <ImageView fx:id="volumeImageView" fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/speaker-volume.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                  </ImageView>
+               </graphic>
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor>
+            </Button>
+        <Slider fx:id="volumeSlider" blockIncrement="0.1" majorTickUnit="0.25" max="1.0" minorTickCount="1" prefWidth="70.0" showTickLabels="true" showTickMarks="true" HBox.hgrow="NEVER">
+               <HBox.margin>
+                  <Insets right="5.0" />
+               </HBox.margin>
+            </Slider>
+      </children>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+         <padding>
+            <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
+         </padding>
+    </HBox>
+  </bottom>
+   <center>
+      <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="200.0" BorderPane.alignment="CENTER" />
+   </center>
+</fx:root>

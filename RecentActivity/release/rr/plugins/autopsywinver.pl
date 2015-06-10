@@ -97,6 +97,50 @@ sub pluginmain {
 		else {
 			::rptMsg("<winver name=\"InstallDate\">".gmtime($install)."</winver>");
 		}
+
+		my $regOwner;
+		eval {
+			$regOwner = $key->get_value("RegisteredOwner")->get_data();
+		};
+		if ($@) {
+#			::rptMsg("RegisteredOwner value not found.");
+		}
+		else {
+			::rptMsg("<winver name=\"RegisteredOwner\">".$regOwner."</winver>");
+		}
+
+		my $regOrg;
+		eval {
+			$regOrg = $key->get_value("RegisteredOrganization")->get_data();
+		};
+		if ($@) {
+#			::rptMsg("RegisteredOrganization value not found.");
+		}
+		else {
+			::rptMsg("<winver name=\"RegisteredOrganization\">".$regOrg."</winver>");
+		}
+
+		my $systemRoot;
+		eval {
+			$systemRoot = $key->get_value("SystemRoot")->get_data();
+		};
+		if ($@) {
+#			::rptMsg("SystemRoot value not found.");
+		}
+		else {
+			::rptMsg("<winver name=\"SystemRoot\">".$systemRoot."</winver>");
+		}
+
+		my $productId;
+		eval {
+			$productId = $key->get_value("ProductId")->get_data();
+		};
+		if ($@) {
+#			::rptMsg("ProductId value not found.");
+		}
+		else {
+			::rptMsg("<winver name=\"ProductId\">".$productId."</winver>");
+		}
 		
 		
 	}

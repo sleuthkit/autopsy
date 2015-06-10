@@ -1,0 +1,35 @@
+/*! \page embedded_file_extractor_page Embedded File Extraction Module
+
+What Does It Do
+========
+
+The Embedded File Extractor module opens ZIP, RAR, other archive formats, Doc, Docx, PPT, PPTX, XLS, and XLSX and sends the derived files from those files back through the ingest pipeline for analysis.
+
+This module expands archive files to enable Autopsy to analyze all files on the system. It enables keyword search and hash lookup to analyze files inside of archives
+
+NOTE: Certain media content embedded inside Doc, Docx, PPT, PPTX, XLS, and XLSX might not be extracted.
+
+Configuration
+=======
+
+There is no configuration required.
+
+Using the Module
+======
+Select the checkbox in the Ingest Modules settings screen to enable the Archive Extractor.
+
+Ingest Settings
+------
+There are no runtime ingest settings required.
+
+Seeing Results
+------
+Each file extracted shows up in the data source tree view as a child of the archive containing it, 
+
+\image html zipped_children_1.PNG
+<br>
+<br>
+and as an archive under "Views", "File Types", "Archives".
+\image html zipped_children_2.PNG
+
+*/

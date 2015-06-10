@@ -4,6 +4,7 @@
 # MS Office UserInfo values 
 #
 # Change history
+#   20130513 - added check for UserName in Common key
 #   20110609 - created
 #
 # References
@@ -20,7 +21,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20110609);
+              version       => 20130513);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,10 +39,24 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching userinfo v.".$VERSION);
 	::rptMsg("userinfo v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
+	my $key_path = 'Software\\Microsoft\\Office\\Common';
+	if (my $key = $root_key->get_subkey($key_path)) {
+		my $username;
+		eval {
+			$username = $key->get_value("UserName")->get_data();
+			::rptMsg($key_path."\\UserName = ".$username);
+		};
+		
+	}
+	else {
+	  ::rptMsg($key_path." not found\.");	
+	}
+	
+	::rptMsg("");
 	my %keys = (2003 => 'Software\\Microsoft\\Office\\11\.0\\Common\\UserInfo',
 	            2007 => 'Software\\Microsoft\\Office\\Common\\UserInfo');
 	

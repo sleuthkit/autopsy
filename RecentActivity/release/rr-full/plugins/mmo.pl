@@ -23,6 +23,7 @@ use strict;
 my %config = (hive          => "NTUSER\.DAT",
               osmask        => 22,
               hasShortDescr => 1,
+              category      => "malware",
               hasDescr      => 0,
               hasRefs       => 0,
               version       => 20130217);

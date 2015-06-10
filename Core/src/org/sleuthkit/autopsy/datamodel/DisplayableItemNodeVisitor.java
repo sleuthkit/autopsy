@@ -20,19 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.InterestingHits.InterestingHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.directorytree.BlackboardArtifactTagTypeNode;
 
 /**
  * Visitor pattern implementation for DisplayableItemNodes
@@ -49,9 +38,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(BlackboardArtifactNode ban);
 
-    T visit(ArtifactTypeNode atn);
+    T visit(ExtractedContent.TypeNode atn);
 
-    T visit(ExtractedContentNode ecn);
+    T visit(ExtractedContent.RootNode ecn);
 
     T visit(FileTypeNode fsfn);
 
@@ -69,35 +58,35 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(RecentFilesFilterNode rffn);
 
-    T visit(KeywordHitsRootNode khrn);
+    T visit(KeywordHits.RootNode khrn);
 
-    T visit(KeywordHitsListNode khsn);
+    T visit(KeywordHits.ListNode khsn);
 
-    T visit(KeywordHitsKeywordNode khmln);
+    T visit(KeywordHits.TermNode khmln);
 
-    T visit(HashsetHitsRootNode hhrn);
+    T visit(HashsetHits.RootNode hhrn);
 
-    T visit(HashsetHitsSetNode hhsn);
+    T visit(HashsetHits.HashsetNameNode hhsn);
 
-    T visit(EmailExtractedRootNode eern);
+    T visit(EmailExtracted.RootNode eern);
 
-    T visit(EmailExtractedAccountNode eean);
+    T visit(EmailExtracted.AccountNode eean);
 
-    T visit(EmailExtractedFolderNode eefn);
+    T visit(EmailExtracted.FolderNode eefn);
 
-    T visit(TagsNode node);
+    T visit(Tags.RootNode node);
     
-    T visit(InterestingHitsRootNode ihrn);
+    T visit(InterestingHits.RootNode ihrn);
 
-    T visit(InterestingHitsSetNode ihsn);
+    T visit(InterestingHits.SetNameNode ihsn);
     
-    T visit(TagNameNode node);
+    T visit(Tags.TagNameNode node);
 
-    T visit(ContentTagTypeNode node);    
+    T visit(Tags.ContentTagTypeNode node);    
 
     T visit(ContentTagNode node);
         
-    T visit(BlackboardArtifactTagTypeNode node);
+    T visit(Tags.BlackboardArtifactTagTypeNode node);
 
     T visit(BlackboardArtifactTagNode node);    
 
@@ -113,6 +102,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(VirtualDirectoryNode ldn);
 
+    T visit(Reports.ReportsListNode reportsNode);
+
+    T visit(Reports.ReportNode reportNode);
+        
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -155,12 +148,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(ArtifactTypeNode atn) {
+        public T visit(ExtractedContent.TypeNode atn) {
             return defaultVisit(atn);
         }
 
         @Override
-        public T visit(ExtractedContentNode ecn) {
+        public T visit(ExtractedContent.RootNode ecn) {
             return defaultVisit(ecn);
         }
 
@@ -205,17 +198,17 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(KeywordHitsRootNode khrn) {
+        public T visit(KeywordHits.RootNode khrn) {
             return defaultVisit(khrn);
         }
 
         @Override
-        public T visit(KeywordHitsListNode khsn) {
+        public T visit(KeywordHits.ListNode khsn) {
             return defaultVisit(khsn);
         }
 
         @Override
-        public T visit(KeywordHitsKeywordNode khmln) {
+        public T visit(KeywordHits.TermNode khmln) {
             return defaultVisit(khmln);
         }
 
@@ -235,37 +228,37 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(HashsetHitsRootNode hhrn) {
+        public T visit(HashsetHits.RootNode hhrn) {
             return defaultVisit(hhrn);
         }
 
         @Override
-        public T visit(HashsetHitsSetNode hhsn) {
+        public T visit(HashsetHits.HashsetNameNode hhsn) {
             return defaultVisit(hhsn);
         }
         
          @Override
-        public T visit(InterestingHitsRootNode ihrn) {
+        public T visit(InterestingHits.RootNode ihrn) {
             return defaultVisit(ihrn);
         }
 
         @Override
-        public T visit(InterestingHitsSetNode ihsn) {
+        public T visit(InterestingHits.SetNameNode ihsn) {
             return defaultVisit(ihsn);
         }
         
         @Override
-        public T visit(EmailExtractedRootNode eern) {
+        public T visit(EmailExtracted.RootNode eern) {
             return defaultVisit(eern);
         }
 
         @Override
-        public T visit(EmailExtractedAccountNode eean) {
+        public T visit(EmailExtracted.AccountNode eean) {
             return defaultVisit(eean);
         }
 
         @Override
-        public T visit(EmailExtractedFolderNode eefn) {
+        public T visit(EmailExtracted.FolderNode eefn) {
             return defaultVisit(eefn);
         }
 
@@ -285,17 +278,17 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(TagsNode node) {
+        public T visit(Tags.RootNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(TagNameNode node) {
+        public T visit(Tags.TagNameNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(ContentTagTypeNode node) {
+        public T visit(Tags.ContentTagTypeNode node) {
             return defaultVisit(node);
         }
 
@@ -305,12 +298,22 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(BlackboardArtifactTagTypeNode node) {
+        public T visit(Tags.BlackboardArtifactTagTypeNode node) {
             return defaultVisit(node);
         }
 
         @Override
         public T visit(BlackboardArtifactTagNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Reports.ReportsListNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(Reports.ReportNode node) {
             return defaultVisit(node);
         }
     }

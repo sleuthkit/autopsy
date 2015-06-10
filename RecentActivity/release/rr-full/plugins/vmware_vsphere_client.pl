@@ -51,8 +51,8 @@ sub pluginmain {
 
 	# Initialize #
 	::logMsg("Launching vmware_vsphere_client v.".$VERSION);
-    ::rptMsg("vmware_vsphere_client v.".$VERSION); # 20110830 [fpi] + banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+   ::rptMsg("vmware_vsphere_client v.".$VERSION); # 20110830 [fpi] + banner
+   ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
@@ -95,7 +95,7 @@ sub pluginmain {
 		# Error # VMware vSphere Client isn't here, try another castle #
 		} else {
 			::rptMsg($key_path." not found.");
-			::logMsg($key_path." not found.");
+			
 		}
 
 	}

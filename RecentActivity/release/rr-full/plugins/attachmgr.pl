@@ -13,6 +13,7 @@
 # References
 #  http://journeyintoir.blogspot.com/2010/10/anatomy-of-drive-by-part-2.html
 #  http://support.microsoft.com/kb/883260
+#  http://blog.handlerdiaries.com/?p=703
 # 
 # copyright 2013 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
@@ -66,7 +67,7 @@ sub pluginmain {
 # settings information derived from MS KB 883260					
 					::alertMsg("ALERT: attachmgr: ".$key_path." SaveZoneInformation value found: ".$data) if ($name eq "SaveZoneInformation");
 					::alertMsg("ALERT: attachmgr: ".$key_path." ScanWithAntiVirus value found: ".$data) if ($name eq "ScanWithAntiVirus");
-					::alertMsg("ALERT: attachmgr: ".$key_path." LowRiskFileTypes value includes exe: ".$data (if $name eq "LowRiskFileTypes" && grep(/exe/,$data));
+					::alertMsg("ALERT: attachmgr: ".$key_path." LowRiskFileTypes value includes exe: ".$data) if ($name eq "LowRiskFileTypes" && grep(/exe/,$data));
 					
 					::rptMsg(sprintf "%-15s  %-6s",$name,$data);
 				}
