@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Nodes for the images
  */
 public class DataSourcesNode extends DisplayableItemNode {
+
     public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
 
     // NOTE: The images passed in via argument will be ignored.
@@ -42,22 +43,23 @@ public class DataSourcesNode extends DisplayableItemNode {
         super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
         init();
     }
-    
+
     public DataSourcesNode() {
         super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
         init();
     }
-    
-    private void init() {    
+
+    private void init() {
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
-    
+
     /* Custom Keys implementation that listens for new data sources being added. */
     private static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
+
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
-        
+
         public DataSourcesNodeChildren() {
             super();
         }
@@ -71,7 +73,6 @@ public class DataSourcesNode extends DisplayableItemNode {
                 }
             }
         };
-        
 
         @Override
         protected void addNotify() {
