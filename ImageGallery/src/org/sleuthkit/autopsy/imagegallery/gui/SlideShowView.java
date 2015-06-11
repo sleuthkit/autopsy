@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener, Category.CategoryListener {
+public class SlideShowView extends DrawableViewBase implements TagUtils.TagListener {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
@@ -193,15 +193,17 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
         groupPane.grouping().addListener((Observable observable) -> {
             syncButtonVisibility();
-            groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
-                syncButtonVisibility();
-            });
+            if (groupPane.getGrouping() != null) {
+                groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
+                    syncButtonVisibility();
+                });
+            }
         });
     }
 
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
-        try{
+        try {
             final boolean hasMultipleFiles = groupPane.getGrouping().fileIds().size() > 1;
             Platform.runLater(() -> {
                 rightButton.setVisible(hasMultipleFiles);
@@ -209,7 +211,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
                 rightButton.setManaged(hasMultipleFiles);
                 leftButton.setManaged(hasMultipleFiles);
             });
-        } catch (NullPointerException ex){
+        } catch (NullPointerException ex) {
             // The case has likely been closed
             LOGGER.log(Level.WARNING, "Error accessing groupPane");
         }

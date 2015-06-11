@@ -162,6 +162,8 @@ public class ImageGalleryModule {
      *
      * @return true if the given file has a supported video mime type or
      *         extension, else false
+     *
+     * //TODO: convert this to use the new FileTypeDetector?
      */
     public static boolean isVideoFile(AbstractFile file) {
         try {
