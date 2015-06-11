@@ -132,8 +132,6 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        logger.log(Level.INFO, "Processing with embedded file extractor: {0}", abstractFile.getName()); //NON-NLS
-
         // call the archive extractor if archiveextraction flag is set.
         if (this.archivextraction) {
             archiveExtractor.unpack(abstractFile);
