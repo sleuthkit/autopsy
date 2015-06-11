@@ -7,7 +7,6 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.*?>
-<?scenebuilder-stylesheet GroupPane.css?>
 
 <fx:root type="AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <children>
@@ -66,9 +65,7 @@
                                         <Region prefHeight="-1.0" prefWidth="5.0" />
                                       
                                     </children>
-                                    <stylesheets>
-                                        <URL value="@GroupPane.css" />
-                                    </stylesheets>
+                                  
                                 </HBox>
                             </items>
                         </ToolBar>
