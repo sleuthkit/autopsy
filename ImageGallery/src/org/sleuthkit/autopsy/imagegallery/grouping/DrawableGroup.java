@@ -138,7 +138,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
             seen.set(false);
-
         }
     }
 
@@ -155,8 +154,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 
-    void setSeen() {
-        this.seen.set(true);
+    void setSeen(boolean isSeen) {
+        this.seen.set(isSeen);
     }
 
     public ReadOnlyBooleanWrapper seenProperty() {

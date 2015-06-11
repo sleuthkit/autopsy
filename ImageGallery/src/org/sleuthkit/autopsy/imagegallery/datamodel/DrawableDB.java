@@ -71,51 +71,51 @@ import org.sqlite.SQLiteJDBCLoader;
  * the future. see also {@link EventsDB} in the timeline viewer.
  */
 public final class DrawableDB {
-
+    
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed";
-
+    
     private static final String OBJ_ID = "obj_id";
-
+    
     private static final String HASH_SET_NAME = "hash_set_name";
-
+    
     private final PreparedStatement insertHashSetStmt;
-
+    
     private final PreparedStatement groupSeenQueryStmt;
-
+    
     private final PreparedStatement insertGroupStmt;
-
+    
     private final List<PreparedStatement> preparedStatements = new ArrayList<>();
-
+    
     private final PreparedStatement removeFileStmt;
-
+    
     private final PreparedStatement updateGroupStmt;
-
+    
     private final PreparedStatement selectHashSetStmt;
-
+    
     private final PreparedStatement selectHashSetNamesStmt;
-
+    
     private final PreparedStatement insertHashHitStmt;
-
+    
     private final PreparedStatement updateFileStmt;
     private PreparedStatement insertFileStmt;
-
+    
     private final PreparedStatement pathGroupStmt;
-
+    
     private final PreparedStatement nameGroupStmt;
-
+    
     private final PreparedStatement created_timeGroupStmt;
-
+    
     private final PreparedStatement modified_timeGroupStmt;
-
+    
     private final PreparedStatement makeGroupStmt;
-
+    
     private final PreparedStatement modelGroupStmt;
-
+    
     private final PreparedStatement analyzedGroupStmt;
-
+    
     private final PreparedStatement hashSetGroupStmt;
 
     /**
@@ -128,13 +128,13 @@ public final class DrawableDB {
      * list of observers to be notified if the database changes
      */
     private final HashSet<FileUpdateEvent.FileUpdateListener> updateListeners = new HashSet<>();
-
+    
     private GroupManager groupManager;
-
+    
     private final Path dbPath;
-
+    
     volatile private Connection con;
-
+    
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
     private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
@@ -206,9 +206,9 @@ public final class DrawableDB {
             insertFileStmt = prepareStatement(
                     "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
                     + "VALUES (?,?,?,?,?,?,?,?)");
-
+            
             removeFileStmt = prepareStatement("delete from drawable_files where obj_id = ?");
-
+            
             pathGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  path  = ? ", DrawableAttribute.PATH);
             nameGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  name  = ? ", DrawableAttribute.NAME);
             created_timeGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  created_time  = ? ", DrawableAttribute.CREATED_TIME);
@@ -217,23 +217,23 @@ public final class DrawableDB {
             modelGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  model  = ? ", DrawableAttribute.MODEL);
             analyzedGroupStmt = prepareStatement("Select obj_id , analyzed from drawable_files where analyzed = ?", DrawableAttribute.ANALYZED);
             hashSetGroupStmt = prepareStatement("select drawable_files.obj_id as obj_id, analyzed from drawable_files ,  hash_sets , hash_set_hits  where drawable_files.obj_id = hash_set_hits.obj_id and hash_sets.hash_set_id = hash_set_hits.hash_set_id and hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
-
-            updateGroupStmt = prepareStatement("update groups set seen = 1 where value = ? and attribute = ?");
+            
+            updateGroupStmt = prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
             insertGroupStmt = prepareStatement("insert or replace into groups (value, attribute) values (?,?)");
-
+            
             groupSeenQueryStmt = prepareStatement("select seen from groups where value = ? and attribute = ?");
-
+            
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets");
             insertHashSetStmt = prepareStatement("insert or ignore into hash_sets (hash_set_name)  values (?)");
             selectHashSetStmt = prepareStatement("select hash_set_id from hash_sets where hash_set_name = ?");
-
+            
             insertHashHitStmt = prepareStatement("insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)");
-
+            
             initializeImageList();
         } else {
             throw new ExceptionInInitializerError();
         }
-
+        
     }
 
     /**
@@ -271,7 +271,7 @@ public final class DrawableDB {
         if (attr != null) {
             groupStatementMap.put(attr, prepareStatement);
         }
-
+        
         return prepareStatement;
     }
 
@@ -284,7 +284,7 @@ public final class DrawableDB {
      * @return
      */
     public static DrawableDB getDrawableDB(Path dbPath, SleuthkitCase tskCase) {
-
+        
         try {
             return new DrawableDB(dbPath.resolve("drawable.db"), tskCase);
         } catch (SQLException ex) {
@@ -295,7 +295,7 @@ public final class DrawableDB {
             return null;
         }
     }
-
+    
     private void setPragmas() throws SQLException {
 
         //this should match Sleuthkit db setupt
@@ -321,7 +321,7 @@ public final class DrawableDB {
             //we never delete anything so...
             statement.execute("PRAGMA auto_vacuum = 0");
         }
-
+        
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode",
                     SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
@@ -329,7 +329,7 @@ public final class DrawableDB {
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "exception while checking sqlite-jdbc version and mode", exception);
         }
-
+        
     }
 
     /**
@@ -344,7 +344,7 @@ public final class DrawableDB {
                 openDBCon();
             }
             setPragmas();
-
+            
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "problem accessing  database", ex);
             return false;
@@ -364,7 +364,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "problem creating drawable_files table", ex);
             return false;
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists groups "
                     + "(group_id INTEGER PRIMARY KEY, "
@@ -377,7 +377,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "problem creating groups table", ex);
             return false;
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists hash_sets "
                     + "( hash_set_id INTEGER primary key,"
@@ -387,7 +387,7 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "problem creating hash_sets table", ex);
             return false;
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists hash_set_hits "
                     + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, "
@@ -398,45 +398,45 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
             return false;
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists path_idx ON drawable_files(path)";
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "problem creating path_idx", ex);
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists name_idx ON drawable_files(name)";
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "problem creating name_idx", ex);
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists make_idx ON drawable_files(make)";
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "problem creating make_idx", ex);
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists model_idx ON drawable_files(model)";
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "problem creating model_idx", ex);
         }
-
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists analyzed_idx ON drawable_files(analyzed)";
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "problem creating analyzed_idx", ex);
         }
-
+        
         return true;
     }
-
+    
     @Override
     public void finalize() throws Throwable {
         try {
@@ -445,7 +445,7 @@ public final class DrawableDB {
             super.finalize();
         }
     }
-
+    
     public void closeDBCon() {
         if (con != null) {
             try {
@@ -457,7 +457,7 @@ public final class DrawableDB {
         }
         con = null;
     }
-
+    
     public void openDBCon() {
         try {
             if (con == null || con.isClosed()) {
@@ -467,7 +467,7 @@ public final class DrawableDB {
             LOGGER.log(Level.WARNING, "Failed to open connection to drawable.db", ex);
         }
     }
-
+    
     public boolean isClosed() throws SQLException {
         if (con == null) {
             return true;
@@ -495,7 +495,7 @@ public final class DrawableDB {
         }
         return names;
     }
-
+    
     public boolean isGroupSeen(GroupKey<?> groupKey) {
         dbReadLock();
         try {
@@ -514,14 +514,15 @@ public final class DrawableDB {
         }
         return false;
     }
-
-    public void markGroupSeen(GroupKey<?> gk) {
+    
+    public void markGroupSeen(GroupKey<?> gk, boolean seen) {
         dbWriteLock();
         try {
-            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = 1 where value = ? and attribute = ?");
+            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
             updateGroupStmt.clearParameters();
-            updateGroupStmt.setString(1, gk.getValueDisplayName());
-            updateGroupStmt.setString(2, gk.getAttribute().attrName.toString());
+            updateGroupStmt.setBoolean(1, seen);
+            updateGroupStmt.setString(2, gk.getValueDisplayName());
+            updateGroupStmt.setString(3, gk.getAttribute().attrName.toString());
             updateGroupStmt.execute();
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error marking group as seen", ex);
@@ -529,41 +530,41 @@ public final class DrawableDB {
             dbWriteUnlock();
         }
     }
-
+    
     public boolean removeFile(long id) {
         DrawableTransaction trans = beginTransaction();
         boolean removeFile = removeFile(id, trans);
         commitTransaction(trans, true);
         return removeFile;
     }
-
+    
     public void updateFile(DrawableFile<?> f) {
         DrawableTransaction trans = beginTransaction();
         updateFile(f, trans);
         commitTransaction(trans, true);
     }
-
+    
     public void insertFile(DrawableFile<?> f) {
         DrawableTransaction trans = beginTransaction();
         insertFile(f, trans);
         commitTransaction(trans, true);
     }
-
+    
     public void insertFile(DrawableFile<?> f, DrawableTransaction tr) {
         insertOrUpdateFile(f, tr, insertFileStmt);
     }
-
+    
     public void updateFile(DrawableFile<?> f, DrawableTransaction tr) {
         insertOrUpdateFile(f, tr, updateFileStmt);
     }
-
+    
     private void insertOrUpdateFile(DrawableFile<?> f, DrawableTransaction tr, PreparedStatement stmt) {
 
         //TODO:      implement batch version -jm
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
-
+        
         dbWriteLock();
         try {
             // Update the list of file IDs in memory
@@ -579,9 +580,9 @@ public final class DrawableDB {
             stmt.setString(7, f.getModel());
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
-
+            
             final Collection<String> hashSetNames = DrawableAttribute.HASHSET.getValue(f);
-
+            
             if (hashSetNames.isEmpty() == false) {
                 for (String name : hashSetNames) {
 
@@ -612,9 +613,9 @@ public final class DrawableDB {
                     insertGroup(val.toString(), attr);
                 }
             }
-
+            
             tr.addUpdatedFile(f.getId());
-
+            
         } catch (SQLException | NullPointerException ex) {
             // This is one of the places where we get an error if the case is closed during processing,
             // which doesn't need to be reported here.
@@ -625,38 +626,38 @@ public final class DrawableDB {
             dbWriteUnlock();
         }
     }
-
+    
     public DrawableTransaction beginTransaction() {
         return new DrawableTransaction();
     }
-
+    
     public void commitTransaction(DrawableTransaction tr, Boolean notify) {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't close already closed transaction");
         }
         tr.commit(notify);
     }
-
+    
     public void addUpdatedFileListener(FileUpdateEvent.FileUpdateListener l) {
         updateListeners.add(l);
     }
-
+    
     private void fireUpdatedFiles(Collection<Long> fileIDs) {
         for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
             listener.handleFileUpdate(FileUpdateEvent.newUpdateEvent(fileIDs, null));
         }
     }
-
+    
     private void fireRemovedFiles(Collection<Long> fileIDs) {
         for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
             listener.handleFileUpdate(FileUpdateEvent.newRemovedEvent(fileIDs));
         }
     }
-
+    
     public Boolean isFileAnalyzed(DrawableFile<?> f) {
         return isFileAnalyzed(f.getId());
     }
-
+    
     public Boolean isFileAnalyzed(long fileId) {
         dbReadLock();
         try (Statement stmt = con.createStatement();
@@ -669,12 +670,12 @@ public final class DrawableDB {
         } finally {
             dbReadUnlock();
         }
-
+        
         return false;
     }
-
+    
     public Boolean areFilesAnalyzed(Collection<Long> fileIds) {
-
+        
         dbReadLock();
         try (Statement stmt = con.createStatement();
                 //Can't make this a preprared statement because of the IN ( ... )
@@ -687,15 +688,15 @@ public final class DrawableDB {
         } finally {
             dbReadUnlock();
         }
-
+        
         return false;
     }
-
+    
     public Boolean isGroupAnalyzed(GroupKey<?> gk) {
         dbReadLock();
         try {
             List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
-
+            
             try {
                 // In testing, this method appears to be a lot faster than doing one large select statement
                 for (Long fileID : fileIDsInGroup) {
@@ -708,7 +709,7 @@ public final class DrawableDB {
                     }
                     return true;
                 }
-
+                
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex);
             }
@@ -862,9 +863,9 @@ public final class DrawableDB {
      * @return
      */
     public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-
+        
         List<A> vals = new ArrayList<>();
-
+        
         switch (groupBy.attrName) {
             case ANALYZED:
             case CATEGORY:
@@ -876,7 +877,7 @@ public final class DrawableDB {
                 dbReadLock();
                 //TODO: convert this to prepared statement 
                 StringBuilder query = new StringBuilder("select " + groupBy.attrName.toString() + ", count(*) from drawable_files group by " + groupBy.attrName.toString());
-
+                
                 String orderByClause = "";
                 switch (sortBy) {
                     case GROUP_BY_VALUE:
@@ -889,12 +890,12 @@ public final class DrawableDB {
 //                    case PRIORITY:
                         break;
                 }
-
+                
                 query.append(orderByClause);
-
+                
                 if (orderByClause.equals("") == false) {
                     String sortOrderClause = "";
-
+                    
                     switch (sortOrder) {
                         case DESCENDING:
                             sortOrderClause = " DESC";
@@ -907,7 +908,7 @@ public final class DrawableDB {
                     }
                     query.append(sortOrderClause);
                 }
-
+                
                 try (Statement stmt = con.createStatement();
                         ResultSet valsResults = stmt.executeQuery(query.toString())) {
                     while (valsResults.next()) {
@@ -919,13 +920,13 @@ public final class DrawableDB {
                     dbReadUnlock();
                 }
         }
-
+        
         return vals;
     }
-
+    
     public void insertGroup(final String value, DrawableAttribute<?> groupBy) {
         dbWriteLock();
-
+        
         try {
             //PreparedStatement insertGroup = con.prepareStatement("insert or replace into groups (value, attribute, seen) values (?,?,0)");
             insertGroupStmt.clearParameters();
@@ -979,9 +980,9 @@ public final class DrawableDB {
             return null;
         }
     }
-
+    
     public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
-
+        
         if (groupKey.getAttribute().isDBColumn) {
             switch (groupKey.getAttribute().attrName) {
                 case CATEGORY:
@@ -995,7 +996,7 @@ public final class DrawableDB {
         try {
             PreparedStatement statement = getGroupStatment(groupKey.getAttribute());
             statement.setObject(1, groupKey.getValue());
-
+            
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
                     files.add(valsResults.getLong(OBJ_ID));
@@ -1006,10 +1007,10 @@ public final class DrawableDB {
         } finally {
             dbReadUnlock();
         }
-
+        
         return files;
     }
-
+    
     public List<DrawableFile<?>> getFilesInGroup(GroupKey<?> key) throws TskCoreException {
         List<DrawableFile<?>> files = new ArrayList<>();
         dbReadLock();
@@ -1025,9 +1026,9 @@ public final class DrawableDB {
                 default:
                     statement = getGroupStatment(key.getAttribute());
             }
-
+            
             statement.setObject(1, key.getValue());
-
+            
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
                     files.add(getFileFromID(valsResults.getLong(OBJ_ID), valsResults.getBoolean(ANALYZED)));
@@ -1038,16 +1039,16 @@ public final class DrawableDB {
         } finally {
             dbReadUnlock();
         }
-
+        
         return files;
     }
-
+    
     private void closeStatements() throws SQLException {
         for (PreparedStatement pStmt : preparedStatements) {
             pStmt.close();
         }
     }
-
+    
     public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
         try {
             List<DrawableFile<?>> files = new ArrayList<>();
@@ -1064,18 +1065,18 @@ public final class DrawableDB {
             throw ex;
         }
     }
-
+    
     private PreparedStatement getGroupStatment(DrawableAttribute<?> groupBy) {
         return groupStatementMap.get(groupBy);
-
+        
     }
-
+    
     public int countAllFiles() {
         int result = -1;
         dbReadLock();
         try (ResultSet rs = con.createStatement().executeQuery("select count(*) as COUNT from drawable_files")) {
             while (rs.next()) {
-
+                
                 result = rs.getInt("COUNT");
                 break;
             }
@@ -1100,7 +1101,7 @@ public final class DrawableDB {
         }
         int valsResults = 0;
         dbWriteLock();
-
+        
         try {
             // Update the list of file IDs in memory
             removeImageFileFromList(id);
@@ -1118,11 +1119,11 @@ public final class DrawableDB {
         //indicates succesfull removal of 1 file
         return valsResults == 1;
     }
-
+    
     public class MultipleTransactionException extends IllegalStateException {
-
+        
         private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO = "cannot have more than one open transaction";
-
+        
         public MultipleTransactionException() {
             super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
         }
@@ -1168,31 +1169,31 @@ public final class DrawableDB {
      */
     @GuardedBy("fileIDlist")
     private final Set<Long> fileIDsInDB = new HashSet<>();
-
+    
     public boolean isInDB(Long id) {
         synchronized (fileIDsInDB) {
             return fileIDsInDB.contains(id);
         }
     }
-
+    
     private void addImageFileToList(Long id) {
         synchronized (fileIDsInDB) {
             fileIDsInDB.add(id);
         }
     }
-
+    
     private void removeImageFileFromList(Long id) {
         synchronized (fileIDsInDB) {
             fileIDsInDB.remove(id);
         }
     }
-
+    
     public int getNumberOfImageFilesInList() {
         synchronized (fileIDsInDB) {
             return fileIDsInDB.size();
         }
     }
-
+    
     private void initializeImageList() {
         synchronized (fileIDsInDB) {
             dbReadLock();
@@ -1214,7 +1215,7 @@ public final class DrawableDB {
      * For performance reasons, keep the file type in memory
      */
     private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
-
+    
     public boolean isVideoFile(AbstractFile f) {
         return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
     }
@@ -1241,7 +1242,7 @@ public final class DrawableDB {
                     .map(Content::getId)
                     .filter(this::isInDB)
                     .count();
-
+            
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.WARNING, "Case closed while getting files");
         } catch (TskCoreException ex1) {
@@ -1254,11 +1255,11 @@ public final class DrawableDB {
      * inner class that can reference access database connection
      */
     public class DrawableTransaction {
-
+        
         private final Set<Long> updatedFiles;
-
+        
         private final Set<Long> removedFiles;
-
+        
         private boolean closed = false;
 
         /**
@@ -1277,13 +1278,13 @@ public final class DrawableDB {
             dbWriteLock();
             try {
                 con.setAutoCommit(false);
-
+                
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex);
             }
-
+            
         }
-
+        
         synchronized public void rollback() {
             if (!closed) {
                 try {
@@ -1296,14 +1297,14 @@ public final class DrawableDB {
                 }
             }
         }
-
+        
         synchronized private void commit(Boolean notify) {
             if (!closed) {
                 try {
                     con.commit();
                     // make sure we close before we update, bc they'll need locks
                     close();
-
+                    
                     if (notify) {
                         fireUpdatedFiles(updatedFiles);
                         fireRemovedFiles(removedFiles);
@@ -1318,7 +1319,7 @@ public final class DrawableDB {
                 }
             }
         }
-
+        
         synchronized private void close() {
             if (!closed) {
                 try {
@@ -1335,15 +1336,15 @@ public final class DrawableDB {
                 }
             }
         }
-
+        
         synchronized public Boolean isClosed() {
             return closed;
         }
-
+        
         synchronized private void addUpdatedFile(Long f) {
             updatedFiles.add(f);
         }
-
+        
         synchronized private void addRemovedFile(long id) {
             removedFiles.add(id);
         }
