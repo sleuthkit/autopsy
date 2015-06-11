@@ -347,7 +347,6 @@ public class GroupPane extends BorderPane implements GroupView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
-  
         try {
             grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
             grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
@@ -586,8 +585,9 @@ public class GroupPane extends BorderPane implements GroupView {
 
         if (isNull(viewState) || isNull(viewState.getGroup())) {
             this.grouping.set(null);
-            gridView.getItems().setAll(Collections.emptyList());
+
             Platform.runLater(() -> {
+                gridView.getItems().setAll(Collections.emptyList());
                 setCenter(null);
 
                 groupLabel.setText("");

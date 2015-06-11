@@ -70,9 +70,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return groupKey.getValueDisplayName();
     }
 
-    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
+    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
-        fileIDs.setAll(filesInGroup);
+        this.fileIDs.setAll(filesInGroup);
+        this.seen.set(seen);
     }
 
     synchronized public int getSize() {

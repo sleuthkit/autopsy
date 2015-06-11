@@ -243,8 +243,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     public DrawableGroup makeGroup(GroupKey<?> groupKey, List<Long> files) {
         List<Long> newFiles = files == null ? new ArrayList<>() : files;
+        final boolean groupSeen = db.isGroupSeen(groupKey);
+        DrawableGroup g = new DrawableGroup(groupKey, newFiles, groupSeen);
 
-        DrawableGroup g = new DrawableGroup(groupKey, newFiles);
         g.seenProperty().addListener((observable, oldSeen, newSeen) -> {
             markGroupSeen(g, newSeen);
         });
