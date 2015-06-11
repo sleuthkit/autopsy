@@ -221,6 +221,7 @@ public class GroupPane extends BorderPane implements GroupView {
         final String header = getHeaderString();
         final List<Long> fileIds = getGrouping().fileIds();
         Platform.runLater(() -> {
+            slideShowToggle.setDisable(fileIds.isEmpty());
             gridView.getItems().setAll(fileIds);
             groupLabel.setText(header);
         });
@@ -347,7 +348,6 @@ public class GroupPane extends BorderPane implements GroupView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
-  
         try {
             grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
             grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
@@ -589,7 +589,6 @@ public class GroupPane extends BorderPane implements GroupView {
             gridView.getItems().setAll(Collections.emptyList());
             Platform.runLater(() -> {
                 setCenter(null);
-
                 groupLabel.setText("");
                 resetScrollBar();
                 if (false == Case.isCaseOpen()) {
@@ -608,6 +607,7 @@ public class GroupPane extends BorderPane implements GroupView {
 
                 gridView.getItems().setAll(getGrouping().fileIds());
                 Platform.runLater(() -> {
+                    slideShowToggle.setDisable(gridView.getItems().isEmpty());
                     groupLabel.setText(header);
                     resetScrollBar();
                     if (viewState.getMode() == GroupViewMode.TILE) {
