@@ -47,7 +47,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
@@ -1146,7 +1145,7 @@ public final class DrawableDB {
     Set<String> getHashSetsForFile(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
-            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+            List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
             for (BlackboardArtifact a : arts) {
                 List<BlackboardAttribute> attrs = a.getAttributes();
                 for (BlackboardAttribute attr : attrs) {
@@ -1156,8 +1155,8 @@ public final class DrawableDB {
                 }
                 return hashNames;
             }
-        } catch (TskCoreException tskCoreException) {
-            throw new IllegalStateException(tskCoreException);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "failed to get hash sets for file", ex);
         }
         return Collections.emptySet();
     }
