@@ -41,13 +41,15 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
+    private final ObservableList<Long> unmodifiableFileIDS = FXCollections.unmodifiableObservableList(fileIDs);
 
     //cache the number of files in this groups with hashset hits
     private long hashSetHitsCount = -1;
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     synchronized public ObservableList<Long> fileIds() {
-        return FXCollections.unmodifiableObservableList(fileIDs);
+        return unmodifiableFileIDS;
     }
 
     final public GroupKey<?> groupKey;
