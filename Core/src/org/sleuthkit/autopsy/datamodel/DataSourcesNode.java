@@ -69,7 +69,7 @@ public class DataSourcesNode extends DisplayableItemNode {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    addNotify();
+                    reloadKeys();
                 }
             }
         };
@@ -77,18 +77,22 @@ public class DataSourcesNode extends DisplayableItemNode {
         @Override
         protected void addNotify() {
             Case.addPropertyChangeListener(pcl);
+            reloadKeys();
+        }
+        
+        @Override
+        protected void removeNotify() {
+            Case.removePropertyChangeListener(pcl);
+            setKeys(Collections.EMPTY_SET);
+        }
+        
+        private void reloadKeys() {
             try {
                 setKeys(Case.getCurrentCase().getDataSources());
             } catch (TskCoreException | IllegalStateException ex) {
                 logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
                 setKeys(Collections.EMPTY_SET);
             }
-        }
-
-        @Override
-        protected void removeNotify() {
-            Case.removePropertyChangeListener(pcl);
-            setKeys(Collections.EMPTY_SET);
         }
     }
 
