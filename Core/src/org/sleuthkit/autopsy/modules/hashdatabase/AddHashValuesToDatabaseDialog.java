@@ -19,13 +19,17 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.Dimension;
+import java.awt.PopupMenu;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.datamodel.HashEntry;
@@ -177,8 +181,35 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
     private void hashValuesTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_hashValuesTextAreaMouseClicked
         if(SwingUtilities.isRightMouseButton(evt)) {
             JPopupMenu popup = new JPopupMenu();
-            popup.add(new JMenu("Paste") {
-            }); // NON-NLS
+
+            JMenuItem cutMenu = new JMenuItem("Cut");
+            cutMenu.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    hashValuesTextArea.cut();
+                }
+            });
+
+            JMenuItem copyMenu = new JMenuItem("Copy");
+            copyMenu.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    hashValuesTextArea.copy();
+                }
+            });
+
+            JMenuItem pasteMenu = new JMenuItem("Paste");
+            pasteMenu.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    hashValuesTextArea.paste();
+                }
+            });
+
+            popup.add(cutMenu);
+            popup.add(copyMenu);
+            popup.add(pasteMenu);
+            popup.show(hashValuesTextArea, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_hashValuesTextAreaMouseClicked
 
