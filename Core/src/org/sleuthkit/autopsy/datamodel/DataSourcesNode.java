@@ -18,12 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Nodes for the images
@@ -32,11 +38,80 @@ public class DataSourcesNode extends DisplayableItemNode {
 
     public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
 
+    // NOTE: The images passed in via argument will be ignored.
+    @Deprecated
     public DataSourcesNode(List<Content> images) {
-        super(new RootContentChildren(images), Lookups.singleton(NAME));
+        super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
+        init();
+    }
+
+    public DataSourcesNode() {
+        super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
+        init();
+    }
+
+    private void init() {
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
+    }
+
+    /* Custom Keys implementation that listens for new data sources being added. */
+    // @@@ This can become private once DirectoryTree doesn't want to refresh the entire tree
+    public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
+
+        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
+
+        List<Content> currentKeys = new ArrayList();
+        
+        public DataSourcesNodeChildren() {
+            super();
+        }
+
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    reloadKeys();
+                }
+            }
+        };
+
+        @Override
+        protected void addNotify() {
+            Case.addPropertyChangeListener(pcl);
+            reloadKeys();
+        }
+        
+        @Override
+        protected void removeNotify() {
+            Case.removePropertyChangeListener(pcl);
+            setKeys(Collections.EMPTY_SET);
+        }
+        
+        private void reloadKeys() {
+            try {
+                currentKeys.addAll(Case.getCurrentCase().getDataSources());
+                setKeys(currentKeys);
+            } catch (TskCoreException | IllegalStateException ex) {
+                logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
+                setKeys(Collections.EMPTY_SET);
+            }
+        }
+        
+        /**
+        * Refresh all content keys
+        * This creates new nodes of keys have changed.
+        */
+       // I think this goes away once we get more listeners in place
+       // It was added as an interim stage 
+       @Deprecated
+       public void refreshContentKeys() {
+           for (Content key : currentKeys) {
+               refreshKey(key);
+           }
+       }
     }
 
     @Override
