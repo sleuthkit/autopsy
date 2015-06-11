@@ -109,7 +109,7 @@ final class IngestPipelinesConfiguration {
      */
     private void readPipelinesConfigurationFile() {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, false);
+            PlatformUtil.extractResourceToUserConfigDir(IngestPipelinesConfiguration.class, PIPELINES_CONFIG_FILE, true);
 
             Path configFilePath = Paths.get(PlatformUtil.getUserConfigDirectory(), PIPELINES_CONFIG_FILE);
             Document doc = XMLUtil.loadDoc(IngestPipelinesConfiguration.class, configFilePath.toAbsolutePath().toString());

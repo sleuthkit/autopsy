@@ -61,7 +61,7 @@ class FileExtMismatchXML {
         this.filePath = filePath;
                
         try {
-            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, DEFAULT_CONFIG_FILE_NAME, false);
+            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(FileExtMismatchXML.class, DEFAULT_CONFIG_FILE_NAME, true);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error copying default mismatch configuration to user dir ", ex); //NON-NLS
         }        

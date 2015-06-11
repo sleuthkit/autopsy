@@ -112,7 +112,7 @@ public class XMLUtil {
      * @throws IOException
      */
     public static <T> void validateDocument(final Document doc, Class<T> clazz, String schemaResourceName) throws SAXException, IOException {
-        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, false);
+        PlatformUtil.extractResourceToUserConfigDir(clazz, schemaResourceName, true);
         File schemaFile = new File(Paths.get(PlatformUtil.getUserConfigDirectory(), schemaResourceName).toAbsolutePath().toString());
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = schemaFactory.newSchema(schemaFile);
@@ -170,7 +170,7 @@ public class XMLUtil {
     // TODO: Deprecate.
     public static <T> boolean xmlIsValid(DOMSource xmlfile, Class<T> clazz, String schemaFile) {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, false);
+            PlatformUtil.extractResourceToUserConfigDir(clazz, schemaFile, true);
             File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + schemaFile);
             SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
