@@ -176,11 +176,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(DataSources i) {
-            try {
-                return new DataSourcesNode(Case.getCurrentCase().getDataSources());
-            } catch (TskCoreException ex) {
-                return defaultVisit(i);
-            }
+            return new DataSourcesNode();
         }
 
         @Override
