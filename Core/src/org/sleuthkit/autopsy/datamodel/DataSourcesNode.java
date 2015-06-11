@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.openide.nodes.Sheet;
@@ -56,10 +57,13 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     /* Custom Keys implementation that listens for new data sources being added. */
-    private static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
+    // @@@ This can become private once DirectoryTree doesn't want to refresh the entire tree
+    public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
+        List<Content> currentKeys = new ArrayList();
+        
         public DataSourcesNodeChildren() {
             super();
         }
@@ -88,12 +92,26 @@ public class DataSourcesNode extends DisplayableItemNode {
         
         private void reloadKeys() {
             try {
-                setKeys(Case.getCurrentCase().getDataSources());
+                currentKeys.addAll(Case.getCurrentCase().getDataSources());
+                setKeys(currentKeys);
             } catch (TskCoreException | IllegalStateException ex) {
                 logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
                 setKeys(Collections.EMPTY_SET);
             }
         }
+        
+        /**
+        * Refresh all content keys
+        * This creates new nodes of keys have changed.
+        */
+       // I think this goes away once we get more listeners in place
+       // It was added as an interim stage 
+       @Deprecated
+       public void refreshContentKeys() {
+           for (Content key : currentKeys) {
+               refreshKey(key);
+           }
+       }
     }
 
     @Override
