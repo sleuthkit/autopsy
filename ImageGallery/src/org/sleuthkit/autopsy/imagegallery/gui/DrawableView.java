@@ -1,5 +1,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -14,13 +15,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
 /**
- * TODO: extract common interface out of {@link SingleImageView} and
- * {@link MetaDataPane}
+ * Interface for classes that are views of a single DrawableFile. Implementation
+ * of DrawableView must be registered with {@link CategoryManager#registerListener(java.lang.Object)
+ * } to have there {@link DrawableView#handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent)
+ * } method invoked
  */
-public interface DrawableView extends Category.CategoryListener, TagUtils.TagListener {
+public interface DrawableView extends TagUtils.TagListener {
 
     //TODO: do this all in css? -jm
     static final int CAT_BORDER_WIDTH = 10;
@@ -51,16 +56,24 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
 
     Long getFileID();
 
-    @Override
-    void handleCategoryChanged(Collection<Long> ids);
+    /**
+     * update the visual representation of the category of the assigned file.
+     * Implementations of {@link DrawableView} must register themselves with
+     * {@link CategoryManager#registerListener(java.lang.Object)} to ahve this
+     * method invoked
+     *
+     * @param evt the CategoryChangeEvent to handle
+     */
+    @Subscribe
+    void handleCategoryChanged(CategoryChangeEvent evt);
 
     @Override
     void handleTagsChanged(Collection<Long> ids);
 
     default boolean hasHashHit() {
-        try{
+        try {
             return getFile().getHashHitSetNames().isEmpty() == false;
-        } catch (NullPointerException ex){
+        } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
             Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits");
@@ -90,13 +103,12 @@ public interface DrawableView extends Category.CategoryListener, TagUtils.TagLis
     default Category updateCategoryBorder() {
         final Category category = getFile().getCategory();
         final Border border = hasHashHit() && (category == Category.ZERO)
-                              ? HASH_BORDER
-                              : DrawableView.getCategoryBorder(category);
+                ? HASH_BORDER
+                : DrawableView.getCategoryBorder(category);
 
         Platform.runLater(() -> {
             getBorderable().setBorder(border);
         });
         return category;
     }
-
 }

@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,7 +72,7 @@ import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
@@ -88,9 +89,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * of {@link DrawableView}s should implement the interface directly
  *
  */
-public abstract class SingleDrawableViewBase extends AnchorPane implements DrawableView {
+public abstract class DrawableViewBase extends AnchorPane implements DrawableView {
 
-    private static final Logger LOGGER = Logger.getLogger(SingleDrawableViewBase.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DrawableViewBase.class.getName());
 
     private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
@@ -141,11 +142,11 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
     protected Long fileID;
 
     /**
-     * the groupPane this {@link SingleDrawableViewBase} is embedded in
+     * the groupPane this {@link DrawableViewBase} is embedded in
      */
     protected GroupPane groupPane;
 
-    protected SingleDrawableViewBase() {
+    protected DrawableViewBase() {
 
         globalSelectionModel.getSelected().addListener((Observable observable) -> {
             updateSelectionState();
@@ -186,7 +187,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                             groupContextMenu.hide();
                         }
                         contextMenu = buildContextMenu();
-                        contextMenu.show(SingleDrawableViewBase.this, t.getScreenX(), t.getScreenY());
+                        contextMenu.show(DrawableViewBase.this, t.getScreenX(), t.getScreenY());
 
                         break;
                 }
@@ -360,14 +361,14 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
             disposeContent();
 
             if (this.fileID == null || Case.isCaseOpen() == false) {
-                Category.unregisterListener(this);
+                ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
                 TagUtils.unregisterListener(this);
                 file = null;
                 Platform.runLater(() -> {
                     clearContent();
                 });
             } else {
-                Category.registerListener(this);
+                ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
                 TagUtils.registerListener(this);
 
                 getFile();
@@ -385,10 +386,14 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         }
     }
 
-    private void updateSelectionState() {
+    /**
+     * update the visual representation of the selection state of this
+     * DrawableView
+     */
+    protected void updateSelectionState() {
         final boolean selected = globalSelectionModel.isSelected(fileID);
         Platform.runLater(() -> {
-            SingleDrawableViewBase.this.setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
+            setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
         });
     }
 
@@ -397,9 +402,10 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         return imageBorder;
     }
 
+    @Subscribe
     @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
-        if (ids.contains(fileID)) {
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
+        if (evt.getIds().contains(fileID)) {
             updateCategoryBorder();
         }
     }
