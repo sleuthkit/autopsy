@@ -40,10 +40,10 @@ import org.sleuthkit.datamodel.TagName;
 public class DrawableAttribute<T extends Comparable<T>> {
 
     public final static DrawableAttribute<String> NAME
-            = new DrawableAttribute<>( AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
+            = new DrawableAttribute<>(AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
 
     public final static DrawableAttribute<Boolean> ANALYZED
-            = new DrawableAttribute<>( AttributeName.ANALYZED, "Analyzed", true, "", f -> Collections.singleton(f.isAnalyzed()));
+            = new DrawableAttribute<>(AttributeName.ANALYZED, "Analyzed", true, "", f -> Collections.singleton(f.isAnalyzed()));
 
     /**
      * since categories are really just tags in autopsy, they are not dealt with
@@ -54,50 +54,48 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * advantage. move categories into DrawableDB
      */
     public final static DrawableAttribute<Category> CATEGORY
-            = new DrawableAttribute<>( AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
+            = new DrawableAttribute<>(AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
 
     public final static DrawableAttribute<TagName> TAGS
-            = new DrawableAttribute<>( AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
+            = new DrawableAttribute<>(AttributeName.TAGS, "Tags", false, "tag_red.png", DrawableFile::getTagNames);
 
     public final static DrawableAttribute<String> PATH
             = new DrawableAttribute<>(AttributeName.PATH, "Path", true, "folder_picture.png", f -> Collections.singleton(f.getDrawablePath()));
 
     public final static DrawableAttribute<String> CREATED_TIME
-            = new DrawableAttribute<>( AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
+            = new DrawableAttribute<>(AttributeName.CREATED_TIME, "Created Time", true, "clock--plus.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f)));
 
     public final static DrawableAttribute<String> MODIFIED_TIME
-            = new DrawableAttribute<>( AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
+            = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, "Modified Time", true, "clock--pencil.png", f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f)));
 
     public final static DrawableAttribute<String> MAKE
-            = new DrawableAttribute<>( AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));
+            = new DrawableAttribute<>(AttributeName.MAKE, "Camera Make", true, "camera.png", f -> Collections.singleton(f.getMake()));
 
     public final static DrawableAttribute<String> MODEL
-            = new DrawableAttribute<>( AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
+            = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
 
     public final static DrawableAttribute<String> HASHSET
             = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashHitSetNames);
 
     public final static DrawableAttribute<Long> OBJ_ID
-            = new DrawableAttribute<>( AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
+            = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
 
     public final static DrawableAttribute<Double> WIDTH
             = new DrawableAttribute<>(AttributeName.WIDTH, "Width", true, "arrow-resize.png", f -> Collections.singleton(f.getWidth()));
 
     public final static DrawableAttribute<Double> HEIGHT
-            = new DrawableAttribute<>( AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight()));
+            = new DrawableAttribute<>(AttributeName.HEIGHT, "Height", true, "arrow-resize-090.png", f -> Collections.singleton(f.getHeight()));
 
     final private static List< DrawableAttribute<?>> groupables
             = Arrays.asList(PATH, HASHSET, CATEGORY, TAGS, MAKE, MODEL);
 
     final private static List<DrawableAttribute<?>> values
             = Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
-                    MODIFIED_TIME, HASHSET, CATEGORY, MAKE, MODEL, OBJ_ID,
-                    WIDTH, HEIGHT);
+                    MODIFIED_TIME, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT);
 
     private final Function<DrawableFile<?>, Collection<T>> extractor;
 
-
-    private DrawableAttribute( AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
+    private DrawableAttribute(AttributeName name, String displayName, Boolean isDBColumn, String imageName, Function<DrawableFile<?>, Collection<T>> extractor) {
         this.attrName = name;
         this.displayName = new ReadOnlyStringWrapper(displayName);
         this.isDBColumn = isDBColumn;
@@ -142,8 +140,19 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
     public static enum AttributeName {
 
-        NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME, MODIFIED_TIME, MAKE,
-        MODEL, HASHSET, OBJ_ID, WIDTH, HEIGHT;
+        NAME,
+        ANALYZED,
+        CATEGORY,
+        TAGS,
+        PATH,
+        CREATED_TIME,
+        MODIFIED_TIME,
+        MAKE,
+        MODEL,
+        HASHSET,
+        OBJ_ID,
+        WIDTH,
+        HEIGHT;
     }
 
     public Collection<T> getValue(DrawableFile<?> f) {
