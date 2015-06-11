@@ -218,7 +218,7 @@ public final class DrawableDB {
             analyzedGroupStmt = prepareStatement("Select obj_id , analyzed from drawable_files where analyzed = ?", DrawableAttribute.ANALYZED);
             hashSetGroupStmt = prepareStatement("select drawable_files.obj_id as obj_id, analyzed from drawable_files ,  hash_sets , hash_set_hits  where drawable_files.obj_id = hash_set_hits.obj_id and hash_sets.hash_set_id = hash_set_hits.hash_set_id and hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
 
-            updateGroupStmt = prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
+            updateGroupStmt = prepareStatement("insert or replace into groups (seen, value, attribute) values( ?, ? , ?)");
             insertGroupStmt = prepareStatement("insert or ignore into groups (value, attribute) values (?,?)");
 
             groupSeenQueryStmt = prepareStatement("select seen from groups where value = ? and attribute = ?");
