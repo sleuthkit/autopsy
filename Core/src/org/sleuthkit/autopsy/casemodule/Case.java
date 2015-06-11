@@ -1098,11 +1098,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             if (toChangeTo.hasData()) {
                 // open all top components
                 CoreComponentControl.openCoreWindows();
-            } 
-            // if case is empty, close windows and launch add data source wizard
-            else {
+            } else {
+                // close all top components
                 CoreComponentControl.closeCoreWindows();
-                Case.runAddImageAction();
             }
         } else { // case is closed
             // close all top components first
