@@ -78,7 +78,7 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
             try {
-                setEffect(Objects.equals(newValue, fileID) ? LAST_SELECTED_EFFECT : null);
+                setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
             } catch (java.lang.IllegalStateException ex) {
                 Logger.getLogger(DrawableTile.class.getName()).log(Level.WARNING, "Error displaying tile");
             }
@@ -86,9 +86,8 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
     }
 
     public DrawableTile(GroupPane gp) {
-        super();
+        super(gp);
         FXMLConstructor.construct(this, "DrawableTile.fxml");
-        groupPane = gp;
     }
 
     @Override
@@ -103,7 +102,7 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
     @Override
     protected void updateSelectionState() {
         super.updateSelectionState();
-        final boolean lastSelected = Objects.equals(globalSelectionModel.lastSelectedProperty().get(), fileID);
+        final boolean lastSelected = Objects.equals(globalSelectionModel.lastSelectedProperty().get(), getFileID());
         Platform.runLater(() -> {
             setEffect(lastSelected ? LAST_SELECTED_EFFECT : null);
         });
@@ -111,7 +110,7 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        Image image = file.getThumbnail();
+        Image image = getFile().getThumbnail();
 
         return () -> {
             imageView.setImage(image);
@@ -119,8 +118,7 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
     }
 
     @Override
-    @ThreadConfined(type = ThreadType.UI)
-    protected String getLabelText() {
-        return file.getName();
+    protected String getTextForLabel() {
+        return getFile().getName();
     }
 }

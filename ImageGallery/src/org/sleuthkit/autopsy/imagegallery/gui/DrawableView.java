@@ -48,7 +48,7 @@ public interface DrawableView extends TagUtils.TagListener {
 
     static final Border CAT0_BORDER = new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    Region getBorderable();
+    Region getCategoryBorderRegion();
 
     DrawableFile<?> getFile();
 
@@ -83,8 +83,6 @@ public interface DrawableView extends TagUtils.TagListener {
 
     static Border getCategoryBorder(Category category) {
         switch (category) {
-            case ZERO:
-                return CAT0_BORDER;
             case ONE:
                 return CAT1_BORDER;
             case TWO:
@@ -94,8 +92,11 @@ public interface DrawableView extends TagUtils.TagListener {
             case FOUR:
                 return CAT4_BORDER;
             case FIVE:
-            default:
                 return CAT5_BORDER;
+            case ZERO:
+            default:
+                return CAT0_BORDER;
+
         }
     }
 
@@ -104,10 +105,11 @@ public interface DrawableView extends TagUtils.TagListener {
         final Category category = getFile().getCategory();
         final Border border = hasHashHit() && (category == Category.ZERO)
                 ? HASH_BORDER
-                : DrawableView.getCategoryBorder(category);
+                : getCategoryBorder(category);
 
         Platform.runLater(() -> {
-            getBorderable().setBorder(border);
+            getCategoryBorderRegion().setBorder(border);
+            getCategoryBorderRegion().requestLayout();
         });
         return category;
     }

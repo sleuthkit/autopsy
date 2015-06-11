@@ -176,7 +176,7 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
             Platform.runLater(() -> {
                 imageView.setImage(null);
                 tableView.getItems().clear();
-                getBorderable().setBorder(null);
+                getCategoryBorderRegion().setBorder(null);
 
             });
         } else {
@@ -216,7 +216,7 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
     }
 
     @Override
-    public Region getBorderable() {
+    public Region getCategoryBorderRegion() {
         return imageBorder;
     }
 
