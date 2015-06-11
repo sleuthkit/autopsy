@@ -133,16 +133,18 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void addFile(Long f) {
         invalidateHashSetHitsCount();
-        seen.set(false);
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
+            seen.set(false);
+
         }
     }
 
     synchronized public void removeFile(Long f) {
         invalidateHashSetHitsCount();
-        seen.set(false);
-        fileIDs.removeAll(f);
+        if (fileIDs.removeAll(f)) {
+            seen.set(false);
+        }
     }
 
     // By default, sort by group key name
