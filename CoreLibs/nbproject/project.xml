@@ -617,8 +617,8 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/openjfx-dialogs-1.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/openjfx-dialogs-1.0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
