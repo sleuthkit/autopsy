@@ -37,7 +37,7 @@
         
         <!-- timeline and image analyzer -->
         <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.20.9" />
-        <dependency org="org.controlsfx" name="openjfx-dialogs" rev="1.0.2"/>
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="openjfx-dialogs" rev="1.0.3"/>
 
         <!-- timeline and -->
         <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
