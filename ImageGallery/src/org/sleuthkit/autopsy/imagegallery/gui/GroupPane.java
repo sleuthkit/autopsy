@@ -347,11 +347,7 @@ public class GroupPane extends BorderPane implements GroupView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
-        ArrayList<MenuItem> grpTagMenues = new ArrayList<>();
-        for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-            MenuItem menuItem = createGrpTagMenuItem(tn);
-            grpTagMenues.add(menuItem);
-        }
+  
         try {
             grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
             grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
@@ -359,7 +355,16 @@ public class GroupPane extends BorderPane implements GroupView {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
         grpTagSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        grpTagSplitMenu.getItems().setAll(grpTagMenues);
+        grpTagSplitMenu.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
+            if (t1) {
+                ArrayList<MenuItem> selTagMenues = new ArrayList<>();
+                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
+                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, grpTagSplitMenu);
+                    selTagMenues.add(menuItem);
+                }
+                grpTagSplitMenu.getItems().setAll(selTagMenues);
+            }
+        });
 
         ArrayList<MenuItem> grpCategoryMenues = new ArrayList<>();
         for (final Category cat : Category.values()) {
