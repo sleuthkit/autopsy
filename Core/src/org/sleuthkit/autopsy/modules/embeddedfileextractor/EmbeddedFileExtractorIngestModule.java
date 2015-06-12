@@ -45,17 +45,12 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     private final IngestServices services = IngestServices.getInstance();
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
 
-    //buffer for checking file headers and signatures
-    private static final int readHeaderSize = 4;
-    private static final byte[] fileHeaderBuffer = new byte[readHeaderSize];
-    private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
-    private static final Case currentCase = Case.getCurrentCase();
-    protected static final String moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-    protected static final String moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+    String moduleDirRelative;
+    String moduleDirAbsolute;
 
     private boolean archivextraction;
     private boolean imageExtraction;
@@ -72,14 +67,19 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         this.context = context;
         jobId = context.getJobId();
 
+        final Case currentCase = Case.getCurrentCase();
+
+        moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
+        moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+
         // initialize the folder where the embedded files are extracted.
-        File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
+        File extractionDirectory = new File(moduleDirAbsolute);
         if (!extractionDirectory.exists()) {
             try {
                 extractionDirectory.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute)); //NON-NLS
+                logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
                 throw new IngestModuleException(ex.getMessage());
             }
         }
@@ -92,8 +92,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         }
 
         // initialize the extraction modules.
-        this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector);
-        this.imageExtractor = new ImageExtractor(context, fileTypeDetector);
+        this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
     }
 
     @Override
@@ -167,7 +167,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
      * @param localRootRelPath relative path to archive, from getUniqueName()
      * @return
      */
-    protected static String getLocalRootAbsPath(String localRootRelPath) {
+    String getLocalRootAbsPath(String localRootRelPath) {
         return moduleDirAbsolute + File.separator + localRootRelPath;
     }
 }

@@ -79,6 +79,13 @@ class SevenZipExtractor {
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
+
+    String moduleDirRelative;
+    String moduleDirAbsolute;
+
+    private String getLocalRootAbsPath(String uniqueArchiveFileName) {
+        return moduleDirAbsolute + File.separator + uniqueArchiveFileName;
+    }
     /**
      * Enum of mimetypes which support archive extraction
      */
@@ -103,7 +110,7 @@ class SevenZipExtractor {
         // TODO Expand to support more formats after upgrading Tika
     }
 
-    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector) throws IngestModuleException {
+    SevenZipExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws IngestModuleException {
         if (!SevenZip.isInitializedSuccessfully() && (SevenZip.getLastInitializationException() == null)) {
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
@@ -121,6 +128,8 @@ class SevenZipExtractor {
         }
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
+        this.moduleDirRelative = moduleDirRelative;
+        this.moduleDirAbsolute = moduleDirAbsolute;
         this.archiveDepthCountTree = new ArchiveDepthCountTree();
     }
 
@@ -308,7 +317,7 @@ class SevenZipExtractor {
 
             //setup the archive local root folder
             final String uniqueArchiveFileName = EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile);
-            final String localRootAbsPath = EmbeddedFileExtractorIngestModule.getLocalRootAbsPath(uniqueArchiveFileName);
+            final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
             final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
                 try {
@@ -321,7 +330,7 @@ class SevenZipExtractor {
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
-            SevenZipExtractor.UnpackedTree unpackedTree = new SevenZipExtractor.UnpackedTree(EmbeddedFileExtractorIngestModule.moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
+            SevenZipExtractor.UnpackedTree unpackedTree = new SevenZipExtractor.UnpackedTree(moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
 
             long freeDiskSpace = services.getFreeDiskSpace();
 
@@ -420,8 +429,8 @@ class SevenZipExtractor {
                 final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + new File(pathInArchive).getName();
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
-                final String localRelPath = EmbeddedFileExtractorIngestModule.moduleDirRelative + File.separator + uniqueExtractedName;
-                final String localAbsPath = EmbeddedFileExtractorIngestModule.moduleDirAbsolute + File.separator + uniqueExtractedName;
+                final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
+                final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
 
                 //create local dirs and empty files before extracted
                 File localFile = new java.io.File(localAbsPath);
