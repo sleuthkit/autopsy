@@ -181,21 +181,13 @@ class SevenZipExtractor {
     private boolean isZipBombArchiveItemCheck(String archiveName, ISimpleInArchiveItem archiveFileItem) {
         try {
             final Long archiveItemSize = archiveFileItem.getSize();
-            if (archiveItemSize == null) {
-                return false;
-            }
-
             //skip the check for small files
-            if (archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
+            if (archiveItemSize == null && archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
                 return false;
             }
 
             final Long archiveItemPackedSize = archiveFileItem.getPackedSize();
-            if (archiveItemPackedSize == null) {
-                return false;
-            }
-
-            if (archiveItemPackedSize <= 0) {
+            if (archiveItemPackedSize == null && archiveItemPackedSize <= 0) {
                 logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveName, archiveFileItem.getPath()}); //NON-NLS
                 return false;
             }
