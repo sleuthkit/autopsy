@@ -59,9 +59,9 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
  * A collaboration monitor listens to local events and translates them into
- * collaboration tasksForHost that are broadcast to collaborating nodes, informs
- * the user of collaboration tasksForHost on other nodes using progress bars,
- * and monitors the health of key collaboration services.
+ * collaboration tasks that are broadcast to collaborating nodes, informs the
+ * user of collaboration tasks on other nodes using progress bars, and monitors
+ * the health of key collaboration services.
  */
 final class CollaborationMonitor {
 
@@ -84,10 +84,10 @@ final class CollaborationMonitor {
 
     /**
      * Constructs a collaboration monitor that listens to local events and
-     * translates them into collaboration tasksForHost that are broadcast to
-     * collaborating nodes, informs the user of collaboration tasksForHost on
-     * other nodes using progress bars, and monitors the health of key
-     * collaboration services.
+     * translates them into collaboration tasks that are broadcast to
+     * collaborating nodes, informs the user of collaboration tasks on other
+     * nodes using progress bars, and monitors the health of key collaboration
+     * services.
      */
     CollaborationMonitor() throws CollaborationMonitorException {
         /**
@@ -137,8 +137,7 @@ final class CollaborationMonitor {
     }
 
     /**
-     * Determines the name of the local host for use in describing local
-     * tasksForHost.
+     * Determines the name of the local host for use in describing local tasks.
      *
      * @return The host name of this Autopsy node.
      */
@@ -158,7 +157,7 @@ final class CollaborationMonitor {
     /**
      * Shuts down this collaboration monitor.
      */
-    void stop() {
+    void shutdown() {
         if (null != periodicTasksExecutor) {
             periodicTasksExecutor.shutdownNow();
             try {
@@ -177,14 +176,16 @@ final class CollaborationMonitor {
             eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
             eventPublisher.closeRemoteEventChannel();
         }
+        
+        remoteTasksManager.shutdown();
     }
 
     /**
-     * The local tasksForHost manager listens to local events and translates
-     * them into tasksForHost it broadcasts to collaborating nodes. Note that
-     * all access to the task collections is synchronized since they may be
-     * accessed by both the threads publishing property change events and by the
-     * heartbeat task thread.
+     * The local tasks manager listens to local events and translates them into
+     * tasks it broadcasts to collaborating nodes. Note that all access to the
+     * task collections is synchronized since they may be accessed by both the
+     * threads publishing property change events and by the heartbeat task
+     * thread.
      */
     private final class LocalTasksManager implements PropertyChangeListener {
 
@@ -193,9 +194,9 @@ final class CollaborationMonitor {
         private final Map<Long, Task> jobIdsTodataSourceAnalysisTasks;
 
         /**
-         * Constructs a local tasksForHost manager that listens to local events
-         * and translates them into tasksForHost that can be broadcast to
-         * collaborating nodes.
+         * Constructs a local tasks manager that listens to local events and
+         * translates them into tasks that can be broadcast to collaborating
+         * nodes.
          */
         LocalTasksManager() {
             nextTaskId = 0;
@@ -204,8 +205,8 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Translates events into updates of the collection of local
-         * tasksForHost this node is broadcasting to other nodes.
+         * Translates events into updates of the collection of local tasks this
+         * node is broadcasting to other nodes.
          *
          * @param event A PropertyChangeEvent.
          */
@@ -228,9 +229,8 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Adds an adding data source task to the collection of local
-         * tasksForHost and publishes the updated collection to any
-         * collaborating nodes.
+         * Adds an adding data source task to the collection of local tasks and
+         * publishes the updated collection to any collaborating nodes.
          *
          * @param event An adding data source event.
          */
@@ -241,9 +241,8 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Removes an adding data source task from the collection of local
-         * tasksForHost and publishes the updated collection to any
-         * collaborating nodes.
+         * Removes an adding data source task from the collection of local tasks
+         * and publishes the updated collection to any collaborating nodes.
          *
          * @param dataSourceId A data source id to pair a data source added or
          * adding data source failed event with an adding data source event.
@@ -254,9 +253,8 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Adds a data source analysis task to the collection of local
-         * tasksForHost and publishes the updated collection to any
-         * collaborating nodes.
+         * Adds a data source analysis task to the collection of local tasks and
+         * publishes the updated collection to any collaborating nodes.
          *
          * @param event A data source analysis started event.
          */
@@ -268,8 +266,8 @@ final class CollaborationMonitor {
 
         /**
          * Removes a data source analysis task from the collection of local
-         * tasksForHost and publishes the updated collection to any
-         * collaborating nodes.
+         * tasks and publishes the updated collection to any collaborating
+         * nodes.
          *
          * @param event A data source analysis completed event.
          */
@@ -279,9 +277,9 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Gets the current local tasksForHost.
+         * Gets the current local tasks.
          *
-         * @return A mapping of task IDs to tasksForHost, may be empty.
+         * @return A mapping of task IDs to tasks, may be empty.
          */
         synchronized Map<Long, Task> getCurrentTasks() {
             Map<Long, Task> currentTasks = new HashMap<>();
@@ -297,11 +295,11 @@ final class CollaborationMonitor {
 
     /**
      * Listens for collaboration event messages broadcast by collaboration
-     * monitors on other nodes and translates them into remote tasksForHost
-     * represented locally using progress bars. Note that all access to the
-     * remote tasksForHost is synchronized since it may be accessed by both the
-     * threads publishing property change events and by the thread running
-     * periodic checks for "stale" tasksForHost.
+     * monitors on other nodes and translates them into remote tasks represented
+     * locally using progress bars. Note that all access to the remote tasks is
+     * synchronized since it may be accessed by both the threads publishing
+     * property change events and by the thread running periodic checks for
+     * "stale" tasks.
      */
     private final class RemoteTasksManager implements PropertyChangeListener {
 
@@ -310,18 +308,17 @@ final class CollaborationMonitor {
         /**
          * Constructs an object that listens for collaboration event messages
          * broadcast by collaboration monitors on other nodes and translates
-         * them into remote tasksForHost represented locally using progress
-         * bars.
+         * them into remote tasks represented locally using progress bars.
          */
         RemoteTasksManager() {
             hostsToTasks = new HashMap<>();
         }
 
         /**
-         * Updates the remote tasksForHost based to reflect a collaboration
-         * event received from another node.
+         * Updates the remote tasks in response to a collaboration event
+         * received from another node.
          *
-         * @param event A collaboration event.
+         * @param event The collaboration event.
          */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
@@ -331,10 +328,17 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Updates the remote tasksForHost based to reflect a collaboration
-         * event received from another node.
+         * Finishes the progress bars for all remote tasks.
+         */
+        void shutdown() {
+            finishAllTasks();
+        }
+        
+        /**
+         * Updates the remote tasks to reflect a collaboration event received
+         * from another node.
          *
-         * @param event A collaboration event.
+         * @param event The collaboration event.
          */
         synchronized void updateTasks(CollaborationEvent event) {
             RemoteTasks tasksForHost = hostsToTasks.get(event.getHostName());
@@ -346,8 +350,8 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Finishes any remote tasksForHost that have gone stale, i.e.,
-         * tasksForHost for which updates have ceased, presumably because the
+         * Finishes the progress bars any remote tasks that have gone stale,
+         * i.e., tasks for which updates have ceased, presumably because the
          * collaborating node has gone down or there is a network issue.
          */
         synchronized void finishStaleTasks() {
@@ -362,8 +366,19 @@ final class CollaborationMonitor {
         }
 
         /**
-         * A collection of progress bars for tasksForHost on a collaborating
-         * node.
+         * Finishes the progress bars for all remote tasks.
+         */
+        synchronized void finishAllTasks() {
+            for (Iterator<Map.Entry<String, RemoteTasks>> it = hostsToTasks.entrySet().iterator(); it.hasNext();) {
+                Map.Entry<String, RemoteTasks> entry = it.next();
+                RemoteTasks tasksForHost = entry.getValue();
+                tasksForHost.finishAllTasks();
+                it.remove();
+            }
+        }
+
+        /**
+         * A collection of progress bars for tasks on a collaborating node.
          */
         class RemoteTasks {
 
@@ -372,8 +387,8 @@ final class CollaborationMonitor {
             private Map<Long, ProgressHandle> taskIdsToProgressBars;
 
             /**
-             * Construct a set of progress bars to represent remote tasksForHost
-             * for a particular host.
+             * Construct a set of progress bars to represent remote tasks for a
+             * particular host.
              *
              * @param event A collaboration event.
              */
@@ -393,10 +408,10 @@ final class CollaborationMonitor {
             }
 
             /**
-             * Updates this remote tasksForHost collection.
+             * Updates this remote tasks collection.
              *
              * @param event A collaboration event from the collaborating node
-             * associated with these tasksForHost.
+             * associated with these tasks.
              */
             void update(CollaborationEvent event) {
                 /**
@@ -440,8 +455,8 @@ final class CollaborationMonitor {
             }
 
             /**
-             * Unconditionally finishes the entire set or remote tasksForHost.
-             * To be used when a host drops off unexpectedly.
+             * Unconditionally finishes the entire set or remote tasks. To be
+             * used when a host drops off unexpectedly.
              */
             void finishAllTasks() {
                 taskIdsToProgressBars.values().stream().forEach((progress) -> {
@@ -452,8 +467,8 @@ final class CollaborationMonitor {
 
             /**
              * Determines whether or not the time since the last update of this
-             * remote tasksForHost collection is greater than the maximum
-             * acceptable interval between updates.
+             * remote tasks collection is greater than the maximum acceptable
+             * interval between updates.
              *
              * @return True or false.
              */
@@ -465,12 +480,11 @@ final class CollaborationMonitor {
     }
 
     /**
-     * A Runnable task that periodically publishes the local tasksForHost in
-     * progress on this node, providing a heartbeat message for collaboration
-     * monitors on other nodes. The current local tasksForHost are included in
-     * the heartbeat message so that nodes that have just joined the event
-     * channel know what this node is doing, even if they join after the current
-     * tasksForHost are begun.
+     * A Runnable task that periodically publishes the local tasks in progress
+     * on this node, providing a heartbeat message for collaboration monitors on
+     * other nodes. The current local tasks are included in the heartbeat
+     * message so that nodes that have just joined the event channel know what
+     * this node is doing, even if they join after the current tasks are begun.
      */
     private final class HeartbeatTask implements Runnable {
 
@@ -484,15 +498,14 @@ final class CollaborationMonitor {
     }
 
     /**
-     * A Runnable task that periodically deals with any remote tasksForHost that
-     * have gone stale, i.e., tasksForHost for which updates have ceased,
-     * presumably because the collaborating node has gone down or there is a
-     * network issue.
+     * A Runnable task that periodically deals with any remote tasks that have
+     * gone stale, i.e., tasks for which updates have ceased, presumably because
+     * the collaborating node has gone down or there is a network issue.
      */
     private final class StaleTaskDetectionTask implements Runnable {
 
         /**
-         * Check for stale remote tasksForHost and clean them up, if found.
+         * Check for stale remote tasks and clean them up, if found.
          */
         @Override
         public void run() {
@@ -525,13 +538,13 @@ final class CollaborationMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
-                    }                    
+                    }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-                    }                    
+                    }
                 }
 
                 /**
@@ -597,8 +610,7 @@ final class CollaborationMonitor {
          * collaboration monitors on other Autopsy nodes.
          *
          * @param hostName The name of the host sending the event.
-         * @param currentTasks The tasksForHost in progress for this Autopsy
-         * node.
+         * @param currentTasks The tasks in progress for this Autopsy node.
          */
         CollaborationEvent(String hostName, Map<Long, Task> currentTasks) {
             super(COLLABORATION_MONITOR_EVENT, null, null);
@@ -616,10 +628,10 @@ final class CollaborationMonitor {
         }
 
         /**
-         * Gets the current tasksForHost for the Autopsy node that published
-         * this event.
+         * Gets the current tasks for the Autopsy node that published this
+         * event.
          *
-         * @return A mapping of task IDs to current tasksForHost
+         * @return A mapping of task IDs to current tasks
          */
         Map<Long, Task> getCurrentTasks() {
             return currentTasks;
