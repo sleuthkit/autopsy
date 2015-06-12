@@ -18,18 +18,23 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Observable;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Node for extension/file type filter view
+ * Node for root of file types view. Children are nodes for specific types.
  */
 public class FileTypesNode extends DisplayableItemNode {
 
@@ -42,7 +47,23 @@ public class FileTypesNode extends DisplayableItemNode {
      * something to provide a sub-node.
      */
     FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
-        super(Children.create(new FileTypesChildren(skCase, filter), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        super(Children.create(new FileTypesChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        init(filter);
+    }
+
+    /**
+     *
+     * @param skCase
+     * @param filter
+     * @param o Observable that was created by a higher-level node that provides
+     * updates on events
+     */
+    private FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
+        super(Children.create(new FileTypesChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        init(filter);
+    }
+
+    private void init(FileTypeExtensionFilters.RootFilter filter) {
         // root node of tree
         if (filter == null) {
             super.setName(FNAME);
@@ -52,7 +73,7 @@ public class FileTypesNode extends DisplayableItemNode {
             super.setName(filter.getName());
             super.setDisplayName(filter.getDisplayName());
         }
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS    
     }
 
     @Override
@@ -88,16 +109,68 @@ public class FileTypesNode extends DisplayableItemNode {
 
         private SleuthkitCase skCase;
         private FileTypeExtensionFilters.RootFilter filter;
+        private Observable notifier;
 
         /**
          *
          * @param skCase
          * @param filter Is null for root node
+         * @param o Observable that provides updates based on events being fired
+         * (or null if one needs to be created)
          */
-        public FileTypesChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
+        public FileTypesChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
+            if (o == null) {
+                this.notifier = new FileTypesChildrenObservable();
+            } else {
+                this.notifier = o;
+            }
+        }
+
+        /**
+         * Listens for case and ingest invest. Updates observers when events are
+         * fired. FileType and FileTypes nodes are all listening to this.
+         */
+        private final class FileTypesChildrenObservable extends Observable {
+
+            FileTypesChildrenObservable() {
+                IngestManager.getInstance().addIngestJobEventListener(pcl);
+                IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                Case.addPropertyChangeListener(pcl);
+            }
+
+            private void removeListeners() {
+                IngestManager.getInstance().removeIngestJobEventListener(pcl);
+                IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+                Case.removePropertyChangeListener(pcl);
+            }
+
+            private final PropertyChangeListener pcl = new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    String eventType = evt.getPropertyName();
+
+                    // new file was added
+                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                        update();
+                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                        update();
+                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                        // case was closed. Remove listeners so that we don't get called with a stale case handle
+                        if (evt.getNewValue() == null) {
+                            removeListeners();
+                        }
+                    }
+                }
+            };
+
+            private void update() {
+                setChanged();
+                notifyObservers();
+            }
         }
 
         @Override
@@ -105,8 +178,7 @@ public class FileTypesNode extends DisplayableItemNode {
             // root node
             if (filter == null) {
                 list.addAll(Arrays.asList(FileTypeExtensionFilters.RootFilter.values()));
-            }
-            // document and executable has another level of nodes
+            } // document and executable has another level of nodes
             else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER)) {
                 list.addAll(Arrays.asList(FileTypeExtensionFilters.DocumentFilter.values()));
             } else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER)) {
@@ -119,11 +191,11 @@ public class FileTypesNode extends DisplayableItemNode {
         protected Node createNodeForKey(FileTypeExtensionFilters.SearchFilterInterface key) {
             // make new nodes for the sub-nodes
             if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER);
+                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER, notifier);
             } else if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER);
+                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
             } else {
-                return new FileTypeNode(key, skCase);
+                return new FileTypeNode(key, skCase, notifier);
             }
         }
     }
