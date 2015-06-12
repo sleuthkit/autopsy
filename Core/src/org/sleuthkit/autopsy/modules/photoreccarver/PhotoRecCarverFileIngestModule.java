@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with unallocated space files as input.
@@ -76,14 +77,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private Path rootOutputDirPath;
     private File executableFile;
-
+    private IngestServices services;
+    
     /**
      * @inheritDoc
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         this.context = context;
-
+        this.services = IngestServices.getInstance();
+        
         // If the global unallocated space processing setting and the module
         // process unallocated space only setting are not in sych, throw an 
         // exception. Although the result would not be incorrect, it would be
@@ -220,6 +223,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 context.addFilesToJob(new ArrayList<>(theList));
+                services.fireModuleContentEvent(new ModuleContentEvent(theList.get(0))); // fire an event to update the tree
             }
         }
         catch (IOException ex) {
