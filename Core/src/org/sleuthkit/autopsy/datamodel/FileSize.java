@@ -156,7 +156,7 @@ public class FileSize implements AutopsyVisitableItem {
         
         /**
          * Listens for case and ingest invest. Updates observers when events are
-         * fired. FileType and FileTypes nodes are all listening to this.
+         * fired. Size-based nodes are listening to this for changes.
          */
         private final class FileSizeRootChildrenObservable extends Observable {
 

@@ -159,7 +159,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         
         /**
          * Listens for case and ingest invest. Updates observers when events are
-         * fired. FileType and FileTypes nodes are all listening to this.
+         * fired. Other nodes are listening to this for changes.
          */
         private final class DeletedContentsChildrenObservable extends Observable {
 
