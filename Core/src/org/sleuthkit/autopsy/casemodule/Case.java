@@ -283,7 +283,7 @@ public class Case {
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
                 if (null != oldCase.collaborationMonitor) {
-                    oldCase.collaborationMonitor.stop();
+                    oldCase.collaborationMonitor.shutdown();
                 }
                 eventPublisher.closeRemoteEventChannel();
             }
@@ -306,7 +306,7 @@ public class Case {
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                     currentCase.collaborationMonitor = new CollaborationMonitor();
                 } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
-                    currentCase.collaborationMonitor.stop();
+                    currentCase.collaborationMonitor.shutdown();
                     logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
