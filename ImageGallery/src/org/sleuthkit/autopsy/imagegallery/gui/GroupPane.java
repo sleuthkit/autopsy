@@ -586,8 +586,9 @@ public class GroupPane extends BorderPane implements GroupView {
 
         if (isNull(viewState) || isNull(viewState.getGroup())) {
             this.grouping.set(null);
-            gridView.getItems().setAll(Collections.emptyList());
+
             Platform.runLater(() -> {
+                gridView.getItems().setAll(Collections.emptyList());
                 setCenter(null);
                 groupLabel.setText("");
                 resetScrollBar();

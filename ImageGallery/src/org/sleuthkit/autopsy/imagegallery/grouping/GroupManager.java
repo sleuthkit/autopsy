@@ -243,8 +243,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     public DrawableGroup makeGroup(GroupKey<?> groupKey, List<Long> files) {
         List<Long> newFiles = files == null ? new ArrayList<>() : files;
+        final boolean groupSeen = db.isGroupSeen(groupKey);
+        DrawableGroup g = new DrawableGroup(groupKey, newFiles, groupSeen);
 
-        DrawableGroup g = new DrawableGroup(groupKey, newFiles);
+        g.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+            markGroupSeen(g, newSeen);
+        });
         synchronized (groupMap) {
             groupMap.put(groupKey, g);
         }
@@ -258,11 +262,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     @ThreadConfined(type = ThreadType.JFX)
-    public void markGroupSeen(DrawableGroup group) {
-        db.markGroupSeen(group.getGroupKey());
-        group.setSeen();
-        unSeenGroups.removeAll(group);
-
+    public void markGroupSeen(DrawableGroup group, boolean seen) {
+        db.markGroupSeen(group.getGroupKey(), seen);
+        group.setSeen(seen);
+        if (seen) {
+            unSeenGroups.removeAll(group);
+        } else if (unSeenGroups.contains(group) == false) {
+            unSeenGroups.add(group);
+            FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
+        }
     }
 
     /**
@@ -324,19 +332,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
         if (task == null || (task.isCancelled() == false)) {
             final boolean groupSeen = db.isGroupSeen(g.getGroupKey());
-            if (groupSeen) {
-                g.setSeen();
-            }
+
             Platform.runLater(() -> {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
                 }
-                if (groupSeen) {
-                    unSeenGroups.removeAll(g);
-                } else if (unSeenGroups.contains(g) == false) {
-                    unSeenGroups.add(g);
-                    FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-                }
+                markGroupSeen(g, groupSeen);
+
             });
         }
     }
