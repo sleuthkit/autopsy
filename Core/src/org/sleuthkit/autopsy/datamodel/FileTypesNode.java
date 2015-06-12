@@ -142,6 +142,7 @@ public class FileTypesNode extends DisplayableItemNode {
             }
 
             private void removeListeners() {
+                deleteObservers();
                 IngestManager.getInstance().removeIngestJobEventListener(pcl);
                 IngestManager.getInstance().removeIngestModuleEventListener(pcl);
                 Case.removePropertyChangeListener(pcl);

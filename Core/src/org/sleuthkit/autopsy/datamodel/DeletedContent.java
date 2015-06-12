@@ -170,6 +170,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             private void removeListeners() {
+                deleteObservers();
                 IngestManager.getInstance().removeIngestJobEventListener(pcl);
                 IngestManager.getInstance().removeIngestModuleEventListener(pcl);
                 Case.removePropertyChangeListener(pcl);
