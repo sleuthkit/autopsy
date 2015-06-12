@@ -72,9 +72,9 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public String getPredicate() throws FilterValidationException {
-        String addQuery = "";
+        String query = "NULL";
         DateSearchPanel panel = this.getComponent();
-
+                
         // first, get the selected timeZone from the dropdown list
         String tz = this.getComponent().getTimeZoneComboBox().getSelectedItem().toString();
         String tzID = tz.substring(tz.indexOf(" ") + 1); // 1 index after the space is the ID
@@ -92,7 +92,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             startDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
             startDate.setTime(temp); // convert to GMT
         } catch (ParseException ex) {
-            // for now, no need to show the error message to the user her
+            // for now, no need to show the error message to the user here
         }
         if (!startDateValue.equals("")) {
             if (startDate != null) {
@@ -120,6 +120,13 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             }
         }
 
+        // If they put the dates in backwards, help them out.
+        if (fromDate > toDate) {
+            long temp = toDate;
+            toDate = fromDate;
+            fromDate = temp;
+        }
+         
         final boolean modifiedChecked = panel.getModifiedCheckBox().isSelected();
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
@@ -127,32 +134,27 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
-            String subQuery = "";
-
             if (modifiedChecked) {
-                subQuery += " OR mtime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
+                query += " OR (mtime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (changedChecked) {
-                subQuery += " OR ctime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
+                query += " OR (ctime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (accessedChecked) {
-                subQuery += " OR atime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
+                query += " OR (atime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (createdChecked) {
-                subQuery += " OR crtime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
+                query += " OR (crtime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
-            
-            if (!subQuery.isEmpty()) {
-                addQuery += " AND (" + subQuery + ")"; //NON-NLS
-            }
+
         } else {
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }
 
-        return addQuery;
+        return query;
 
     }
 

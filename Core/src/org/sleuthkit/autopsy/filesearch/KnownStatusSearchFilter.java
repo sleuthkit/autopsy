@@ -56,7 +56,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }
 
-        String expr = "";
+        String expr = "NULL";
         if (unknown) {
             expr += " OR " + predicateHelper(FileKnown.UNKNOWN); //NON-NLS
         }
@@ -75,7 +75,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
      * @return un-padded SQL boolean expression
      */
     private String predicateHelper(FileKnown knownStatus) {
-        return "known is " + knownStatus.getFileKnownValue(); //NON-NLS
+        return "known = " + knownStatus.getFileKnownValue(); //NON-NLS
     }
 
     @Override

@@ -207,11 +207,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 
          //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
          String query = "";
-
+         int i=0;
          for (FileSearchFilter f : this.getEnabledFilters()) {
              String result = f.getPredicate();
              if (!result.isEmpty()) {
-                 query += " AND (" + result + ")"; //NON-NLS
+                 if(i>0) {
+                    query += " AND (" + result + ")"; //NON-NLS
+                 }
+                 else {
+                    query += " (" + result + ")"; //NON-NLS
+                 }
+                 ++i;
              }
          }
 
