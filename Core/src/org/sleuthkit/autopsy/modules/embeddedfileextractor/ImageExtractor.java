@@ -58,6 +58,9 @@ class ImageExtractor {
     private String parentFileName;
     private final String UNKNOWN_NAME_PREFIX = "image_";
     private final FileTypeDetector fileTypeDetector;
+
+    String moduleDirRelative;
+    String moduleDirAbsolute;
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -84,12 +87,14 @@ class ImageExtractor {
     }
     private SupportedImageExtractionFormats abstractFileExtractionFormat;
 
-    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector) {
+    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
 
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
+        this.moduleDirRelative = moduleDirRelative;
+        this.moduleDirAbsolute = moduleDirAbsolute;
     }
     
     /**
@@ -481,7 +486,7 @@ class ImageExtractor {
      * @return path to the image extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = EmbeddedFileExtractorIngestModule.moduleDirAbsolute + File.separator + parentFileName;
+        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
         File outputFilePath = new File(outputFolderPath);
         if (!outputFilePath.exists()) {
             try {
@@ -504,7 +509,7 @@ class ImageExtractor {
      */
     private String getFileRelativePath(String fileName) {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + EmbeddedFileExtractorIngestModule.moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
+        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
     }
 
     /**
