@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -29,7 +33,9 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -98,6 +104,7 @@ public class FileSize implements AutopsyVisitableItem {
         return this.skCase;
     }
 
+    /* Root node. Children are nodes for specific sizes. */
     public static class FileSizeRootNode extends DisplayableItemNode {
 
         private static final String NAME = NbBundle.getMessage(FileSize.class, "FileSize.fileSizeRootNode.name");
@@ -136,14 +143,65 @@ public class FileSize implements AutopsyVisitableItem {
         }
     }
 
+    /* Makes the children for specific sizes */
     public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
+        private Observable notifier;
 
         public FileSizeRootChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
-
+            notifier = new FileSizeRootChildrenObservable();
         }
+        
+        /**
+         * Listens for case and ingest invest. Updates observers when events are
+         * fired. Size-based nodes are listening to this for changes.
+         */
+        private final class FileSizeRootChildrenObservable extends Observable {
+
+            FileSizeRootChildrenObservable() {
+                IngestManager.getInstance().addIngestJobEventListener(pcl);
+                IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                Case.addPropertyChangeListener(pcl);
+            }
+
+            private void removeListeners() {
+                deleteObservers();
+                IngestManager.getInstance().removeIngestJobEventListener(pcl);
+                IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+                Case.removePropertyChangeListener(pcl);
+            }
+
+            private final PropertyChangeListener pcl = new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    String eventType = evt.getPropertyName();
+
+                    // new file was added
+                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                        // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
+                        update();
+                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                        update();
+                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        update();
+                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                        // case was closed. Remove listeners so that we don't get called with a stale case handle
+                        if (evt.getNewValue() == null) {
+                            removeListeners();
+                        }
+                    }
+                }
+            };
+
+            private void update() {
+                setChanged();
+                notifyObservers();
+            }
+        }
+
 
         @Override
         protected boolean createKeys(List<FileSizeFilter> list) {
@@ -153,26 +211,55 @@ public class FileSize implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(FileSizeFilter key) {
-            return new FileSizeNode(skCase, key);
+            return new FileSizeNode(skCase, key, notifier);
         }
 
+        /* Node for a specific size range. Children are files. */
         public class FileSizeNode extends DisplayableItemNode {
-
             private FileSizeFilter filter;
-            private final Logger logger = Logger.getLogger(FileSizeNode.class.getName());
-
+            
+            // use version with observer instead so that it updates
+            @Deprecated
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter) {
-                super(Children.create(new FileSizeChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
-                super.setName(filter.getName());
+                super(Children.create(new FileSizeChildren(filter, skCase, null), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
-
+                init();
+            }
+            
+            /**
+             * 
+             * @param skCase
+             * @param filter
+             * @param o Observable that provides updates when events are fired 
+             */
+            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o) {
+                super(Children.create(new FileSizeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));    
+                this.filter = filter;
+                init();
+                o.addObserver(new FileSizeNodeObserver());
+            }
+            
+            private void init() {
+                super.setName(filter.getName());
+                
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
 
-                //get count of children without preloading all children nodes
-                final long count = new FileSizeChildren(filter, skCase).calculateItems();
-                //final long count = getChildren().getNodesCount(true);
+                updateDisplayName();
+            }
+            
+            // update the display name when new events are fired
+            private class FileSizeNodeObserver implements Observer {
+
+                @Override
+                public void update(Observable o, Object arg) {
+                    updateDisplayName();
+                }
+            }
+            
+            private void updateDisplayName() {
+                final long count = FileSizeChildren.calculateItems(skCase, filter);
                 super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
             }
 
@@ -204,15 +291,49 @@ public class FileSize implements AutopsyVisitableItem {
             }
         }
 
-        class FileSizeChildren extends ChildFactory<AbstractFile> {
+        /* Makes children, which are nodes for files of a given range */
+        static class FileSizeChildren extends ChildFactory.Detachable<AbstractFile> {
 
-            private SleuthkitCase skCase;
-            private FileSizeFilter filter;
-            private final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
+            private final SleuthkitCase skCase;
+            private final FileSizeFilter filter;
+            private final Observable notifier;
+            private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
-            FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase) {
+            /**
+             * 
+             * @param filter
+             * @param skCase
+             * @param o Observable that provides updates when new files are added to case
+             */
+            FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o) {
                 this.skCase = skCase;
                 this.filter = filter;
+                this.notifier = o;
+            }
+            
+            @Override
+            protected void addNotify() {
+                if (notifier != null) {
+                    notifier.addObserver(observer);
+                }
+            }
+
+            @Override
+            protected void removeNotify() {
+                if (notifier != null) {
+                    notifier.deleteObserver(observer);
+                }
+            }
+            
+            private final Observer observer = new FileSizeChildrenObserver();
+            
+            // Cause refresh of children if there are changes
+            private class FileSizeChildrenObserver implements Observer {
+
+                @Override
+                public void update(Observable o, Object arg) {
+                    refresh(true);
+                }
             }
 
             @Override
@@ -225,7 +346,7 @@ public class FileSize implements AutopsyVisitableItem {
                 return true;
             }
 
-            private String makeQuery() {
+            private static String makeQuery(FileSizeFilter filter) {
                 String query;
                 switch (filter) {
                     case SIZE_50_200:
@@ -252,7 +373,7 @@ public class FileSize implements AutopsyVisitableItem {
             private List<AbstractFile> runFsQuery() {
                 List<AbstractFile> ret = new ArrayList<>();
 
-                String query = makeQuery();
+                String query = makeQuery(filter);
                 if (query == null) {
                     return null;
                 }
@@ -272,9 +393,9 @@ public class FileSize implements AutopsyVisitableItem {
              *
              * @return
              */
-            long calculateItems() {
+            static long calculateItems(SleuthkitCase sleuthkitCase, FileSizeFilter filter) {
                 try {
-                    return skCase.countFilesWhere(makeQuery());
+                    return sleuthkitCase.countFilesWhere(makeQuery(filter));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting files by size search view count", ex); //NON-NLS
                     return 0;

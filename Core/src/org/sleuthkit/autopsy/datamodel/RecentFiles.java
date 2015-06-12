@@ -23,6 +23,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Recent files node support
+ * NOTE: As of june '15 we do not display this in the tree.
+ * It can be added back when we have filtering in the results area. 
  */
  class RecentFiles implements AutopsyVisitableItem {
     
