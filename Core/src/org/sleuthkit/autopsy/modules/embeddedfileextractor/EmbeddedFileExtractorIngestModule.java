@@ -45,17 +45,12 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     private final IngestServices services = IngestServices.getInstance();
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
 
-    //buffer for checking file headers and signatures
-    private static final int readHeaderSize = 4;
-    private static final byte[] fileHeaderBuffer = new byte[readHeaderSize];
-    private static final int ZIP_SIGNATURE_BE = 0x504B0304;
     private IngestJobContext context;
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
-    private static final Case currentCase = Case.getCurrentCase();
-    protected static final String moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-    protected static final String moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+    protected static String moduleDirRelative;
+    protected static String moduleDirAbsolute;
 
     private boolean archivextraction;
     private boolean imageExtraction;
@@ -71,6 +66,11 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         jobId = context.getJobId();
+
+        final Case currentCase = Case.getCurrentCase();
+
+        moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
+        moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
 
         // initialize the folder where the embedded files are extracted.
         File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
