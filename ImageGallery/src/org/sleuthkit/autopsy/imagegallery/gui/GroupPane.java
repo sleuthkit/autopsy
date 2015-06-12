@@ -143,6 +143,8 @@ public class GroupPane extends BorderPane implements GroupView {
     );
 
     private static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
+    private static final List<KeyCode> categoryKeyCodes = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
+            KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
 
     private final Back backAction;
 
@@ -219,6 +221,7 @@ public class GroupPane extends BorderPane implements GroupView {
         final String header = getHeaderString();
         final List<Long> fileIds = getGrouping().fileIds();
         Platform.runLater(() -> {
+            slideShowToggle.setDisable(fileIds.isEmpty());
             gridView.getItems().setAll(fileIds);
             groupLabel.setText(header);
         });
@@ -232,7 +235,8 @@ public class GroupPane extends BorderPane implements GroupView {
         FXMLConstructor.construct(this, "GroupPane.fxml");
     }
 
-    public void activateSlideShowViewer(Long slideShowFileId) {
+    @ThreadConfined(type = ThreadType.JFX)
+    public void activateSlideShowViewer(Long slideShowFileID) {
         groupViewMode.set(GroupViewMode.SLIDE_SHOW);
 
         //make a new slideShowPane if necessary
@@ -241,13 +245,14 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         //assign last selected file or if none first file in group
-        if (slideShowFileId == null || grouping.get().fileIds().contains(slideShowFileId) == false) {
-            slideShowPane.setFile(grouping.get().fileIds().get(0));
+        if (slideShowFileID == null || getGrouping().fileIds().contains(slideShowFileID) == false) {
+            slideShowPane.setFile(getGrouping().fileIds().get(0));
         } else {
-            slideShowPane.setFile(slideShowFileId);
+            slideShowPane.setFile(slideShowFileID);
         }
         setCenter(slideShowPane);
         slideShowPane.requestFocus();
+
     }
 
     public void activateTileViewer() {
@@ -258,6 +263,7 @@ public class GroupPane extends BorderPane implements GroupView {
         if (slideShowPane != null) {
             slideShowPane.disposeContent();
         }
+        slideShowPane = null;
         this.scrollToFileID(globalSelectionModel.lastSelectedProperty().get());
     }
 
@@ -342,11 +348,6 @@ public class GroupPane extends BorderPane implements GroupView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
-        ArrayList<MenuItem> grpTagMenues = new ArrayList<>();
-        for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-            MenuItem menuItem = createGrpTagMenuItem(tn);
-            grpTagMenues.add(menuItem);
-        }
         try {
             grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
             grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
@@ -354,7 +355,16 @@ public class GroupPane extends BorderPane implements GroupView {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
         grpTagSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        grpTagSplitMenu.getItems().setAll(grpTagMenues);
+        grpTagSplitMenu.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
+            if (t1) {
+                ArrayList<MenuItem> selTagMenues = new ArrayList<>();
+                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
+                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, grpTagSplitMenu);
+                    selTagMenues.add(menuItem);
+                }
+                grpTagSplitMenu.getItems().setAll(selTagMenues);
+            }
+        });
 
         ArrayList<MenuItem> grpCategoryMenues = new ArrayList<>();
         for (final Category cat : Category.values()) {
@@ -456,12 +466,14 @@ public class GroupPane extends BorderPane implements GroupView {
                         if (t.getClickCount() == 1) {
                             selectAllFiles();
                         }
-                        if (contextMenu == null) {
-                            contextMenu = buildContextMenu();
-                        }
+                        if (globalSelectionModel.getSelected().isEmpty() == false) {
+                            if (contextMenu == null) {
+                                contextMenu = buildContextMenu();
+                            }
 
-                        contextMenu.hide();
-                        contextMenu.show(GroupPane.this, t.getScreenX(), t.getScreenY());
+                            contextMenu.hide();
+                            contextMenu.show(GroupPane.this, t.getScreenX(), t.getScreenY());
+                        }
                         t.consume();
                         break;
                 }
@@ -574,15 +586,15 @@ public class GroupPane extends BorderPane implements GroupView {
 
         if (isNull(viewState) || isNull(viewState.getGroup())) {
             this.grouping.set(null);
-            final List<Long> fileIds = Collections.emptyList();
-            final String header = "";
+
             Platform.runLater(() -> {
+                gridView.getItems().setAll(Collections.emptyList());
                 setCenter(null);
-                gridView.getItems().setAll(fileIds);
-                groupLabel.setText(header);
+                groupLabel.setText("");
                 resetScrollBar();
                 if (false == Case.isCaseOpen()) {
                     cellMap.values().stream().forEach(DrawableCell::resetItem);
+                    cellMap.clear();
                 }
             });
 
@@ -593,9 +605,10 @@ public class GroupPane extends BorderPane implements GroupView {
                 this.getGrouping().fileIds().addListener(filesSyncListener);
 
                 final String header = getHeaderString();
-                final ObservableList<Long> fileIds = getGrouping().fileIds();
+
+                gridView.getItems().setAll(getGrouping().fileIds());
                 Platform.runLater(() -> {
-                    gridView.getItems().setAll(fileIds);
+                    slideShowToggle.setDisable(gridView.getItems().isEmpty());
                     groupLabel.setText(header);
                     resetScrollBar();
                     if (viewState.getMode() == GroupViewMode.TILE) {
@@ -613,6 +626,31 @@ public class GroupPane extends BorderPane implements GroupView {
         getScrollBar().ifPresent((scrollBar) -> {
             scrollBar.setValue(0);
         });
+    }
+
+    @ThreadConfined(type = ThreadType.JFX)
+    private Optional<ScrollBar> getScrollBar() {
+        if (gridView == null || gridView.getSkin() == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar"));
+    }
+
+    void makeSelection(Boolean shiftDown, Long newFileID) {
+
+        if (shiftDown) {
+            //TODO: do more hear to implement slicker multiselect
+            int endIndex = grouping.get().fileIds().indexOf(newFileID);
+            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
+            endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
+            List<Long> subList = grouping.get().fileIds().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().fileIds().size()) + 1);
+
+            globalSelectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
+            globalSelectionModel.select(newFileID);
+        } else {
+            selectionAnchorIndex = null;
+            globalSelectionModel.clearAndSelect(newFileID);
+        }
     }
 
     private class DrawableCell extends GridCell<Long> {
@@ -648,13 +686,10 @@ public class GroupPane extends BorderPane implements GroupView {
         }
 
         void resetItem() {
-            updateItem(null, true);
+//            updateItem(null, true);
             tile.setFile(null);
         }
     }
-
-    private static final List<KeyCode> categoryKeyCodes = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
-            KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
 
     /**
      * implements the key handler for tile navigation ( up, down , left, right
@@ -769,31 +804,6 @@ public class GroupPane extends BorderPane implements GroupView {
             } else {
                 //don't select past end of group
             }
-        }
-    }
-
-    @ThreadConfined(type = ThreadType.JFX)
-    private Optional<ScrollBar> getScrollBar() {
-        if (gridView == null || gridView.getSkin() == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable((ScrollBar) gridView.getSkin().getNode().lookup(".scroll-bar"));
-    }
-
-    void makeSelection(Boolean shiftDown, Long newFileID) {
-
-        if (shiftDown) {
-            //TODO: do more hear to implement slicker multiselect
-            int endIndex = grouping.get().fileIds().indexOf(newFileID);
-            int startIndex = IntStream.of(grouping.get().fileIds().size(), selectionAnchorIndex, endIndex).min().getAsInt();
-            endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
-            List<Long> subList = grouping.get().fileIds().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().fileIds().size()) + 1);
-
-            globalSelectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
-            globalSelectionModel.select(newFileID);
-        } else {
-            selectionAnchorIndex = null;
-            globalSelectionModel.clearAndSelect(newFileID);
         }
     }
 

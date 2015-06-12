@@ -269,6 +269,9 @@ public class IngestJobSettings {
                     case "E01 Verify": //NON-NLS
                         moduleNames.add("E01 Verifier"); //NON-NLS
                         break;
+                    case "Archive Extractor": //NON-NLS
+                        moduleNames.add("Embedded File Extractor");
+                        break;
                     default:
                         moduleNames.add(name);
                 }

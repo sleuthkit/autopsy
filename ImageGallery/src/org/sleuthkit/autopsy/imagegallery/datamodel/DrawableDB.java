@@ -47,7 +47,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
@@ -219,8 +218,8 @@ public final class DrawableDB {
             analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED);
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
 
-            updateGroupStmt = prepareStatement("UPDATE groups SET seen = 1 WHERE value = ? AND attribute = ?");
-            insertGroupStmt = prepareStatement("INSERT OR REPLACE INTO groups (value, attribute) VALUES (?,?)");
+            updateGroupStmt = prepareStatement("insert or replace into groups (seen, value, attribute) values( ?, ? , ?)");
+            insertGroupStmt = prepareStatement("insert or ignore into groups (value, attribute) values (?,?)");
 
             groupSeenQueryStmt = prepareStatement("SELECT seen FROM groups WHERE value = ? AND attribute = ?");
 
@@ -230,6 +229,9 @@ public final class DrawableDB {
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)");
 
+            for (Category cat : Category.values()) {
+                insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY);
+            }
             initializeImageList();
         } else {
             throw new ExceptionInInitializerError();
@@ -516,13 +518,14 @@ public final class DrawableDB {
         return false;
     }
 
-    public void markGroupSeen(GroupKey<?> gk) {
+    public void markGroupSeen(GroupKey<?> gk, boolean seen) {
         dbWriteLock();
         try {
-            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = 1 where value = ? and attribute = ?");
+            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
             updateGroupStmt.clearParameters();
-            updateGroupStmt.setString(1, gk.getValueDisplayName());
-            updateGroupStmt.setString(2, gk.getAttribute().attrName.toString());
+            updateGroupStmt.setBoolean(1, seen);
+            updateGroupStmt.setString(2, gk.getValueDisplayName());
+            updateGroupStmt.setString(3, gk.getAttribute().attrName.toString());
             updateGroupStmt.execute();
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error marking group as seen", ex);
@@ -1146,7 +1149,7 @@ public final class DrawableDB {
     Set<String> getHashSetsForFile(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
-            List<BlackboardArtifact> arts = ImageGalleryController.getDefault().getSleuthKitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+            List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
             for (BlackboardArtifact a : arts) {
                 List<BlackboardAttribute> attrs = a.getAttributes();
                 for (BlackboardAttribute attr : attrs) {
@@ -1156,8 +1159,8 @@ public final class DrawableDB {
                 }
                 return hashNames;
             }
-        } catch (TskCoreException tskCoreException) {
-            throw new IllegalStateException(tskCoreException);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "failed to get hash sets for file", ex);
         }
         return Collections.emptySet();
     }

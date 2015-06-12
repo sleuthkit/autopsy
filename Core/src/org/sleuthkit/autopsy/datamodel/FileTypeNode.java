@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -42,33 +44,56 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Node for a specific file type / extension
+ * Node for a specific file type / extension. Children of it will be the files
+ * of that type.
  */
 public class FileTypeNode extends DisplayableItemNode {
 
     FileTypeExtensionFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
 
+    // deprecated in favor of the version that takes an observable to provide refresh updates
+    @Deprecated
     FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         super(Children.create(new FileTypeChildFactory(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
         this.filter = filter;
         this.skCase = skCase;
+        init();
+    }
 
+    /**
+     *
+     * @param filter Extensions that will be shown for this node
+     * @param skCase
+     * @param o Observable that sends updates when the child factories should
+     * refresh
+     */
+    FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+        super(Children.create(new FileTypeChildFactory(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
+        this.filter = filter;
+        this.skCase = skCase;
+        init();
+        o.addObserver(new FileTypeNodeObserver());
+    }
+
+    private void init() {
         super.setName(filter.getName());
-
-        /* There is a bug in the below code. The count becomes inaccurate when ZIP files
-         * blow up and when a 2nd data source is added. I think we need to change the overall
-         * design of this and have a singleton class (or some other place) that will store
-         * the results and each level can either ask it for the count or specific ids and
-         * it would be responsible for listening for case events and data events. 
-         */
-        //get count of children without preloading all children nodes
-        final long count = new FileTypeChildFactory(filter, skCase).calculateItems();
-        //final long count = getChildren().getNodesCount(true);
-        
-        super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
-        
+        updateDisplayName();
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
+    }
+
+    // update the display name when new events are fired
+    private class FileTypeNodeObserver implements Observer {
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
+    }
+
+    private void updateDisplayName() {
+        final long count = FileTypeChildFactory.calculateItems(skCase, filter);
+        super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
     }
 
     @Override
@@ -110,24 +135,68 @@ public class FileTypeNode extends DisplayableItemNode {
     /**
      * Child node factory for a specific file type - does the database query.
      */
-    public static class FileTypeChildFactory extends ChildFactory<Content> {
+    public static class FileTypeChildFactory extends ChildFactory.Detachable<Content> {
+
         private final SleuthkitCase skCase;
         private final FileTypeExtensionFilters.SearchFilterInterface filter;
-        private final Logger logger = Logger.getLogger(FileTypeChildFactory.class.getName());
+        private final static Logger logger = Logger.getLogger(FileTypeChildFactory.class.getName());
+        private Observable notifier;
 
+        // use the constructor that gets an observable passed in for updates
+        @Deprecated
         FileTypeChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
             super();
             this.filter = filter;
             this.skCase = skCase;
+            notifier = null;
+        }
+
+        /**
+         *
+         * @param filter Extensions to display
+         * @param skCase
+         * @param o Observable that will notify when there could be new data to
+         * display
+         */
+        FileTypeChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+            super();
+            this.filter = filter;
+            this.skCase = skCase;
+            notifier = o;
+        }
+
+        @Override
+        protected void addNotify() {
+            if (notifier != null) {
+                notifier.addObserver(observer);
+            }
+        }
+
+        @Override
+        protected void removeNotify() {
+            if (notifier != null) {
+                notifier.deleteObserver(observer);
+            }
+        }
+        private final Observer observer = new FileTypeChildFactoryObserver();
+
+        // Cause refresh of children if there are changes
+        private class FileTypeChildFactoryObserver implements Observer {
+
+            @Override
+            public void update(Observable o, Object arg) {
+                refresh(true);
+            }
         }
 
         /**
          * Get children count without actually loading all nodes
+         *
          * @return
          */
-        long calculateItems() {
+        static long calculateItems(SleuthkitCase sleuthkitCase, FileTypeExtensionFilters.SearchFilterInterface filter) {
             try {
-                return skCase.countFilesWhere(createQuery());
+                return sleuthkitCase.countFilesWhere(createQuery(filter));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
                 return 0;
@@ -137,7 +206,7 @@ public class FileTypeNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<Content> list) {
             try {
-                List<AbstractFile> files = skCase.findAllFilesWhere(createQuery()); 
+                List<AbstractFile> files = skCase.findAllFilesWhere(createQuery(filter));
                 list.addAll(files);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
@@ -145,7 +214,7 @@ public class FileTypeNode extends DisplayableItemNode {
             return true;
         }
 
-        private String createQuery() {
+        private static String createQuery(FileTypeExtensionFilters.SearchFilterInterface filter) {
             StringBuilder query = new StringBuilder();
             query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
             if (UserPreferences.hideKnownFilesInViewsTree()) {

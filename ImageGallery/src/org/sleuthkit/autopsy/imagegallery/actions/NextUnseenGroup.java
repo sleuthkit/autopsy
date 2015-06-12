@@ -56,14 +56,15 @@ public class NextUnseenGroup extends Action {
 
         });
         controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            updateButton();
+            Platform.runLater(this::updateButton);
+
         });
 
         setEventHandler((ActionEvent t) -> {
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
-                    .ifPresent(controller.getGroupManager()::markGroupSeen);
+                    .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
 
             if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
                 controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
