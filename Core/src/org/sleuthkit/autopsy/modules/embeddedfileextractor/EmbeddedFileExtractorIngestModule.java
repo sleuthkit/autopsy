@@ -49,8 +49,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
-    protected static String moduleDirRelative;
-    protected static String moduleDirAbsolute;
+    String moduleDirRelative;
+    String moduleDirAbsolute;
 
     private boolean archivextraction;
     private boolean imageExtraction;
@@ -73,13 +73,13 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
 
         // initialize the folder where the embedded files are extracted.
-        File extractionDirectory = new File(EmbeddedFileExtractorIngestModule.moduleDirAbsolute);
+        File extractionDirectory = new File(moduleDirAbsolute);
         if (!extractionDirectory.exists()) {
             try {
                 extractionDirectory.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute, ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + EmbeddedFileExtractorIngestModule.moduleDirAbsolute)); //NON-NLS
+                logger.log(Level.SEVERE, "Error initializing output dir: " + moduleDirAbsolute, ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Error initializing", "Error initializing output dir: " + moduleDirAbsolute)); //NON-NLS
                 throw new IngestModuleException(ex.getMessage());
             }
         }
@@ -92,8 +92,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
         }
 
         // initialize the extraction modules.
-        this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector);
-        this.imageExtractor = new ImageExtractor(context, fileTypeDetector);
+        this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
     }
 
     @Override
@@ -167,7 +167,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
      * @param localRootRelPath relative path to archive, from getUniqueName()
      * @return
      */
-    protected static String getLocalRootAbsPath(String localRootRelPath) {
+    String getLocalRootAbsPath(String localRootRelPath) {
         return moduleDirAbsolute + File.separator + localRootRelPath;
     }
 }
