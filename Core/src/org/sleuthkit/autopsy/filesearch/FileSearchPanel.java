@@ -63,7 +63,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
-
+    private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
+    
     /**
      * Creates new form FileSearchPanel
      */
@@ -202,17 +203,23 @@ import org.sleuthkit.datamodel.TskCoreException;
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
      * if an enabled filter is in an invalid state
      */
-    private String getQuery() throws FilterValidationException {
+     private String getQuery() throws FilterValidationException {
 
-        //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE 1";
-        String query = " 1";
+         //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
+         String query = "";
 
-        for (FileSearchFilter f : this.getEnabledFilters()) {
-            query += " AND (" + f.getPredicate() + ")"; //NON-NLS
-        }
+         for (FileSearchFilter f : this.getEnabledFilters()) {
+             String result = f.getPredicate();
+             if (!result.isEmpty()) {
+                 query += " AND (" + result + ")"; //NON-NLS
+             }
+         }
 
-        return query;
-    }
+         if (query.isEmpty()) {
+             throw new FilterValidationException(EMPTY_WHERE_CLAUSE);
+         }
+         return query;
+     }
 
     private Collection<FileSearchFilter> getFilters() {
         Collection<FileSearchFilter> filters = new ArrayList<FileSearchFilter>();

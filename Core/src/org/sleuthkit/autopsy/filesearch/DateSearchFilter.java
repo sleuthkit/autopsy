@@ -72,7 +72,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public String getPredicate() throws FilterValidationException {
-        String addQuery = "1";
+        String addQuery = "";
         DateSearchPanel panel = this.getComponent();
 
         // first, get the selected timeZone from the dropdown list
@@ -127,25 +127,27 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
-            String subQuery = "0";
+            String subQuery = "";
 
             if (modifiedChecked) {
-                subQuery += " or mtime between " + fromDate + " and " + toDate; //NON-NLS
+                subQuery += " OR mtime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
             }
 
             if (changedChecked) {
-                subQuery += " or ctime between " + fromDate + " and " + toDate; //NON-NLS
+                subQuery += " OR ctime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
             }
 
             if (accessedChecked) {
-                subQuery += " or atime between " + fromDate + " and " + toDate; //NON-NLS
+                subQuery += " OR atime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
             }
 
             if (createdChecked) {
-                subQuery += " or crtime between " + fromDate + " and " + toDate; //NON-NLS
+                subQuery += " OR crtime BETWEEN " + fromDate + " AND " + toDate; //NON-NLS
             }
-
-            addQuery += " and (" + subQuery + ")"; //NON-NLS
+            
+            if (!subQuery.isEmpty()) {
+                addQuery += " AND (" + subQuery + ")"; //NON-NLS
+            }
         } else {
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }

@@ -56,15 +56,15 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }
 
-        String expr = "0";
+        String expr = "";
         if (unknown) {
-            expr += " or " + predicateHelper(FileKnown.UNKNOWN); //NON-NLS
+            expr += " OR " + predicateHelper(FileKnown.UNKNOWN); //NON-NLS
         }
         if (known) {
-            expr += " or " + predicateHelper(FileKnown.KNOWN); //NON-NLS
+            expr += " OR " + predicateHelper(FileKnown.KNOWN); //NON-NLS
         }
         if (knownBad) {
-            expr += " or " + predicateHelper(FileKnown.BAD); //NON-NLS
+            expr += " OR " + predicateHelper(FileKnown.BAD); //NON-NLS
         }
         return expr;
     }
