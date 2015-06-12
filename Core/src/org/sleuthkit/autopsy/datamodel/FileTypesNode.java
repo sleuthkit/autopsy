@@ -158,6 +158,8 @@ public class FileTypesNode extends DisplayableItemNode {
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                             || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                         update();
+                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        update();
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {

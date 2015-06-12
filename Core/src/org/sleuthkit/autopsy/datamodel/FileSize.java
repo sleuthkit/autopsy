@@ -179,10 +179,12 @@ public class FileSize implements AutopsyVisitableItem {
 
                     // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        // @@@ could check the minimum size here and only fire off updates if we know the file meets the min size criteria
+                        // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
                         update();
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                             || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                        update();
+                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                         update();
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
@@ -311,16 +313,18 @@ public class FileSize implements AutopsyVisitableItem {
             @Override
             protected void addNotify() {
                 if (notifier != null) {
-                    notifier.addObserver(new FileSizeChildrenObserver());
+                    notifier.addObserver(observer);
                 }
             }
 
             @Override
             protected void removeNotify() {
                 if (notifier != null) {
-                    notifier.deleteObserver(new FileSizeChildrenObserver());
+                    notifier.deleteObserver(observer);
                 }
             }
+            
+            private final Observer observer = new FileSizeChildrenObserver();
             
             // Cause refresh of children if there are changes
             private class FileSizeChildrenObserver implements Observer {

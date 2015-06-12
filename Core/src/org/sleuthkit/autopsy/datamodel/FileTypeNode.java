@@ -168,16 +168,17 @@ public class FileTypeNode extends DisplayableItemNode {
         @Override
         protected void addNotify() {
             if (notifier != null) {
-                notifier.addObserver(new FileTypeChildFactoryObserver());
+                notifier.addObserver(observer);
             }
         }
 
         @Override
         protected void removeNotify() {
             if (notifier != null) {
-                notifier.deleteObserver(new FileTypeChildFactoryObserver());
+                notifier.deleteObserver(observer);
             }
         }
+        private final Observer observer = new FileTypeChildFactoryObserver();
 
         // Cause refresh of children if there are changes
         private class FileTypeChildFactoryObserver implements Observer {
