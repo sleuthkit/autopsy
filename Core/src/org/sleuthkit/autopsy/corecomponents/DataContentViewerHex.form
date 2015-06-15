@@ -88,9 +88,13 @@
                   <Component id="goToPageLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="goToPageTextField" min="-2" pref="79" max="-2" attributes="0"/>
-                  <EmptySpace pref="205" max="32767" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Component id="goToOffsetLabel" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="goToOffsetTextField" min="-2" pref="79" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
-              <Component id="jScrollPane1" alignment="0" pref="622" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -108,9 +112,11 @@
                       <Component id="prevPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
                       <Component id="goToPageLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="goToPageTextField" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="goToOffsetLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="goToOffsetTextField" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                  <Component id="jScrollPane1" pref="388" max="32767" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="jScrollPane1" pref="382" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -277,6 +283,23 @@
               <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.goToPageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="goToOffsetLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.goToOffsetLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="goToOffsetTextField">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.goToOffsetTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="goToOffsetTextFieldActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
