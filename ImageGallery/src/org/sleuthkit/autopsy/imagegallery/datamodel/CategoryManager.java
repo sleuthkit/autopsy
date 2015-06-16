@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.TagUtils;
 
 /**
  * Provides a cached view of the number of files per category, and fires
@@ -75,6 +76,7 @@ public class CategoryManager {
         this.db = db;
         categoryCounts.invalidateAll();
         Category.clearTagNames();
+        TagUtils.clearFollowUpTagName();
     }
 
     /**
