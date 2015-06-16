@@ -429,7 +429,7 @@ public class Case {
             result = "_" + result;
         }
 
-        // Chop to 63-13=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
+        // Chop to 63-15=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
         if (result.length() > MAX_SANITIZED_NAME_LENGTH) {
             result = result.substring(0, MAX_SANITIZED_NAME_LENGTH);
         }
