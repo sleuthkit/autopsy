@@ -20,14 +20,10 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.scene.paint.Color;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Enum to represent the six categories in the DHs image categorization scheme.
@@ -101,19 +97,4 @@ public enum Category implements Comparable<Category> {
         return displayName;
     }
 
-    /**
-     * get the TagName used to store this Category in the main autopsy db.
-     *
-     * @return the TagName used for this Category
-     */
-    public TagName getTagName() {
-        if (tagName == null) {
-            try {
-                tagName = TagUtils.getTagName(displayName);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(Category.class.getName()).log(Level.SEVERE, "failed to get TagName for " + displayName, ex);
-            }
-        }
-        return tagName;
-    }
 }

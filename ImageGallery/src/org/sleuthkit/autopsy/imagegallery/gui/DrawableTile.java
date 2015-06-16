@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSelectionModel;
 
 /**
@@ -43,7 +42,7 @@ import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSele
  *
  * TODO: refactor this to extend from {@link Control}? -jm
  */
-public class DrawableTile extends DrawableViewBase implements TagUtils.TagListener {
+public class DrawableTile extends DrawableViewBase {
 
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
@@ -73,8 +72,8 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
 
-        imageView.fitHeightProperty().bind(Toolbar.getDefault().sizeSliderValue());
-        imageView.fitWidthProperty().bind(Toolbar.getDefault().sizeSliderValue());
+        imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
+        imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
             try {

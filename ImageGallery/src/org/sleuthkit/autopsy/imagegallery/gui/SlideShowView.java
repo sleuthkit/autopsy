@@ -48,9 +48,9 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends DrawableViewBase implements TagUtils.TagListener {
+public class SlideShowView extends DrawableViewBase {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
@@ -127,7 +127,7 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
 
         tagSplitButton.setOnAction((ActionEvent t) -> {
             try {
-                TagUtils.createSelTagMenuItem(TagUtils.getFollowUpTagName(), tagSplitButton).getOnAction().handle(t);
+                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSplitButton, getController()).getOnAction().handle(t);
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -137,8 +137,8 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
         tagSplitButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, tagSplitButton);
+                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
+                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, tagSplitButton, getController());
                     selTagMenues.add(menuItem);
                 }
                 tagSplitButton.getItems().setAll(selTagMenues);
@@ -347,7 +347,7 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
         public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
             if (t1) {
                 FileIDSelectionModel.getInstance().clearAndSelect(getFileID());
-                new CategorizeAction().addTag(cat.getTagName(), "");
+                new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
             }
         }
     }

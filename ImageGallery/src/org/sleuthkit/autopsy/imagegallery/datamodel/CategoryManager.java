@@ -26,7 +26,8 @@ import java.util.Collection;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Provides a cached view of the number of files per category, and fires
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.imagegallery.TagUtils;
 public class CategoryManager {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
+    private final ImageGalleryController controller;
 
     /**
      * the DrawableDB that backs the category counts cache. The counts are
@@ -63,6 +65,20 @@ public class CategoryManager {
      */
     private final LoadingCache<Category, LongAdder> categoryCounts
             = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
+    /**
+     * cached TagNames corresponding to Categories, looked up from
+     * autopsyTagManager at initial request or if invalidated by case change.
+     */
+    private final LoadingCache<Category, TagName> catTagNameMap = CacheBuilder.newBuilder().build(CacheLoader.from(cat
+            -> getController().getTagsManager().getTagName(cat)));
+
+    public CategoryManager(ImageGalleryController controller) {
+        this.controller = controller;
+    }
+
+    private ImageGalleryController getController() {
+        return controller;
+    }
 
     /**
      * assign a new db. the counts cache is invalidated and all subsequent db
@@ -75,8 +91,8 @@ public class CategoryManager {
     public void setDb(DrawableDB db) {
         this.db = db;
         categoryCounts.invalidateAll();
+        catTagNameMap.invalidateAll();
         Category.clearTagNames();
-        TagUtils.clearFollowUpTagName();
     }
 
     /**
@@ -171,4 +187,13 @@ public class CategoryManager {
         categoryEventBus.unregister(listener);
     }
 
+    /**
+     * get the TagName used to store this Category in the main autopsy db.
+     *
+     * @return the TagName used for this Category
+     */
+    public TagName getTagName(Category cat) {
+        return catTagNameMap.getUnchecked(cat);
+
+    }
 }

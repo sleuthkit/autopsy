@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
@@ -51,10 +52,10 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -486,31 +487,34 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public Set<Long> getFileIDsWithCategory(Category category) throws TskCoreException {
 
         try {
+            final DrawableTagsManager tagsManager = controller.getTagsManager();
             if (category == Category.ZERO) {
+                List< TagName> tns = Stream.of(Category.ONE, Category.TWO, Category.THREE, Category.FOUR, Category.FIVE)
+                        .map(tagsManager::getTagName)
+                        .collect(Collectors.toList());
 
                 Set<Long> files = new HashSet<>();
-                TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
                 for (TagName tn : tns) {
-                    List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
-                    for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
-                            files.add(ct.getContent().getId());
-                        }
+                    if (tn != null) {
+                        List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tn);
+                        files.addAll(contentTags.stream()
+                                .filter(ct -> ct.getContent() instanceof AbstractFile)
+                                .filter(ct -> db.isInDB(ct.getContent().getId()))
+                                .map(ct -> ct.getContent().getId())
+                                .collect(Collectors.toSet()));
                     }
                 }
 
                 return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
             } else {
 
-                Set<Long> files = new HashSet<>();
-                List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
-                for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
-                        files.add(ct.getContent().getId());
-                    }
-                }
+                List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
+                return contentTags.stream()
+                        .filter(ct -> ct.getContent() instanceof AbstractFile)
+                        .filter(ct -> db.isInDB(ct.getContent().getId()))
+                        .map(ct -> ct.getContent().getId())
+                        .collect(Collectors.toSet());
 
-                return files;
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex);
@@ -688,7 +692,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 controller.getCategoryManager().fireChange(fileIDs);
 
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
-                    TagUtils.fireChange(fileIDs);
+                    controller.getTagsManager().fireChange(fileIDs);
                 }
                 break;
         }

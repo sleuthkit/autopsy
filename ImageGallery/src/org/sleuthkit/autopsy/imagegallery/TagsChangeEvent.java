@@ -16,29 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.datamodel;
+package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.Collection;
 import java.util.Collections;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Event broadcast to various UI componenets when one or more files' category
- * has been changed
+ *
  */
 @Immutable
-public class CategoryChangeEvent {
+public class TagsChangeEvent {
 
     private final Collection<Long> fileIDs;
 
-    /**
-     * @return the fileIDs of the files whose categories have changed
-     */
     public Collection<Long> getFileIDs() {
         return Collections.unmodifiableCollection(fileIDs);
     }
 
-    public CategoryChangeEvent(Collection<Long> fileIDs) {
+    public TagsChangeEvent(Collection<Long> fileIDs) {
         this.fileIDs = fileIDs;
     }
+
 }

@@ -100,11 +100,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
@@ -277,7 +277,7 @@ public class GroupPane extends BorderPane implements GroupView {
             @Override
             public void handle(ActionEvent t) {
                 Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
-                new CategorizeAction().addTagsToFiles(cat.getTagName(), "", fileIdSet);
+                new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
 
                 grpCatSplitMenu.setText(cat.getDisplayName());
                 grpCatSplitMenu.setOnAction(this);
@@ -292,7 +292,7 @@ public class GroupPane extends BorderPane implements GroupView {
             @Override
             public void handle(ActionEvent t) {
                 Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
-                AddDrawableTagAction.getInstance().addTagsToFiles(tn, "", fileIdSet);
+                new AddDrawableTagAction(controller).addTagsToFiles(tn, "", fileIdSet);
 
                 grpTagSplitMenu.setText(tn.getDisplayName());
                 grpTagSplitMenu.setOnAction(this);
@@ -340,8 +340,8 @@ public class GroupPane extends BorderPane implements GroupView {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        gridView.cellHeightProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
-        gridView.cellWidthProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
+        gridView.cellHeightProperty().bind(Toolbar.getDefault(controller).sizeSliderValue().add(75));
+        gridView.cellWidthProperty().bind(Toolbar.getDefault(controller).sizeSliderValue().add(75));
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
 
         //configure toolbar properties
@@ -349,8 +349,8 @@ public class GroupPane extends BorderPane implements GroupView {
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
         try {
-            grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
-            grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
+            grpTagSplitMenu.setText(getController().getTagsManager().getFollowUpTagName().getDisplayName());
+            grpTagSplitMenu.setOnAction(createGrpTagMenuItem(getController().getTagsManager().getFollowUpTagName()).getOnAction());
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
@@ -358,8 +358,8 @@ public class GroupPane extends BorderPane implements GroupView {
         grpTagSplitMenu.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, grpTagSplitMenu);
+                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
+                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, grpTagSplitMenu, controller);
                     selTagMenues.add(menuItem);
                 }
                 grpTagSplitMenu.getItems().setAll(selTagMenues);
@@ -419,9 +419,8 @@ public class GroupPane extends BorderPane implements GroupView {
             private ContextMenu buildContextMenu() {
                 ArrayList<MenuItem> menuItems = new ArrayList<>();
 
-                menuItems.add(CategorizeAction.getPopupMenu());
-
-                menuItems.add(AddDrawableTagAction.getInstance().getPopupMenu());
+                menuItems.add(new CategorizeAction(controller).getPopupMenu());
+                menuItems.add(new AddDrawableTagAction(controller).getPopupMenu());
 
                 Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
 
@@ -653,6 +652,10 @@ public class GroupPane extends BorderPane implements GroupView {
         }
     }
 
+    ImageGalleryController getController() {
+        return controller;
+    }
+
     private class DrawableCell extends GridCell<Long> {
 
         private final DrawableTile tile = new DrawableTile(GroupPane.this);
@@ -751,27 +754,27 @@ public class GroupPane extends BorderPane implements GroupView {
                     switch (t.getCode()) {
                         case NUMPAD0:
                         case DIGIT0:
-                            new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.ZERO), "");
                             break;
                         case NUMPAD1:
                         case DIGIT1:
-                            new CategorizeAction().addTag(Category.ONE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.ONE), "");
                             break;
                         case NUMPAD2:
                         case DIGIT2:
-                            new CategorizeAction().addTag(Category.TWO.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.TWO), "");
                             break;
                         case NUMPAD3:
                         case DIGIT3:
-                            new CategorizeAction().addTag(Category.THREE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.THREE), "");
                             break;
                         case NUMPAD4:
                         case DIGIT4:
-                            new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.FOUR), "");
                             break;
                         case NUMPAD5:
                         case DIGIT5:
-                            new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.FIVE), "");
                             break;
                     }
                 }
