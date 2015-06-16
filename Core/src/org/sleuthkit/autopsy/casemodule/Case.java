@@ -79,7 +79,8 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-
+    private static final int MAX_SANITIZED_NAME_LENGTH=48;
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -363,7 +364,8 @@ public class Case {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String indexName = caseName + "_" + dateFormat.format(date);
+        String santizedCaseName = sanitizeCaseName(caseName);
+        String indexName = santizedCaseName + "_" + dateFormat.format(date);
 
         String dbName = null;
 
@@ -371,7 +373,7 @@ public class Case {
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            dbName = caseName + "_" + dateFormat.format(date);
+            dbName = santizedCaseName + "_" + dateFormat.format(date);
         }
 
         xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
@@ -398,6 +400,47 @@ public class Case {
         changeCase(newCase);
     }
 
+    /**
+     * Sanitize the case name for PostgreSQL database, Solr cores, and ActiveMQ
+     * topics. Makes it plain-vanilla enough that each item should be able to
+     * use it.
+     *
+     * @param caseName The name of the case as typed in by the user
+     * @return the sanitized case name to use for Database, Solr, and ActiveMQ
+     */
+    private static String sanitizeCaseName(String caseName) {
+
+        String result;
+
+        // Remove all non-ASCII characters
+        result = caseName.replaceAll("[^\\p{ASCII}]", "");
+
+        // Remove all control characters
+        result = result.replaceAll("[\\p{Cntrl}]", "");
+
+        // Remove / \ : ? space ' "
+        result = result.replaceAll("[ /?:'\"\\\\]", "");
+
+        // Make it all lowercase
+        result = result.toLowerCase();
+
+        // Must start with letter or underscore. If not, prepend an underscore.
+        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '_')) {
+            result = "_" + result;
+        }
+
+        // Chop to 63-13=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
+        if (result.length() > MAX_SANITIZED_NAME_LENGTH) {
+            result = result.substring(0, MAX_SANITIZED_NAME_LENGTH);
+        }
+
+        if (result.isEmpty()) {
+            result = "case";
+        }
+
+        return result;
+    }
+    
     /**
      * Opens the existing case (open the XML config file)
      *
