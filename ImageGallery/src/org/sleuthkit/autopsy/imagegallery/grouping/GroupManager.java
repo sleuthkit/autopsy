@@ -40,6 +40,7 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.swing.SortOrder;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
@@ -241,8 +242,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @return the new DrawableGroup for the given key
      */
-    public DrawableGroup makeGroup(GroupKey<?> groupKey, List<Long> files) {
-        List<Long> newFiles = files == null ? new ArrayList<>() : files;
+    public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
+
+        Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new HashSet<Long>());
         final boolean groupSeen = db.isGroupSeen(groupKey);
         DrawableGroup g = new DrawableGroup(groupKey, newFiles, groupSeen);
 
@@ -303,7 +305,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, List<Long> filesInGroup) {
+    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, Set<Long> filesInGroup) {
         populateAnalyzedGroup(groupKey, filesInGroup, null);
     }
 
@@ -314,7 +316,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param groupKey
      * @param filesInGroup
      */
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final GroupKey<A> groupKey, List<Long> filesInGroup, ReGroupTask<A> task) {
+    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final GroupKey<A> groupKey, Set<Long> filesInGroup, ReGroupTask<A> task) {
 
         /* if this is not part of a regroup task or it is but the task is not
          * cancelled...
@@ -352,7 +354,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *         this
      *         group if they are all analyzed
      */
-    public List<Long> checkAnalyzed(final GroupKey<?> groupKey) {
+    public Set<Long> checkAnalyzed(final GroupKey<?> groupKey) {
         try {
             /* for attributes other than path we can't be sure a group is fully
              * analyzed because we don't know all the files that will be a part
@@ -464,7 +466,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     }
 
-    public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
+    public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
             case CATEGORY:
@@ -481,12 +483,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
-    public List<Long> getFileIDsWithCategory(Category category) throws TskCoreException {
+    public Set<Long> getFileIDsWithCategory(Category category) throws TskCoreException {
 
         try {
             if (category == Category.ZERO) {
 
-                List<Long> files = new ArrayList<>();
+                Set<Long> files = new HashSet<>();
                 TagName[] tns = {Category.FOUR.getTagName(), Category.THREE.getTagName(), Category.TWO.getTagName(), Category.ONE.getTagName(), Category.FIVE.getTagName()};
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
@@ -500,7 +502,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 return db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")");
             } else {
 
-                List<Long> files = new ArrayList<>();
+                Set<Long> files = new HashSet<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
                     if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
@@ -516,9 +518,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-    public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
+    public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         try {
-            List<Long> files = new ArrayList<>();
+            Set<Long> files = new HashSet<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
@@ -636,7 +638,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             // It may be that this was the last unanalyzed file in the group, so test
                             // whether the group is now fully analyzed.
                             //TODO: use method in groupmanager ?
-                            List<Long> checkAnalyzed = checkAnalyzed(gk);
+                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
@@ -674,7 +676,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         } else {
                             //if there wasn't already a group check if there should be one now
                             //TODO: use method in groupmanager ?
-                            List<Long> checkAnalyzed = checkAnalyzed(gk);
+                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
@@ -759,7 +761,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 //check if this group is analyzed
                 final GroupKey<A> groupKey = new GroupKey<>(groupBy, val);
 
-                List<Long> checkAnalyzed = checkAnalyzed(groupKey);
+                Set<Long> checkAnalyzed = checkAnalyzed(groupKey);
                 if (checkAnalyzed != null) { // != null => the group is analyzed, so add it to the ui
 
                     // makeGroup will create the group and add it to the map groupMap, but does not
