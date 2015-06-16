@@ -204,15 +204,45 @@ public class EmailExtracted implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
-                        emailResults.update();
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        /**
+                         * Due to some unresolved issues with how cases are
+                         * closed, it is possible for the event to have a null
+                         * oldValue if the event is a remote event.
+                         */
+                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                        if (null != eventData && eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
+                            emailResults.update();
+                        }
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
                     }
-                }
-                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    emailResults.update();
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        emailResults.update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                 }
                 else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle

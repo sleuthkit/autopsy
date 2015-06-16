@@ -53,7 +53,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
      */
     public BlackboardPostEvent(ModuleDataEvent eventData) {
         /**
-         * Putting a serializable data holding object into newValue to allow for
+         * Putting a serializable data holding object into oldValue to allow for
          * lazy loading of the ModuleDataEvent object for remote events. This
          * bypasses the issues related to the serialization and de-serialization
          * of BlackboardArtifact objects when the event is published over a

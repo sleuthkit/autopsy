@@ -32,6 +32,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -99,7 +100,7 @@ final class RemoteEventPublisher {
         }
         if (null != consumer) {
             consumer.close();
-        }        
+        }
         if (null != session) {
             session.close();
         }
@@ -134,6 +135,23 @@ final class RemoteEventPublisher {
          */
         @Override
         public void onMessage(Message message) {
+            /**
+             * This is a stop gap measure until a different way of handling the
+             * closing of cases is worked out. Currently, Case.currentCase is
+             * set to null before Case.Event.CURRENT_CASE is published. That
+             * means that clients of this class have not had the chance to close
+             * their remote event channels and remote events may be received for
+             * a case that is already closed.
+             */
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do not publish the event.
+                 */
+                return;
+            }
+
             try {
                 if (message instanceof ObjectMessage) {
                     ObjectMessage objectMessage = (ObjectMessage) message;

@@ -51,26 +51,23 @@ public class Tags implements AutopsyVisitableItem {
     // Creation of a RootNode object corresponding to a Tags object is done 
     // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
     // override of Children.Keys<T>.createNodes().
-    
+
     private final TagResults tagResults = new TagResults();
     private final String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
-
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
 
-
-    
-    
     /**
-     * This class largely does nothing except act as a top-level object that 
-     * the other nodes can listen to.  This mimics what other nodes have (keword search, etc.),
-     * but theirs stores data.
+     * This class largely does nothing except act as a top-level object that the
+     * other nodes can listen to. This mimics what other nodes have (keword
+     * search, etc.), but theirs stores data.
      */
     private class TagResults extends Observable {
+
         public void update() {
             setChanged();
             notifyObservers();
@@ -123,20 +120,55 @@ public class Tags implements AutopsyVisitableItem {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    /* Note: this is a hack. In an ideal world, TagsManager
-                     * would fire events so that the directory tree would
-                     * refresh. But, we haven't had a chance to add that so, we
-                     * fire these events and the tree refreshes based on them. */
-                    if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)
-                            || ((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
-                        refresh(true);
-                        tagResults.update();
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        /**
+                         * There are two things to note here. It is possible for
+                         * the event to have a null oldValue if the event is a
+                         * remote event and the case is closed after the above
+                         * call, but before this code executes. Second, the use
+                         * of deprecated artifact types here is explained by the
+                         * fact that in an ideal world, the TagsManager would
+                         * fire tag-related events so that the tags tree would
+                         * refresh. But, we haven't had a chance to add that, so
+                         * we fire these events with bogus artifacts to indicate
+                         * a tree refresh is required.
+                         */
+                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                        if (null != eventData
+                                && (eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT
+                                || eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)) {
+                            refresh(true);
+                            tagResults.update();
+                        }
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    refresh(true);
-                    tagResults.update();
-                }
-                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        refresh(true);
+                        tagResults.update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that this can be garbage collected
                     if (evt.getNewValue() == null) {
                         removeNotify();
@@ -187,15 +219,15 @@ public class Tags implements AutopsyVisitableItem {
 
     /**
      * Instances of this class are elements of Node hierarchies consisting of
-     * content and blackboard artifact tags, grouped first by tag type, then by tag
-     * name.
+     * content and blackboard artifact tags, grouped first by tag type, then by
+     * tag name.
      */
     public class TagNameNode extends DisplayableItemNode implements Observer {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png"; //NON-NLS
         private final TagName tagName;
-        
+
         public TagNameNode(TagName tagName) {
             super(Children.create(new TagTypeNodeFactory(tagName), true), Lookups.singleton(NbBundle.getMessage(TagNameNode.class, "TagNameNode.namePlusTags.text", tagName.getDisplayName())));
             this.tagName = tagName;
@@ -250,12 +282,13 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
     }
-    
+
     /**
-     * Creates nodes for the two types of tags: file and artifact.
-     * Does not need observer / messages since it always has the same children
+     * Creates nodes for the two types of tags: file and artifact. Does not need
+     * observer / messages since it always has the same children
      */
     private class TagTypeNodeFactory extends ChildFactory<String> {
+
         private final TagName tagName;
         private final String CONTENT_TAG_TYPE_NODE_KEY = NbBundle.getMessage(TagNameNode.class, "TagNameNode.contentTagTypeNodeKey.text");
         private final String BLACKBOARD_ARTIFACT_TAG_TYPE_NODE_KEY = NbBundle.getMessage(TagNameNode.class, "TagNameNode.bbArtTagTypeNodeKey.text");
@@ -284,19 +317,20 @@ public class Tags implements AutopsyVisitableItem {
             }
         }
     }
-    
+
     private final String CONTENT_DISPLAY_NAME = NbBundle.getMessage(ContentTagTypeNode.class, "ContentTagTypeNode.displayName.text");
-        
+
     /**
-     * Node for the content tags.  Children are specific tags.
-     * Instances of this class are are elements of a directory tree sub-tree
-     * consisting of content and blackboard artifact tags, grouped first by tag
-     * type, then by tag name.
+     * Node for the content tags. Children are specific tags. Instances of this
+     * class are are elements of a directory tree sub-tree consisting of content
+     * and blackboard artifact tags, grouped first by tag type, then by tag
+     * name.
      */
     public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private TagName tagName;
+
         public ContentTagTypeNode(TagName tagName) {
             super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
             this.tagName = tagName;
@@ -305,7 +339,7 @@ public class Tags implements AutopsyVisitableItem {
             this.setIconBaseWithExtension(ICON_PATH);
             tagResults.addObserver(this);
         }
-        
+
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
@@ -341,10 +375,11 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             updateDisplayName();
-        }    
+        }
     }
-    
+
     private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
+
         private final TagName tagName;
 
         ContentTagNodeFactory(TagName tagName) {
@@ -377,13 +412,15 @@ public class Tags implements AutopsyVisitableItem {
     }
 
     private final String ARTIFACT_DISPLAY_NAME = NbBundle.getMessage(BlackboardArtifactTagTypeNode.class, "BlackboardArtifactTagTypeNode.displayName.text");
-        
+
     /**
      * Instances of this class are elements in a sub-tree of the Autopsy
-     * presentation of the SleuthKit data model. The sub-tree consists of content
-     * and blackboard artifact tags, grouped first by tag type, then by tag name.
+     * presentation of the SleuthKit data model. The sub-tree consists of
+     * content and blackboard artifact tags, grouped first by tag type, then by
+     * tag name.
      */
     public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
+
         private TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
@@ -395,7 +432,7 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
             tagResults.addObserver(this);
         }
-        
+
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
@@ -435,28 +472,29 @@ public class Tags implements AutopsyVisitableItem {
     }
 
     private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> {
-         private final TagName tagName;
 
-         BlackboardArtifactTagNodeFactory(TagName tagName) {
-             super();
-             this.tagName = tagName;
-         }
+        private final TagName tagName;
 
-         @Override
-         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
-             try {
-                 // Use the blackboard artifact tags bearing the specified tag name as the keys.
-                 keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));
-             } catch (TskCoreException ex) {
-                 Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-             }
-             return true;
-         }
+        BlackboardArtifactTagNodeFactory(TagName tagName) {
+            super();
+            this.tagName = tagName;
+        }
 
-         @Override
-         protected Node createNodeForKey(BlackboardArtifactTag key) {
-             // The blackboard artifact tags to be wrapped are used as the keys.
-             return new BlackboardArtifactTagNode(key);
-         }
-     }
+        @Override
+        protected boolean createKeys(List<BlackboardArtifactTag> keys) {
+            try {
+                // Use the blackboard artifact tags bearing the specified tag name as the keys.
+                keys.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));
+            } catch (TskCoreException ex) {
+                Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
+            }
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(BlackboardArtifactTag key) {
+            // The blackboard artifact tags to be wrapped are used as the keys.
+            return new BlackboardArtifactTagNode(key);
+        }
+    }
 }

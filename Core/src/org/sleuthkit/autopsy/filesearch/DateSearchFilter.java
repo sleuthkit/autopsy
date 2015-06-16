@@ -74,7 +74,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     public String getPredicate() throws FilterValidationException {
         String query = "NULL";
         DateSearchPanel panel = this.getComponent();
-                
+
         // first, get the selected timeZone from the dropdown list
         String tz = this.getComponent().getTimeZoneComboBox().getSelectedItem().toString();
         String tzID = tz.substring(tz.indexOf(" ") + 1); // 1 index after the space is the ID
@@ -126,7 +126,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             toDate = fromDate;
             fromDate = temp;
         }
-         
+
         final boolean modifiedChecked = panel.getModifiedCheckBox().isSelected();
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
@@ -253,7 +253,20 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                     break;
                 case DATA_SOURCE_ADDED:
                 case DATA_SOURCE_DELETED:
-                    SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                     break;
             }
         }

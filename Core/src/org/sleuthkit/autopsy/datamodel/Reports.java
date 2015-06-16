@@ -98,7 +98,20 @@ public final class Reports implements AutopsyVisitableItem {
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
                     if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
-                        ReportNodeFactory.this.refresh(true);
+                        /**
+                         * This is a stop gap measure until a different way of
+                         * handling the closing of cases is worked out.
+                         * Currently, remote events may be received for a case
+                         * that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            ReportNodeFactory.this.refresh(true);
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     }
                 }
             });

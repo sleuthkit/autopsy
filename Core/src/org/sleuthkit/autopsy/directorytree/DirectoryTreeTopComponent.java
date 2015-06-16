@@ -525,8 +525,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String changed = evt.getPropertyName();
-        Object oldValue = evt.getOldValue();
-        Object newValue = evt.getNewValue();
         if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
             // When a case is closed, the old value of this property is the 
             // closed Case object and the new value is null. When a case is 
@@ -536,15 +534,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             // opened events instead of property change events would be a better
             // solution. Either way, more probably needs to be done to clean up
             // data model objects when a case is closed.
-            if (oldValue != null && newValue == null) {
+            if (evt.getOldValue() != null && evt.getNewValue() == null) {
                 // The current case has been closed. Reset the ExplorerManager.
                 SwingUtilities.invokeLater(() -> {
                     Node emptyNode = new AbstractNode(Children.LEAF);
                     em.setRootContext(emptyNode);
                 });
-            } else if (newValue != null) {
+            } else if (evt.getNewValue() != null) {
                 // A new case has been opened. Reset the ExplorerManager. 
-                Case newCase = (Case) newValue;
+                Case newCase = (Case) evt.getNewValue();
                 final String newCaseName = newCase.getName();
                 SwingUtilities.invokeLater(() -> {
                     em.getRootContext().setName(newCaseName);
@@ -561,23 +559,44 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            /**
+             * This is a stop gap measure until a different way of handling the
+             * closing of cases is worked out. Currently, remote events may be
+             * received for a case that is already closed.
+             */
+            try {
+                Case.getCurrentCase();
                 CoreComponentControl.openCoreWindows();
+                SwingUtilities.invokeLater(this::componentOpened);
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
             }
-            SwingUtilities.invokeLater(this::componentOpened);
         } // change in node selection
         else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
             SwingUtilities.invokeLater(() -> {
-                respondSelection((Node[]) oldValue, (Node[]) newValue);
+                respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
             });
         } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
             // all nodes should be listening for these events and update accordingly.
         } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            SwingUtilities.invokeLater(this::refreshDataSourceTree);
-        } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-            SwingUtilities.invokeLater(this::refreshDataSourceTree);
+                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                || changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            /**
+             * This is a stop gap measure until a different way of handling the
+             * closing of cases is worked out. Currently, remote events may be
+             * received for a case that is already closed.
+             */
+            try {
+                Case.getCurrentCase();
+                SwingUtilities.invokeLater(this::refreshDataSourceTree);
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
+            }
         }
     }
 

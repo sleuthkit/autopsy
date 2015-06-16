@@ -696,9 +696,22 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    SwingUtilities.invokeLater(() -> {
-                        outOfDatePromptAndRebuild();
-                    });
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        SwingUtilities.invokeLater(() -> {
+                            outOfDatePromptAndRebuild();
+                        });
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                     break;
             }
         }
@@ -711,9 +724,22 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ADDED:
-                    SwingUtilities.invokeLater(() -> {
-                        outOfDatePromptAndRebuild();
-                    });
+                    /**
+                     * This is a stop gap measure until a different way of
+                     * handling the closing of cases is worked out. Currently,
+                     * remote events may be received for a case that is already
+                     * closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        SwingUtilities.invokeLater(() -> {
+                            outOfDatePromptAndRebuild();
+                        });
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                     break;
                 case CURRENT_CASE:
                     SwingUtilities.invokeLater(() -> {

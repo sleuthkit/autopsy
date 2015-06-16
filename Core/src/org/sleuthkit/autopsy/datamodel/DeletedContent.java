@@ -183,13 +183,38 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        // @@@ COULD CHECK If the new file is deleted before notifying...
-                        update();
+                        /**
+                         * This is a stop gap measure until a different way of
+                         * handling the closing of cases is worked out.
+                         * Currently, remote events may be received for a case
+                         * that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            // @@@ COULD CHECK If the new file is deleted before notifying...
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                        update();
-                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        update();
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        /**
+                         * This is a stop gap measure until a different way of
+                         * handling the closing of cases is worked out.
+                         * Currently, remote events may be received for a case
+                         * that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {
