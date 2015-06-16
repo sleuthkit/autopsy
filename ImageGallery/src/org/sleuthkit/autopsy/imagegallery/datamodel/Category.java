@@ -53,6 +53,10 @@ public enum Category {
         return nameMap.containsKey(tName);
     }
 
+    public static boolean isCategoryTagName(TagName tName) {
+        return nameMap.containsKey(tName.getDisplayName());
+    }
+
     public static boolean isNotCategoryName(String tName) {
         return nameMap.containsKey(tName) == false;
     }
