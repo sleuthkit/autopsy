@@ -139,7 +139,7 @@ public final class ContentUtils {
                     return TimeZone.getDefault();
                 }
             }
-        } catch (TskException | NullPointerException ex) {
+        } catch (TskException ex) {
             return TimeZone.getDefault();
         }
     }
