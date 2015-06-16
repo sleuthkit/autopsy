@@ -67,30 +67,9 @@ public class AutopsyExceptionHandler extends Handler {
 
             if (record.getMessage() != null) {
                 // Throwable was anticipated, caught and logged. Display log message and throwable message.
-
-                final int levelValue = record.getLevel().intValue();
-                
-                final Component parentComponent = null; // Use default window frame.
-                final String message = formatExplanation(record);
-                final String title = getTitleForLevelValue(levelValue);
-                final int messageType = getMessageTypeForLevelValue(levelValue);
-
-                // publish() was probably not called from the EDT, so run the message box there instead of here.
-                //only show the dialog in dev builds
-                if (buildType == Version.Type.DEVELOPMENT) {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        JOptionPane.showMessageDialog(
-                                parentComponent,
-                                message,
-                                title,
-                                messageType);
-                    }
-                });
-                }
-                logger.log(Level.SEVERE, "Unexpected error: " + title + ", " + message ); //NON-NLS
+                logger.log(Level.SEVERE, "Unexpected error: " + 
+                        getTitleForLevelValue(record.getLevel().intValue()) + 
+                        ", " + formatExplanation(record)); //NON-NLS
             } else {
                 // Throwable (unanticipated) error. Use built-in exception handler to offer details, stacktrace.
                 nbErrorManager.publish(record);
