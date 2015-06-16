@@ -28,7 +28,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Utilities;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
@@ -94,6 +97,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
      return (getSize().width < 400);
  }};
         this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white
+        this.outputViewPane.requestFocusInWindow();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
         currentPageLabel = new javax.swing.JLabel();
@@ -116,6 +120,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        outputViewPane.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);
@@ -289,13 +294,54 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         setDataViewByPageNumber(pageNumber);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
-    private void goToOffsetTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToOffsetTextFieldActionPerformed
+    /***
+     * Calculates the offset relative to the current caret position.
+     * @param add Pass true if the user provided offset is to be added with the offset of the caret position. Else false.
+     * @return 
+     */
+    private long getOffset(boolean add) {
         String hexOffsetStr = goToOffsetTextField.getText();
+        String userProvidedRelativeOffsetStr;
+        String userSelectedLine;
+        userProvidedRelativeOffsetStr = hexOffsetStr.substring(hexOffsetStr.indexOf("+")); // NON-NLS
         try {
-            long offset = Long.decode(hexOffsetStr);
+            // get the selected line. Extract the current hex offset location.
+            userSelectedLine = outputViewPane.getText().subSequence(
+                    Utilities.getRowStart(outputViewPane, outputViewPane.getCaretPosition()),
+                    Utilities.getRowEnd(outputViewPane, outputViewPane.getCaretPosition()))
+                    .toString();
+            // NOTE: This needs to change if the outputFormat of outputViewPane changes.
+            String hexForUserSelectedLine = userSelectedLine.substring(0, userSelectedLine.indexOf(":"));
+            if (add) {
+                return Long.decode(hexForUserSelectedLine) + Long.decode(userProvidedRelativeOffsetStr);
+            } else {
+                return Long.decode(hexForUserSelectedLine) - Long.decode(userProvidedRelativeOffsetStr);
+            }
+        } catch (BadLocationException ex) {
+            // thrown in case the caret location is out of the range of the outputViewPane.
+            // Log it?
+        }
+        return 0L;
+    }
+
+    private void goToOffsetTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToOffsetTextFieldActionPerformed
+        long offset;
+        // jump forward relative to the current location.
+        if (goToOffsetTextField.getText().startsWith("+")) {
+            offset = getOffset(true);
+        } else
+            // jump backward relative to the current location.
+            if (goToOffsetTextField.getText().startsWith("-")) {
+            offset = getOffset(false);
+        } else {
+            // jump to an absolute location.
+            offset = Long.decode(goToOffsetTextField.getText());
+        }
+
+        try {
             setDataViewByOffset(offset);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "DataContentViewerHex.goToOffsetTextField.msgDlg", hexOffsetStr));
+            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "DataContentViewerHex.goToOffsetTextField.msgDlg", goToOffsetTextField.getText()));
         }
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 

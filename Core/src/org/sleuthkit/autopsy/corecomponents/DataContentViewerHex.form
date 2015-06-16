@@ -137,6 +137,9 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Courier New" size="11" style="0"/>
                 </Property>
+                <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+                  <Color id="Default Cursor"/>
+                </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[700, 20]"/>
                 </Property>
@@ -146,7 +149,7 @@
               </Properties>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;     public boolean getScrollableTracksViewportWidth() {&#xd;     return (getSize().width &lt; 400);&#xd; }};"/>
-                <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white"/>
+                <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white&#xd;&#xa;this.outputViewPane.requestFocusInWindow();"/>
               </AuxValues>
             </Component>
           </SubComponents>
