@@ -34,7 +34,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.gui.GroupPane;
 import org.sleuthkit.autopsy.imagegallery.gui.MetaDataPane;
@@ -145,7 +144,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
-            borderPane.setTop(Toolbar.getDefault());
+            borderPane.setTop(Toolbar.getDefault(controller));
             borderPane.setBottom(new StatusBar(controller));
 
             metaDataTable = new MetaDataPane(controller);

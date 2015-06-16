@@ -126,7 +126,8 @@ public final class ImageGalleryController {
 
     private final GroupManager groupManager = new GroupManager(this);
     private final HashSetManager hashSetManager = new HashSetManager();
-    private final CategoryManager categoryManager = new CategoryManager();
+    private final CategoryManager categoryManager = new CategoryManager(this);
+    private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
 
     private StackPane fullUIStackPane;
 
@@ -344,7 +345,7 @@ public final class ImageGalleryController {
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), getSleuthKitCase());
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
         setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
@@ -356,6 +357,7 @@ public final class ImageGalleryController {
         groupManager.setDB(db);
         hashSetManager.setDb(db);
         categoryManager.setDb(db);
+        tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
         SummaryTablePane.getDefault().refresh();
     }
 
@@ -371,9 +373,9 @@ public final class ImageGalleryController {
             historyManager.clear();
         });
         Category.clearTagNames();
-        TagUtils.clearFollowUpTagName();
+        tagsManager.clearFollowUpTagName();
 
-        Toolbar.getDefault().reset();
+        Toolbar.getDefault(this).reset();
         groupManager.clear();
         if (db != null) {
             db.closeDBCon();
@@ -487,6 +489,10 @@ public final class ImageGalleryController {
 
     public CategoryManager getCategoryManager() {
         return categoryManager;
+    }
+
+    public DrawableTagsManager getTagsManager() {
+        return tagsManager;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...

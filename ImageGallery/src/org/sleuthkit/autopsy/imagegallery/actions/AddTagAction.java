@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -43,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * //TODO: this class started as a cut and paste from
  * org.sleuthkit.autopsy.actions.AddTagAction and needs to be
- * refactor or reintegrated to the AddTagAction hierarchy of Autopysy.
+ * refactored or reintegrated to the AddTagAction hierarchy of Autopysy.
  */
 abstract class AddTagAction {
 
@@ -86,7 +87,7 @@ abstract class AddTagAction {
     // to be reworked.
     protected class TagMenu extends Menu {
 
-        TagMenu() {
+        TagMenu(ImageGalleryController controller) {
             super(getActionDisplayName());
 
             // Get the current set of tag names.
@@ -147,9 +148,9 @@ abstract class AddTagAction {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
                     if (null != tagNameAndComment) {
                         if (tagNameAndComment.getTagName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                            new CategorizeAction().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                                new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         } else {
-                            AddDrawableTagAction.getInstance().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                                new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
                         refreshDirectoryTree();
                     }

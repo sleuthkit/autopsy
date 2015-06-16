@@ -64,10 +64,10 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTag;
+import org.sleuthkit.autopsy.imagegallery.actions.DeleteTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -138,6 +138,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
      */
     final private GroupPane groupPane;
     private boolean registered = false;
+    private final ImageGalleryController controller;
 
     GroupPane getGroupPane() {
         return groupPane;
@@ -145,6 +146,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     protected DrawableViewBase(GroupPane groupPane) {
         this.groupPane = groupPane;
+        this.controller = groupPane.getController();
         globalSelectionModel.getSelected().addListener((Observable observable) -> {
             updateSelectionState();
         });
@@ -194,9 +196,9 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
             private ContextMenu buildContextMenu() {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
-                menuItems.add(CategorizeAction.getPopupMenu());
+                menuItems.add(new CategorizeAction(controller).getPopupMenu());
 
-                menuItems.add(AddDrawableTagAction.getInstance().getPopupMenu());
+                menuItems.add(new AddDrawableTagAction(controller).getPopupMenu());
 
                 final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
                 extractMenuItem.setOnAction((ActionEvent t) -> {
@@ -260,42 +262,15 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
             if (followUpToggle.isSelected() == true) {
                 globalSelectionModel.clearAndSelect(fileID);
                 try {
-                    AddDrawableTagAction.getInstance().addTag(TagUtils.getFollowUpTagName(), "");
+                    new AddDrawableTagAction(controller).addTag(ImageGalleryController.getDefault().getTagsManager().getFollowUpTagName(), "");
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to add follow up tag.  Could not load TagName.", ex);
                 }
             } else {
-                new DeleteFollowUpTag(file).handle(t);
-//                deleteFollowupTag(fileID);
+                new DeleteTagAction(controller, file).handle(t);
             }
         });
     }
-
-//    /**
-//     *
-//     * @param fileID1 the value of fileID1
-//     *
-//     * @throws IllegalStateException
-//     */
-//    private void deleteFollowupTag(final Long fileID1) throws IllegalStateException {
-//        //TODO: convert this to an action!
-//        final ImageGalleryController controller = ImageGalleryController.getDefault();
-//        try {
-//            // remove file from old category group
-//            controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID1);
-//
-//            List<ContentTag> contentTagsByContent = controller.getSleuthKitCase().getContentTagsByContent(file);
-//            for (ContentTag ct : contentTagsByContent) {
-//                if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
-//                    controller.getSleuthKitCase().deleteContentTag(ct);
-//                }
-//            }
-//            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
-//            controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID1), DrawableAttribute.TAGS));
-//        } catch (TskCoreException ex) {
-//            LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
-//        }
-//    }
 
     @Override
     public DrawableFile<?> getFile() {
@@ -315,7 +290,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     }
 
     protected boolean hasFollowUp() throws TskCoreException {
-        String followUpTagName = TagUtils.getFollowUpTagName().getDisplayName();
+        String followUpTagName = ImageGalleryController.getDefault().getTagsManager().getFollowUpTagName().getDisplayName();
         Collection<TagName> tagNames = DrawableAttribute.TAGS.getValue(getFile());
         return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
     }
@@ -326,8 +301,8 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     }
 
     @Override
-    synchronized public void handleTagsChanged(Collection<Long> ids) {
-        if (fileID != null && ids.contains(fileID)) {
+    synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
+        if (fileID != null && evnt.getFileIDs().contains(fileID)) {
             updateFollowUpIcon();
         }
     }
@@ -354,8 +329,8 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
             if (this.fileID == null || Case.isCaseOpen() == false) {
                 if (registered == true) {
-                    ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
-                    TagUtils.unregisterListener(this);
+                    getController().getCategoryManager().unregisterListener(this);
+                    getController().getTagsManager().unregisterListener(this);
                     registered = false;
                 }
                 file = null;
@@ -364,8 +339,8 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
                 });
             } else {
                 if (registered == false) {
-                    ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
-                    TagUtils.registerListener(this);
+                    getController().getCategoryManager().registerListener(this);
+                    getController().getTagsManager().registerListener(this);
                     registered = true;
                 }
                 file = null;
@@ -411,8 +386,13 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     @Subscribe
     @Override
     synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (evt.getIds().contains(getFileID())) {
+        if (evt.getFileIDs().contains(getFileID())) {
             updateCategoryBorder();
         }
+    }
+
+    @Override
+    public ImageGalleryController getController() {
+        return controller;
     }
 }

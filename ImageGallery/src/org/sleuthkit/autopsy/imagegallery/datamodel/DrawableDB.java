@@ -47,6 +47,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
@@ -147,6 +148,7 @@ public final class DrawableDB {
         }
     }
     private final SleuthkitCase tskCase;
+    private final ImageGalleryController controller;
 
     //////////////general database logic , mostly borrowed from sleuthkitcase
     /**
@@ -195,9 +197,10 @@ public final class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(Path dbPath, SleuthkitCase tskCase) throws SQLException, ExceptionInInitializerError, IOException {
+    private DrawableDB(Path dbPath, ImageGalleryController controller) throws SQLException, ExceptionInInitializerError, IOException {
         this.dbPath = dbPath;
-        this.tskCase = tskCase;
+        this.controller = controller;
+        this.tskCase = controller.getSleuthKitCase();
         Files.createDirectories(dbPath.getParent());
         if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
@@ -286,10 +289,10 @@ public final class DrawableDB {
      *
      * @return
      */
-    public static DrawableDB getDrawableDB(Path dbPath, SleuthkitCase tskCase) {
+    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
 
         try {
-            return new DrawableDB(dbPath.resolve("drawable.db"), tskCase);
+            return new DrawableDB(dbPath.resolve("drawable.db"), controller);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex);
             return null;
@@ -1055,7 +1058,7 @@ public final class DrawableDB {
     public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
         try {
             List<DrawableFile<?>> files = new ArrayList<>();
-            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
+            List<ContentTag> contentTags = tskCase.getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile) {
                     files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
@@ -1240,7 +1243,7 @@ public final class DrawableDB {
      */
     public long getCategoryCount(Category cat) {
         try {
-            return Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName()).stream()
+            return tskCase.getContentTagsByTagName(controller.getTagsManager().getTagName(cat)).stream()
                     .map(ContentTag::getContent)
                     .map(Content::getId)
                     .filter(this::isInDB)
