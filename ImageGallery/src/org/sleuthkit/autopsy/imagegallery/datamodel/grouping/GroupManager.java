@@ -243,6 +243,9 @@ public class GroupManager {
     /**
      * 'mark' the given group as seen. This removes it from the queue of
      * groups
+    public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
+
+        Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new HashSet<Long>());
      * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
@@ -284,6 +287,8 @@ public class GroupManager {
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                         }
+    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, Set<Long> filesInGroup) {
+    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final GroupKey<A> groupKey, Set<Long> filesInGroup, ReGroupTask<A> task) {
                     });
                 }
             }
@@ -291,6 +296,7 @@ public class GroupManager {
             // It may be that this was the last unanalyzed file in the group, so test
             // whether the group is now fully analyzed.
             popuplateIfAnalyzed(groupKey, null);
+    public Set<Long> checkAnalyzed(final GroupKey<?> groupKey) {
         }
 
         return group;
@@ -595,6 +601,7 @@ public class GroupManager {
 
             for (GroupKey<?> gk : groupsForFile) {
                 removeFromGroup(gk, fileId);
+                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
             }
         }
     }
@@ -739,6 +746,7 @@ public class GroupManager {
                 updateProgress(p, vals.size());
                 groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
+                Set<Long> checkAnalyzed = checkAnalyzed(groupKey);
             }
 
             updateProgress(1, 1);

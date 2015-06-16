@@ -67,11 +67,9 @@ import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -267,6 +265,32 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             });
         });
     }
+
+//    /**
+//     *
+//     * @param fileID1 the value of fileID1
+//     *
+//     * @throws IllegalStateException
+//     */
+//    private void deleteFollowupTag(final Long fileID1) throws IllegalStateException {
+//        //TODO: convert this to an action!
+//        final ImageGalleryController controller = ImageGalleryController.getDefault();
+//        try {
+//            // remove file from old category group
+//            controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID1);
+//
+//            List<ContentTag> contentTagsByContent = controller.getSleuthKitCase().getContentTagsByContent(file);
+//            for (ContentTag ct : contentTagsByContent) {
+//                if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
+//                    controller.getSleuthKitCase().deleteContentTag(ct);
+//                }
+//            }
+//            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
+//            controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID1), DrawableAttribute.TAGS));
+//        } catch (TskCoreException ex) {
+//            LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
+//        }
+//    }
 
     protected boolean hasFollowUp() {
         if (getFileID().isPresent()) {
