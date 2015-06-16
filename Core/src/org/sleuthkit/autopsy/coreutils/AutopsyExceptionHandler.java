@@ -19,14 +19,12 @@
 
 package org.sleuthkit.autopsy.coreutils;
 
-import java.awt.Component;
 import java.util.logging.Filter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.netbeans.core.NbErrorManager;
 
@@ -64,12 +62,13 @@ public class AutopsyExceptionHandler extends Handler {
     public void publish(LogRecord record) {
 
         if (isLoggable(record)) {
-
+            final String title = getTitleForLevelValue(record.getLevel().intValue());
+            final String message = formatExplanation(record);
+                        
             if (record.getMessage() != null) {
                 // Throwable was anticipated, caught and logged. Display log message and throwable message.
-                logger.log(Level.SEVERE, "Unexpected error: " + 
-                        getTitleForLevelValue(record.getLevel().intValue()) + 
-                        ", " + formatExplanation(record)); //NON-NLS
+                MessageNotifyUtil.Notify.error(title, message);
+                logger.log(Level.SEVERE, "Unexpected error: " + title + ", " + message); //NON-NLS
             } else {
                 // Throwable (unanticipated) error. Use built-in exception handler to offer details, stacktrace.
                 nbErrorManager.publish(record);
