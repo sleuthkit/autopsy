@@ -34,16 +34,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public enum Category implements Comparable<Category> {
 
-    ZERO(Color.LIGHTGREY, 0, "CAT-0, Uncategorized"),
-    ONE(Color.RED, 1, "CAT-1,  Child Exploitation (Illegal)"),
-    TWO(Color.ORANGE, 2, "CAT-2, Child Exploitation (Non-Illegal/Age Difficult)"),
-    THREE(Color.YELLOW, 3, "CAT-3, CGI/Animation (Child Exploitive)"),
-    FOUR(Color.BISQUE, 4, "CAT-4,  Exemplar/Comparison (Internal Use Only)"),
-    FIVE(Color.GREEN, 5, "CAT-5, Non-pertinent");
+    ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized"),
+    ONE(Color.RED, 1, "CAT-1:  Child Exploitation (Illegal)"),
+    TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
+    THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
+    FOUR(Color.BISQUE, 4, "CAT-4:  Exemplar/Comparison (Internal Use Only)"),
+    FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent");
 
     /** map from displayName to enum value */
     private static final Map<String, Category> nameMap
-            = Stream.of(values()).collect(Collectors.toMap(Category::getDisplayName,
+            = Stream.of(values()).collect(Collectors.toMap(
+                            Category::getDisplayName,
                             Function.identity()));
 
     public static final String CATEGORY_PREFIX = "CAT-";
@@ -63,6 +64,10 @@ public enum Category implements Comparable<Category> {
         Category.THREE.tagName = null;
         Category.FOUR.tagName = null;
         Category.FIVE.tagName = null;
+    }
+
+    public static boolean isCategoryTagName(TagName tName) {
+        return nameMap.containsKey(tName.getDisplayName());
     }
 
     private TagName tagName;

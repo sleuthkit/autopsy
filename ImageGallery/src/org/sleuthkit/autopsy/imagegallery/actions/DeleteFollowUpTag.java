@@ -78,6 +78,8 @@ public class DeleteFollowUpTag extends Action {
                 }
             }
             IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
+
+            //make sure rest of ui  hears category change.
             controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
