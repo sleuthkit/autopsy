@@ -698,7 +698,7 @@ public final class DrawableDB {
     public Boolean isGroupAnalyzed(GroupKey<?> gk) {
         dbReadLock();
         try {
-            List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
+            Set<Long> fileIDsInGroup = getFileIDsInGroup(gk);
 
             try {
                 // In testing, this method appears to be a lot faster than doing one large select statement
@@ -747,10 +747,10 @@ public final class DrawableDB {
      *
      * @throws TskCoreException
      */
-    public List<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
+    public Set<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
-        List<Long> ret = new ArrayList<>();
+        Set<Long> ret = new HashSet<>();
         dbReadLock();
         try {
             statement = con.createStatement();
@@ -984,7 +984,7 @@ public final class DrawableDB {
         }
     }
 
-    public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
+    public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
 
         if (groupKey.getAttribute().isDBColumn) {
             switch (groupKey.getAttribute().attrName) {
@@ -994,7 +994,7 @@ public final class DrawableDB {
                     return groupManager.getFileIDsWithTag((TagName) groupKey.getValue());
             }
         }
-        List<Long> files = new ArrayList<>();
+        Set<Long> files = new HashSet<>();
         dbReadLock();
         try {
             PreparedStatement statement = getGroupStatment(groupKey.getAttribute());
