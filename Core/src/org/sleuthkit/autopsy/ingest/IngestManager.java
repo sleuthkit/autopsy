@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
@@ -331,9 +332,8 @@ public class IngestManager {
             }
         } catch (IllegalStateException | AutopsyEventException ex) {
             logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
-            JOptionPane.showMessageDialog(null, NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.ErrMsg"),
-                    NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.FailPopup.Title"),
-                    JOptionPane.WARNING_MESSAGE);
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.ErrMsg"));
         }
     }
 
