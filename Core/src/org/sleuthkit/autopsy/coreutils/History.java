@@ -37,7 +37,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * advance.
  *
  * @param <T> the type of objects used to represent the
- * current/historical/future states
+ *            current/historical/future states
  */
 @ThreadSafe
 public class History<T> {
@@ -133,6 +133,7 @@ public class History<T> {
      * by invoking the equals method. Throws away any forward states.
      *
      * @param newState the new state to advance to
+     *
      * @throws IllegalArgumentException if newState == null
      */
     synchronized public void advance(T newState) throws IllegalArgumentException {
@@ -150,7 +151,7 @@ public class History<T> {
         }
     }
 
-    public void clear() {
+    synchronized public void clear() {
         historyStack.clear();
         forwardStack.clear();
         currentState.set(null);

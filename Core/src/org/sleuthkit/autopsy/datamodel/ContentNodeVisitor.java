@@ -19,24 +19,24 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- * Interface for visitor pattern on ContentNodes
+ * Visitor Pattern interface that goes over Content nodes
+ * in the data source area of the tree.
+ * 
+ * The DisplayableItemNodeVisitor goes over all nodes in the tree.
+ * 
  * @param <T> visit method return type
  */
  interface ContentNodeVisitor<T> {
-
-    T visit(DirectoryNode dn);
-
-    T visit(FileNode fn);
-
+     
     T visit(ImageNode in);
-
+    T visit(VirtualDirectoryNode lcn);
     T visit(VolumeNode vn);
-    
-    T visit(LayoutFileNode lcn);
-    
+    T visit(DirectoryNode dn);
+    T visit(FileNode fn);
+    T visit(LayoutFileNode lcn);    
     T visit(LocalFileNode dfn);
     
-    T visit(VirtualDirectoryNode lcn);
+    
 
     /**
      * Visitor with an implementable default behavior for all types. Override

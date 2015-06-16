@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.datamodel;
 
 
 /**
- * Images nodes support
+ * Root node to store the data sources in a case
  */
-public class DataSources implements AutopsyVisitableItem{
+public class DataSources implements AutopsyVisitableItem {
     
     public DataSources() {
     }

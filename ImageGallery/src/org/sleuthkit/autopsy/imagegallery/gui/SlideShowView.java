@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,6 +56,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
+import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.HASH_BORDER;
+import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.getCategoryBorder;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -64,7 +66,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends SingleDrawableViewBase implements TagUtils.TagListener, Category.CategoryListener {
+public class SlideShowView extends DrawableViewBase implements TagUtils.TagListener {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
@@ -191,33 +193,34 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
         syncButtonVisibility();
 
-        groupPane.grouping().addListener((Observable observable) -> {
+        getGroupPane().grouping().addListener((Observable observable) -> {
             syncButtonVisibility();
-            groupPane.getGrouping().fileIds().addListener((Observable observable1) -> {
-                syncButtonVisibility();
-            });
+            if (getGroupPane().getGrouping() != null) {
+                getGroupPane().getGrouping().fileIds().addListener((Observable observable1) -> {
+                    syncButtonVisibility();
+                });
+            }
         });
     }
 
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
-        try{
-            final boolean hasMultipleFiles = groupPane.getGrouping().fileIds().size() > 1;
+        try {
+            final boolean hasMultipleFiles = getGroupPane().getGrouping().fileIds().size() > 1;
             Platform.runLater(() -> {
                 rightButton.setVisible(hasMultipleFiles);
                 leftButton.setVisible(hasMultipleFiles);
                 rightButton.setManaged(hasMultipleFiles);
                 leftButton.setManaged(hasMultipleFiles);
             });
-        } catch (NullPointerException ex){
+        } catch (NullPointerException ex) {
             // The case has likely been closed
             LOGGER.log(Level.WARNING, "Error accessing groupPane");
         }
     }
 
     SlideShowView(GroupPane gp) {
-        super();
-        groupPane = gp;
+        super(gp);
         FXMLConstructor.construct(this, "SlideShow.fxml");
 
     }
@@ -230,10 +233,10 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
     }
 
     @Override
-    public void setFile(final Long fileID) {
+    synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
-        if (this.fileID != null) {
-            groupPane.makeSelection(false, this.fileID);
+        if (this.getFileID() != null) {
+            getGroupPane().makeSelection(false, this.getFileID());
         }
     }
 
@@ -251,12 +254,12 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        if (file.isVideo()) {
+        if (getFile().isVideo()) {
             return () -> {
-                imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
+                imageBorder.setCenter(MediaControl.create((VideoFile<?>) getFile()));
             };
         } else {
-            ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
+            ImageView imageView = new ImageView(((ImageFile<?>) getFile()).getFullSizeImage());
             imageView.setPreserveRatio(true);
             imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
             imageView.fitHeightProperty().bind(this.heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
@@ -267,23 +270,24 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
     }
 
     @Override
-    protected String getLabelText() {
-        return file.getName() + " " + getSupplementalText();
+    protected String getTextForLabel() {
+        return getFile().getName() + " " + getSupplementalText();
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void cycleSlideShowImage(int d) {
         stopVideo();
-        if (fileID != null) {
-            int index = groupPane.getGrouping().fileIds().indexOf(fileID);
-            final int size = groupPane.getGrouping().fileIds().size();
+        if (getFileID() != null) {
+            int index = getGroupPane().getGrouping().fileIds().indexOf(getFileID());
+            final int size = getGroupPane().getGrouping().fileIds().size();
             index = (index + d) % size;
             if (index < 0) {
                 index += size;
             }
-            setFile(groupPane.getGrouping().fileIds().get(index));
+            setFile(getGroupPane().getGrouping().fileIds().get(index));
 
         } else {
-            setFile(groupPane.getGrouping().fileIds().get(0));
+            setFile(getGroupPane().getGrouping().fileIds().get(0));
         }
     }
 
@@ -292,23 +296,22 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
      *         of y"
      */
     private String getSupplementalText() {
-        return " ( " + (groupPane.getGrouping().fileIds().indexOf(fileID) + 1) + " of " + groupPane.getGrouping().fileIds().size() + " in group )";
+        return " ( " + (getGroupPane().getGrouping().fileIds().indexOf(getFileID()) + 1) + " of " + getGroupPane().getGrouping().fileIds().size() + " in group )";
     }
 
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategoryBorder() {
-        final Category category = super.updateCategoryBorder();
+        final Category category = getFile().getCategory();
+        final Border border = hasHashHit() && (category == Category.ZERO)
+                ? HASH_BORDER
+                : getCategoryBorder(category);
         ToggleButton toggleForCategory = getToggleForCategory(category);
 
-        Runnable r = () -> {
+        Platform.runLater(() -> {
+            getCategoryBorderRegion().setBorder(border);
             toggleForCategory.setSelected(true);
-        };
-        if (Platform.isFxApplicationThread()) {
-            r.run();
-        } else {
-            Platform.runLater(r);
-        }
+        });
 
         return category;
     }
@@ -343,7 +346,7 @@ public class SlideShowView extends SingleDrawableViewBase implements TagUtils.Ta
         @Override
         public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
             if (t1) {
-                FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                FileIDSelectionModel.getInstance().clearAndSelect(getFileID());
                 new CategorizeAction().addTag(cat.getTagName(), "");
             }
         }

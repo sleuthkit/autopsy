@@ -78,7 +78,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private DrawableDB db;
 
     private final ImageGalleryController controller;
-
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
      * not
@@ -203,9 +202,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         groupBy = DrawableAttribute.PATH;
         sortOrder = SortOrder.ASCENDING;
         Platform.runLater(() -> {
-            synchronized (unSeenGroups) {
-                unSeenGroups.clear();
-            }
+            unSeenGroups.clear();
             analyzedGroups.clear();
         });
         synchronized (groupMap) {
@@ -246,8 +243,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     public DrawableGroup makeGroup(GroupKey<?> groupKey, List<Long> files) {
         List<Long> newFiles = files == null ? new ArrayList<>() : files;
+        final boolean groupSeen = db.isGroupSeen(groupKey);
+        DrawableGroup g = new DrawableGroup(groupKey, newFiles, groupSeen);
 
-        DrawableGroup g = new DrawableGroup(groupKey, newFiles);
+        g.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+            markGroupSeen(g, newSeen);
+        });
         synchronized (groupMap) {
             groupMap.put(groupKey, g);
         }
@@ -258,14 +259,18 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * 'mark' the given group as seen. This removes it from the queue of groups
      * to review, and is persisted in the drawable db.
      *
-     *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
-    public void markGroupSeen(DrawableGroup group) {
-        synchronized (unSeenGroups) {
-            unSeenGroups.remove(group);
+    @ThreadConfined(type = ThreadType.JFX)
+    public void markGroupSeen(DrawableGroup group, boolean seen) {
+        db.markGroupSeen(group.getGroupKey(), seen);
+        group.setSeen(seen);
+        if (seen) {
+            unSeenGroups.removeAll(group);
+        } else if (unSeenGroups.contains(group) == false) {
+            unSeenGroups.add(group);
+            FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
         }
-        db.markGroupSeen(group.groupKey);
     }
 
     /**
@@ -283,20 +288,17 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             group.removeFile(fileID);
 
             // If we're grouping by category, we don't want to remove empty groups.
-            if (group.groupKey.getValueDisplayName().startsWith("CAT-")) {
-                return;
-            } else {
+            if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                 if (group.fileIds().isEmpty()) {
                     synchronized (groupMap) {
                         groupMap.remove(groupKey, group);
                     }
                     Platform.runLater(() -> {
                         analyzedGroups.remove(group);
-                        synchronized (unSeenGroups) {
-                            unSeenGroups.remove(group);
-                        }
+                        unSeenGroups.remove(group);
                     });
                 }
+            } else {
             }
         }
     }
@@ -322,25 +324,21 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
          * was still running) */
         if (task == null || (task.isCancelled() == false)) {
             DrawableGroup g = makeGroup(groupKey, filesInGroup);
-
             populateAnalyzedGroup(g, task);
         }
     }
 
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<A> task) {
+    private synchronized void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<?> task) {
 
         if (task == null || (task.isCancelled() == false)) {
-            final boolean groupSeen = db.isGroupSeen(g.groupKey);
+            final boolean groupSeen = db.isGroupSeen(g.getGroupKey());
+
             Platform.runLater(() -> {
                 if (analyzedGroups.contains(g) == false) {
                     analyzedGroups.add(g);
                 }
-                synchronized (unSeenGroups) {
-                    if (groupSeen == false && unSeenGroups.contains(g) == false) {
-                        unSeenGroups.add(g);
-                        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-                    }
-                }
+                markGroupSeen(g, groupSeen);
+
             });
         }
     }
@@ -350,7 +348,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @param groupKey
      *
-     * @return null if this group is not analyzed or a list of file ids in this
+     * @return null if this group is not analyzed or a list of file ids in
+     *         this
      *         group if they are all analyzed
      */
     public List<Long> checkAnalyzed(final GroupKey<?> groupKey) {
@@ -438,7 +437,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             switch (groupBy.attrName) {
                 //these cases get special treatment
                 case CATEGORY:
-                    values = (List<A>) Category.valuesList();
+                    values = (List<A>) Arrays.asList(Category.values());
                     break;
                 case TAGS:
                     values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse().stream()
@@ -449,7 +448,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     values = (List<A>) Arrays.asList(false, true);
                     break;
                 case HASHSET:
-                    TreeSet<A> names = new TreeSet<>((Set<A>) db.getHashSetNames());
+                    TreeSet<A> names = new TreeSet<>((Collection<? extends A>) db.getHashSetNames());
                     values = new ArrayList<>(names);
                     break;
                 default:
@@ -459,8 +458,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type " + groupBy.getDisplayName());
-            return new ArrayList<A>();
+            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName());
+            return Collections.emptyList();
         }
 
     }
@@ -492,7 +491,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 for (TagName tn : tns) {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tn);
                     for (ContentTag ct : contentTags) {
-                        if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                        if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                             files.add(ct.getContent().getId());
                         }
                     }
@@ -504,8 +503,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 List<Long> files = new ArrayList<>();
                 List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(category.getTagName());
                 for (ContentTag ct : contentTags) {
-                    if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
-
+                    if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                         files.add(ct.getContent().getId());
                     }
                 }
@@ -518,27 +516,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
-    /**
-     * Count the number of files with the given category.
-     * This is faster than getFileIDsWithCategory and should be used if only the
-     * counts are needed and not the file IDs.
-     *
-     * @param category Category to match against
-     *
-     * @return Number of files with the given category
-     *
-     * @throws TskCoreException
-     */
-    public int countFilesWithCategory(Category category) throws TskCoreException {
-        return db.getCategoryCount(category);
-    }
-
     public List<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         try {
             List<Long> files = new ArrayList<>();
             List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && db.isImageFile(((AbstractFile) ct.getContent()).getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
 
                     files.add(ct.getContent().getId());
                 }
@@ -657,8 +640,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
                                 populateAnalyzedGroup(gk, checkAnalyzed);
                             }
-                        } else {
-                            g.invalidateHashSetHitsCount();
                         }
                     }
                 }
@@ -679,7 +660,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                  */
                 for (final long fileId : fileIDs) {
 
-                    db.updateHashSetsForFile(fileId);
+                    controller.getHashSetManager().invalidateHashSetsForFile(fileId);
 
                     //get grouping(s) this file would be in
                     Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
@@ -700,9 +681,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         }
                     }
                 }
-                if (evt.getChangedAttribute() == DrawableAttribute.CATEGORY) {
-                    Category.fireChange(fileIDs);
-                }
+
+                //we fire this event for all files so that the category counts get updated during initial db population
+                controller.getCategoryManager().fireChange(fileIDs);
+
                 if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
                     TagUtils.fireChange(fileIDs);
                 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,86 +24,62 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 
 /**
- * Visitor pattern implementation for DisplayableItemNodes
+ * Visitor pattern that goes over all nodes in the directory tree.
+ * This includes extracted content, reports, and the data sources area. 
  */
 public interface DisplayableItemNodeVisitor<T> {
 
+    /* Data Sources Area */
+    T visit(DataSourcesNode in);
+    T visit(LayoutFileNode lfn);
+    T visit(LocalFileNode dfn);
+    T visit(VirtualDirectoryNode ldn);
     T visit(DirectoryNode dn);
-
     T visit(FileNode fn);
-
     T visit(ImageNode in);
-
     T visit(VolumeNode vn);
 
-    T visit(BlackboardArtifactNode ban);
-
-    T visit(ExtractedContent.TypeNode atn);
-
-    T visit(ExtractedContent.RootNode ecn);
-
+    /* Views Area */
+    T visit(ViewsNode vn);
     T visit(FileTypeNode fsfn);
-
     T visit(DeletedContentNode dcn);
-
     T visit(DeletedContentsNode dcn);
-
     T visit(FileSizeRootNode fsrn);
-
     T visit(FileSizeNode fsn);
-
     T visit(FileTypesNode sfn);
-
     T visit(RecentFilesNode rfn);
-
     T visit(RecentFilesFilterNode rffn);
-
-    T visit(KeywordHits.RootNode khrn);
-
-    T visit(KeywordHits.ListNode khsn);
-
-    T visit(KeywordHits.TermNode khmln);
-
-    T visit(HashsetHits.RootNode hhrn);
-
-    T visit(HashsetHits.HashsetNameNode hhsn);
-
-    T visit(EmailExtracted.RootNode eern);
-
-    T visit(EmailExtracted.AccountNode eean);
-
-    T visit(EmailExtracted.FolderNode eefn);
-
-    T visit(Tags.RootNode node);
     
+    
+    
+    /* Extracted Results Area */
+    T visit(ResultsNode rn);
+    T visit(BlackboardArtifactNode ban);
+    T visit(ExtractedContent.TypeNode atn);
+    T visit(ExtractedContent.RootNode ecn);
+    T visit(KeywordHits.RootNode khrn);
+    T visit(KeywordHits.ListNode khsn);
+    T visit(KeywordHits.TermNode khmln);
+    T visit(HashsetHits.RootNode hhrn);
+    T visit(HashsetHits.HashsetNameNode hhsn);
+    T visit(EmailExtracted.RootNode eern);
+    T visit(EmailExtracted.AccountNode eean);
+    T visit(EmailExtracted.FolderNode eefn);
     T visit(InterestingHits.RootNode ihrn);
-
     T visit(InterestingHits.SetNameNode ihsn);
     
+    
+    /* Tags */
+    T visit(Tags.RootNode node);
     T visit(Tags.TagNameNode node);
-
     T visit(Tags.ContentTagTypeNode node);    
-
     T visit(ContentTagNode node);
-        
     T visit(Tags.BlackboardArtifactTagTypeNode node);
-
     T visit(BlackboardArtifactTagNode node);    
 
-    T visit(ViewsNode vn);
-
-    T visit(ResultsNode rn);
-
-    T visit(DataSourcesNode in);
-
-    T visit(LayoutFileNode lfn);
-
-    T visit(LocalFileNode dfn);
-
-    T visit(VirtualDirectoryNode ldn);
-
+   
+    /* Reports */
     T visit(Reports.ReportsListNode reportsNode);
-
     T visit(Reports.ReportNode reportNode);
         
     /**

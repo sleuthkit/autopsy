@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +50,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -72,10 +71,13 @@ import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -83,24 +85,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
  * since they share a similar node tree and many behaviors, other implementers
- * of {@link  DrawableView}s should implement the interface directly
+ * of {@link DrawableView}s should implement the interface directly
  *
  */
-public abstract class SingleDrawableViewBase extends AnchorPane implements DrawableView {
+public abstract class DrawableViewBase extends AnchorPane implements DrawableView {
 
-    private static final Logger LOGGER = Logger.getLogger(SingleDrawableViewBase.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DrawableViewBase.class.getName());
 
-    private static final Border UNSELECTED_ORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
+    private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
-    //TODO: should this stuff be done in CSS? -jm
+    //TODO: do this in CSS? -jm
     protected static final Image videoIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/video-file.png");
-
     protected static final Image hashHitIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png");
-
     protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
-
     protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
 
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
@@ -137,17 +136,22 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     static private ContextMenu contextMenu;
 
-    protected DrawableFile<?> file;
+    private DrawableFile<?> file;
 
-    protected Long fileID;
+    private Long fileID;
 
     /**
-     * the groupPane this {@link SingleDrawableViewBase} is embedded in
+     * the groupPane this {@link DrawableViewBase} is embedded in
      */
-    protected GroupPane groupPane;
+    final private GroupPane groupPane;
+    private boolean registered = false;
 
-    protected SingleDrawableViewBase() {
+    GroupPane getGroupPane() {
+        return groupPane;
+    }
 
+    protected DrawableViewBase(GroupPane groupPane) {
+        this.groupPane = groupPane;
         globalSelectionModel.getSelected().addListener((Observable observable) -> {
             updateSelectionState();
         });
@@ -187,7 +191,7 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                             groupContextMenu.hide();
                         }
                         contextMenu = buildContextMenu();
-                        contextMenu.show(SingleDrawableViewBase.this, t.getScreenX(), t.getScreenY());
+                        contextMenu.show(DrawableViewBase.this, t.getScreenX(), t.getScreenY());
 
                         break;
                 }
@@ -254,16 +258,18 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
 
     protected abstract Runnable getContentUpdateRunnable();
 
-    protected abstract String getLabelText();
+    protected abstract String getTextForLabel();
 
+    @SuppressWarnings("deprecation")
     protected void initialize() {
         followUpToggle.setOnAction((ActionEvent t) -> {
+
             if (followUpToggle.isSelected() == true) {
                 globalSelectionModel.clearAndSelect(fileID);
                 try {
                     AddDrawableTagAction.getInstance().addTag(TagUtils.getFollowUpTagName(), "");
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Failed to add follow up tag.  Could not load TagName.", ex);
                 }
             } else {
                 //TODO: convert this to an action!
@@ -271,20 +277,20 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                 try {
                     // remove file from old category group
                     controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID);
-                
-                    List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(getFile());
+
+                    List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
                     for (ContentTag ct : contentTagsByContent) {
                         if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
                             Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
-                            SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
                         }
                     }
-
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
                     controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                 }
             }
+
         });
     }
 
@@ -296,13 +302,13 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                     file = ImageGalleryController.getDefault().getFileFromId(fileID);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileID, ex);
-                    return null;
+                    file = null;
                 }
             }
+            return file;
         } else {
             return null;
         }
-        return file;
     }
 
     protected boolean hasFollowUp() throws TskCoreException {
@@ -311,36 +317,19 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
         return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
     }
 
-    protected void updateUI(final boolean isVideo, final boolean hasHashSetHits, final String text) {
-        if (isVideo) {
-            fileTypeImageView.setImage(videoIcon);
-        } else {
-            fileTypeImageView.setImage(null);
-        }
-
-        if (hasHashSetHits) {
-            hashHitImageView.setImage(hashHitIcon);
-        } else {
-            hashHitImageView.setImage(null);
-        }
-
-        nameLabel.setText(text);
-        nameLabel.setTooltip(new Tooltip(text));
-    }
-
     @Override
-    public Long getFileID() {
+    synchronized public Long getFileID() {
         return fileID;
     }
 
     @Override
-    public void handleTagsChanged(Collection<Long> ids) {
+    synchronized public void handleTagsChanged(Collection<Long> ids) {
         if (fileID != null && ids.contains(fileID)) {
             updateFollowUpIcon();
         }
     }
 
-    protected void updateFollowUpIcon() {
+    synchronized protected void updateFollowUpIcon() {
         if (file != null) {
             try {
                 boolean hasFollowUp = hasFollowUp();
@@ -349,58 +338,77 @@ public abstract class SingleDrawableViewBase extends AnchorPane implements Drawa
                     followUpToggle.setSelected(hasFollowUp);
                 });
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
             }
         }
     }
 
     @Override
-    public void setFile(final Long fileID) {
+    synchronized public void setFile(final Long fileID) {
         if (Objects.equals(fileID, this.fileID) == false) {
             this.fileID = fileID;
             disposeContent();
-            
+
             if (this.fileID == null || Case.isCaseOpen() == false) {
-                Category.unregisterListener(this);
-                TagUtils.unregisterListener(this);
+                if (registered == true) {
+                    ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
+                    TagUtils.unregisterListener(this);
+                    registered = false;
+                }
                 file = null;
                 Platform.runLater(() -> {
                     clearContent();
                 });
             } else {
-                Category.registerListener(this);
-                TagUtils.registerListener(this);
- 
+                if (registered == false) {
+                    ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
+                    TagUtils.registerListener(this);
+                    registered = true;
+                }
+                file = null;
                 getFile();
                 updateSelectionState();
                 updateCategoryBorder();
                 updateFollowUpIcon();
-                final String text = getLabelText();
-                final boolean isVideo = file.isVideo();
-                final boolean hasHashSetHits = hasHashHit();
-                Platform.runLater(() -> {
-                    updateUI(isVideo, hasHashSetHits, text);
-                });
+                updateUI();
                 Platform.runLater(getContentUpdateRunnable());
             }
         }
     }
 
-    private void updateSelectionState() {
-        final boolean selected = globalSelectionModel.isSelected(fileID);
+    private void updateUI() {
+        final boolean isVideo = getFile().isVideo();
+        final boolean hasHashSetHits = hasHashHit();
+        final String text = getTextForLabel();
+
         Platform.runLater(() -> {
-            SingleDrawableViewBase.this.setBorder(selected ? SELECTED_BORDER : UNSELECTED_ORDER);
+            fileTypeImageView.setImage(isVideo ? videoIcon : null);
+            hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
+            nameLabel.setText(text);
+            nameLabel.setTooltip(new Tooltip(text));
+        });
+    }
+
+    /**
+     * update the visual representation of the selection state of this
+     * DrawableView
+     */
+    synchronized protected void updateSelectionState() {
+        final boolean selected = globalSelectionModel.isSelected(getFileID());
+        Platform.runLater(() -> {
+            setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
         });
     }
 
     @Override
-    public Region getBorderable() {
+    public Region getCategoryBorderRegion() {
         return imageBorder;
     }
 
+    @Subscribe
     @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
-        if (ids.contains(fileID)) {
+    synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
+        if (evt.getIds().contains(getFileID())) {
             updateCategoryBorder();
         }
     }
