@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.grouping;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -70,7 +70,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return groupKey.getValueDisplayName();
     }
 
-    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup, boolean seen) {
+    DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
         this.fileIDs.setAll(filesInGroup);
         this.seen.set(seen);
