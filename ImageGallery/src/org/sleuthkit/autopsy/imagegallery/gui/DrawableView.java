@@ -1,7 +1,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.Collection;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.layout.Border;
@@ -13,7 +12,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * } to have there {@link DrawableView#handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent)
  * } method invoked
  */
-public interface DrawableView extends TagUtils.TagListener {
+public interface DrawableView {
 
     //TODO: do this all in css? -jm
     static final int CAT_BORDER_WIDTH = 10;
@@ -67,8 +67,10 @@ public interface DrawableView extends TagUtils.TagListener {
     @Subscribe
     void handleCategoryChanged(CategoryChangeEvent evt);
 
-    @Override
-    void handleTagsChanged(Collection<Long> ids);
+    @Subscribe
+    void handleTagsChanged(TagsChangeEvent evt);
+
+    ImageGalleryController getController();
 
     default boolean hasHashHit() {
         try {

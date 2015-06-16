@@ -29,16 +29,18 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
+import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -54,13 +56,13 @@ public class CategorizeAction extends AddTagAction {
 
     private final ImageGalleryController controller;
 
-    public CategorizeAction() {
+    public CategorizeAction(ImageGalleryController controller) {
         super();
-        this.controller = ImageGalleryController.getDefault();
+        this.controller = controller;
     }
 
-    static public Menu getPopupMenu() {
-        return new CategoryMenu();
+    public Menu getPopupMenu() {
+        return new CategoryMenu(controller);
     }
 
     @Override
@@ -90,7 +92,7 @@ public class CategorizeAction extends AddTagAction {
      */
     static private class CategoryMenu extends Menu {
 
-        CategoryMenu() {
+        CategoryMenu(ImageGalleryController controller) {
             super("Categorize");
 
             // Each category get an item in the sub-menu. Selecting one of these menu items adds
@@ -99,8 +101,8 @@ public class CategorizeAction extends AddTagAction {
 
                 MenuItem categoryItem = new MenuItem(cat.getDisplayName());
                 categoryItem.setOnAction((ActionEvent t) -> {
-                    final CategorizeAction categorizeAction = new CategorizeAction();
-                    categorizeAction.addTag(cat.getTagName(), NO_COMMENT);
+                    final CategorizeAction categorizeAction = new CategorizeAction(controller);
+                    categorizeAction.addTag(controller.getCategoryManager().getTagName(cat), NO_COMMENT);
                 });
                 categoryItem.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
                 getItems().add(categoryItem);
@@ -123,29 +125,34 @@ public class CategorizeAction extends AddTagAction {
 
         @Override
         public void run() {
+            final GroupManager groupManager = controller.getGroupManager();
+            final SleuthkitCase sleuthKitCase = controller.getSleuthKitCase();
+            final CategoryManager categoryManager = controller.getCategoryManager();
+
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
                 Category oldCat = file.getCategory();
+
                 // remove file from old category group
-                controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
+                groupManager.removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
 
                 //remove old category tag if necessary
-                List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file); //tsk db
+                List<ContentTag> allContentTags = sleuthKitCase.getContentTagsByContent(file); //tsk db
+
                 for (ContentTag ct : allContentTags) {
                     //this is bad: treating tags as categories as long as their names start with prefix
                     //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
                     if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                        Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);   //tsk db
-                        controller.getCategoryManager().decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                        sleuthKitCase.deleteContentTag(ct);   //tsk db
+                        categoryManager.decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                     }
-
                 }
-                controller.getCategoryManager().incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
-                if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                    Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment); //tsk db
+                categoryManager.incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+                if (tagName != categoryManager.getTagName(Category.ZERO)) { // no tags for cat-0
+                    controller.getTagsManager().addContentTag(file, tagName, comment); //tsk db
                 }
                 //make sure rest of ui  hears category change.
-                controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
+                groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
 
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error categorizing result", ex);

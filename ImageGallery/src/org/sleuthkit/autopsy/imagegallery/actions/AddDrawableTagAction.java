@@ -27,7 +27,6 @@ import javafx.scene.control.Menu;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
@@ -45,50 +44,41 @@ import org.sleuthkit.datamodel.TskCoreException;
  * diverged from autopsy action, make this extend from controlsfx Action
  */
 public class AddDrawableTagAction extends AddTagAction {
-    
+
     private static final Logger LOGGER = Logger.getLogger(AddDrawableTagAction.class.getName());
 
-    // This class is a singleton to support multi-selection of nodes, since
-    // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
-    // node in the array returns a reference to the same action object from Node.getActions(boolean).    
-    private static AddDrawableTagAction instance;
-    
-    public static synchronized AddDrawableTagAction getInstance() {
-        if (null == instance) {
-            instance = new AddDrawableTagAction();
-        }
-        return instance;
+    private final ImageGalleryController controller;
+
+    public AddDrawableTagAction(ImageGalleryController controller) {
+        this.controller = controller;
     }
-    
-    private AddDrawableTagAction() {
-    }
-    
+
     public Menu getPopupMenu() {
-        return new TagMenu();
+        return new TagMenu(controller);
     }
-    
+
     @Override
     protected String getActionDisplayName() {
         return Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size() > 1 ? "Tag Files" : "Tag File";
     }
-    
+
     @Override
     public void addTag(TagName tagName, String comment) {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
         addTagsToFiles(tagName, comment, selectedFiles);
     }
-        
+
     @Override
-    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles){    
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
         new SwingWorker<Void, Void>() {
-            
+
             @Override
             protected Void doInBackground() throws Exception {
                 for (Long fileID : selectedFiles) {
                     try {
-                        DrawableFile<?> file = ImageGalleryController.getDefault().getFileFromId(fileID);
+                        DrawableFile<?> file = controller.getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
-                        Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
+                        controller.getTagsManager().addContentTag(file, tagName, comment);
                     } catch (IllegalStateException ex) {
                         LOGGER.log(Level.SEVERE, "Case was closed out from underneath Updatefile task", ex);
                     } catch (TskCoreException ex) {
@@ -97,14 +87,12 @@ public class AddDrawableTagAction extends AddTagAction {
                     }
 
                     //make sure rest of ui  hears category change.
-                    ImageGalleryController.getDefault().getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
-                  
+                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 }
-                
                 refreshDirectoryTree();
                 return null;
             }
-            
+
             @Override
             protected void done() {
                 super.done();
@@ -114,7 +102,6 @@ public class AddDrawableTagAction extends AddTagAction {
                     LOGGER.log(Level.SEVERE, "unexpected exception while tagging files", ex);
                 }
             }
-            
         }.execute();
     }
 }

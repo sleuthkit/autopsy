@@ -45,7 +45,7 @@ import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -56,11 +56,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Shows details of the selected file.
  */
-public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, DrawableView {
+public class MetaDataPane extends AnchorPane implements DrawableView {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
     private final ImageGalleryController controller;
+
+    @Override
+    public ImageGalleryController getController() {
+        return controller;
+    }
 
     private Long fileID;
 
@@ -92,8 +97,8 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert tableView != null : "fx:id=\"tableView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert valueColumn != null : "fx:id=\"valueColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
-        TagUtils.registerListener(this);
-        ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
+        getController().getTagsManager().registerListener(this);
+        getController().getCategoryManager().registerListener(this);
 
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setPlaceholder(new Label("Select a file to show its details here."));
@@ -224,14 +229,15 @@ public class MetaDataPane extends AnchorPane implements TagUtils.TagListener, Dr
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (getFile() != null && evt.getIds().contains(getFileID())) {
+        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
             updateUI();
         }
     }
 
     @Override
-    public void handleTagsChanged(Collection<Long> ids) {
-        if (getFile() != null && ids.contains(getFileID())) {
+    @Subscribe
+    public void handleTagsChanged(TagsChangeEvent evt) {
+        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
             updateUI();
         }
     }

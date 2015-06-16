@@ -56,7 +56,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
     @Override
     public String toString() {
-        return "GroupKey: " + getAttribute() + " = " + getValue();
+        return "GroupKey: " + getAttribute().attrName + " = " + getValue();
     }
 
     @Override
