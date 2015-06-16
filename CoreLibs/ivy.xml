@@ -36,7 +36,7 @@
         <dependency conf="autopsy_core->*" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
         <!-- timeline and image analyzer -->
-        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.20.9" />
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.40.9" />
         <dependency conf="autopsy_core->*" org="org.controlsfx" name="openjfx-dialogs" rev="1.0.3"/>
 
         <!-- timeline and -->
