@@ -518,6 +518,10 @@ public final class ImageGalleryController {
         return tagsManager;
     }
 
+    public DrawableTagsManager getTagsManager() {
+        return tagsManager;
+    }
+
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time
     // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)

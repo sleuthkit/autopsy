@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CategoryManager {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
+    private final ImageGalleryController controller;
 
     private final ImageGalleryController controller;
 

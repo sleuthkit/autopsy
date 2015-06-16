@@ -1,7 +1,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;

@@ -61,6 +61,11 @@ public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
+    @Override
+    public ImageGalleryController getController() {
+        return controller;
+    }
+
     @FXML
     private ImageView imageView;
 

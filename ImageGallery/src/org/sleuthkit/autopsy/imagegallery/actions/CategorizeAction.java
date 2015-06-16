@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
+import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
@@ -128,6 +129,7 @@ public class CategorizeAction extends AddTagAction {
         public void run() {
             final CategoryManager categoryManager = controller.getCategoryManager();
             final DrawableTagsManager tagsManager = controller.getTagsManager();
+
 
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
