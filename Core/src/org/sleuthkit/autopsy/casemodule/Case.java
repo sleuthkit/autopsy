@@ -366,14 +366,13 @@ public class Case {
         Date date = new Date();
         String santizedCaseName = sanitizeCaseName(caseName);
         String indexName = santizedCaseName + "_" + dateFormat.format(date);
-
         String dbName = null;
 
         // figure out the database name and index name for text extraction
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            dbName = santizedCaseName + "_" + dateFormat.format(date);
+            dbName = indexName;
         }
 
         xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
@@ -413,23 +412,23 @@ public class Case {
         String result;
 
         // Remove all non-ASCII characters
-        result = caseName.replaceAll("[^\\p{ASCII}]", "");
+        result = caseName.replaceAll("[^\\p{ASCII}]", "_");
 
         // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "");
+        result = result.replaceAll("[\\p{Cntrl}]", "_");
 
         // Remove / \ : ? space ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "");
+        result = result.replaceAll("[ /?:'\"\\\\]", "_");
 
         // Make it all lowercase
         result = result.toLowerCase();
 
-        // Must start with letter or underscore. If not, prepend an underscore.
+        // Must start with letter or underscore for PostgreSQL. If not, prepend an underscore.
         if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '_')) {
             result = "_" + result;
         }
 
-        // Chop to 63-13=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
+        // Chop to 63-15=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
         if (result.length() > MAX_SANITIZED_NAME_LENGTH) {
             result = result.substring(0, MAX_SANITIZED_NAME_LENGTH);
         }
