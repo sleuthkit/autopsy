@@ -79,7 +79,7 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-    private static final int MAX_SANITIZED_NAME_LENGTH=48;
+    private static final int MAX_SANITIZED_NAME_LENGTH=47;
     
     /**
      * Name for the property that determines whether to show the dialog at
@@ -428,7 +428,7 @@ public class Case {
             result = "_" + result;
         }
 
-        // Chop to 63-15=48 left (63 max for PostgreSQL, taking 15 for the date 20151225_123456)
+        // Chop to 63-16=47 left (63 max for PostgreSQL, taking 16 for the date _20151225_123456)
         if (result.length() > MAX_SANITIZED_NAME_LENGTH) {
             result = result.substring(0, MAX_SANITIZED_NAME_LENGTH);
         }
