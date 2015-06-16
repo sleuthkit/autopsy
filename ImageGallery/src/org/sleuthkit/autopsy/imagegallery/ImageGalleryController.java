@@ -371,6 +371,7 @@ public final class ImageGalleryController {
             historyManager.clear();
         });
         Category.clearTagNames();
+        TagUtils.clearFollowUpTagName();
 
         Toolbar.getDefault().reset();
         groupManager.clear();

@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
@@ -43,34 +45,36 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class TagUtils {
 
-    private static final String follow_Up = "Follow Up";
+    private static final String FOLLOW_UP = "Follow Up";
 
     private static TagName followUpTagName;
+
+    /**
+     * Use when closing a case to make sure everything is re-initialized in the
+     * next case.
+     */
+    public static void clearFollowUpTagName() {
+        followUpTagName = null;
+    }
 
     private final static List<TagListener> listeners = new ArrayList<>();
 
     synchronized public static TagName getFollowUpTagName() throws TskCoreException {
         if (followUpTagName == null) {
-            followUpTagName = getTagName(follow_Up);
+            followUpTagName = getTagName(FOLLOW_UP);
         }
         return followUpTagName;
     }
 
     static public Collection<TagName> getNonCategoryTagNames() {
-        List<TagName> nonCatTagNames = new ArrayList<>();
-        List<TagName> allTagNames;
         try {
-            allTagNames = Case.getCurrentCase().getServices().getTagsManager().getAllTagNames();
-            for (TagName tn : allTagNames) {
-                if (tn.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false) {
-                    nonCatTagNames.add(tn);
-                }
-            }
+            return Case.getCurrentCase().getServices().getTagsManager().getAllTagNames().stream()
+                    .filter(Category::isCategoryTagName)
+                    .collect(Collectors.toSet());
         } catch (TskCoreException | IllegalStateException ex) {
             Logger.getLogger(TagUtils.class.getName()).log(Level.WARNING, "couldn't access case", ex);
         }
-
-        return nonCatTagNames;
+        return Collections.emptySet();
     }
 
     synchronized static public TagName getTagName(String displayName) throws TskCoreException {
@@ -94,7 +98,7 @@ public class TagUtils {
     }
 
     public static void fireChange(Collection<Long> ids) {
-        Set<TagUtils.TagListener> listenersCopy = new HashSet<TagUtils.TagListener>(listeners);
+        Set<TagUtils.TagListener> listenersCopy = new HashSet<>(listeners);
         synchronized (listeners) {
             listenersCopy.addAll(listeners);
         }
@@ -132,6 +136,7 @@ public class TagUtils {
     }
 
     public static interface TagListener {
+
         public void handleTagsChanged(Collection<Long> ids);
     }
 }
