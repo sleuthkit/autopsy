@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
+import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -554,6 +555,15 @@ public class GroupManager {
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
+    }
+
+    @Subscribe
+    public void handleAutopsyTagChange(TagsChangeEvent evt) {
+        if (groupBy == DrawableAttribute.TAGS
+                && evt.getFileIDs().size() == 1
+                && evt.getFileIDs().contains(-1L)) {
+            regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
+        }
     }
 
     @Subscribe

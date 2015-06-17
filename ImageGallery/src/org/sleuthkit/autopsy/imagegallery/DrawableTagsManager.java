@@ -22,6 +22,7 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -111,7 +112,7 @@ public class DrawableTagsManager {
      * @throws TskCoreException
      */
     synchronized public TagName getFollowUpTagName() throws TskCoreException {
-        if (followUpTagName == null) {
+        if (Objects.isNull(followUpTagName)) {
             followUpTagName = getTagName(FOLLOW_UP);
         }
         return followUpTagName;
