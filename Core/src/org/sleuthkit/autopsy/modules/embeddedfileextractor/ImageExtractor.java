@@ -196,7 +196,7 @@ class ImageExtractor {
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         PicturesTable pictureTable = doc.getPicturesTable();
@@ -234,7 +234,7 @@ class ImageExtractor {
         try {
             docx = new XWPFDocument(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XWPFPictureData> listOfAllPictures = docx.getAllPictures();
@@ -273,7 +273,7 @@ class ImageExtractor {
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 
@@ -343,7 +343,7 @@ class ImageExtractor {
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XSLFPictureData> listOfAllPictures = pptx.getAllPictures();
@@ -390,7 +390,7 @@ class ImageExtractor {
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName()); //NON-NLS
             return null;
         }
 
@@ -433,7 +433,7 @@ class ImageExtractor {
         try {
             xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
         } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 
