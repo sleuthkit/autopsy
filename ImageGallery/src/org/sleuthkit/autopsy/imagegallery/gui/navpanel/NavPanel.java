@@ -155,6 +155,7 @@ public class NavPanel extends TabPane {
         initNavTree();
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
             boolean wasPermuted = false;
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
@@ -175,6 +176,11 @@ public class NavPanel extends TabPane {
 
             if (wasPermuted) {
                 rebuildTrees();
+            }
+            if (selectedItem != null) {
+                Platform.runLater(() -> {
+                    setFocusedGroup(selectedItem.getValue().getGroup());
+                });
 
             }
         });
