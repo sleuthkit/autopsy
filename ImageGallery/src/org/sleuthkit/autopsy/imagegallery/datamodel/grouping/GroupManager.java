@@ -200,21 +200,7 @@ public class GroupManager {
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
         synchronized (groupMap) {
-            if (groupKey.getAttribute() == DrawableAttribute.TAGS) {
-
-                System.out.println(groupKey);
-//                @SuppressWarnings("unchecked")
-//                GroupKey<TagName> tagKey = (GroupKey<TagName>) groupKey;
-//
-//                return groupMap.keySet().stream()
-//                        .filter((GroupKey<?> t) -> t.getAttribute() == DrawableAttribute.TAGS)
-//                        .map((GroupKey<?> t) -> (GroupKey<TagName>) t)
-//                        .filter(t -> tagKey.getValue().getDisplayName().equals(t.getValue().getDisplayName()))
-//                        .findFirst().map(groupMap::get).orElse(null);
-
-            } //else {
             return groupMap.get(groupKey);
-//            }
         }
     }
 
@@ -258,15 +244,19 @@ public class GroupManager {
     /**
      * 'mark' the given group as seen. This removes it from the queue of
      * groups
+     * files.
     public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
 
         Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new HashSet<Long>());
+            }
+     * groups
      * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     @ThreadConfined(type = ThreadType.JFX)
-    public void markGroupSeen(DrawableGroup group, boolean seen) {
+    public void markGroupSeen(DrawableGroup group, boolean seen
+    ) {
         db.markGroupSeen(group.getGroupKey(), seen);
         group.setSeen(seen);
         if (seen) {
@@ -546,6 +536,7 @@ public class GroupManager {
                 unmodifiableUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
             });
         }
+
     }
 
     /**
@@ -705,6 +696,7 @@ public class GroupManager {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
                 }
             }
+
         }
         return null;
     }
