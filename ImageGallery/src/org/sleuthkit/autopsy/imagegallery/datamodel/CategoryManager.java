@@ -92,7 +92,6 @@ public class CategoryManager {
         this.db = db;
         categoryCounts.invalidateAll();
         catTagNameMap.invalidateAll();
-        Category.clearTagNames();
     }
 
     /**

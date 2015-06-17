@@ -92,6 +92,7 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     }
 
     @FXML
+    @SuppressWarnings("unchecked")
     void initialize() {
         assert attributeColumn != null : "fx:id=\"attributeColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
@@ -121,14 +122,12 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
         valueColumn.setCellValueFactory((p) -> {
-            if (p.getValue().getKey() == DrawableAttribute.TAGS) {
-                return new SimpleStringProperty(((Collection<TagName>) p.getValue().getValue()).stream()
-                        .map(TagName::getDisplayName)
-                        .filter((String t) -> t.startsWith(Category.CATEGORY_PREFIX) == false)
-                        .collect(Collectors.joining(" ; ", "", "")));
-            } else {
-                return new SimpleStringProperty(StringUtils.join((Iterable<?>) p.getValue().getValue(), " ; "));
-            }
+            return (p.getValue().getKey() == DrawableAttribute.TAGS)
+                    ? new SimpleStringProperty(((Collection<TagName>) p.getValue().getValue()).stream()
+                            .map(TagName::getDisplayName)
+                            .filter(Category::isNotCategoryName)
+                            .collect(Collectors.joining(" ; ")))
+                    : new SimpleStringProperty(StringUtils.join((Iterable<?>) p.getValue().getValue(), " ; "));
         });
         valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
         valueColumn.setCellFactory((p) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, String>() {
@@ -150,9 +149,6 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         controller.getSelectionModel().lastSelectedProperty().addListener((observable, oldFileID, newFileID) -> {
             setFile(newFileID);
         });
-
-//        MetaDataPane.this.visibleProperty().bind(controller.getMetaDataCollapsed().not());
-//        MetaDataPane.this.managedProperty().bind(controller.getMetaDataCollapsed().not());
     }
 
     @Override
