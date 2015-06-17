@@ -536,7 +536,7 @@ public class Case {
             String path = entry.getValue();
             boolean fileExists = (pathExists(path)
                     || driveExists(path));
-            if (!fileExists) {
+            if (!fileExists && IngestManager.getInstance().isRunningInteractively() == true) {
                 int ret = JOptionPane.showConfirmDialog(null,
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.msg",
