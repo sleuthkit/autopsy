@@ -64,8 +64,7 @@ class MissingImageDialog extends javax.swing.JDialog {
         fc.addChoosableFileFilter(rawFilter);
         fc.addChoosableFileFilter(encaseFilter);
         fc.setFileFilter(allFilter);
-
-
+     
         customInit();
     }
 
@@ -138,6 +137,7 @@ class MissingImageDialog extends javax.swing.JDialog {
         containerPanel = new javax.swing.JPanel();
         pathNameTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
+        lbWarning = new javax.swing.JLabel();
         titleLabel = new javax.swing.JLabel();
         titleSeparator = new javax.swing.JSeparator();
 
@@ -192,16 +192,24 @@ class MissingImageDialog extends javax.swing.JDialog {
             }
         });
 
+        lbWarning.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        lbWarning.setForeground(new java.awt.Color(244, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(lbWarning, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.text")); // NOI18N
+        lbWarning.setToolTipText(org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.lbWarning.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
         containerPanel.setLayout(containerPanelLayout);
         containerPanelLayout.setHorizontalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(containerPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(pathNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(browseButton)
-                .addContainerGap(83, Short.MAX_VALUE))
+                .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(containerPanelLayout.createSequentialGroup()
+                        .addComponent(pathNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(browseButton)
+                        .addContainerGap(83, Short.MAX_VALUE))))
         );
         containerPanelLayout.setVerticalGroup(
             containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -210,12 +218,13 @@ class MissingImageDialog extends javax.swing.JDialog {
                 .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(pathNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(browseButton))
-                .addContainerGap(62, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 19, Short.MAX_VALUE)
+                .addGap(18, 18, 18))
         );
 
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12));
-        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle
-                .getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.titleLabel.text")); // NOI18N
 
         titleSeparator.setForeground(new java.awt.Color(102, 102, 102));
 
@@ -255,10 +264,11 @@ class MissingImageDialog extends javax.swing.JDialog {
             String newPath = pathNameTextField.getText();
             //TODO handle local files
             db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
+            this.dispose();            
         } catch (TskCoreException ex) {
+            lbWarning.setText(NbBundle.getMessage(this.getClass(), "MissingImageDialog.ErrorSettingImage"));
             logger.log(Level.WARNING, "Error setting image paths", ex); //NON-NLS
         }
-        this.dispose();
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -274,7 +284,7 @@ class MissingImageDialog extends javax.swing.JDialog {
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
 
         String oldText = pathNameTextField.getText();
-
+        lbWarning.setText("");
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
@@ -295,6 +305,7 @@ class MissingImageDialog extends javax.swing.JDialog {
     private javax.swing.JPanel buttonPanel;
     private javax.swing.JButton cancelButton;
     private javax.swing.JPanel containerPanel;
+    private javax.swing.JLabel lbWarning;
     private javax.swing.JTextField pathNameTextField;
     private javax.swing.JButton selectButton;
     private javax.swing.JLabel titleLabel;
