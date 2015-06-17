@@ -193,7 +193,6 @@
                 <package>org.sleuthkit.autopsy.datamodel</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>
-                <package>org.sleuthkit.autopsy.examples</package>
                 <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
