@@ -84,21 +84,25 @@ public interface DrawableView {
     }
 
     static Border getCategoryBorder(Category category) {
-        switch (category) {
-            case ONE:
-                return CAT1_BORDER;
-            case TWO:
-                return CAT2_BORDER;
-            case THREE:
-                return CAT3_BORDER;
-            case FOUR:
-                return CAT4_BORDER;
-            case FIVE:
-                return CAT5_BORDER;
-            case ZERO:
-            default:
-                return CAT0_BORDER;
+        if (category != null) {
+            switch (category) {
+                case ONE:
+                    return CAT1_BORDER;
+                case TWO:
+                    return CAT2_BORDER;
+                case THREE:
+                    return CAT3_BORDER;
+                case FOUR:
+                    return CAT4_BORDER;
+                case FIVE:
+                    return CAT5_BORDER;
+                case ZERO:
+                default:
+                    return CAT0_BORDER;
 
+            }
+        } else {
+            return CAT0_BORDER;
         }
     }
 

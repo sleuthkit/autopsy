@@ -43,30 +43,25 @@ public enum Category implements Comparable<Category> {
                             Category::getDisplayName,
                             Function.identity()));
 
-    public static final String CATEGORY_PREFIX = "CAT-";
-
     public static Category fromDisplayName(String displayName) {
         return nameMap.get(displayName);
     }
 
-    /**
-     * Use when closing a case to make sure everything is re-initialized in the
-     * next case.
-     */
-    public static void clearTagNames() {
-        Category.ZERO.tagName = null;
-        Category.ONE.tagName = null;
-        Category.TWO.tagName = null;
-        Category.THREE.tagName = null;
-        Category.FOUR.tagName = null;
-        Category.FIVE.tagName = null;
-    }
-
     public static boolean isCategoryTagName(TagName tName) {
-        return nameMap.containsKey(tName.getDisplayName());
+        return isCategoryName(tName.getDisplayName());
     }
 
-    private TagName tagName;
+    public static boolean isNotCategoryTagName(TagName tName) {
+        return isNotCategoryName(tName.getDisplayName());
+    }
+
+    public static boolean isCategoryName(String tName) {
+        return nameMap.containsKey(tName);
+    }
+
+    public static boolean isNotCategoryName(String tName) {
+        return nameMap.containsKey(tName) == false;
+    }
 
     private final Color color;
 
