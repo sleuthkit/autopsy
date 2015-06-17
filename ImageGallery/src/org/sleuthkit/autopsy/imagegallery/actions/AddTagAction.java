@@ -27,14 +27,11 @@ import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -48,16 +45,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class AddTagAction {
 
-    @SuppressWarnings("deprecation")
-    protected void refreshDirectoryTree() {
-
-        /* Note: this is a hack. In an ideal world, TagsManager would fire
-         * events so that the directory tree would refresh. But, we haven't
-         * had a chance to add that so, we fire these events and the tree
-         * refreshes based on them.
-         */
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
-    }
     protected static final String NO_COMMENT = "";
 
     /**
@@ -91,7 +78,7 @@ abstract class AddTagAction {
             super(getActionDisplayName());
 
             // Get the current set of tag names.
-            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+            DrawableTagsManager tagsManager = controller.getTagsManager();
             List<TagName> tagNames = null;
             try {
                 tagNames = tagsManager.getAllTagNames();
@@ -112,7 +99,7 @@ abstract class AddTagAction {
                         MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
                         tagNameItem.setOnAction((ActionEvent t) -> {
                             addTag(tagName, NO_COMMENT);
-                            refreshDirectoryTree();
+                            DrawableTagsManager.fireTagsChangedEvent();
                         });
                         quickTagMenu.getItems().add(tagNameItem);
                     }
@@ -133,7 +120,7 @@ abstract class AddTagAction {
                     TagName tagName = GetTagNameDialog.doDialog();
                     if (tagName != null) {
                         addTag(tagName, NO_COMMENT);
-                        refreshDirectoryTree();
+                 
                     }
                 });
             });
@@ -152,7 +139,7 @@ abstract class AddTagAction {
                         } else {
                                 new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
-                        refreshDirectoryTree();
+                      
                     }
                 });
             });

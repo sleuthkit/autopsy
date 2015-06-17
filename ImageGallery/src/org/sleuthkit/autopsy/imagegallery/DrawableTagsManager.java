@@ -28,6 +28,10 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -45,7 +49,7 @@ public class DrawableTagsManager {
     /** Used to distribute {@link TagsChangeEvent}s */
     private final EventBus tagsEventBus = new EventBus("Tags Event Bus");
 
-    /** The tag name corresponging to the "built-in" tag "Follow Up" */
+    /** The tag name corresponding to the "built-in" tag "Follow Up" */
     private TagName followUpTagName;
 
     public DrawableTagsManager(TagsManager autopsyTagsManager) {
@@ -113,7 +117,7 @@ public class DrawableTagsManager {
         return followUpTagName;
     }
 
-    public Collection<TagName> getNonCategoryTagNames() {
+    synchronized public Collection<TagName> getNonCategoryTagNames() {
         try {
             return autopsyTagsManager.getAllTagNames().stream()
                     .filter(Category::isCategoryTagName)
@@ -122,6 +126,20 @@ public class DrawableTagsManager {
             Logger.getLogger(DrawableTagsManager.class.getName()).log(Level.WARNING, "couldn't access case", ex);
         }
         return Collections.emptySet();
+    }
+
+    /**
+     * Gets content tags count by content.
+     *
+     * @param The content of interest.
+     *
+     * @return A list, possibly empty, of the tags that have been applied to the
+     *         artifact.
+     *
+     * @throws TskCoreException
+     */
+    public synchronized List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+        return autopsyTagsManager.getContentTagsByContent(content);
     }
 
     public synchronized TagName getTagName(String displayName) throws TskCoreException {
@@ -150,12 +168,35 @@ public class DrawableTagsManager {
         }
     }
 
-    public void addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
+    synchronized public void addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
         autopsyTagsManager.addContentTag(file, tagName, comment);
     }
 
-    public List<ContentTag> getContentTagsByTagName(TagName t) throws TskCoreException {
+    synchronized public List<ContentTag> getContentTagsByTagName(TagName t) throws TskCoreException {
         return autopsyTagsManager.getContentTagsByTagName(t);
     }
 
+    /**
+     * Fire the ModuleDataEvent that we use as a place holder for a real Tag
+     * Event. This is used to refresh the autopsy tag tree and the ui in
+     * ImageGallery
+     *
+     *
+     * Note: this is a hack. In an ideal world, TagsManager would fire
+     * events so that the directory tree would refresh. But, we haven't
+     * had a chance to add that so, we fire these events and the tree
+     * refreshes based on them.
+     */
+    static public void fireTagsChangedEvent() {
+
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
+    }
+
+    public synchronized List<TagName> getAllTagNames() throws TskCoreException {
+        return autopsyTagsManager.getAllTagNames();
+    }
+
+    public synchronized List<TagName> getTagNamesInUse() throws TskCoreException {
+        return autopsyTagsManager.getTagNamesInUse();
+    }
 }

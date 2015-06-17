@@ -40,6 +40,9 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -80,11 +83,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private DrawableDB db;
 
     private final ImageGalleryController controller;
+
     /**
      * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
-     * not
-     * fully analyzed or not visible groups could be in this map
+     * not fully analyzed or not visible groups could be in this map
      */
+    @GuardedBy("this")
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
     /**
@@ -153,7 +157,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
             if (groupBy == DrawableAttribute.TAGS) {
-                if (((TagName) val).getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false) {
+                if (Category.isCategoryTagName((TagName) val) == false) {
                     resultSet.add(new GroupKey(groupBy, val));
                 }
             } else {
@@ -189,9 +193,24 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *         or
      *         null if no group exists for that key.
      */
-    public DrawableGroup getGroupForKey(GroupKey<?> groupKey) {
+    @Nullable
+    public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
         synchronized (groupMap) {
+            if (groupKey.getAttribute() == DrawableAttribute.TAGS) {
+
+                System.out.println(groupKey);
+//                @SuppressWarnings("unchecked")
+//                GroupKey<TagName> tagKey = (GroupKey<TagName>) groupKey;
+//
+//                return groupMap.keySet().stream()
+//                        .filter((GroupKey<?> t) -> t.getAttribute() == DrawableAttribute.TAGS)
+//                        .map((GroupKey<?> t) -> (GroupKey<TagName>) t)
+//                        .filter(t -> tagKey.getValue().getDisplayName().equals(t.getValue().getDisplayName()))
+//                        .findFirst().map(groupMap::get).orElse(null);
+
+            } //else {
             return groupMap.get(groupKey);
+//            }
         }
     }
 
@@ -443,7 +462,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     values = (List<A>) Arrays.asList(Category.values());
                     break;
                 case TAGS:
-                    values = (List<A>) Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse().stream()
+                    values = (List<A>) controller.getTagsManager().getTagNamesInUse().stream()
                             .filter(t -> t.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false)
                             .collect(Collectors.toList());
                     break;
@@ -525,14 +544,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         try {
             Set<Long> files = new HashSet<>();
-            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(tagName);
+            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
-
                     files.add(ct.getContent().getId());
                 }
             }
-
             return files;
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex);

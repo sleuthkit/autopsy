@@ -1058,7 +1058,7 @@ public final class DrawableDB {
     public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
         try {
             List<DrawableFile<?>> files = new ArrayList<>();
-            List<ContentTag> contentTags = tskCase.getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
+            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile) {
                     files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
@@ -1145,7 +1145,7 @@ public final class DrawableDB {
      *         in.
      *
      *
-     * //TODO: why does this go to the SKC? don't we already have this in =fo
+     * //TODO: why does this go to the SKC? don't we already have this info
      * in the drawable db?
      */
     @Nonnull
