@@ -170,19 +170,16 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public Set<TagName> getTagNames() {
         try {
-            List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(this);
 
-            return contentTagsByContent.stream()
+            return getSleuthkitCase().getContentTagsByContent(this).stream()
                     .map(Tag::getName)
                     .collect(Collectors.toSet());
-
         } catch (TskCoreException ex) {
             Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName(), ex);
-            return Collections.emptySet();
         } catch (IllegalStateException ex) {
             Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
-            return Collections.emptySet();
         }
+        return Collections.emptySet();
     }
 
     @Deprecated
@@ -275,7 +272,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public void updateCategory() {
         try {
-            List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(this);
+
+            List<ContentTag> contentTagsByContent = getSleuthkitCase().getContentTagsByContent(this);
             Category cat = null;
             for (ContentTag ct : contentTagsByContent) {
                 if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {

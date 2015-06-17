@@ -67,7 +67,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.actions.DeleteTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -257,17 +257,17 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     @SuppressWarnings("deprecation")
     protected void initialize() {
-        followUpToggle.setOnAction((ActionEvent t) -> {
-
+        followUpToggle.setOnAction((ActionEvent event) -> {
             if (followUpToggle.isSelected() == true) {
-                globalSelectionModel.clearAndSelect(fileID);
                 try {
-                    new AddDrawableTagAction(controller).addTag(ImageGalleryController.getDefault().getTagsManager().getFollowUpTagName(), "");
+                    final TagName followUpTagName = controller.getTagsManager().getFollowUpTagName();
+                    globalSelectionModel.clearAndSelect(fileID);
+                    new AddDrawableTagAction(controller).addTag(followUpTagName, "");
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to add follow up tag.  Could not load TagName.", ex);
+                    LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
                 }
             } else {
-                new DeleteTagAction(controller, file).handle(t);
+                new DeleteFollowUpTagAction(controller, file).handle(event);
             }
         });
     }
@@ -290,7 +290,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     }
 
     protected boolean hasFollowUp() throws TskCoreException {
-        String followUpTagName = ImageGalleryController.getDefault().getTagsManager().getFollowUpTagName().getDisplayName();
+        String followUpTagName = getController().getTagsManager().getFollowUpTagName().getDisplayName();
         Collection<TagName> tagNames = DrawableAttribute.TAGS.getValue(getFile());
         return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
     }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -134,6 +135,7 @@ public final class ImageGalleryController {
     private StackPane centralStackPane;
 
     private Node infoOverlay;
+    private SleuthkitCase sleuthKitCase;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -345,20 +347,25 @@ public final class ImageGalleryController {
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
+        if (Objects.nonNull(theNewCase)) {
+            this.sleuthKitCase = theNewCase.getSleuthkitCase();
+            this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
-        setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
-        setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
+            setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
+            setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
 
-        // if we add this line icons are made as files are analyzed rather than on demand.
-        // db.addUpdatedFileListener(IconCache.getDefault());
-        restartWorker();
-        historyManager.clear();
-        groupManager.setDB(db);
-        hashSetManager.setDb(db);
-        categoryManager.setDb(db);
-        tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
-        SummaryTablePane.getDefault().refresh();
+            // if we add this line icons are made as files are analyzed rather than on demand.
+            // db.addUpdatedFileListener(IconCache.getDefault());
+            restartWorker();
+            historyManager.clear();
+            groupManager.setDB(db);
+            hashSetManager.setDb(db);
+            categoryManager.setDb(db);
+            tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
+            SummaryTablePane.getDefault().refresh();
+        } else {
+            reset();
+        }
     }
 
     /**
@@ -558,12 +565,8 @@ public final class ImageGalleryController {
         }
     }
 
-    public SleuthkitCase getSleuthKitCase() throws IllegalStateException {
-        if (Case.isCaseOpen()) {
-            return Case.getCurrentCase().getSleuthkitCase();
-        } else {
-            throw new IllegalStateException("No Case is open!");
-        }
+    public synchronized SleuthkitCase getSleuthKitCase() {
+        return sleuthKitCase;
     }
 
     /**

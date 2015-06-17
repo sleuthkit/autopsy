@@ -28,6 +28,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -89,7 +90,7 @@ public class AddDrawableTagAction extends AddTagAction {
                     //make sure rest of ui  hears category change.
                     controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 }
-                refreshDirectoryTree();
+                DrawableTagsManager.fireTagsChangedEvent();
                 return null;
             }
 

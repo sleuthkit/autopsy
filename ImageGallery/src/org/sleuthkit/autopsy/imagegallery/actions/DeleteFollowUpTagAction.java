@@ -19,19 +19,18 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
@@ -39,23 +38,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Action to delete the follow up tag a
- *
- *
  */
-public class DeleteTagAction extends Action {
+public class DeleteFollowUpTagAction extends Action {
 
-    private static final Logger LOGGER = Logger.getLogger(DeleteTagAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DeleteFollowUpTagAction.class.getName());
     private final long fileID;
     private final DrawableFile<?> file;
     private final ImageGalleryController controller;
-    private final ContentTag tag;
 
-    public DeleteTagAction(ImageGalleryController controller, DrawableFile<?> file, ContentTag tag) {
+    public DeleteFollowUpTagAction(ImageGalleryController controller, DrawableFile<?> file) {
         super("Delete Follow Up Tag");
         this.controller = controller;
         this.file = file;
         this.fileID = file.getId();
-        this.tag = tag;
         setEventHandler((ActionEvent t) -> {
             deleteTag();
         });
@@ -63,27 +58,28 @@ public class DeleteTagAction extends Action {
 
     /**
      *
-     * @param fileID1 the value of fileID1
      *
-     * @throws IllegalStateException
+     *
      */
-    private void deleteTag() throws IllegalStateException {
+    private void deleteTag() {
 
         final SleuthkitCase sleuthKitCase = controller.getSleuthKitCase();
         final GroupManager groupManager = controller.getGroupManager();
+        final DrawableTagsManager tagsManager = controller.getTagsManager();
 
         try {
+            final TagName followUpTagName = tagsManager.getFollowUpTagName();
             // remove file from old category group
-            groupManager.removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, tag.getName()), fileID);
-            sleuthKitCase.deleteContentTag(tag);
-//
-//            List<ContentTag> contentTagsByContent = sleuthKitCase.getContentTagsByContent(file);
-//            for (ContentTag ct : contentTagsByContent) {
-//                if (ct.getName().getDisplayName().equals(tagsManager.getFollowUpTagName().getDisplayName())) {
-//                    sleuthKitCase.deleteContentTag(ct);
-//                }
-//            }
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
+            groupManager.removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, followUpTagName), fileID);
+
+            List<ContentTag> contentTagsByContent = sleuthKitCase.getContentTagsByContent(file);
+            for (ContentTag ct : contentTagsByContent) {
+                if (ct.getName().getDisplayName().equals(followUpTagName.getDisplayName())) {
+                    sleuthKitCase.deleteContentTag(ct);
+                }
+            }
+
+            DrawableTagsManager.fireTagsChangedEvent();
 
             //make sure rest of ui  hears category change.
             groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
@@ -91,4 +87,5 @@ public class DeleteTagAction extends Action {
             LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
         }
     }
+
 }
