@@ -95,7 +95,7 @@ abstract class AddTagAction {
             // a tag with the associated tag name. 
             if (null != tagNames && !tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
-                    if (tagName.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false) {
+                    if (Category.isNotCategoryTagName(tagName)) {
                         MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
                         tagNameItem.setOnAction((ActionEvent t) -> {
                             addTag(tagName, NO_COMMENT);
@@ -134,7 +134,7 @@ abstract class AddTagAction {
                 SwingUtilities.invokeLater(() -> {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
                     if (null != tagNameAndComment) {
-                        if (tagNameAndComment.getTagName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
+                            if (Category.isCategoryTagName(tagNameAndComment.getTagName())) {
                                 new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         } else {
                                 new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());

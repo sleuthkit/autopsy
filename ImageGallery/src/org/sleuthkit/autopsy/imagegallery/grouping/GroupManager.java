@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.grouping;
 
+import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
+import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -157,7 +159,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
             if (groupBy == DrawableAttribute.TAGS) {
-                if (Category.isCategoryTagName((TagName) val) == false) {
+                if (Category.isNotCategoryTagName((TagName) val)) {
                     resultSet.add(new GroupKey(groupBy, val));
                 }
             } else {
@@ -463,7 +465,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     break;
                 case TAGS:
                     values = (List<A>) controller.getTagsManager().getTagNamesInUse().stream()
-                            .filter(t -> t.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false)
+                            .filter(Category::isNotCategoryTagName)
                             .collect(Collectors.toList());
                     break;
                 case ANALYZED:
@@ -590,7 +592,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param sortOrder
      * @param force     true to force a full db query regroup
      */
-    public <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
+    public synchronized <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
 
         if (!Case.isCaseOpen()) {
             return;
@@ -631,6 +633,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
+    }
+
+    @Subscribe
+    public void handleAutopsyTagChange(TagsChangeEvent evt) {
+        if (groupBy == DrawableAttribute.TAGS
+                && evt.getFileIDs().size() == 1
+                && evt.getFileIDs().contains(-1L)) {
+            regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
+        }
     }
 
     /**

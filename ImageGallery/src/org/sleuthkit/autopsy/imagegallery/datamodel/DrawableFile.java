@@ -46,7 +46,6 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.Tag;
@@ -111,7 +110,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         super(file.getSleuthkitCase(), file.getId(), file.getAttrType(), file.getAttrId(), file.getName(), file.getType(), file.getMetaAddr(), (int) file.getMetaSeq(), file.getDirType(), file.getMetaType(), null, new Integer(0).shortValue(), file.getSize(), file.getCtime(), file.getCrtime(), file.getAtime(), file.getMtime(), new Integer(0).shortValue(), file.getUid(), file.getGid(), file.getMd5Hash(), file.getKnown(), file.getParentPath());
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
-
     }
 
     public abstract boolean isVideo();
@@ -272,20 +270,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public void updateCategory() {
         try {
+            category.set(getSleuthkitCase().getContentTagsByContent(this).stream()
+                    .map(Tag::getName).filter(Category::isCategoryTagName)
+                    .findFirst()
+                    .map(TagName::getDisplayName)
+                    .map(Category::fromDisplayName)
+                    .orElse(Category.ZERO)
+            );
 
-            List<ContentTag> contentTagsByContent = getSleuthkitCase().getContentTagsByContent(this);
-            Category cat = null;
-            for (ContentTag ct : contentTagsByContent) {
-                if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                    cat = Category.fromDisplayName(ct.getName().getDisplayName());
-                    break;
-                }
-            }
-            if (cat == null) {
-                category.set(Category.ZERO);
-            } else {
-                category.set(cat);
-            }
         } catch (TskCoreException ex) {
             Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
         } catch (IllegalStateException ex) {

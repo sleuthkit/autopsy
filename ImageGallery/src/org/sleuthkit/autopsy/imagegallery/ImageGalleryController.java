@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -57,7 +58,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -68,6 +68,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -83,25 +84,25 @@ import org.sleuthkit.datamodel.TskData;
  * control.
  */
 public final class ImageGalleryController {
-
+    
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
-
+    
     private final Region infoOverLayBackground = new Region() {
         {
             setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
             setOpacity(.4);
         }
     };
-
+    
     private static ImageGalleryController instance;
-
+    
     public static synchronized ImageGalleryController getDefault() {
         if (instance == null) {
             instance = new ImageGalleryController();
         }
         return instance;
     }
-
+    
     private final History<GroupViewState> historyManager = new History<>();
 
     /**
@@ -109,75 +110,75 @@ public final class ImageGalleryController {
      * not listen to speed up ingest
      */
     private final SimpleBooleanProperty listeningEnabled = new SimpleBooleanProperty(false);
-
+    
     private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
-
+    
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
-
+    
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
-
+    
     private final FileIDSelectionModel selectionModel = FileIDSelectionModel.getInstance();
-
+    
     private DBWorkerThread dbWorkerThread;
-
+    
     private DrawableDB db;
-
+    
     private final GroupManager groupManager = new GroupManager(this);
     private final HashSetManager hashSetManager = new HashSetManager();
     private final CategoryManager categoryManager = new CategoryManager(this);
     private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
-
+    
     private StackPane fullUIStackPane;
-
+    
     private StackPane centralStackPane;
-
+    
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
-
+    
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
     }
-
+    
     public void setMetaDataCollapsed(Boolean metaDataCollapsed) {
         this.metaDataCollapsed.set(metaDataCollapsed);
     }
-
+    
     private GroupViewState getViewState() {
         return historyManager.getCurrentState();
     }
-
+    
     public ReadOnlyBooleanProperty regroupDisabled() {
         return regroupDisabled.getReadOnlyProperty();
     }
-
+    
     public ReadOnlyObjectProperty<GroupViewState> viewState() {
         return historyManager.currentState();
     }
-
+    
     public synchronized FileIDSelectionModel getSelectionModel() {
-
+        
         return selectionModel;
     }
-
+    
     public GroupManager getGroupManager() {
         return groupManager;
     }
-
+    
     public DrawableDB getDatabase() {
         return db;
     }
-
+    
     synchronized public void setListeningEnabled(boolean enabled) {
         listeningEnabled.set(enabled);
     }
-
+    
     synchronized boolean isListeningEnabled() {
         return listeningEnabled.get();
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     void setStale(Boolean b) {
         Platform.runLater(() -> {
@@ -187,18 +188,18 @@ public final class ImageGalleryController {
             new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
         }
     }
-
+    
     public ReadOnlyBooleanProperty stale() {
         return stale.getReadOnlyProperty();
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean isStale() {
         return stale.get();
     }
-
+    
     private ImageGalleryController() {
-
+        
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
             //if we just turned on listening and a case is open and that case is not up to date
             if (newValue && !oldValue && Case.existsCurrentCase() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
@@ -206,28 +207,28 @@ public final class ImageGalleryController {
                 queueDBWorkerTask(new CopyAnalyzedFiles());
             }
         });
-
+        
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
             if (Case.isCaseOpen()) {
                 checkForGroups();
             }
         });
-
+        
         groupManager.getUnSeenGroups().addListener((Observable observable) -> {
             //if there are unseen groups and none being viewed
             if (groupManager.getUnSeenGroups().isEmpty() == false && (getViewState() == null || getViewState().getGroup() == null)) {
                 advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)));
             }
         });
-
+        
         viewState().addListener((Observable observable) -> {
             selectionModel.clearSelection();
         });
-
+        
         regroupDisabled.addListener((Observable observable) -> {
             checkForGroups();
         });
-
+        
         IngestManager.getInstance().addIngestModuleEventListener((PropertyChangeEvent evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
@@ -236,27 +237,27 @@ public final class ImageGalleryController {
         });
 //        metaDataCollapsed.bind(Toolbar.getDefault().showMetaDataProperty());
     }
-
+    
     public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
     }
-
+    
     public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
-
+    
     public void advance(GroupViewState newState) {
         historyManager.advance(newState);
     }
-
+    
     public GroupViewState advance() {
         return historyManager.advance();
     }
-
+    
     public GroupViewState retreat() {
         return historyManager.retreat();
     }
-
+    
     private void updateRegroupDisabled() {
         regroupDisabled.set(getFileUpdateQueueSizeProperty().get() > 0 || IngestManager.getInstance().isIngestRunning());
     }
@@ -278,7 +279,7 @@ public final class ImageGalleryController {
                             new NoGroupsDialog("No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
                                     new ProgressIndicator()));
                 }
-
+                
             } else if (getFileUpdateQueueSizeProperty().get() > 0) {
                 replaceNotification(fullUIStackPane,
                         new NoGroupsDialog("No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
@@ -292,19 +293,19 @@ public final class ImageGalleryController {
                     replaceNotification(fullUIStackPane,
                             new NoGroupsDialog("There are no images/videos in the added datasources."));
                 }
-
+                
             } else if (!groupManager.isRegrouping()) {
                 replaceNotification(centralStackPane,
                         new NoGroupsDialog("There are no fully analyzed groups to display:"
                                 + "  the current Group By setting resulted in no groups, "
                                 + "or no groups are fully analyzed but ingest is not running."));
             }
-
+            
         } else {
             clearNotification();
         }
     }
-
+    
     private void clearNotification() {
         //remove the ingest spinner
         if (fullUIStackPane != null) {
@@ -315,27 +316,27 @@ public final class ImageGalleryController {
             centralStackPane.getChildren().remove(infoOverlay);
         }
     }
-
+    
     private void replaceNotification(StackPane stackPane, Node newNode) {
         clearNotification();
-
+        
         infoOverlay = new StackPane(infoOverLayBackground, newNode);
         if (stackPane != null) {
             stackPane.getChildren().add(infoOverlay);
         }
     }
-
+    
     private void restartWorker() {
         if (dbWorkerThread != null) {
             // Keep using the same worker thread if one exists
             return;
         }
         dbWorkerThread = new DBWorkerThread();
-
+        
         getFileUpdateQueueSizeProperty().addListener((Observable o) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
-
+        
         Thread th = new Thread(dbWorkerThread);
         th.setDaemon(false); // we want it to go away when it is done
         th.start();
@@ -350,7 +351,7 @@ public final class ImageGalleryController {
         if (Objects.nonNull(theNewCase)) {
             this.sleuthKitCase = theNewCase.getSleuthkitCase();
             this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
-
+            
             setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
             setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
 
@@ -362,7 +363,9 @@ public final class ImageGalleryController {
             hashSetManager.setDb(db);
             categoryManager.setDb(db);
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
+            tagsManager.registerListener(groupManager);
             SummaryTablePane.getDefault().refresh();
+            
         } else {
             reset();
         }
@@ -379,9 +382,9 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             historyManager.clear();
         });
-        Category.clearTagNames();
         tagsManager.clearFollowUpTagName();
-
+        tagsManager.unregisterListener(groupManager);
+        
         Toolbar.getDefault(this).reset();
         groupManager.clear();
         if (db != null) {
@@ -403,21 +406,21 @@ public final class ImageGalleryController {
         }
         dbWorkerThread.addTask(innerTask);
     }
-
+    
     public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
-
+    
     public void setStacks(StackPane fullUIStack, StackPane centralStack) {
         fullUIStackPane = fullUIStack;
         this.centralStackPane = centralStack;
         Platform.runLater(this::checkForGroups);
     }
-
+    
     public ReadOnlyIntegerProperty getFileUpdateQueueSizeProperty() {
         return queueSizeProperty.getReadOnlyProperty();
     }
-
+    
     public ReadOnlyDoubleProperty regroupProgress() {
         return groupManager.regroupProgress();
     }
@@ -436,6 +439,10 @@ public final class ImageGalleryController {
                 case CONTENT_CHANGED:
                 //TODO: do we need to do anything here?  -jm
                 case DATA_ADDED:
+                    ModuleDataEvent oldValue = (ModuleDataEvent) evt.getOldValue();
+                    if ("TagAction".equals(oldValue.getModuleName()) && oldValue.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
+                        getTagsManager().fireChange(Collections.singleton(-1L));
+                    }
                     /* we could listen to DATA events and progressivly
                      * update files, and get data from DataSource ingest
                      * modules, but given that most modules don't post new
@@ -489,15 +496,15 @@ public final class ImageGalleryController {
             }
         });
     }
-
+    
     public HashSetManager getHashSetManager() {
         return hashSetManager;
     }
-
+    
     public CategoryManager getCategoryManager() {
         return categoryManager;
     }
-
+    
     public DrawableTagsManager getTagsManager() {
         return tagsManager;
     }
@@ -538,7 +545,7 @@ public final class ImageGalleryController {
                 queueSizeProperty.set(workQueue.size());
             });
         }
-
+        
         @Override
         public void run() {
 
@@ -549,22 +556,22 @@ public final class ImageGalleryController {
                 }
                 try {
                     InnerTask it = workQueue.take();
-
+                    
                     if (it.cancelled == false) {
                         it.run();
                     }
-
+                    
                     Platform.runLater(() -> {
                         queueSizeProperty.set(workQueue.size());
                     });
-
+                    
                 } catch (InterruptedException ex) {
                     Exceptions.printStackTrace(ex);
                 }
             }
         }
     }
-
+    
     public synchronized SleuthkitCase getSleuthKitCase() {
         return sleuthKitCase;
     }
@@ -573,55 +580,55 @@ public final class ImageGalleryController {
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
     static public abstract class InnerTask implements Runnable {
-
+        
         public double getProgress() {
             return progress.get();
         }
-
+        
         public final void updateProgress(Double workDone) {
             this.progress.set(workDone);
         }
-
+        
         public String getMessage() {
             return message.get();
         }
-
+        
         public final void updateMessage(String Status) {
             this.message.set(Status);
         }
         SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
         SimpleDoubleProperty progress = new SimpleDoubleProperty(this, "pregress");
         SimpleStringProperty message = new SimpleStringProperty(this, "status");
-
+        
         public SimpleDoubleProperty progressProperty() {
             return progress;
         }
-
+        
         public SimpleStringProperty messageProperty() {
             return message;
         }
-
+        
         public Worker.State getState() {
             return state.get();
         }
-
+        
         protected void updateState(Worker.State newState) {
             state.set(newState);
         }
-
+        
         public ReadOnlyObjectProperty<Worker.State> stateProperty() {
             return new ReadOnlyObjectWrapper<>(state.get());
         }
-
+        
         protected InnerTask() {
         }
-
+        
         protected volatile boolean cancelled = false;
-
+        
         public void cancel() {
             updateState(Worker.State.CANCELLED);
         }
-
+        
         protected boolean isCancelled() {
             return getState() == Worker.State.CANCELLED;
         }
@@ -631,25 +638,25 @@ public final class ImageGalleryController {
      * Abstract base class for tasks associated with a file in the database
      */
     static public abstract class FileTask extends InnerTask {
-
+        
         private final AbstractFile file;
-
+        
         public AbstractFile getFile() {
             return file;
         }
-
+        
         public FileTask(AbstractFile f) {
             super();
             this.file = f;
         }
-
+        
     }
 
     /**
      * task that updates one file in database with results from ingest
      */
     private class UpdateFileTask extends FileTask {
-
+        
         public UpdateFileTask(AbstractFile f) {
             super(f);
         }
@@ -676,7 +683,7 @@ public final class ImageGalleryController {
      * task that updates one file in database with results from ingest
      */
     private class RemoveFileTask extends FileTask {
-
+        
         public RemoveFileTask(AbstractFile f) {
             super(f);
         }
@@ -695,7 +702,7 @@ public final class ImageGalleryController {
                     Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task");
                 }
             }
-
+            
         }
     }
 
@@ -707,16 +714,16 @@ public final class ImageGalleryController {
      * adds them to the Drawable DB
      */
     private class CopyAnalyzedFiles extends InnerTask {
-
+        
         final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
-
+        
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
-
+        
         @Override
         public void run() {
             progressHandle.start();
             updateMessage("populating analyzed image/video database");
-
+            
             try {
                 //grab all files with supported extension or detected mime types
                 final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
@@ -726,7 +733,7 @@ public final class ImageGalleryController {
                         + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
                         + " and blackboard_attributes.value_text in ('" + StringUtils.join(ImageGalleryModule.getSupportedMimes(), "','") + "'))");
                 progressHandle.switchToDeterminate(files.size());
-
+                
                 updateProgress(0.0);
 
                 //do in transaction
@@ -740,7 +747,7 @@ public final class ImageGalleryController {
                     }
                     final Boolean hasMimeType = ImageGalleryModule.hasSupportedMimeType(f);
                     final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
-
+                    
                     if (known) {
                         db.removeFile(f.getId(), tr);  //remove known files
                     } else {
@@ -760,38 +767,38 @@ public final class ImageGalleryController {
                             }
                         }
                     }
-
+                    
                     units++;
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);
                     updateProgress(prog - 1 / (double) files.size());
                     updateMessage(f.getName());
                 }
-
+                
                 progressHandle.finish();
-
+                
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
                 updateMessage("commiting image/video database");
                 updateProgress(1.0);
-
+                
                 progressHandle.start();
                 db.commitTransaction(tr, true);
-
+                
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
             }
-
+            
             progressHandle.finish();
-
+            
             updateMessage(
                     "");
             updateProgress(
                     -1.0);
             setStale(false);
         }
-
+        
     }
 
     /**
@@ -802,7 +809,7 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     class PrePopulateDataSourceFiles extends InnerTask {
-
+        
         private final Content dataSource;
 
         /**
@@ -812,7 +819,7 @@ public final class ImageGalleryController {
          */
         // (name like '.jpg' or name like '.png' ...)
         private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
-
+        
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
         /**
@@ -838,7 +845,7 @@ public final class ImageGalleryController {
             final List<AbstractFile> files;
             try {
                 List<Long> fsObjIds = new ArrayList<>();
-
+                
                 String fsQuery;
                 if (dataSource instanceof Image) {
                     Image image = (Image) dataSource;
@@ -852,7 +859,7 @@ public final class ImageGalleryController {
                 else {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
-
+                
                 files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
@@ -870,21 +877,21 @@ public final class ImageGalleryController {
                     final int prog = units;
                     progressHandle.progress(f.getName(), units);
                 }
-
+                
                 progressHandle.finish();
                 progressHandle = ProgressHandleFactory.createHandle("commiting image/video database");
-
+                
                 progressHandle.start();
                 db.commitTransaction(tr, false);
-
+                
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             } catch (IllegalStateException | NullPointerException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "Case was closed out from underneath prepopulating database");
             }
-
+            
             progressHandle.finish();
         }
     }
-
+    
 }
