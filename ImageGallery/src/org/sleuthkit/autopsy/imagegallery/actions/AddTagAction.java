@@ -26,6 +26,7 @@ import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;

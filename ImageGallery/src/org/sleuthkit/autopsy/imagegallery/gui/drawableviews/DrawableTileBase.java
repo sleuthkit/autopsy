@@ -258,6 +258,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     try {
                         globalSelectionModel.clearAndSelect(file.getId());
                         new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
+                    new AddDrawableTagAction(controller).addTag(followUpTagName, "");
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
                     }

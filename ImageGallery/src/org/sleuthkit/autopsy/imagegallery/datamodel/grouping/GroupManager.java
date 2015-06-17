@@ -199,7 +199,21 @@ public class GroupManager {
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
         synchronized (groupMap) {
+            if (groupKey.getAttribute() == DrawableAttribute.TAGS) {
+
+                System.out.println(groupKey);
+//                @SuppressWarnings("unchecked")
+//                GroupKey<TagName> tagKey = (GroupKey<TagName>) groupKey;
+//
+//                return groupMap.keySet().stream()
+//                        .filter((GroupKey<?> t) -> t.getAttribute() == DrawableAttribute.TAGS)
+//                        .map((GroupKey<?> t) -> (GroupKey<TagName>) t)
+//                        .filter(t -> tagKey.getValue().getDisplayName().equals(t.getValue().getDisplayName()))
+//                        .findFirst().map(groupMap::get).orElse(null);
+
+            } //else {
             return groupMap.get(groupKey);
+//            }
         }
     }
 
