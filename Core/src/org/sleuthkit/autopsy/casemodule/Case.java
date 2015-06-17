@@ -404,6 +404,24 @@ public class Case {
      * topics. Makes it plain-vanilla enough that each item should be able to
      * use it.
      *
+     * Sanitize the PostgreSQL/Solr core, and ActiveMQ name by excluding: 
+     *      Control characters 
+     *      Non-ASCII characters
+     *      Various others shown below 
+     * 
+     * Solr: http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
+     *      may not be / \ : 
+     * 
+     * ActiveMQ: http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
+     *      may not be ? 
+     * 
+     * PostgreSQL: http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 
+     *      63 chars max,  must start with a-z or _ following chars can be
+     *      letters _ or digits 
+     *
+     * SQLite: Uses autopsy.db for the database name
+     *      follows Windows naming convention
+     * 
      * @param caseName The name of the case as typed in by the user
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
