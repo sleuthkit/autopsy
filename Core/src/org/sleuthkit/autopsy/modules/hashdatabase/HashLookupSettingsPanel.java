@@ -34,7 +34,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-import org.openide.util.Exceptions;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -823,8 +822,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             hashDb.addHashes(listOfHashes);
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "HashLookupSettingsPanel.hashesAdded.err"), ex); //NON-NLS
+            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "HashLookupSettingsPanel.hashesAdded.err"));
         }
+        // TODO - Remove
         for(HashEntry h: listOfHashes) {
             Logger.getLogger(HashSetTableModel.class.getName()).log(Level.INFO, h.getMd5Hash());
         }

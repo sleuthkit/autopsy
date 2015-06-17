@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.Dimension;
-import java.awt.PopupMenu;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,10 +27,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.HashEntry;
 
 /**
@@ -126,7 +126,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(instructionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                    .addComponent(instructionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 250, Short.MAX_VALUE)
                     .addComponent(jScrollPane1))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -138,7 +138,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(42, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(instructionLabel)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -164,18 +164,22 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         String userInput = hashValuesTextArea.getText();
         String[] listOfHashEntries = userInput.split("\\r?\\n");
         // These entries may be of <MD5> or <MD5, comment> format
+        int numberOfHashesAdded = 0;
         for(String hashEntry : listOfHashEntries) {
             Matcher m = md5Pattern.matcher(hashEntry);
             if(m.find()) {
                 // more information can be added to the HashEntry - sha-1, sha-512, comment
                 hashes.add(new HashEntry(null, m.group(0), null, null, null));
+                numberOfHashesAdded++;
             }
         }
+        JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "AddHashValuesToDatabaseDialog.hashesAdded.msg", numberOfHashesAdded));
         this.dispose();
     }//GEN-LAST:event_AddValuesToHashDatabaseButtonActionPerformed
 
     private void pasteFromClipboardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pasteFromClipboardButtonActionPerformed
         hashValuesTextArea.paste();
+        hashValuesTextArea.append("\n");
     }//GEN-LAST:event_pasteFromClipboardButtonActionPerformed
 
     private void hashValuesTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_hashValuesTextAreaMouseClicked
@@ -203,6 +207,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     hashValuesTextArea.paste();
+                    hashValuesTextArea.append("\n");
                 }
             });
 
