@@ -198,21 +198,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
         synchronized (groupMap) {
-            if (groupKey.getAttribute() == DrawableAttribute.TAGS) {
-
-                System.out.println(groupKey);
-//                @SuppressWarnings("unchecked")
-//                GroupKey<TagName> tagKey = (GroupKey<TagName>) groupKey;
-//
-//                return groupMap.keySet().stream()
-//                        .filter((GroupKey<?> t) -> t.getAttribute() == DrawableAttribute.TAGS)
-//                        .map((GroupKey<?> t) -> (GroupKey<TagName>) t)
-//                        .filter(t -> tagKey.getValue().getDisplayName().equals(t.getValue().getDisplayName()))
-//                        .findFirst().map(groupMap::get).orElse(null);
-
-            } //else {
             return groupMap.get(groupKey);
-//            }
         }
     }
 
@@ -255,7 +241,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     /**
      * make and return a new group with the given key and files. If a group
-     * already existed for that key, it will be replaced.
+     * already existed for that key, it will be updated to contain the given
+     * files.
      *
      * NOTE: this is the only API for making a new group.
      *
@@ -265,28 +252,33 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @return the new DrawableGroup for the given key
      */
     public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
-
-        Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new HashSet<Long>());
-        final boolean groupSeen = db.isGroupSeen(groupKey);
-        DrawableGroup g = new DrawableGroup(groupKey, newFiles, groupSeen);
-
-        g.seenProperty().addListener((observable, oldSeen, newSeen) -> {
-            markGroupSeen(g, newSeen);
-        });
         synchronized (groupMap) {
-            groupMap.put(groupKey, g);
+            if (groupMap.containsKey(groupKey)) {
+                DrawableGroup group = groupMap.get(groupKey);
+                group.setFiles(ObjectUtils.defaultIfNull(files, Collections.emptySet()));
+                return group;
+            } else {
+                final boolean groupSeen = db.isGroupSeen(groupKey);
+                DrawableGroup group = new DrawableGroup(groupKey, files, groupSeen);
+                group.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+                    markGroupSeen(group, newSeen);
+                });
+                groupMap.put(groupKey, group);
+                return group;
+            }
         }
-        return g;
     }
 
     /**
-     * 'mark' the given group as seen. This removes it from the queue of groups
+     * 'mark' the given group as seen. This removes it from the queue of
+     * groups
      * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     @ThreadConfined(type = ThreadType.JFX)
-    public void markGroupSeen(DrawableGroup group, boolean seen) {
+    public void markGroupSeen(DrawableGroup group, boolean seen
+    ) {
         db.markGroupSeen(group.getGroupKey(), seen);
         group.setSeen(seen);
         if (seen) {
@@ -314,9 +306,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             // If we're grouping by category, we don't want to remove empty groups.
             if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                 if (group.fileIds().isEmpty()) {
-                    synchronized (groupMap) {
-                        groupMap.remove(groupKey, group);
-                    }
                     Platform.runLater(() -> {
                         analyzedGroups.remove(group);
                         unSeenGroups.remove(group);
@@ -624,6 +613,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
             });
         }
+
     }
 
     /**
@@ -723,6 +713,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     controller.getTagsManager().fireChange(fileIDs);
                 }
                 break;
+
         }
     }
 
@@ -768,14 +759,11 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     unSeenGroups.clear();
                 }
             });
-            synchronized (groupMap) {
-                groupMap.clear();
-            }
 
             // Get the list of group keys
             final List<A> vals = findValuesForAttribute(groupBy);
 
-            // Make a list of each group 
+            // Make a list of each group
             final List<DrawableGroup> groups = new ArrayList<>();
 
             groupProgress.start(vals.size());

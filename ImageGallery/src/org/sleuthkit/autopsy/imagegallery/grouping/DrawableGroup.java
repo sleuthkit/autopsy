@@ -134,7 +134,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 ((DrawableGroup) obj).groupKey);
     }
 
-    synchronized public void addFile(Long f) {
+    synchronized void addFile(Long f) {
         invalidateHashSetHitsCount();
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
@@ -142,7 +142,21 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         }
     }
 
-    synchronized public void removeFile(Long f) {
+    synchronized void setFiles(Set<? extends Long> newFileIds) {
+        invalidateHashSetHitsCount();
+        boolean filesRemoved = fileIDs.removeIf((Long t) -> newFileIds.contains(t) == false);
+        if (filesRemoved) {
+            seen.set(false);
+        }
+        for (Long f : newFileIds) {
+            if (fileIDs.contains(f) == false) {
+                fileIDs.add(f);
+                seen.set(false);
+            }
+        }
+    }
+
+    synchronized void removeFile(Long f) {
         invalidateHashSetHitsCount();
         if (fileIDs.removeAll(f)) {
             seen.set(false);
@@ -151,11 +165,13 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     // By default, sort by group key name
     @Override
-    public int compareTo(DrawableGroup other) {
+    public int compareTo(DrawableGroup other
+    ) {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 
-    void setSeen(boolean isSeen) {
+    void setSeen(boolean isSeen
+    ) {
         this.seen.set(isSeen);
     }
 
@@ -166,4 +182,5 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public boolean isSeen() {
         return seen.get();
     }
+
 }
