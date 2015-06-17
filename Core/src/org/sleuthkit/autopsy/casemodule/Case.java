@@ -540,7 +540,7 @@ public class Case {
                 int ret = JOptionPane.showConfirmDialog(null,
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.msg",
-                                appName, path),
+                                getAppName(), path),
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.title"),
                         JOptionPane.YES_NO_OPTION);

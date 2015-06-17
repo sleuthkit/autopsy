@@ -837,7 +837,7 @@ public final class ImageGalleryController {
                     for (FileSystem fs : image.getFileSystems()) {
                         fsObjIds.add(fs.getId());
                     }
-                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
+                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " OR fs_obj_id = ") + ") ";
                 } // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
                 // for them, we will not specify a fs_obj_id, which means we will grab files
                 // from another data source, but the drawable DB is smart enough to de-dupe them.
@@ -845,7 +845,7 @@ public final class ImageGalleryController {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 
-                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
+                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction
