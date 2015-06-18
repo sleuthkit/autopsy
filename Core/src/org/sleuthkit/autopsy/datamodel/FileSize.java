@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -178,15 +178,15 @@ public class FileSize implements AutopsyVisitableItem {
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
 
-                    // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
                         /**
-                         * This is a stop gap measure until a different way of
-                         * handling the closing of cases is worked out.
-                         * Currently, remote events may be received for a case
-                         * that is already closed.
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
                          */
                         try {
+                            // new file was added
                             // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
                             Case.getCurrentCase();
                             update();
@@ -199,10 +199,10 @@ public class FileSize implements AutopsyVisitableItem {
                             || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                         /**
-                         * This is a stop gap measure until a different way of
-                         * handling the closing of cases is worked out.
-                         * Currently, remote events may be received for a case
-                         * that is already closed.
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
                          */
                         try {
                             Case.getCurrentCase();

@@ -680,10 +680,23 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case FILE_DONE:
-                    Platform.runLater(() -> {
-                        newEventsFlag.set(true);
-                    });
-                    break;
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        Platform.runLater(() -> {
+                            newEventsFlag.set(true);
+                        });
+                        break;
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
             }
         }
     }
@@ -697,10 +710,10 @@ public class TimeLineController {
                 case CANCELLED:
                 case COMPLETED:
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();
@@ -725,10 +738,10 @@ public class TimeLineController {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ADDED:
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();

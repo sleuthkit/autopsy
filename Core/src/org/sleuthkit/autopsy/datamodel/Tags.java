@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,19 +121,20 @@ public class Tags implements AutopsyVisitableItem {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();
                         /**
-                         * There are two things to note here. It is possible for
-                         * the event to have a null oldValue if the event is a
-                         * remote event and the case is closed after the above
-                         * call, but before this code executes. Second, the use
-                         * of deprecated artifact types here is explained by the
+                         * There are two things to note here. * First, even with
+                         * the check above, it is still possible that the case
+                         * will be closed in a different thread before this code
+                         * executes. If that happens, it is possible for the
+                         * event to have a null oldValue. Second, the use of
+                         * deprecated artifact types here is explained by the
                          * fact that in an ideal world, the TagsManager would
                          * fire tag-related events so that the tags tree would
                          * refresh. But, we haven't had a chance to add that, so
@@ -154,10 +155,10 @@ public class Tags implements AutopsyVisitableItem {
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();

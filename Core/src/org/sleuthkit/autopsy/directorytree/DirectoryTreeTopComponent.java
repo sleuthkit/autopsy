@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -560,9 +559,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } // if the image is added to the case
         else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
             /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
              */
             try {
                 Case.getCurrentCase();
@@ -585,9 +585,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                 || changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
             /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
              */
             try {
                 Case.getCurrentCase();
