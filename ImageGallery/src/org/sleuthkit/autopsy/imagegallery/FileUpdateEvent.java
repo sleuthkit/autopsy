@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class FileUpdateEvent {
     }
 
     public Collection<Long> getFileIDs() {
-        return fileIDs;
+        return Collections.unmodifiableCollection(fileIDs);
     }
 
     public DrawableAttribute<?> getChangedAttribute() {
@@ -86,5 +87,7 @@ public class FileUpdateEvent {
     public static interface FileUpdateListener extends EventListener {
 
         public void handleFileUpdate(FileUpdateEvent evt);
+
+        public void handleFileRemoved(FileUpdateEvent evt);
     }
 }

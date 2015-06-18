@@ -656,7 +656,7 @@ public final class DrawableDB {
 
     private void fireRemovedFiles(Collection<Long> fileIDs) {
         for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(FileUpdateEvent.newRemovedEvent(fileIDs));
+            listener.handleFileRemoved(FileUpdateEvent.newRemovedEvent(fileIDs));
         }
     }
 
