@@ -165,13 +165,11 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     // By default, sort by group key name
     @Override
-    public int compareTo(DrawableGroup other
-    ) {
+    public int compareTo(DrawableGroup other) {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 
-    void setSeen(boolean isSeen
-    ) {
+    void setSeen(boolean isSeen) {
         this.seen.set(isSeen);
     }
 

@@ -50,6 +50,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -255,6 +256,7 @@ public class GroupManager {
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     @ThreadConfined(type = ThreadType.JFX)
+    public void markGroupSeen(DrawableGroup group, boolean seen) {
     public void markGroupSeen(DrawableGroup group, boolean seen
     ) {
         db.markGroupSeen(group.getGroupKey(), seen);
@@ -292,8 +294,6 @@ public class GroupManager {
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                         }
-    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, Set<Long> filesInGroup) {
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final GroupKey<A> groupKey, Set<Long> filesInGroup, ReGroupTask<A> task) {
                     });
                 }
             }
@@ -301,8 +301,6 @@ public class GroupManager {
             // It may be that this was the last unanalyzed file in the group, so test
             // whether the group is now fully analyzed.
             popuplateIfAnalyzed(groupKey, null);
-    public Set<Long> checkAnalyzed(final GroupKey<?> groupKey) {
-        }
 
         return group;
     }
@@ -536,7 +534,6 @@ public class GroupManager {
                 unmodifiableUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
             });
         }
-
     }
 
     /**
@@ -616,7 +613,6 @@ public class GroupManager {
 
             for (GroupKey<?> gk : groupsForFile) {
                 removeFromGroup(gk, fileId);
-                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
             }
         }
     }
@@ -629,6 +625,8 @@ public class GroupManager {
      */
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
+        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.UPDATE);
+        Collection<Long> fileIDs = evt.getFileIDs();
         /**
          * TODO: is there a way to optimize this to avoid quering to db
          * so much. the problem is that as a new files are analyzed they
@@ -682,6 +680,51 @@ public class GroupManager {
                                     markGroupSeen(group, newSeen);
                                 });
                                 groupMap.put(groupKey, group);
+                }
+                        Platform.runLater(() -> {
+                            if (analyzedGroups.contains(group) == false) {
+                                analyzedGroups.add(group);
+                            }
+                            markGroupSeen(group, groupSeen);
+                        });
+                        return group;
+            }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
+        }
+            }
+
+    private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+
+        if (Objects.nonNull(task) && (task.isCancelled())) {
+            /* if this method call is part of a ReGroupTask and that task is
+             * cancelled, no-op
+             *
+             * this allows us to stop if a regroup task has been cancelled (e.g.
+             * the user picked a different group by attribute, while the
+             * current task was still running) */
+        } else {         // no task or un-cancelled task
+            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
+                /* for attributes other than path we can't be sure a group is
+                 * fully analyzed because we don't know all the files that
+                 * will be a part of that group */
+
+                try {
+                    Set<Long> fileIDs = getFileIDsInGroup(groupKey);
+                    if (Objects.nonNull(fileIDs)) {
+                        DrawableGroup group;
+                        final boolean groupSeen = db.isGroupSeen(groupKey);
+                        synchronized (groupMap) {
+                            if (groupMap.containsKey(groupKey)) {
+                                group = groupMap.get(groupKey);
+                                group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
+                            } else {
+
+                                group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                                group.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+                                    markGroupSeen(group, newSeen);
+                                });
+                                groupMap.put(groupKey, group);
                             }
                         }
                         Platform.runLater(() -> {
@@ -690,13 +733,11 @@ public class GroupManager {
                             }
                             markGroupSeen(group, groupSeen);
                         });
-                        return group;
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
                 }
             }
-
         }
         return null;
     }
@@ -762,7 +803,6 @@ public class GroupManager {
                 updateProgress(p, vals.size());
                 groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
-                Set<Long> checkAnalyzed = checkAnalyzed(groupKey);
             }
 
             updateProgress(1, 1);
