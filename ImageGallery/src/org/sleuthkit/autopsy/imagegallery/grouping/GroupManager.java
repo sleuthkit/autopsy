@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-4 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,10 +25,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -41,12 +43,14 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -98,16 +102,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
+    private final SortedList<DrawableGroup> unmodifiableAnalyzedGroups = new SortedList<>(analyzedGroups);
 
-    private final ObservableList<DrawableGroup> publicAnalyzedGroupsWrapper = FXCollections.unmodifiableObservableList(analyzedGroups);
-    /**
-     * list of unseen groups
-     */
+    /** list of unseen groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
-
-//    private final SortedList<Grouping> sortedUnSeenGroups = new SortedList<>(unSeenGroups);
-    private final ObservableList<DrawableGroup> publicSortedUnseenGroupsWrapper = FXCollections.unmodifiableObservableList(unSeenGroups);
+    private final SortedList<DrawableGroup> unmodifiableUnSeenGroups = new SortedList<>(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -117,7 +117,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
 
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
-    private ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
+    private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
 
     public void setDB(DrawableDB db) {
         this.db = db;
@@ -125,13 +125,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
     }
 
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getAnalyzedGroups() {
-        return publicAnalyzedGroupsWrapper;
+        return unmodifiableAnalyzedGroups;
     }
 
     @ThreadConfined(type = ThreadType.JFX)
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getUnSeenGroups() {
-        return publicSortedUnseenGroupsWrapper;
+        return unmodifiableUnSeenGroups;
     }
 
     /**
@@ -240,36 +242,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     }
 
     /**
-     * make and return a new group with the given key and files. If a group
-     * already existed for that key, it will be updated to contain the given
-     * files.
-     *
-     * NOTE: this is the only API for making a new group.
-     *
-     * @param groupKey the groupKey that uniquely identifies this group
-     * @param files    a list of fileids that are members of this group
-     *
-     * @return the new DrawableGroup for the given key
-     */
-    public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
-        synchronized (groupMap) {
-            if (groupMap.containsKey(groupKey)) {
-                DrawableGroup group = groupMap.get(groupKey);
-                group.setFiles(ObjectUtils.defaultIfNull(files, Collections.emptySet()));
-                return group;
-            } else {
-                final boolean groupSeen = db.isGroupSeen(groupKey);
-                DrawableGroup group = new DrawableGroup(groupKey, files, groupSeen);
-                group.seenProperty().addListener((observable, oldSeen, newSeen) -> {
-                    markGroupSeen(group, newSeen);
-                });
-                groupMap.put(groupKey, group);
-                return group;
-            }
-        }
-    }
-
-    /**
      * 'mark' the given group as seen. This removes it from the queue of
      * groups
      * to review, and is persisted in the drawable db.
@@ -277,15 +249,13 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param group the {@link  DrawableGroup} to mark as seen
      */
     @ThreadConfined(type = ThreadType.JFX)
-    public void markGroupSeen(DrawableGroup group, boolean seen
-    ) {
+    public void markGroupSeen(DrawableGroup group, boolean seen) {
         db.markGroupSeen(group.getGroupKey(), seen);
         group.setSeen(seen);
         if (seen) {
             unSeenGroups.removeAll(group);
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
-            FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
         }
     }
 
@@ -297,7 +267,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      * @param groupKey the value of groupKey
      * @param fileID   the value of file
      */
-    public synchronized void removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
+    public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
         final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
@@ -311,74 +281,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                         unSeenGroups.remove(group);
                     });
                 }
-            } else {
             }
         }
-    }
 
-    public synchronized void populateAnalyzedGroup(final GroupKey<?> groupKey, Set<Long> filesInGroup) {
-        populateAnalyzedGroup(groupKey, filesInGroup, null);
-    }
-
-    /**
-     * create a group with the given GroupKey and file ids and add it to the
-     * analyzed group list.
-     *
-     * @param groupKey
-     * @param filesInGroup
-     */
-    private synchronized <A extends Comparable<A>> void populateAnalyzedGroup(final GroupKey<A> groupKey, Set<Long> filesInGroup, ReGroupTask<A> task) {
-
-        /* if this is not part of a regroup task or it is but the task is not
-         * cancelled...
-         *
-         * this allows us to stop if a regroup task has been cancelled (e.g. the
-         * user picked a different group by attribute, while the current task
-         * was still running) */
-        if (task == null || (task.isCancelled() == false)) {
-            DrawableGroup g = makeGroup(groupKey, filesInGroup);
-            populateAnalyzedGroup(g, task);
-        }
-    }
-
-    private synchronized void populateAnalyzedGroup(final DrawableGroup g, ReGroupTask<?> task) {
-
-        if (task == null || (task.isCancelled() == false)) {
-            final boolean groupSeen = db.isGroupSeen(g.getGroupKey());
-
-            Platform.runLater(() -> {
-                if (analyzedGroups.contains(g) == false) {
-                    analyzedGroups.add(g);
-                }
-                markGroupSeen(g, groupSeen);
-
-            });
-        }
-    }
-
-    /**
-     * check if the group for the given groupkey is analyzed
-     *
-     * @param groupKey
-     *
-     * @return null if this group is not analyzed or a list of file ids in
-     *         this
-     *         group if they are all analyzed
-     */
-    public Set<Long> checkAnalyzed(final GroupKey<?> groupKey) {
-        try {
-            /* for attributes other than path we can't be sure a group is fully
-             * analyzed because we don't know all the files that will be a part
-             * of that group */
-            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
-                return getFileIDsInGroup(groupKey);
-            } else {
-                return null;
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
-            return null;
-        }
+        return group;
     }
 
     /**
@@ -595,9 +501,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             if (groupByTask != null) {
                 groupByTask.cancel(true);
             }
-            Platform.runLater(() -> {
-                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-            });
 
             groupByTask = new ReGroupTask<A>(groupBy, sortBy, sortOrder);
             Platform.runLater(() -> {
@@ -605,15 +508,14 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             });
             regroupExecutor.submit(groupByTask);
         } else {
-            // just resort the list of groups
+            // resort the list of groups
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
-                FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
+                unmodifiableAnalyzedGroups.setComparator(sortBy.getGrpComparator(sortOrder));
+                unmodifiableUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
             });
         }
-
     }
 
     /**
@@ -634,86 +536,114 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
     }
 
+    @Override
+    synchronized public void handleFileRemoved(FileUpdateEvent evt) {
+        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.REMOVE);
+
+        for (final long fileId : evt.getFileIDs()) {
+            //get grouping(s) this file would be in
+            Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
+
+            for (GroupKey<?> gk : groupsForFile) {
+                DrawableGroup g = removeFromGroup(gk, fileId);
+
+                if (g == null) {
+                    // It may be that this was the last unanalyzed file in the group, so test
+                    // whether the group is now fully analyzed.
+                    popuplateIfAnalyzed(gk, null);
+                }
+            }
+        }
+    }
+
     /**
      * handle {@link FileUpdateEvent} sent from Db when files are
      * inserted/updated
-     *
-     * TODO: why isn't this just two methods!
      *
      * @param evt
      */
     @Override
     synchronized public void handleFileUpdate(FileUpdateEvent evt) {
-        final Collection<Long> fileIDs = evt.getFileIDs();
-        switch (evt.getUpdateType()) {
-            case REMOVE:
-                for (final long fileId : fileIDs) {
-                    //get grouping(s) this file would be in
-                    Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
+        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.UPDATE);
+        Collection<Long> fileIDs = evt.getFileIDs();
+        /**
+         * TODO: is there a way to optimize this to avoid quering to db
+         * so much. the problem is that as a new files are analyzed they
+         * might be in new groups( if we are grouping by say make or
+         * model) -jm
+         */
+        for (long fileId : fileIDs) {
 
-                    for (GroupKey<?> gk : groupsForFile) {
-                        removeFromGroup(gk, fileId);
+            controller.getHashSetManager().invalidateHashSetsForFile(fileId);
 
-                        DrawableGroup g = getGroupForKey(gk);
+            //get grouping(s) this file would be in
+            Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
 
-                        if (g == null) {
-                            // It may be that this was the last unanalyzed file in the group, so test
-                            // whether the group is now fully analyzed.
-                            //TODO: use method in groupmanager ?
-                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
-                            if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
-                                populateAnalyzedGroup(gk, checkAnalyzed);
+            for (GroupKey<?> gk : groupsForFile) {
+                DrawableGroup g = getGroupForKey(gk);
+
+                if (g == null) {
+                    //if there wasn't already a group check if there should be one now
+                    popuplateIfAnalyzed(gk, null);
+                } else {
+                    //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
+                    g.addFile(fileId);
+                }
+            }
+        }
+
+        //we fire this event for all files so that the category counts get updated during initial db population
+        controller.getCategoryManager().fireChange(fileIDs);
+
+        if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
+            controller.getTagsManager().fireChange(fileIDs);
+        }
+    }
+
+    private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+
+        if (Objects.nonNull(task) && (task.isCancelled())) {
+            /* if this method call is part of a ReGroupTask and that task is
+             * cancelled, no-op
+             *
+             * this allows us to stop if a regroup task has been cancelled (e.g.
+             * the user picked a different group by attribute, while the
+             * current task was still running) */
+        } else {         // no task or un-cancelled task
+            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
+                /* for attributes other than path we can't be sure a group is
+                 * fully analyzed because we don't know all the files that
+                 * will be a part of that group */
+
+                try {
+                    Set<Long> fileIDs = getFileIDsInGroup(groupKey);
+                    if (Objects.nonNull(fileIDs)) {
+                        DrawableGroup group;
+                        final boolean groupSeen = db.isGroupSeen(groupKey);
+                        synchronized (groupMap) {
+                            if (groupMap.containsKey(groupKey)) {
+                                group = groupMap.get(groupKey);
+                                group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
+                            } else {
+
+                                group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                                group.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+                                    markGroupSeen(group, newSeen);
+                                });
+                                groupMap.put(groupKey, group);
                             }
                         }
-                    }
-                }
-
-                break;
-            case UPDATE:
-
-                /**
-                 * TODO: is there a way to optimize this to avoid quering to db
-                 * so much. the problem is that as a new files are analyzed they
-                 * might be in new groups( if we are grouping by say make or
-                 * model)
-                 *
-                 * TODO: Should this be a InnerTask so it can be done by the
-                 * WorkerThread? Is it already done by worker thread because
-                 * handlefileUpdate is invoked through call on db in UpdateTask
-                 * innertask? -jm
-                 */
-                for (final long fileId : fileIDs) {
-
-                    controller.getHashSetManager().invalidateHashSetsForFile(fileId);
-
-                    //get grouping(s) this file would be in
-                    Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
-
-                    for (GroupKey<?> gk : groupsForFile) {
-                        DrawableGroup g = getGroupForKey(gk);
-
-                        if (g != null) {
-                            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-                            g.addFile(fileId);
-                        } else {
-                            //if there wasn't already a group check if there should be one now
-                            //TODO: use method in groupmanager ?
-                            Set<Long> checkAnalyzed = checkAnalyzed(gk);
-                            if (checkAnalyzed != null) { // => the group is analyzed, so add it to the ui
-                                populateAnalyzedGroup(gk, checkAnalyzed);
+                        Platform.runLater(() -> {
+                            if (analyzedGroups.contains(group) == false) {
+                                analyzedGroups.add(group);
                             }
-                        }
+                            markGroupSeen(group, groupSeen);
+                        });
                     }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
                 }
-
-                //we fire this event for all files so that the category counts get updated during initial db population
-                controller.getCategoryManager().fireChange(fileIDs);
-
-                if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
-                    controller.getTagsManager().fireChange(fileIDs);
-                }
-                break;
-
+            }
         }
     }
 
@@ -755,16 +685,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             groupProgress = ProgressHandleFactory.createHandle("regrouping files by " + groupBy.attrName.toString() + " sorted by " + sortBy.name() + " in " + sortOrder.toString() + " order", this);
             Platform.runLater(() -> {
                 analyzedGroups.clear();
-                synchronized (unSeenGroups) {
-                    unSeenGroups.clear();
-                }
+                unSeenGroups.clear();
+
+                final Comparator<DrawableGroup> grpComparator = sortBy.getGrpComparator(sortOrder);
+                unmodifiableAnalyzedGroups.setComparator(grpComparator);
+                unmodifiableUnSeenGroups.setComparator(grpComparator);
             });
 
             // Get the list of group keys
             final List<A> vals = findValuesForAttribute(groupBy);
-
-            // Make a list of each group
-            final List<DrawableGroup> groups = new ArrayList<>();
 
             groupProgress.start(vals.size());
 
@@ -778,25 +707,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                 updateMessage("regrouping files by " + groupBy.attrName.toString() + " : " + val);
                 updateProgress(p, vals.size());
                 groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
-                //check if this group is analyzed
-                final GroupKey<A> groupKey = new GroupKey<>(groupBy, val);
-
-                Set<Long> checkAnalyzed = checkAnalyzed(groupKey);
-                if (checkAnalyzed != null) { // != null => the group is analyzed, so add it to the ui
-
-                    // makeGroup will create the group and add it to the map groupMap, but does not
-                    // update anything else
-                    DrawableGroup g = makeGroup(groupKey, checkAnalyzed);
-                    groups.add(g);
-                }
-            }
-
-            // Sort the group list
-            Collections.sort(groups, sortBy.getGrpComparator(sortOrder));
-
-            // Officially add all groups in order
-            for (DrawableGroup g : groups) {
-                populateAnalyzedGroup(g, ReGroupTask.this);
+                popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
             }
 
             updateProgress(1, 1);

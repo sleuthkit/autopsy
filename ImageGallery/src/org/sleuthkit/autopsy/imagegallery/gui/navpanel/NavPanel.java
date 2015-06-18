@@ -171,13 +171,14 @@ public class NavPanel extends TabPane {
                 if (change.wasPermutated()) {
                     // Handle this afterward
                     wasPermuted = true;
+                    break;
                 }
             }
 
             if (wasPermuted) {
                 rebuildTrees();
             }
-            if (selectedItem != null) {
+            if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
                 Platform.runLater(() -> {
                     setFocusedGroup(selectedItem.getValue().getGroup());
                 });
@@ -268,7 +269,6 @@ public class NavPanel extends TabPane {
     }
 
     private static List<String> groupingToPath(DrawableGroup g) {
-
         if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
             String path = g.groupKey.getValueDisplayName();
 

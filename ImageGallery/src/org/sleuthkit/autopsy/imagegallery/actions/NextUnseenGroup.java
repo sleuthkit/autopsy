@@ -51,6 +51,7 @@ public class NextUnseenGroup extends Action {
         this.controller = controller;
         setGraphic(new ImageView(ADVANCE));
 
+        //TODO: do we need both these listeners?
         controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> {
             Platform.runLater(this::updateButton);
 
