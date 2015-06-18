@@ -24,9 +24,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -216,8 +216,10 @@ public class TagsManager implements Closeable {
                         NbBundle.getMessage(this.getClass(), "TagsManager.addContentTag.exception.endLTbegin.msg"));
             }
         }
-            
-        return tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
+
+        final ContentTag newContentTag = tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
+        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.CONTENT_TAG_ADDED.toString(), null, newContentTag);
+        return newContentTag;
     }
     
     /**
@@ -232,6 +234,7 @@ public class TagsManager implements Closeable {
         }
         
         tskCase.deleteContentTag(tag);
+        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.CONTENT_TAG_DELETED.toString(), tag, null);
     }
 
     /**
@@ -317,8 +320,10 @@ public class TagsManager implements Closeable {
         if (!tagNamesInitialized) {
             getExistingTagNames();
         }
-        
-        return tskCase.addBlackboardArtifactTag(artifact, tagName, comment);       
+
+        final BlackboardArtifactTag newBlackboardArtifactTag = tskCase.addBlackboardArtifactTag(artifact, tagName, comment);
+        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), null, newBlackboardArtifactTag);
+        return newBlackboardArtifactTag;
     }
 
     /**
@@ -331,7 +336,8 @@ public class TagsManager implements Closeable {
         if (!tagNamesInitialized) {
             getExistingTagNames();
         }
-        
+
+        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), tag, null);
         tskCase.deleteBlackboardArtifactTag(tag);
     }
         
