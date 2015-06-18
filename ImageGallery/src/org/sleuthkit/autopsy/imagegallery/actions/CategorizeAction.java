@@ -161,4 +161,5 @@ public class CategorizeAction extends AddTagAction {
             DrawableTagsManager.refreshTagsInAutopsy();
         }
     }
+
 }
