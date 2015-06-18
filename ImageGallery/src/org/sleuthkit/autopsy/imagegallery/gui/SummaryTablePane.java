@@ -75,6 +75,7 @@ public class SummaryTablePane extends AnchorPane {
 
         //register for category events
         controller.getCategoryManager().registerListener(this);
+        handleCategoryChanged(null);
     }
 
     public SummaryTablePane(ImageGalleryController controller) {
@@ -88,10 +89,6 @@ public class SummaryTablePane extends AnchorPane {
      */
     @Subscribe
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        refresh();
-    }
-
-    public void refresh() {
         final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {

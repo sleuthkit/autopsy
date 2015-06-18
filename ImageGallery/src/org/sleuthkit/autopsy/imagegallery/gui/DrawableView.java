@@ -108,15 +108,19 @@ public interface DrawableView {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     default Category updateCategoryBorder() {
-        final Category category = getFile().getCategory();
-        final Border border = hasHashHit() && (category == Category.ZERO)
-                ? HASH_BORDER
-                : getCategoryBorder(category);
+        if (getFile() != null) {
+            final Category category = getFile().getCategory();
+            final Border border = hasHashHit() && (category == Category.ZERO)
+                    ? HASH_BORDER
+                    : getCategoryBorder(category);
 
-        Platform.runLater(() -> {
-            getCategoryBorderRegion().setBorder(border);
-            getCategoryBorderRegion().requestLayout();
-        });
-        return category;
+            Platform.runLater(() -> {
+                getCategoryBorderRegion().setBorder(border);
+                getCategoryBorderRegion().requestLayout();
+            });
+            return category;
+        } else {
+            return Category.ZERO;
+        }
     }
 }
