@@ -88,12 +88,13 @@ public class DataSourcesNode extends DisplayableItemNode {
         @Override
         protected void removeNotify() {
             Case.removePropertyChangeListener(pcl);
+            currentKeys.clear();
             setKeys(Collections.<Content>emptySet());
         }
         
         private void reloadKeys() {
             try {
-                currentKeys.addAll(Case.getCurrentCase().getDataSources());
+                currentKeys = Case.getCurrentCase().getDataSources();
                 setKeys(currentKeys);
             } catch (TskCoreException | IllegalStateException ex) {
                 logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
