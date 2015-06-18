@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
  */
 public class SummaryTablePane extends AnchorPane {
 
-    private static SummaryTablePane instance;
-
     @FXML
     private TableColumn<Pair<Category, Long>, String> catColumn;
 
@@ -53,6 +51,7 @@ public class SummaryTablePane extends AnchorPane {
 
     @FXML
     private TableView<Pair<Category, Long>> tableView;
+    private final ImageGalleryController controller;
 
     @FXML
     void initialize() {
@@ -74,19 +73,14 @@ public class SummaryTablePane extends AnchorPane {
 
         tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
 
-//        //register for category events
-        ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
+        //register for category events
+        controller.getCategoryManager().registerListener(this);
     }
 
-    private SummaryTablePane() {
+    public SummaryTablePane(ImageGalleryController controller) {
+        this.controller = controller;
         FXMLConstructor.construct(this, "SummaryTablePane.fxml");
-    }
 
-    public static synchronized SummaryTablePane getDefault() {
-        if (instance == null) {
-            instance = new SummaryTablePane();
-        }
-        return instance;
     }
 
     /**
@@ -101,7 +95,7 @@ public class SummaryTablePane extends AnchorPane {
         final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {
-                data.add(new Pair<>(cat, ImageGalleryController.getDefault().getCategoryManager().getCategoryCount(cat)));
+                data.add(new Pair<>(cat, controller.getCategoryManager().getCategoryCount(cat)));
             }
         }
         Platform.runLater(() -> {

@@ -158,7 +158,7 @@ public class CategorizeAction extends AddTagAction {
                 JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
             }
 
-            DrawableTagsManager.fireTagsChangedEvent();
+            DrawableTagsManager.refreshTagsInAutopsy();
         }
     }
 }

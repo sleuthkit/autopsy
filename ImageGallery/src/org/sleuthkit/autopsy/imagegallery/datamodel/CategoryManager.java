@@ -23,6 +23,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,6 +45,7 @@ import org.sleuthkit.datamodel.TagName;
 public class CategoryManager {
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
+
     private final ImageGalleryController controller;
 
     /**
@@ -88,10 +90,17 @@ public class CategoryManager {
      *
      * @param db
      */
-    public void setDb(DrawableDB db) {
+    synchronized public void setDb(DrawableDB db) {
         this.db = db;
         categoryCounts.invalidateAll();
         catTagNameMap.invalidateAll();
+        fireChange(Collections.singleton(-1L));
+    }
+
+    synchronized public void invalidateCaches() {
+        categoryCounts.invalidateAll();
+        catTagNameMap.invalidateAll();
+        fireChange(Collections.singleton(-1L));
     }
 
     /**
@@ -101,7 +110,7 @@ public class CategoryManager {
      *
      * @return the long the number of files with the given Category
      */
-    public long getCategoryCount(Category cat) {
+    synchronized public long getCategoryCount(Category cat) {
         if (cat == Category.ZERO) {
             // Keeping track of the uncategorized files is a bit tricky while ingest
             // is going on, so always use the list of file IDs we already have along with the
@@ -119,7 +128,7 @@ public class CategoryManager {
      *
      * @param cat the Category to increment
      */
-    public void incrementCategoryCount(Category cat) {
+    synchronized public void incrementCategoryCount(Category cat) {
         if (cat != Category.ZERO) {
             categoryCounts.getUnchecked(cat).increment();
         }
@@ -131,7 +140,7 @@ public class CategoryManager {
      *
      * @param cat the Category to decrement
      */
-    public void decrementCategoryCount(Category cat) {
+    synchronized public void decrementCategoryCount(Category cat) {
         if (cat != Category.ZERO) {
             categoryCounts.getUnchecked(cat).decrement();
         }
@@ -147,7 +156,7 @@ public class CategoryManager {
      * @return a LongAdder whose value is set to the number of file with the
      *         given Category
      */
-    private LongAdder getCategoryCountHelper(Category cat) {
+    synchronized private LongAdder getCategoryCountHelper(Category cat) {
         LongAdder longAdder = new LongAdder();
         longAdder.decrement();
         try {
@@ -191,7 +200,7 @@ public class CategoryManager {
      *
      * @return the TagName used for this Category
      */
-    public TagName getTagName(Category cat) {
+    synchronized public TagName getTagName(Category cat) {
         return catTagNameMap.getUnchecked(cat);
 
     }

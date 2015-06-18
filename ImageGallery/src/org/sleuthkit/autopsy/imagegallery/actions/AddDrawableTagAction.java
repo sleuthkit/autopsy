@@ -90,7 +90,7 @@ public class AddDrawableTagAction extends AddTagAction {
                     //make sure rest of ui  hears category change.
                     controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 }
-                DrawableTagsManager.fireTagsChangedEvent();
+                DrawableTagsManager.refreshTagsInAutopsy();
                 return null;
             }
 

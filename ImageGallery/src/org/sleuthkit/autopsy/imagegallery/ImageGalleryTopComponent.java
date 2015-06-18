@@ -150,7 +150,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             metaDataTable = new MetaDataPane(controller);
 
             navPanel = new NavPanel(controller);
-            leftPane = new VBox(navPanel, SummaryTablePane.getDefault());
+            leftPane = new VBox(navPanel, new SummaryTablePane(controller));
             SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
             SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
             SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
