@@ -62,10 +62,11 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
-        List<Content> currentKeys = new ArrayList();
+        List<Content> currentKeys;
         
         public DataSourcesNodeChildren() {
             super();
+            this.currentKeys = new ArrayList<>();
         }
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
@@ -87,7 +88,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         @Override
         protected void removeNotify() {
             Case.removePropertyChangeListener(pcl);
-            setKeys(Collections.EMPTY_SET);
+            setKeys(Collections.<Content>emptySet());
         }
         
         private void reloadKeys() {
@@ -96,7 +97,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                 setKeys(currentKeys);
             } catch (TskCoreException | IllegalStateException ex) {
                 logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
-                setKeys(Collections.EMPTY_SET);
+                setKeys(Collections.<Content>emptySet());
             }
         }
         
