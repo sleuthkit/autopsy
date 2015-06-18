@@ -52,16 +52,16 @@
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="cbEnableMultiUser" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbOops" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cbEnableMultiUser" alignment="3" max="32767" attributes="0"/>
+                      <Component id="lbOops" alignment="3" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                   <Component id="pnDatabaseSettings" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="pnSolrSettings" min="-2" max="-2" attributes="0"/>
+                  <Component id="pnSolrSettings" min="-2" pref="106" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnMessagingSettings" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>

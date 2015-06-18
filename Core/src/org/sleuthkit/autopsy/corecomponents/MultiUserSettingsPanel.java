@@ -322,15 +322,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cbEnableMultiUser)
-                    .addComponent(lbOops))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cbEnableMultiUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbOops, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(16, 16, 16)
                 .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(35, 35, 35))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -378,22 +378,22 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     void load() {
         CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-        tbHostnameOrIp.setText(dbInfo.getHost());
-        tbPortNumber.setText(dbInfo.getPort());
-        tbUsername.setText(dbInfo.getUserName());
+        tbHostnameOrIp.setText(dbInfo.getHost().trim());
+        tbPortNumber.setText(dbInfo.getPort().trim());
+        tbUsername.setText(dbInfo.getUserName().trim());
         tbPassword.setText(dbInfo.getPassword());
 
         MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-        msgHostTextField.setText(msgServiceInfo.getHost());
-        msgPortTextField.setText(msgServiceInfo.getPort());
-        msgUserNameTextField.setText(msgServiceInfo.getUserName());
+        msgHostTextField.setText(msgServiceInfo.getHost().trim());
+        msgPortTextField.setText(msgServiceInfo.getPort().trim());
+        msgUserNameTextField.setText(msgServiceInfo.getUserName().trim());
         msgPasswordField.setText(msgServiceInfo.getPassword());
 
-        String indexingServerHost = UserPreferences.getIndexingServerHost();
+        String indexingServerHost = UserPreferences.getIndexingServerHost().trim();
         if (!indexingServerHost.isEmpty()) {
             tbIndexingServerHost.setText(indexingServerHost);
         }
-        String indexingServerPort = UserPreferences.getIndexingServerPort();
+        String indexingServerPort = UserPreferences.getIndexingServerPort().trim();
         if (portNumberIsValid(indexingServerPort)) {
             tbIndexingServerPort.setText(indexingServerPort);
         }
@@ -427,23 +427,23 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         }
 
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
-                tbHostnameOrIp.getText(),
-                tbPortNumber.getText(),
-                tbUsername.getText(),
+                tbHostnameOrIp.getText().trim(),
+                tbPortNumber.getText().trim(),
+                tbUsername.getText().trim(),
                 new String(tbPassword.getPassword()),
                 dbType);
 
         UserPreferences.setDatabaseConnectionInfo(info);
 
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
-                msgUserNameTextField.getText(),
+                msgUserNameTextField.getText().trim(),
                 new String(msgPasswordField.getPassword()),
-                msgHostTextField.getText(),
-                msgPortTextField.getText());
+                msgHostTextField.getText().trim(),
+                msgPortTextField.getText().trim());
         UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
 
-        UserPreferences.setIndexingServerHost(tbIndexingServerHost.getText());
-        UserPreferences.setIndexingServerPort(Integer.parseInt(tbIndexingServerPort.getText()));
+        UserPreferences.setIndexingServerHost(tbIndexingServerHost.getText().trim());
+        UserPreferences.setIndexingServerPort(Integer.parseInt(tbIndexingServerPort.getText().trim()));
         
     }
 
