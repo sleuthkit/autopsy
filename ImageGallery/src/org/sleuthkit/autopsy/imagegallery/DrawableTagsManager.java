@@ -78,7 +78,7 @@ public class DrawableTagsManager {
     }
 
     /**
-     * fire a CategoryChangeEvent with the given fileIDs
+     * fire a TagsChangeEvent with the given fileIDs
      *
      * @param fileIDs
      */
@@ -188,7 +188,7 @@ public class DrawableTagsManager {
      * had a chance to add that so, we fire these events and the tree
      * refreshes based on them.
      */
-    static public void fireTagsChangedEvent() {
+    static public void refreshTagsInAutopsy() {
 
         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
     }
