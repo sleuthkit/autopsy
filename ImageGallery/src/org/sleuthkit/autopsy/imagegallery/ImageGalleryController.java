@@ -234,7 +234,6 @@ public final class ImageGalleryController {
         IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
             Platform.runLater(this::updateRegroupDisabled);
         });
-//        metaDataCollapsed.bind(Toolbar.getDefault().showMetaDataProperty());
     }
 
     public ReadOnlyBooleanProperty getCanAdvance() {
