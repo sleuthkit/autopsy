@@ -26,17 +26,16 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.TskException;
 
 /*
  * A background task that adds the given image to 
@@ -151,7 +150,21 @@ import org.sleuthkit.datamodel.TskException;
                     hasCritError = true;
                     errorList.add(ex.getMessage());
                 } catch (TskDataException ex) {
-                    logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
+                    /**
+                     * Expedient Hack! Please note this is a hack. There is an
+                     * issue to fix this down in TSK, where it should be fixed.
+                     * 
+                     * When the C++ side is fixed:
+                     * 1) remove this check
+                     * 2) only log the WARNING, not the SEVERE issue
+                     * 3) Do not set hasCritError=true for this exception
+                     */
+                    if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
+                        logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
+                    } else {
+                        hasCritError = true;
+                        logger.log(Level.SEVERE, "Cannot talk to the database. Unable to add image. ", ex); //NON-NLS
+                    }
                     errorList.add(ex.getMessage());
                 } 
                 postProcess();
