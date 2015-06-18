@@ -60,8 +60,8 @@ class ImageExtractor {
     private final String UNKNOWN_NAME_PREFIX = "image_";
     private final FileTypeDetector fileTypeDetector;
 
-    String moduleDirRelative;
-    String moduleDirAbsolute;
+    private String moduleDirRelative;
+    private String moduleDirAbsolute;
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -131,7 +131,7 @@ class ImageExtractor {
      * @param format
      * @param abstractFile The abstract file to be processed.
      */
-    protected void extractImage(AbstractFile abstractFile) {
+    void extractImage(AbstractFile abstractFile) {
         // 
         // switchcase for different supported formats
         // process abstractFile according to the format by calling appropriate methods.
@@ -139,7 +139,19 @@ class ImageExtractor {
         List<ExtractedImage> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
-
+        //check if already has derived files, skip
+        try {
+            if (abstractFile.hasChildren()) {
+                //check if local unpacked dir exists
+                if (new File(getOutputFolderPath(parentFileName)).exists()) {
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                    return;
+                }
+            }
+        } catch (TskCoreException e) {
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", parentFileName); //NON-NLS
+            return;
+        }
         switch (abstractFileExtractionFormat) {
             case DOC:
                 listOfExtractedImages = extractImagesFromDoc(abstractFile);
