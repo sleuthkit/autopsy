@@ -595,9 +595,9 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(fileIDs);
 
-        if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
-            controller.getTagsManager().fireChange(fileIDs);
-        }
+//        if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
+//            controller.getTagsManager().fireChange(fileIDs);
+//        }
     }
 
     private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
