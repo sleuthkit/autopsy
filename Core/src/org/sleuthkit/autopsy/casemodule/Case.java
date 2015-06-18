@@ -49,8 +49,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -126,7 +131,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * case. The old value supplied by the event object is null and the new
          * value is a reference to a Report object representing the new report.
          */
-        REPORT_ADDED;
+        REPORT_ADDED,
+        /** new value is tag added */
+        BLACKBOARD_ARTIFACT_TAG_ADDED,
+        /**
+         * old value is tag deleted
+         */
+        BLACKBOARD_ARTIFACT_TAG_DELETED,
+        /** new value is tag added */
+        CONTENT_TAG_ADDED,
+        /**
+         * old value is tag deleted
+         */
+        CONTENT_TAG_DELETED;
     };
 
     private String name;

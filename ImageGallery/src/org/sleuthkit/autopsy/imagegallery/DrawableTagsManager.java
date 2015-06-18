@@ -45,7 +45,7 @@ public class DrawableTagsManager {
 
     private static final String FOLLOW_UP = "Follow Up";
 
-    private Object autopsyTagsManagerLock = new Object();
+    final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
 
     /** Used to distribute {@link TagsChangeEvent}s */
@@ -66,7 +66,7 @@ public class DrawableTagsManager {
      * @param autopsyTagsManager
      */
     public void setAutopsyTagsManager(TagsManager autopsyTagsManager) {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             this.autopsyTagsManager = autopsyTagsManager;
             clearFollowUpTagName();
         }
@@ -77,7 +77,7 @@ public class DrawableTagsManager {
      * next case.
      */
     public void clearFollowUpTagName() {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             followUpTagName = null;
         }
     }
@@ -108,7 +108,7 @@ public class DrawableTagsManager {
      * @throws TskCoreException
      */
     public TagName getFollowUpTagName() throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             if (Objects.isNull(followUpTagName)) {
                 followUpTagName = getTagName(FOLLOW_UP);
             }
@@ -117,7 +117,7 @@ public class DrawableTagsManager {
     }
 
     public Collection<TagName> getNonCategoryTagNames() {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             try {
                 return autopsyTagsManager.getAllTagNames().stream()
                         .filter(Category::isCategoryTagName)
@@ -140,13 +140,13 @@ public class DrawableTagsManager {
      * @throws TskCoreException
      */
     public List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getContentTagsByContent(content);
         }
     }
 
     public TagName getTagName(String displayName) throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             try {
                 for (TagName tn : autopsyTagsManager.getAllTagNames()) {
                     if (displayName.equals(tn.getDisplayName())) {
@@ -175,14 +175,14 @@ public class DrawableTagsManager {
 
     public void addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
         ContentTag addContentTag;
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             addContentTag = autopsyTagsManager.addContentTag(file, tagName, comment);
         }
         fireTagAdded(addContentTag);
     }
 
     public List<ContentTag> getContentTagsByTagName(TagName t) throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getContentTagsByTagName(t);
         }
     }
@@ -203,13 +203,13 @@ public class DrawableTagsManager {
     }
 
     public List<TagName> getAllTagNames() throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getAllTagNames();
         }
     }
 
     public List<TagName> getTagNamesInUse() throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getTagNamesInUse();
         }
     }
@@ -221,21 +221,11 @@ public class DrawableTagsManager {
     public void fireTagDeleted(ContentTag oldTag) {
         tagsEventBus.post(new TagsChangeEvent(Collections.singleton(oldTag.getContent().getId())));
     }
-//
-//    /**
-//     * fire a TagsChangeEvent with the given fileIDs
-//     *
-//     * @param fileIDs
-//     */
-//    public final void fireChange(Collection<Long> fileIDs) {
-//        tagsEventBus.post(new TagsChangeEvent(fileIDs));
-//    }
 
     public void deleteContentTag(ContentTag ct) throws TskCoreException {
-        synchronized (autopsyTagsManager) {
+        synchronized (autopsyTagsManagerLock) {
             autopsyTagsManager.deleteContentTag(ct);
         }
         fireTagDeleted(ct);
     }
-
 }
