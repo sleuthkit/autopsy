@@ -43,7 +43,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.datamodel.HashEntry;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -818,17 +817,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     private void addHashValueButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashValueButtonActionPerformed
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
-        List<HashEntry> listOfHashes = new AddHashValuesToDatabaseDialog(hashDb.getHashSetName()).getHashValuesAddedToDatabase();
-        try {
-            hashDb.addHashes(listOfHashes);
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "HashLookupSettingsPanel.hashesAdded.err"), ex); //NON-NLS
-            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "HashLookupSettingsPanel.hashesAdded.err"));
-        }
-        // TODO - Remove
-        for(HashEntry h: listOfHashes) {
-            Logger.getLogger(HashSetTableModel.class.getName()).log(Level.INFO, h.getMd5Hash());
-        }
+        new AddHashValuesToDatabaseDialog(hashDb);
     }//GEN-LAST:event_addHashValueButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
