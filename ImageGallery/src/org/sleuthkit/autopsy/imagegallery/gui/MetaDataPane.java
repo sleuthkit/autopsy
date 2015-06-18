@@ -225,7 +225,7 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
+        if (getFile() != null && (evt.getFileIDs().contains(-1L) || evt.getFileIDs().contains(getFileID()))) {
             updateUI();
         }
     }
@@ -233,7 +233,7 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     @Override
     @Subscribe
     public void handleTagsChanged(TagsChangeEvent evt) {
-        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
+        if (getFile() != null && (evt.getFileIDs().contains(-1L) || evt.getFileIDs().contains(getFileID()))) {
             updateUI();
         }
     }
