@@ -41,13 +41,15 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
+    private final ObservableList<Long> unmodifiableFileIDS = FXCollections.unmodifiableObservableList(fileIDs);
 
     //cache the number of files in this groups with hashset hits
     private long hashSetHitsCount = -1;
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     synchronized public ObservableList<Long> fileIds() {
-        return FXCollections.unmodifiableObservableList(fileIDs);
+        return unmodifiableFileIDS;
     }
 
     final public GroupKey<?> groupKey;
@@ -68,9 +70,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return groupKey.getValueDisplayName();
     }
 
-    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
+    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
-        fileIDs.setAll(filesInGroup);
+        this.fileIDs.setAll(filesInGroup);
+        this.seen.set(seen);
     }
 
     synchronized public int getSize() {
@@ -133,16 +136,17 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
 
     synchronized public void addFile(Long f) {
         invalidateHashSetHitsCount();
-        seen.set(false);
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
+            seen.set(false);
         }
     }
 
     synchronized public void removeFile(Long f) {
         invalidateHashSetHitsCount();
-        seen.set(false);
-        fileIDs.removeAll(f);
+        if (fileIDs.removeAll(f)) {
+            seen.set(false);
+        }
     }
 
     // By default, sort by group key name
@@ -151,8 +155,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 
-    void setSeen() {
-        this.seen.set(true);
+    void setSeen(boolean isSeen) {
+        this.seen.set(isSeen);
     }
 
     public ReadOnlyBooleanWrapper seenProperty() {

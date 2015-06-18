@@ -140,7 +140,9 @@ class GroupTreeCell extends TreeCell<TreeNode> {
     }
 
     private String getGroupName() {
-        return StringUtils.defaultIfBlank(getItem().getPath(), DrawableGroup.getBlankGroupName());
+        return Optional.ofNullable(getItem())
+                .map((TreeNode t) -> StringUtils.defaultIfBlank(t.getPath(), DrawableGroup.getBlankGroupName()))
+                .orElse("");
     }
 
     /**

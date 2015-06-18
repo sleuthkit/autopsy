@@ -50,7 +50,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
@@ -137,17 +136,22 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     static private ContextMenu contextMenu;
 
-    protected DrawableFile<?> file;
+    private DrawableFile<?> file;
 
-    protected Long fileID;
+    private Long fileID;
 
     /**
      * the groupPane this {@link DrawableViewBase} is embedded in
      */
-    protected GroupPane groupPane;
+    final private GroupPane groupPane;
+    private boolean registered = false;
 
-    protected DrawableViewBase() {
+    GroupPane getGroupPane() {
+        return groupPane;
+    }
 
+    protected DrawableViewBase(GroupPane groupPane) {
+        this.groupPane = groupPane;
         globalSelectionModel.getSelected().addListener((Observable observable) -> {
             updateSelectionState();
         });
@@ -254,11 +258,12 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     protected abstract Runnable getContentUpdateRunnable();
 
-    protected abstract String getLabelText();
+    protected abstract String getTextForLabel();
 
     @SuppressWarnings("deprecation")
     protected void initialize() {
         followUpToggle.setOnAction((ActionEvent t) -> {
+
             if (followUpToggle.isSelected() == true) {
                 globalSelectionModel.clearAndSelect(fileID);
                 try {
@@ -273,7 +278,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
                     // remove file from old category group
                     controller.getGroupManager().removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, TagUtils.getFollowUpTagName()), fileID);
 
-                    List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(getFile());
+                    List<ContentTag> contentTagsByContent = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
                     for (ContentTag ct : contentTagsByContent) {
                         if (ct.getName().getDisplayName().equals(TagUtils.getFollowUpTagName().getDisplayName())) {
                             Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
@@ -285,6 +290,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
                     LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                 }
             }
+
         });
     }
 
@@ -311,36 +317,19 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
         return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
     }
 
-    protected void updateUI(final boolean isVideo, final boolean hasHashSetHits, final String text) {
-        if (isVideo) {
-            fileTypeImageView.setImage(videoIcon);
-        } else {
-            fileTypeImageView.setImage(null);
-        }
-
-        if (hasHashSetHits) {
-            hashHitImageView.setImage(hashHitIcon);
-        } else {
-            hashHitImageView.setImage(null);
-        }
-
-        nameLabel.setText(text);
-        nameLabel.setTooltip(new Tooltip(text));
-    }
-
     @Override
-    public Long getFileID() {
+    synchronized public Long getFileID() {
         return fileID;
     }
 
     @Override
-    public void handleTagsChanged(Collection<Long> ids) {
+    synchronized public void handleTagsChanged(Collection<Long> ids) {
         if (fileID != null && ids.contains(fileID)) {
             updateFollowUpIcon();
         }
     }
 
-    protected void updateFollowUpIcon() {
+    synchronized protected void updateFollowUpIcon() {
         if (file != null) {
             try {
                 boolean hasFollowUp = hasFollowUp();
@@ -349,63 +338,77 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
                     followUpToggle.setSelected(hasFollowUp);
                 });
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
             }
         }
     }
 
     @Override
-    public void setFile(final Long fileID) {
+    synchronized public void setFile(final Long fileID) {
         if (Objects.equals(fileID, this.fileID) == false) {
             this.fileID = fileID;
             disposeContent();
 
             if (this.fileID == null || Case.isCaseOpen() == false) {
-                ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
-                TagUtils.unregisterListener(this);
+                if (registered == true) {
+                    ImageGalleryController.getDefault().getCategoryManager().unregisterListener(this);
+                    TagUtils.unregisterListener(this);
+                    registered = false;
+                }
                 file = null;
                 Platform.runLater(() -> {
                     clearContent();
                 });
             } else {
-                ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
-                TagUtils.registerListener(this);
-
+                if (registered == false) {
+                    ImageGalleryController.getDefault().getCategoryManager().registerListener(this);
+                    TagUtils.registerListener(this);
+                    registered = true;
+                }
+                file = null;
                 getFile();
                 updateSelectionState();
                 updateCategoryBorder();
                 updateFollowUpIcon();
-                final String text = getLabelText();
-                final boolean isVideo = file.isVideo();
-                final boolean hasHashSetHits = hasHashHit();
-                Platform.runLater(() -> {
-                    updateUI(isVideo, hasHashSetHits, text);
-                });
+                updateUI();
                 Platform.runLater(getContentUpdateRunnable());
             }
         }
+    }
+
+    private void updateUI() {
+        final boolean isVideo = getFile().isVideo();
+        final boolean hasHashSetHits = hasHashHit();
+        final String text = getTextForLabel();
+
+        Platform.runLater(() -> {
+            fileTypeImageView.setImage(isVideo ? videoIcon : null);
+            hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
+            nameLabel.setText(text);
+            nameLabel.setTooltip(new Tooltip(text));
+        });
     }
 
     /**
      * update the visual representation of the selection state of this
      * DrawableView
      */
-    protected void updateSelectionState() {
-        final boolean selected = globalSelectionModel.isSelected(fileID);
+    synchronized protected void updateSelectionState() {
+        final boolean selected = globalSelectionModel.isSelected(getFileID());
         Platform.runLater(() -> {
             setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
         });
     }
 
     @Override
-    public Region getBorderable() {
+    public Region getCategoryBorderRegion() {
         return imageBorder;
     }
 
     @Subscribe
     @Override
-    public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (evt.getIds().contains(fileID)) {
+    synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
+        if (evt.getIds().contains(getFileID())) {
             updateCategoryBorder();
         }
     }

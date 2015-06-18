@@ -204,7 +204,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      */
     private boolean parsableFormat(AbstractFile f) {
         try {
-            return fileTypeDetector.getFileType(f).equals("image/jpeg");
+            String mimeType = fileTypeDetector.getFileType(f);
+            if (mimeType != null) {
+                return fileTypeDetector.getFileType(f).equals("image/jpeg");
+            } else {
+                return false;
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
             return false;

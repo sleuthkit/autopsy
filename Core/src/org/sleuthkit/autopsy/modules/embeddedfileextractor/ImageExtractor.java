@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.poi.OldFileFormatException;
 import org.apache.poi.hslf.model.Picture;
 import org.apache.poi.hslf.usermodel.PictureData;
 import org.apache.poi.hslf.usermodel.SlideShow;
@@ -58,6 +59,9 @@ class ImageExtractor {
     private String parentFileName;
     private final String UNKNOWN_NAME_PREFIX = "image_";
     private final FileTypeDetector fileTypeDetector;
+
+    String moduleDirRelative;
+    String moduleDirAbsolute;
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -84,12 +88,14 @@ class ImageExtractor {
     }
     private SupportedImageExtractionFormats abstractFileExtractionFormat;
 
-    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector) {
+    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
 
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
+        this.moduleDirRelative = moduleDirRelative;
+        this.moduleDirAbsolute = moduleDirAbsolute;
     }
     
     /**
@@ -189,7 +195,7 @@ class ImageExtractor {
         HWPFDocument doc = null;
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
@@ -227,7 +233,7 @@ class ImageExtractor {
         XWPFDocument docx = null;
         try {
             docx = new XWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
@@ -266,7 +272,7 @@ class ImageExtractor {
         SlideShow ppt = null;
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
@@ -336,7 +342,7 @@ class ImageExtractor {
         XMLSlideShow pptx;
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
@@ -383,7 +389,7 @@ class ImageExtractor {
         Workbook xls;
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName(), ex); //NON-NLS
             return null;
         }
@@ -426,7 +432,7 @@ class ImageExtractor {
         Workbook xlsx;
         try {
             xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException ex) {
+        } catch (IOException | OldFileFormatException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
@@ -481,7 +487,7 @@ class ImageExtractor {
      * @return path to the image extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = EmbeddedFileExtractorIngestModule.moduleDirAbsolute + File.separator + parentFileName;
+        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
         File outputFilePath = new File(outputFolderPath);
         if (!outputFilePath.exists()) {
             try {
@@ -504,7 +510,7 @@ class ImageExtractor {
      */
     private String getFileRelativePath(String fileName) {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + EmbeddedFileExtractorIngestModule.moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
+        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
     }
 
     /**
