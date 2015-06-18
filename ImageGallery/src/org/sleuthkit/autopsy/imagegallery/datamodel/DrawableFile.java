@@ -268,22 +268,21 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return category;
     }
 
-    public void updateCategory() {
+    /** set the category property to the most severe one found */
+    private void updateCategory() {
         try {
             category.set(getSleuthkitCase().getContentTagsByContent(this).stream()
                     .map(Tag::getName).filter(Category::isCategoryTagName)
-                    .findFirst()
                     .map(TagName::getDisplayName)
                     .map(Category::fromDisplayName)
+                    .sorted().findFirst() //sort by severity and take the first
                     .orElse(Category.ZERO)
             );
-
         } catch (TskCoreException ex) {
             Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
-
     }
 
     public abstract Image getThumbnail();

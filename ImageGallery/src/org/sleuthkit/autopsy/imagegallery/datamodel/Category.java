@@ -28,14 +28,17 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Enum to represent the six categories in the DHs image categorization scheme.
  */
-public enum Category implements Comparable<Category> {
+public enum Category {
 
-    ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized"),
+    /* This order of declaration is required so that Enum's compareTo method
+     * preserves the fact that lower category numbers are first/most sever,
+     * except 0 which is last */
     ONE(Color.RED, 1, "CAT-1:  Child Exploitation (Illegal)"),
     TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
     THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
     FOUR(Color.BISQUE, 4, "CAT-4:  Exemplar/Comparison (Internal Use Only)"),
-    FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent");
+    FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent"),
+    ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized");
 
     /** map from displayName to enum value */
     private static final Map<String, Category> nameMap

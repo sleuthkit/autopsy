@@ -2,7 +2,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -302,7 +302,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     @Override
     synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
-        if (fileID != null && evnt.getFileIDs().contains(fileID)) {
+        if (fileID != null && (evnt.getFileIDs().contains(fileID) || evnt.getFileIDs().contains(-1L))) {
             updateFollowUpIcon();
         }
     }
@@ -386,7 +386,7 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     @Subscribe
     @Override
     synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (evt.getFileIDs().contains(getFileID())) {
+        if (evt.getFileIDs().contains(getFileID()) || evt.getFileIDs().contains(-1L)) {
             updateCategoryBorder();
         }
     }
