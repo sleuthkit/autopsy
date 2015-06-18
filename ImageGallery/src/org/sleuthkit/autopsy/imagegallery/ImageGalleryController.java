@@ -65,7 +65,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
-import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -364,8 +363,6 @@ public final class ImageGalleryController {
             categoryManager.setDb(db);
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
-            SummaryTablePane.getDefault().refresh();
-
         } else {
             reset();
         }
@@ -442,6 +439,7 @@ public final class ImageGalleryController {
                     ModuleDataEvent oldValue = (ModuleDataEvent) evt.getOldValue();
                     if ("TagAction".equals(oldValue.getModuleName()) && oldValue.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
                         getTagsManager().fireChange(Collections.singleton(-1L));
+                        getCategoryManager().invalidateCaches();
                     }
                     /* we could listen to DATA events and progressivly
                      * update files, and get data from DataSource ingest

@@ -99,7 +99,7 @@ abstract class AddTagAction {
                         MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
                         tagNameItem.setOnAction((ActionEvent t) -> {
                             addTag(tagName, NO_COMMENT);
-                            DrawableTagsManager.fireTagsChangedEvent();
+                            DrawableTagsManager.refreshTagsInAutopsy();
                         });
                         quickTagMenu.getItems().add(tagNameItem);
                     }
@@ -120,7 +120,7 @@ abstract class AddTagAction {
                     TagName tagName = GetTagNameDialog.doDialog();
                     if (tagName != null) {
                         addTag(tagName, NO_COMMENT);
-                        refreshDirectoryTree();
+                           
                     }
                 });
             });

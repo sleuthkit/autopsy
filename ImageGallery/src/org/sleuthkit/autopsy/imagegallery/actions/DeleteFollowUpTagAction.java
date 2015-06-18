@@ -79,7 +79,7 @@ public class DeleteFollowUpTagAction extends Action {
                 }
             }
 
-            DrawableTagsManager.fireTagsChangedEvent();
+            DrawableTagsManager.refreshTagsInAutopsy();
 
             //make sure rest of ui  hears category change.
             groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
