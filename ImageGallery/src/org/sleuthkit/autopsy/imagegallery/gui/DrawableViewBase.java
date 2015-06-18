@@ -300,13 +300,6 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
         return fileID;
     }
 
-    @Override
-    synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
-        if (fileID != null && (evnt.getFileIDs().contains(fileID) || evnt.getFileIDs().contains(-1L))) {
-            updateFollowUpIcon();
-        }
-    }
-
     synchronized protected void updateFollowUpIcon() {
         if (file != null) {
             try {
@@ -381,6 +374,14 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     @Override
     public Region getCategoryBorderRegion() {
         return imageBorder;
+    }
+
+    @Subscribe
+    @Override
+    synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
+        if (fileID != null && (evnt.getFileIDs().contains(fileID) || evnt.getFileIDs().contains(-1L))) {
+            updateFollowUpIcon();
+        }
     }
 
     @Subscribe
