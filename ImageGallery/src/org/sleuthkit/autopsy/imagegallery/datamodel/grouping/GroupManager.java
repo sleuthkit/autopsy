@@ -691,7 +691,6 @@ public class GroupManager {
             }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
-        }
             }
 
     private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {

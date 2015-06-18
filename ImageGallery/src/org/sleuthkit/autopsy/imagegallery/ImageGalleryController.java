@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
@@ -70,11 +71,11 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -441,11 +442,6 @@ public final class ImageGalleryController {
                 case CONTENT_CHANGED:
                 //TODO: do we need to do anything here?  -jm
                 case DATA_ADDED:
-                    ModuleDataEvent oldValue = (ModuleDataEvent) evt.getOldValue();
-                    if ("TagAction".equals(oldValue.getModuleName()) && oldValue.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
-                        getTagsManager().fireChange(Collections.singleton(-1L));
-                        getCategoryManager().invalidateCaches();
-                    }
                     /* we could listen to DATA events and progressivly
                      * update files, and get data from DataSource ingest
                      * modules, but given that most modules don't post new
@@ -494,6 +490,26 @@ public final class ImageGalleryController {
                         queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource));
                     } else {//TODO: keep track of what we missed for later
                         setStale(true);
+                    }
+                    break;
+                case CONTENT_TAG_ADDED:
+                    ContentTag newTag = (ContentTag) evt.getNewValue();
+                    if (Category.isCategoryTagName(newTag.getName())) {
+                        new CategorizeAction(ImageGalleryController.this).addTag(newTag.getName(), "");
+                    } else {
+                        getTagsManager().fireTagAdded(newTag);
+                    }
+                    break;
+                case CONTENT_TAG_DELETED:
+                    ContentTag oldTag = (ContentTag) evt.getOldValue();
+                    final long fileID = oldTag.getContent().getId();
+                    if (getDatabase().isInDB(fileID)) {
+                        if (Category.isCategoryTagName(oldTag.getName())) {
+                            getCategoryManager().decrementCategoryCount(Category.fromTagName(oldTag.getName()));
+                            getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
+                        } else {
+                            getTagsManager().fireTagDeleted(oldTag);
+                        }
                     }
                     break;
                 case CONTENT_TAG_ADDED:

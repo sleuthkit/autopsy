@@ -351,6 +351,14 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
     @Subscribe
     @Override
+    synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
+        if (fileID != null && (evnt.getFileIDs().contains(fileID) || evnt.getFileIDs().contains(-1L))) {
+            updateFollowUpIcon();
+        }
+    }
+
+    @Subscribe
+    @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
 
         handleTagEvent(evt, () -> {
