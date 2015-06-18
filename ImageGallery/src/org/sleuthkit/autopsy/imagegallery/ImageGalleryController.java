@@ -367,7 +367,6 @@ public final class ImageGalleryController {
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
             tagsManager.registerListener(categoryManager);
-
         } else {
             reset();
         }
@@ -445,6 +444,7 @@ public final class ImageGalleryController {
                     ModuleDataEvent oldValue = (ModuleDataEvent) evt.getOldValue();
                     if ("TagAction".equals(oldValue.getModuleName()) && oldValue.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
                         getTagsManager().fireChange(Collections.singleton(-1L));
+                        getCategoryManager().invalidateCaches();
                     }
                     /* we could listen to DATA events and progressivly
                      * update files, and get data from DataSource ingest
