@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import java.beans.PropertyChangeEvent;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Tag;
@@ -27,7 +26,7 @@ import org.sleuthkit.datamodel.Tag;
  * Base Class for events that are fired when a Tag is added
  */
 @Immutable
-abstract class TagAddedEvent<T extends Tag> extends PropertyChangeEvent {
+abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
 
     protected TagAddedEvent(String propertyName, T newValue) {
         super(Case.class, propertyName, null, newValue);
@@ -39,7 +38,8 @@ abstract class TagAddedEvent<T extends Tag> extends PropertyChangeEvent {
      * @return the tTag
      */
     @SuppressWarnings("unchecked")
-    public T getAddedTag() {
+    @Override
+    public T getTag() {
         return (T) getNewValue();
     }
 
