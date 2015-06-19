@@ -272,7 +272,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     private void updateCategory() {
         try {
             category.set(getSleuthkitCase().getContentTagsByContent(this).stream()
-                    .map(Tag::getName).filter(Category::isCategoryTagName)
+                    .map(Tag::getName).filter(CategoryManager::isCategoryTagName)
                     .map(TagName::getDisplayName)
                     .map(Category::fromDisplayName)
                     .sorted().findFirst() //sort by severity and take the first

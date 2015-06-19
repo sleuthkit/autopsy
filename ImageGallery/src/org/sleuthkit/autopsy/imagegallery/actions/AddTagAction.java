@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -95,11 +95,10 @@ abstract class AddTagAction {
             // a tag with the associated tag name. 
             if (null != tagNames && !tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
-                    if (Category.isNotCategoryTagName(tagName)) {
+                    if (CategoryManager.isNotCategoryTagName(tagName)) {
                         MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
                         tagNameItem.setOnAction((ActionEvent t) -> {
                             addTag(tagName, NO_COMMENT);
-                            DrawableTagsManager.refreshTagsInAutopsy();
                         });
                         quickTagMenu.getItems().add(tagNameItem);
                     }
@@ -134,7 +133,7 @@ abstract class AddTagAction {
                 SwingUtilities.invokeLater(() -> {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
                     if (null != tagNameAndComment) {
-                            if (Category.isCategoryTagName(tagNameAndComment.getTagName())) {
+                            if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
                                 new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         } else {
                                 new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());

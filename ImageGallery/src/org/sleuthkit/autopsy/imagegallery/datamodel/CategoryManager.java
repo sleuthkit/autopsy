@@ -24,11 +24,17 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides a cached view of the number of files per category, and fires
@@ -94,13 +100,13 @@ public class CategoryManager {
         this.db = db;
         categoryCounts.invalidateAll();
         catTagNameMap.invalidateAll();
-        fireChange(Collections.singleton(-1L));
+        fireChange(Collections.emptyList(), null);
     }
 
     synchronized public void invalidateCaches() {
         categoryCounts.invalidateAll();
         catTagNameMap.invalidateAll();
-        fireChange(Collections.singleton(-1L));
+        fireChange(Collections.emptyList(), null);
     }
 
     /**
@@ -173,8 +179,8 @@ public class CategoryManager {
      *
      * @param fileIDs
      */
-    public void fireChange(Collection<Long> fileIDs) {
-        categoryEventBus.post(new CategoryChangeEvent(fileIDs));
+    public void fireChange(Collection<Long> fileIDs, Category newCategory) {
+        categoryEventBus.post(new CategoryChangeEvent(fileIDs, newCategory));
     }
 
     /**
@@ -203,5 +209,60 @@ public class CategoryManager {
     synchronized public TagName getTagName(Category cat) {
         return catTagNameMap.getUnchecked(cat);
 
+    }
+
+    public static Category fromTagName(TagName tagName) {
+        return Category.fromDisplayName(tagName.getDisplayName());
+    }
+
+    public static boolean isCategoryTagName(TagName tName) {
+        return Category.isCategoryName(tName.getDisplayName());
+    }
+
+    public static boolean isNotCategoryTagName(TagName tName) {
+        return Category.isNotCategoryName(tName.getDisplayName());
+
+    }
+
+    public void handleTagAdded(ContentTagAddedEvent event) {
+        ContentTag addedTag = event.getAddedTag();
+        if (isCategoryTagName(addedTag.getName())) {
+            final DrawableTagsManager tagsManager = controller.getTagsManager();
+            try {
+                //remove old category tag(s) if necessary
+                List<ContentTag> allContentTags = tagsManager.getContentTagsByContent(addedTag.getContent());
+
+                for (ContentTag ct : allContentTags) {
+                    if (ct.getId() != addedTag.getId()
+                            && CategoryManager.isCategoryTagName(ct.getName())) {
+                        try {
+                            tagsManager.deleteContentTag(ct);
+                        } catch (TskCoreException tskException) {
+                            LOGGER.log(Level.SEVERE, "Failed to delete content tag. Unable to maintain categories in a consistent state.", tskException);
+                        }
+                    }
+                }
+            } catch (TskCoreException tskException) {
+                LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException);
+            }
+            Category newCat = CategoryManager.fromTagName(addedTag.getName());
+            if (newCat != Category.ZERO) {
+                incrementCategoryCount(newCat);
+            }
+
+            fireChange(Collections.singleton(addedTag.getId()), newCat);
+        }
+    }
+
+    public void handleTagDeleted(ContentTagDeletedEvent event) {
+        ContentTag deleted = event.getDeletedTag();
+        if (isCategoryTagName(deleted.getName())) {
+
+            Category deletedCat = CategoryManager.fromTagName(deleted.getName());
+            if (deletedCat != Category.ZERO) {
+                decrementCategoryCount(deletedCat);
+            }
+            fireChange(Collections.singleton(deleted.getId()), null);
+        }
     }
 }

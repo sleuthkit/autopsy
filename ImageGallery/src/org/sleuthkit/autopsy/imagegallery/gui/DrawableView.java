@@ -12,8 +12,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -68,7 +69,10 @@ public interface DrawableView {
     void handleCategoryChanged(CategoryChangeEvent evt);
 
     @Subscribe
-    void handleTagsChanged(TagsChangeEvent evt);
+    void handleTagAdded(ContentTagAddedEvent evt);
+
+    @Subscribe
+    void handleTagDeleted(ContentTagDeletedEvent evt);
 
     ImageGalleryController getController();
 
