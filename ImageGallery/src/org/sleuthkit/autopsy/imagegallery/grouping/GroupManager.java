@@ -279,8 +279,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                 if (group.fileIds().isEmpty()) {
                     Platform.runLater(() -> {
-                        analyzedGroups.remove(group);
-                        unSeenGroups.remove(group);
+                        if (analyzedGroups.contains(group)) {
+                            analyzedGroups.remove(group);
+                        }
+                        if (unSeenGroups.contains(group)) {
+                            unSeenGroups.remove(group);
+                        }
                     });
                 }
             }
@@ -535,10 +539,12 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
-        final long fileID = evt.getAddedTag().getContent().getId();
-        DrawableGroup g = getGroupForKey(groupKey);
-        addFileToGroup(g, groupKey, fileID);
+        if (groupBy == DrawableAttribute.TAGS || groupBy == DrawableAttribute.CATEGORY) {
+            final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+            final long fileID = evt.getAddedTag().getContent().getId();
+            DrawableGroup g = getGroupForKey(groupKey);
+            addFileToGroup(g, groupKey, fileID);
+        }
 
     }
 
@@ -554,9 +560,11 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
-        final long fileID = evt.getDeletedTag().getContent().getId();
-        DrawableGroup g = removeFromGroup(groupKey, fileID);
+        if (groupBy == DrawableAttribute.TAGS || groupBy == DrawableAttribute.CATEGORY) {
+            final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
+            final long fileID = evt.getDeletedTag().getContent().getId();
+            DrawableGroup g = removeFromGroup(groupKey, fileID);
+        }
     }
 
     @Override
