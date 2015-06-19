@@ -61,10 +61,11 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
@@ -378,16 +379,21 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     @Subscribe
     @Override
-    synchronized public void handleTagsChanged(TagsChangeEvent evnt) {
-        if (fileID != null && (evnt.getFileIDs().contains(fileID) || evnt.getFileIDs().contains(-1L))) {
-            updateFollowUpIcon();
-        }
+    public void handleTagAdded(ContentTagAddedEvent evt) {
+
+        updateFollowUpIcon();
+    }
+
+    @Subscribe
+    @Override
+    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        updateFollowUpIcon();
     }
 
     @Subscribe
     @Override
     synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (evt.getFileIDs().contains(getFileID()) || evt.getFileIDs().contains(-1L)) {
+        if (fileID != null && evt.getFileIDs().contains(getFileID())) {
             updateCategoryBorder();
         }
     }

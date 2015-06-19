@@ -30,15 +30,21 @@ import javax.annotation.concurrent.Immutable;
 public class CategoryChangeEvent {
 
     private final Collection<Long> fileIDs;
+    private final Category newCategory;
+
+    public CategoryChangeEvent(Collection<Long> fileIDs, Category newCategory) {
+        this.fileIDs = fileIDs;
+        this.newCategory = newCategory;
+    }
+
+    public Category getNewCategory() {
+        return newCategory;
+    }
 
     /**
      * @return the fileIDs of the files whose categories have changed
      */
     public Collection<Long> getFileIDs() {
         return Collections.unmodifiableCollection(fileIDs);
-    }
-
-    public CategoryChangeEvent(Collection<Long> fileIDs) {
-        this.fileIDs = fileIDs;
     }
 }

@@ -250,7 +250,6 @@ public class TagsManager implements Closeable {
         final ContentTag newContentTag = tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         Case.getCurrentCase().notifyContentTagAdded(newContentTag);
         return newContentTag;
-        return newContentTag;
     }
 
     /**
