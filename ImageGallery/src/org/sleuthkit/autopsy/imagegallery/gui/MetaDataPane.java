@@ -44,8 +44,9 @@ import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -225,16 +226,23 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (getFile() != null && (evt.getFileIDs().contains(-1L) || evt.getFileIDs().contains(getFileID()))) {
+        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
             updateUI();
         }
     }
 
     @Override
-    @Subscribe
-    public void handleTagsChanged(TagsChangeEvent evt) {
-        if (getFile() != null && (evt.getFileIDs().contains(-1L) || evt.getFileIDs().contains(getFileID()))) {
+    public void handleTagAdded(ContentTagAddedEvent evt) {
+        if (getFile() != null && evt.getAddedTag().getContent().getId() == getFileID()) {
             updateUI();
         }
     }
+
+    @Override
+    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        if (getFile() != null && evt.getDeletedTag().getContent().getId() == getFileID()) {
+            updateUI();
+        }
+    }
+
 }

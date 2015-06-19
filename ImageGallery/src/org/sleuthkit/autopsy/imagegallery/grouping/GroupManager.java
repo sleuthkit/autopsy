@@ -60,12 +60,14 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -161,7 +163,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : groupBy.getValue(file)) {
             if (groupBy == DrawableAttribute.TAGS) {
-                if (Category.isNotCategoryTagName((TagName) val)) {
+                if (CategoryManager.isNotCategoryTagName((TagName) val)) {
                     resultSet.add(new GroupKey(groupBy, val));
                 }
             } else {
@@ -282,6 +284,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     });
                 }
             }
+        } else { //group == null
+            // It may be that this was the last unanalyzed file in the group, so test
+            // whether the group is now fully analyzed.
+            popuplateIfAnalyzed(groupKey, null);
         }
 
         return group;
@@ -360,7 +366,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                     break;
                 case TAGS:
                     values = (List<A>) controller.getTagsManager().getTagNamesInUse().stream()
-                            .filter(Category::isNotCategoryTagName)
+                            .filter(CategoryManager::isNotCategoryTagName)
                             .collect(Collectors.toList());
                     break;
                 case ANALYZED:
@@ -528,12 +534,29 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     }
 
     @Subscribe
-    public void handleAutopsyTagChange(TagsChangeEvent evt) {
-        if (groupBy == DrawableAttribute.TAGS
-                && evt.getFileIDs().size() == 1
-                && evt.getFileIDs().contains(-1L)) {
-            regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
+    public void handleTagAdded(ContentTagAddedEvent evt) {
+        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+        final long fileID = evt.getAddedTag().getContent().getId();
+        DrawableGroup g = getGroupForKey(groupKey);
+        addFileToGroup(g, groupKey, fileID);
+
+    }
+
+    private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
+        if (g == null) {
+            //if there wasn't already a group check if there should be one now
+            popuplateIfAnalyzed(groupKey, null);
+        } else {
+            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
+            g.addFile(fileID);
         }
+    }
+
+    @Subscribe
+    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
+        final long fileID = evt.getDeletedTag().getContent().getId();
+        DrawableGroup g = removeFromGroup(groupKey, fileID);
     }
 
     @Override
@@ -545,13 +568,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
 
             for (GroupKey<?> gk : groupsForFile) {
-                DrawableGroup g = removeFromGroup(gk, fileId);
-
-                if (g == null) {
-                    // It may be that this was the last unanalyzed file in the group, so test
-                    // whether the group is now fully analyzed.
-                    popuplateIfAnalyzed(gk, null);
-                }
+                removeFromGroup(gk, fileId);
             }
         }
     }
@@ -578,29 +595,21 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
             //get grouping(s) this file would be in
             Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
-
             for (GroupKey<?> gk : groupsForFile) {
                 DrawableGroup g = getGroupForKey(gk);
-
-                if (g == null) {
-                    //if there wasn't already a group check if there should be one now
-                    popuplateIfAnalyzed(gk, null);
-                } else {
-                    //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-                    g.addFile(fileId);
-                }
+                addFileToGroup(g, gk, fileId);
             }
         }
 
         //we fire this event for all files so that the category counts get updated during initial db population
-        controller.getCategoryManager().fireChange(fileIDs);
+        controller.getCategoryManager().fireChange(fileIDs, null);
 
 //        if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
 //            controller.getTagsManager().fireChange(fileIDs);
 //        }
     }
 
-    private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+    private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 
         if (Objects.nonNull(task) && (task.isCancelled())) {
             /* if this method call is part of a ReGroupTask and that task is
@@ -609,6 +618,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
              * this allows us to stop if a regroup task has been cancelled (e.g.
              * the user picked a different group by attribute, while the
              * current task was still running) */
+
         } else {         // no task or un-cancelled task
             if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
                 /* for attributes other than path we can't be sure a group is
@@ -639,12 +649,14 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                             }
                             markGroupSeen(group, groupSeen);
                         });
+                        return group;
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
                 }
             }
         }
+        return null;
     }
 
     /**

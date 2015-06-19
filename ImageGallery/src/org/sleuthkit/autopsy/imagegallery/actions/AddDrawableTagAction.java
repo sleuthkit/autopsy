@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -28,11 +27,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TagName;
@@ -87,10 +83,9 @@ public class AddDrawableTagAction extends AddTagAction {
                         JOptionPane.showMessageDialog(null, "Unable to tag " + fileID + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
                     }
 
-                    //make sure rest of ui  hears category change.
-                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+//                    //make sure rest of ui  hears category change.
+//                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 }
-                DrawableTagsManager.refreshTagsInAutopsy();
                 return null;
             }
 

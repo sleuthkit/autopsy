@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +31,6 @@ import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -41,7 +39,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -87,6 +84,10 @@ public class CategorizeAction extends AddTagAction {
         }
     }
 
+    public void enforceOneCat(TagName name, String string) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     /**
      * Instances of this class implement a context menu user interface for
      * selecting a category
@@ -127,8 +128,8 @@ public class CategorizeAction extends AddTagAction {
         @Override
         public void run() {
             final GroupManager groupManager = controller.getGroupManager();
-            final SleuthkitCase sleuthKitCase = controller.getSleuthKitCase();
             final CategoryManager categoryManager = controller.getCategoryManager();
+            final DrawableTagsManager tagsManager = controller.getTagsManager();
 
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
@@ -138,27 +139,27 @@ public class CategorizeAction extends AddTagAction {
                 groupManager.removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);  //memory
 
                 //remove old category tag if necessary
-                List<ContentTag> allContentTags = sleuthKitCase.getContentTagsByContent(file); //tsk db
+                List<ContentTag> allContentTags = tagsManager.getContentTagsByContent(file); //tsk db
 
+                //JMTODO: move this to CategoryManager
                 for (ContentTag ct : allContentTags) {
-                    if (Category.isCategoryTagName(ct.getName())) {
-                        sleuthKitCase.deleteContentTag(ct);   //tsk db
-                        categoryManager.decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
+                    if (CategoryManager.isCategoryTagName(ct.getName())) {
+                        tagsManager.deleteContentTag(ct);   //tsk db
+//                        categoryManager.decrementCategoryCount(Category.fromDisplayName(ct.getName().getDisplayName()));  //memory/drawable db
                     }
                 }
-                categoryManager.incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
+//                categoryManager.incrementCategoryCount(Category.fromDisplayName(tagName.getDisplayName())); //memory/drawable db
                 if (tagName != categoryManager.getTagName(Category.ZERO)) { // no tags for cat-0
-                    controller.getTagsManager().addContentTag(file, tagName, comment); //tsk db
+                    tagsManager.addContentTag(file, tagName, comment); //tsk db
                 }
-                //make sure rest of ui  hears category change.
-                groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
+//                //make sure rest of ui  hears category change.
+//                groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY)); //memory/ui
 
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
                 JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
             }
 
-            DrawableTagsManager.refreshTagsInAutopsy();
         }
     }
 
