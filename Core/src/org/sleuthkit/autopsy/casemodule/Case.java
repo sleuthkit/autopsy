@@ -1392,29 +1392,33 @@ public class Case {
             Case.clearTempFolder();
             checkSubFolders(toChangeTo);
 
-            // enable these menus
-            CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-            CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                // enable these menus
+                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-            if (toChangeTo.hasData()) {
-                // open all top components
-                CoreComponentControl.openCoreWindows();
-            } else {
-                // close all top components
-                CoreComponentControl.closeCoreWindows();
+                if (toChangeTo.hasData()) {
+                    // open all top components
+                    CoreComponentControl.openCoreWindows();
+                } else {
+                    // close all top components
+                    CoreComponentControl.closeCoreWindows();
+                }
             }
         } else { // case is closed
-            // close all top components first
-            CoreComponentControl.closeCoreWindows();
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                // close all top components first
+                CoreComponentControl.closeCoreWindows();
 
-            // disable these menus
-            CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-            CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-
+                // disable these menus
+                CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+            }
+            
             //clear pending notifications
             MessageNotifyUtil.Notify.clear();
 
