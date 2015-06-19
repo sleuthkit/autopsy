@@ -601,6 +601,59 @@ public class Case implements SleuthkitCase.ErrorObserver {
     }
 
     /**
+     * Notifies the UI that a new ContentTag has been added.
+     *
+     * @param newTag new ContentTag added
+     */
+    public void notifyContentTagAdded(ContentTag newTag) {
+        notify(new ContentTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a ContentTag has been deleted.
+     *
+     * @param deletedTag ContentTag deleted
+     */
+    public void notifyContentTagDeleted(ContentTag deletedTag) {
+        notify(new ContentTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies the UI that a new BlackboardArtifactTag has been added.
+     *
+     * @param newTag new BlackboardArtifactTag added
+     */
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
+        notify(new BlackBoardArtifactTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a BlackboardArtifactTag has been.
+     *
+     * @param deletedTag BlackboardArtifactTag deleted
+     */
+    public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
+        notify(new BlackBoardArtifactTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies the UI about a Case level event.
+     *
+     * @param propertyChangeEvent the event to distribute
+     */
+    private void notify(final PropertyChangeEvent propertyChangeEvent) {
+        try {
+            pcs.firePropertyChange(propertyChangeEvent);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
+                    NbBundle.getMessage(this.getClass(),
+                            "Case.changeCase.errListenToCaseUpdates.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
+    }
+
+    /**
      * @return The Services object for this case.
      */
     public Services getServices() {
