@@ -82,9 +82,6 @@ public class AddDrawableTagAction extends AddTagAction {
                         LOGGER.log(Level.SEVERE, "Error tagging result", ex);
                         JOptionPane.showMessageDialog(null, "Unable to tag " + fileID + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
                     }
-
-//                    //make sure rest of ui  hears category change.
-//                    controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                 }
                 return null;
             }

@@ -23,6 +23,8 @@ import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import static java.util.Objects.nonNull;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -130,9 +132,33 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
     static private ContextMenu contextMenu;
 
-    private DrawableFile<?> file;
+    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
 
-    private Long fileID;
+    volatile private Optional<Long> fileIDOpt = Optional.empty();
+
+    @Override
+    public Optional<Long> getFileID() {
+        return fileIDOpt;
+    }
+
+    @Override
+    public Optional<DrawableFile<?>> getFile() {
+        if (fileIDOpt.isPresent()) {
+            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
+                return fileOpt;
+            } else {
+                try {
+                    fileOpt = Optional.of(ImageGalleryController.getDefault().getFileFromId(fileIDOpt.get()));
+                } catch (TskCoreException ex) {
+                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
+                    fileOpt = Optional.empty();
+                }
+                return fileOpt;
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
 
     /**
      * the groupPane this {@link DrawableViewBase} is embedded in
@@ -158,43 +184,44 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
 
             @Override
             public void handle(MouseEvent t) {
+                getFile().ifPresent(file -> {
+                    final long fileID = file.getId();
+                    switch (t.getButton()) {
+                        case PRIMARY:
+                            if (t.getClickCount() == 1) {
+                                if (t.isControlDown()) {
 
-                switch (t.getButton()) {
-                    case PRIMARY:
-                        if (t.getClickCount() == 1) {
-                            if (t.isControlDown()) {
-                                globalSelectionModel.toggleSelection(fileID);
-                            } else {
-                                groupPane.makeSelection(t.isShiftDown(), fileID);
+                                    globalSelectionModel.toggleSelection(fileID);
+                                } else {
+                                    groupPane.makeSelection(t.isShiftDown(), fileID);
+                                }
+                            } else if (t.getClickCount() > 1) {
+                                groupPane.activateSlideShowViewer(fileID);
                             }
-                        } else if (t.getClickCount() > 1) {
-                            groupPane.activateSlideShowViewer(fileID);
-                        }
-                        break;
-                    case SECONDARY:
-
-                        if (t.getClickCount() == 1) {
-                            if (globalSelectionModel.isSelected(fileID) == false) {
-                                groupPane.makeSelection(false, fileID);
+                            break;
+                        case SECONDARY:
+                            if (t.getClickCount() == 1) {
+                                if (globalSelectionModel.isSelected(fileID) == false) {
+                                    groupPane.makeSelection(false, fileID);
+                                }
                             }
-                        }
+                            if (contextMenu != null) {
+                                contextMenu.hide();
+                            }
+                            final ContextMenu groupContextMenu = groupPane.getContextMenu();
+                            if (groupContextMenu != null) {
+                                groupContextMenu.hide();
+                            }
+                            contextMenu = buildContextMenu(file);
+                            contextMenu.show(DrawableViewBase.this, t.getScreenX(), t.getScreenY());
+                            break;
+                    }
+                });
 
-                        if (contextMenu != null) {
-                            contextMenu.hide();
-                        }
-                        final ContextMenu groupContextMenu = groupPane.getContextMenu();
-                        if (groupContextMenu != null) {
-                            groupContextMenu.hide();
-                        }
-                        contextMenu = buildContextMenu();
-                        contextMenu.show(DrawableViewBase.this, t.getScreenX(), t.getScreenY());
-
-                        break;
-                }
                 t.consume();
             }
 
-            private ContextMenu buildContextMenu() {
+            private ContextMenu buildContextMenu(DrawableFile<?> file) {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
                 menuItems.add(new CategorizeAction(controller).getPopupMenu());
@@ -213,13 +240,13 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
                 MenuItem contentViewer = new MenuItem("Show Content Viewer");
                 contentViewer.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
-                        new NewWindowViewAction("Show Content Viewer", new FileNode(getFile().getAbstractFile())).actionPerformed(null);
+                        new NewWindowViewAction("Show Content Viewer", new FileNode(file.getAbstractFile())).actionPerformed(null);
                     });
                 });
                 menuItems.add(contentViewer);
 
                 MenuItem externalViewer = new MenuItem("Open in External Viewer");
-                final ExternalViewerAction externalViewerAction = new ExternalViewerAction("Open in External Viewer", new FileNode(getFile().getAbstractFile()));
+                final ExternalViewerAction externalViewerAction = new ExternalViewerAction("Open in External Viewer", new FileNode(file.getAbstractFile()));
 
                 externalViewer.setDisable(externalViewerAction.isEnabled() == false);
                 externalViewer.setOnAction((ActionEvent t) -> {
@@ -259,116 +286,106 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     @SuppressWarnings("deprecation")
     protected void initialize() {
         followUpToggle.setOnAction((ActionEvent event) -> {
-            if (followUpToggle.isSelected() == true) {
-                try {
-                    final TagName followUpTagName = controller.getTagsManager().getFollowUpTagName();
-                    globalSelectionModel.clearAndSelect(fileID);
-                    new AddDrawableTagAction(controller).addTag(followUpTagName, "");
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
+            getFile().ifPresent(file -> {
+                if (followUpToggle.isSelected() == true) {
+                    try {
+                        final TagName followUpTagName = controller.getTagsManager().getFollowUpTagName();
+                        globalSelectionModel.clearAndSelect(file.getId());
+                        new AddDrawableTagAction(controller).addTag(followUpTagName, "");
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
+                    }
+                } else {
+                    new DeleteFollowUpTagAction(controller, file).handle(event);
                 }
-            } else {
-                new DeleteFollowUpTagAction(controller, file).handle(event);
-            }
+            });
         });
     }
 
-    @Override
-    public DrawableFile<?> getFile() {
-        if (fileID != null) {
-            if (file == null || file.getId() != fileID) {
-                try {
-                    file = ImageGalleryController.getDefault().getFileFromId(fileID);
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileID, ex);
-                    file = null;
-                }
-            }
-            return file;
-        } else {
-            return null;
-        }
-    }
-
-    protected boolean hasFollowUp() throws TskCoreException {
-        String followUpTagName = getController().getTagsManager().getFollowUpTagName().getDisplayName();
-        Collection<TagName> tagNames = DrawableAttribute.TAGS.getValue(getFile());
-        return tagNames.stream().anyMatch((tn) -> tn.getDisplayName().equals(followUpTagName));
-    }
-
-    @Override
-    synchronized public Long getFileID() {
-        return fileID;
-    }
-
-    synchronized protected void updateFollowUpIcon() {
-        if (file != null) {
+    protected boolean hasFollowUp() {
+        if (getFile().isPresent()) {
             try {
-                boolean hasFollowUp = hasFollowUp();
-                Platform.runLater(() -> {
-                    followUpImageView.setImage(hasFollowUp ? followUpIcon : followUpGray);
-                    followUpToggle.setSelected(hasFollowUp);
-                });
+                TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
+                Collection<TagName> tagNames = DrawableAttribute.TAGS.getValue(getFile().get());
+                return tagNames.stream().anyMatch((tn) -> tn.equals(followUpTagName));
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+                LOGGER.log(Level.WARNING, "failed to get follow up tag name ", ex);
+                return true;
             }
+        } else {
+            return false;
         }
     }
 
     @Override
-    synchronized public void setFile(final Long fileID) {
-        if (Objects.equals(fileID, this.fileID) == false) {
-            this.fileID = fileID;
-            disposeContent();
-
-            if (this.fileID == null || Case.isCaseOpen() == false) {
-                if (registered == true) {
-                    getController().getCategoryManager().unregisterListener(this);
-                    getController().getTagsManager().unregisterListener(this);
-                    registered = false;
-                }
-                file = null;
-                Platform.runLater(() -> {
-                    clearContent();
-                });
-            } else {
-                if (registered == false) {
-                    getController().getCategoryManager().registerListener(this);
-                    getController().getTagsManager().registerListener(this);
-                    registered = true;
-                }
-                file = null;
-                getFile();
-                updateSelectionState();
-                updateCategoryBorder();
-                updateFollowUpIcon();
-                updateUI();
-                Platform.runLater(getContentUpdateRunnable());
+    public void setFile(final Long newFileID) {
+        if (fileIDOpt.isPresent()) {
+            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
+                setFileHelper(newFileID);
             }
+        } else {
+            if (nonNull(newFileID)) {
+                setFileHelper(newFileID);
+            }
+        }
+    }
+
+    private void setFileHelper(final Long newFileID) {
+        fileIDOpt = Optional.ofNullable(newFileID);
+        disposeContent();
+
+        if (fileIDOpt.isPresent() == false || Case.isCaseOpen() == false) {
+            if (registered == true) {
+                getController().getCategoryManager().unregisterListener(this);
+                getController().getTagsManager().unregisterListener(this);
+                registered = false;
+            }
+            fileOpt = Optional.empty();
+            Platform.runLater(() -> {
+                clearContent();
+            });
+        } else {
+            if (registered == false) {
+                getController().getCategoryManager().registerListener(this);
+                getController().getTagsManager().registerListener(this);
+                registered = true;
+            }
+            fileOpt = Optional.empty();
+
+            updateSelectionState();
+            updateCategoryBorder();
+            updateFollowUpIcon();
+            updateUI();
+            Platform.runLater(getContentUpdateRunnable());
         }
     }
 
     private void updateUI() {
-        final boolean isVideo = getFile().isVideo();
-        final boolean hasHashSetHits = hasHashHit();
-        final String text = getTextForLabel();
+        getFile().ifPresent(file -> {
+            final boolean isVideo = file.isVideo();
+            final boolean hasHashSetHits = hasHashHit();
+            final String text = getTextForLabel();
 
-        Platform.runLater(() -> {
-            fileTypeImageView.setImage(isVideo ? videoIcon : null);
-            hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
-            nameLabel.setText(text);
-            nameLabel.setTooltip(new Tooltip(text));
+            Platform.runLater(() -> {
+                fileTypeImageView.setImage(isVideo ? videoIcon : null);
+                hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
+                nameLabel.setText(text);
+                nameLabel.setTooltip(new Tooltip(text));
+            });
         });
+
     }
 
     /**
      * update the visual representation of the selection state of this
      * DrawableView
      */
-    synchronized protected void updateSelectionState() {
-        final boolean selected = globalSelectionModel.isSelected(getFileID());
-        Platform.runLater(() -> {
-            setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
+    protected void updateSelectionState() {
+        getFile().ifPresent(file -> {
+            final boolean selected = globalSelectionModel.isSelected(file.getId());
+            Platform.runLater(() -> {
+                setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
+            });
         });
     }
 
@@ -380,22 +397,54 @@ public abstract class DrawableViewBase extends AnchorPane implements DrawableVie
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
+        fileIDOpt.ifPresent(fileID -> {
+            try {
+                if (fileID == evt.getAddedTag().getContent().getId()
+                        && evt.getAddedTag().getName() == getController().getTagsManager().getFollowUpTagName()) {
 
-        updateFollowUpIcon();
+                    Platform.runLater(() -> {
+                        followUpImageView.setImage(followUpIcon);
+                        followUpToggle.setSelected(true);
+                    });
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+            }
+        });
     }
 
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        updateFollowUpIcon();
+
+        fileIDOpt.ifPresent(fileID -> {
+            try {
+                if (fileID == evt.getDeletedTag().getContent().getId()
+                        && evt.getDeletedTag().getName() == controller.getTagsManager().getFollowUpTagName()) {
+                    updateFollowUpIcon();
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+            }
+        });
+    }
+
+    private void updateFollowUpIcon() {
+        boolean hasFollowUp = hasFollowUp();
+        Platform.runLater(() -> {
+            followUpImageView.setImage(hasFollowUp ? followUpIcon : followUpGray);
+            followUpToggle.setSelected(hasFollowUp);
+        });
     }
 
     @Subscribe
     @Override
-    synchronized public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (fileID != null && evt.getFileIDs().contains(getFileID())) {
-            updateCategoryBorder();
-        }
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
+        fileIDOpt.ifPresent(fileID -> {
+            if (evt.getFileIDs().contains(fileID)) {
+                updateCategoryBorder();
+            }
+        });
     }
 
     @Override
