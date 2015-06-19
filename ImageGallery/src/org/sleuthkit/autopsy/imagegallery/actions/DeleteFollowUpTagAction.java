@@ -26,10 +26,7 @@ import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -50,23 +47,17 @@ public class DeleteFollowUpTagAction extends Action {
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    final GroupManager groupManager = controller.getGroupManager();
                     final DrawableTagsManager tagsManager = controller.getTagsManager();
 
                     try {
                         final TagName followUpTagName = tagsManager.getFollowUpTagName();
-                        // remove file from old category group
-                        groupManager.removeFromGroup(new GroupKey<TagName>(DrawableAttribute.TAGS, followUpTagName), fileID);
-
+                    
                         List<ContentTag> contentTagsByContent = tagsManager.getContentTagsByContent(file);
                         for (ContentTag ct : contentTagsByContent) {
                             if (ct.getName().getDisplayName().equals(followUpTagName.getDisplayName())) {
                                 tagsManager.deleteContentTag(ct);
                             }
                         }
-
-                        //make sure rest of ui  hears category change.
-//                        groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                     }

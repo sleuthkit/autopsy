@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSelectionModel;
+import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label,
@@ -109,15 +110,20 @@ public class DrawableTile extends DrawableViewBase {
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        Image image = getFile().getThumbnail();
+        if (getFile().isPresent()) {
+            Image image = getFile().get().getThumbnail();
 
-        return () -> {
-            imageView.setImage(image);
-        };
+            return () -> {
+                imageView.setImage(image);
+            };
+        } else {
+            return () -> { //no-op
+            };
+        }
     }
 
     @Override
     protected String getTextForLabel() {
-        return getFile().getName();
+        return getFile().map(AbstractContent::getName).orElse("");
     }
 }

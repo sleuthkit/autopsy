@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -48,14 +49,15 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
+import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.CAT_BORDER_WIDTH;
 import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.HASH_BORDER;
 import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.getCategoryBorder;
 import org.sleuthkit.datamodel.TagName;
@@ -235,9 +237,9 @@ public class SlideShowView extends DrawableViewBase {
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
-        if (this.getFileID() != null) {
-            getGroupPane().makeSelection(false, this.getFileID());
-        }
+        getFileID().ifPresent((Long id) -> {
+            getGroupPane().makeSelection(false, id);
+        });
     }
 
     @Override
@@ -254,24 +256,33 @@ public class SlideShowView extends DrawableViewBase {
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        if (getFile().isVideo()) {
-            return () -> {
-                imageBorder.setCenter(MediaControl.create((VideoFile<?>) getFile()));
-            };
-        } else {
-            ImageView imageView = new ImageView(((ImageFile<?>) getFile()).getFullSizeImage());
-            imageView.setPreserveRatio(true);
-            imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-            imageView.fitHeightProperty().bind(this.heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
-            return () -> {
-                imageBorder.setCenter(imageView);
-            };
-        }
+
+        return getFile().map(new Function<DrawableFile<?>, Runnable>() {
+
+            @Override
+            public Runnable apply(DrawableFile<?> file) {
+
+                if (file.isVideo()) {
+                    return () -> {
+                        imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
+                    };
+                } else {
+                    ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
+                    imageView.setPreserveRatio(true);
+                    imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
+                    imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
+                    return () -> {
+                        imageBorder.setCenter(imageView);
+                    };
+                }
+            }
+        }).orElse(() -> {
+        });
     }
 
     @Override
     protected String getTextForLabel() {
-        return getFile().getName() + " " + getSupplementalText();
+        return getFile().map(file -> file.getName() + " " + getSupplementalText()).orElse("");
     }
 
     @ThreadConfined(type = ThreadType.JFX)
@@ -302,18 +313,19 @@ public class SlideShowView extends DrawableViewBase {
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategoryBorder() {
-        final Category category = getFile().getCategory();
-        final Border border = hasHashHit() && (category == Category.ZERO)
-                ? HASH_BORDER
-                : getCategoryBorder(category);
-        ToggleButton toggleForCategory = getToggleForCategory(category);
+        return getFile().map(file -> {
+            final Category category = file.getCategory();
+            final Border border1 = hasHashHit() && (category == Category.ZERO)
+                    ? HASH_BORDER
+                    : getCategoryBorder(category);
+            ToggleButton toggleForCategory = getToggleForCategory(category);
+            Platform.runLater(() -> {
+                getCategoryBorderRegion().setBorder(border1);
+                toggleForCategory.setSelected(true);
+            });
+            return category;
+        }).orElse(Category.ZERO);
 
-        Platform.runLater(() -> {
-            getCategoryBorderRegion().setBorder(border);
-            toggleForCategory.setSelected(true);
-        });
-
-        return category;
     }
 
     private ToggleButton getToggleForCategory(Category category) {
@@ -345,10 +357,13 @@ public class SlideShowView extends DrawableViewBase {
 
         @Override
         public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-            if (t1) {
-                FileIDSelectionModel.getInstance().clearAndSelect(getFileID());
-                new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
-            }
+            getFileID().ifPresent(fileID -> {
+                if (t1) {
+                    FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                    new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
+                }
+            });
+
         }
     }
 }

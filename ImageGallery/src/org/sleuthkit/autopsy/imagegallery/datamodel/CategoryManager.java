@@ -224,6 +224,7 @@ public class CategoryManager {
 
     }
 
+    @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
         ContentTag addedTag = event.getAddedTag();
         if (isCategoryTagName(addedTag.getName())) {
@@ -253,7 +254,7 @@ public class CategoryManager {
             fireChange(Collections.singleton(addedTag.getId()), newCat);
         }
     }
-
+    @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
         ContentTag deleted = event.getDeletedTag();
         if (isCategoryTagName(deleted.getName())) {

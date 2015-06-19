@@ -22,6 +22,9 @@ import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
+import static java.util.Objects.nonNull;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -68,8 +71,6 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         return controller;
     }
 
-    private Long fileID;
-
     @FXML
     private ImageView imageView;
 
@@ -84,13 +85,6 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
 
     @FXML
     private BorderPane imageBorder;
-
-    private DrawableFile<?> file;
-
-    @Override
-    public Long getFileID() {
-        return fileID;
-    }
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -152,29 +146,52 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         });
     }
 
+    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
+
+    volatile private Optional<Long> fileIDOpt = Optional.empty();
+
     @Override
-    public DrawableFile<?> getFile() {
-        if (fileID != null) {
-            if (file == null || file.getId() != fileID) {
-                try {
-                    file = controller.getFileFromId(fileID);
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileID, ex);
-                    return null;
-                }
-            }
-        } else {
-            return null;
-        }
-        return file;
+    public Optional<Long> getFileID() {
+        return fileIDOpt;
     }
 
     @Override
-    public void setFile(Long fileID) {
-        this.fileID = fileID;
+    public Optional<DrawableFile<?>> getFile() {
+        if (fileIDOpt.isPresent()) {
+            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
+                return fileOpt;
+            } else {
+                try {
+                    fileOpt = Optional.of(ImageGalleryController.getDefault().getFileFromId(fileIDOpt.get()));
+                } catch (TskCoreException ex) {
+                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
+                    fileOpt = Optional.empty();
+                }
+                return fileOpt;
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
 
-        if (fileID == null) {
+    @Override
+    public void setFile(Long newFileID) {
 
+        if (fileIDOpt.isPresent()) {
+            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
+                setFileHelper(newFileID);
+            }
+        } else {
+            if (nonNull(newFileID)) {
+                setFileHelper(newFileID);
+            }
+        }
+        setFileHelper(newFileID);
+    }
+
+    private void setFileHelper(Long newFileID) {
+        fileIDOpt = Optional.of(newFileID);
+        if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
                 tableView.getItems().clear();
@@ -182,12 +199,7 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
 
             });
         } else {
-            try {
-                file = controller.getFileFromId(fileID);
-                updateUI();
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Failed to get drawable file from ID", ex);
-            }
+            updateUI();
         }
     }
 
@@ -206,15 +218,18 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     }
 
     public void updateUI() {
-        final Image icon = getFile().getThumbnail();
-        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributesList = getFile().getAttributesList();
+        getFile().ifPresent(file -> {
+            final Image icon = file.getThumbnail();
+            final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributesList = file.getAttributesList();
 
-        Platform.runLater(() -> {
-            imageView.setImage(icon);
-            tableView.getItems().setAll(attributesList);
+            Platform.runLater(() -> {
+                imageView.setImage(icon);
+                tableView.getItems().setAll(attributesList);
+            });
+
+            updateCategoryBorder();
         });
 
-        updateCategoryBorder();
     }
 
     @Override
@@ -226,23 +241,28 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryChangeEvent evt) {
-        if (getFile() != null && evt.getFileIDs().contains(getFileID())) {
-            updateUI();
-        }
+        getFileID().ifPresent(fileID -> {
+            if (evt.getFileIDs().contains(fileID)) {
+                updateUI();
+            }
+        });
     }
 
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        if (getFile() != null && evt.getAddedTag().getContent().getId() == getFileID()) {
-            updateUI();
-        }
+        handleTagChanged(evt.getAddedTag().getContent().getId());
     }
 
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        if (getFile() != null && evt.getDeletedTag().getContent().getId() == getFileID()) {
-            updateUI();
-        }
+        handleTagChanged(evt.getDeletedTag().getContent().getId());
     }
 
+    private void handleTagChanged(Long tagFileID) {
+        getFileID().ifPresent(fileID -> {
+            if (Objects.equals(tagFileID, fileID)) {
+                updateUI();
+            }
+        });
+    }
 }

@@ -1,6 +1,8 @@
 package org.sleuthkit.autopsy.imagegallery.gui;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.layout.Border;
@@ -51,11 +53,11 @@ public interface DrawableView {
 
     Region getCategoryBorderRegion();
 
-    DrawableFile<?> getFile();
+    Optional<DrawableFile<?>> getFile();
 
     void setFile(final Long fileID);
 
-    Long getFileID();
+    Optional<Long> getFileID();
 
     /**
      * update the visual representation of the category of the assigned file.
@@ -78,7 +80,10 @@ public interface DrawableView {
 
     default boolean hasHashHit() {
         try {
-            return getFile().getHashHitSetNames().isEmpty() == false;
+            return getFile().map(DrawableFile::getHashHitSetNames)
+                    .map((Collection<String> t) -> t.isEmpty() == false)
+                    .orElse(false);
+
         } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
@@ -113,7 +118,7 @@ public interface DrawableView {
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     default Category updateCategoryBorder() {
         if (getFile() != null) {
-            final Category category = getFile().getCategory();
+            final Category category = getFile().map(DrawableFile::getCategory).orElse(Category.ZERO);
             final Border border = hasHashHit() && (category == Category.ZERO)
                     ? HASH_BORDER
                     : getCategoryBorder(category);
