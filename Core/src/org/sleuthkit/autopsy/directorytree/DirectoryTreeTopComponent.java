@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -524,60 +523,83 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        String changed = evt.getPropertyName();
-        Object oldValue = evt.getOldValue();
-        Object newValue = evt.getNewValue();
-        if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
-            // When a case is closed, the old value of this property is the 
-            // closed Case object and the new value is null. When a case is 
-            // opened, the old value is null and the new value is the new Case
-            // object.
-            // @@@ This needs to be revisited. Perhaps case closed and case
-            // opened events instead of property change events would be a better
-            // solution. Either way, more probably needs to be done to clean up
-            // data model objects when a case is closed.
-            if (oldValue != null && newValue == null) {
-                // The current case has been closed. Reset the ExplorerManager.
-                SwingUtilities.invokeLater(() -> {
-                    Node emptyNode = new AbstractNode(Children.LEAF);
-                    em.setRootContext(emptyNode);
-                });
-            } else if (newValue != null) {
-                // A new case has been opened. Reset the ExplorerManager. 
-                Case newCase = (Case) newValue;
-                final String newCaseName = newCase.getName();
-                SwingUtilities.invokeLater(() -> {
-                    em.getRootContext().setName(newCaseName);
-                    em.getRootContext().setDisplayName(newCaseName);
+        if (IngestManager.getInstance().isRunningInteractively()) {
+            String changed = evt.getPropertyName();
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
+                // When a case is closed, the old value of this property is the 
+                // closed Case object and the new value is null. When a case is 
+                // opened, the old value is null and the new value is the new Case
+                // object.
+                // @@@ This needs to be revisited. Perhaps case closed and case
+                // opened events instead of property change events would be a better
+                // solution. Either way, more probably needs to be done to clean up
+                // data model objects when a case is closed.
+                if (evt.getOldValue() != null && evt.getNewValue() == null) {
+                    // The current case has been closed. Reset the ExplorerManager.
+                    SwingUtilities.invokeLater(() -> {
+                        Node emptyNode = new AbstractNode(Children.LEAF);
+                        em.setRootContext(emptyNode);
+                    });
+                } else if (evt.getNewValue() != null) {
+                    // A new case has been opened. Reset the ExplorerManager. 
+                    Case newCase = (Case) evt.getNewValue();
+                    final String newCaseName = newCase.getName();
+                    SwingUtilities.invokeLater(() -> {
+                        em.getRootContext().setName(newCaseName);
+                        em.getRootContext().setDisplayName(newCaseName);
 
                     // Reset the forward and back
-                    // buttons. Note that a call to CoreComponentControl.openCoreWindows()
-                    // by the new Case object will lead to a componentOpened() call
-                    // that will repopulate the tree.
-                    // @@@ The repopulation of the tree in this fashion also merits
-                    // reconsideration.
-                    resetHistory();
+                        // buttons. Note that a call to CoreComponentControl.openCoreWindows()
+                        // by the new Case object will lead to a componentOpened() call
+                        // that will repopulate the tree.
+                        // @@@ The repopulation of the tree in this fashion also merits
+                        // reconsideration.
+                        resetHistory();
+                    });
+                }
+            } // if the image is added to the case
+            else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
+                    CoreComponentControl.openCoreWindows();
+                    SwingUtilities.invokeLater(this::componentOpened);
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } // change in node selection
+            else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                SwingUtilities.invokeLater(() -> {
+                    respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
                 });
-            }
-        } // if the image is added to the case
-        else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-            if (IngestManager.getInstance().isRunningInteractively()) {
-                CoreComponentControl.openCoreWindows();
-            }
-            SwingUtilities.invokeLater(this::componentOpened);
-        } // change in node selection
-        else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-            SwingUtilities.invokeLater(() -> {
-                respondSelection((Node[]) oldValue, (Node[]) newValue);
-            });
-        } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+            } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
             // nothing to do here.
-            // all nodes should be listening for these events and update accordingly.
-        } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            SwingUtilities.invokeLater(this::refreshDataSourceTree);
-        } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-            SwingUtilities.invokeLater(this::refreshDataSourceTree);
+                // all nodes should be listening for these events and update accordingly.
+            } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                    || changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
+                    SwingUtilities.invokeLater(this::refreshDataSourceTree);
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            }
         }
     }
 

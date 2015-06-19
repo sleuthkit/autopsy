@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.datamodel;
-
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -50,34 +49,34 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 public class InterestingHits implements AutopsyVisitableItem {
-    
+
     private static final String INTERESTING_ITEMS = NbBundle
             .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private SleuthkitCase skCase;
     private final InterestingResults interestingResults = new InterestingResults();
-    
+
     public InterestingHits(SleuthkitCase skCase) {
         this.skCase = skCase;
         interestingResults.update();
     }
- 
+
     private class InterestingResults extends Observable {
+
         private final Map<String, Set<Long>> interestingItemsMap = new LinkedHashMap<>();
-    
+
         public List<String> getSetNames() {
             List<String> setNames = new ArrayList<>(interestingItemsMap.keySet());
             Collections.sort(setNames);
             return setNames;
         }
-        
+
         public Set<Long> getArtifactIds(String setName) {
             return interestingItemsMap.get(setName);
         }
-        
+
         public void update() {
             interestingItemsMap.clear();
             loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
@@ -85,16 +84,17 @@ public class InterestingHits implements AutopsyVisitableItem {
             setChanged();
             notifyObservers();
         }
-    
+
         /*
-         * Reads the artifacts of specified type, grouped by Set, and loads into the interestingItemsMap
+         * Reads the artifacts of specified type, grouped by Set, and loads into
+         * the interestingItemsMap
          */
         @SuppressWarnings("deprecation")
         private void loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
             if (skCase == null) {
-                return;   
+                return;
             }
-            
+
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = artType.getTypeID();
             String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
@@ -118,13 +118,13 @@ public class InterestingHits implements AutopsyVisitableItem {
             }
         }
     }
-    
+
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
-     
-     /**
+
+    /**
      * Node for the interesting items
      */
     public class RootNode extends DisplayableItemNode {
@@ -140,7 +140,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             return false;
         }
-                
+
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
@@ -156,36 +156,67 @@ public class InterestingHits implements AutopsyVisitableItem {
             }
 
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
-                                    getName()));
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
+                    getName()));
 
             return s;
         }
     }
-    
-     private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
 
-         /* This should probably be in the top-level class, but the factory has nice methods
-         * for its startup and shutdown, so it seemed like a cleaner place to register the
-         * property change listener.
+    private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
+
+        /*
+         * This should probably be in the top-level class, but the factory has
+         * nice methods for its startup and shutdown, so it seemed like a
+         * cleaner place to register the property change listener.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT) ||
-                            (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)) {
-                        interestingResults.update();
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        /**
+                         * Even with the check above, it is still possible that
+                         * the case will be closed in a different thread before
+                         * this code executes. If that happens, it is possible
+                         * for the event to have a null oldValue.
+                         */
+                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                        if (null != eventData && (eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT
+                                || eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)) {
+                            interestingResults.update();
+                        }
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
                     }
-                }
-                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    interestingResults.update();
-                }
-                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        interestingResults.update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     if (evt.getNewValue() == null) {
                         removeNotify();
@@ -211,7 +242,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             Case.removePropertyChangeListener(pcl);
             interestingResults.deleteObserver(this);
         }
-        
+
         @Override
         protected boolean createKeys(List<String> list) {
             list.addAll(interestingResults.getSetNames());
@@ -228,9 +259,11 @@ public class InterestingHits implements AutopsyVisitableItem {
             refresh(true);
         }
     }
-     
+
     public class SetNameNode extends DisplayableItemNode implements Observer {
+
         private final String setName;
+
         public SetNameNode(String setName) {//, Set<Long> children) {
             super(Children.create(new HitFactory(setName), true), Lookups.singleton(setName));
             this.setName = setName;
@@ -239,7 +272,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
             interestingResults.addObserver(this);
         }
-        
+
         private void updateDisplayName() {
             super.setDisplayName(setName + " (" + interestingResults.getArtifactIds(setName).size() + ")");
         }
@@ -259,9 +292,9 @@ public class InterestingHits implements AutopsyVisitableItem {
             }
 
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
-                                    getName()));
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
+                    getName()));
 
             return s;
         }
@@ -276,8 +309,9 @@ public class InterestingHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
     }
-     
+
     private class HitFactory extends ChildFactory<Long> implements Observer {
+
         private final String setName;
 
         private HitFactory(String setName) {
@@ -297,7 +331,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(Long l) {
             if (skCase == null) {
-                return null;   
+                return null;
             }
             try {
                 return new BlackboardArtifactNode(skCase.getBlackboardArtifact(l));
