@@ -23,6 +23,8 @@ import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
+import static java.util.Objects.nonNull;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -126,6 +128,30 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     protected BorderPane imageBorder;
 
+
+    @Override
+    public Optional<Long> getFileID() {
+        return fileIDOpt;
+    }
+
+    @Override
+    public Optional<DrawableFile<?>> getFile() {
+        if (fileIDOpt.isPresent()) {
+            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
+                return fileOpt;
+            } else {
+                try {
+                    fileOpt = Optional.of(ImageGalleryController.getDefault().getFileFromId(fileIDOpt.get()));
+                } catch (TskCoreException ex) {
+                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
+                    fileOpt = Optional.empty();
+                }
+                return fileOpt;
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
     /**
      * the groupPane this {@link DrawableTileBase} is embedded in
      */
@@ -258,7 +284,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                     try {
                         globalSelectionModel.clearAndSelect(file.getId());
                         new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
-                    new AddDrawableTagAction(controller).addTag(followUpTagName, "");
+                        new AddDrawableTagAction(controller).addTag(followUpTagName, "");
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
                     }
@@ -281,10 +307,12 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             }
         } else {
             return false;
+            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
+                setFileHelper(newFileID);
         }
     }
 
-    @Override
+    private void setFileHelper(final Long newFileID) {
     protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         disposeContent();
@@ -352,14 +380,44 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
+        fileIDOpt.ifPresent(fileID -> {
+            try {
+                if (fileID == evt.getAddedTag().getContent().getId()
+                        && evt.getAddedTag().getName() == getController().getTagsManager().getFollowUpTagName()) {
 
-        updateFollowUpIcon();
+                    Platform.runLater(() -> {
+                        followUpImageView.setImage(followUpIcon);
+                        followUpToggle.setSelected(true);
+                    });
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+            }
+        });
     }
 
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        updateFollowUpIcon();
+
+        fileIDOpt.ifPresent(fileID -> {
+            try {
+                if (fileID == evt.getDeletedTag().getContent().getId()
+                        && evt.getDeletedTag().getName() == controller.getTagsManager().getFollowUpTagName()) {
+                    updateFollowUpIcon();
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+            }
+        });
+    }
+
+    private void updateFollowUpIcon() {
+        boolean hasFollowUp = hasFollowUp();
+        Platform.runLater(() -> {
+            followUpImageView.setImage(hasFollowUp ? followUpIcon : followUpGray);
+            followUpToggle.setSelected(hasFollowUp);
+        });
     }
 
     @Subscribe

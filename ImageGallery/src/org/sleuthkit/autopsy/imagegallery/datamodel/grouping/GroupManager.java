@@ -293,6 +293,7 @@ public class GroupManager {
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                         }
+                        }
                     });
                 }
         } else { //group == null
@@ -550,10 +551,12 @@ public class GroupManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
-        final long fileID = evt.getAddedTag().getContent().getId();
-        DrawableGroup g = getGroupForKey(groupKey);
-        addFileToGroup(g, groupKey, fileID);
+        if (groupBy == DrawableAttribute.TAGS || groupBy == DrawableAttribute.CATEGORY) {
+            final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+            final long fileID = evt.getAddedTag().getContent().getId();
+            DrawableGroup g = getGroupForKey(groupKey);
+            addFileToGroup(g, groupKey, fileID);
+        }
 
     }
 
@@ -614,6 +617,7 @@ public class GroupManager {
         if (groupKey != null) {
             final long fileID = evt.getTag().getContent().getId();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
+        }
         }
     }
 

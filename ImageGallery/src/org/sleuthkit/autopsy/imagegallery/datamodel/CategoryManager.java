@@ -262,7 +262,7 @@ public class CategoryManager {
             fireChange(Collections.singleton(addedTag.getContent().getId()), newCat);
         }
     }
-
+    @Subscribe
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
         ContentTag deleted = event.getTag();

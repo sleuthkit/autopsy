@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,8 +36,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -154,6 +151,16 @@ public class CategorizeAction extends AddTagAction {
                             .collect(Collectors.toList()).isEmpty()) {
                         tagsManager.addContentTag(file, tagName, comment);
                     }
+                } else {
+                    tagsManager.getContentTagsByContent(file).stream()
+                            .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
+                            .forEach((ct) -> {
+                                try {
+                                    tagsManager.deleteContentTag(ct);
+                                } catch (TskCoreException ex) {
+                                    LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
+                                }
+                            });
                 }
 
             } catch (TskCoreException ex) {

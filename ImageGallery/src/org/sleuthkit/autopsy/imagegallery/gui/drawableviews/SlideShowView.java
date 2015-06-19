@@ -50,7 +50,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
@@ -319,6 +318,7 @@ public class SlideShowView extends DrawableTileBase {
     public Category updateCategory() {
         if (getFile().isPresent()) {
             final Category category = super.updateCategory();
+            final Border border1 = hasHashHit() && (category == Category.ZERO)
             ToggleButton toggleForCategory = getToggleForCategory(category);
             Platform.runLater(() -> {
                 toggleForCategory.setSelected(true);

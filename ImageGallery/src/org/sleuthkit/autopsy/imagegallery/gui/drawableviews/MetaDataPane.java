@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -83,7 +84,6 @@ public class MetaDataPane extends DrawableUIBase {
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
-
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -93,8 +93,6 @@ public class MetaDataPane extends DrawableUIBase {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-    }
-
     @FXML
     @SuppressWarnings("unchecked")
     void initialize() {
@@ -155,9 +153,34 @@ public class MetaDataPane extends DrawableUIBase {
         });
     }
 
+    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
+
+    volatile private Optional<Long> fileIDOpt = Optional.empty();
+
     @Override
     protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
+        if (newFileID == null) {
+
+    @Override
+    public Optional<DrawableFile<?>> getFile() {
+        if (fileIDOpt.isPresent()) {
+            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
+                return fileOpt;
+            } else {
+                return fileOpt;
+            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
+                setFileHelper(newFileID);
+            }
+        } else {
+            if (nonNull(newFileID)) {
+                setFileHelper(newFileID);
+            }
+        }
+        setFileHelper(newFileID);
+    }
+    private void setFileHelper(Long newFileID) {
+        fileIDOpt = Optional.of(newFileID);
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
@@ -183,6 +206,7 @@ public class MetaDataPane extends DrawableUIBase {
 
             updateCategory();
         });
+
     }
 
     @Override
@@ -227,9 +251,14 @@ public class MetaDataPane extends DrawableUIBase {
 
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        if (getFile() != null && evt.getDeletedTag().getContent().getId() == getFileID()) {
-            updateUI();
-        }
+        handleTagChanged(evt.getDeletedTag().getContent().getId());
     }
 
+    private void handleTagChanged(Long tagFileID) {
+        getFileID().ifPresent(fileID -> {
+            if (Objects.equals(tagFileID, fileID)) {
+                updateUI();
+            }
+        });
+    }
 }
