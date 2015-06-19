@@ -79,7 +79,8 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-
+    private static final int MAX_SANITIZED_NAME_LENGTH=47;
+    
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -363,15 +364,15 @@ public class Case {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String indexName = caseName + "_" + dateFormat.format(date);
-
+        String santizedCaseName = sanitizeCaseName(caseName);
+        String indexName = santizedCaseName + "_" + dateFormat.format(date);
         String dbName = null;
 
         // figure out the database name and index name for text extraction
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            dbName = caseName + "_" + dateFormat.format(date);
+            dbName = indexName;
         }
 
         xmlcm.create(caseDir, caseName, examiner, caseNumber, caseType, dbName, indexName); // create a new XML config file
@@ -398,6 +399,65 @@ public class Case {
         changeCase(newCase);
     }
 
+    /**
+     * Sanitize the case name for PostgreSQL database, Solr cores, and ActiveMQ
+     * topics. Makes it plain-vanilla enough that each item should be able to
+     * use it.
+     *
+     * Sanitize the PostgreSQL/Solr core, and ActiveMQ name by excluding: 
+     *      Control characters 
+     *      Non-ASCII characters
+     *      Various others shown below 
+     * 
+     * Solr: http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
+     *      may not be / \ : 
+     * 
+     * ActiveMQ: http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
+     *      may not be ? 
+     * 
+     * PostgreSQL: http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 
+     *      63 chars max,  must start with a-z or _ following chars can be
+     *      letters _ or digits 
+     *
+     * SQLite: Uses autopsy.db for the database name
+     *      follows Windows naming convention
+     * 
+     * @param caseName The name of the case as typed in by the user
+     * @return the sanitized case name to use for Database, Solr, and ActiveMQ
+     */
+    private static String sanitizeCaseName(String caseName) {
+
+        String result;
+
+        // Remove all non-ASCII characters
+        result = caseName.replaceAll("[^\\p{ASCII}]", "_");
+
+        // Remove all control characters
+        result = result.replaceAll("[\\p{Cntrl}]", "_");
+
+        // Remove / \ : ? space ' "
+        result = result.replaceAll("[ /?:'\"\\\\]", "_");
+
+        // Make it all lowercase
+        result = result.toLowerCase();
+
+        // Must start with letter or underscore for PostgreSQL. If not, prepend an underscore.
+        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '_')) {
+            result = "_" + result;
+        }
+
+        // Chop to 63-16=47 left (63 max for PostgreSQL, taking 16 for the date _20151225_123456)
+        if (result.length() > MAX_SANITIZED_NAME_LENGTH) {
+            result = result.substring(0, MAX_SANITIZED_NAME_LENGTH);
+        }
+
+        if (result.isEmpty()) {
+            result = "case";
+        }
+
+        return result;
+    }
+    
     /**
      * Opens the existing case (open the XML config file)
      *
@@ -494,11 +554,11 @@ public class Case {
             String path = entry.getValue();
             boolean fileExists = (pathExists(path)
                     || driveExists(path));
-            if (!fileExists) {
+            if (!fileExists && IngestManager.getInstance().isRunningInteractively() == true) {
                 int ret = JOptionPane.showConfirmDialog(null,
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.msg",
-                                appName, path),
+                                getAppName(), path),
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.title"),
                         JOptionPane.YES_NO_OPTION);
