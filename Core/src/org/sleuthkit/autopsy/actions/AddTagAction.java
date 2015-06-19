@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,20 +19,18 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An abstract base class for Actions that allow users to tag SleuthKit data 
@@ -98,12 +96,8 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             if (null != tagNames && !tagNames.isEmpty()) {
                 for (final TagName tagName : tagNames) {
                     JMenuItem tagNameItem = new JMenuItem(tagName.getDisplayName());
-                    tagNameItem.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            addTag(tagName, NO_COMMENT);
-                            refreshDirectoryTree();
-                        }
+                    tagNameItem.addActionListener((ActionEvent e) -> {
+                        addTag(tagName, NO_COMMENT);
                     });
                     quickTagMenu.add(tagNameItem);
                 }
@@ -120,14 +114,10 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
             JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
-            newTagMenuItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    TagName tagName = GetTagNameDialog.doDialog();
-                    if (tagName != null) {
-                        addTag(tagName, NO_COMMENT);
-                        refreshDirectoryTree();
-                    }
+            newTagMenuItem.addActionListener((ActionEvent e) -> {
+                TagName tagName = GetTagNameDialog.doDialog();
+                if (null != tagName) {
+                    addTag(tagName, NO_COMMENT);
                 }
             });
             quickTagMenu.add(newTagMenuItem);
@@ -137,14 +127,10 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             // optional comment and adds a tag with the resulting name.
             JMenuItem tagAndCommentItem = new JMenuItem(
                     NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
-            tagAndCommentItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
-                    if (null != tagNameAndComment) {
-                        addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                        refreshDirectoryTree();
-                    }
+            tagAndCommentItem.addActionListener((ActionEvent e) -> {
+                GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
+                if (null != tagNameAndComment) {
+                    addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                 }
             });
             add(tagAndCommentItem);        
