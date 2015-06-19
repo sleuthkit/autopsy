@@ -207,7 +207,6 @@ public class MetaDataPane extends DrawableUIBase {
         handleTagEvent(evt, this::updateUI);
     }
 
-    @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         handleTagEvent(evt, this::updateUI);
@@ -225,4 +224,12 @@ public class MetaDataPane extends DrawableUIBase {
             }
         });
     }
+
+    @Override
+    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        if (getFile() != null && evt.getDeletedTag().getContent().getId() == getFileID()) {
+            updateUI();
+        }
+    }
+
 }

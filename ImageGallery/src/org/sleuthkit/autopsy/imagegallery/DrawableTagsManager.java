@@ -27,11 +27,11 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -60,6 +60,32 @@ public class DrawableTagsManager {
     }
 
     /**
+     * register an object to receive CategoryChangeEvents
+     *
+     * @param listner
+     */
+    public void registerListener(Object listner) {
+        tagsEventBus.register(listner);
+    }
+
+    /**
+     * unregister an object from receiving CategoryChangeEvents
+     *
+     * @param listener
+     */
+    public void unregisterListener(Object listener) {
+        tagsEventBus.unregister(listener);
+    }
+
+    public void fireTagAddedEvent(ContentTagAddedEvent event) {
+        tagsEventBus.post(event);
+    }
+
+    public void fireTagDeletedEvent(ContentTagDeletedEvent event) {
+        tagsEventBus.post(event);
+    }
+
+    /**
      * assign a new TagsManager to back this one, ie when the current case
      * changes
      *
@@ -83,24 +109,6 @@ public class DrawableTagsManager {
     }
 
     /**
-     * register an object to receive CategoryChangeEvents
-     *
-     * @param listner
-     */
-    public void registerListener(Object listner) {
-        tagsEventBus.register(listner);
-    }
-
-    /**
-     * unregister an object from receiving CategoryChangeEvents
-     *
-     * @param listener
-     */
-    public void unregisterListener(Object listener) {
-        tagsEventBus.unregister(listener);
-    }
-
-    /**
      * get the (cached) follow up TagName
      *
      * @return
@@ -120,7 +128,7 @@ public class DrawableTagsManager {
         synchronized (autopsyTagsManagerLock) {
             try {
                 return autopsyTagsManager.getAllTagNames().stream()
-                        .filter(Category::isCategoryTagName)
+                        .filter(CategoryManager::isCategoryTagName)
                         .collect(Collectors.toSet());
             } catch (TskCoreException | IllegalStateException ex) {
                 Logger.getLogger(DrawableTagsManager.class.getName()).log(Level.WARNING, "couldn't access case", ex);
@@ -173,33 +181,16 @@ public class DrawableTagsManager {
         }
     }
 
-    public void addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
-        ContentTag addContentTag;
+    public ContentTag addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            addContentTag = autopsyTagsManager.addContentTag(file, tagName, comment);
+            return autopsyTagsManager.addContentTag(file, tagName, comment);
         }
-        fireTagAdded(addContentTag);
     }
 
     public List<ContentTag> getContentTagsByTagName(TagName t) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             return autopsyTagsManager.getContentTagsByTagName(t);
         }
-    }
-
-    /**
-     * Fire the ModuleDataEvent that we use as a place holder for a real Tag
-     * Event. This is used to refresh the autopsy tag tree and the ui in
-     * ImageGallery
-     *
-     *
-     * Note: this is a hack. In an ideal world, TagsManager would fire
-     * events so that the directory tree would refresh. But, we haven't
-     * had a chance to add that so, we fire these events and the tree
-     * refreshes based on them.
-     */
-    static public void refreshTagsInAutopsy() {
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("TagAction", BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)); //NON-NLS
     }
 
     public List<TagName> getAllTagNames() throws TskCoreException {
@@ -214,18 +205,9 @@ public class DrawableTagsManager {
         }
     }
 
-    public void fireTagAdded(ContentTag newTag) {
-        tagsEventBus.post(new TagsChangeEvent(Collections.singleton(newTag.getContent().getId())));
-    }
-
-    public void fireTagDeleted(ContentTag oldTag) {
-        tagsEventBus.post(new TagsChangeEvent(Collections.singleton(oldTag.getContent().getId())));
-    }
-
     public void deleteContentTag(ContentTag ct) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             autopsyTagsManager.deleteContentTag(ct);
         }
-        fireTagDeleted(ct);
     }
 }

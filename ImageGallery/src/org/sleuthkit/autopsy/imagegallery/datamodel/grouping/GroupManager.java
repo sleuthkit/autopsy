@@ -64,7 +64,6 @@ import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.TagsChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -296,6 +295,10 @@ public class GroupManager {
                         }
                     });
                 }
+        } else { //group == null
+            // It may be that this was the last unanalyzed file in the group, so test
+            // whether the group is now fully analyzed.
+            popuplateIfAnalyzed(groupKey, null);
             }
         } else { //group == null
             // It may be that this was the last unanalyzed file in the group, so test
@@ -546,11 +549,21 @@ public class GroupManager {
     }
 
     @Subscribe
-    public void handleAutopsyTagChange(TagsChangeEvent evt) {
-        if (groupBy == DrawableAttribute.TAGS
-                && evt.getFileIDs().size() == 1
-                && evt.getFileIDs().contains(-1L)) {
-            regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
+    public void handleTagAdded(ContentTagAddedEvent evt) {
+        final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+        final long fileID = evt.getAddedTag().getContent().getId();
+        DrawableGroup g = getGroupForKey(groupKey);
+        addFileToGroup(g, groupKey, fileID);
+
+    }
+
+    private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
+        if (g == null) {
+            //if there wasn't already a group check if there should be one now
+            popuplateIfAnalyzed(groupKey, null);
+        } else {
+            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
+            g.addFile(fileID);
         }
     }
 
@@ -693,7 +706,7 @@ public class GroupManager {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
             }
 
-    private void popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+    private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 
         if (Objects.nonNull(task) && (task.isCancelled())) {
             /* if this method call is part of a ReGroupTask and that task is
@@ -702,6 +715,7 @@ public class GroupManager {
              * this allows us to stop if a regroup task has been cancelled (e.g.
              * the user picked a different group by attribute, while the
              * current task was still running) */
+
         } else {         // no task or un-cancelled task
             if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
                 /* for attributes other than path we can't be sure a group is
@@ -732,6 +746,7 @@ public class GroupManager {
                             }
                             markGroupSeen(group, groupSeen);
                         });
+                        return group;
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);

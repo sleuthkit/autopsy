@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.event.ActionEvent;
@@ -26,14 +25,12 @@ import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -53,7 +50,6 @@ public class DeleteFollowUpTagAction extends Action {
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    final SleuthkitCase sleuthKitCase = controller.getSleuthKitCase();
                     final GroupManager groupManager = controller.getGroupManager();
                     final DrawableTagsManager tagsManager = controller.getTagsManager();
 
@@ -69,9 +65,8 @@ public class DeleteFollowUpTagAction extends Action {
                             }
                         }
 
-                        DrawableTagsManager.refreshTagsInAutopsy();
                         //make sure rest of ui  hears category change.
-                        groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
+//                        groupManager.handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.TAGS));
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to delete follow up tag.", ex);
                     }

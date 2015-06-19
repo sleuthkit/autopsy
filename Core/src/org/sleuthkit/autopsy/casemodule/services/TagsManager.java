@@ -253,7 +253,6 @@ public class TagsManager implements Closeable {
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
         }
-        return newContentTag;
     }
 
     /**

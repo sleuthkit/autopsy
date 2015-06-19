@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -61,7 +60,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
@@ -75,7 +73,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -368,6 +365,7 @@ public final class ImageGalleryController {
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
             tagsManager.registerListener(categoryManager);
+
         } else {
             reset();
         }
@@ -493,23 +491,15 @@ public final class ImageGalleryController {
                     }
                     break;
                 case CONTENT_TAG_ADDED:
-                    ContentTag newTag = (ContentTag) evt.getNewValue();
-                    if (Category.isCategoryTagName(newTag.getName())) {
-                        new CategorizeAction(ImageGalleryController.this).addTag(newTag.getName(), "");
-                    } else {
-                        getTagsManager().fireTagAdded(newTag);
+                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+                    if (getDatabase().isInDB((tagAddedEvent).getAddedTag().getContent().getId())) {
+                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }
                     break;
                 case CONTENT_TAG_DELETED:
-                    ContentTag oldTag = (ContentTag) evt.getOldValue();
-                    final long fileID = oldTag.getContent().getId();
-                    if (getDatabase().isInDB(fileID)) {
-                        if (Category.isCategoryTagName(oldTag.getName())) {
-                            getCategoryManager().decrementCategoryCount(Category.fromTagName(oldTag.getName()));
-                            getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
-                        } else {
-                            getTagsManager().fireTagDeleted(oldTag);
-                        }
+                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                    if (getDatabase().isInDB((tagDeletedEvent).getDeletedTag().getContent().getId())) {
+                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
                 case CONTENT_TAG_ADDED:
