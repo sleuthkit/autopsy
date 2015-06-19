@@ -34,6 +34,7 @@ import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Provides thread-safe support for publishing events to registered subscribers
@@ -135,38 +136,40 @@ final class RemoteEventPublisher {
          */
         @Override
         public void onMessage(Message message) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, Case.currentCase is
-             * set to null before Case.Event.CURRENT_CASE is published. That
-             * means that clients of this class have not had the chance to close
-             * their remote event channels and remote events may be received for
-             * a case that is already closed.
-             */
-            try {
-                Case.getCurrentCase();
-            } catch (IllegalStateException notUsed) {
+            if (IngestManager.getInstance().isRunningInteractively()) {
                 /**
-                 * Case is closed, do not publish the event.
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently,
+                 * Case.currentCase is set to null before
+                 * Case.Event.CURRENT_CASE is published. That means that clients
+                 * of this class have not had the chance to close their remote
+                 * event channels and remote events may be received for a case
+                 * that is already closed.
                  */
-                return;
-            }
-
-            try {
-                if (message instanceof ObjectMessage) {
-                    ObjectMessage objectMessage = (ObjectMessage) message;
-                    Object object = objectMessage.getObject();
-                    if (object instanceof AutopsyEvent) {
-                        AutopsyEvent event = (AutopsyEvent) object;
-                        event.setSourceType(AutopsyEvent.SourceType.REMOTE);
-                        localPublisher.publish(event);
-                    }
+                try {
+                    Case.getCurrentCase();
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do not publish the event.
+                     */
+                    return;
                 }
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error receiving message", ex);
+
+                try {
+                    if (message instanceof ObjectMessage) {
+                        ObjectMessage objectMessage = (ObjectMessage) message;
+                        Object object = objectMessage.getObject();
+                        if (object instanceof AutopsyEvent) {
+                            AutopsyEvent event = (AutopsyEvent) object;
+                            event.setSourceType(AutopsyEvent.SourceType.REMOTE);
+                            localPublisher.publish(event);
+                        }
+                    }
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, "Error receiving message", ex);
+                }
             }
         }
-
     }
 
 }

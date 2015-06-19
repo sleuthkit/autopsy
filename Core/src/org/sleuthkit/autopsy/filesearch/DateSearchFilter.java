@@ -254,10 +254,10 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 case DATA_SOURCE_ADDED:
                 case DATA_SOURCE_DELETED:
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();

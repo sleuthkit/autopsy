@@ -206,18 +206,19 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();
-                        /**
-                         * Due to some unresolved issues with how cases are
-                         * closed, it is possible for the event to have a null
-                         * oldValue if the event is a remote event.
-                         */
+			/**
+			 * Even with the check above, it is still possible that the
+			 * case will be closed in a different thread before this
+			 * code executes. If that happens, it is possible for the
+			 * event to have a null oldValue.
+			 */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData && eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
                             emailResults.update();
@@ -230,10 +231,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     /**
-                     * This is a stop gap measure until a different way of
-                     * handling the closing of cases is worked out. Currently,
-                     * remote events may be received for a case that is already
-                     * closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCase();
@@ -243,8 +244,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                          * Case is closed, do nothing.
                          */
                     }
-                }
-                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     if (evt.getNewValue() == null) {
                         removeNotify();
