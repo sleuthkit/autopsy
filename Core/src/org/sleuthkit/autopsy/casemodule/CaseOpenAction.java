@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -29,6 +30,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -71,8 +73,8 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        int retval = fc.showOpenDialog((Component) e.getSource());
-
+        int retval = fc.showOpenDialog(WindowManager.getDefault().getMainWindow());
+                
         if (retval == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getPath();
             String dirPath = fc.getSelectedFile().getParent();
