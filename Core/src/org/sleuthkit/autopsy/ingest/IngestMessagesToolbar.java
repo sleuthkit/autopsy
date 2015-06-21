@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,32 +26,25 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
-
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Toolbar for Ingest
- *
+ * Tool bar for an ingest messages button that allows a user to open the ingest
+ * messages inbox top component.
  */
  class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();
     private static volatile IngestMessagesToolbar instance;
 
-    /**
-     * Creates new form IngestMessagesToolbar
-     */
     private IngestMessagesToolbar() {
         initComponents();
         customizeComponents();
     }
 
-    /**
-     * @return the default instance IngestMessagesToolbar
-     */
     public static IngestMessagesToolbar getDefault() {
         if (instance == null) {
             synchronized (IngestMessagesToolbar.class) {
@@ -101,17 +94,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
         ingestMessagesButton.setMaximumSize(new java.awt.Dimension(38, 24));
         ingestMessagesButton.setMinimumSize(new java.awt.Dimension(38, 24));
         ingestMessagesButton.setPreferredSize(new java.awt.Dimension(38, 24));
-        ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        showIngestMessages();
-                    }
-                });
-
-            }
+        ingestMessagesButton.addActionListener((java.awt.event.ActionEvent evt) -> {
+            EventQueue.invokeLater(this::showIngestMessages);
         });
         this.add(ingestMessagesButton, BorderLayout.CENTER);
     }
@@ -143,12 +127,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
             }
         });
 
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    setEnabled(evt.getNewValue() != null);
-                }
+        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                setEnabled(evt.getNewValue() != null && IngestManager.getInstance().isRunningInteractively());
             }
         });
     }

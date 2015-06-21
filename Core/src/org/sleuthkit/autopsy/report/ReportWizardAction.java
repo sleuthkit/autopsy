@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -27,10 +27,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.DialogDisplayer;
@@ -44,19 +42,16 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportWizardAction")
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 80)})
-// moved into Bundle
-//@NbBundle.Messages(value = "CTL_ReportWizardAction=Run Report")
 public final class ReportWizardAction  extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
-    private static final Logger logger = Logger.getLogger(ReportWizardAction.class.getName());
     
-    private JButton toolbarButton = new JButton();
+    private final JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
 
     /**
@@ -83,23 +78,15 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
 
     public ReportWizardAction() {
         setEnabled(false);
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    Case newCase = (Case) evt.getNewValue();
-                    setEnabled(newCase != null);
-                }
+        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                Case newCase = (Case) evt.getNewValue();
+                setEnabled(newCase != null && IngestManager.getInstance().isRunningInteractively());
             }
         });
 
         // Initialize the Generate Report button
-        toolbarButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ReportWizardAction.this.actionPerformed(e);
-            }
-        });
+        toolbarButton.addActionListener(ReportWizardAction.this::actionPerformed);
     }
 
     @Override
@@ -123,9 +110,9 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
     }
 
     /**
-     * Returns the toolbar component of this action
+     * Returns the tool bar component of this action
      *
-     * @return component the toolbar button
+     * @return component the tool bar button
      */
     @Override
     public Component getToolbarPresenter() {

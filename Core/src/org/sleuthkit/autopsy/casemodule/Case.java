@@ -79,8 +79,8 @@ public class Case {
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
     private static IntervalErrorReportData tskErrorReporter = null;
-    private static final int MAX_SANITIZED_NAME_LENGTH=47;
-    
+    private static final int MAX_SANITIZED_NAME_LENGTH = 47;
+
     /**
      * Name for the property that determines whether to show the dialog at
      * startup
@@ -294,7 +294,6 @@ public class Case {
             currentCase = newCase;
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
             doCaseChange(currentCase);
-            updateMainWindowTitle(currentCase.name);
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
@@ -404,24 +403,25 @@ public class Case {
      * topics. Makes it plain-vanilla enough that each item should be able to
      * use it.
      *
-     * Sanitize the PostgreSQL/Solr core, and ActiveMQ name by excluding: 
-     *      Control characters 
-     *      Non-ASCII characters
-     *      Various others shown below 
-     * 
-     * Solr: http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
-     *      may not be / \ : 
-     * 
-     * ActiveMQ: http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
-     *      may not be ? 
-     * 
-     * PostgreSQL: http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 
-     *      63 chars max,  must start with a-z or _ following chars can be
-     *      letters _ or digits 
+     * Sanitize the PostgreSQL/Solr core, and ActiveMQ name by excluding:
+     * Control characters Non-ASCII characters Various others shown below
      *
-     * SQLite: Uses autopsy.db for the database name
-     *      follows Windows naming convention
-     * 
+     * Solr:
+     * http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
+     * may not be / \ :
+     *
+     * ActiveMQ:
+     * http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
+     * may not be ?
+     *
+     * PostgreSQL:
+     * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 63
+     * chars max, must start with a-z or _ following chars can be letters _ or
+     * digits
+     *
+     * SQLite: Uses autopsy.db for the database name follows Windows naming
+     * convention
+     *
      * @param caseName The name of the case as typed in by the user
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
@@ -457,7 +457,7 @@ public class Case {
 
         return result;
     }
-    
+
     /**
      * Opens the existing case (open the XML config file)
      *
@@ -627,7 +627,7 @@ public class Case {
     public void notifyFailedAddingNewDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceFailedEvent(dataSourceId));
     }
-    
+
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
@@ -1407,6 +1407,14 @@ public class Case {
                     CoreComponentControl.closeCoreWindows();
                 }
             }
+
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                updateMainWindowTitle(currentCase.name);
+            } else {
+                Frame f = WindowManager.getDefault().getMainWindow();
+                f.setTitle(Case.getAppName()); // set the window name to just application name                
+            }
+
         } else { // case is closed
             if (IngestManager.getInstance().isRunningInteractively()) {
                 // close all top components first
@@ -1418,7 +1426,7 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
             }
-            
+
             //clear pending notifications
             MessageNotifyUtil.Notify.clear();
 
