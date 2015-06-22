@@ -50,7 +50,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -647,8 +646,6 @@ public class GroupManager {
      */
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
-        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.UPDATE);
-        Collection<Long> fileIDs = evt.getFileIDs();
         /**
          * TODO: is there a way to optimize this to avoid quering to db
          * so much. the problem is that as a new files are analyzed they
@@ -670,7 +667,6 @@ public class GroupManager {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
-
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 
         if (Objects.nonNull(task) && (task.isCancelled())) {

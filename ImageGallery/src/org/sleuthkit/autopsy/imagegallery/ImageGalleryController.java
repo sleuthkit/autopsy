@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
