@@ -220,7 +220,6 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @ThreadConfined(type = ThreadType.JFX)
-
     public void stopVideo() {
         if (imageBorder.getCenter() instanceof MediaControl) {
             ((MediaControl) imageBorder.getCenter()).stopVideo();

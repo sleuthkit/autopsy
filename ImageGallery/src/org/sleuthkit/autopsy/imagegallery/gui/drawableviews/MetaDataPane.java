@@ -88,6 +88,9 @@ public class MetaDataPane extends DrawableUIBase {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
+        }
+    }
+
     @FXML
     @SuppressWarnings("unchecked")
     void initialize() {

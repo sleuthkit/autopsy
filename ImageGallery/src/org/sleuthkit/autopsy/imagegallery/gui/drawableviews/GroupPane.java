@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.SlideShowView;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTile;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
