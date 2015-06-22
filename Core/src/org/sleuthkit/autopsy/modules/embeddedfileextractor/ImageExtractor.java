@@ -60,8 +60,8 @@ class ImageExtractor {
     private final String UNKNOWN_NAME_PREFIX = "image_";
     private final FileTypeDetector fileTypeDetector;
 
-    String moduleDirRelative;
-    String moduleDirAbsolute;
+    private String moduleDirRelative;
+    private String moduleDirAbsolute;
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -131,7 +131,7 @@ class ImageExtractor {
      * @param format
      * @param abstractFile The abstract file to be processed.
      */
-    protected void extractImage(AbstractFile abstractFile) {
+    void extractImage(AbstractFile abstractFile) {
         // 
         // switchcase for different supported formats
         // process abstractFile according to the format by calling appropriate methods.
@@ -139,7 +139,19 @@ class ImageExtractor {
         List<ExtractedImage> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
-
+        //check if already has derived files, skip
+        try {
+            if (abstractFile.hasChildren()) {
+                //check if local unpacked dir exists
+                if (new File(getOutputFolderPath(parentFileName)).exists()) {
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                    return;
+                }
+            }
+        } catch (TskCoreException e) {
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", parentFileName); //NON-NLS
+            return;
+        }
         switch (abstractFileExtractionFormat) {
             case DOC:
                 listOfExtractedImages = extractImagesFromDoc(abstractFile);
@@ -195,8 +207,9 @@ class ImageExtractor {
         HWPFDocument doc = null;
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         PicturesTable pictureTable = doc.getPicturesTable();
@@ -233,8 +246,9 @@ class ImageExtractor {
         XWPFDocument docx = null;
         try {
             docx = new XWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XWPFPictureData> listOfAllPictures = docx.getAllPictures();
@@ -272,8 +286,9 @@ class ImageExtractor {
         SlideShow ppt = null;
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 
@@ -342,8 +357,9 @@ class ImageExtractor {
         XMLSlideShow pptx;
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XSLFPictureData> listOfAllPictures = pptx.getAllPictures();
@@ -389,8 +405,9 @@ class ImageExtractor {
         Workbook xls;
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName(), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName()); //NON-NLS
             return null;
         }
 
@@ -432,8 +449,9 @@ class ImageExtractor {
         Workbook xlsx;
         try {
             xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException | OldFileFormatException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 

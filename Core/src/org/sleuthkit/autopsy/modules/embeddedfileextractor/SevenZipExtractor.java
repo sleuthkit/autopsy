@@ -80,8 +80,8 @@ class SevenZipExtractor {
     //counts archive depth
     private ArchiveDepthCountTree archiveDepthCountTree;
 
-    String moduleDirRelative;
-    String moduleDirAbsolute;
+    private String moduleDirRelative;
+    private String moduleDirAbsolute;
 
     private String getLocalRootAbsPath(String uniqueArchiveFileName) {
         return moduleDirAbsolute + File.separator + uniqueArchiveFileName;
@@ -268,7 +268,21 @@ class SevenZipExtractor {
      * @param archiveFile file to unpack
      * @return list of unpacked derived files
      */
-    protected void unpack(AbstractFile archiveFile) {
+    void unpack(AbstractFile archiveFile) {
+        //check if already has derived files, skip
+        try {
+            if (archiveFile.hasChildren()) {
+                //check if local unpacked dir exists
+                if (new File(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", archiveFile.getName()); //NON-NLS
+                    return;
+                }
+            }
+        } catch (TskCoreException e) {
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFile.getName()); //NON-NLS
+            return;
+        }
+
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
 
         //recursion depth check for zip bomb

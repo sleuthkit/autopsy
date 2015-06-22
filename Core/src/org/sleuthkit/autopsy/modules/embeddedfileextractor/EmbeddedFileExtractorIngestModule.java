@@ -49,8 +49,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     private long jobId;
     private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
-    String moduleDirRelative;
-    String moduleDirAbsolute;
+    private String moduleDirRelative;
+    private String moduleDirAbsolute;
 
     private boolean archivextraction;
     private boolean imageExtraction;
@@ -116,22 +116,6 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        //check if already has derived files, skip
-        try {
-            if (abstractFile.hasChildren()) {
-                //check if local unpacked dir exists
-                final String uniqueFileName = getUniqueName(abstractFile);
-                final String localRootAbsPath = getLocalRootAbsPath(uniqueFileName);
-                if (new File(localRootAbsPath).exists()) {
-                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
-                    return ProcessResult.OK;
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", abstractFile.getName()); //NON-NLS
-            return ProcessResult.OK;
-        }
-
         // call the archive extractor if archiveextraction flag is set.
         if (this.archivextraction) {
             archiveExtractor.unpack(abstractFile);
@@ -157,17 +141,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
      * @param archiveFile
      * @return
      */
-    protected static String getUniqueName(AbstractFile archiveFile) {
+    static String getUniqueName(AbstractFile archiveFile) {
         return archiveFile.getName() + "_" + archiveFile.getId();
-    }
-
-    /**
-     * Get local abs path to the unpacked archive root
-     *
-     * @param localRootRelPath relative path to archive, from getUniqueName()
-     * @return
-     */
-    String getLocalRootAbsPath(String localRootRelPath) {
-        return moduleDirAbsolute + File.separator + localRootRelPath;
     }
 }
