@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  *
