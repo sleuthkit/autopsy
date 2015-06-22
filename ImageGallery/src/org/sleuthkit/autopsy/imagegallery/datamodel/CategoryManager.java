@@ -226,7 +226,7 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
-        ContentTag addedTag = event.getAddedTag();
+        ContentTag addedTag = event.getTag();
         if (isCategoryTagName(addedTag.getName())) {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             try {
@@ -256,7 +256,7 @@ public class CategoryManager {
     }
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
-        ContentTag deleted = event.getDeletedTag();
+        ContentTag deleted = event.getTag();
         if (isCategoryTagName(deleted.getName())) {
 
             Category deletedCat = CategoryManager.categoryFromTagName(deleted.getName());
