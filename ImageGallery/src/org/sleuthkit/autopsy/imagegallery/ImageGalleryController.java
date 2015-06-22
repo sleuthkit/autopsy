@@ -490,13 +490,13 @@ public final class ImageGalleryController {
                     break;
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (getDatabase().isInDB((tagAddedEvent).getAddedTag().getContent().getId())) {
+                    if (getDatabase().isInDB((tagAddedEvent).getTag().getContent().getId())) {
                         getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }
                     break;
                 case CONTENT_TAG_DELETED:
                     final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (getDatabase().isInDB((tagDeletedEvent).getDeletedTag().getContent().getId())) {
+                    if (getDatabase().isInDB((tagDeletedEvent).getTag().getContent().getId())) {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;

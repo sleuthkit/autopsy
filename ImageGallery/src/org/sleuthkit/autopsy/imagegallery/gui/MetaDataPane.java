@@ -46,10 +46,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -197,19 +199,24 @@ public class MetaDataPane extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        handleTagChanged(evt.getAddedTag().getContent().getId());
+        handleTagEvent(evt, this::updateUI);
     }
 
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        handleTagChanged(evt.getDeletedTag().getContent().getId());
+        handleTagEvent(evt, this::updateUI);
     }
 
-    private void handleTagChanged(Long tagFileID) {
+    /**
+     *
+     * @param tagFileID the value of tagEvent
+     * @param runnable  the value of runnable
+     */
+    void handleTagEvent(TagEvent<ContentTag> tagEvent, final Runnable runnable) {
         getFileID().ifPresent(fileID -> {
-            if (Objects.equals(tagFileID, fileID)) {
-                updateUI();
+            if (Objects.equals(tagEvent.getTag().getContent().getId(), fileID)) {
+                runnable.run();
             }
         });
     }
