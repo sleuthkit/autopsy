@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import javax.xml.transform.stream.*;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -80,27 +79,26 @@ import org.xml.sax.SAXException;
     // the document
     private Document doc;
     // general info
-    private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
     private String caseNumber;      // case number
     private String examiner;        // examiner name
-    private String schemaVersion = "1.0";
-    private String autopsySavedVersion;
+    private final String schemaVersion = "1.0";
+    private final String autopsySavedVersion;
     private CaseType caseType;      // The type of case: local or shared
     private String dbName;          // The name of the database    
     private String textIndexName;   // The name of the index where extracted text is stored.
     
     // for error handling
     private JPanel caller;
-    private String className = this.getClass().toString();
+    private final String className = this.getClass().toString();
     private static final Logger logger = Logger.getLogger(XMLCaseManagement.class.getName());
 
     /**
      * The constructor
      */
     XMLCaseManagement() {
-//        System.setProperty("netbeans.buildnumber", autopsyVer); // set the current autopsy version // moved to CoreComponents installer
         autopsySavedVersion = System.getProperty("netbeans.buildnumber");
     }
 
@@ -705,19 +703,11 @@ import org.xml.sax.SAXException;
 
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = null;
+        DocumentBuilder db;
         try {
             db = dbf.newDocumentBuilder();
             doc = db.parse(file);
-        } catch (ParserConfigurationException ex) {
-            throw new CaseActionException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                                        conFilePath), ex);
-        } catch (SAXException ex) {
-            throw new CaseActionException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                                        conFilePath), ex);
-        } catch (IOException ex) {
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
                                         conFilePath), ex);
@@ -727,9 +717,10 @@ import org.xml.sax.SAXException;
         doc.getDocumentElement().normalize();
         doc.getDocumentElement().normalize();
 
-        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
-            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
-        }
+        // TODO: Restore later
+//        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
+//            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
+//        }
 
         Element rootEl = doc.getDocumentElement();
         String rootName = rootEl.getNodeName();
