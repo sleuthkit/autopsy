@@ -27,11 +27,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -254,6 +256,7 @@ public class CategoryManager {
             fireChange(Collections.singleton(addedTag.getContent().getId()), newCat);
         }
     }
+
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
         ContentTag deleted = event.getTag();
@@ -264,6 +267,35 @@ public class CategoryManager {
                 decrementCategoryCount(deletedCat);
             }
             fireChange(Collections.singleton(deleted.getContent().getId()), null);
+        }
+    }
+
+    /**
+     * Event broadcast to various UI componenets when one or more files'
+     * category
+     * has been changed
+     */
+    @Immutable
+    public static class CategoryChangeEvent {
+
+        private final Collection<Long> fileIDs;
+        private final Category newCategory;
+
+        public CategoryChangeEvent(Collection<Long> fileIDs, Category newCategory) {
+            super();
+            this.fileIDs = fileIDs;
+            this.newCategory = newCategory;
+        }
+
+        public Category getNewCategory() {
+            return newCategory;
+        }
+
+        /**
+         * @return the fileIDs of the files whose categories have changed
+         */
+        public Collection<Long> getFileIDs() {
+            return Collections.unmodifiableCollection(fileIDs);
         }
     }
 }

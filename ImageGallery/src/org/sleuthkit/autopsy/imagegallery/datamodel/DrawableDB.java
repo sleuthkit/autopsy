@@ -46,13 +46,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
-import static org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy.GROUP_BY_VALUE;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
+import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -125,11 +124,6 @@ public final class DrawableDB {
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
-    /**
-     * list of observers to be notified if the database changes
-     */
-    private final HashSet<FileUpdateEvent.FileUpdateListener> updateListeners = new HashSet<>();
-
     private GroupManager groupManager;
 
     private final Path dbPath;
@@ -201,6 +195,7 @@ public final class DrawableDB {
         this.dbPath = dbPath;
         this.controller = controller;
         this.tskCase = controller.getSleuthKitCase();
+        this.groupManager = controller.getGroupManager();
         Files.createDirectories(dbPath.getParent());
         if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
@@ -642,22 +637,6 @@ public final class DrawableDB {
             throw new IllegalArgumentException("can't close already closed transaction");
         }
         tr.commit(notify);
-    }
-
-    public void addUpdatedFileListener(FileUpdateEvent.FileUpdateListener l) {
-        updateListeners.add(l);
-    }
-
-    private void fireUpdatedFiles(Collection<Long> fileIDs) {
-        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(FileUpdateEvent.newUpdateEvent(fileIDs, null));
-        }
-    }
-
-    private void fireRemovedFiles(Collection<Long> fileIDs) {
-        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileRemoved(FileUpdateEvent.newRemovedEvent(fileIDs));
-        }
     }
 
     public Boolean isFileAnalyzed(DrawableFile<?> f) {
@@ -1149,7 +1128,7 @@ public final class DrawableDB {
      * in the drawable db?
      */
     @Nonnull
-    Set<String> getHashSetsForFile(long fileID) {
+    public Set<String> getHashSetsForFile(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
             List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
@@ -1312,8 +1291,10 @@ public final class DrawableDB {
                     close();
 
                     if (notify) {
-                        fireUpdatedFiles(updatedFiles);
-                        fireRemovedFiles(removedFiles);
+                        if (groupManager != null) {
+                            groupManager.handleFileUpdate(updatedFiles);
+                            groupManager.handleFileRemoved(removedFiles);
+                        }
                     }
                 } catch (SQLException ex) {
                     if (Case.isCaseOpen()) {

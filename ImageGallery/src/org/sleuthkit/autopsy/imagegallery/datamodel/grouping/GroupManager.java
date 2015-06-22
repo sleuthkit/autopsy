@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
@@ -50,7 +50,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -62,8 +61,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -71,6 +68,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -84,7 +82,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * extent {@link SleuthkitCase} ) to facilitate creation, retrieval, updating,
  * and sorting of {@link DrawableGroup}s.
  */
-public class GroupManager implements FileUpdateEvent.FileUpdateListener {
+public class GroupManager {
 
     private static final Logger LOGGER = Logger.getLogger(GroupManager.class.getName());
 
@@ -123,7 +121,6 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     public void setDB(DrawableDB db) {
         this.db = db;
-        db.addUpdatedFileListener(this);
         regroup(groupBy, sortBy, sortOrder, Boolean.TRUE);
     }
 
@@ -575,11 +572,10 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         DrawableGroup g = removeFromGroup(groupKey, fileID);
     }
 
-    @Override
-    synchronized public void handleFileRemoved(FileUpdateEvent evt) {
-        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.REMOVE);
+    @Subscribe
+    synchronized public void handleFileRemoved(Collection<Long> removedFileIDs) {
 
-        for (final long fileId : evt.getFileIDs()) {
+        for (final long fileId : removedFileIDs) {
             //get grouping(s) this file would be in
             Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
 
@@ -595,17 +591,15 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
      *
      * @param evt
      */
-    @Override
-    synchronized public void handleFileUpdate(FileUpdateEvent evt) {
-        Validate.isTrue(evt.getUpdateType() == FileUpdateEvent.UpdateType.UPDATE);
-        Collection<Long> fileIDs = evt.getFileIDs();
+    @Subscribe
+    synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
         /**
          * TODO: is there a way to optimize this to avoid quering to db
          * so much. the problem is that as a new files are analyzed they
          * might be in new groups( if we are grouping by say make or
          * model) -jm
          */
-        for (long fileId : fileIDs) {
+        for (long fileId : updatedFileIDs) {
 
             controller.getHashSetManager().invalidateHashSetsForFile(fileId);
 
@@ -618,11 +612,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
         }
 
         //we fire this event for all files so that the category counts get updated during initial db population
-        controller.getCategoryManager().fireChange(fileIDs, null);
-
-//        if (evt.getChangedAttribute() == DrawableAttribute.TAGS) {
-//            controller.getTagsManager().fireChange(fileIDs);
-//        }
+        controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
 
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {

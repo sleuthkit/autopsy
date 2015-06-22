@@ -28,7 +28,7 @@ import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
  * Marks the currently fisplayed group as "seen" and advances to the next unseen

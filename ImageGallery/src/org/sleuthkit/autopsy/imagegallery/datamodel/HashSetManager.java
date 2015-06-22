@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.Set;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 
 /**
  * Manages a cache of hashset hits as a map from fileID to hashset names.
