@@ -20,20 +20,21 @@
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -66,7 +67,11 @@ public class CategoryManager {
     /**
      * Used to distribute {@link CategoryChangeEvent}s
      */
-    private final EventBus categoryEventBus = new EventBus("Category Event Bus");
+    private final EventBus categoryEventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(
+            new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> {
+                LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e);
+            }).build()
+    ));
 
     /**
      * For performance reasons, keep current category counts in memory. All of

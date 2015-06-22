@@ -18,19 +18,20 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -42,13 +43,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DrawableTagsManager {
 
+    private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
+
     private static final String FOLLOW_UP = "Follow Up";
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
 
     /** Used to distribute {@link TagsChangeEvent}s */
-    private final EventBus tagsEventBus = new EventBus("Tags Event Bus");
+    private final EventBus tagsEventBus = new AsyncEventBus(
+            Executors.newSingleThreadExecutor(
+                    new BasicThreadFactory.Builder().namingPattern("Tags Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> {
+                        LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e);
+                    }).build()
+            ));
 
     /** The tag name corresponding to the "built-in" tag "Follow Up" */
     private TagName followUpTagName;
@@ -130,7 +138,7 @@ public class DrawableTagsManager {
                         .filter(CategoryManager::isCategoryTagName)
                         .collect(Collectors.toSet());
             } catch (TskCoreException | IllegalStateException ex) {
-                Logger.getLogger(DrawableTagsManager.class.getName()).log(Level.WARNING, "couldn't access case", ex);
+                LOGGER.log(Level.WARNING, "couldn't access case", ex);
             }
             return Collections.emptySet();
         }
@@ -166,7 +174,7 @@ public class DrawableTagsManager {
                     throw new TskCoreException("tagame exists but wasn't found", ex);
                 }
             } catch (IllegalStateException ex) {
-                Logger.getLogger(DrawableTagsManager.class.getName()).log(Level.SEVERE, "Case was closed out from underneath", ex);
+                LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex);
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }
         }
