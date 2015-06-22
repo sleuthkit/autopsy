@@ -84,7 +84,14 @@ final class RemoteEventPublisher {
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
             logger.log(Level.SEVERE, "Failed to connect to event channel", ex);
-            stop();
+            try {
+                stop();
+            } catch (JMSException ignored) {
+                /**
+                 * Not surprising if there is some error here, but it was worth
+                 * trying to clean up.
+                 */
+            }
             throw ex;
         }
     }
