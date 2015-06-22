@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSelectionModel;
+import static org.sleuthkit.autopsy.imagegallery.gui.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
 
 /**
@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.AbstractContent;
  *
  * TODO: refactor this to extend from {@link Control}? -jm
  */
-public class DrawableTile extends DrawableViewBase {
+public class DrawableTile extends DrawableTileBase {
 
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
@@ -67,7 +67,6 @@ public class DrawableTile extends DrawableViewBase {
         assert imageBorder != null : "fx:id=\"imageAnchor\" was not injected: check your FXML file 'DrawableTile.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'DrawableTile.fxml'.";
         assert nameLabel != null : "fx:id=\"nameLabel\" was not injected: check your FXML file 'DrawableTile.fxml'.";
-
         //set up properties and binding
         setCache(true);
         setCacheHint(CacheHint.SPEED);
@@ -87,8 +86,10 @@ public class DrawableTile extends DrawableViewBase {
 
     public DrawableTile(GroupPane gp) {
         super(gp);
+
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
+
 
     @Override
     @ThreadConfined(type = ThreadType.JFX)
