@@ -541,11 +541,11 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> groupKey = null;
         if (groupBy == DrawableAttribute.TAGS) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         } else if (groupBy == DrawableAttribute.CATEGORY) {
-            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()));
+            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
         }
-        final long fileID = evt.getAddedTag().getContent().getId();
+        final long fileID = evt.getTag().getContent().getId();
         DrawableGroup g = getGroupForKey(groupKey);
         addFileToGroup(g, groupKey, fileID);
 
@@ -567,11 +567,11 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
         if (groupBy == DrawableAttribute.TAGS) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         } else if (groupBy == DrawableAttribute.CATEGORY) {
-            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getDeletedTag().getName()));
+            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
         }
-        final long fileID = evt.getDeletedTag().getContent().getId();
+        final long fileID = evt.getTag().getContent().getId();
         DrawableGroup g = removeFromGroup(groupKey, fileID);
     }
 
