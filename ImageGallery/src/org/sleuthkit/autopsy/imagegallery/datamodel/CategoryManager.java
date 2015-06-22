@@ -35,8 +35,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;

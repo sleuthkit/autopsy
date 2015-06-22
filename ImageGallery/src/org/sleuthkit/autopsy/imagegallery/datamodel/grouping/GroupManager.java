@@ -551,15 +551,16 @@ public class GroupManager {
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> groupKey = null;
-        if (groupBy == DrawableAttribute.TAGS) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
-        } else if (groupBy == DrawableAttribute.CATEGORY) {
+        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
             groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
+        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         }
-        final long fileID = evt.getTag().getContent().getId();
-        DrawableGroup g = getGroupForKey(groupKey);
-        addFileToGroup(g, groupKey, fileID);
-
+        if (groupKey != null) {
+            final long fileID = evt.getTag().getContent().getId();
+            DrawableGroup g = getGroupForKey(groupKey);
+            addFileToGroup(g, groupKey, fileID);
+        }
     }
 
     @SuppressWarnings("AssignmentToMethodParameter")
@@ -618,9 +619,11 @@ public class GroupManager {
         } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
             groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         }
+
         if (groupKey != null) {
             final long fileID = evt.getTag().getContent().getId();
-        DrawableGroup g = removeFromGroup(groupKey, fileID);
+            DrawableGroup g = removeFromGroup(groupKey, fileID);
+        }
     }
         }
     }
