@@ -211,7 +211,7 @@ public class CategoryManager {
 
     }
 
-    public static Category fromTagName(TagName tagName) {
+    public static Category categoryFromTagName(TagName tagName) {
         return Category.fromDisplayName(tagName.getDisplayName());
     }
 
@@ -246,7 +246,7 @@ public class CategoryManager {
             } catch (TskCoreException tskException) {
                 LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException);
             }
-            Category newCat = CategoryManager.fromTagName(addedTag.getName());
+            Category newCat = CategoryManager.categoryFromTagName(addedTag.getName());
             if (newCat != Category.ZERO) {
                 incrementCategoryCount(newCat);
             }
@@ -259,7 +259,7 @@ public class CategoryManager {
         ContentTag deleted = event.getDeletedTag();
         if (isCategoryTagName(deleted.getName())) {
 
-            Category deletedCat = CategoryManager.fromTagName(deleted.getName());
+            Category deletedCat = CategoryManager.categoryFromTagName(deleted.getName());
             if (deletedCat != Category.ZERO) {
                 decrementCategoryCount(deletedCat);
             }

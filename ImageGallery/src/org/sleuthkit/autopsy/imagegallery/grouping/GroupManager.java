@@ -539,20 +539,25 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        if (groupBy == DrawableAttribute.TAGS || groupBy == DrawableAttribute.CATEGORY) {
-            final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
-            final long fileID = evt.getAddedTag().getContent().getId();
-            DrawableGroup g = getGroupForKey(groupKey);
-            addFileToGroup(g, groupKey, fileID);
+        GroupKey<?> groupKey = null;
+        if (groupBy == DrawableAttribute.TAGS) {
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+        } else if (groupBy == DrawableAttribute.CATEGORY) {
+            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()));
         }
+        final long fileID = evt.getAddedTag().getContent().getId();
+        DrawableGroup g = getGroupForKey(groupKey);
+        addFileToGroup(g, groupKey, fileID);
 
     }
 
+    @SuppressWarnings("AssignmentToMethodParameter")
     private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
         if (g == null) {
             //if there wasn't already a group check if there should be one now
-            popuplateIfAnalyzed(groupKey, null);
-        } else {
+            g = popuplateIfAnalyzed(groupKey, null);
+        }
+        if (g != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             g.addFile(fileID);
         }
@@ -560,11 +565,14 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
 
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        if (groupBy == DrawableAttribute.TAGS || groupBy == DrawableAttribute.CATEGORY) {
-            final GroupKey<TagName> groupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
-            final long fileID = evt.getDeletedTag().getContent().getId();
-            DrawableGroup g = removeFromGroup(groupKey, fileID);
+        GroupKey<?> groupKey = null;
+        if (groupBy == DrawableAttribute.TAGS) {
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getDeletedTag().getName());
+        } else if (groupBy == DrawableAttribute.CATEGORY) {
+            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getDeletedTag().getName()));
         }
+        final long fileID = evt.getDeletedTag().getContent().getId();
+        DrawableGroup g = removeFromGroup(groupKey, fileID);
     }
 
     @Override
@@ -631,7 +639,7 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
             if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
                 /* for attributes other than path we can't be sure a group is
                  * fully analyzed because we don't know all the files that
-                 * will be a part of that group */
+                 * will be a part of that group,. just show them no matter what. */
 
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
@@ -643,9 +651,8 @@ public class GroupManager implements FileUpdateEvent.FileUpdateListener {
                                 group = groupMap.get(groupKey);
                                 group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
                             } else {
-
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
-                                group.seenProperty().addListener((observable, oldSeen, newSeen) -> {
+                                group.seenProperty().addListener((o, oldSeen, newSeen) -> {
                                     markGroupSeen(group, newSeen);
                                 });
                                 groupMap.put(groupKey, group);

@@ -25,6 +25,7 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -282,24 +283,20 @@ public class SlideShowView extends DrawableTileBase {
 
     @Override
     protected String getTextForLabel() {
-        return getFile().map(file -> file.getName() + " " + getSupplementalText()).orElse("");
+        return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
     }
 
     @ThreadConfined(type = ThreadType.JFX)
-    private void cycleSlideShowImage(int d) {
+    private void cycleSlideShowImage(int direction) {
         stopVideo();
-        if (getFileID().isPresent()) {
-            int index = getGroupPane().getGrouping().fileIds().indexOf(getFileID());
-            final int size = getGroupPane().getGrouping().fileIds().size();
-            index = (index + d) % size;
-            if (index < 0) {
-                index += size;
-            }
-            setFile(getGroupPane().getGrouping().fileIds().get(index));
+        final int groupSize = getGroupPane().getGrouping().fileIds().size();
+        final Integer nextIndex = getFileID().map(fileID -> {
+            final int currentIndex = getGroupPane().getGrouping().fileIds().indexOf(fileID);
+            return (currentIndex + direction + groupSize) % groupSize;
+        }).orElse(0);
+        setFile(getGroupPane().getGrouping().fileIds().get(nextIndex)
+        );
 
-        } else {
-            setFile(getGroupPane().getGrouping().fileIds().get(0));
-        }
     }
 
     /**
@@ -307,7 +304,10 @@ public class SlideShowView extends DrawableTileBase {
      *         of y"
      */
     private String getSupplementalText() {
-        return " ( " + (getGroupPane().getGrouping().fileIds().indexOf(getFileID()) + 1) + " of " + getGroupPane().getGrouping().fileIds().size() + " in group )";
+        final ObservableList<Long> fileIds = getGroupPane().getGrouping().fileIds();
+        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
+                .orElse("");
+
     }
 
     @Override
