@@ -251,7 +251,7 @@ public class CategoryManager {
                 incrementCategoryCount(newCat);
             }
 
-            fireChange(Collections.singleton(addedTag.getId()), newCat);
+            fireChange(Collections.singleton(addedTag.getContent().getId()), newCat);
         }
     }
     @Subscribe
@@ -263,7 +263,7 @@ public class CategoryManager {
             if (deletedCat != Category.ZERO) {
                 decrementCategoryCount(deletedCat);
             }
-            fireChange(Collections.singleton(deleted.getId()), null);
+            fireChange(Collections.singleton(deleted.getContent().getId()), null);
         }
     }
 }

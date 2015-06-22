@@ -58,8 +58,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.CAT_BORDER_WIDTH;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.HASH_BORDER;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.getCategoryBorder;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -68,7 +66,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends DrawableViewBase {
+public class SlideShowView extends DrawableTileBase {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
@@ -223,6 +221,7 @@ public class SlideShowView extends DrawableViewBase {
 
     SlideShowView(GroupPane gp) {
         super(gp);
+
         FXMLConstructor.construct(this, "SlideShow.fxml");
 
     }
@@ -237,6 +236,7 @@ public class SlideShowView extends DrawableViewBase {
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
+
         getFileID().ifPresent((Long id) -> {
             getGroupPane().makeSelection(false, id);
         });
@@ -288,7 +288,7 @@ public class SlideShowView extends DrawableViewBase {
     @ThreadConfined(type = ThreadType.JFX)
     private void cycleSlideShowImage(int d) {
         stopVideo();
-        if (getFileID() != null) {
+        if (getFileID().isPresent()) {
             int index = getGroupPane().getGrouping().fileIds().indexOf(getFileID());
             final int size = getGroupPane().getGrouping().fileIds().size();
             index = (index + d) % size;
@@ -312,20 +312,17 @@ public class SlideShowView extends DrawableViewBase {
 
     @Override
     @ThreadConfined(type = ThreadType.ANY)
-    public Category updateCategoryBorder() {
-        return getFile().map(file -> {
-            final Category category = file.getCategory();
-            final Border border1 = hasHashHit() && (category == Category.ZERO)
-                    ? HASH_BORDER
-                    : getCategoryBorder(category);
+    public Category updateCategory() {
+        if (getFile().isPresent()) {
+            final Category category = super.updateCategory();
             ToggleButton toggleForCategory = getToggleForCategory(category);
             Platform.runLater(() -> {
-                getCategoryBorderRegion().setBorder(border1);
                 toggleForCategory.setSelected(true);
             });
             return category;
-        }).orElse(Category.ZERO);
-
+        } else {
+            return Category.ZERO;
+        }
     }
 
     private ToggleButton getToggleForCategory(Category category) {

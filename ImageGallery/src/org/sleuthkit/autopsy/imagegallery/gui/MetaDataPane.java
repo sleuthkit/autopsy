@@ -23,9 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
-import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -39,7 +37,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
@@ -53,23 +50,14 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Shows details of the selected file.
  */
-public class MetaDataPane extends AnchorPane implements DrawableView {
+public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
-
-    private final ImageGalleryController controller;
-
-    @Override
-    public ImageGalleryController getController() {
-        return controller;
-    }
 
     @FXML
     private ImageView imageView;
@@ -141,56 +129,14 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         //listen for selection change
-        controller.getSelectionModel().lastSelectedProperty().addListener((observable, oldFileID, newFileID) -> {
+        getController().getSelectionModel().lastSelectedProperty().addListener((observable, oldFileID, newFileID) -> {
             setFile(newFileID);
         });
     }
 
-    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
-
-    volatile private Optional<Long> fileIDOpt = Optional.empty();
-
     @Override
-    public Optional<Long> getFileID() {
-        return fileIDOpt;
-    }
-
-    @Override
-    public Optional<DrawableFile<?>> getFile() {
-        if (fileIDOpt.isPresent()) {
-            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
-                return fileOpt;
-            } else {
-                try {
-                    fileOpt = Optional.of(ImageGalleryController.getDefault().getFileFromId(fileIDOpt.get()));
-                } catch (TskCoreException ex) {
-                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
-                    fileOpt = Optional.empty();
-                }
-                return fileOpt;
-            }
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public void setFile(Long newFileID) {
-
-        if (fileIDOpt.isPresent()) {
-            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
-                setFileHelper(newFileID);
-            }
-        } else {
-            if (nonNull(newFileID)) {
-                setFileHelper(newFileID);
-            }
-        }
-        setFileHelper(newFileID);
-    }
-
-    private void setFileHelper(Long newFileID) {
-        fileIDOpt = Optional.of(newFileID);
+    synchronized protected void setFileHelper(Long newFileID) {
+        setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
@@ -204,7 +150,7 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
     }
 
     public MetaDataPane(ImageGalleryController controller) {
-        this.controller = controller;
+        super(controller);
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
         fxmlLoader.setRoot(this);
@@ -224,12 +170,12 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
 
             Platform.runLater(() -> {
                 imageView.setImage(icon);
+                tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });
 
-            updateCategoryBorder();
+            updateCategory();
         });
-
     }
 
     @Override
@@ -248,11 +194,13 @@ public class MetaDataPane extends AnchorPane implements DrawableView {
         });
     }
 
+    @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
         handleTagChanged(evt.getAddedTag().getContent().getId());
     }
 
+    @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         handleTagChanged(evt.getDeletedTag().getContent().getId());
