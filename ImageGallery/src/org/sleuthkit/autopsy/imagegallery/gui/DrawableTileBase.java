@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
@@ -70,6 +71,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -349,36 +351,36 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        getFileID().ifPresent(fileID -> {
-            try {
-                if (fileID == evt.getAddedTag().getContent().getId()
-                        && evt.getAddedTag().getName().equals(getController().getTagsManager().getFollowUpTagName())) {
 
-                    Platform.runLater(() -> {
-                        followUpImageView.setImage(followUpIcon);
-                        followUpToggle.setSelected(true);
-                    });
-                }
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
-            }
+        handleTagEvent(evt, () -> {
+            Platform.runLater(() -> {
+                followUpImageView.setImage(followUpIcon);
+                followUpToggle.setSelected(true);
+            });
         });
     }
 
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        handleTagEvent(evt, this::updateFollowUpIcon);
+    }
 
+    void handleTagEvent(TagEvent<ContentTag> evt, Runnable runnable) {
         getFileID().ifPresent(fileID -> {
             try {
-                if (fileID == evt.getDeletedTag().getContent().getId()
-                        && evt.getDeletedTag().getName().equals(getController().getTagsManager().getFollowUpTagName())) {
-                    updateFollowUpIcon();
+                final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
+                final ContentTag deletedTag = evt.getTag();
+
+                if (fileID == deletedTag.getContent().getId()
+                        && deletedTag.getName().equals(followUpTagName)) {
+                    runnable.run();
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get follow up status for file.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex);
             }
         });
+
     }
 
     private void updateFollowUpIcon() {

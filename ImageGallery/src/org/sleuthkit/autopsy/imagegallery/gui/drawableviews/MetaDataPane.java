@@ -221,13 +221,18 @@ public class MetaDataPane extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        handleTagChanged(evt.getDeletedTag().getContent().getId());
+        handleTagEvent(evt, this::updateUI);
     }
 
-    private void handleTagChanged(Long tagFileID) {
+    /**
+     *
+     * @param tagFileID the value of tagEvent
+     * @param runnable  the value of runnable
+     */
+    void handleTagEvent(TagEvent<ContentTag> tagEvent, final Runnable runnable) {
         getFileID().ifPresent(fileID -> {
-            if (Objects.equals(tagFileID, fileID)) {
-                updateUI();
+            if (Objects.equals(tagEvent.getTag().getContent().getId(), fileID)) {
+                runnable.run();
             }
         });
     }
