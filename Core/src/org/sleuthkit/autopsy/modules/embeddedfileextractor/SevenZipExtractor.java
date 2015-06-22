@@ -417,6 +417,7 @@ class SevenZipExtractor {
                     // If the size property cannot be determined, out-of-disk-space
                     // situations cannot be ascertained.
                     // Hence skip this file.
+                    logger.log(Level.WARNING, "Size cannot be determined. Skipping file in archive: {0}", pathInArchive); //NON-NLS
                     continue;
                 }
 
