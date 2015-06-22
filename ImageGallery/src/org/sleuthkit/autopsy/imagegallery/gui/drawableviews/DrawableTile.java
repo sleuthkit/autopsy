@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.Objects;
 import java.util.logging.Level;
@@ -32,7 +32,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableTileBase.globalSelectionModel;
+import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
 
 /**

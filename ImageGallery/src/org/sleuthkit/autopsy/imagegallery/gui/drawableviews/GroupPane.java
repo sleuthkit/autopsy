@@ -16,8 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.SlideShowView;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTile;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,6 +118,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 

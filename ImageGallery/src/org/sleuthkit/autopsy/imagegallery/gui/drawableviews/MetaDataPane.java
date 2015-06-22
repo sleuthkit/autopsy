@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
@@ -75,6 +75,20 @@ public class MetaDataPane extends DrawableUIBase {
 
     @FXML
     private BorderPane imageBorder;
+
+    public MetaDataPane(ImageGalleryController controller) {
+        super(controller);
+
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
+        fxmlLoader.setRoot(this);
+        fxmlLoader.setController(this);
+
+        try {
+            fxmlLoader.load();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -137,7 +151,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    synchronized protected void setFileHelper(Long newFileID) {
+    protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
             Platform.runLater(() -> {
@@ -148,20 +162,6 @@ public class MetaDataPane extends DrawableUIBase {
             });
         } else {
             updateUI();
-        }
-    }
-
-    public MetaDataPane(ImageGalleryController controller) {
-        super(controller);
-
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-
-        try {
-            fxmlLoader.load();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
         }
     }
 
