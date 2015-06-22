@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import java.beans.PropertyChangeEvent;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Tag;
@@ -27,7 +26,7 @@ import org.sleuthkit.datamodel.Tag;
  * Base Class for events that are fired when a Tag is deleted
  */
 @Immutable
-abstract class TagDeletedEvent<T extends Tag> extends PropertyChangeEvent {
+abstract class TagDeletedEvent<T extends Tag> extends TagEvent<T> {
 
     protected TagDeletedEvent(String propertyName, T oldValue) {
         super(Case.class, propertyName, oldValue, null);
@@ -39,7 +38,8 @@ abstract class TagDeletedEvent<T extends Tag> extends PropertyChangeEvent {
      * @return the Tag
      */
     @SuppressWarnings("unchecked")
-    public T getDeletedTag() {
+    @Override
+    public T getTag() {
         return (T) getOldValue();
     }
 }
