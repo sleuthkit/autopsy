@@ -311,7 +311,6 @@ class SevenZipExtractor {
                 NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName"));
         int processedItems = 0;
 
-        String compressMethod = null;
         boolean progressStarted = false;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
@@ -402,10 +401,6 @@ class SevenZipExtractor {
                 //update progress bar
                 progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
 
-                if (compressMethod == null) {
-                    compressMethod = item.getMethod();
-                }
-
                 final boolean isEncrypted = item.isEncrypted();
                 final boolean isDir = item.isFolder();
 
@@ -417,7 +412,13 @@ class SevenZipExtractor {
                     fullEncryption = false;
                 }
 
-                final long size = item.getSize();
+                final Long size = item.getSize();
+                if (size == null) {
+                    // If the size property cannot be determined, out-of-disk-space
+                    // situations cannot be ascertained.
+                    // Hence skip this file.
+                    continue;
+                }
 
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
