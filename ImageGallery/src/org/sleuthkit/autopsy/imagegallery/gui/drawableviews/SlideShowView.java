@@ -220,6 +220,7 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @ThreadConfined(type = ThreadType.JFX)
+
     public void stopVideo() {
         if (imageBorder.getCenter() instanceof MediaControl) {
             ((MediaControl) imageBorder.getCenter()).stopVideo();
@@ -318,7 +319,6 @@ public class SlideShowView extends DrawableTileBase {
     public Category updateCategory() {
         if (getFile().isPresent()) {
             final Category category = super.updateCategory();
-            final Border border1 = hasHashHit() && (category == Category.ZERO)
             ToggleButton toggleForCategory = getToggleForCategory(category);
             Platform.runLater(() -> {
                 toggleForCategory.setSelected(true);

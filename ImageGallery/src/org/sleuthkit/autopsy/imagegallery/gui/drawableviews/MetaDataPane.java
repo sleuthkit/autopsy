@@ -62,11 +62,6 @@ public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
-    @Override
-    public ImageGalleryController getController() {
-        return controller;
-    }
-
     @FXML
     private ImageView imageView;
 
@@ -153,34 +148,9 @@ public class MetaDataPane extends DrawableUIBase {
         });
     }
 
-    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
-
-    volatile private Optional<Long> fileIDOpt = Optional.empty();
-
-    @Override
     protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
-
-    @Override
-    public Optional<DrawableFile<?>> getFile() {
-        if (fileIDOpt.isPresent()) {
-            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
-                return fileOpt;
-            } else {
-                return fileOpt;
-            if (Objects.equals(newFileID, fileIDOpt.get()) == false) {
-                setFileHelper(newFileID);
-            }
-        } else {
-            if (nonNull(newFileID)) {
-                setFileHelper(newFileID);
-            }
-        }
-        setFileHelper(newFileID);
-    }
-    private void setFileHelper(Long newFileID) {
-        fileIDOpt = Optional.of(newFileID);
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
@@ -206,7 +176,6 @@ public class MetaDataPane extends DrawableUIBase {
 
             updateCategory();
         });
-
     }
 
     @Override
@@ -249,6 +218,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
     }
 
+    @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         handleTagChanged(evt.getDeletedTag().getContent().getId());
