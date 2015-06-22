@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 
 /**
  * Displays summary statistics (counts) for each group
@@ -88,7 +87,7 @@ public class SummaryTablePane extends AnchorPane {
      * listen to Category updates and rebuild the table
      */
     @Subscribe
-    public void handleCategoryChanged(CategoryChangeEvent evt) {
+    public void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
         final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (Category cat : Category.values()) {

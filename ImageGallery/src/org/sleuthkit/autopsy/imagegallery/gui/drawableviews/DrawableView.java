@@ -18,7 +18,6 @@ import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
@@ -68,7 +67,7 @@ public interface DrawableView {
      * @param evt the CategoryChangeEvent to handle
      */
     @Subscribe
-    default void handleCategoryChanged(CategoryChangeEvent evt) {
+    default void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
         getFileID().ifPresent(fileID -> {
             if (evt.getFileIDs().contains(fileID)) {
                 updateCategory();

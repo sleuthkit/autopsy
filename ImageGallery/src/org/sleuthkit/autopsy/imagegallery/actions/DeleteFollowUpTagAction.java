@@ -24,7 +24,7 @@ import javafx.event.ActionEvent;
 import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ContentTag;

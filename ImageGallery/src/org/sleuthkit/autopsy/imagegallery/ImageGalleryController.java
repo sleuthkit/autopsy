@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +64,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;

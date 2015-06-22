@@ -49,8 +49,8 @@ import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
@@ -188,7 +188,7 @@ public class MetaDataPane extends DrawableUIBase {
     /** {@inheritDoc } */
     @Subscribe
     @Override
-    public void handleCategoryChanged(CategoryChangeEvent evt) {
+    public void handleCategoryChanged(CategoryManager.CategoryChangeEvent evt) {
         getFileID().ifPresent(fileID -> {
             if (evt.getFileIDs().contains(fileID)) {
                 updateUI();
