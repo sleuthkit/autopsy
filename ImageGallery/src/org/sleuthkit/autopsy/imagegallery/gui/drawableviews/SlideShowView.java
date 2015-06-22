@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -58,13 +58,16 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.CAT_BORDER_WIDTH;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import org.sleuthkit.autopsy.imagegallery.gui.MediaControl;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
+ *
  * TODO: reduce coupling to GroupPane
  */
 public class SlideShowView extends DrawableTileBase {
@@ -73,39 +76,35 @@ public class SlideShowView extends DrawableTileBase {
 
     @FXML
     private ToggleButton cat0Toggle;
-
+    @FXML
+    private ToggleButton cat1Toggle;
     @FXML
     private ToggleButton cat2Toggle;
+    @FXML
+    private ToggleButton cat3Toggle;
+    @FXML
+    private ToggleButton cat4Toggle;
+    @FXML
+    private ToggleButton cat5Toggle;
 
     @FXML
     private SplitMenuButton tagSplitButton;
 
     @FXML
-    private ToggleButton cat3Toggle;
-
-    @FXML
     private Region spring;
-
     @FXML
     private Button leftButton;
-
-    @FXML
-    private ToggleButton cat4Toggle;
-
-    @FXML
-    private ToggleButton cat5Toggle;
-
-    @FXML
-    private ToggleButton cat1Toggle;
-
     @FXML
     private Button rightButton;
-
     @FXML
     private ToolBar toolBar;
-
     @FXML
     private BorderPane footer;
+
+    SlideShowView(GroupPane gp) {
+        super(gp);
+        FXMLConstructor.construct(this, "SlideShow.fxml");
+    }
 
     @FXML
     @Override
@@ -145,6 +144,8 @@ public class SlideShowView extends DrawableTileBase {
                 tagSplitButton.getItems().setAll(selTagMenues);
             }
         });
+
+        //configure category toggles
         cat0Toggle.setBorder(new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
         cat1Toggle.setBorder(new Border(new BorderStroke(Category.ONE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
         cat2Toggle.setBorder(new Border(new BorderStroke(Category.TWO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
@@ -176,9 +177,7 @@ public class SlideShowView extends DrawableTileBase {
 
         //set up key listener equivalents of buttons
         addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent t) -> {
-
             if (t.getEventType() == KeyEvent.KEY_PRESSED) {
-
                 switch (t.getCode()) {
                     case LEFT:
                         cycleSlideShowImage(-1);
@@ -220,20 +219,14 @@ public class SlideShowView extends DrawableTileBase {
         }
     }
 
-    SlideShowView(GroupPane gp) {
-        super(gp);
-
-        FXMLConstructor.construct(this, "SlideShow.fxml");
-
-    }
-
-    @ThreadConfined(type = ThreadType.UI)
+    @ThreadConfined(type = ThreadType.JFX)
     public void stopVideo() {
         if (imageBorder.getCenter() instanceof MediaControl) {
             ((MediaControl) imageBorder.getCenter()).stopVideo();
         }
     }
 
+    /** {@inheritDoc } */
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
@@ -255,6 +248,7 @@ public class SlideShowView extends DrawableTileBase {
         imageBorder.setCenter(null);
     }
 
+    /** {@inheritDoc } */
     @Override
     protected Runnable getContentUpdateRunnable() {
 
@@ -281,11 +275,20 @@ public class SlideShowView extends DrawableTileBase {
         });
     }
 
+    /** {@inheritDoc } */
     @Override
     protected String getTextForLabel() {
         return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
     }
 
+    /**
+     * cycle the image displayed in thes SlideShowview, to the next/previous one
+     * in the group.
+     *
+     * @param direction the direction to cycle:
+     *                  -1 => left / back
+     *                  1 => right / forward
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private void cycleSlideShowImage(int direction) {
         stopVideo();
@@ -296,7 +299,6 @@ public class SlideShowView extends DrawableTileBase {
         }).orElse(0);
         setFile(getGroupPane().getGrouping().fileIds().get(nextIndex)
         );
-
     }
 
     /**
@@ -310,6 +312,7 @@ public class SlideShowView extends DrawableTileBase {
 
     }
 
+    /** {@inheritDoc } */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategory() {
