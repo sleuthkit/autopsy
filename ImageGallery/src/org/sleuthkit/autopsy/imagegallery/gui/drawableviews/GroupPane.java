@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.SlideShowView;
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTile;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +100,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
