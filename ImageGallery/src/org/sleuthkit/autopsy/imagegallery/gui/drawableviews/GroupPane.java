@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.SlideShowView;
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTile;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +100,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.imagegallery.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -130,13 +127,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  *
  * TODO: Extract the The GridView instance to a separate class analogous to the
- * SlideShow. Move selection model into controlsfx GridView and submit pull
+ * SlideShow.
+ *
+ * TODO: Move selection model into controlsfx GridView and submit pull
  * request to them.
  * https://bitbucket.org/controlsfx/controlsfx/issue/4/add-a-multipleselectionmodel-to-gridview
- *
- *
  */
-public class GroupPane extends BorderPane implements GroupView {
+public class GroupPane extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
 
