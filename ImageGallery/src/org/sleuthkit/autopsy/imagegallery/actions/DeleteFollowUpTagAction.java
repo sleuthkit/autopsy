@@ -37,11 +37,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DeleteFollowUpTagAction extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(DeleteFollowUpTagAction.class.getName());
-    private final long fileID;
 
     public DeleteFollowUpTagAction(final ImageGalleryController controller, final DrawableFile<?> file) {
         super("Delete Follow Up Tag");
-        this.fileID = file.getId();
         setEventHandler((ActionEvent t) -> {
             new SwingWorker<Void, Void>() {
 

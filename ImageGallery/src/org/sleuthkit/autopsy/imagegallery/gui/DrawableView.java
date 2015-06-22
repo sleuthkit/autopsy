@@ -68,7 +68,13 @@ public interface DrawableView {
      * @param evt the CategoryChangeEvent to handle
      */
     @Subscribe
-    void handleCategoryChanged(CategoryChangeEvent evt);
+    default void handleCategoryChanged(CategoryChangeEvent evt) {
+        getFileID().ifPresent(fileID -> {
+            if (evt.getFileIDs().contains(fileID)) {
+                updateCategory();
+            }
+        });
+    }
 
     @Subscribe
     void handleTagAdded(ContentTagAddedEvent evt);
@@ -116,16 +122,12 @@ public interface DrawableView {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    default Category updateCategoryBorder() {
-        if (getFile() != null) {
+    default Category updateCategory() {
+        if (getFile().isPresent()) {
             final Category category = getFile().map(DrawableFile::getCategory).orElse(Category.ZERO);
-            final Border border = hasHashHit() && (category == Category.ZERO)
-                    ? HASH_BORDER
-                    : getCategoryBorder(category);
-
+            final Border border = hasHashHit() && (category == Category.ZERO) ? HASH_BORDER : getCategoryBorder(category);
             Platform.runLater(() -> {
                 getCategoryBorderRegion().setBorder(border);
-                getCategoryBorderRegion().requestLayout();
             });
             return category;
         } else {
