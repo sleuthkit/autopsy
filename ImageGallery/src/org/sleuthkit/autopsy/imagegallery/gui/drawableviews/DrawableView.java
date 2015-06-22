@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
