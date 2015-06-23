@@ -18,22 +18,17 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
-import java.util.logging.Level;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstract base class for actions that allow users to tag SleuthKit data
@@ -77,42 +72,31 @@ abstract class AddTagAction {
         TagMenu(ImageGalleryController controller) {
             super(getActionDisplayName());
 
-            // Get the current set of tag names.
-            DrawableTagsManager tagsManager = controller.getTagsManager();
-            List<TagName> tagNames = null;
-            try {
-                tagNames = tagsManager.getAllTagNames();
-            } catch (TskCoreException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
-            }
-
             // Create a "Quick Tag" sub-menu.
             Menu quickTagMenu = new Menu("Quick Tag");
             getItems().add(quickTagMenu);
 
-            // Each tag name in the current set of tags gets its own menu item in
-            // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name. 
-            if (null != tagNames && !tagNames.isEmpty()) {
-                for (final TagName tagName : tagNames) {
-                    if (CategoryManager.isNotCategoryTagName(tagName)) {
-                        MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
-                        tagNameItem.setOnAction((ActionEvent t) -> {
-                            addTag(tagName, NO_COMMENT);
-                        });
-                        quickTagMenu.getItems().add(tagNameItem);
-                    }
-                }
-            } else {
+            /* Each non-Category tag name in the current set of tags gets its
+             * own menu item in the "Quick Tags" sub-menu. Selecting one of
+             * these menu items adds a tag with the associated tag name. */
+            Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
+            if (tagNames.isEmpty()) {
                 MenuItem empty = new MenuItem("No tags");
                 empty.setDisable(true);
                 quickTagMenu.getItems().add(empty);
+            } else {
+                for (final TagName tagName : tagNames) {
+                    MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
+                    tagNameItem.setOnAction((ActionEvent t) -> {
+                        addTag(tagName, NO_COMMENT);
+                    });
+                    quickTagMenu.getItems().add(tagNameItem);
+                }
             }
 
-            //   quickTagMenu.addSeparator();
-            // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
-            // Selecting this item initiates a dialog that can be used to create
-            // or select a tag name and adds a tag with the resulting name.
+            /* The "Quick Tag" menu also gets an "New Tag..." menu item.
+             * Selecting this item initiates a dialog that can be used to create
+             * or select a tag name and adds a tag with the resulting name. */
             MenuItem newTagMenuItem = new MenuItem("New Tag...");
             newTagMenuItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
@@ -124,18 +108,19 @@ abstract class AddTagAction {
             });
             quickTagMenu.getItems().add(newTagMenuItem);
 
-            // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
-            // a dialog that can be used to create or select a tag name with an 
-            // optional comment and adds a tag with the resulting name.
+            /* Create a "Tag and Comment..." menu item. Selecting this item
+             * initiates a dialog that can be used to create or select a tag
+             * name with an optional comment and adds a tag with the resulting
+             * name. */
             MenuItem tagAndCommentItem = new MenuItem("Tag and Comment...");
             tagAndCommentItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
                     GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
                     if (null != tagNameAndComment) {
-                            if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
-                                new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                        if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
+                            new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         } else {
-                                new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                            new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
                     }
                 });
