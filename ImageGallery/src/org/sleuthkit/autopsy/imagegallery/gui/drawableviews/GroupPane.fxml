@@ -113,7 +113,7 @@
                                         </ImageView>
                                     </graphic>
                                 </ToggleButton>
-                                <ToggleButton id="filmStripToggle" fx:id="slideShowToggle" disable="true" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" text="">
+                                <ToggleButton id="filmStripToggle" fx:id="slideShowToggle"  contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" text="">
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" translateY="1.0">
                                             <image>

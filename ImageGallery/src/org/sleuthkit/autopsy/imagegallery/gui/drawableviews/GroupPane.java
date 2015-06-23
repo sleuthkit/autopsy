@@ -590,6 +590,7 @@ public class GroupPane extends BorderPane {
             Platform.runLater(() -> {
                 gridView.getItems().setAll(Collections.emptyList());
                 setCenter(null);
+                slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
                 if (false == Case.isCaseOpen()) {
