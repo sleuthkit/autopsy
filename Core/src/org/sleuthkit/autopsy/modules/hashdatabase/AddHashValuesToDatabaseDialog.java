@@ -28,9 +28,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashEntry;
 
@@ -40,8 +42,9 @@ import org.sleuthkit.datamodel.HashEntry;
  */
 public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
 
-    Pattern md5Pattern = Pattern.compile("[a-f0-9]{32}");
+    Pattern md5Pattern = Pattern.compile("^[a-fA-F0-9]{32}$");
     List<HashEntry> hashes = new ArrayList<>();
+    List<String> invalidHashes = new ArrayList<>();
     HashDb hashDb;
 
     /**
@@ -50,7 +53,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
      */
     AddHashValuesToDatabaseDialog(HashDb hashDb) {
         super(new JFrame(),
-                "Add Hash Values to - " + hashDb.getHashSetName(),
+                NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JFrame.Title", hashDb.getHashSetName()) ,
                 true);
         this.hashDb = hashDb;
         initComponents();
@@ -97,6 +100,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         jScrollPane1.setViewportView(hashValuesTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(AddValuesToHashDatabaseButton, org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.AddValuesToHashDatabaseButton.text")); // NOI18N
+        AddValuesToHashDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.AddValuesToHashDatabaseButton.toolTipText")); // NOI18N
         AddValuesToHashDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 AddValuesToHashDatabaseButtonActionPerformed(evt);
@@ -104,6 +108,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.cancelButton.text")); // NOI18N
+        cancelButton.setToolTipText(org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.cancelButton.toolTipText")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -111,6 +116,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(pasteFromClipboardButton, org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.pasteFromClipboardButton.text")); // NOI18N
+        pasteFromClipboardButton.setToolTipText(org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.pasteFromClipboardButton.toolTipText")); // NOI18N
         pasteFromClipboardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pasteFromClipboardButtonActionPerformed(evt);
@@ -162,38 +168,72 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
 
     private void AddValuesToHashDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddValuesToHashDatabaseButtonActionPerformed
 
+        AddHashValuesToDatabaseDialog thisDialog = this;
         new SwingWorker<Object, Void>() {
             private AddHashValuesToDatabaseProgressDialog progressPanel;
 
             @Override
             protected Object doInBackground() throws Exception {
                 progressPanel = new AddHashValuesToDatabaseProgressDialog();
-                progressPanel.setStatusLabel("Parsing hashes from the text area...");
+                progressPanel.setStatusLabel(NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseProgressDialog.AddHashValuesTodatabaseStatusLabel.parsing"));
                 getHashesFromTextArea();
-                progressPanel.setStatusLabel("Adding hashes to database...");
-                progressPanel.addHashesToDatabase(hashDb, hashes);
+                // If textArea contains no invalid hashes, add hashes. Else,
+                // pop a dialogbox prompting the user about the invalid input.
+                if (invalidHashes.isEmpty()) {
+                    if (hashes.isEmpty()) {
+                        // If there are are no hashes, prompt the user about it.
+                        progressPanel.dispose();
+                        JOptionPane.showMessageDialog(thisDialog,
+                                NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.noHashesToAdd"));
+                    } else {
+                        progressPanel.setStatusLabel(NbBundle.getMessage(AddHashValuesToDatabaseDialog.class,
+                                "AddHashValuesToDatabaseProgressDialog.AddHashValuesTodatabaseStatusLabel.adding"));
+                        progressPanel.addHashesToDatabase(hashDb, hashes);
+                    }
+                } else {
+                    // generate the error message
+                    String invalidHashesString = "";
+                    for (String invalidHash : invalidHashes) {
+                        invalidHashesString = invalidHashesString + invalidHash + "\n";
+                    }
+                    progressPanel.dispose();
+                    JOptionPane.showMessageDialog(thisDialog,
+                            NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.invalidHashes", invalidHashes.size(), invalidHashesString));
+                }
                 return null;
             }
 
             @Override
             protected void done() {
+                // dispose AddHashValuesToDatabaseProgressDialog if the user has
+                // entered valid hashes.
+                if (invalidHashes.isEmpty() && !hashes.isEmpty()) {
+                    thisDialog.dispose();
+                }
+                // reset lists used to keep track of user input.
+                hashes.removeAll(hashes);
+                invalidHashes.removeAll(invalidHashes);
             }
 
             // parses the textArea for md5 values. Add those md5 values to a list.
             private void getHashesFromTextArea() {
                 String userInput = hashValuesTextArea.getText();
-                String[] listOfHashEntries = userInput.split("\\r?\\n");
+                String[] linesInTextArea = userInput.split("\\r?\\n");
                 // These entries may be of <MD5> or <MD5, comment> format
-                for (String hashEntry : listOfHashEntries) {
+                for (String hashEntry : linesInTextArea) {
+                    hashEntry = hashEntry.trim();
                     Matcher m = md5Pattern.matcher(hashEntry);
                     if (m.find()) {
                         // more information can be added to the HashEntry - sha-1, sha-512, comment
                         hashes.add(new HashEntry(null, m.group(0), null, null, null));
+                    } else {
+                        if(!hashEntry.isEmpty()) {
+                            invalidHashes.add(hashEntry);
+                        }
                     }
                 }
             }
         }.execute();
-        this.dispose();
     }//GEN-LAST:event_AddValuesToHashDatabaseButtonActionPerformed
 
     private void pasteFromClipboardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pasteFromClipboardButtonActionPerformed
