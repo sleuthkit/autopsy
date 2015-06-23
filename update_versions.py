@@ -218,10 +218,15 @@ def compare_xml(module, apiname_tag, apiname_cur):
             "-newapi", newapi,
             "-script",
             null_file]
-    jdiff = subprocess.Popen(cmd, stdout=log, stderr=log)
-    jdiff.wait()
+    try:
+        jdiff = subprocess.Popen(cmd, stdout=log, stderr=log)
+        jdiff.wait()
+        code = jdiff.returncode
+    except Exception:
+        printt("Javadoc not found. Exiting...")
+        exit(1)
     log.close()
-    code = jdiff.returncode
+
     print("Compared XML for " + module.name)
     if code == NO_CHANGES:
         print("  No API changes")
@@ -257,8 +262,12 @@ def gen_xml(path, modules, name):
                 "-apiname", xml_out,        # leaving it in just in case it's needed once again
                 "-sourcepath", fix_path(src)]
         cmd = cmd + get_packages(src)
-        jdiff = subprocess.Popen(cmd, stdout=log, stderr=log)
-        jdiff.wait()
+        try:
+            jdiff = subprocess.Popen(cmd, stdout=log, stderr=log)
+            jdiff.wait()
+        except Exception:
+            printt("Javadoc not found. Exiting...")
+            exit(1)
         log.close()
         print("Generated XML for " + name + " " + module.name)
         sys.stdout.flush()
@@ -633,16 +642,16 @@ def print_version_updates(modules):
             output = (module.name + ":\n")
             output += ("\tMajor Release:\tNo Change.\n")            
             output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].increment()) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")   
+            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
             f.write(output)
         elif module.ret == NON_COMPATIBLE:
             output = (module.name + ":\n")
-            output += ("\Major Release:\t" + str(versions[2]) + "\t->\t" + str(versions[2] + 1) + "\n")
+            output += ("\Major Release:\t" + str(versions[2]) + "\t->\t" + str(float(versions[2]) + 1) + "\n")
             output += ("\tSpecification:\t" + str(versions[0]) + "\t->\t" + str(versions[0].overflow()) + "\n")
-            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
+            output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
             output += ("\n")
             print(output)
             sys.stdout.flush()
@@ -662,7 +671,7 @@ def print_version_updates(modules):
             if versions[1] is None:
                 output += ("\tImplementation: None\n")
             else:
-                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(versions[1] + 1) + "\n")
+                output += ("\tImplementation:\t" + str(versions[1]) + "\t->\t" + str(float(versions[1]) + 1) + "\n")
                 output += ("\n")
             print(output)
             sys.stdout.flush()
