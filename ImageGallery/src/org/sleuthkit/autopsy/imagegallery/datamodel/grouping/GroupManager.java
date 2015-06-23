@@ -270,7 +270,9 @@ public class GroupManager {
         //get grouping this file would be in
         final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
-            group.removeFile(fileID);
+            Platform.runLater(() -> {
+                group.removeFile(fileID);
+            });
 
             // If we're grouping by category, we don't want to remove empty groups.
             if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
@@ -536,16 +538,21 @@ public class GroupManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        GroupKey<?> groupKey = null;
+        GroupKey<?> newGroupKey = null;
+        final long fileID = evt.getTag().getContent().getId();
         if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
-            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
+            newGroupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
+            for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
+                if (oldGroupKey.equals(newGroupKey) == false) {
+                    removeFromGroup(oldGroupKey, fileID);
+                }
+            }
         } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
+            newGroupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         }
-        if (groupKey != null) {
-            final long fileID = evt.getTag().getContent().getId();
-            DrawableGroup g = getGroupForKey(groupKey);
-            addFileToGroup(g, groupKey, fileID);
+        if (newGroupKey != null) {
+            DrawableGroup g = getGroupForKey(newGroupKey);
+            addFileToGroup(g, newGroupKey, fileID);
         }
     }
 
@@ -555,9 +562,13 @@ public class GroupManager {
             //if there wasn't already a group check if there should be one now
             g = popuplateIfAnalyzed(groupKey, null);
         }
-        if (g != null) {
+        DrawableGroup group = g;
+        if (group != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-            g.addFile(fileID);
+            Platform.runLater(() -> {
+                group.addFile(fileID);
+            });
+
         }
     }
 
@@ -569,7 +580,6 @@ public class GroupManager {
         } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
             groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
         }
-
         if (groupKey != null) {
             final long fileID = evt.getTag().getContent().getId();
             DrawableGroup g = removeFromGroup(groupKey, fileID);

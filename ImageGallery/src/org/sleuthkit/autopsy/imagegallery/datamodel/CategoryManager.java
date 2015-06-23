@@ -233,14 +233,12 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
-        ContentTag addedTag = event.getTag();
+        final ContentTag addedTag = event.getTag();
         if (isCategoryTagName(addedTag.getName())) {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             try {
                 //remove old category tag(s) if necessary
-                List<ContentTag> allContentTags = tagsManager.getContentTagsByContent(addedTag.getContent());
-
-                for (ContentTag ct : allContentTags) {
+                for (ContentTag ct : tagsManager.getContentTagsByContent(addedTag.getContent())) {
                     if (ct.getId() != addedTag.getId()
                             && CategoryManager.isCategoryTagName(ct.getName())) {
                         try {

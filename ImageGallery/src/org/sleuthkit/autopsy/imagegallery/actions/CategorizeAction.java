@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -28,12 +30,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -127,11 +131,10 @@ public class CategorizeAction extends AddTagAction {
 
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
-
-                if (tagName != categoryManager.getTagName(Category.ZERO)) { // no tags for cat-0
-                    tagsManager.addContentTag(file, tagName, comment); //tsk db
-                } else {
-                    tagsManager.getContentTagsByContent(file).stream()
+                final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
+                if (tagName == categoryManager.getTagName(Category.ZERO)) {
+                    // delete all cat tags for cat-0
+                    fileTags.stream()
                             .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
                             .forEach((ct) -> {
                                 try {
@@ -140,6 +143,14 @@ public class CategorizeAction extends AddTagAction {
                                     LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
                                 }
                             });
+                } else {
+                    //add cat tag if no existing cat tag for that cat
+                    if (fileTags.stream()
+                            .map(Tag::getName)
+                            .filter(tagName::equals)
+                            .collect(Collectors.toList()).isEmpty()) {
+                        tagsManager.addContentTag(file, tagName, comment);
+                    }
                 }
 
             } catch (TskCoreException ex) {
