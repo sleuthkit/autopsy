@@ -223,7 +223,7 @@ def compare_xml(module, apiname_tag, apiname_cur):
         jdiff.wait()
         code = jdiff.returncode
     except Exception:
-        printt("Javadoc not found. Exiting...")
+        printt("Error executing javadoc. Exiting...")
         exit(1)
     log.close()
 
@@ -266,7 +266,7 @@ def gen_xml(path, modules, name):
             jdiff = subprocess.Popen(cmd, stdout=log, stderr=log)
             jdiff.wait()
         except Exception:
-            printt("Javadoc not found. Exiting...")
+            printt("Error executing javadoc. Exiting...")
             exit(1)
         log.close()
         print("Generated XML for " + name + " " + module.name)
@@ -860,6 +860,16 @@ def main():
         return 0
     printinfo()
 
+    # Check if javadoc and jdiff are present.
+    jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
+    if(not os.path.isdir(jdiff)):
+        printt("jdiff not found. Exiting...")
+        return 1
+    try:
+        subprocess.call(["javadoc"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+    except Exception:
+        printt("javadoc not found. Exiting...")
+        return 1
     # -----------------------------------------------
     # 1) Clone Autopsy, checkout to given tag/commit
     # 2) Get the modules in the clone and the source
