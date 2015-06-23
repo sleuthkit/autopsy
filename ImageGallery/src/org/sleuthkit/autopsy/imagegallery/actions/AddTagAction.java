@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -26,7 +25,6 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -130,17 +128,13 @@ abstract class AddTagAction {
             // or select a tag name and adds a tag with the resulting name.
             MenuItem newTagMenuItem = new MenuItem("New Tag...");
             newTagMenuItem.setOnAction((ActionEvent t) -> {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        TagName tagName = GetTagNameDialog.doDialog();
-                        if (tagName != null) {
-                            addTag(tagName, NO_COMMENT);
-                            refreshDirectoryTree();
-                        }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                SwingUtilities.invokeLater(() -> {
+                    TagName tagName = GetTagNameDialog.doDialog();
+                    if (tagName != null) {
+                        addTag(tagName, NO_COMMENT);
+                        refreshDirectoryTree();
+                    }
+                });
             });
             quickTagMenu.getItems().add(newTagMenuItem);
 
@@ -149,21 +143,17 @@ abstract class AddTagAction {
             // optional comment and adds a tag with the resulting name.
             MenuItem tagAndCommentItem = new MenuItem("Tag and Comment...");
             tagAndCommentItem.setOnAction((ActionEvent t) -> {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
-                        if (null != tagNameAndComment) {
-                            if (tagNameAndComment.getTagName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                                new CategorizeAction().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                            } else {
-                                AddDrawableTagAction.getInstance().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                            }
-                            refreshDirectoryTree();
+                SwingUtilities.invokeLater(() -> {
+                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
+                    if (null != tagNameAndComment) {
+                        if (tagNameAndComment.getTagName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
+                            new CategorizeAction().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                        } else {
+                            AddDrawableTagAction.getInstance().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                        refreshDirectoryTree();
+                    }
+                });
             });
             getItems().add(tagAndCommentItem);
         }
