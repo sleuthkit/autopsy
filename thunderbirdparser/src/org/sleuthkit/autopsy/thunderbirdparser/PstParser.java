@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -202,7 +203,8 @@ class PstParser {
             try {
                 PSTAttachment attach = msg.getAttachment(x);
                 long size = attach.getAttachSize();
-                if (size >= services.getFreeDiskSpace()) {
+                long freeSpace = services.getFreeDiskSpace();
+                if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (size >= freeSpace)) {
                     continue;
                 }
                 // both long and short filenames can be used for attachments
