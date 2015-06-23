@@ -353,7 +353,7 @@ public class IngestManager {
      * @param runInteractively whether or not to this ingest manager should run
      * ingest interactively.
      */
-    public synchronized void setRunInteractively(boolean runInteractively) {
+    public void setRunInteractively(boolean runInteractively) {
         this.runInteractively = runInteractively;
     }
 
@@ -362,7 +362,7 @@ public class IngestManager {
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
      */
-    public synchronized boolean isRunningInteractively() {
+    public boolean isRunningInteractively() {
         return this.runInteractively;
     }
 
