@@ -361,7 +361,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     
     /**
-     * Sets the DataView (The tabbed panel)
+     * Sets the DataView (The tabbed panel) by page number
      *
      * @param page Page to display (1-based counting)
      */
@@ -369,76 +369,29 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (this.dataSource == null) {
             return;
         }
-        
         if (page == 0) {
             return;
         }
-        
         currentPage = page;
         long offset = (currentPage - 1) * pageLength;
-        
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        String errorText = null;     
-
-        int bytesRead = 0;
-        if (dataSource.getSize() > 0) {
-            try {
-                bytesRead = dataSource.read(data, offset, pageLength); // read the data
-            } catch (TskException ex) {
-                errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                                                offset + pageLength);
-                logger.log(Level.WARNING, "Error while trying to show the hex content.", ex); //NON-NLS
-            }
-        }
-
-        // set the data on the bottom and show it
-        if (bytesRead <= 0) {
-            errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                                            offset + pageLength);
-        }
-        
-
-        // disable or enable the next button
-        if ((errorText == null) && (currentPage < totalPages)) {
-            nextPageButton.setEnabled(true);
-        } 
-        else {
-            nextPageButton.setEnabled(false);
-        }
-
-        if ((errorText == null) && (currentPage > 1)) {
-            prevPageButton.setEnabled(true);
-        } 
-        else {
-            prevPageButton.setEnabled(false);
-        }
-        
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setComponentsVisibility(true); // shows the components that not needed
-
-        // set the output view
-        if (errorText == null) {
-            int showLength = bytesRead < pageLength ? bytesRead : (int) pageLength;
-            outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset));
-        }
-        else {
-            outputViewPane.setText(errorText);
-        }
-
-        outputViewPane.setCaretPosition(0);
-        this.setCursor(null);
+        setDataView(offset);
         goToOffsetTextField.setText(Long.toString(offset));
     }
-    
+    /**
+     * Sets the DataView (The tabbed panel) by offset
+     *
+     * @param page Page to display (1-based counting)
+     */
     private void setDataViewByOffset(long offset) {
         if (this.dataSource == null) {
             return;
         }
+        currentPage = (int) (offset / pageLength) + 1;
+        setDataView(offset);
+        goToPageTextField.setText(Integer.toString(currentPage));
+    }
 
-        currentPage = (int)(offset / pageLength) + 1;
-
+    private void setDataView(long offset) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -487,7 +440,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         outputViewPane.setCaretPosition(0);
         this.setCursor(null);
-        goToPageTextField.setText(Integer.toString(currentPage));
     }
 
     @Override
