@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 
@@ -150,7 +151,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Some network drives always return -1 for free disk space. 
             // In this case, expect enough space and move on.
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
-            if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
+            if ((freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && ((file.getSize() * 1.2) > freeDiskSpace)) {
                 logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to save unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.UnableToCarve", file.getName()),
