@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -131,12 +132,21 @@ public class DrawableTagsManager {
         }
     }
 
+    /**
+     * get all the TagNames that are not categories
+     *
+     * @return all the TagNames that are not categories, in alphabetical order
+     *         by displayName, or, an empty set if there was an exception looking them
+     *         up from the db.
+     */
+    @Nonnull
     public Collection<TagName> getNonCategoryTagNames() {
         synchronized (autopsyTagsManagerLock) {
             try {
                 return autopsyTagsManager.getAllTagNames().stream()
-                        .filter(CategoryManager::isCategoryTagName)
-                        .collect(Collectors.toSet());
+                        .filter(CategoryManager::isNotCategoryTagName)
+                        .distinct().sorted()
+                        .collect(Collectors.toList());
             } catch (TskCoreException | IllegalStateException ex) {
                 LOGGER.log(Level.WARNING, "couldn't access case", ex);
             }
