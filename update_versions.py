@@ -868,7 +868,7 @@ def main():
     try:
         subprocess.call(["javadoc"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
     except Exception:
-        printt("javadoc not found. Exiting...")
+        printt("javadoc not found in path. Exiting...")
         return 1
     # -----------------------------------------------
     # 1) Clone Autopsy, checkout to given tag/commit
