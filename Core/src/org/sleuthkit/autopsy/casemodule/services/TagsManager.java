@@ -248,7 +248,11 @@ public class TagsManager implements Closeable {
             }
         }
         final ContentTag newContentTag = tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
-        Case.getCurrentCase().notifyContentTagAdded(newContentTag);
+        try {
+            Case.getCurrentCase().notifyContentTagAdded(newContentTag);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
+        }
         return newContentTag;
     }
 
@@ -266,7 +270,11 @@ public class TagsManager implements Closeable {
         }
 
         tskCase.deleteContentTag(tag);
-        Case.getCurrentCase().notifyContentTagDeleted(tag);
+        try {
+            Case.getCurrentCase().notifyContentTagDeleted(tag);
+        } catch (IllegalArgumentException e) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteContentTag.noCaseWarning"));
+        }
     }
 
     /**
@@ -375,7 +383,11 @@ public class TagsManager implements Closeable {
         }
 
         BlackboardArtifactTag addBlackboardArtifactTag = tskCase.addBlackboardArtifactTag(artifact, tagName, comment);
-        Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(addBlackboardArtifactTag);
+        try {
+            Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(addBlackboardArtifactTag);
+        } catch (IllegalArgumentException e) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addBlackboardArtifactTag.noCaseWarning"));
+        }
         return addBlackboardArtifactTag;
     }
 
@@ -393,7 +405,11 @@ public class TagsManager implements Closeable {
         }
 
         tskCase.deleteBlackboardArtifactTag(tag);
-        Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
+        try {
+            Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
+        } catch (IllegalArgumentException e) {
+            Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteBlackboardArtifactTag.noCaseWarning"));
+        }
     }
 
     /**
