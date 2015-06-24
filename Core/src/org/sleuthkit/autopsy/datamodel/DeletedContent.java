@@ -35,6 +35,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -111,6 +112,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         private static final String NAME = NbBundle.getMessage(DeletedContent.class,
                 "DeletedContent.deletedContentsNode.name");
         private SleuthkitCase skCase;
+        
 
         DeletedContentsNode(SleuthkitCase skCase) {
             super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
@@ -151,6 +153,8 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         private SleuthkitCase skCase;
         private Observable notifier;
+        // true if we have already told user that not all files will be shown
+        private static boolean maxFilesDialogShown = false; 
 
         public DeletedContentsChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
@@ -195,6 +199,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                         if (evt.getNewValue() == null) {
                             removeListeners();
                         }
+                        maxFilesDialogShown = false;
                     }
                 }
             };
@@ -333,14 +338,19 @@ public class DeletedContent implements AutopsyVisitableItem {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
                     queryList.remove(queryList.size() - 1);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                    "DeletedContent.createKeys.maxObjects.msg",
-                                    MAX_OBJECTS - 1));
-                        }
-                    });
+                    
+                    // only show the dialog once - not each time we refresh
+                    if (maxFilesDialogShown == false) {
+                        maxFilesDialogShown = true;
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(),
+                                        "DeletedContent.createKeys.maxObjects.msg",
+                                        MAX_OBJECTS - 1));
+                            }
+                        });
+                    }
                 }
                 list.addAll(queryList);
                 return true;
