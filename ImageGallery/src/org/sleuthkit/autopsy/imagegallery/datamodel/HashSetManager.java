@@ -36,7 +36,7 @@ public class HashSetManager {
      * @return the names of the hashsets the given fileID is in
      */
     private Set<String> getHashSetsForFileHelper(long fileID) {
-        return db.getHashSetsForFile(fileID);
+        return db.getHashSetsForFileFromAutopsy(fileID);
     }
 
     /**
