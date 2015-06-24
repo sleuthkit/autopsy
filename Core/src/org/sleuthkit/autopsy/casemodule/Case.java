@@ -306,7 +306,6 @@ public class Case {
                     eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, newCase.getTextIndexName()));
                     currentCase.collaborationMonitor = new CollaborationMonitor();
                 } catch (AutopsyEventException | CollaborationMonitor.CollaborationMonitorException ex) {
-                    currentCase.collaborationMonitor.shutdown();
                     logger.log(Level.SEVERE, "Failed to setup for collaboration", ex);
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }

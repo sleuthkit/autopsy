@@ -173,7 +173,7 @@ final class CollaborationMonitor {
         }
 
         Case.removeEventSubscriber(CASE_EVENTS_OF_INTEREST, localTasksManager);
-        eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
+        IngestManager.getInstance().removeIngestJobEventListener(localTasksManager);
 
         if (null != eventPublisher) {
             eventPublisher.removeSubscriber(COLLABORATION_MONITOR_EVENT, remoteTasksManager);
