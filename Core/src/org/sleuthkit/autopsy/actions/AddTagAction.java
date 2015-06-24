@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.util.NbBundle;
@@ -33,45 +34,54 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for Actions that allow users to tag SleuthKit data 
- * model objects.  
+ * An abstract base class for Actions that allow users to tag SleuthKit data
+ * model objects.
  */
-abstract class AddTagAction extends TagAction implements Presenter.Popup { 
+abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
+
     private static final String NO_COMMENT = "";
-    
+
     AddTagAction(String menuText) {
         super(menuText);
     }
-    
+
     @Override
-    public JMenuItem getPopupPresenter() {            
+    public JMenuItem getPopupPresenter() {
         return new TagMenu();
     }
-                
-    @Override
-    protected void doAction(ActionEvent event) {
-    }
-            
+
     /**
-     * Template method to allow derived classes to provide a string for for a
-     * menu item label.
+     * Subclasses of AddTagAction, should not override actionPerformed, but
+     * instead override addTag.
+     *
+     * @param event
+     */
+    @Override
+    @SuppressWarnings("NoopMethodInAbstractClass")
+    public void actionPerformed(ActionEvent event) {
+    }
+
+    /**
+     * Template method to allow derived classes to provide a string for a menu
+     * item label.
      */
     abstract protected String getActionDisplayName();
-    
+
     /**
-     * Template method to allow derived classes to add the indicated tag and 
-     * comment to one or more a SleuthKit data model objects.
+     * Template method to allow derived classes to add the indicated tag and
+     * comment to one or more SleuthKit data model objects.
      */
     abstract protected void addTag(TagName tagName, String comment);
 
     /**
-     * Instances of this class implement a context menu user interface for 
-     * creating or selecting a tag name for a tag and specifying an optional tag 
-     * comment. 
+     * Instances of this class implement a context menu user interface for
+     * creating or selecting a tag name for a tag and specifying an optional tag
+     * comment.
      */
     // @@@ This user interface has some significant usability issues and needs
     // to be reworked.
     private class TagMenu extends JMenu {
+
         TagMenu() {
             super(getActionDisplayName());
 
@@ -81,15 +91,14 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
             try {
                 tagNames = tagsManager.getAllTagNames();
                 Collections.sort(tagNames);
-            }
-            catch (TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
-                        
+
             // Create a "Quick Tag" sub-menu.
             JMenu quickTagMenu = new JMenu(NbBundle.getMessage(this.getClass(), "AddTagAction.quickTag"));
-            add(quickTagMenu);    
-            
+            add(quickTagMenu);
+
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
             // a tag with the associated tag name. 
@@ -101,11 +110,10 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
                     });
                     quickTagMenu.add(tagNameItem);
                 }
-            }
-            else {
+            } else {
                 JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
                 empty.setEnabled(false);
-                quickTagMenu.add(empty);                
+                quickTagMenu.add(empty);
             }
 
             quickTagMenu.addSeparator();
@@ -133,7 +141,7 @@ abstract class AddTagAction extends TagAction implements Presenter.Popup {
                     addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                 }
             });
-            add(tagAndCommentItem);        
+            add(tagAndCommentItem);
         }
-    }    
+    }
 }

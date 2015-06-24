@@ -488,16 +488,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param newDataSource new data source added
      */
     void notifyNewDataSource(Content newDataSource) {
-
-        try {
-            pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newDataSource);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
-                    NbBundle.getMessage(this.getClass(),
-                            "Case.changeCase.errListenToCaseUpdates.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
+        notifyPropertyChangeEvent(new PropertyChangeEvent(Case.class, Events.DATA_SOURCE_ADDED.toString(), null, newDataSource));
         CoreComponentControl.openCoreWindows();
     }
 
@@ -507,7 +498,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param newTag new ContentTag added
      */
     public void notifyContentTagAdded(ContentTag newTag) {
-        notify(new ContentTagAddedEvent(newTag));
+        notifyPropertyChangeEvent(new ContentTagAddedEvent(newTag));
     }
 
     /**
@@ -516,7 +507,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param deletedTag ContentTag deleted
      */
     public void notifyContentTagDeleted(ContentTag deletedTag) {
-        notify(new ContentTagDeletedEvent(deletedTag));
+        notifyPropertyChangeEvent(new ContentTagDeletedEvent(deletedTag));
     }
 
     /**
@@ -525,7 +516,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param newTag new BlackboardArtifactTag added
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
-        notify(new BlackBoardArtifactTagAddedEvent(newTag));
+        notifyPropertyChangeEvent(new BlackBoardArtifactTagAddedEvent(newTag));
     }
 
     /**
@@ -534,7 +525,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param deletedTag BlackboardArtifactTag deleted
      */
     public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
-        notify(new BlackBoardArtifactTagDeletedEvent(deletedTag));
+        notifyPropertyChangeEvent(new BlackBoardArtifactTagDeletedEvent(deletedTag));
     }
 
     /**
@@ -542,7 +533,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param propertyChangeEvent the event to distribute
      */
-    private void notify(final PropertyChangeEvent propertyChangeEvent) {
+    private void notifyPropertyChangeEvent(final PropertyChangeEvent propertyChangeEvent) {
         try {
             pcs.firePropertyChange(propertyChangeEvent);
         } catch (Exception e) {
