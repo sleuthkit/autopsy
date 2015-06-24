@@ -1170,8 +1170,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             normalizedLocalPath = Paths.get(localPath).normalize().toString();
         } catch (InvalidPathException ex) {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
-            logger.log(Level.WARNING, errorMsg, ex);
-            throw new TskCoreException(errorMsg);
+            throw new TskCoreException(errorMsg, ex);
         }
         Report report = this.db.addReport(normalizedLocalPath, srcModuleName, reportName);
         try {
