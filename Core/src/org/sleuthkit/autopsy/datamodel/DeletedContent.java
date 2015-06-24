@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -151,6 +152,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         private SleuthkitCase skCase;
         private Observable notifier;
+        private static boolean maxFilesDialogShown = false;
 
         public DeletedContentsChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
@@ -180,45 +182,22 @@ public class DeletedContent implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
+
+                    // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
-                         */
-                        try {
-                            Case.getCurrentCase();
-                            // new file was added                            
-                            // @@@ COULD CHECK If the new file is deleted before notifying...
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
+                        // @@@ COULD CHECK If the new file is deleted before notifying...
+                        update();
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
-                         */
-                        try {
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                        update();
+                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        update();
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {
                             removeListeners();
                         }
+                        maxFilesDialogShown = false;
                     }
                 }
             };
@@ -357,14 +336,19 @@ public class DeletedContent implements AutopsyVisitableItem {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
                     queryList.remove(queryList.size() - 1);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                    "DeletedContent.createKeys.maxObjects.msg",
-                                    MAX_OBJECTS - 1));
-                        }
-                    });
+                    
+                    // only show the dialog once
+                    if (maxFilesDialogShown == false) {
+                        maxFilesDialogShown = true;
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(),
+                                        "DeletedContent.createKeys.maxObjects.msg",
+                                        MAX_OBJECTS - 1));
+                            }
+                        });
+                    }
                 }
                 list.addAll(queryList);
                 return true;
