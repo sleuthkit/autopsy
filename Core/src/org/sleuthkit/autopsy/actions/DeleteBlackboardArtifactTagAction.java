@@ -21,19 +21,19 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
-
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to delete tags applied to blackboard artifacts.  
  */
-public class DeleteBlackboardArtifactTagAction extends TagAction {
+public class DeleteBlackboardArtifactTagAction extends AbstractAction {
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteBlackboardArtifactTagAction.class,
                                                                 "DeleteBlackboardArtifactTagAction.deleteTags");
     
@@ -54,7 +54,7 @@ public class DeleteBlackboardArtifactTagAction extends TagAction {
     }    
     
     @Override
-    protected void doAction(ActionEvent event) {
+    public void actionPerformed(ActionEvent event) {
         Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
         for (BlackboardArtifactTag tag : selectedTags) {
             try {
