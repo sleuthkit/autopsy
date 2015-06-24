@@ -25,6 +25,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
@@ -1163,7 +1165,14 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @throws TskCoreException
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
-        Report report = this.db.addReport(localPath, srcModuleName, reportName);
+        String normalizedLocalPath;
+        try {
+            normalizedLocalPath = Paths.get(localPath).normalize().toString();
+        } catch (InvalidPathException ex) {
+            String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
+            throw new TskCoreException(errorMsg, ex);
+        }
+        Report report = this.db.addReport(normalizedLocalPath, srcModuleName, reportName);
         try {
             Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
         } catch (Exception ex) {
