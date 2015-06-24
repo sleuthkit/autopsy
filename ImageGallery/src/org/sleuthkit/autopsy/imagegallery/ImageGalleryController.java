@@ -454,7 +454,7 @@ public final class ImageGalleryController {
                      */
                     AbstractFile file = (AbstractFile) evt.getNewValue();
                     if (isListeningEnabled()) {
-                        if (ImageGalleryModule.isSupportedAndNotKnown(file)) {
+                        if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
                             //this file should be included and we don't already know about it from hash sets (NSRL)
                             queueDBWorkerTask(new UpdateFileTask(file));
                         } else if (ImageGalleryModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
@@ -737,12 +737,15 @@ public final class ImageGalleryController {
 
             try {
                 //grab all files with supported extension or detected mime types
-                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
-                        + " where  blackboard_artifacts.obj_id = tsk_files.obj_id"
-                        + " and blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
-                        + " and blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
-                        + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                        + " and blackboard_attributes.value_text in ('" + StringUtils.join(ImageGalleryModule.getSupportedMimes(), "','") + "'))");
+                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " OR tsk_files.obj_id IN ("
+                        + "SELECT tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
+                        + " WHERE  blackboard_artifacts.obj_id = tsk_files.obj_id"
+                        + " AND blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
+                        + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
+                        + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
+                        + " AND (blackboard_attributes.value_text LIKE 'video/%'"
+                        + "     OR blackboard_attributes.value_text LIKE 'image/%'"
+                        + "     OR blackboard_attributes.value_text LIKE 'application/x-shockwave-flash'))");
                 progressHandle.switchToDeterminate(files.size());
 
                 updateProgress(0.0);
@@ -756,14 +759,15 @@ public final class ImageGalleryController {
                         progressHandle.finish();
                         break;
                     }
-                    final Boolean hasMimeType = ImageGalleryModule.hasSupportedMimeType(f);
+
                     final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
                     if (known) {
                         db.removeFile(f.getId(), tr);  //remove known files
                     } else {
+                        final Boolean hasMimeType = ImageGalleryModule.hasDrawableMimeType(f);
                         if (hasMimeType == null) {
-                            if (ImageGalleryModule.isSupported(f)) {
+                            if (ImageGalleryModule.isDrawable(f)) {
                                 //no mime type but supported =>  add as not analyzed
                                 db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
                             } else {
@@ -803,23 +807,21 @@ public final class ImageGalleryController {
 
             progressHandle.finish();
 
-            updateMessage(
-                    "");
-            updateProgress(
-                    -1.0);
+            updateMessage("");
+            updateProgress(-1.0);
             setStale(false);
         }
 
     }
 
     /**
-     * task that does pre-ingest copy over of files from a new datasource with
+     * task that does pre-ingest copy over of files from a new datasource
      * (uses fs_obj_id to identify files from new datasource) *
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
      */
-    class PrePopulateDataSourceFiles extends InnerTask {
+    private class PrePopulateDataSourceFiles extends InnerTask {
 
         private final Content dataSource;
 
@@ -864,10 +866,12 @@ public final class ImageGalleryController {
                         fsObjIds.add(fs.getId());
                     }
                     fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
-                } // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
-                // for them, we will not specify a fs_obj_id, which means we will grab files
-                // from another data source, but the drawable DB is smart enough to de-dupe them.
-                else {
+                } else {
+                    /* NOTE: Logical files currently (Apr '15) have a null
+                     * value for fs_obj_id in DB. for them, we will not specify
+                     * a fs_obj_id, which means we will grab files from another
+                     * data source, but the drawable DB is smart enough to
+                     * de-dupe them. */
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 
@@ -885,7 +889,6 @@ public final class ImageGalleryController {
                     }
                     db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
                     units++;
-                    final int prog = units;
                     progressHandle.progress(f.getName(), units);
                 }
 
@@ -904,5 +907,4 @@ public final class ImageGalleryController {
             progressHandle.finish();
         }
     }
-
 }

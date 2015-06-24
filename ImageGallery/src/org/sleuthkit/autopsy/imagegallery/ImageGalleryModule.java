@@ -18,24 +18,24 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -59,15 +59,17 @@ public class ImageGalleryModule {
 
     private static final Set<String> supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
-    /** mime types of images we can display */
-    private static final Set<String> imageMimes = Sets.newHashSet("image/jpeg", "image/bmp", "image/gif", "image/png", "image/x-ms-bmp");
-    /** mime types of videos we can display */
-    private static final Set<String> videoMimes = Sets.newHashSet("video/mp4", "video/x-flv", "video/x-javafx");
-    /** mime types of files we can display */
-    private static final Set<String> supportedMimes = Sets.union(imageMimes, videoMimes);
+    private static FileTypeDetector FILE_TYPE_DETECTOR;
 
-    static Set<String> getSupportedMimes() {
-        return Collections.unmodifiableSet(supportedMimes);
+    private static synchronized FileTypeDetector getFileTypeDetector() {
+        if (isNull(FILE_TYPE_DETECTOR)) {
+            try {
+                FILE_TYPE_DETECTOR = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex);
+            }
+        }
+        return FILE_TYPE_DETECTOR;
     }
 
     /**
@@ -96,7 +98,7 @@ public class ImageGalleryModule {
     static boolean isEnabledforCase(Case c) {
         if (c != null) {
             String enabledforCaseProp = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
-            return StringUtils.isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
+            return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
         } else {
             return false;
         }
@@ -123,18 +125,18 @@ public class ImageGalleryModule {
     }
 
     /** is the given file suported by image analyzer: ie, does it have a
-     * supported mime type. if no mime type is found, does it have a supported
-     * extension or a jpeg header.
+     * supported mime type (image/*, or video/*). if no mime type is found, does
+     * it have a supported extension or a jpeg/png header.
      *
      * @param file
      *
      * @return true if this file is supported or false if not
      */
-    static Boolean isSupported(AbstractFile file) {
-        //if there were no file type attributes, or we failed to read it, fall back on extension and jpeg header
-        return Optional.ofNullable(hasSupportedMimeType(file)).orElseGet(() -> {
-            return supportedExtensions.contains(getFileExtension(file))
-                    || ImageUtils.isJpegFileHeader(file);
+    static Boolean isDrawable(AbstractFile file) {
+        //if there were no file type attributes,  fall back on extension and jpeg header
+        return Optional.ofNullable(hasDrawableMimeType(file)).orElseGet(() -> {
+            return supportedExtensions.contains(file.getNameExtension())
+                    || ImageUtils.isJpegFileHeader(file) || ImageUtils.isPngFileHeader(file);
         });
     }
 
@@ -142,44 +144,44 @@ public class ImageGalleryModule {
      *
      * @param file
      *
-     * @return true if the file had a TSK_FILE_TYPE_SIG attribute on a
-     *         TSK_GEN_INFO that is in the supported list. False if there was an
-     *         unsupported attribute, null if no attributes were found
+     * @return true if the file has an image or video mime type.
+     *         false if a non image/video mimetype.
+     *         null if a mimetype could not be detected.
      */
-    static Boolean hasSupportedMimeType(AbstractFile file) {
+    static Boolean hasDrawableMimeType(AbstractFile file) {
         try {
-            ArrayList<BlackboardAttribute> fileSignatureAttrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            if (fileSignatureAttrs.isEmpty() == false) {
-                return fileSignatureAttrs.stream().anyMatch(attr -> supportedMimes.contains(attr.getValueString()));
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String mimeType = fileTypeDetector.getFileType(file);
+                return isNull(mimeType) ? null
+                        : mimeType.startsWith("image/") || mimeType.startsWith("video/") || mimeType.equalsIgnoreCase("application/x-shockwave-flash");
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to read TSK_FILE_TYPE_SIG attribute for " + file.getName(), ex);
+            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
         }
         return null;
     }
 
     /** @param file
      *
-     * @return true if the given file has a supported video mime type or
-     *         extension, else false
-     *
-     * //TODO: convert this to use the new FileTypeDetector?
+     * @return true if the given file has a video mime type (video/* or
+     *         application/x-shockwave-flash) or if no mimetype is available a video
+     *         extension
      */
     public static boolean isVideoFile(AbstractFile file) {
         try {
-            ArrayList<BlackboardAttribute> fileSignatureAttrs = file.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            if (fileSignatureAttrs.isEmpty() == false) {
-                return fileSignatureAttrs.stream().anyMatch(attr -> videoMimes.contains(attr.getValueString()));
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String mimeType = fileTypeDetector.getFileType(file);
+                if (nonNull(mimeType)) {
+                    return mimeType.startsWith("video/") || mimeType.equalsIgnoreCase("application/x-shockwave-flash");
+                }
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to read TSK_FILE_TYPE_SIG attribute for " + file.getName(), ex);
-        }
-        //if there were no file type attributes, or we failed to read it, fall back on extension
-        return videoExtensions.contains(getFileExtension(file));
-    }
+            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
 
-    private static String getFileExtension(AbstractFile file) {
-        return Iterables.getLast(Arrays.asList(StringUtils.split(file.getName(), '.')), "");
+        }
+        return videoExtensions.contains(file.getNameExtension());
     }
 
     /**
@@ -188,10 +190,10 @@ public class ImageGalleryModule {
      *
      * @param abstractFile
      *
-     * @return true if the given {@link AbstractFile} is 'supported' and not
+     * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
      */
-    public static boolean isSupportedAndNotKnown(AbstractFile abstractFile) {
-        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageGalleryModule.isSupported(abstractFile);
+    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) {
+        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && ImageGalleryModule.isDrawable(abstractFile);
     }
 }

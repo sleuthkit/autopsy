@@ -329,7 +329,7 @@ public class GroupManager {
                 while (rs.next()) {
                     long id = rs.getLong("obj_id");
                     try {
-                        if (ImageGalleryModule.isSupportedAndNotKnown(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id))) {
+                        if (ImageGalleryModule.isDrawableAndNotKnown(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id))) {
                             files.add(id);
                         }
                     } catch (TskCoreException ex) {
