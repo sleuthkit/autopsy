@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -257,7 +257,7 @@ public class TimeLineController {
         LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
         try {
             SwingUtilities.invokeLater(() -> {
-                if (mainFrame != null) {
+                if (isWindowOpen()) {
                     mainFrame.close();
                 }
             });
@@ -311,7 +311,8 @@ public class TimeLineController {
         }
     }
 
-    /** show the timeline window and prompt for rebuilding database */
+    /** show the timeline window and prompt for rebuilding database if
+     * necessary. */
     synchronized void openTimeLine() {
 
         // listen for case changes (specifically images being added, and case changes).
@@ -636,10 +637,19 @@ public class TimeLineController {
     /**
      * prompt the user to rebuild and then rebuild if the user chooses to
      */
-    synchronized public boolean outOfDatePromptAndRebuild() {
+    synchronized private boolean outOfDatePromptAndRebuild() {
         return showOutOfDateConfirmation() == JOptionPane.YES_OPTION
                 ? rebuildRepo()
                 : false;
+    }
+
+    /**
+     * is the timeline window open.
+     *
+     * @return true if the timeline window is open
+     */
+    synchronized private boolean isWindowOpen() {
+        return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
     synchronized int showLastPopulatedWhileIngestingConfirmation() {
@@ -703,7 +713,9 @@ public class TimeLineController {
                 case CANCELLED:
                 case COMPLETED:
                     //if we are doing incremental updates, drop this
-                    outOfDatePromptAndRebuild();
+                    if (isWindowOpen()) {
+                        outOfDatePromptAndRebuild();
+                    }
                     break;
             }
         }
@@ -718,7 +730,9 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
 //                    Content content = (Content) evt.getNewValue();
                     //if we are doing incremental updates, drop this
-                    outOfDatePromptAndRebuild();
+                    if (isWindowOpen()) {
+                        outOfDatePromptAndRebuild();
+                    }
                     break;
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
