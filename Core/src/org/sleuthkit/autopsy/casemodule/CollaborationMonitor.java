@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
@@ -525,7 +526,7 @@ final class CollaborationMonitor {
     private final static class CrashDetectionTask implements Runnable {
 
         private static boolean dbServerIsRunning = true;
-//        private static boolean solrServerIsRunning = true;
+        private static boolean solrServerIsRunning = true;
         private static boolean messageServerIsRunning = true;
         private static final Object lock = new Object();
 
@@ -550,31 +551,23 @@ final class CollaborationMonitor {
                     }
                 }
 
-                /**
-                 * TODO: Figure out what is wrong with this code. The call to
-                 * construct the HttpSolrServer object never returns. Perhaps
-                 * this is the result of a dependency of the solr-solrj-4.91.jar
-                 * that is not satisfied. Removing the jar from wrapped jars for
-                 * now.
-                 */
-//            try {
-//                String host = UserPreferences.getIndexingServerHost();
-//                String port = UserPreferences.getIndexingServerPort();
-//                HttpSolrServer solr = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
-//                CoreAdminRequest.getStatus(Case.getCurrentCase().getTextIndexName(), solr);
-//                if (!solrServerIsRunning) {
-//                    solrServerIsRunning = true;
-//                    logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
-//                    MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
-//                }
-//            } catch (SolrServerException | IOException ex) {
-//                if (solrServerIsRunning) {
-//                    solrServerIsRunning = false;
-//                    logger.log(Level.SEVERE, "Failed to connect to Solr server", ex); //NON-NLS
-//                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
-//                }
-//            }
-//                
+                KeywordSearchService kwsService = Case.getCurrentCase().getServices().getKeywordSearchService();
+
+                if (kwsService.canConnectToRemoteSolrServer()) {
+                    if (!solrServerIsRunning) {
+                        solrServerIsRunning = true;
+                        logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+                    }                    
+                }
+                else {
+                    if (solrServerIsRunning) {
+                        solrServerIsRunning = false;
+                        logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+                    }                    
+                }
+                
                 MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
                 try {
                     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());

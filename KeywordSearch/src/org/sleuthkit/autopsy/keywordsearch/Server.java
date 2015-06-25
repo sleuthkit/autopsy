@@ -984,7 +984,7 @@ public class Server {
         }
     }
 
-    private HttpSolrServer connectToRemoteSolrServer() {
+    HttpSolrServer connectToRemoteSolrServer() {
         String host = UserPreferences.getIndexingServerHost();
         String port = UserPreferences.getIndexingServerPort();
         
