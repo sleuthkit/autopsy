@@ -502,18 +502,7 @@ public final class ImageGalleryController {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
-                case CONTENT_TAG_ADDED:
-                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (getDatabase().isInDB((tagAddedEvent).getTag().getContent().getId())) {
-                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                    }
-                    break;
-                case CONTENT_TAG_DELETED:
-                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (getDatabase().isInDB((tagDeletedEvent).getTag().getContent().getId())) {
-                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                    }
-                    break;
+                
             }
         });
     }
@@ -530,9 +519,7 @@ public final class ImageGalleryController {
         return tagsManager;
     }
 
-    public DrawableTagsManager getTagsManager() {
-        return tagsManager;
-    }
+   
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time

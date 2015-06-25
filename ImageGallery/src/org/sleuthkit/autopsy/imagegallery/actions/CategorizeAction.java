@@ -144,23 +144,7 @@ public class CategorizeAction extends AddTagAction {
                                     LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
                                 }
                             });
-                } else {
-                    //add cat tag if no existing cat tag for that cat
-                    if (fileTags.stream()
-                            .map(Tag::getName)
-                            .filter(tagName::equals)
-                            .collect(Collectors.toList()).isEmpty()) {
-                        tagsManager.addContentTag(file, tagName, comment);
-                    }
-                            .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
-                            .forEach((ct) -> {
-                                try {
-                                    tagsManager.deleteContentTag(ct);
-                                } catch (TskCoreException ex) {
-                                    LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
-                                }
-                            });
-                } else {
+                }  else {
                     //add cat tag if no existing cat tag for that cat
                     if (fileTags.stream()
                             .map(Tag::getName)

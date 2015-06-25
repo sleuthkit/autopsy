@@ -25,7 +25,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
@@ -57,7 +56,7 @@ public class CategoryManager {
 
     private final ImageGalleryController controller;
 
-    private final ImageGalleryController controller;
+
 
     /**
      * the DrawableDB that backs the category counts cache. The counts are
@@ -262,7 +261,6 @@ public class CategoryManager {
         }
     }
 
-    @Subscribe
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
         ContentTag deleted = event.getTag();

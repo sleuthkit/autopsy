@@ -36,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -44,6 +45,12 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
+import static javafx.concurrent.Worker.State.CANCELLED;
+import static javafx.concurrent.Worker.State.FAILED;
+import static javafx.concurrent.Worker.State.READY;
+import static javafx.concurrent.Worker.State.RUNNING;
+import static javafx.concurrent.Worker.State.SCHEDULED;
+import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -56,7 +63,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
@@ -244,10 +250,11 @@ public class GroupManager {
      * 'mark' the given group as seen. This removes it from the queue of
      * groups
      * files.
-    public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
-
-        Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new HashSet<Long>());
-            }
+     * public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
+     *
+     * Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new
+     * HashSet<Long>());
+     * }
      * groups
      * to review, and is persisted in the drawable db.
      *
@@ -255,8 +262,7 @@ public class GroupManager {
      */
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
-    public void markGroupSeen(DrawableGroup group, boolean seen
-    ) {
+
         db.markGroupSeen(group.getGroupKey(), seen);
         group.setSeen(seen);
         if (seen) {
@@ -292,19 +298,15 @@ public class GroupManager {
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                         }
-                        }
+
                     });
                 }
-        } else { //group == null
-            // It may be that this was the last unanalyzed file in the group, so test
-            // whether the group is now fully analyzed.
-            popuplateIfAnalyzed(groupKey, null);
+            } else { //group == null
+                // It may be that this was the last unanalyzed file in the group, so test
+                // whether the group is now fully analyzed.
+                popuplateIfAnalyzed(groupKey, null);
             }
-        } else { //group == null
-            // It may be that this was the last unanalyzed file in the group, so test
-            // whether the group is now fully analyzed.
-            popuplateIfAnalyzed(groupKey, null);
-
+        }
         return group;
     }
 
@@ -585,42 +587,6 @@ public class GroupManager {
     }
 
     @Subscribe
-    public void handleTagAdded(ContentTagAddedEvent evt) {
-        GroupKey<?> newGroupKey = null;
-        final long fileID = evt.getTag().getContent().getId();
-        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
-            newGroupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
-            for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
-                if (oldGroupKey.equals(newGroupKey) == false) {
-                    removeFromGroup(oldGroupKey, fileID);
-                }
-            }
-        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
-            newGroupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
-        }
-        if (newGroupKey != null) {
-            DrawableGroup g = getGroupForKey(newGroupKey);
-            addFileToGroup(g, newGroupKey, fileID);
-        }
-    }
-
-    @SuppressWarnings("AssignmentToMethodParameter")
-    private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
-        if (g == null) {
-            //if there wasn't already a group check if there should be one now
-            g = popuplateIfAnalyzed(groupKey, null);
-        }
-        DrawableGroup group = g;
-        if (group != null) {
-            //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-            Platform.runLater(() -> {
-                group.addFile(fileID);
-            });
-
-        }
-    }
-
-    @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
         if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
@@ -631,8 +597,6 @@ public class GroupManager {
         if (groupKey != null) {
             final long fileID = evt.getTag().getContent().getId();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
-        }
-    }
         }
     }
 
@@ -678,49 +642,6 @@ public class GroupManager {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
-    private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
-
-        if (Objects.nonNull(task) && (task.isCancelled())) {
-            /* if this method call is part of a ReGroupTask and that task is
-             * cancelled, no-op
-             *
-             * this allows us to stop if a regroup task has been cancelled (e.g.
-             * the user picked a different group by attribute, while the
-             * current task was still running) */
-
-        } else {         // no task or un-cancelled task
-            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
-                /* for attributes other than path we can't be sure a group is
-                 * fully analyzed because we don't know all the files that
-                 * will be a part of that group,. just show them no matter what. */
-
-                try {
-                    Set<Long> fileIDs = getFileIDsInGroup(groupKey);
-                    if (Objects.nonNull(fileIDs)) {
-                        DrawableGroup group;
-                        final boolean groupSeen = db.isGroupSeen(groupKey);
-                        synchronized (groupMap) {
-                            if (groupMap.containsKey(groupKey)) {
-                                group = groupMap.get(groupKey);
-                                group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
-                            } else {
-                                group = new DrawableGroup(groupKey, fileIDs, groupSeen);
-                                group.seenProperty().addListener((o, oldSeen, newSeen) -> {
-                                    markGroupSeen(group, newSeen);
-                                });
-                                groupMap.put(groupKey, group);
-                }
-                        Platform.runLater(() -> {
-                            if (analyzedGroups.contains(group) == false) {
-                                analyzedGroups.add(group);
-                            }
-                            markGroupSeen(group, groupSeen);
-                        });
-                        return group;
-            }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex);
-            }
 
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 

@@ -48,11 +48,9 @@ public enum Category {
     public static Category fromDisplayName(String displayName) {
         return nameMap.get(displayName);
     }
+
     public static boolean isCategoryName(String tName) {
         return nameMap.containsKey(tName);
-
-    public static boolean isNotCategoryName(String tName) {
-        return nameMap.containsKey(tName) == false;
     }
 
     public static boolean isNotCategoryName(String tName) {
