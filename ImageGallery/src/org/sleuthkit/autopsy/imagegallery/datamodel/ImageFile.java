@@ -18,16 +18,17 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.logging.Level;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.mime.MimeTypeException;
-import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
+import javax.imageio.ImageIO;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * ImageGallery data model object that represents an image file. It is a
@@ -50,39 +51,24 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return ThumbnailCache.getDefault().get(this);
     }
 
+
     public Image getFullSizeImage() {
         Image image = null;
-//        if (imageRef != null) {
-//            image = imageRef.get();
-//        }
-//        if (image == null) {
-//
-//            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
-//                BufferedImage read = ImageIO.read(readContentInputStream);
-//                image = SwingFXUtils.toFXImage(read, null);
-//            } catch (IOException | NullPointerException ex) {
-//                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
-//                return null;
-//            }
-//            imageRef = new SoftReference<>(image);
-//        }
-        if (image == null) {
-            try {
-                String fileType1 = new FileTypeDetector().getFileType(file);
-                String extension = MimeTypes.getDefaultMimeTypes().forName(fileType1).getExtension();
-                extension = StringUtils.strip(extension, ".");
-                final String name = "/org/sleuthkit/autopsy/imagegallery/images/mimeTypes/" + extension + "-icon-128x128.png";
-                System.out.println(name);
-                final String toExternalForm = ImageFile.class.getResource(name).toExternalForm();
-                return new Image(toExternalForm, true);
-
-            } catch (NullPointerException | FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (MimeTypeException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+        if (imageRef != null) {
+            image = imageRef.get();
         }
-            return image;
+        if (image == null) {
+
+            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
+                BufferedImage read = ImageIO.read(readContentInputStream);
+                image = SwingFXUtils.toFXImage(read, null);
+            } catch (IOException | NullPointerException ex) {
+                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
+                return null;
+            }
+            imageRef = new SoftReference<>(image);
+        }
+        return image;
     }
 
     @Override
