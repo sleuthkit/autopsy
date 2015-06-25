@@ -404,6 +404,7 @@ public class TagsManager implements Closeable {
             getExistingTagNames();
         }
 
+        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), tag, null);
         tskCase.deleteBlackboardArtifactTag(tag);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
