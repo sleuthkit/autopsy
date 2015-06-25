@@ -41,15 +41,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -105,6 +105,7 @@ public class Toolbar extends ToolBar {
 
         ImageGalleryController.getDefault().getGroupManager().regroup(groupByBox.getSelectionModel().getSelectedItem(), sortByBox.getSelectionModel().getSelectedItem(), getSortOrder(), false);
     };
+    private ImageGalleryController controller;
 
     synchronized public SortOrder getSortOrder() {
         return orderProperty.get();
@@ -117,9 +118,9 @@ public class Toolbar extends ToolBar {
         return sizeSlider.valueProperty();
     }
 
-    static synchronized public Toolbar getDefault() {
+    static synchronized public Toolbar getDefault(ImageGalleryController controller) {
         if (instance == null) {
-            instance = new Toolbar();
+            instance = new Toolbar(controller);
         }
         return instance;
     }
@@ -151,7 +152,7 @@ public class Toolbar extends ToolBar {
 
         tagSelectedMenuButton.setOnAction((ActionEvent t) -> {
             try {
-                TagUtils.createSelTagMenuItem(TagUtils.getFollowUpTagName(), tagSelectedMenuButton).getOnAction().handle(t);
+                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSelectedMenuButton, getController()).getOnAction().handle(t);
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -161,22 +162,22 @@ public class Toolbar extends ToolBar {
         tagSelectedMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, tagSelectedMenuButton);
+                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
+                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, tagSelectedMenuButton, getController());
                     selTagMenues.add(menuItem);
                 }
                 tagSelectedMenuButton.getItems().setAll(selTagMenues);
             }
         });
 
-        catSelectedMenuButton.setOnAction(createSelCatMenuItem(Category.FIVE, catSelectedMenuButton).getOnAction());
+        catSelectedMenuButton.setOnAction(createSelCatMenuItem(Category.FIVE, catSelectedMenuButton, getController()).getOnAction());
         catSelectedMenuButton.setText(Category.FIVE.getDisplayName());
         catSelectedMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         catSelectedMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> categoryMenues = new ArrayList<>();
                 for (final Category cat : Category.values()) {
-                    MenuItem menuItem = createSelCatMenuItem(cat, catSelectedMenuButton);
+                    MenuItem menuItem = createSelCatMenuItem(cat, catSelectedMenuButton, getController());
                     categoryMenues.add(menuItem);
                 }
                 catSelectedMenuButton.getItems().setAll(categoryMenues);
@@ -221,20 +222,25 @@ public class Toolbar extends ToolBar {
         });
     }
 
-    private Toolbar() {
+    private Toolbar(ImageGalleryController controller) {
+        this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml");
     }
 
-    private static MenuItem createSelCatMenuItem(Category cat, final SplitMenuButton catSelectedMenuButton) {
+    private static MenuItem createSelCatMenuItem(Category cat, final SplitMenuButton catSelectedMenuButton, ImageGalleryController controller) {
         final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                new CategorizeAction().addTag(cat.getTagName(), "");
+                new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
                 catSelectedMenuButton.setText(cat.getDisplayName());
                 catSelectedMenuButton.setOnAction(this);
             }
         });
         return menuItem;
+    }
+
+    private ImageGalleryController getController() {
+        return controller;
     }
 }

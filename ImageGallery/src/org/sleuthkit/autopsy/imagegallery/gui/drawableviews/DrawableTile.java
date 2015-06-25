@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.Objects;
 import java.util.logging.Level;
@@ -32,8 +32,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSelectionModel;
+import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
+import org.sleuthkit.datamodel.AbstractContent;
 
 /**
  * GUI component that represents a single image as a tile with an icon, a label,
@@ -43,7 +44,7 @@ import static org.sleuthkit.autopsy.imagegallery.gui.DrawableViewBase.globalSele
  *
  * TODO: refactor this to extend from {@link Control}? -jm
  */
-public class DrawableTile extends DrawableViewBase implements TagUtils.TagListener {
+public class DrawableTile extends DrawableTileBase {
 
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
@@ -67,14 +68,13 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
         assert imageBorder != null : "fx:id=\"imageAnchor\" was not injected: check your FXML file 'DrawableTile.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'DrawableTile.fxml'.";
         assert nameLabel != null : "fx:id=\"nameLabel\" was not injected: check your FXML file 'DrawableTile.fxml'.";
-
         //set up properties and binding
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
 
-        imageView.fitHeightProperty().bind(Toolbar.getDefault().sizeSliderValue());
-        imageView.fitWidthProperty().bind(Toolbar.getDefault().sizeSliderValue());
+        imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
+        imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
 
         globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
             try {
@@ -87,8 +87,10 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
 
     public DrawableTile(GroupPane gp) {
         super(gp);
+
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
+
 
     @Override
     @ThreadConfined(type = ThreadType.JFX)
@@ -110,15 +112,20 @@ public class DrawableTile extends DrawableViewBase implements TagUtils.TagListen
 
     @Override
     protected Runnable getContentUpdateRunnable() {
-        Image image = getFile().getThumbnail();
+        if (getFile().isPresent()) {
+            Image image = getFile().get().getThumbnail();
 
-        return () -> {
-            imageView.setImage(image);
-        };
+            return () -> {
+                imageView.setImage(image);
+            };
+        } else {
+            return () -> { //no-op
+            };
+        }
     }
 
     @Override
     protected String getTextForLabel() {
-        return getFile().getName();
+        return getFile().map(AbstractContent::getName).orElse("");
     }
 }

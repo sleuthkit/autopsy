@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.image.ImageView;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 
 public class SortByListCell extends ListCell<GroupSortBy> {
     
