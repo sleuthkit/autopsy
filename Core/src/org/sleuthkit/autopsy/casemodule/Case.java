@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,8 +44,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
@@ -65,8 +64,19 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -163,7 +173,19 @@ public class Case {
          * case. The old value supplied by the event object is null and the new
          * value is a reference to a Report object representing the new report.
          */
-        REPORT_ADDED;
+        REPORT_ADDED,
+        /** Property name for the event when a new BlackBoardArtifactTag is
+         * added. The new value is tag added, the old value is empty */
+        BLACKBOARD_ARTIFACT_TAG_ADDED,
+        /** Property name for the event when a new BlackBoardArtifactTag is
+         * deleted. The new value is empty, the old value is the deleted tag */
+        BLACKBOARD_ARTIFACT_TAG_DELETED,
+        /** Property name for the event when a new ContentTag is
+         * added. The new value is tag added, the old value is empty */
+        CONTENT_TAG_ADDED,
+        /** Property name for the event when a new ContentTag is
+         * deleted. The new value is empty, the old value is the deleted tag */
+        CONTENT_TAG_DELETED;
     };
 
     /**
@@ -325,10 +347,11 @@ public class Case {
      * Creates a new case (create the XML config file and database). Overload
      * for API consistency, defaults to a single-user case.
      *
-     * @param caseDir The directory to store case data in. Will be created if it
-     * doesn't already exist. If it exists, it should have all of the needed sub
-     * dirs that createCaseDirectory() will create.
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it
+     *                   doesn't already exist. If it exists, it should have all of the needed sub
+     *                   dirs that createCaseDirectory() will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
      * @param examiner the examiner for this case
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
@@ -578,7 +601,7 @@ public class Case {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId the ID of the image that being added
+     * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      * @deprecated Use notifyNewDataSource() instead.
      */
@@ -638,6 +661,42 @@ public class Case {
      */
     public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
+    }
+
+    /**
+     * Notifies the UI that a new ContentTag has been added.
+     *
+     * @param newTag new ContentTag added
+     */
+    public void notifyContentTagAdded(ContentTag newTag) {
+        eventPublisher.publish(new ContentTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a ContentTag has been deleted.
+     *
+     * @param deletedTag ContentTag deleted
+     */
+    public void notifyContentTagDeleted(ContentTag deletedTag) {
+        eventPublisher.publish(new ContentTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies the UI that a new BlackboardArtifactTag has been added.
+     *
+     * @param newTag new BlackboardArtifactTag added
+     */
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
+        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a BlackboardArtifactTag has been.
+     *
+     * @param deletedTag BlackboardArtifactTag deleted
+     */
+    public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
+        eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
     }
 
     /**
@@ -703,9 +762,9 @@ public class Case {
      * Updates the case name.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath the old path that wants to be updated
+     * @param oldPath     the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath the new path
+     * @param newPath     the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -1230,10 +1289,20 @@ public class Case {
         return result;
     }
 
-    /*
-     * The methods below are used to manage the case directories (creating,
-     * checking, deleting, etc)
+    /**
+     * to create the case directory
+     *
+     * @param caseDir  Path to the case directory (typically base + case name)
+     * @param caseName the case name (used only for error messages)
+     *
+     * @throws CaseActionException throw if could not create the case dir
+     * @Deprecated
      */
+    @Deprecated
+    static void createCaseDirectory(String caseDir, String caseName) throws CaseActionException {
+        createCaseDirectory(caseDir, CaseType.SINGLE_USER_CASE);
+    }
+
     /**
      * Create the case directory and its needed subfolders.
      *
@@ -1316,20 +1385,6 @@ public class Case {
      */
     static public void invokeStartupDialog() {
         StartupWindowProvider.getInstance().open();
-    }
-
-    /**
-     * Call if there are no images in the case. Displays a dialog offering to
-     * add one.
-     */
-    private static void runAddImageAction() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                final AddImageAction action = Lookup.getDefault().lookup(AddImageAction.class);
-                action.actionPerformed(null);
-            }
-        });
     }
 
     /**
@@ -1454,16 +1509,25 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param [in] localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
-     * @param [in] sourceModuleName The name of the module that created the
-     * report.
-     * @param [in] reportName The report name, may be empty.
+     * @param localPath        The path of the report file, must be in the case
+     *                         directory or one of its subdirectories.
+     * @param sourceModuleName The name of the module that created the
+     *                         report.
+     * @param reportName       The report name, may be empty.
+     *
      * @return A Report data transfer object (DTO) for the new row.
+     *
      * @throws TskCoreException
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
-        Report report = this.db.addReport(localPath, srcModuleName, reportName);
+        String normalizedLocalPath;
+        try {
+            normalizedLocalPath = Paths.get(localPath).normalize().toString();
+        } catch (InvalidPathException ex) {
+            String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
+            throw new TskCoreException(errorMsg, ex);
+        }
+        Report report = this.db.addReport(normalizedLocalPath, srcModuleName, reportName);
         eventPublisher.publish(new ReportAddedEvent(report));
     }
 

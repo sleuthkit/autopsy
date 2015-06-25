@@ -45,8 +45,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
  * Display two trees. one shows all folders (groups) and calls out folders with
@@ -155,6 +155,7 @@ public class NavPanel extends TabPane {
         initNavTree();
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
             boolean wasPermuted = false;
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
@@ -170,11 +171,17 @@ public class NavPanel extends TabPane {
                 if (change.wasPermutated()) {
                     // Handle this afterward
                     wasPermuted = true;
+                    break;
                 }
             }
 
             if (wasPermuted) {
                 rebuildTrees();
+            }
+            if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
+                Platform.runLater(() -> {
+                    setFocusedGroup(selectedItem.getValue().getGroup());
+                });
 
             }
         });
@@ -262,7 +269,6 @@ public class NavPanel extends TabPane {
     }
 
     private static List<String> groupingToPath(DrawableGroup g) {
-
         if (g.groupKey.getAttribute() == DrawableAttribute.PATH) {
             String path = g.groupKey.getValueDisplayName();
 

@@ -16,14 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -50,61 +52,59 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.HASH_BORDER;
-import static org.sleuthkit.autopsy.imagegallery.gui.DrawableView.getCategoryBorder;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import org.sleuthkit.autopsy.imagegallery.gui.MediaControl;
+import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
  * GroupPane. TODO: Extract a subclass for video files in slideshow mode-jm
+ *
  * TODO: reduce coupling to GroupPane
  */
-public class SlideShowView extends DrawableViewBase implements TagUtils.TagListener {
+public class SlideShowView extends DrawableTileBase {
 
     private static final Logger LOGGER = Logger.getLogger(SlideShowView.class.getName());
 
     @FXML
     private ToggleButton cat0Toggle;
-
+    @FXML
+    private ToggleButton cat1Toggle;
     @FXML
     private ToggleButton cat2Toggle;
+    @FXML
+    private ToggleButton cat3Toggle;
+    @FXML
+    private ToggleButton cat4Toggle;
+    @FXML
+    private ToggleButton cat5Toggle;
 
     @FXML
     private SplitMenuButton tagSplitButton;
 
     @FXML
-    private ToggleButton cat3Toggle;
-
-    @FXML
     private Region spring;
-
     @FXML
     private Button leftButton;
-
-    @FXML
-    private ToggleButton cat4Toggle;
-
-    @FXML
-    private ToggleButton cat5Toggle;
-
-    @FXML
-    private ToggleButton cat1Toggle;
-
     @FXML
     private Button rightButton;
-
     @FXML
     private ToolBar toolBar;
-
     @FXML
     private BorderPane footer;
+
+    SlideShowView(GroupPane gp) {
+        super(gp);
+        FXMLConstructor.construct(this, "SlideShow.fxml");
+    }
 
     @FXML
     @Override
@@ -127,7 +127,7 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
 
         tagSplitButton.setOnAction((ActionEvent t) -> {
             try {
-                TagUtils.createSelTagMenuItem(TagUtils.getFollowUpTagName(), tagSplitButton).getOnAction().handle(t);
+                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSplitButton, getController()).getOnAction().handle(t);
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -137,13 +137,15 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
         tagSplitButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, tagSplitButton);
+                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
+                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, tagSplitButton, getController());
                     selTagMenues.add(menuItem);
                 }
                 tagSplitButton.getItems().setAll(selTagMenues);
             }
         });
+
+        //configure category toggles
         cat0Toggle.setBorder(new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
         cat1Toggle.setBorder(new Border(new BorderStroke(Category.ONE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
         cat2Toggle.setBorder(new Border(new BorderStroke(Category.TWO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
@@ -175,9 +177,7 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
 
         //set up key listener equivalents of buttons
         addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent t) -> {
-
             if (t.getEventType() == KeyEvent.KEY_PRESSED) {
-
                 switch (t.getCode()) {
                     case LEFT:
                         cycleSlideShowImage(-1);
@@ -219,25 +219,21 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
         }
     }
 
-    SlideShowView(GroupPane gp) {
-        super(gp);
-        FXMLConstructor.construct(this, "SlideShow.fxml");
-
-    }
-
-    @ThreadConfined(type = ThreadType.UI)
+    @ThreadConfined(type = ThreadType.JFX)
     public void stopVideo() {
         if (imageBorder.getCenter() instanceof MediaControl) {
             ((MediaControl) imageBorder.getCenter()).stopVideo();
         }
     }
 
+    /** {@inheritDoc } */
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
-        if (this.getFileID() != null) {
-            getGroupPane().makeSelection(false, this.getFileID());
-        }
+
+        getFileID().ifPresent((Long id) -> {
+            getGroupPane().makeSelection(false, id);
+        });
     }
 
     @Override
@@ -252,43 +248,57 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
         imageBorder.setCenter(null);
     }
 
+    /** {@inheritDoc } */
     @Override
     protected Runnable getContentUpdateRunnable() {
-        if (getFile().isVideo()) {
-            return () -> {
-                imageBorder.setCenter(MediaControl.create((VideoFile<?>) getFile()));
-            };
-        } else {
-            ImageView imageView = new ImageView(((ImageFile<?>) getFile()).getFullSizeImage());
-            imageView.setPreserveRatio(true);
-            imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-            imageView.fitHeightProperty().bind(this.heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
-            return () -> {
-                imageBorder.setCenter(imageView);
-            };
-        }
+
+        return getFile().map(new Function<DrawableFile<?>, Runnable>() {
+
+            @Override
+            public Runnable apply(DrawableFile<?> file) {
+
+                if (file.isVideo()) {
+                    return () -> {
+                        imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
+                    };
+                } else {
+                    ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
+                    imageView.setPreserveRatio(true);
+                    imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
+                    imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
+                    return () -> {
+                        imageBorder.setCenter(imageView);
+                    };
+                }
+            }
+        }).orElse(() -> {
+        });
     }
 
+    /** {@inheritDoc } */
     @Override
     protected String getTextForLabel() {
-        return getFile().getName() + " " + getSupplementalText();
+        return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
     }
 
+    /**
+     * cycle the image displayed in thes SlideShowview, to the next/previous one
+     * in the group.
+     *
+     * @param direction the direction to cycle:
+     *                  -1 => left / back
+     *                  1 => right / forward
+     */
     @ThreadConfined(type = ThreadType.JFX)
-    private void cycleSlideShowImage(int d) {
+    private void cycleSlideShowImage(int direction) {
         stopVideo();
-        if (getFileID() != null) {
-            int index = getGroupPane().getGrouping().fileIds().indexOf(getFileID());
-            final int size = getGroupPane().getGrouping().fileIds().size();
-            index = (index + d) % size;
-            if (index < 0) {
-                index += size;
-            }
-            setFile(getGroupPane().getGrouping().fileIds().get(index));
-
-        } else {
-            setFile(getGroupPane().getGrouping().fileIds().get(0));
-        }
+        final int groupSize = getGroupPane().getGrouping().fileIds().size();
+        final Integer nextIndex = getFileID().map(fileID -> {
+            final int currentIndex = getGroupPane().getGrouping().fileIds().indexOf(fileID);
+            return (currentIndex + direction + groupSize) % groupSize;
+        }).orElse(0);
+        setFile(getGroupPane().getGrouping().fileIds().get(nextIndex)
+        );
     }
 
     /**
@@ -296,24 +306,26 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
      *         of y"
      */
     private String getSupplementalText() {
-        return " ( " + (getGroupPane().getGrouping().fileIds().indexOf(getFileID()) + 1) + " of " + getGroupPane().getGrouping().fileIds().size() + " in group )";
+        final ObservableList<Long> fileIds = getGroupPane().getGrouping().fileIds();
+        return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
+                .orElse("");
+
     }
 
+    /** {@inheritDoc } */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
-    public Category updateCategoryBorder() {
-        final Category category = getFile().getCategory();
-        final Border border = hasHashHit() && (category == Category.ZERO)
-                ? HASH_BORDER
-                : getCategoryBorder(category);
-        ToggleButton toggleForCategory = getToggleForCategory(category);
-
-        Platform.runLater(() -> {
-            getCategoryBorderRegion().setBorder(border);
-            toggleForCategory.setSelected(true);
-        });
-
-        return category;
+    public Category updateCategory() {
+        if (getFile().isPresent()) {
+            final Category category = super.updateCategory();
+            ToggleButton toggleForCategory = getToggleForCategory(category);
+            Platform.runLater(() -> {
+                toggleForCategory.setSelected(true);
+            });
+            return category;
+        } else {
+            return Category.ZERO;
+        }
     }
 
     private ToggleButton getToggleForCategory(Category category) {
@@ -345,10 +357,13 @@ public class SlideShowView extends DrawableViewBase implements TagUtils.TagListe
 
         @Override
         public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-            if (t1) {
-                FileIDSelectionModel.getInstance().clearAndSelect(getFileID());
-                new CategorizeAction().addTag(cat.getTagName(), "");
-            }
+            getFileID().ifPresent(fileID -> {
+                if (t1) {
+                    FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                    new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
+                }
+            });
+
         }
     }
 }

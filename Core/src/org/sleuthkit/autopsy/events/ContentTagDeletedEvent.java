@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,32 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
+package org.sleuthkit.autopsy.events;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
- *
+ * An event that is fired when a ContentTag is deleted.
  */
- class TreeNode {
+@Immutable
+public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> {
 
-   private  String path;
-   private DrawableGroup group;
-
-    public String getPath() {
-        return path;
-    }
-
-    public DrawableGroup getGroup() {
-        return group;
-    }
-
-    public TreeNode(String path, DrawableGroup group) {
-        this.path = path;
-        this.group = group;
-    }
-
-    void setGroup(DrawableGroup g) {
-    group = g;
+    public ContentTagDeletedEvent(ContentTag deletedTag) {
+        super(Case.Events.CONTENT_TAG_DELETED.toString(), deletedTag);
     }
 }

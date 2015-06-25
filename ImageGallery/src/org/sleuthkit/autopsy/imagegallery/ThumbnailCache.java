@@ -119,28 +119,29 @@ public enum ThumbnailCache {
 
     /**
      * load a thumbnail from the disk based cache for the given file, or
-     * generate and save a new thumnbail if one doesn't already exist
+     * generate and save a new thumbnail if one doesn't already exist
      *
-     * @param file the file to load a thumbnail of
+     * @param file the DrawableFile to load a thumbnail of
      *
-     * @return an optional containing a thumbnail, or null if a thumbnail
-     *         couldn't be loaded or generated
+     * @return an (possibly empty) optional containing a thumbnail
      */
     private Optional<Image> load(DrawableFile<?> file) {
-        Image thumbnail = null;
-        File cacheFile;
-        try {// try to load the thumbnail from disk
-            cacheFile = getCacheFile(file.getId());
+        Image thumbnail;
 
-            if (cacheFile.exists()) {
-                // If a thumbnail file is already saved locally, load it
-                try {
-                    int dim = iconSize.get();
-                    thumbnail = new Image(Utilities.toURI(cacheFile).toURL().toString(), dim, dim, true, false, true);
-                } catch (MalformedURLException ex) {
-                    Exceptions.printStackTrace(ex);
+        try {
+            thumbnail = getCacheFile(file.getId()).map((File cachFile) -> {
+                if (cachFile.exists()) {
+                    // If a thumbnail file is already saved locally, load it
+                    try {
+                        int dim = iconSize.get();
+                        return new Image(Utilities.toURI(cachFile).toURL().toString(), dim, dim, true, false, true);
+                    } catch (MalformedURLException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                    }
                 }
-            }
+                return null;
+            }).orElse(null);
+
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "can't load icon when no case is open");
             return Optional.empty();
@@ -153,9 +154,23 @@ public enum ThumbnailCache {
         return Optional.ofNullable(thumbnail); //return icon, or null if generation failed
     }
 
-    private static File getCacheFile(long id) {
-        // @@@ should use ImageUtils.getFile();
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
+    /**
+     * get a File to store the cached icon in.
+     *
+     * @param id the obj id of the file to get a cache file for
+     *
+     * @return a Optional containing a File to store the cahced icon in or an
+     *         empty optional if there was a
+     *         problem.
+     */
+    private static Optional<File> getCacheFile(long id) {
+        try {
+            // @@@ should use ImageUtils.getFile();
+            return Optional.of(new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png"));
+        } catch (IllegalStateException e) {
+            LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
+            return Optional.empty();
+        }
     }
 
     /**
@@ -255,15 +270,15 @@ public enum ThumbnailCache {
      * @param bi   the thumbnail to save for the given DrawableFile
      */
     private void saveIcon(final DrawableFile<?> file, final Image bi) {
-        try {
-            if (bi != null) {
-                File f = getCacheFile(file.getId());
-                //convert back to swing to save
-                ImageIO.write(SwingFXUtils.fromFXImage(bi, null), FORMAT, f);
-            }
-        } catch (IllegalArgumentException | IOException ex) {
-            //LOGGER.log(Level.WARNING, "failed to save generated icon ", ex);
-            LOGGER.log(Level.WARNING, "failed to save generated icon");
+        if (bi != null) {
+            getCacheFile(file.getId()).ifPresent((File cacheFile) -> {
+                try {
+                    //convert back to swing to save
+                    ImageIO.write(SwingFXUtils.fromFXImage(bi, null), FORMAT, cacheFile);
+                } catch (IllegalArgumentException | IOException ex) {
+                    LOGGER.log(Level.WARNING, "failed to save generated icon");
+                }
+            });
         }
     }
 }

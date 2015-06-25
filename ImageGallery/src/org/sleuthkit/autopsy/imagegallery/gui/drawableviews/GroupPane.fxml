@@ -23,7 +23,7 @@
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
-                                        <Image url="@../images/arrow-180.png" />
+                                        <Image url="@../../images/arrow-180.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
@@ -32,7 +32,7 @@
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
-                                        <Image url="@../images/arrow.png" />
+                                        <Image url="@../../images/arrow.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
@@ -53,7 +53,7 @@
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
-                                        <Image url="@../images/control-double.png" />
+                                        <Image url="@../../images/control-double.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
@@ -108,16 +108,16 @@
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" translateY="1.0">
                                             <image>
-                                                <Image url="@../images/application_view_tile.png" />
+                                                <Image url="@../../images/application_view_tile.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
                                 </ToggleButton>
-                                <ToggleButton id="filmStripToggle" fx:id="slideShowToggle" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" text="">
+                                <ToggleButton id="filmStripToggle" fx:id="slideShowToggle"  contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" text="">
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" translateY="1.0">
                                             <image>
-                                                <Image url="@../images/film.png" />
+                                                <Image url="@../../images/film.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
