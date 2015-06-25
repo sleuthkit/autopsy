@@ -35,4 +35,10 @@ public interface KeywordSearchService extends Closeable {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
+    
+    /**
+     * Are we able to connect to the remote Solr server.
+     * @return true if we can connect, otherwise false
+     */
+    public boolean canConnectToRemoteSolrServer();
 }
