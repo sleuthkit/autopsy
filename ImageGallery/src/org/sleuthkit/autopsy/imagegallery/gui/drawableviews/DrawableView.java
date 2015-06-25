@@ -1,7 +1,8 @@
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.Collection;
+import java.util.Optional;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.layout.Border;
@@ -13,9 +14,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
@@ -25,7 +27,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * } to have there {@link DrawableView#handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent)
  * } method invoked
  */
-public interface DrawableView extends TagUtils.TagListener {
+public interface DrawableView {
 
     //TODO: do this all in css? -jm
     static final int CAT_BORDER_WIDTH = 10;
@@ -50,11 +52,11 @@ public interface DrawableView extends TagUtils.TagListener {
 
     Region getCategoryBorderRegion();
 
-    DrawableFile<?> getFile();
+    Optional<DrawableFile<?>> getFile();
 
     void setFile(final Long fileID);
 
-    Long getFileID();
+    Optional<Long> getFileID();
 
     /**
      * update the visual representation of the category of the assigned file.
@@ -65,14 +67,28 @@ public interface DrawableView extends TagUtils.TagListener {
      * @param evt the CategoryChangeEvent to handle
      */
     @Subscribe
-    void handleCategoryChanged(CategoryChangeEvent evt);
+    default void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
+        getFileID().ifPresent(fileID -> {
+            if (evt.getFileIDs().contains(fileID)) {
+                updateCategory();
+            }
+        });
+    }
 
-    @Override
-    void handleTagsChanged(Collection<Long> ids);
+    @Subscribe
+    void handleTagAdded(ContentTagAddedEvent evt);
+
+    @Subscribe
+    void handleTagDeleted(ContentTagDeletedEvent evt);
+
+    ImageGalleryController getController();
 
     default boolean hasHashHit() {
         try {
-            return getFile().getHashHitSetNames().isEmpty() == false;
+            return getFile().map(DrawableFile::getHashHitSetNames)
+                    .map((Collection<String> t) -> t.isEmpty() == false)
+                    .orElse(false);
+
         } catch (NullPointerException ex) {
             // I think this happens when we're in the process of removing images from the view while
             // also trying to update it? 
@@ -82,35 +98,39 @@ public interface DrawableView extends TagUtils.TagListener {
     }
 
     static Border getCategoryBorder(Category category) {
-        switch (category) {
-            case ONE:
-                return CAT1_BORDER;
-            case TWO:
-                return CAT2_BORDER;
-            case THREE:
-                return CAT3_BORDER;
-            case FOUR:
-                return CAT4_BORDER;
-            case FIVE:
-                return CAT5_BORDER;
-            case ZERO:
-            default:
-                return CAT0_BORDER;
+        if (category != null) {
+            switch (category) {
+                case ONE:
+                    return CAT1_BORDER;
+                case TWO:
+                    return CAT2_BORDER;
+                case THREE:
+                    return CAT3_BORDER;
+                case FOUR:
+                    return CAT4_BORDER;
+                case FIVE:
+                    return CAT5_BORDER;
+                case ZERO:
+                default:
+                    return CAT0_BORDER;
 
+            }
+        } else {
+            return CAT0_BORDER;
         }
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    default Category updateCategoryBorder() {
-        final Category category = getFile().getCategory();
-        final Border border = hasHashHit() && (category == Category.ZERO)
-                ? HASH_BORDER
-                : getCategoryBorder(category);
-
-        Platform.runLater(() -> {
-            getCategoryBorderRegion().setBorder(border);
-            getCategoryBorderRegion().requestLayout();
-        });
-        return category;
+    default Category updateCategory() {
+        if (getFile().isPresent()) {
+            final Category category = getFile().map(DrawableFile::getCategory).orElse(Category.ZERO);
+            final Border border = hasHashHit() && (category == Category.ZERO) ? HASH_BORDER : getCategoryBorder(category);
+            Platform.runLater(() -> {
+                getCategoryBorderRegion().setBorder(border);
+            });
+            return category;
+        } else {
+            return Category.ZERO;
+        }
     }
 }

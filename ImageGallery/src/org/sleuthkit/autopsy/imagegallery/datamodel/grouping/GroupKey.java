@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import java.util.Map;
 import java.util.Objects;
@@ -56,7 +56,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
     @Override
     public String toString() {
-        return "GroupKey: " + getAttribute() + " = " + getValue();
+        return "GroupKey: " + getAttribute().attrName + " = " + getValue();
     }
 
     @Override

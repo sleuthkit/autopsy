@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -70,7 +70,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return groupKey.getValueDisplayName();
     }
 
-    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup, boolean seen) {
+    DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
         this.fileIDs.setAll(filesInGroup);
         this.seen.set(seen);
@@ -134,7 +134,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 ((DrawableGroup) obj).groupKey);
     }
 
-    synchronized public void addFile(Long f) {
+    synchronized void addFile(Long f) {
         invalidateHashSetHitsCount();
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
@@ -142,7 +142,21 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         }
     }
 
-    synchronized public void removeFile(Long f) {
+    synchronized void setFiles(Set<? extends Long> newFileIds) {
+        invalidateHashSetHitsCount();
+        boolean filesRemoved = fileIDs.removeIf((Long t) -> newFileIds.contains(t) == false);
+        if (filesRemoved) {
+            seen.set(false);
+        }
+        for (Long f : newFileIds) {
+            if (fileIDs.contains(f) == false) {
+                fileIDs.add(f);
+                seen.set(false);
+            }
+        }
+    }
+
+    synchronized void removeFile(Long f) {
         invalidateHashSetHitsCount();
         if (fileIDs.removeAll(f)) {
             seen.set(false);
@@ -166,4 +180,5 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public boolean isSeen() {
         return seen.get();
     }
+
 }

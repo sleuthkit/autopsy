@@ -46,12 +46,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy;
-import static org.sleuthkit.autopsy.imagegallery.grouping.GroupSortBy.GROUP_BY_VALUE;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
+import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -124,11 +124,6 @@ public final class DrawableDB {
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
 
-    /**
-     * list of observers to be notified if the database changes
-     */
-    private final HashSet<FileUpdateEvent.FileUpdateListener> updateListeners = new HashSet<>();
-
     private GroupManager groupManager;
 
     private final Path dbPath;
@@ -147,6 +142,7 @@ public final class DrawableDB {
         }
     }
     private final SleuthkitCase tskCase;
+    private final ImageGalleryController controller;
 
     //////////////general database logic , mostly borrowed from sleuthkitcase
     /**
@@ -195,9 +191,11 @@ public final class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(Path dbPath, SleuthkitCase tskCase) throws SQLException, ExceptionInInitializerError, IOException {
+    private DrawableDB(Path dbPath, ImageGalleryController controller) throws SQLException, ExceptionInInitializerError, IOException {
         this.dbPath = dbPath;
-        this.tskCase = tskCase;
+        this.controller = controller;
+        this.tskCase = controller.getSleuthKitCase();
+        this.groupManager = controller.getGroupManager();
         Files.createDirectories(dbPath.getParent());
         if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
@@ -286,10 +284,10 @@ public final class DrawableDB {
      *
      * @return
      */
-    public static DrawableDB getDrawableDB(Path dbPath, SleuthkitCase tskCase) {
+    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
 
         try {
-            return new DrawableDB(dbPath.resolve("drawable.db"), tskCase);
+            return new DrawableDB(dbPath.resolve("drawable.db"), controller);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex);
             return null;
@@ -641,22 +639,6 @@ public final class DrawableDB {
         tr.commit(notify);
     }
 
-    public void addUpdatedFileListener(FileUpdateEvent.FileUpdateListener l) {
-        updateListeners.add(l);
-    }
-
-    private void fireUpdatedFiles(Collection<Long> fileIDs) {
-        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(FileUpdateEvent.newUpdateEvent(fileIDs, null));
-        }
-    }
-
-    private void fireRemovedFiles(Collection<Long> fileIDs) {
-        for (FileUpdateEvent.FileUpdateListener listener : updateListeners) {
-            listener.handleFileUpdate(FileUpdateEvent.newRemovedEvent(fileIDs));
-        }
-    }
-
     public Boolean isFileAnalyzed(DrawableFile<?> f) {
         return isFileAnalyzed(f.getId());
     }
@@ -698,7 +680,7 @@ public final class DrawableDB {
     public Boolean isGroupAnalyzed(GroupKey<?> gk) {
         dbReadLock();
         try {
-            List<Long> fileIDsInGroup = getFileIDsInGroup(gk);
+            Set<Long> fileIDsInGroup = getFileIDsInGroup(gk);
 
             try {
                 // In testing, this method appears to be a lot faster than doing one large select statement
@@ -747,10 +729,10 @@ public final class DrawableDB {
      *
      * @throws TskCoreException
      */
-    public List<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
+    public Set<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
-        List<Long> ret = new ArrayList<>();
+        Set<Long> ret = new HashSet<>();
         dbReadLock();
         try {
             statement = con.createStatement();
@@ -984,7 +966,7 @@ public final class DrawableDB {
         }
     }
 
-    public List<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
+    public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
 
         if (groupKey.getAttribute().isDBColumn) {
             switch (groupKey.getAttribute().attrName) {
@@ -994,7 +976,7 @@ public final class DrawableDB {
                     return groupManager.getFileIDsWithTag((TagName) groupKey.getValue());
             }
         }
-        List<Long> files = new ArrayList<>();
+        Set<Long> files = new HashSet<>();
         dbReadLock();
         try {
             PreparedStatement statement = getGroupStatment(groupKey.getAttribute());
@@ -1055,7 +1037,7 @@ public final class DrawableDB {
     public List<DrawableFile<?>> getFilesWithCategory(Category cat) throws TskCoreException, IllegalArgumentException {
         try {
             List<DrawableFile<?>> files = new ArrayList<>();
-            List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName());
+            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(controller.getTagsManager().getTagName(cat));
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile) {
                     files.add(DrawableFile.create((AbstractFile) ct.getContent(), isFileAnalyzed(ct.getContent().getId()),
@@ -1142,11 +1124,11 @@ public final class DrawableDB {
      *         in.
      *
      *
-     * //TODO: why does this go to the SKC? don't we already have this in =fo
+     * //TODO: why does this go to the SKC? don't we already have this info
      * in the drawable db?
      */
     @Nonnull
-    Set<String> getHashSetsForFile(long fileID) {
+    public Set<String> getHashSetsForFile(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
             List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
@@ -1240,7 +1222,7 @@ public final class DrawableDB {
      */
     public long getCategoryCount(Category cat) {
         try {
-            return Case.getCurrentCase().getServices().getTagsManager().getContentTagsByTagName(cat.getTagName()).stream()
+            return tskCase.getContentTagsByTagName(controller.getTagsManager().getTagName(cat)).stream()
                     .map(ContentTag::getContent)
                     .map(Content::getId)
                     .filter(this::isInDB)
@@ -1309,8 +1291,10 @@ public final class DrawableDB {
                     close();
 
                     if (notify) {
-                        fireUpdatedFiles(updatedFiles);
-                        fireRemovedFiles(removedFiles);
+                        if (groupManager != null) {
+                            groupManager.handleFileUpdate(updatedFiles);
+                            groupManager.handleFileRemoved(removedFiles);
+                        }
                     }
                 } catch (SQLException ex) {
                     if (Case.isCaseOpen()) {

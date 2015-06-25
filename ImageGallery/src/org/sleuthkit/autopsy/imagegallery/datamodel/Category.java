@@ -20,52 +20,44 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.scene.paint.Color;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
-import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Enum to represent the six categories in the DHs image categorization scheme.
  */
-public enum Category implements Comparable<Category> {
+public enum Category {
 
-    ZERO(Color.LIGHTGREY, 0, "CAT-0, Uncategorized"),
-    ONE(Color.RED, 1, "CAT-1,  Child Exploitation (Illegal)"),
-    TWO(Color.ORANGE, 2, "CAT-2, Child Exploitation (Non-Illegal/Age Difficult)"),
-    THREE(Color.YELLOW, 3, "CAT-3, CGI/Animation (Child Exploitive)"),
-    FOUR(Color.BISQUE, 4, "CAT-4,  Exemplar/Comparison (Internal Use Only)"),
-    FIVE(Color.GREEN, 5, "CAT-5, Non-pertinent");
+    /* This order of declaration is required so that Enum's compareTo method
+     * preserves the fact that lower category numbers are first/most sever,
+     * except 0 which is last */
+    ONE(Color.RED, 1, "CAT-1:  Child Exploitation (Illegal)"),
+    TWO(Color.ORANGE, 2, "CAT-2: Child Exploitation (Non-Illegal/Age Difficult)"),
+    THREE(Color.YELLOW, 3, "CAT-3: CGI/Animation (Child Exploitive)"),
+    FOUR(Color.BISQUE, 4, "CAT-4:  Exemplar/Comparison (Internal Use Only)"),
+    FIVE(Color.GREEN, 5, "CAT-5: Non-pertinent"),
+    ZERO(Color.LIGHTGREY, 0, "CAT-0: Uncategorized");
 
     /** map from displayName to enum value */
     private static final Map<String, Category> nameMap
-            = Stream.of(values()).collect(Collectors.toMap(Category::getDisplayName,
+            = Stream.of(values()).collect(Collectors.toMap(
+                            Category::getDisplayName,
                             Function.identity()));
-
-    public static final String CATEGORY_PREFIX = "CAT-";
 
     public static Category fromDisplayName(String displayName) {
         return nameMap.get(displayName);
     }
+    public static boolean isCategoryName(String tName) {
+        return nameMap.containsKey(tName);
 
-    /**
-     * Use when closing a case to make sure everything is re-initialized in the
-     * next case.
-     */
-    public static void clearTagNames() {
-        Category.ZERO.tagName = null;
-        Category.ONE.tagName = null;
-        Category.TWO.tagName = null;
-        Category.THREE.tagName = null;
-        Category.FOUR.tagName = null;
-        Category.FIVE.tagName = null;
+    public static boolean isNotCategoryName(String tName) {
+        return nameMap.containsKey(tName) == false;
     }
 
-    private TagName tagName;
+    public static boolean isNotCategoryName(String tName) {
+        return nameMap.containsKey(tName) == false;
+    }
 
     private final Color color;
 
@@ -96,19 +88,4 @@ public enum Category implements Comparable<Category> {
         return displayName;
     }
 
-    /**
-     * get the TagName used to store this Category in the main autopsy db.
-     *
-     * @return the TagName used for this Category
-     */
-    public TagName getTagName() {
-        if (tagName == null) {
-            try {
-                tagName = TagUtils.getTagName(displayName);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(Category.class.getName()).log(Level.SEVERE, "failed to get TagName for " + displayName, ex);
-            }
-        }
-        return tagName;
-    }
 }
