@@ -253,6 +253,7 @@ public class TagsManager implements Closeable {
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
         }
+        return newContentTag;
     }
 
     /**
@@ -403,7 +404,6 @@ public class TagsManager implements Closeable {
             getExistingTagNames();
         }
 
-        Case.getPropertyChangeSupport().firePropertyChange(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), tag, null);
         tskCase.deleteBlackboardArtifactTag(tag);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
