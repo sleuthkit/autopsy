@@ -24,11 +24,9 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,7 +76,6 @@ final class CollaborationMonitor {
     private static final long STALE_TASKS_DETECTION_INTERVAL_MINUTES = 2;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
     private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
-    private static final SimpleDateFormat SERVICE_MSG_DATE_FORMAT = new SimpleDateFormat("MM/dd HH:mm:ss z");
     private static final Logger logger = Logger.getLogger(CollaborationMonitor.class.getName());
     private final String hostName;
     private final LocalTasksManager localTasksManager;
@@ -541,13 +538,13 @@ final class CollaborationMonitor {
                     if (!dbServerIsRunning) {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
-                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
                     }
                 }
 
@@ -557,14 +554,14 @@ final class CollaborationMonitor {
                     if (!solrServerIsRunning) {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
-                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
                     }                    
                 }
                 else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
                     }                    
                 }
                 
@@ -577,13 +574,13 @@ final class CollaborationMonitor {
                     if (!messageServerIsRunning) {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
-                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
                     }
                 }
             }
