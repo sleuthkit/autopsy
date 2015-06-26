@@ -40,6 +40,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -178,7 +179,7 @@ class SevenZipExtractor {
      * @param archiveFileItem the archive item
      * @return true if potential zip bomb, false otherwise
      */
-    private boolean isZipBombArchiveItemCheck(String archiveName, ISimpleInArchiveItem archiveFileItem) {
+    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISimpleInArchiveItem archiveFileItem) {
         try {
             final Long archiveItemSize = archiveFileItem.getSize();
 
@@ -190,19 +191,25 @@ class SevenZipExtractor {
             final Long archiveItemPackedSize = archiveFileItem.getPackedSize();
 
             if (archiveItemPackedSize == null || archiveItemPackedSize <= 0) {
-                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveName, archiveFileItem.getPath()}); //NON-NLS
+                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveFile.getName(), archiveFileItem.getPath()}); //NON-NLS
                 return false;
             }
-
+            
             int cRatio = (int) (archiveItemSize / archiveItemPackedSize);
 
             if (cRatio >= MAX_COMPRESSION_RATIO) {
                 String itemName = archiveFileItem.getPath();
                 logger.log(Level.INFO, "Possible zip bomb detected, compression ration: {0} for in archive item: {1}", new Object[]{cRatio, itemName}); //NON-NLS
                 String msg = NbBundle.getMessage(this.getClass(),
-                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveName, itemName);
+                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), itemName);
+                String path;
+                try {
+                    path = archiveFile.getUniquePath();
+                } catch (TskCoreException ex) {
+                    path = archiveFile.getParentPath() + archiveFile.getName();
+                }
                 String details = NbBundle.getMessage(this.getClass(),
-                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnDetails", cRatio);
+                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnDetails", cRatio, path);
                 //MessageNotifyUtil.Notify.error(msg, details);
                 services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
                 return true;
@@ -269,20 +276,28 @@ class SevenZipExtractor {
      * @return list of unpacked derived files
      */
     void unpack(AbstractFile archiveFile) {
+        String archiveFilePath;
+        try {
+            archiveFilePath = archiveFile.getUniquePath();
+        } catch (TskCoreException ex) {
+            archiveFilePath = archiveFile.getParentPath() + archiveFile.getName();
+        }
+        
         //check if already has derived files, skip
         try {
             if (archiveFile.hasChildren()) {
                 //check if local unpacked dir exists
                 if (new File(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", archiveFile.getName()); //NON-NLS
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", archiveFilePath); //NON-NLS
                     return;
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFile.getName()); //NON-NLS
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFilePath); //NON-NLS
             return;
         }
-
+        
+    
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
 
         //recursion depth check for zip bomb
@@ -295,7 +310,7 @@ class SevenZipExtractor {
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnMsg.zipBomb", archiveFile.getName());
             String details = NbBundle.getMessage(this.getClass(),
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnDetails.zipBomb",
-                    parentAr.getDepth());
+                    parentAr.getDepth(), archiveFilePath);
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
             return;
@@ -322,7 +337,7 @@ class SevenZipExtractor {
             inArchive = SevenZip.openInArchive(options, stream);
 
             int numItems = inArchive.getNumberOfItems();
-            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFile.getName(), numItems}); //NON-NLS
+            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFilePath, numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
 
@@ -381,7 +396,7 @@ class SevenZipExtractor {
                     }
 
                     String msg = NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
-                            archiveFile.getName(), pathInArchive);
+                            archiveFilePath, pathInArchive);
                     logger.log(Level.WARNING, msg);
 
                 }
@@ -389,7 +404,7 @@ class SevenZipExtractor {
                 logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
                 //check if possible zip bomb
-                if (isZipBombArchiveItemCheck(archiveFile.getName(), item)) {
+                if (isZipBombArchiveItemCheck(archiveFile, item)) {
                     continue; //skip the item
                 }
 
@@ -428,12 +443,12 @@ class SevenZipExtractor {
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(this.getClass(),
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
-                                archiveFile.getName(), fileName);
+                                archiveFilePath, fileName);
                         String details = NbBundle.getMessage(this.getClass(),
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new Object[]{archiveFile.getUniquePath(), fileName}); //NON-NLS
+                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new Object[]{archiveFilePath, fileName}); //NON-NLS
                         logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
                         continue; //skip this file
                     } else {
@@ -523,23 +538,17 @@ class SevenZipExtractor {
                 //TODO decide if anything to cleanup, for now bailing
             }
 
-        } catch (SevenZipException | TskCoreException ex) {
+        } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
-            String fullName;
-            try {
-                fullName = archiveFile.getUniquePath();
-            } catch (TskCoreException ex1) {
-                fullName = archiveFile.getName();
-            }
-
+           
             // print a message if the file is allocated
             if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
                 String msg = NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.msg",
                         archiveFile.getName());
                 String details = NbBundle.getMessage(this.getClass(),
                         "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.details",
-                        fullName, ex.getMessage());
+                        archiveFilePath, ex.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
             }
         } finally {
@@ -573,7 +582,7 @@ class SevenZipExtractor {
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFile, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFilePath, ex); //NON-NLS
             }
 
             String msg = NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.msg");
