@@ -114,7 +114,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             return IngestModule.ProcessResult.OK
 
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
-        if file.getName().find(".txt") != -1:
+        if file.getName().lower().endswith(".txt"):
 
             self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
