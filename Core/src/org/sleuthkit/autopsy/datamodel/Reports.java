@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -37,8 +38,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -97,7 +100,7 @@ public final class Reports implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
+                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORTS_DELETED.toString())) {
                         ReportNodeFactory.this.refresh(true);
                     }
                 }
@@ -183,6 +186,7 @@ public final class Reports implements AutopsyVisitableItem {
             List<Action> actions = new ArrayList<>();
             actions.addAll(Arrays.asList(super.getActions(true)));
             actions.add(new OpenReportAction());
+            actions.add(DeleteReportAction.getInstance());
             return actions.toArray(new Action[actions.size()]);
         }
 
@@ -191,6 +195,45 @@ public final class Reports implements AutopsyVisitableItem {
             return new OpenReportAction();
         }
 
+        private static class DeleteReportAction extends AbstractAction {
+
+            private static DeleteReportAction instance;
+
+            // This class is a singleton to support multi-selection of nodes,
+            // since org.openide.nodes.NodeOp.findActions(Node[] nodes) will
+            // only pick up an Action if every node in the array returns a
+            // reference to the same action object from Node.getActions(boolean).
+            private static DeleteReportAction getInstance() {
+                if (instance == null) {
+                    instance = new DeleteReportAction();
+                }
+                return instance;
+            }
+
+            /**
+             * Do not instantiate directly. Use
+             * DeleteReportAction.getInstance(), instead.
+             */
+            private DeleteReportAction() {
+                super(NbBundle.getMessage(DeleteReportAction.class, "DeleteReportAction.actionDisplayName"));
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Collection<? extends Report> selectedReportsCollection = Utilities.actionsGlobalContext().lookupAll(Report.class);
+                if (JOptionPane.showConfirmDialog(null,
+                        NbBundle.getMessage(DeleteReportAction.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
+                        NbBundle.getMessage(DeleteReportAction.class, "DeleteReportAction.actionPerformed.showConfirmDialog.msg", selectedReportsCollection.size()),
+                        JOptionPane.OK_CANCEL_OPTION) == 0) {
+                    try {
+                        Case.getCurrentCase().deleteReports(selectedReportsCollection);
+                        DataContentTopComponent.findInstance().repaint();
+                    } catch (TskCoreException | IllegalStateException ex) {
+                        Logger.getLogger(DeleteReportAction.class.getName()).log(Level.INFO, "Error deleting the reports. ", ex); // NON-NLS - Provide solution to the user?
+                    }
+                }
+            }
+        }
         private final class OpenReportAction extends AbstractAction {
             
             private OpenReportAction() {

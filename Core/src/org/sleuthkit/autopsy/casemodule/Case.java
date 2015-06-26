@@ -29,6 +29,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -128,7 +130,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * case. The old value supplied by the event object is null and the new
          * value is a reference to a Report object representing the new report.
          */
-        REPORT_ADDED;
+        REPORT_ADDED,
+        /**
+         * Name for the property change event when a report/s is/are deleted
+         * from the case. Both the old value and the new value supplied by the
+         * event object are null.
+         */
+        REPORTS_DELETED;
     };
 
     private String name;
@@ -1183,6 +1191,37 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
+    }
+
+    public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
+
+        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString();
+        for (Report report : reports) {
+            // traverse to the root directory of Report report.
+            String reportPath = report.getPath();
+            while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) {
+                reportPath = Paths.get(reportPath, "..").normalize().toString();
+            }
+
+            // delete from the disk.
+            try {
+                FileUtils.deleteDirectory(new File(reportPath));
+            } catch (IOException | SecurityException ex) {
+                logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
+            }
+
+            // delete from the database.
+            this.db.deleteReport(report);
+
+            // fire property change event.
+            try {
+                Case.pcs.firePropertyChange(Events.REPORTS_DELETED.toString(), null, null);
+            } catch (Exception ex) {
+                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORTS_DELETED.toString()); //NON-NLS
+                logger.log(Level.SEVERE, errorMessage, ex);
+            }
+        }
     }
 
     /**

@@ -321,6 +321,7 @@ class ReportKML implements GeneralReportModule {
                     // read the next line
                     line = reader.readLine();
                 }
+                reader.close();
                 progressPanel.increment();
                 /*
                  * Step 4: write the XML file
