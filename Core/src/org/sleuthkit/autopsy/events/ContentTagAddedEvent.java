@@ -1,13 +1,13 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -16,32 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
+package org.sleuthkit.autopsy.events;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
- *
+ * An event that is fired when a ContentTag is added.
  */
- class TreeNode {
+@Immutable
+public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> {
 
-   private  String path;
-   private DrawableGroup group;
-
-    public String getPath() {
-        return path;
+    public ContentTagAddedEvent(ContentTag newTag) {
+        super(Case.Events.CONTENT_TAG_ADDED.toString(), newTag);
     }
 
-    public DrawableGroup getGroup() {
-        return group;
-    }
-
-    public TreeNode(String path, DrawableGroup group) {
-        this.path = path;
-        this.group = group;
-    }
-
-    void setGroup(DrawableGroup g) {
-    group = g;
-    }
 }

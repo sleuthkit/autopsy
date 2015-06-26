@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,32 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
+package org.sleuthkit.autopsy.events;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 
 /**
  *
  */
- class TreeNode {
+public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> {
 
-   private  String path;
-   private DrawableGroup group;
-
-    public String getPath() {
-        return path;
-    }
-
-    public DrawableGroup getGroup() {
-        return group;
-    }
-
-    public TreeNode(String path, DrawableGroup group) {
-        this.path = path;
-        this.group = group;
-    }
-
-    void setGroup(DrawableGroup g) {
-    group = g;
+    public BlackBoardArtifactTagDeletedEvent(BlackboardArtifactTag oldValue) {
+        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), oldValue);
     }
 }
