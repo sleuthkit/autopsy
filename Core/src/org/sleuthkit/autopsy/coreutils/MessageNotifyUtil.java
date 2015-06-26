@@ -123,7 +123,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error dialog
          *
-         * @param message message to shpw
+         * @param message message to show
          */
         public static void error(String message) {
             show(message, MessageType.ERROR);

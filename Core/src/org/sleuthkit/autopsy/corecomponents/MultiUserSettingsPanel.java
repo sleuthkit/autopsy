@@ -193,7 +193,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(lbSolrSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbSolrSettings.text")); // NOI18N
 
         tbIndexingServerHost.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbIndexingServerHost.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerHost.text")); // NOI18N
         tbIndexingServerHost.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerHost.toolTipText")); // NOI18N
         tbIndexingServerHost.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -202,7 +201,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         });
 
         tbIndexingServerPort.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbIndexingServerPort.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerPort.text")); // NOI18N
         tbIndexingServerPort.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbIndexingServerPort.toolTipText")); // NOI18N
         tbIndexingServerPort.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

@@ -115,7 +115,7 @@ public final class UserPreferences {
         }
         return new CaseDbConnectionInfo(
                 preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
-                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, ""),
+                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
                 preferences.get(EXTERNAL_DATABASE_USER, ""),
                 preferences.get(EXTERNAL_DATABASE_PASSWORD, ""),
                 dbType);
@@ -138,7 +138,7 @@ public final class UserPreferences {
     }
     
     public static String getIndexingServerPort() {
-        return preferences.get(INDEXING_SERVER_PORT, "");
+        return preferences.get(INDEXING_SERVER_PORT, "8983");
     }
     
     public static void setIndexingServerPort(int port) {
@@ -166,7 +166,7 @@ public final class UserPreferences {
         return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
                 preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
-                preferences.get(MESSAGE_SERVICE_PORT, ""));
+                preferences.get(MESSAGE_SERVICE_PORT, "61616"));
     }
 
     /**
