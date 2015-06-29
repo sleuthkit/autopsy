@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -39,18 +40,16 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
@@ -151,6 +150,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
+
     protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
@@ -202,7 +202,6 @@ public class MetaDataPane extends DrawableUIBase {
         handleTagEvent(evt, this::updateUI);
     }
 
-    @Subscribe
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         handleTagEvent(evt, this::updateUI);

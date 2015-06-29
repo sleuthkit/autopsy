@@ -248,7 +248,15 @@ public class GroupManager {
 
     /**
      * 'mark' the given group as seen. This removes it from the queue of
-     * groups to review, and is persisted in the drawable db.
+     * groups
+     * files.
+     * public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
+     *
+     * Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new
+     * HashSet<Long>());
+     * }
+     * groups
+     * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */

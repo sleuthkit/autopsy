@@ -129,6 +129,7 @@ public class CategorizeAction extends AddTagAction {
             final CategoryManager categoryManager = controller.getCategoryManager();
             final DrawableTagsManager tagsManager = controller.getTagsManager();
 
+
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
                 final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);

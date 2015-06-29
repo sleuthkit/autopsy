@@ -501,6 +501,7 @@ public final class ImageGalleryController {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
+                
             }
         });
     }
@@ -516,6 +517,8 @@ public final class ImageGalleryController {
     public DrawableTagsManager getTagsManager() {
         return tagsManager;
     }
+
+   
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time

@@ -25,7 +25,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Level;
@@ -56,6 +55,8 @@ public class CategoryManager {
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     private final ImageGalleryController controller;
+
+
 
     /**
      * the DrawableDB that backs the category counts cache. The counts are
