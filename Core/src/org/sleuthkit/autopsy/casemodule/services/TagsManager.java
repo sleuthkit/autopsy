@@ -250,7 +250,7 @@ public class TagsManager implements Closeable {
         final ContentTag newContentTag = tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
             Case.getCurrentCase().notifyContentTagAdded(newContentTag);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalStateException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
         }
         return newContentTag;
