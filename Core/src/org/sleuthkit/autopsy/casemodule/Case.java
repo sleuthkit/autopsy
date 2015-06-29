@@ -1193,6 +1193,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
         return this.db.getAllReports();
     }
 
+    /**
+     * Deletes reports from the case - deletes it from the disk as well as the
+     * database.
+     * @param reports Collection of Report to be deleted from the case.
+     * @throws TskCoreException
+     */
     public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
 
         String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString();
