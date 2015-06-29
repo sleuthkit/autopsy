@@ -312,6 +312,24 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets a content tag by tag id.
+     *
+     * @param tagID The tag id of interest.
+     *
+     * @return the content tag with the specified tag id.
+     *
+     * @throws TskCoreException
+     */
+    public synchronized ContentTag getContentTagByTagID(long tagID) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+
+        return tskCase.getContentTagByID(tagID);
+    }
+
+    /**
      * Gets content tags by tag name.
      *
      * @param tagName The tag name of interest.
@@ -445,6 +463,24 @@ public class TagsManager implements Closeable {
         }
 
         return tskCase.getBlackboardArtifactTagsCountByTagName(tagName);
+    }
+
+    /**
+     * Gets a blackboard artifact tag by tag id.
+     *
+     * @param tagID The tag id of interest.
+     *
+     * @return the blackboard artifact tag with the specified tag id.
+     *
+     * @throws TskCoreException
+     */
+    public synchronized BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagID) throws TskCoreException {
+        // @@@ This is a work around to be removed when database access on the EDT is correctly synchronized.
+        if (!tagNamesInitialized) {
+            getExistingTagNames();
+        }
+
+        return tskCase.getBlackboardArtifactTagByID(tagID);
     }
 
     /**
