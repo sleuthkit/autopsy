@@ -79,7 +79,7 @@ public final class Logger extends java.util.logging.Logger {
                                             + record.getSourceMethodName() + "\n"
                                             + record.getLevel() + ": "
                                             + this.formatMessage(record) + "\n"
-                                            + record.getThrown().toString() + ": "
+                                            + record.getThrown().toString() + ":\n"
                                             + StackTrace
                                             + "\n";
                                 } else {

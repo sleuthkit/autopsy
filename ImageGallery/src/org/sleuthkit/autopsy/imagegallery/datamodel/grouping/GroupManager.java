@@ -36,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -44,6 +45,12 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
+import static javafx.concurrent.Worker.State.CANCELLED;
+import static javafx.concurrent.Worker.State.FAILED;
+import static javafx.concurrent.Worker.State.READY;
+import static javafx.concurrent.Worker.State.RUNNING;
+import static javafx.concurrent.Worker.State.SCHEDULED;
+import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -56,7 +63,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
@@ -249,6 +255,7 @@ public class GroupManager {
      */
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
+
         db.markGroupSeen(group.getGroupKey(), seen);
         group.setSeen(seen);
         if (seen) {
@@ -284,15 +291,15 @@ public class GroupManager {
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                         }
+
                     });
                 }
+            } else { //group == null
+                // It may be that this was the last unanalyzed file in the group, so test
+                // whether the group is now fully analyzed.
+                popuplateIfAnalyzed(groupKey, null);
             }
-        } else { //group == null
-            // It may be that this was the last unanalyzed file in the group, so test
-            // whether the group is now fully analyzed.
-            popuplateIfAnalyzed(groupKey, null);
         }
-
         return group;
     }
 
