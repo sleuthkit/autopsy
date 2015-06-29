@@ -248,8 +248,7 @@ public class GroupManager {
 
     /**
      * 'mark' the given group as seen. This removes it from the queue of
-     * groups
-     * to review, and is persisted in the drawable db.
+     * groups to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
