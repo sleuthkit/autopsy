@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import com.google.common.eventbus.Subscribe;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,7 +56,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -66,7 +63,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -74,8 +70,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
@@ -300,59 +294,6 @@ public class GroupManager {
             }
         }
         return group;
-    }
-
-    /**
-     * the implementation of this should be moved to DrawableDB
-     *
-     * @param hashDbName
-     *
-     * @return
-     *
-     * @deprecated
-     */
-    @Deprecated
-    private List<Long> getFileIDsWithHashSetName(String hashDbName) {
-        List<Long> files = new ArrayList<>();
-        try {
-
-            final SleuthkitCase sleuthkitCase = ImageGalleryController.getDefault().getSleuthKitCase();
-            String query = "SELECT obj_id FROM blackboard_attributes,blackboard_artifacts WHERE "
-                    + "attribute_type_id=" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
-                    + " AND blackboard_attributes.value_text='" + hashDbName + "'"
-                    + " AND blackboard_artifacts.artifact_type_id=" + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-
-            ResultSet rs = null;
-            try {
-                rs = sleuthkitCase.runQuery(query);
-                while (rs.next()) {
-                    long id = rs.getLong("obj_id");
-                    try {
-                        if (ImageGalleryModule.isDrawableAndNotKnown(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id))) {
-                            files.add(id);
-                        }
-                    } catch (TskCoreException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-            } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            } finally {
-                if (rs != null) {
-                    try {
-                        Case.getCurrentCase().getSleuthkitCase().closeRunQuery(rs);
-                    } catch (SQLException ex) {
-                        LOGGER.log(Level.WARNING, "Error closing result set after getting hashset hits", ex);
-                    }
-                }
-            }
-
-            return files;
-        } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Can't get the current case; there is no case open!", ex);
-            return files;
-        }
     }
 
     /**

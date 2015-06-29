@@ -27,19 +27,24 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.imagegallery.FileTypeIcons;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
+
+    private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png");
 
     VideoFile(T file, Boolean analyzed) {
         super(file, analyzed);
     }
 
+    public static Image getGenericVideoThumbnail() {
+        return VIDEO_ICON;
+    }
+
     @Override
     public Image getThumbnail() {
         //TODO: implement video thumbnailing here?
-        return FileTypeIcons.getGenericVideoThumbnail();
+        return getGenericVideoThumbnail();
     }
 
     SoftReference<Media> mediaRef;

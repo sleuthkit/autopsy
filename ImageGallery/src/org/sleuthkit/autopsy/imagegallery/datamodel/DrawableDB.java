@@ -46,8 +46,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -1199,7 +1199,7 @@ public final class DrawableDB {
     private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
 
     public boolean isVideoFile(AbstractFile f) {
-        return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
+        return videoFileMap.computeIfAbsent(f, FileTypeUtils::isVideoFile);
     }
 
     /**

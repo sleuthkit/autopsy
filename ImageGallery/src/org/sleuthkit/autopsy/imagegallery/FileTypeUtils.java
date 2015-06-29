@@ -1,0 +1,161 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.imagegallery;
+
+import com.google.common.collect.Sets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.imageio.ImageIO;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ *
+ */
+public enum FileTypeUtils {
+
+    instance;
+
+    private static final Set<String> supportedMimeTypes = new HashSet<>();
+
+    public static Set<String> getAllSupportedMimeTypes() {
+        return Collections.unmodifiableSet(supportedMimeTypes);
+    }
+    private static final Set<String> imageExtensions = new HashSet<>();
+    static final Set<String> videoExtensions = new HashSet<>();
+    static final Set<String> supportedExtensions;
+
+    static {
+        imageExtensions.addAll(Stream.of(ImageIO.getReaderFileSuffixes())
+                .map(String::toLowerCase)
+                .collect(Collectors.toList()));
+        imageExtensions.addAll(Arrays.asList("bmp", "gif", "jpg", "jpeg",
+                "png", "tga", "psd", "tif", "tiff", "yuv", "ico", "ai", "svg"));
+
+        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v",
+                "mp4", "mov", "mpeg", "mpg", "mpe", "mp4", "rm", "wmv",
+                "mpv", "flv", "swf"));
+
+        supportedExtensions = Sets.union(imageExtensions, videoExtensions);
+
+        supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
+                .map(String::toLowerCase)
+                .collect(Collectors.toList()));
+
+        supportedMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
+    }
+
+    private static FileTypeDetector FILE_TYPE_DETECTOR;
+
+    private static final Logger LOGGER = Logger.getLogger(FileTypeUtils.class.getName());
+
+    static Set<String> getAllSupportedExtensions() {
+        return Collections.unmodifiableSet(supportedExtensions);
+    }
+
+    static synchronized FileTypeDetector getFileTypeDetector() {
+        if (isNull(FILE_TYPE_DETECTOR)) {
+            try {
+                FILE_TYPE_DETECTOR = new FileTypeDetector();
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to initialize File Type Detector, will fall back on extensions in some situations.", ex);
+            }
+        }
+        return FILE_TYPE_DETECTOR;
+    }
+
+    /** is the given file supported by image analyzer? ie, does it have a
+     * supported mime type (image/*, or video/*). if no mime type is found, does
+     * it have a supported extension or a jpeg/png header?
+     *
+     * @param file
+     *
+     * @return true if this file is supported or false if not
+     */
+    public static Boolean isDrawable(AbstractFile file) {
+        return hasDrawableMimeType(file).orElseGet(() -> {
+            return FileTypeUtils.supportedExtensions.contains(file.getNameExtension())
+                    || ImageUtils.isJpegFileHeader(file)
+                    || ImageUtils.isPngFileHeader(file);
+        });
+    }
+
+    /**
+     *
+     *
+     * @param file
+     *
+     * @return an Optional containg:
+     *         True if the file has an image or video mime type.
+     *         False if a non image/video mimetype.
+     *         null empty Optional if a mimetype could not be detected.
+     */
+    static Optional<Boolean> hasDrawableMimeType(AbstractFile file) {
+        try {
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String mimeType = fileTypeDetector.getFileType(file);
+                if (isNull(mimeType)) {
+                    return Optional.empty();
+                } else {
+                    mimeType = mimeType.toLowerCase();
+                    return Optional.of(mimeType.startsWith("image/")
+                            || mimeType.startsWith("video/")
+                            || supportedMimeTypes.contains(mimeType));
+                }
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
+        }
+        return Optional.empty();
+    }
+
+    /** @param file
+     *
+     * @return true if the given file has a video mime type (video/*,
+     *         application/x-shockwave-flash, etc) or, if no mimetype is
+     *         available, a video extension.
+     */
+    public static boolean isVideoFile(AbstractFile file) {
+        try {
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String mimeType = fileTypeDetector.getFileType(file);
+                if (nonNull(mimeType)) {
+                    mimeType = mimeType.toLowerCase();
+                    return mimeType.startsWith("video/") || supportedMimeTypes.contains(mimeType);
+                }
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
+        }
+        return FileTypeUtils.videoExtensions.contains(file.getNameExtension());
+    }
+}

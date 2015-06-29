@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -62,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
+        if (FileTypeUtils.isVideoFile(abstractFileById)) {
             return new VideoFile<>(abstractFileById, analyzed);
         } else {
             return new ImageFile<>(abstractFileById, analyzed);
@@ -83,7 +84,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
 
         AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
+        if (FileTypeUtils.isVideoFile(abstractFileById)) {
             return new VideoFile<>(abstractFileById, analyzed);
         } else {
             return new ImageFile<>(abstractFileById, analyzed);
