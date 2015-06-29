@@ -6,13 +6,18 @@
 package org.sleuthkit.autopsy.events;
 
 import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 abstract public class TagEvent<T extends Tag> extends AutopsyEvent {
 
-    public TagEvent(Object source, String propertyName, Object oldValue, Object newValue) {
+    abstract Long getTagID();
+
+    abstract T getTagByID(long id) throws IllegalStateException, TskCoreException;
+
+    public TagEvent(Object source, String propertyName, T oldValue, T newValue) {
         super(propertyName, oldValue, newValue);
     }
 

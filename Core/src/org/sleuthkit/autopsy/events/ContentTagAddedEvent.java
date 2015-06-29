@@ -18,18 +18,25 @@
  */
 package org.sleuthkit.autopsy.events;
 
+import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An event that is fired when a ContentTag is added.
  */
 @Immutable
-public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> {
+public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements Serializable{
+
+    private static final long serialVersionUID = 1L;
 
     public ContentTagAddedEvent(ContentTag newTag) {
         super(Case.Events.CONTENT_TAG_ADDED.toString(), newTag);
     }
 
+    ContentTag getTagByID(long id) throws IllegalStateException, TskCoreException {
+        return Case.getCurrentCase().getServices().getTagsManager().getContentTagByTagID(id);
+    }
 }

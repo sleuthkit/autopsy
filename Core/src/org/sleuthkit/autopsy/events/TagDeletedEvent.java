@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.events;
 
+import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Base Class for events that are fired when a Tag is deleted
@@ -28,8 +31,18 @@ import org.sleuthkit.datamodel.Tag;
 @Immutable
 abstract class TagDeletedEvent<T extends Tag> extends TagEvent<T> {
 
+    private static final Logger LOGGER = Logger.getLogger(TagDeletedEvent.class.getName());
+    private transient T tag;
+    private final Long tagID;
+
+    @Override
+    Long getTagID() {
+        return tagID;
+    }
+
     protected TagDeletedEvent(String propertyName, T oldValue) {
         super(Case.class, propertyName, oldValue, null);
+
     }
 
     /**
@@ -42,4 +55,28 @@ abstract class TagDeletedEvent<T extends Tag> extends TagEvent<T> {
     public T getTag() {
         return (T) getOldValue();
     }
+
+    @Override
+    public Object getOldValue() {
+        /**
+         * The dataSource field is set in the constructor, but it is transient
+         * so it will become null when the event is serialized for publication
+         * over a network. Doing a lazy load of the Content object bypasses the
+         * issues related to the serialization and de-serialization of Content
+         * objects and may also save database round trips from other nodes since
+         * subscribers to this event are often not interested in the event data.
+         */
+        if (null != tag) {
+            return tag;
+        }
+        try {
+            long id = tagID;
+            tag = getTagByID(id);
+            return tag;
+        } catch (IllegalStateException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            return null;
+        }
+    }
+
 }

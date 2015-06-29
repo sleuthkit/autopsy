@@ -18,15 +18,24 @@
  */
 package org.sleuthkit.autopsy.events;
 
+import java.io.Serializable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> {
+public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public BlackBoardArtifactTagDeletedEvent(BlackboardArtifactTag oldValue) {
         super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), oldValue);
+    }
+
+    @Override
+    BlackboardArtifactTag getTagByID(long tagID) throws IllegalStateException, TskCoreException {
+        return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(tagID);
     }
 }
