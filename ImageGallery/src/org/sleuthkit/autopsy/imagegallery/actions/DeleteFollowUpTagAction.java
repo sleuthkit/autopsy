@@ -24,9 +24,9 @@ import javafx.event.ActionEvent;
 import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,7 +49,7 @@ public class DeleteFollowUpTagAction extends Action {
 
                     try {
                         final TagName followUpTagName = tagsManager.getFollowUpTagName();
-                    
+
                         List<ContentTag> contentTagsByContent = tagsManager.getContentTagsByContent(file);
                         for (ContentTag ct : contentTagsByContent) {
                             if (ct.getName().getDisplayName().equals(followUpTagName.getDisplayName())) {
