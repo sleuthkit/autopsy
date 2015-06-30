@@ -104,7 +104,6 @@ abstract class AddTagAction {
                     TagName tagName = GetTagNameDialog.doDialog();
                     if (tagName != null) {
                         addTag(tagName, NO_COMMENT);
-                 
                     }
                 });
             });
@@ -124,7 +123,6 @@ abstract class AddTagAction {
                         } else {
                             new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
-                      
                     }
                 });
             });
