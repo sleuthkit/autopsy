@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.events;
 
 import java.util.logging.Level;
-import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -28,21 +26,22 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base Class for events that are fired when a Tag is added
  */
-@Immutable
-abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
+abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(TagAddedEvent.class.getName());
+
     private transient T tag;
     private final Long tagID;
 
-    @Override
-    Long getTagID() {
-        return tagID;
+    TagAddedEvent(String propertyName, T addedTag) {
+        super(propertyName, null, addedTag);
+        tag = addedTag;
+        tagID = addedTag.getId();
     }
 
-    protected TagAddedEvent(String propertyName, T newValue) {
-        super(Case.class, propertyName, null, newValue);
-        tagID = newValue.getId();
+    Long getTagID() {
+        return tagID;
     }
 
     /**
@@ -50,14 +49,12 @@ abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
      *
      * @return the tTag
      */
-    @SuppressWarnings("unchecked")
-    @Override
-    public T getTag() {
-        return (T) getNewValue();
+    public T getAddedTag() {
+        return getNewValue();
     }
 
     @Override
-    public Object getNewValue() {
+    public T getNewValue() {
         /**
          * The dataSource field is set in the constructor, but it is transient
          * so it will become null when the event is serialized for publication
@@ -70,8 +67,7 @@ abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
             return tag;
         }
         try {
-            long id = tagID;
-            tag = getTagByID(id);
+            tag = getTagByID(tagID);
             return tag;
         } catch (IllegalStateException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
@@ -79,4 +75,5 @@ abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
         }
     }
 
+    abstract T getTagByID(long id) throws IllegalStateException, TskCoreException;
 }

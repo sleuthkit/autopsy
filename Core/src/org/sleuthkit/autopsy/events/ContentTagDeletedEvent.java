@@ -22,21 +22,51 @@ import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An event that is fired when a ContentTag is deleted.
  */
 @Immutable
-public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> implements Serializable {
+public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> {
 
     private static final long serialVersionUID = 1L;
 
     public ContentTagDeletedEvent(ContentTag deletedTag) {
-        super(Case.Events.CONTENT_TAG_DELETED.toString(), deletedTag);
+        super(Case.Events.CONTENT_TAG_DELETED.toString(), new DeletedContentTagInfo(deletedTag));
     }
 
-    ContentTag getTagByID(long id) throws IllegalStateException, TskCoreException {
-        return Case.getCurrentCase().getServices().getTagsManager().getContentTagByTagID(id);
+    @Override
+    public DeletedContentTagInfo getDeletedTagInfo() {
+        return (DeletedContentTagInfo) getOldValue();
+    }
+
+    @Immutable
+    public static class DeletedContentTagInfo extends DeletedTagInfo<ContentTag> implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private final long contentID;
+        private final long beginByteOffset;
+        private final long endByteOffset;
+
+        private DeletedContentTagInfo(ContentTag deletedTag) {
+            super(deletedTag);
+            beginByteOffset = deletedTag.getBeginByteOffset();
+            endByteOffset = deletedTag.getEndByteOffset();
+            contentID = deletedTag.getContent().getId();
+
+        }
+
+        public long getContentID() {
+            return contentID;
+        }
+
+        public long getBeginByteOffset() {
+            return beginByteOffset;
+        }
+
+        public long getEndByteOffset() {
+            return endByteOffset;
+        }
     }
 }

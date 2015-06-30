@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
-
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
 import java.util.Arrays;
@@ -46,12 +45,10 @@ import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -86,7 +83,7 @@ public class MetaDataPane extends DrawableUIBase {
             fxmlLoader.load();
         } catch (IOException exception) {
             throw new RuntimeException(exception);
-        
+
         }
     }
 
@@ -150,7 +147,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
     }
 
-@Override
+    @Override
     protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
@@ -199,28 +196,20 @@ public class MetaDataPane extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        handleTagEvent(evt, this::updateUI);
-    }
-
-    @Override
-    public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        handleTagEvent(evt, this::updateUI);
-    }
-
-    /**
-     *
-     * @param tagFileID the value of tagEvent
-     * @param runnable  the value of runnable
-     */
-    void handleTagEvent(TagEvent<ContentTag> tagEvent, final Runnable runnable) {
-        getFileID().ifPresent(fileID -> {
-            if (Objects.equals(tagEvent.getTag().getContent().getId(), fileID)) {
-                runnable.run();
+        getFileID().ifPresent((fileID) -> {
+            if (Objects.equals(evt.getAddedTag().getContent().getId(), fileID)) {
+                updateUI();
             }
         });
     }
 
- 
+    @Override
+    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+        getFileID().ifPresent((fileID) -> {
+            if (Objects.equals(evt.getDeletedTagInfo().getContentID(), fileID)) {
+                updateUI();
+            }
+        });
+    }
 
- 
 }

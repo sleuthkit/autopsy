@@ -19,23 +19,48 @@
 package org.sleuthkit.autopsy.events;
 
 import java.io.Serializable;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> implements Serializable {
+@Immutable
+public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> {
 
     private static final long serialVersionUID = 1L;
 
-    public BlackBoardArtifactTagDeletedEvent(BlackboardArtifactTag oldValue) {
-        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), oldValue);
+    public BlackBoardArtifactTagDeletedEvent(BlackboardArtifactTag deletedTag) {
+        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), new DeletedBlackboardArtifactTagInfo(deletedTag));
     }
 
     @Override
-    BlackboardArtifactTag getTagByID(long tagID) throws IllegalStateException, TskCoreException {
-        return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(tagID);
+    public DeletedBlackboardArtifactTagInfo getDeletedTagInfo() {
+        return (DeletedBlackboardArtifactTagInfo) getOldValue();
+    }
+
+    @Immutable
+    public static class DeletedBlackboardArtifactTagInfo extends DeletedTagInfo<BlackboardArtifactTag> implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private final long contentID;
+
+        private final long artifactID;
+
+        private DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
+            super(deletedTag);
+            artifactID = deletedTag.getArtifact().getArtifactID();
+            contentID = deletedTag.getContent().getId();
+        }
+
+        public long getContentID() {
+            return contentID;
+        }
+
+        public long getArtifactID() {
+            return artifactID;
+        }
     }
 }

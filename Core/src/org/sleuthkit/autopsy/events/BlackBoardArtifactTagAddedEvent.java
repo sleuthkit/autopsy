@@ -18,26 +18,22 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import java.io.Serializable;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArtifactTag> implements Serializable {
+@Immutable
+public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArtifactTag> {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(ContentTagAddedEvent.class.getName());
-
-    private transient BlackboardArtifactTag tag;
     private final long tagID;
 
     public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag) {
-        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag
-        );
+        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag);
         tagID = newTag.getId();
     }
 
@@ -45,5 +41,4 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
     BlackboardArtifactTag getTagByID(long id) throws IllegalStateException, TskCoreException {
         return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(tagID);
     }
-
 }

@@ -18,65 +18,56 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import java.util.logging.Level;
+import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Tag;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Base Class for events that are fired when a Tag is deleted
  */
 @Immutable
-abstract class TagDeletedEvent<T extends Tag> extends TagEvent<T> {
+abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent {
 
-    private static final Logger LOGGER = Logger.getLogger(TagDeletedEvent.class.getName());
-    private transient T tag;
-    private final Long tagID;
+    private static final long serialVersionUID = 1L;
 
-    @Override
-    Long getTagID() {
-        return tagID;
-    }
-
-    protected TagDeletedEvent(String propertyName, T oldValue) {
-        super(Case.class, propertyName, oldValue, null);
-
+    TagDeletedEvent(String propertyName, DeletedTagInfo<T> deletedTagInfo) {
+        super(propertyName, deletedTagInfo, null);
     }
 
     /**
-     * get the Tag that was deleted
+     * get info about the Tag that was deleted
      *
      * @return the Tag
      */
     @SuppressWarnings("unchecked")
-    @Override
-    public T getTag() {
-        return (T) getOldValue();
-    }
+    abstract public DeletedTagInfo<T> getDeletedTagInfo();
 
-    @Override
-    public Object getOldValue() {
-        /**
-         * The dataSource field is set in the constructor, but it is transient
-         * so it will become null when the event is serialized for publication
-         * over a network. Doing a lazy load of the Content object bypasses the
-         * issues related to the serialization and de-serialization of Content
-         * objects and may also save database round trips from other nodes since
-         * subscribers to this event are often not interested in the event data.
-         */
-        if (null != tag) {
-            return tag;
+    @Immutable
+    abstract static class DeletedTagInfo<T extends Tag> implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String comment;
+        private final long tagID;
+        private final TagName name;
+
+        DeletedTagInfo(T deletedTag) {
+            comment = deletedTag.getComment();
+            tagID = deletedTag.getId();
+            name = deletedTag.getName();
         }
-        try {
-            long id = tagID;
-            tag = getTagByID(id);
-            return tag;
-        } catch (IllegalStateException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
-            return null;
+
+        public String getComment() {
+            return comment;
+        }
+
+        public long getTagID() {
+            return tagID;
+        }
+
+        public TagName getName() {
+            return name;
         }
     }
-
 }

@@ -56,8 +56,6 @@ public class CategoryManager {
 
     private final ImageGalleryController controller;
 
-
-
     /**
      * the DrawableDB that backs the category counts cache. The counts are
      * initialized from this, and the counting of CAT-0 is always delegated to
@@ -234,7 +232,7 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
-        final ContentTag addedTag = event.getTag();
+        final ContentTag addedTag = event.getAddedTag();
         if (isCategoryTagName(addedTag.getName())) {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             try {
@@ -263,14 +261,15 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
-        ContentTag deleted = event.getTag();
-        if (isCategoryTagName(deleted.getName())) {
+        final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+        TagName tagName = deletedTagInfo.getName();
+        if (isCategoryTagName(tagName)) {
 
-            Category deletedCat = CategoryManager.categoryFromTagName(deleted.getName());
+            Category deletedCat = CategoryManager.categoryFromTagName(tagName);
             if (deletedCat != Category.ZERO) {
                 decrementCategoryCount(deletedCat);
             }
-            fireChange(Collections.singleton(deleted.getContent().getId()), null);
+            fireChange(Collections.singleton(deletedTagInfo.getContentID()), null);
         }
     }
 

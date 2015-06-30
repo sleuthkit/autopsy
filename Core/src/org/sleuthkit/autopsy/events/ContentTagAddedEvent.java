@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.events;
 
-import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.ContentTag;
@@ -28,7 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An event that is fired when a ContentTag is added.
  */
 @Immutable
-public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements Serializable{
+public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> {
 
     private static final long serialVersionUID = 1L;
 
