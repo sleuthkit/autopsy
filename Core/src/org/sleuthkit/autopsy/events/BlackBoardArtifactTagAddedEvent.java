@@ -24,21 +24,27 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Event sent when a black board artifact tag is added.
  */
 @Immutable
 public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArtifactTag> {
 
     private static final long serialVersionUID = 1L;
-    private final long tagID;
 
     public BlackBoardArtifactTagAddedEvent(BlackboardArtifactTag newTag) {
         super(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(), newTag);
-        tagID = newTag.getId();
     }
 
+    /**
+     * get the BlackboardArtifactTag that was added by its id
+     *
+     * @return BlackboardArtifactTag that was added
+     *
+     * @throws IllegalStateException
+     * @throws TskCoreException
+     */
     @Override
-    BlackboardArtifactTag getTagByID(long id) throws IllegalStateException, TskCoreException {
-        return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(tagID);
+    BlackboardArtifactTag getTagByID() throws IllegalStateException, TskCoreException {
+        return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
     }
 }

@@ -31,7 +31,15 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(TagAddedEvent.class.getName());
 
+    /**
+     * The tag that was added. This will be lost during serialization and
+     * re-loaded from the database in getNewValue()
+     */
     private transient T tag;
+    /**
+     * The id of the tag that was added. This will bu used to re-load the
+     * transient tag from the database.
+     */
     private final Long tagID;
 
     TagAddedEvent(String propertyName, T addedTag) {
@@ -40,6 +48,11 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
         tagID = addedTag.getId();
     }
 
+    /**
+     * get the id of the Tag that was added
+     *
+     * @return the id of the Tag that was added
+     */
     Long getTagID() {
         return tagID;
     }
@@ -56,10 +69,10 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
     @Override
     public T getNewValue() {
         /**
-         * The dataSource field is set in the constructor, but it is transient
+         * The tag field is set in the constructor, but it is transient
          * so it will become null when the event is serialized for publication
-         * over a network. Doing a lazy load of the Content object bypasses the
-         * issues related to the serialization and de-serialization of Content
+         * over a network. Doing a lazy load of the Tag object bypasses the
+         * issues related to the serialization and de-serialization of Tag
          * objects and may also save database round trips from other nodes since
          * subscribers to this event are often not interested in the event data.
          */
@@ -67,7 +80,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
             return tag;
         }
         try {
-            tag = getTagByID(tagID);
+            tag = getTagByID();
             return tag;
         } catch (IllegalStateException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
@@ -75,5 +88,16 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
         }
     }
 
-    abstract T getTagByID(long id) throws IllegalStateException, TskCoreException;
+    /**
+     * implementors should override this to lookup the appropriate kind of tag
+     * (Content/BlackBoardArtifact) during the lazy load of the transient tag
+     * field
+     *
+     *
+     * @return the Tag based on the saved tag id
+     *
+     * @throws IllegalStateException
+     * @throws TskCoreException
+     */
+    abstract T getTagByID() throws IllegalStateException, TskCoreException;
 }

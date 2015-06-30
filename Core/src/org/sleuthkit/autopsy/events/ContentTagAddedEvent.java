@@ -35,7 +35,15 @@ public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> {
         super(Case.Events.CONTENT_TAG_ADDED.toString(), newTag);
     }
 
-    ContentTag getTagByID(long id) throws IllegalStateException, TskCoreException {
-        return Case.getCurrentCase().getServices().getTagsManager().getContentTagByTagID(id);
+    /**
+     * get the ContentTag that was added by its id
+     *
+     * @return ContentTag that was added
+     *
+     * @throws IllegalStateException
+     * @throws TskCoreException
+     */
+    ContentTag getTagByID() throws IllegalStateException, TskCoreException {
+        return Case.getCurrentCase().getServices().getTagsManager().getContentTagByTagID(getTagID());
     }
 }

@@ -36,13 +36,24 @@ abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent {
     }
 
     /**
-     * get info about the Tag that was deleted
+     * get info about the Tag that was deleted.
      *
-     * @return the Tag
+     * Since we don't serialize the deleted tag, and we can't look it up by id
+     * after it is deleted, we send this info to represent it.
+     *
+     * @return info about the Tag that was deleted.
      */
     @SuppressWarnings("unchecked")
     abstract public DeletedTagInfo<T> getDeletedTagInfo();
 
+    /**
+     * Base Class for info about a deleted tag. This is sent as the old value in
+     * the event, since we are not serializing the Tag it self, and we can't
+     * look it up by id, like we do for added tags, because it doesn't exist
+     * in the db any more.
+     *
+     * @param <T> the subtype of Tag, BlackBoardArtifactTag or ContentTag
+     */
     @Immutable
     abstract static class DeletedTagInfo<T extends Tag> implements Serializable {
 
@@ -57,6 +68,8 @@ abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent {
             tagID = deletedTag.getId();
             name = deletedTag.getName();
         }
+
+        abstract public long getContentID();
 
         public String getComment() {
             return comment;

@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 
 /**
- *
+ * Event that is fired when a black board artifact tag is deleted.
  */
 @Immutable
 public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> {
@@ -35,11 +35,20 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
         super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), new DeletedBlackboardArtifactTagInfo(deletedTag));
     }
 
+    /**
+     * {@inheritDoc }
+     *
+     * @return the DeletedBlackboardArtifactTagInfo for the deleted tag
+     */
     @Override
     public DeletedBlackboardArtifactTagInfo getDeletedTagInfo() {
         return (DeletedBlackboardArtifactTagInfo) getOldValue();
     }
 
+    /**
+     * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
+     * includes artifact related info.
+     */
     @Immutable
     public static class DeletedBlackboardArtifactTagInfo extends DeletedTagInfo<BlackboardArtifactTag> implements Serializable {
 
@@ -55,6 +64,7 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
             contentID = deletedTag.getContent().getId();
         }
 
+        @Override
         public long getContentID() {
             return contentID;
         }

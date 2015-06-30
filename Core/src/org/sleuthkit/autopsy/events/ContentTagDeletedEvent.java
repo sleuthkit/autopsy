@@ -35,11 +35,20 @@ public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> {
         super(Case.Events.CONTENT_TAG_DELETED.toString(), new DeletedContentTagInfo(deletedTag));
     }
 
+    /**
+     * {@inheritDoc }
+     *
+     * @return the DeletedContentTagInfo for the deleted tag
+     */
     @Override
     public DeletedContentTagInfo getDeletedTagInfo() {
         return (DeletedContentTagInfo) getOldValue();
     }
 
+    /**
+     * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
+     * includes byte offset related info.
+     */
     @Immutable
     public static class DeletedContentTagInfo extends DeletedTagInfo<ContentTag> implements Serializable {
 
@@ -57,6 +66,7 @@ public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> {
 
         }
 
+        @Override
         public long getContentID() {
             return contentID;
         }
