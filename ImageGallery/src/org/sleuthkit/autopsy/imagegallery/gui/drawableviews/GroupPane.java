@@ -115,7 +115,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -360,7 +359,7 @@ public class GroupPane extends BorderPane {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
                 for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
-                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, grpTagSplitMenu, controller);
+                    MenuItem menuItem = createGrpTagMenuItem(tn);
                     selTagMenues.add(menuItem);
                 }
                 grpTagSplitMenu.getItems().setAll(selTagMenues);
