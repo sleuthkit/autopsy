@@ -116,12 +116,7 @@ public final class IngestJob {
          * startup is going to fail, it will likely fail for the first child
          * data source ingest job.
          */
-        if (errors.isEmpty()) {
-            IngestManager ingestManager = IngestManager.getInstance();
-            this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
-                ingestManager.fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
-            });
-        } else {
+        if(! errors.isEmpty()) {
             this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
                 dataSourceJob.cancel();
             });
@@ -172,7 +167,6 @@ public final class IngestJob {
         IngestManager ingestManager = IngestManager.getInstance();
         this.dataSourceJobs.values().stream().forEach((job) -> {
             job.cancel();
-            ingestManager.fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
         });
         this.cancelled = true;
     }

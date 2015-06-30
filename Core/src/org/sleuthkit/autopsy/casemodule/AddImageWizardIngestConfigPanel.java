@@ -222,14 +222,14 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     private void startDataSourceProcessing(WizardDescriptor settings) {
         
-       
+        final UUID dataSourceId = UUID.randomUUID();
        
         // Add a cleanup task to interrupt the background process if the
         // wizard exits while the background process is running.
         cleanupTask = addImageAction.new CleanupTask() {
             @Override
             void cleanup() throws Exception {
-                cancelDataSourceProcessing();
+                cancelDataSourceProcessing(dataSourceId);
             }
         };
         
@@ -238,7 +238,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
          // get the selected DSProcessor
         dsProcessor =  dataSourcePanel.getComponent().getCurrentDSProcessor();
         
-        final UUID dataSourceId = UUID.randomUUID();
         Case.getCurrentCase().notifyAddingNewDataSource(dataSourceId);
         DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback () {
             @Override
@@ -258,7 +257,8 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     /*
      * Cancels the data source processing - in case the users presses 'Cancel'
      */
-    private void cancelDataSourceProcessing() {
+    private void cancelDataSourceProcessing(UUID dataSourceId) {
+        Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
          dsProcessor.cancel();
     }
     
