@@ -19,18 +19,24 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
-import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -73,14 +79,32 @@ public class AddDrawableTagAction extends AddTagAction {
             protected Void doInBackground() throws Exception {
                 for (Long fileID : selectedFiles) {
                     try {
-                        DrawableFile<?> file = controller.getFileFromId(fileID);
+                        final DrawableFile<?> file = controller.getFileFromId(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment});
-                        controller.getTagsManager().addContentTag(file, tagName, comment);
-                    } catch (IllegalStateException ex) {
-                        LOGGER.log(Level.SEVERE, "Case was closed out from underneath Updatefile task", ex);
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error tagging result", ex);
-                        JOptionPane.showMessageDialog(null, "Unable to tag " + fileID + ".", "Tagging Error", JOptionPane.ERROR_MESSAGE);
+
+                        // check if the same tag is being added for the same abstract file.
+                        DrawableTagsManager tagsManager = controller.getTagsManager();
+                        List<ContentTag> contentTags = tagsManager.getContentTagsByContent(file);
+                        Optional<TagName> duplicateTagName = contentTags.stream()
+                                .map(ContentTag::getName)
+                                .filter(tagName::equals)
+                                .findAny();
+
+                        if (duplicateTagName.isPresent()) {
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.WARNING, "Unable to tag " + file.getName() + ". It has already been tagged as \"" + tagName.getDisplayName() + ". Cannot reapply the same tag.", ButtonType.OK);
+                                alert.setHeaderText("Tag Error");
+                                alert.show();
+                            });
+                        } else {
+                            controller.getTagsManager().addContentTag(file, tagName, comment);
+                        }
+
+                    } catch (TskCoreException tskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Error tagging result", tskCoreException);
+                        Platform.runLater(() -> {
+                            new Alert(Alert.AlertType.ERROR, "Unable to file " + fileID + ".").show();
+                        });
                     }
                 }
                 return null;
