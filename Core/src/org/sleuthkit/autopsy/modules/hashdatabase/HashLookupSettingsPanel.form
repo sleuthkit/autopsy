@@ -91,14 +91,21 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="hashDatabasesLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Component id="createDatabaseButton" min="-2" pref="137" max="-2" attributes="0"/>
-                                      <EmptySpace max="32767" attributes="0"/>
-                                      <Component id="importDatabaseButton" min="-2" pref="133" max="-2" attributes="0"/>
-                                  </Group>
+                              <Group type="103" groupAlignment="1" attributes="0">
                                   <Component id="jScrollPane1" min="-2" pref="275" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="1" attributes="0">
+                                      <Component id="createDatabaseButton" min="-2" pref="137" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                          <Component id="deleteDatabaseButton" pref="0" max="32767" attributes="0"/>
+                                          <Component id="importDatabaseButton" min="-2" pref="133" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
                               </Group>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
@@ -127,6 +134,10 @@
                                                           <Component id="hashDbLocationLabel" alignment="0" max="32767" attributes="0"/>
                                                           <Component id="indexPathLabel" max="32767" attributes="0"/>
                                                           <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
+                                                          <Group type="102" attributes="0">
+                                                              <Component id="addHashValueButton" min="-2" pref="137" max="-2" attributes="0"/>
+                                                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                                          </Group>
                                                       </Group>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
@@ -150,13 +161,6 @@
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="hashDatabasesLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="deleteDatabaseButton" alignment="0" min="-2" pref="137" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -204,7 +208,10 @@
                                   <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="indexButton" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="indexButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="addHashValueButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
@@ -451,6 +458,19 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexPathLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="addHashValueButton">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.addHashValueButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.addHashValueButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addHashValueButtonActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

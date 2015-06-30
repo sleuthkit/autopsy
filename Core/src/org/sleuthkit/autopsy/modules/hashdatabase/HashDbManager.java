@@ -867,7 +867,7 @@ public class HashDbManager implements PropertyChangeListener {
             assert content instanceof AbstractFile;
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
-                if (null != file.getMd5Hash()) {
+                if (null != file.getMd5Hash() && isUpdateable()) {
                     SleuthkitJNI.addToHashDatabase(null, file.getMd5Hash(), null, null, comment, handle);
                 }
             }
@@ -880,7 +880,9 @@ public class HashDbManager implements PropertyChangeListener {
          * @throws TskCoreException
          */
         public void addHashes(List<HashEntry> hashes) throws TskCoreException {
-            SleuthkitJNI.addToHashDatabase(hashes, handle);
+            if(isUpdateable()) {
+                SleuthkitJNI.addToHashDatabase(hashes, handle);
+            }
         }
 
         /**
