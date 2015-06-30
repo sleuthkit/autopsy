@@ -121,6 +121,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         hashDbIndexStatusLabel.setForeground(Color.black);
         indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
         indexButton.setEnabled(false);
+        addHashesToDatabaseButton.setEnabled(false);
 
         // Update ingest options.
         sendIngestMessagesCheckBox.setSelected(false);
@@ -167,7 +168,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
                 hashDbIndexStatusLabel.setForeground(Color.black);
                 indexButton.setEnabled(false);
+                addHashesToDatabaseButton.setEnabled(false);
             } else if (db.hasIndex()) {
+                addHashesToDatabaseButton.setEnabled(true);
                 if (db.hasIndexOnly()) {
                     hashDbIndexStatusLabel.setText(
                             NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
@@ -185,6 +188,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     indexButton.setEnabled(false);
                 }
             } else {
+                addHashesToDatabaseButton.setEnabled(true);
                 hashDbIndexStatusLabel.setText(
                         NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
                 hashDbIndexStatusLabel.setForeground(Color.red);
@@ -197,11 +201,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             hashDbIndexStatusLabel.setForeground(Color.red);
             indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
             indexButton.setEnabled(false);
+            addHashesToDatabaseButton.setEnabled(false);
         }
 
         // Disable the indexing button if ingest is in progress.
         if (ingestIsRunning) {
             indexButton.setEnabled(false);
+            addHashesToDatabaseButton.setEnabled(false);
         }
 
         // Update ingest option components.        
@@ -481,6 +487,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         createDatabaseButton = new javax.swing.JButton();
         indexPathLabelLabel = new javax.swing.JLabel();
         indexPathLabel = new javax.swing.JLabel();
+        addHashesToDatabaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
 
@@ -590,6 +597,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(addHashesToDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.addHashesToDatabaseButton.text")); // NOI18N
+        addHashesToDatabaseButton.setEnabled(false);
+        addHashesToDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addHashesToDatabaseButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -628,7 +643,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                                     .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                     .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                     .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                                        .addComponent(addHashesToDatabaseButton)
+                                                        .addGap(0, 0, Short.MAX_VALUE))))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
@@ -683,7 +701,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                             .addComponent(indexLabel)
                             .addComponent(hashDbIndexStatusLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(indexButton)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(indexButton)
+                            .addComponent(addHashesToDatabaseButton))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(optionsLabel)
@@ -798,7 +818,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
+
+    private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
+        
+        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        new AddHashValuesToDatabaseDialog(hashDb);
+    }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addHashesToDatabaseButton;
     private javax.swing.JButton createDatabaseButton;
     private javax.swing.JButton deleteDatabaseButton;
     private javax.swing.JLabel hashDatabasesLabel;
