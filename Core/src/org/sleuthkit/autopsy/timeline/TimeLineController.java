@@ -260,7 +260,7 @@ public class TimeLineController {
         LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
         try {
             SwingUtilities.invokeLater(() -> {
-                if (mainFrame != null) {
+                if (isWindowOpen()) {
                     mainFrame.close();
                 }
             });
@@ -315,7 +315,7 @@ public class TimeLineController {
     }
 
     /**
-     * show the timeline window and prompt for rebuilding database
+     * show the timeline window and prompt for rebuilding database if necessary.
      */
     synchronized void openTimeLine() {
 
@@ -640,10 +640,19 @@ public class TimeLineController {
     /**
      * prompt the user to rebuild and then rebuild if the user chooses to
      */
-    synchronized public boolean outOfDatePromptAndRebuild() {
+    synchronized private boolean outOfDatePromptAndRebuild() {
         return showOutOfDateConfirmation() == JOptionPane.YES_OPTION
                 ? rebuildRepo()
                 : false;
+    }
+
+    /**
+     * is the timeline window open.
+     *
+     * @return true if the timeline window is open
+     */
+    synchronized private boolean isWindowOpen() {
+        return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
     synchronized int showLastPopulatedWhileIngestingConfirmation() {
@@ -718,7 +727,9 @@ public class TimeLineController {
                     try {
                         Case.getCurrentCase();
                         SwingUtilities.invokeLater(() -> {
-                            outOfDatePromptAndRebuild();
+                            if (isWindowOpen()) {
+                                outOfDatePromptAndRebuild();
+                            }
                         });
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -746,7 +757,9 @@ public class TimeLineController {
                     try {
                         Case.getCurrentCase();
                         SwingUtilities.invokeLater(() -> {
-                            outOfDatePromptAndRebuild();
+                            if (isWindowOpen()) {
+                                outOfDatePromptAndRebuild();
+                            }
                         });
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -754,6 +767,7 @@ public class TimeLineController {
                          */
                     }
                     break;
+
                 case CURRENT_CASE:
                     SwingUtilities.invokeLater(() -> {
                         OpenTimelineAction.invalidateController();
