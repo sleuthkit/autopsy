@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Icon;
@@ -52,8 +54,8 @@ public class MessageNotifyUtil {
         INFO(NotifyDescriptor.INFORMATION_MESSAGE, "info-icon-16.png"), //NON-NLS
         ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"), //NON-NLS
         WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"); //NON-NLS
-        private int notifyDescriptorType;
-        private Icon icon;
+        private final int notifyDescriptorType;
+        private final Icon icon;
 
         private MessageType(int notifyDescriptorType, String resourceName) {
             this.notifyDescriptorType = notifyDescriptorType;
@@ -121,7 +123,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error dialog
          *
-         * @param message message to shpw
+         * @param message message to show
          */
         public static void error(String message) {
             show(message, MessageType.ERROR);
@@ -142,20 +144,21 @@ public class MessageNotifyUtil {
      */
     public static class Notify {
 
+        private static final SimpleDateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("MM/dd/yy HH:mm:ss z");
+                
         //notifications to keep track of and to reset when case is closed
         private static final List<Notification> notifications = Collections.synchronizedList(new ArrayList<Notification>());
 
         private Notify() {
         }
-        
+
         /**
-         * Clear pending notifications
-         * Should really only be used by Case
+         * Clear pending notifications Should really only be used by Case
          */
         public static void clear() {
-            for (Notification n : notifications) {
+            notifications.stream().forEach((n) -> {
                 n.clear();
-            }
+            });
             notifications.clear();
         }
 
@@ -163,8 +166,8 @@ public class MessageNotifyUtil {
          * Show message with the specified type and action listener
          */
         public static void show(String title, String message, MessageType type, ActionListener actionListener) {
-            Notification newNotification = 
-                    NotificationDisplayer.getDefault().notify(title, type.getIcon(), message, actionListener);
+            Notification newNotification
+                    = NotificationDisplayer.getDefault().notify(addTimeStampToTitle(title), type.getIcon(), message, actionListener);
             notifications.add(newNotification);
         }
 
@@ -178,11 +181,8 @@ public class MessageNotifyUtil {
          * @param type type of the message
          */
         public static void show(String title, final String message, final MessageType type) {
-            ActionListener actionListener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    MessageNotifyUtil.Message.show(message, type);
-                }
+            ActionListener actionListener = (ActionEvent e) -> {
+                MessageNotifyUtil.Message.show(message, type);
             };
 
             show(title, message, type, actionListener);
@@ -216,6 +216,18 @@ public class MessageNotifyUtil {
          */
         public static void warn(String title, String message) {
             show(title, message, MessageType.WARNING);
+        }
+
+        /**
+         * Adds a time stamp prefix to the title of notifications so that they
+         * will be in order (they are sorted alphabetically) in the
+         * notifications area.
+         *
+         * @param title A notification title without a time stamp prefix.  
+         * @return The notification title with a time stamp prefix.
+         */
+        private static String addTimeStampToTitle(String title) {
+            return TIME_STAMP_FORMAT.format(new Date()) + " " + title;
         }
     }
 }

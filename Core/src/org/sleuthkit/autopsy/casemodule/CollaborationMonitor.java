@@ -24,11 +24,9 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,6 +55,7 @@ import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
@@ -69,7 +68,7 @@ final class CollaborationMonitor {
 
     private static final String EVENT_CHANNEL_NAME = "%s-Collaboration-Monitor-Events";
     private static final String COLLABORATION_MONITOR_EVENT = "COLLABORATION_MONITOR_EVENT";
-    private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{Case.Events.ADDING_DATA_SOURCE.toString(), Case.Events.DATA_SOURCE_ADDED.toString()}));
+    private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{Case.Events.ADDING_DATA_SOURCE.toString(), Case.Events.DATA_SOURCE_ADDED.toString(), Case.Events.ADDING_DATA_SOURCE_FAILED.toString()}));
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 3;
     private static final String PERIODIC_TASK_THREAD_NAME = "collab-monitor-periodic-tasks-%d";
     private static final long HEARTBEAT_INTERVAL_MINUTES = 1;
@@ -77,7 +76,6 @@ final class CollaborationMonitor {
     private static final long STALE_TASKS_DETECTION_INTERVAL_MINUTES = 2;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
     private static final long EXECUTOR_TERMINATION_WAIT_SECS = 30;
-    private static final SimpleDateFormat SERVICE_MSG_DATE_FORMAT = new SimpleDateFormat("MM/dd HH:mm:ss z");
     private static final Logger logger = Logger.getLogger(CollaborationMonitor.class.getName());
     private final String hostName;
     private final LocalTasksManager localTasksManager;
@@ -525,7 +523,7 @@ final class CollaborationMonitor {
     private final static class CrashDetectionTask implements Runnable {
 
         private static boolean dbServerIsRunning = true;
-//        private static boolean solrServerIsRunning = true;
+        private static boolean solrServerIsRunning = true;
         private static boolean messageServerIsRunning = true;
         private static final Object lock = new Object();
 
@@ -540,41 +538,33 @@ final class CollaborationMonitor {
                     if (!dbServerIsRunning) {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
-                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
                     }
                 }
 
-                /**
-                 * TODO: Figure out what is wrong with this code. The call to
-                 * construct the HttpSolrServer object never returns. Perhaps
-                 * this is the result of a dependency of the solr-solrj-4.91.jar
-                 * that is not satisfied. Removing the jar from wrapped jars for
-                 * now.
-                 */
-//            try {
-//                String host = UserPreferences.getIndexingServerHost();
-//                String port = UserPreferences.getIndexingServerPort();
-//                HttpSolrServer solr = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
-//                CoreAdminRequest.getStatus(Case.getCurrentCase().getTextIndexName(), solr);
-//                if (!solrServerIsRunning) {
-//                    solrServerIsRunning = true;
-//                    logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
-//                    MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
-//                }
-//            } catch (SolrServerException | IOException ex) {
-//                if (solrServerIsRunning) {
-//                    solrServerIsRunning = false;
-//                    logger.log(Level.SEVERE, "Failed to connect to Solr server", ex); //NON-NLS
-//                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
-//                }
-//            }
-//                
+                KeywordSearchService kwsService = Case.getCurrentCase().getServices().getKeywordSearchService();
+
+                if (kwsService.canConnectToRemoteSolrServer()) {
+                    if (!solrServerIsRunning) {
+                        solrServerIsRunning = true;
+                        logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+                    }                    
+                }
+                else {
+                    if (solrServerIsRunning) {
+                        solrServerIsRunning = false;
+                        logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+                    }                    
+                }
+                
                 MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
                 try {
                     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
@@ -584,13 +574,13 @@ final class CollaborationMonitor {
                     if (!messageServerIsRunning) {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
-                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title", SERVICE_MSG_DATE_FORMAT.format(new Date())), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
                     }
                 }
             }

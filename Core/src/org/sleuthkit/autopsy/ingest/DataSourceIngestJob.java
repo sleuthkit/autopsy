@@ -343,6 +343,7 @@ final class DataSourceIngestJob {
      * @return A collection of ingest module startup errors, empty on success.
      */
     List<IngestModuleError> start() {
+        IngestManager.getInstance().fireDataSourceAnalysisStarted(parentJob.getId(), id, dataSource);
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
@@ -936,7 +937,8 @@ final class DataSourceIngestJob {
                 }
             }
         }
-
+      
+        IngestManager.getInstance().fireDataSourceAnalysisCancelled(parentJob.getId(), id, dataSource);
         this.cancelled = true;
 
         /**

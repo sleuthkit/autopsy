@@ -20,11 +20,15 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.util.HashMap;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -145,6 +149,19 @@ public class SolrSearchService implements KeywordSearchService {
         }
     }
 
+    @Override
+    public boolean canConnectToRemoteSolrServer() {
+        try {
+            HttpSolrServer solrServer = KeywordSearch.getServer().connectToRemoteSolrServer();
+            CoreAdminRequest.getStatus(null, solrServer);
+        }
+        catch (SolrServerException | IOException ex) {
+            return false;
+        }
+        
+        return true;
+    }
+    
     @Override
     public void close() throws IOException {
     }

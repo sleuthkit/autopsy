@@ -495,7 +495,6 @@ public class Case {
             XMLCaseManagement xmlcm = new XMLCaseManagement();
 
             xmlcm.open(configFilePath); // open and load the config file to the document handler in the XML class
-            xmlcm.writeFile(); // write any changes to the config file
 
             String caseName = xmlcm.getCaseName();
             String caseNumber = xmlcm.getCaseNumber();
