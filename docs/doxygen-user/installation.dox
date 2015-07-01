@@ -124,8 +124,8 @@ Use Windows Explorer to navigate to the path shown (<i>C:\\ProgramData\\Oracle\\
 <br>
 \image html javaproperties.PNG
 <br>
-12.	Edit <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr\\solr.xml</i> to set the _transientCacheSize_ to the maximum number of cases expected to be open concurrently. If you expect three concurrent cases, the text to add is 
-<i>\<int name="transientCacheSize">3\</int></i>
+12.	Edit <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr\\solr.xml</i> to set the _transientCacheSize_ to the maximum number of cases expected to be open concurrently. If you expect ten concurrent cases, the text to add is 
+<i>\<int name="transientCacheSize">10\</int></i>
 <br><br>
 The added part is highlighted in yellow below. Ensure that it is inside the <i>\<solr></i> tag as follows:
 <br>
@@ -163,7 +163,7 @@ To install PostgreSQL, perform the following steps:
 2.	Run _postgresql-9.4.4-1-windows-x64.exe_
 3.	You may accept defaults for all items except for the password as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
 4.	You do not need to launch the StackBuilder nor acquire any more software from it. Uncheck the option to use StackBuilder and press _Finish_.
-5.	Using the PostgreSQL administrator login and the _psql_ tool, create a regular user account to use while running Autopsy. To start _psql_, press _Start_, type _psql_, and press _Enter_ a few times until it prompts you for a password. Type in the password you gave it when installing PostgreSQL.  You should see a prompt that looks like the screenshot below.
+5.	Using the PostgreSQL administrator login and the _psql_ tool, create a regular user account to use while running Autopsy. Note you can also do this with the graphical tool _pgAdminIII_, but this guide only covers _psql_. To start _psql_, press _Start_, type _psql_, and press _Enter_ a few times until it prompts you for a password. Type in the password you gave it when installing PostgreSQL.  You should see a prompt that looks like the screenshot below.
 <br>
 \image html postgresqlinstall1.PNG
 <br>
