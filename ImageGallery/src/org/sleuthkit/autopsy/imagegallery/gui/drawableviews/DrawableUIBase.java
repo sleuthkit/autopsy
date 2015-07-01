@@ -35,9 +35,9 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     private final ImageGalleryController controller;
 
-    volatile private Optional<DrawableFile<?>> fileOpt = Optional.empty();
+    private Optional<DrawableFile<?>> fileOpt = Optional.empty();
 
-    volatile private Optional<Long> fileIDOpt = Optional.empty();
+    private Optional<Long> fileIDOpt = Optional.empty();
 
     public DrawableUIBase(ImageGalleryController controller) {
         this.controller = controller;
@@ -53,16 +53,16 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         return fileIDOpt;
     }
 
-    void setFileIDOpt(Optional<Long> fileIDOpt) {
+    synchronized void setFileIDOpt(Optional<Long> fileIDOpt) {
         this.fileIDOpt = fileIDOpt;
     }
 
-    void setFileOpt(Optional<DrawableFile<?>> fileOpt) {
+    synchronized void setFileOpt(Optional<DrawableFile<?>> fileOpt) {
         this.fileOpt = fileOpt;
     }
 
     @Override
-    public Optional<DrawableFile<?>> getFile() {
+    synchronized public Optional<DrawableFile<?>> getFile() {
         if (fileIDOpt.isPresent()) {
             if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
                 return fileOpt;
@@ -83,7 +83,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     protected abstract void setFileHelper(Long newFileID);
 
     @Override
-    public void setFile(Long newFileID) {
+    synchronized public void setFile(Long newFileID) {
         if (getFileID().isPresent()) {
             if (Objects.equals(newFileID, getFileID().get()) == false) {
                 setFileHelper(newFileID);
@@ -92,6 +92,4 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             setFileHelper(newFileID);
         }
     }
-
-
 }
