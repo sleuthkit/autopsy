@@ -174,19 +174,29 @@ public class Case {
          * value is a reference to a Report object representing the new report.
          */
         REPORT_ADDED,
-        /** Property name for the event when a new BlackBoardArtifactTag is
-         * added. The new value is tag added, the old value is empty */
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * added. The new value is tag added, the old value is empty
+         */
         BLACKBOARD_ARTIFACT_TAG_ADDED,
-        /** Property name for the event when a new BlackBoardArtifactTag is
-         * deleted. The new value is empty, the old value is an object with info
-         * about the deleted tag */
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * deleted. The new value is empty, the old value is a
+         * {@link BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo}
+         * object with info about the deleted tag.
+         */
         BLACKBOARD_ARTIFACT_TAG_DELETED,
-        /** Property name for the event when a new ContentTag is
-         * added. The new value is tag added, the old value is empty */
+        /**
+         * Property name for the event when a new ContentTag is
+         * added. The new value is tag added, the old value is empty
+         */
         CONTENT_TAG_ADDED,
-        /** Property name for the event when a new ContentTag is
-         * deleted. The new value is empty, the old value is an object with info
-         * about the deleted tag */
+        /**
+         * Property name for the event when a new ContentTag is
+         * deleted. The new value is empty, the old value is a
+         * {@link ContentTagDeletedEvent.DeletedContentTagInfo} object with info
+         * about the deleted tag.
+         */
         CONTENT_TAG_DELETED;
     };
 
@@ -350,12 +360,12 @@ public class Case {
      * for API consistency, defaults to a single-user case.
      *
      * @param caseDir    The directory to store case data in. Will be created if
-     *                   it
-     *                   doesn't already exist. If it exists, it should have all of the needed sub
-     *                   dirs that createCaseDirectory() will create.
+     *                   it doesn't already exist. If it exists, it should have all of the
+     *                   needed sub dirs that createCaseDirectory() will create.
      * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
+     * @param examiner   the examiner for this case
+     *
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
@@ -365,13 +375,13 @@ public class Case {
     /**
      * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir The directory to store case data in. Will be created if it
-     * doesn't already exist. If it exists, it should have all of the needed sub
-     * dirs that createCaseDirectory() will create.
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it doesn't already exist. If it exists, it should have all of the needed
+     *                   sub dirs that createCaseDirectory() will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
-     * @param caseType the type of case, single-user or multi-user
+     * @param examiner   the examiner for this case
+     * @param caseType   the type of case, single-user or multi-user
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
@@ -447,6 +457,7 @@ public class Case {
      * convention
      *
      * @param caseName The name of the case as typed in by the user
+     *
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
     private static String sanitizeCaseName(String caseName) {
@@ -604,6 +615,7 @@ public class Case {
      * @param imgPaths the paths of the image that being added
      * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
+     *
      * @deprecated Use notifyNewDataSource() instead.
      */
     @Deprecated
@@ -622,6 +634,7 @@ public class Case {
      * reopens windows if needed.
      *
      * @param newDataSource new data source added
+     *
      * @deprecated Use notifyNewDataSource() instead.
      */
     @Deprecated
@@ -634,8 +647,8 @@ public class Case {
      * source is being added to the case database.
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
-     * should be used to call notifyNewDataSource() after the data source is
-     * added.
+     *                     should be used to call notifyNewDataSource() after the
+     *                     data source is added.
      */
     public void notifyAddingNewDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
@@ -656,9 +669,9 @@ public class Case {
      * source is being added to the case database.
      *
      * @param newDataSource New data source added.
-     * @param dataSourceId A unique identifier for the data source. Should be
-     * the same UUID used to call notifyAddingNewDataSource() when the process
-     * of adding the data source began.
+     * @param dataSourceId  A unique identifier for the data source. Should be
+     *                      the same UUID used to call notifyAddingNewDataSource() when the process
+     *                      of adding the data source began.
      */
     public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
@@ -1039,6 +1052,7 @@ public class Case {
      * permanent data.
      *
      * @return absolute path to the module output directory
+     *
      * @deprecated Use getModuleDirectory() instead.
      */
     @Deprecated
@@ -1052,6 +1066,7 @@ public class Case {
      * subdirectory of this case dir.
      *
      * @return relative path to the module output dir
+     *
      * @deprecated Use getModuleOutputDirectoryRelativePath() instead
      */
     @Deprecated
@@ -1065,6 +1080,7 @@ public class Case {
      * PropertyChangeListeners.
      *
      * @return A new PropertyChangeSupport object.
+     *
      * @deprecated Do not use.
      */
     @Deprecated
@@ -1076,6 +1092,7 @@ public class Case {
      * Get the data model Content objects in the root of this case's hierarchy.
      *
      * @return a list of the root objects
+     *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Content> getDataSources() throws TskCoreException {
@@ -1172,7 +1189,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventNames The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1183,7 +1200,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1307,8 +1324,9 @@ public class Case {
     /**
      * Create the case directory and its needed subfolders.
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseType The type of case, single-user or multi-user
+     *
      * @throws CaseActionException throw if could not create the case dir
      */
     static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
@@ -1510,13 +1528,11 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath        The path of the report file, must be in the case
-     *                         directory or one of its subdirectories.
-     * @param sourceModuleName The name of the module that created the
-     *                         report.
-     * @param reportName       The report name, may be empty.
-     *
-     * @return A Report data transfer object (DTO) for the new row.
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
+     * @param srcModuleName The name of the module that created the
+     *                      report.
+     * @param reportName    The report name, may be empty.
      *
      * @throws TskCoreException
      */
