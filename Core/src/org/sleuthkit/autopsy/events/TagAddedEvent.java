@@ -43,7 +43,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
     private final Long tagID;
 
     TagAddedEvent(String propertyName, T addedTag) {
-        super(propertyName, null, addedTag);
+        super(propertyName, null, null);
         tag = addedTag;
         tagID = addedTag.getId();
     }
