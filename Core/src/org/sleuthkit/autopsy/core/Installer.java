@@ -65,6 +65,7 @@ public class Installer extends ModuleInstall {
                 //We should update this if we officially switch to a new version of CRT/compiler
                 System.loadLibrary("msvcr100"); //NON-NLS
                 System.loadLibrary("msvcp100"); //NON-NLS
+                System.loadLibrary("msvcr120"); //NON-NLS
                 logger.log(Level.INFO, "MSVCR100 and MSVCP100 libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading MSVCR100 and MSVCP100 libraries, ", e); //NON-NLS
