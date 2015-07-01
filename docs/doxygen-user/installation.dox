@@ -1,4 +1,6 @@
-/*! \page installation_page Installation 
+/*! \page installation_page How to Install
+
+[TOC]
 
 Installation
 -----
@@ -8,27 +10,234 @@ Download Autopsy from the website:
 http://sleuthkit.org/autopsy/download.php
 
 The current version of Autopsy 3 runs only on Microsoft Windows.
-We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
+We have gotten older versions to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
 
-The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
+<br>
+\section prereqs Prerequisites
+It is _highly_ recommended to remove or disable any antivirus software from computers that will be processing or reviewing cases. Antivirus software will often conflict with forensic software, and may quarantine or even delete some of your results before you get a chance to look at them.
 
+<br>
+\section deployment_types Deployment Types
+There are two types of cases that Autopsy can create and use:
+ - **Standalone**: A single user with a single computer. Not intended to have multiple examiners working on the same case.
+ - **Collaborative**: A multi-user environment with multiple computers. Multiple examiners can work on the same case at the same time.
 
-Optimizing Performance
------
+Both deployment types use the same analysis modules and the same installer.
+<br><br>
+\subsection standalone_install Standalone (Single User) Installation
+1.	Install Autopsy. This is explained in \ref aut_install. The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
 
+<br>
+\subsection collab_install Collaborative (Multi-user) Installation
+To use the Multi-user collaboration feature, three additional software packages are required. These packages need to be accessible to machines running Autopsy collaborative cases via the network. These packages do not have to be installed on the same machine as Autopsy, nor on the same machine as each other.
+
+1.	Install Autopsy just as in \ref standalone_install above
+2.	Install and configure Apache ActiveMQ on a machine accessible to Autopsy nodes. This is explained in \ref activemq_install.
+3.	Install and configure Bitnami Solr on a machine accessible to Autopsy nodes. This is explained in \ref solr_install.
+4.	Install and configure PostgreSQL on a machine accessible to Autopsy nodes. This is explained in \ref postgre_install.
+5.	Configure Multi-user settings. This is explained in \ref multi_user_options.
+
+Links are provided allowing users to get external packages directly from their sources, but depending upon which Autopsy package you have, all the external installation packages required _may_ already be included in the Autopsy zip file. Check your zip file to find out.
+
+<br>
+\subsection deployment_section Recommended Deployment Scheme for Collaboration
+While you may run all of the external services (ActiveMQ, Solr, and PostgreSQL) on the same machine that is running Autopsy, this is not ideal. Spreading the services out across several machines can improve throughput. Keeping in mind that all the following machines need to be able to communicate with each other and see the shared drive over the network, one recommended configuration, in descending order of processing power and RAM required, follows:
+
+####Machine A:####
+ - **Solr** - Install this on a machine by itself, as it takes the most RAM and CPU of the lot. 
+
+####Machine B:####
+- **Autopsy** - This is the next biggest RAM and CPU user. 
+- **Shared network drive host** - This machine will need the most access to the shared drive, so hosting it here speeds processing.
+- Note you can have as many of these machines as you like.
+
+####Machine C:####
+- **ActiveMQ** - This service can share a machine with PostgreSQL nicely.
+- **PostgreSQL** - This service can share a machine with ActiveMQ nicely.
+
+<br>
+\section installation_section Installation
+\subsection aut_install Autopsy Installation
+To install Autopsy, perform the following steps:
+1.	Run the Autopsy _msi_ file
+2.	If Windows prompts with User Account Control, click _Yes_
+3.	Click through the dialog boxes until you click a button that says _Finish_
+4.	Core Autopsy should now be fully installed
+
+<br><br>
+\subsection activemq_install Apache ActiveMQ Installation
+To install ActiveMQ, perform the following steps:
+1.	Test if you have a 64-bit version of the Java Runtime Environment (JRE) already installed by double clicking _test_version.bat_. If you do not see "You have a 64-bit JRE installed", proceed to step 2. If you see "You have a 64-bit JRE installed", proceed to step 3.
+2.	Install a 64-bit version of the JRE. Download it from: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. If you are installing 64 bit Autopsy, be sure to select a package that has "x64" in the name. Follow the installation prompts to install the JRE, then when the install has completed, re-run _test_version.bat_. It should say "You have a 64-bit JRE installed".
+3.	Download ActiveMQ-5.11.1 from: http://activemq.apache.org/activemq-5111-release.html
+4.	Extract the files in the archive to the desktop
+5.	Edit <i>apache-activemq-5.11.1\\conf\\activemq.xml</i> to add <b>"&amp;wireFormat.maxInactivityDuration=0"</b> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
+<br>
+\image html maxinactivityduration.PNG
+<br>
+6.	Move the <i>apache-activemq-5.11.1</i> folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.11.1</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
+7.	Install ActiveMQ as a service by navigating to the folder <i>apache-activemq-5.11.1-bin\\apache-activemq-5.11.1\\bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
+8.	Start the ActiveMQ service by going pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link. 
+9.	ActiveMQ should now be fully installed.
+10.	You can access the admin pages in your web browser using something via a URL like this (set your host): http://localhost:8161/admin. The default username is _admin_ and the default password is _admin_. If you can see a page that looks like the following, it is ready to function.
+<br><br>
+\image html activemq.PNG
+<br>
+11.	If you do not see a screen like the above screenshot and you have double checked that the ActiveMQ service is running, contact your network administrator. For the ActiveMQ service to be accessible by network clients you may need to configure your Windows firewall (and any other 3rd party firewall in use) to allow communication.
+
+<br><br>
+\subsection solr_install Bitnami Solr Installation
+To install Solr, perform the following steps:
+1.	Download the Apache Solr 4.10.3-0 installation package from https://bitnami.com/stack/solr/installer. By default, the Bitnami installation process will configure Solr to run in a 32-bit Java runtime as a Windows Service under the Local System account. The following steps will configure Solr to run in a 64-bit Java runtime using an account that will have access to the network storage.
+
+2.	Test if you have a 64-bit version of the Java Runtime Environment already installed by double clicking _test_version.bat_. If you do not see "You have a 64-bit JRE installed", proceed to step 3. If you see "You have a 64-bit JRE installed", proceed to step 4.
+3.	Install a 64-bit version of the JRE. Download it from: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. Be sure to select a package that has "x64" in the name. Follow the installation prompts to install the JRE, then when the install has completed, re-run _test_version.bat_. It should say "You have a 64-bit JRE installed".
+
+4.	Run the Bitnami installer, <i>bitnami-solr-4.10.3-0-windows-installer.exe</i>
+
+5.	If Windows prompts with User Account Control, click _Yes_
+
+6.	Follow the prompts through to completion. You do not need to "Learn more about Bitnami cloud hosting" so you can clear the check box.
+
+7.	If you see an error dialog like the following, you may safely ignore it.
+<br><br>
+\image html apachebadmessage.PNG
+<br>
+8.	When the installation completes, clear the "Launch Bitnami Apache Solr Stack Now?" checkbox and click _Finish_.
+9.	Stop _solrApache_ and _solrJetty_ services by pressing _Start_, typing _services.msc_, pressing _Enter_, and locating the _solrApache_ and _solrJetty_ Windows services. Select the services one at a time, and press _Stop the service_ once for each of them. If the service is already stopped and there is no _Stop the service_ available, this is okay.
+
+10.	Right click on <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat</i> and click on _Run as administrator_, selecting _Yes_ if prompted by User Account Control.
+
+11.	Edit the <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat</i> script and replace the path to _JavaHome_ with the path to your 64-bit version of the JRE, e.g. something like:  <i>--JavaHome="C:\Program Files\Java\jre1.8.0_45"</i> Note you need administrator permission to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it.
+<br><br>
+If you have a 64-bit JRE installed, the correct path can be obtained by running the command _where java_ from the Windows command line. A correct example is shown below in yellow:
+<br>
+\image html wherejava.PNG
+<br>
+Do not include the "bin" folder in the path you place into the _JavaHome_ variable.
+<br><br>
+Note that if you get something like the following, it is a symbolic link to the Java installation and you need to trace it to the proper folder as explained below.
+<br>
+\image html symlinkjava.PNG
+<br>
+Use Windows Explorer to navigate to the path shown (<i>C:\\ProgramData\\Oracle\\Java\\javapath</i> for the example above), then right click on _java.exe_ and go to _Properties_. You will see the path you should use in the _Target_ field, shown in the screenshot below. Do not include the "bin" folder in the path you place into the _JavaHome_ variable.
+<br>
+\image html javaproperties.PNG
+<br>
+12.	Edit <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr\\solr.xml</i> to set the _transientCacheSize_ to the maximum number of cases expected to be open concurrently. If you expect three concurrent cases, the text to add is 
+<i>\<int name="transientCacheSize">3\</int></i>
+<br><br>
+The added part is highlighted in yellow below. Ensure that it is inside the <i>\<solr></i> tag as follows:
+<br>
+\image html transientcache.PNG
+<br>
+Again you may have trouble saving to the file in the current location. If so, just save it out to the desktop and copy the desktop file back over the top of the original.
+<br><br>
+Also, be very careful. Do not   cut and paste this from this document, as some programs will change quotes to characters that look like quotes but are not.
+<br><br>
+13.	Copy the folders _configsets_ and _lib_ from the installation disk to <i>C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr</i>
+
+14.	Start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service (very likely it will say "The solrJetty service could not be started." This is okay.):   <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
+ <br><br>
+Your command prompt should look like the screenshot below.  Note the use of <i>cmd /c</i> to prevent the script from closing your command prompt.
+<br><br>
+\image html solrinstall1.PNG
+<br><br>
+15. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
+<br><br>
+\image html solrinstall2.PNG
+<br>
+If the machine is on a domain, **make sure** to select the domain with the mouse by going to the _Log On_ tab, clicking _Browse_, then clicking _Locations_ and selecting the domain of interest. Then enter the user name desired and press _Check Names_. When that completes, press _OK_, type in the password (once for each box) and press _OK_. You may see "The user has been granted the log on as a service right."
+
+16. You should be able to see the Solr service in a web browser via the URL <i>http://localhost:8983/solr/#/</i> as shown in the screenshot below.
+<br><br>
+\image html solrinstall3.PNG
+<br>
+If the service is appropriately started and you are unable to see the screenshot above, contact your network administrator to open ports in the firewall.
+
+<br>
+\subsection postgre_install PostgreSQL Installation
+To install PostgreSQL, perform the following steps:
+
+1.	Download a 64-bit PostgreSQL version 9.4.1 installer from  http://www.enterprisedb.com/products-services-training/pgdownload#windows  Choose the one that says _Win X86-64_.
+2.	Run _postgresql-9.4.4-1-windows-x64.exe_
+3.	You may accept defaults for all items except for the password as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
+4.	You do not need to launch the StackBuilder nor acquire any more software from it. Uncheck the option to use StackBuilder and press _Finish_.
+5.	Using the PostgreSQL administrator login and the _psql_ tool, create a regular user account to use while running Autopsy. To start _psql_, press _Start_, type _psql_, and press _Enter_ a few times until it prompts you for a password. Type in the password you gave it when installing PostgreSQL.  You should see a prompt that looks like the screenshot below.
+<br>
+\image html postgresqlinstall1.PNG
+<br>
+If you want your user account name to be <i>"Autopsy"</i> and your password to be <i>"myPassword"</i>, use the following command to create a new user, noting that the password is enclosed in single quotes, __not backticks nor double quotes__.  Also note that it is important to type this command in from the keyboard directly, as copying and pasting can sometimes yield different characters for single quotes that can confuse _psql_.
+<br><br>
+The command is: 
+<br>
+>	CREATE  USER  Autopsy  WITH  PASSWORD  'myPassword'  CREATEDB;
+<br>
+When you see the _CREATE ROLE_ output as shown in the screenshot below, the new user has been created.  You can close the _psql_ window now.
+<br>
+<br>
+\image html postgresqlinstall2.PNG
+<br>
+
+6.	Edit  <i>C:\\Program Files\\PostgreSQL\\9.4\\data\\pg_hba.conf</i> to add an entry to allow external computers to connect via the network. 
+<br><br>
+First, find your machine's IPv4 address and Subnet Mask (Press _Start_, type _cmd_, type _ipconfig_ and parse the results. The IP address is shown in yellow below.
+<br>
+\image html postgresqlinstall3.PNG
+<br>
+The following is an example rule that allows all clients on the 10.10.192.x  subnet to connect using md5 authentication.
+<br>
+> host	all	all	10.10.192.0/24	md5
+<br>
+__Rules of thumb:__
+If your Subnet Mask is 255.255.0.0, your rule should look like this: A.B.0.0/16, where A is the first octet in your IP address and B is the second octet.
+<br><br>
+If your Subnet Mask is 255.255.255.0, your rule should look like this: A.B.C.0/24, where A is the first octet in your IP address, B is the second octet, and C is the third octet. Add the line highlighted in yellow below, formatted with spaces between the entries, adjusting the IP address to an appropriate value as described above.
+<br><br>
+\image html postgresqlinstall4.PNG
+<br>
+<br><br>
+If you intend to use PostgreSQL from machines on a different subnet, you need an entry in the _pg_hba.conf_ file for each subnet. 
+<br><br>
+Uncomment the following values in the configuration file located at <i>C:\\Program Files\\PostgreSQL\\9.4\\data\\postgresql.conf</i>  and change the value to those shown below:
+<br>
+>	fsync = off<br>
+>	synchronous_commit = off<br>
+>	full_page_writes = off<br>
+<br>
+Pictorially, change the following, from this:
+<br>
+\image html postgresqlinstall5.PNG
+<br>
+To this:
+<br><br>
+\image html postgresqlinstall6.PNG
+<br>
+Note the removal of the leading number symbol-this uncomments that entry.
+
+7.	Press _Start_, type _services.msc_, and press _Enter_.  Select _postgresql-x64-9.4 PostgreSQL Server 9.4_ in the services list and click the link that says _Stop the service_ then click the link that says _Start the service_ as shown in the screenshot below.
+<br><br>
+\image html postgresqlinstall7.PNG
+<br>
+PostgreSQL should now be up and running. You can verify this with the PSQL tool used earlier in this document. 
+<br><br><br>
+
+\section optimizing_performance Optimizing Performance
 After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
 
-1) Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
-- Run Autopsy from the Start Menu or desktop
-- When presented with the case creation splash screen, cancel/close the window
-- Select "Tools", "Options"
-- On the "Autopsy" tab, there is a drop down for "Number of thread to use for file ingest". We recommend that you set this value to be smaller than the number of cores minus two.  If you set this number too high, performance can degrade because the pipelines are fighting for the same resources. Individual testing should be done to find an optimal setting. 
-- After each change, restart Autopsy to let this setting take effect.
-
+1.	Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
+    - Run Autopsy from the Start Menu or desktop
+    - When presented with the case creation splash screen, cancel/close the window
+    - Select "Tools", "Options"
+    - On the "Autopsy" tab, there is a drop down for "Number of thread to use for file ingest". We recommend that you set this value to be smaller than the number of cores minus two.  If you set this number too high, performance can degrade because the pipelines are fighting for the same resources. Individual testing should be done to find an optimal setting. 
+    - After each change, restart Autopsy to let this setting take effect.
+<br><br>
 \image html threadcount.PNG
-
-2) When making a case, use different drives to store the case and the images. The case directory is where the SQLite database and keyword search index are stored.  This allows the maximum amount of data to be read and written at the same time. 
-
-3) We have had best performance using either local solid state drives or fibre channel-attached SAN storage. 
+<br><br>
+2.	In the screenshot above, there is an option to <i>"Enable timeout to allow modules to automatically terminate after a set amount of time"</i>. Enabling this feature by applying a checkmark and setting a number of hours puts a maximum amount of time an individual module may attempt to process before being stopped. If enabled and a module attempts to run for longer than this timeout, Autopsy stops the module and  moves on to process the next module. This allows processing to continue even if a rouge module does not end appropriately in a reasonable amount of time.
+<br><br>
+3.	When making a case, use different drives to store the case and the images. The case directory is where the SQLite database and keyword search index are stored.  This allows the maximum amount of data to be read and written at the same time. If using collaborative Multi-user mode, it is important that UNC paths are used to specifiy drive names. Drive mapping will work, but it is sometimes difficult to get all the machines participating in a case to map to the same drive letters for the same resources. It is much simpler to use fully-specified UNC paths in the form of <i>\\\\hostname\\sharename\\folder</i>.
+<br><br>
+4.	We have had best performance using either local solid state drives or fibre channel-attached SAN storage. 
 
 */
