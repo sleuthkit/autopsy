@@ -250,7 +250,7 @@ public class TagsManager implements Closeable {
         final ContentTag newContentTag = tskCase.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
             Case.getCurrentCase().notifyContentTagAdded(newContentTag);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalStateException ex) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addContentTag.noCaseWarning"));
         }
         return newContentTag;
@@ -272,7 +272,7 @@ public class TagsManager implements Closeable {
         tskCase.deleteContentTag(tag);
         try {
             Case.getCurrentCase().notifyContentTagDeleted(tag);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteContentTag.noCaseWarning"));
         }
     }
@@ -403,7 +403,7 @@ public class TagsManager implements Closeable {
         BlackboardArtifactTag addBlackboardArtifactTag = tskCase.addBlackboardArtifactTag(artifact, tagName, comment);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(addBlackboardArtifactTag);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.addBlackboardArtifactTag.noCaseWarning"));
         }
         return addBlackboardArtifactTag;
@@ -425,7 +425,7 @@ public class TagsManager implements Closeable {
         tskCase.deleteBlackboardArtifactTag(tag);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             Logger.getLogger(TagsManager.class.getName()).log(Level.WARNING, NbBundle.getMessage(TagsManager.class, "TagsManager.deleteBlackboardArtifactTag.noCaseWarning"));
         }
     }
