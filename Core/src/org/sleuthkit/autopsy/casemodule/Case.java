@@ -26,8 +26,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -63,11 +63,11 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -178,13 +178,15 @@ public class Case {
          * added. The new value is tag added, the old value is empty */
         BLACKBOARD_ARTIFACT_TAG_ADDED,
         /** Property name for the event when a new BlackBoardArtifactTag is
-         * deleted. The new value is empty, the old value is the deleted tag */
+         * deleted. The new value is empty, the old value is an object with info
+         * about the deleted tag */
         BLACKBOARD_ARTIFACT_TAG_DELETED,
         /** Property name for the event when a new ContentTag is
          * added. The new value is tag added, the old value is empty */
         CONTENT_TAG_ADDED,
         /** Property name for the event when a new ContentTag is
-         * deleted. The new value is empty, the old value is the deleted tag */
+         * deleted. The new value is empty, the old value is an object with info
+         * about the deleted tag */
         CONTENT_TAG_DELETED;
     };
 
