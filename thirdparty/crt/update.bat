@@ -5,4 +5,5 @@ copy c:\windows\system32\msvcr100.dll win64
 copy c:\windows\system32\msvcp100.dll win64
 copy c:\windows\system32\msvcr120.dll win64
 copy c:\windows\sysWoW64\msvcr100.dll win32
+copy c:\windows\sysWow64\msvcp100.dll win32
 copy c:\windows\sysWow64\msvcr120.dll win32
