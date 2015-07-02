@@ -1196,29 +1196,35 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Deletes reports from the case - deletes it from the disk as well as the
      * database.
+     *
      * @param reports Collection of Report to be deleted from the case.
+     * @param deleteFromDisk Set true to perform reports file deletion from
+     * disk.
      * @throws TskCoreException
      */
-    public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
 
-        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString();
+        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString(); // NON-NLS
         for (Report report : reports) {
-            // traverse to the root directory of Report report.
-            String reportPath = report.getPath();
-            while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) {
-                reportPath = Paths.get(reportPath, "..").normalize().toString();
-            }
-
-            // delete from the disk.
-            try {
-                FileUtils.deleteDirectory(new File(reportPath));
-            } catch (IOException | SecurityException ex) {
-                logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
-                JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
-            }
 
             // delete from the database.
             this.db.deleteReport(report);
+
+            if (deleteFromDisk) {
+                // traverse to the root directory of Report report.
+                String reportPath = report.getPath();
+                while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) { // NON-NLS
+                    reportPath = Paths.get(reportPath, "..").normalize().toString(); // NON-NLS
+                }
+
+                // delete from the disk.
+                try {
+                    FileUtils.deleteDirectory(new File(reportPath));
+                } catch (IOException | SecurityException ex) {
+                    logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
+                }
+            }
 
             // fire property change event.
             try {

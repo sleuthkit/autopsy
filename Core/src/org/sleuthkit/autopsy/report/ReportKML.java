@@ -208,7 +208,6 @@ class ReportKML implements GeneralReportModule {
                 }
 
                 out.flush();
-                out.close();
 
                 progressPanel.increment();
                 /*
