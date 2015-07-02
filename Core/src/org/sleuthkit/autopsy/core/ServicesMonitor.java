@@ -30,8 +30,8 @@ import java.util.stream.Stream;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -174,7 +174,8 @@ public class ServicesMonitor {
                     }
                 }
 
-                KeywordSearchService kwsService = Case.getCurrentCase().getServices().getKeywordSearchService();
+                //KeywordSearchService kwsService = Case.getCurrentCase().getServices().getKeywordSearchService();
+                KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
 
                 if (kwsService.canConnectToRemoteSolrServer()) {
                     if (!solrServerIsRunning) {
