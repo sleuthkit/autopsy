@@ -19,10 +19,14 @@
 package org.sleuthkit.autopsy.core;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.beans.PropertyChangeListener;
 import java.net.URISyntaxException;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -30,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -50,6 +55,10 @@ public class ServicesMonitor {
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
+    
+    private static final Set<String> serviceNames = Stream.of(ServicesMonitor.Service.values())
+            .map(ServicesMonitor.Service::toString)
+            .collect(Collectors.toSet());
 
     /**
      * List of services that are being monitored.
@@ -90,6 +99,44 @@ public class ServicesMonitor {
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
         periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
+
+    // Subscribes to all events
+    void addSubscriber(PropertyChangeListener subscriber) {
+        eventPublisher.addSubscriber(serviceNames, subscriber);
+    }
+
+    
+    void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    }
+
+    
+    void addSubscriber(String eventName, PropertyChangeListener subscriber) {
+
+    }
+
+
+    void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+
+    }
+
+
+    void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
+        
+    }
+
+    // Unsubscribes from all events
+    void removeSubscriber(PropertyChangeListener subscriber) {
+        eventPublisher.removeSubscriber(serviceNames, subscriber);
+    }
+    
+    /**
+     * Fire an event signifying change in remote database (e.g. PostgreSQL) service status.
+     */
+    void fireRemoteDatabaseStatusChange(ServiceStatus status) {
+        AutopsyEvent event = new AutopsyEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status);
+        eventPublisher.publish(event);
+    }    
+
 
     /**
      * A Runnable task that periodically checks the availability of
