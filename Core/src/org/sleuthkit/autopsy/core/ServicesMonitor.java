@@ -144,12 +144,12 @@ public class ServicesMonitor {
      * message broker) and reports status to the user in case of a gap in
      * service.
      */
-    private final static class CrashDetectionTask implements Runnable {
+    private final class CrashDetectionTask implements Runnable {
 
-        private static boolean dbServerIsRunning = true;
-        private static boolean solrServerIsRunning = true;
-        private static boolean messageServerIsRunning = true;
-        private static final Object lock = new Object();
+        private boolean dbServerIsRunning = true;
+        private boolean solrServerIsRunning = true;
+        private boolean messageServerIsRunning = true;
+        private final Object lock = new Object();
 
         /**
          * Monitor the availability of collaboration resources
@@ -163,12 +163,14 @@ public class ServicesMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
+                        fireRemoteDatabaseStatusChange(ServiceStatus.UP);
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
+                        fireRemoteDatabaseStatusChange(ServiceStatus.DOWN);
                     }
                 }
 
