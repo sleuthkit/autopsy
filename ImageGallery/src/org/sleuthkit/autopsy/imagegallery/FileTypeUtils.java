@@ -57,8 +57,20 @@ public enum FileTypeUtils {
         imageExtensions.addAll(Stream.of(ImageIO.getReaderFileSuffixes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
-        imageExtensions.addAll(Arrays.asList("bmp", "gif", "jpg", "jpeg",
-                "png", "tga", "psd", "tif", "tiff", "yuv", "ico", "ai", "svg"));
+        imageExtensions.addAll(Arrays.asList(
+                "bmp" //Bitmap
+                , "gif" //gif
+                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants
+                , "pbm", "pgm", "ppm" // Portable image format variants
+                , "png" //portable network graphic
+                , "tga" //targa
+                , "psd" //photoshop
+                , "tif", "tiff" //tiff variants
+                , "yuv", "ico" //icons
+                , "ai" //illustrator
+                , "svg" //scalable vector graphics
+                , "sn", "ras" //sun raster
+        ));
 
         videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v",
                 "mp4", "mov", "mpeg", "mpg", "mpe", "mp4", "rm", "wmv",
