@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -1196,10 +1197,23 @@ public final class DrawableDB {
     /**
      * For performance reasons, keep the file type in memory
      */
-    private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> videoFileMap = new ConcurrentHashMap<>();
 
+    /**
+     * is this File a video file?
+     *
+     * @param f check if this file is a video. will return false for null file.
+     *
+     * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
+     *         } but caches the result.
+     *         returns false if passed a null AbstractFile
+     */
     public boolean isVideoFile(AbstractFile f) {
-        return videoFileMap.computeIfAbsent(f, FileTypeUtils::isVideoFile);
+        if (Objects.isNull(f)) {
+            return false;
+        } else {
+            return videoFileMap.computeIfAbsent(f.getId(), (id) -> ImageGalleryModule.isVideoFile(f));
+        }
     }
 
     /**

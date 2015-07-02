@@ -290,7 +290,7 @@ public class SlideShowView extends DrawableTileBase {
      *                  1 => right / forward
      */
     @ThreadConfined(type = ThreadType.JFX)
-    private void cycleSlideShowImage(int direction) {
+    synchronized private void cycleSlideShowImage(int direction) {
         stopVideo();
         final int groupSize = getGroupPane().getGrouping().fileIds().size();
         final Integer nextIndex = getFileID().map(fileID -> {
@@ -363,7 +363,6 @@ public class SlideShowView extends DrawableTileBase {
                     new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
                 }
             });
-
         }
     }
 }

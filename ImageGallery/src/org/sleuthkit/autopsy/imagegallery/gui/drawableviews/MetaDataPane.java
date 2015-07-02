@@ -150,7 +150,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    protected synchronized void setFileHelper(Long newFileID) {
+    synchronized protected void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
             Platform.runLater(() -> {

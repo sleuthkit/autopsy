@@ -284,7 +284,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     }
 
     @Override
-    protected void setFileHelper(final Long newFileID) {
+    synchronized protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         disposeContent();
 
@@ -351,7 +351,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-
         handleTagEvent(evt, () -> {
             Platform.runLater(() -> {
                 followUpImageView.setImage(followUpIcon);
