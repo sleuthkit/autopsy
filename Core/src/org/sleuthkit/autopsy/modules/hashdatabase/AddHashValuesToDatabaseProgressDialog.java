@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2013 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
@@ -12,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -33,6 +47,7 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
     private final List<HashEntry> hashes;
     private final List<String> invalidHashes;
     private final Pattern md5Pattern;
+    private String errorTitle;
     private String errorMessage;
     private final String text;
 
@@ -62,7 +77,8 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Executes a SwingWorker which performs addition of hashes into the database.
+     * Executes a SwingWorker which performs addition of hashes into the
+     * database.
      */
     final void addHashValuesToDatabase() {
         parentRef.enableAddHashValuesToDatabaseDialog(false);
@@ -79,25 +95,30 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
                 if (!invalidHashes.isEmpty()) {
                     statusLabel.setText(NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.invalidHash"));
                     finish(false);
-                    errorMessage = NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.invaliHash.msg");
+                    errorTitle = NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.invaliHash.msg");
+                    errorMessage = "";
                     for (String invalidHash : invalidHashes) {
                         errorMessage = errorMessage + invalidHash + "\n"; // NON-NLS
                     }
                     showErrorsButton.setVisible(true);
+                    showErrorsButton.requestFocus();
                 } else if (hashes.isEmpty()) {
                     statusLabel.setText(NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.noHashesToAdd"));
                     finish(false);
                 } else {
                     try {
                         hashDb.addHashes(hashes);
+                        okButton.requestFocus();
                         statusLabel.setText(NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.success", hashes.size()));
                         finish(true);
                         disposeParent = true;
                     } catch (TskCoreException ex) {
                         statusLabel.setText(NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.errorAddingValidHash"));
                         finish(false);
-                        errorMessage = NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.errorAddingValidHash.msg", ex.toString());
+                        errorTitle = NbBundle.getMessage(AddHashValuesToDatabaseProgressDialog.class, "AddHashValuesToDatabaseProgressDialog.addHashValuesToDatabase.errorAddingValidHash.msg");
+                        errorMessage = ex.toString();
                         showErrorsButton.setVisible(true);
+                        showErrorsButton.requestFocus();
                     }
                 }
                 return null;
@@ -108,25 +129,33 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
     /**
      * Sets the progressbar to maximum value, change colors accordingly, and
      * enables OK button.
-     * @param success 
+     *
+     * @param success
      */
     private void finish(boolean success) {
         okButton.setEnabled(true);
         addingHashesToDatabaseProgressBar.setIndeterminate(false);
         addingHashesToDatabaseProgressBar.setValue(addingHashesToDatabaseProgressBar.getMaximum());
         if (success) {
-            addingHashesToDatabaseProgressBar.setForeground(Color.green);
+            // a hack to set progressbar color.
+            addingHashesToDatabaseProgressBar.setStringPainted(true);
+            addingHashesToDatabaseProgressBar.setForeground(new Color(50,205,50));
+            addingHashesToDatabaseProgressBar.setString("");
         } else {
-            addingHashesToDatabaseProgressBar.setBackground(Color.red);
-            addingHashesToDatabaseProgressBar.setForeground(Color.red);
+            // a hack to set progressbar color.
+            addingHashesToDatabaseProgressBar.setStringPainted(true);
+            addingHashesToDatabaseProgressBar.setForeground(new Color(178,34,34));
+            addingHashesToDatabaseProgressBar.setString("");
         }
 
     }
 
     /**
      * Parses for String for MD5 hashes and adds new HashEntry objects into the
-     * list of hashes. It also populates the invalidHashes list for user-feedback.
-     * @param text 
+     * list of hashes. It also populates the invalidHashes list for
+     * user-feedback.
+     *
+     * @param text
      */
     private void getHashesFromTextArea(String text) {
         String[] linesInTextArea = text.split("\\r?\\n"); // NON-NLS
@@ -188,16 +217,16 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(addingHashesToDatabaseProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 311, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(okButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(statusLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(showErrorsButton)))
-                .addContainerGap())
+                        .addComponent(showErrorsButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(addingHashesToDatabaseProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -207,9 +236,9 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
                     .addComponent(addingHashesToDatabaseProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(okButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(statusLabel)
-                    .addComponent(showErrorsButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(showErrorsButton)
+                    .addComponent(statusLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -225,10 +254,13 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void showErrorsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showErrorsButtonActionPerformed
+        JLabel textLabel = new JLabel(errorTitle);
         JTextArea textArea = new JTextArea(errorMessage);
+        textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(250, 100));
-        JOptionPane.showMessageDialog(this, scrollPane, "Error:\n", JOptionPane.OK_OPTION); // NON-NLS
+        Object[] jOptionPaneComponents = {textLabel, scrollPane};
+        JOptionPane.showMessageDialog(this, jOptionPaneComponents, "Error:\n", JOptionPane.OK_OPTION); // NON-NLS
     }//GEN-LAST:event_showErrorsButtonActionPerformed
 
 

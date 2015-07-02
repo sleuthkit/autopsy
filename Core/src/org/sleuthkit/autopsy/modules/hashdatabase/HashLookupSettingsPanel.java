@@ -34,6 +34,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import org.openide.util.Exceptions;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -158,6 +159,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
+        
+        try {
+            addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
+            addHashesToDatabaseButton.setEnabled(false);
+        }
 
         // Update indexing components.
         try {
@@ -168,9 +176,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
                 hashDbIndexStatusLabel.setForeground(Color.black);
                 indexButton.setEnabled(false);
-                addHashesToDatabaseButton.setEnabled(false);
             } else if (db.hasIndex()) {
-                addHashesToDatabaseButton.setEnabled(true);
                 if (db.hasIndexOnly()) {
                     hashDbIndexStatusLabel.setText(
                             NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
@@ -188,7 +194,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     indexButton.setEnabled(false);
                 }
             } else {
-                addHashesToDatabaseButton.setEnabled(true);
                 hashDbIndexStatusLabel.setText(
                         NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
                 hashDbIndexStatusLabel.setForeground(Color.red);
@@ -201,13 +206,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             hashDbIndexStatusLabel.setForeground(Color.red);
             indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
             indexButton.setEnabled(false);
-            addHashesToDatabaseButton.setEnabled(false);
         }
 
         // Disable the indexing button if ingest is in progress.
         if (ingestIsRunning) {
             indexButton.setEnabled(false);
-            addHashesToDatabaseButton.setEnabled(false);
         }
 
         // Update ingest option components.        
