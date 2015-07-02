@@ -16,10 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.events;
+package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 
@@ -27,7 +28,7 @@ import org.sleuthkit.datamodel.TagName;
  * Base Class for events that are fired when a Tag is deleted
  */
 @Immutable
-abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent {
+abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

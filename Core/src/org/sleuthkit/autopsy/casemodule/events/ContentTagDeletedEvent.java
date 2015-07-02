@@ -16,52 +16,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.events;
+package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
- * Event that is fired when a black board artifact tag is deleted.
+ * An event that is fired when a ContentTag is deleted.
  */
 @Immutable
-public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<BlackboardArtifactTag> {
+public class ContentTagDeletedEvent extends TagDeletedEvent<ContentTag> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public BlackBoardArtifactTagDeletedEvent(BlackboardArtifactTag deletedTag) {
-        super(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(), new DeletedBlackboardArtifactTagInfo(deletedTag));
+    public ContentTagDeletedEvent(ContentTag deletedTag) {
+        super(Case.Events.CONTENT_TAG_DELETED.toString(), new DeletedContentTagInfo(deletedTag));
     }
 
     /**
      * {@inheritDoc }
      *
-     * @return the DeletedBlackboardArtifactTagInfo for the deleted tag
+     * @return the DeletedContentTagInfo for the deleted tag
      */
     @Override
-    public DeletedBlackboardArtifactTagInfo getDeletedTagInfo() {
-        return (DeletedBlackboardArtifactTagInfo) getOldValue();
+    public DeletedContentTagInfo getDeletedTagInfo() {
+        return (DeletedContentTagInfo) getOldValue();
     }
 
     /**
      * Extension of {@link DeletedTagInfo} for BlackBoardArtifactTags that
-     * includes artifact related info.
+     * includes byte offset related info.
      */
     @Immutable
-    public static class DeletedBlackboardArtifactTagInfo extends DeletedTagInfo<BlackboardArtifactTag> implements Serializable {
+    public static class DeletedContentTagInfo extends DeletedTagInfo<ContentTag> implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
         private final long contentID;
+        private final long beginByteOffset;
+        private final long endByteOffset;
 
-        private final long artifactID;
-
-        private DeletedBlackboardArtifactTagInfo(BlackboardArtifactTag deletedTag) {
+        private DeletedContentTagInfo(ContentTag deletedTag) {
             super(deletedTag);
-            artifactID = deletedTag.getArtifact().getArtifactID();
+            beginByteOffset = deletedTag.getBeginByteOffset();
+            endByteOffset = deletedTag.getEndByteOffset();
             contentID = deletedTag.getContent().getId();
+
         }
 
         @Override
@@ -69,8 +71,12 @@ public class BlackBoardArtifactTagDeletedEvent extends TagDeletedEvent<Blackboar
             return contentID;
         }
 
-        public long getArtifactID() {
-            return artifactID;
+        public long getBeginByteOffset() {
+            return beginByteOffset;
+        }
+
+        public long getEndByteOffset() {
+            return endByteOffset;
         }
     }
 }

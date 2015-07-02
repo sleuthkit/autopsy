@@ -16,26 +16,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.events;
+package org.sleuthkit.autopsy.casemodule.events;
 
+import java.io.Serializable;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Base Class for events that are fired when a Tag is added
  */
-abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
+abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(TagAddedEvent.class.getName());
 
     /**
      * The tag that was added. This will be lost during serialization and
      * re-loaded from the database in getNewValue()
      */
     private transient T tag;
+
     /**
      * The id of the tag that was added. This will bu used to re-load the
      * transient tag from the database.
@@ -83,7 +85,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent {
             tag = getTagByID();
             return tag;
         } catch (IllegalStateException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error doing lazy load for remote event", ex);
+            Logger.getLogger(TagAddedEvent.class.getName()).log(Level.SEVERE, "Error doing lazy load for remote event", ex);
             return null;
         }
     }
