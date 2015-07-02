@@ -1214,6 +1214,7 @@ public final class DrawableDB {
         } else {
             return videoFileMap.computeIfAbsent(f.getId(), (id) -> FileTypeUtils.isVideoFile(f));
         }
+        
     }
 
     /**

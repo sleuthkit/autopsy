@@ -182,21 +182,6 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
-                <package>org.apache.tika</package>
-                <package>org.apache.tika.config</package>
-                <package>org.apache.tika.detect</package>
-                <package>org.apache.tika.exception</package>
-                <package>org.apache.tika.extractor</package>
-                <package>org.apache.tika.fork</package>
-                <package>org.apache.tika.io</package>
-                <package>org.apache.tika.language</package>
-                <package>org.apache.tika.metadata</package>
-                <package>org.apache.tika.mime</package>
-                <package>org.apache.tika.parser</package>
-                <package>org.apache.tika.parser.external</package>
-                <package>org.apache.tika.sax</package>
-                <package>org.apache.tika.sax.xpath</package>
-                <package>org.apache.tika.utils</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
