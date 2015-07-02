@@ -1212,7 +1212,7 @@ public final class DrawableDB {
         if (Objects.isNull(f)) {
             return false;
         } else {
-            return videoFileMap.computeIfAbsent(f.getId(), (id) -> ImageGalleryModule.isVideoFile(f));
+            return videoFileMap.computeIfAbsent(f.getId(), (id) -> FileTypeUtils.isVideoFile(f));
         }
     }
 
