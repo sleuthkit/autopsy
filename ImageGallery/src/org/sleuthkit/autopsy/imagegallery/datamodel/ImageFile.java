@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
-import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,23 +49,33 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return ThumbnailCache.getDefault().get(this);
     }
 
-
     public Image getFullSizeImage() {
         Image image = null;
         if (imageRef != null) {
             image = imageRef.get();
         }
-        if (image == null) {
 
-            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
-                BufferedImage read = ImageIO.read(readContentInputStream);
-                image = SwingFXUtils.toFXImage(read, null);
-            } catch (IOException | NullPointerException ex) {
+        if (image == null) {
+            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
+                image = new Image(readContentInputStream);
+                if (image.errorProperty().get()) {
+                    image.getException().printStackTrace();
+                }
+            } catch (IOException ex) {
                 Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
-                return null;
             }
-            imageRef = new SoftReference<>(image);
         }
+
+//        if (image == null || image.isError()) {
+//            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
+//                BufferedImage read = ImageIO.read(readContentInputStream);
+//                image = SwingFXUtils.toFXImage(read, null);
+//            } catch (IOException | NullPointerException ex) {
+//                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
+//                return null;
+//            }
+//            imageRef = new SoftReference<>(image);
+//        }
         return image;
     }
 
