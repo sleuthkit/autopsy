@@ -90,8 +90,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     //TODO: do this in CSS? -jm
-    protected static final Image videoIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/video-file.png");
-    protected static final Image hashHitIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png");
     protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
     protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
 
@@ -110,6 +108,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     protected ImageView hashHitImageView;
 
+    @FXML
+    protected ImageView undisplayableImageView;
     /**
      * displays the icon representing follow up tag
      */
@@ -318,11 +318,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
+            final boolean isUndisplayable = file.isDisplayable() == false;
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
-                fileTypeImageView.setImage(isVideo ? videoIcon : null);
-                hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
+                fileTypeImageView.setManaged(isVideo);
+                hashHitImageView.setManaged(hasHashSetHits);
+                undisplayableImageView.setManaged(isUndisplayable);
+                fileTypeImageView.setVisible(isVideo);
+                hashHitImageView.setVisible(hasHashSetHits);
+                undisplayableImageView.setVisible(isUndisplayable);
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });

@@ -58,7 +58,10 @@
                                                 <ToggleButton id="Cat2Toggle" fx:id="cat2Toggle" mnemonicParsing="false" styleClass="button" text="2" HBox.hgrow="ALWAYS" />
                                                 <ToggleButton fx:id="cat3Toggle" mnemonicParsing="false" styleClass="button" text="3" HBox.hgrow="ALWAYS" />
                                                 <ToggleButton fx:id="cat4Toggle" mnemonicParsing="false" styleClass="button" text="4" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" toggleGroup="$cat" HBox.hgrow="ALWAYS" />                                          
+                                                <ToggleButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" HBox.hgrow="ALWAYS">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="cat" />
+                                       </toggleGroup></ToggleButton>                                          
                                             </buttons>
                                         
                                         </org.controlsfx.control.SegmentedButton>
@@ -99,6 +102,11 @@
                                                                 <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                                                             </HBox.margin>
                                                         </ImageView>
+                                          <ImageView fx:id="undisplayableImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../../images/prohibition.png" />
+                                             </image>
+                                          </ImageView>
                                                     </children>
                                                     <padding>
                                                         <Insets bottom="2.0" right="2.0" top="2.0" />
