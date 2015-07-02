@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -53,18 +54,19 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupManager;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
-import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -128,13 +130,15 @@ public final class ImageGalleryController {
 
     private final GroupManager groupManager = new GroupManager(this);
     private final HashSetManager hashSetManager = new HashSetManager();
-    private final CategoryManager categoryManager = new CategoryManager();
+    private final CategoryManager categoryManager = new CategoryManager(this);
+    private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
 
     private StackPane fullUIStackPane;
 
     private StackPane centralStackPane;
 
     private Node infoOverlay;
+    private SleuthkitCase sleuthKitCase;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -335,7 +339,7 @@ public final class ImageGalleryController {
             Platform.runLater(this::updateRegroupDisabled);
         });
 
-        Thread th = new Thread(dbWorkerThread);
+        Thread th = new Thread(dbWorkerThread, "DB-Worker-Thread");
         th.setDaemon(false); // we want it to go away when it is done
         th.start();
     }
@@ -346,19 +350,27 @@ public final class ImageGalleryController {
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), getSleuthKitCase());
+        if (Objects.nonNull(theNewCase)) {
+            this.sleuthKitCase = theNewCase.getSleuthkitCase();
+            this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
-        setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
-        setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
+            setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
+            setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
 
-        // if we add this line icons are made as files are analyzed rather than on demand.
-        // db.addUpdatedFileListener(IconCache.getDefault());
-        restartWorker();
-        historyManager.clear();
-        groupManager.setDB(db);
-        hashSetManager.setDb(db);
-        categoryManager.setDb(db);
-        SummaryTablePane.getDefault().refresh();
+            // if we add this line icons are made as files are analyzed rather than on demand.
+            // db.addUpdatedFileListener(IconCache.getDefault());
+            restartWorker();
+            historyManager.clear();
+            groupManager.setDB(db);
+            hashSetManager.setDb(db);
+            categoryManager.setDb(db);
+            tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
+            tagsManager.registerListener(groupManager);
+            tagsManager.registerListener(categoryManager);
+
+        } else {
+            reset();
+        }
     }
 
     /**
@@ -372,9 +384,11 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             historyManager.clear();
         });
-        Category.clearTagNames();
+        tagsManager.clearFollowUpTagName();
+        tagsManager.unregisterListener(groupManager);
+        tagsManager.unregisterListener(categoryManager);
 
-        Toolbar.getDefault().reset();
+        Toolbar.getDefault(this).reset();
         groupManager.clear();
         if (db != null) {
             db.closeDBCon();
@@ -478,6 +492,19 @@ public final class ImageGalleryController {
                         setStale(true);
                     }
                     break;
+                case CONTENT_TAG_ADDED:
+                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+                    if (getDatabase().isInDB((tagAddedEvent).getAddedTag().getContent().getId())) {
+                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                    }
+                    break;
+                case CONTENT_TAG_DELETED:
+                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                    if (getDatabase().isInDB((tagDeletedEvent).getDeletedTagInfo().getContentID())) {
+                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                    }
+                    break;
+
             }
         });
     }
@@ -488,6 +515,10 @@ public final class ImageGalleryController {
 
     public CategoryManager getCategoryManager() {
         return categoryManager;
+    }
+
+    public DrawableTagsManager getTagsManager() {
+        return tagsManager;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
@@ -553,12 +584,8 @@ public final class ImageGalleryController {
         }
     }
 
-    public SleuthkitCase getSleuthKitCase() throws IllegalStateException {
-        if (Case.isCaseOpen()) {
-            return Case.getCurrentCase().getSleuthkitCase();
-        } else {
-            throw new IllegalStateException("No Case is open!");
-        }
+    public synchronized SleuthkitCase getSleuthKitCase() {
+        return sleuthKitCase;
     }
 
     /**

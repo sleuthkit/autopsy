@@ -757,6 +757,7 @@ public class TimeLineController {
                     try {
                         Case.getCurrentCase();
                         SwingUtilities.invokeLater(() -> {
+                            //if we are doing incremental updates, drop this
                             if (isWindowOpen()) {
                                 outOfDatePromptAndRebuild();
                             }

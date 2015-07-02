@@ -184,6 +184,7 @@
             <public-packages>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
+                <package>org.sleuthkit.autopsy.casemodule.events</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.core</package>

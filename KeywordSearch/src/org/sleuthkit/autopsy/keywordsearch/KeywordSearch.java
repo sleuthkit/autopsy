@@ -23,15 +23,15 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.BlackboardResultWriter;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
 
 /**
  * Wrapper over KeywordSearch Solr server singleton.
@@ -123,11 +123,14 @@ public class KeywordSearch {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
 
             final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
+                /* don't call getOld/NewValue() unless they are needed, since
+                 * they might do expensive db operations to load transient
+                 * values lost in serialization */
+                Object oldValue = evt.getOldValue();
+                Object newValue = evt.getNewValue();
                 if (newValue != null) {
                     // new case is open
                     try {

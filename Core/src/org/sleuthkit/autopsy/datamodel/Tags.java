@@ -35,8 +35,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -116,10 +114,12 @@ public class Tags implements AutopsyVisitableItem {
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
-            @SuppressWarnings("deprecation")
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -128,32 +128,15 @@ public class Tags implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        /**
-                         * There are two things to note here. * First, even with
-                         * the check above, it is still possible that the case
-                         * will be closed in a different thread before this code
-                         * executes. If that happens, it is possible for the
-                         * event to have a null oldValue. Second, the use of
-                         * deprecated artifact types here is explained by the
-                         * fact that in an ideal world, the TagsManager would
-                         * fire tag-related events so that the tags tree would
-                         * refresh. But, we haven't had a chance to add that, so
-                         * we fire these events with bogus artifacts to indicate
-                         * a tree refresh is required.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && (eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT
-                                || eventData.getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)) {
-                            refresh(true);
-                            tagResults.update();
-                        }
+                        refresh(true);
+                        tagResults.update();
                     } catch (IllegalStateException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -472,13 +455,14 @@ public class Tags implements AutopsyVisitableItem {
         }
     }
 
-    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> {
+    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {
 
         private final TagName tagName;
 
         BlackboardArtifactTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
+            tagResults.addObserver(this);
         }
 
         @Override
@@ -496,6 +480,11 @@ public class Tags implements AutopsyVisitableItem {
         protected Node createNodeForKey(BlackboardArtifactTag key) {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 }
