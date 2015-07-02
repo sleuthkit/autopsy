@@ -37,26 +37,56 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Enum style singleton to provide utilities related to questions about a files
+ * type
  */
 public enum FileTypeUtils {
 
     instance;
 
+    private static final Logger LOGGER = Logger.getLogger(FileTypeUtils.class.getName());
+
+    /**
+     * Set of specific mimetypes (as strings) that we should support(ie,
+     * include in db and show to user).
+     * These are in addition to all image/* or video/* types
+     */
     private static final Set<String> supportedMimeTypes = new HashSet<>();
+    /**
+     * set of specific mimetypes to support as videos, in addition to any type
+     * prefixed by video/
+     */
     private static final Set<String> videoMimeTypes = new HashSet<>();
-
-    public static Set<String> getAllSupportedMimeTypes() {
-        return Collections.unmodifiableSet(supportedMimeTypes);
-    }
+    /**
+     * set of extensions to support as images. lowercase without the period.
+     */
     private static final Set<String> imageExtensions = new HashSet<>();
-    static final Set<String> videoExtensions = new HashSet<>();
-    static final Set<String> supportedExtensions;
+    /**
+     * set of extensions to support as videos. lowercase without the period.
+     */
+    private static final Set<String> videoExtensions = new HashSet<>();
+    /**
+     * set of all extensions that we should support(ie, include in db and show
+     * to user). Initialized to be the concatenation of imageExtensions and
+     * videoExtensions sets.
+     */
+    private static final Set<String> supportedExtensions;
+    /**
+     * Lazily instantiated FileTypeDetector to use when the mimetype of a
+     * file is needed
+     */
+    private static FileTypeDetector FILE_TYPE_DETECTOR;
 
+    /**
+     * static initalizer block to initialize sets of extensions and mimetypes
+     * to be supported
+     */
     static {
+        //add all extension ImageIO claims to support
         imageExtensions.addAll(Stream.of(ImageIO.getReaderFileSuffixes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
+        //add list of known image extensions
         imageExtensions.addAll(Arrays.asList(
                 "bmp" //Bitmap
                 , "gif" //gif
@@ -72,25 +102,35 @@ public enum FileTypeUtils {
                 , "sn", "ras" //sun raster
         ));
 
-        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi", "m1v", "m2v", "m4v",
-                "mp4", "mov", "mpeg", "mpg", "mpe", "mp4", "rm", "wmv",
-                "mpv", "flv", "swf"));
+        //add list of known video extensions
+        videoExtensions.addAll(Arrays.asList("fxm", "aaf", "3gp", "asf", "avi",
+                "m1v", "m2v", "m4v", "mp4", "mov", "mpeg", "mpg", "mpe", "mp4",
+                "rm", "wmv", "mpv", "flv", "swf"));
 
         supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
+        //add list of mimetypes to count as videos even though they aren't prefixed by video/
         videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
 
         supportedMimeTypes.addAll(videoMimeTypes);
+        //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
-
     }
 
-    private static FileTypeDetector FILE_TYPE_DETECTOR;
+    /**
+     *
+     * @return
+     */
+    public static Set<String> getAllSupportedMimeTypes() {
+        return Collections.unmodifiableSet(supportedMimeTypes);
+    }
 
-    private static final Logger LOGGER = Logger.getLogger(FileTypeUtils.class.getName());
-
+    /**
+     *
+     * @return
+     */
     static Set<String> getAllSupportedExtensions() {
         return Collections.unmodifiableSet(supportedExtensions);
     }
