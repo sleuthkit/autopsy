@@ -44,6 +44,7 @@ public enum FileTypeUtils {
     instance;
 
     private static final Set<String> supportedMimeTypes = new HashSet<>();
+    private static final Set<String> videoMimeTypes = new HashSet<>();
 
     public static Set<String> getAllSupportedMimeTypes() {
         return Collections.unmodifiableSet(supportedMimeTypes);
@@ -65,11 +66,13 @@ public enum FileTypeUtils {
 
         supportedExtensions = Sets.union(imageExtensions, videoExtensions);
 
+        videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
+
+        supportedMimeTypes.addAll(videoMimeTypes);
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
-        supportedMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
     }
 
     private static FileTypeDetector FILE_TYPE_DETECTOR;
@@ -108,7 +111,7 @@ public enum FileTypeUtils {
     }
 
     /**
-     *
+     * does the given file have drawable/supported mime type
      *
      * @param file
      *
@@ -137,7 +140,10 @@ public enum FileTypeUtils {
         return Optional.empty();
     }
 
-    /** @param file
+    /**
+     * is the given file a video
+     *
+     * @param file
      *
      * @return true if the given file has a video mime type (video/*,
      *         application/x-shockwave-flash, etc) or, if no mimetype is
@@ -150,7 +156,7 @@ public enum FileTypeUtils {
                 String mimeType = fileTypeDetector.getFileType(file);
                 if (nonNull(mimeType)) {
                     mimeType = mimeType.toLowerCase();
-                    return mimeType.startsWith("video/") || supportedMimeTypes.contains(mimeType);
+                    return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
                 }
             }
         } catch (TskCoreException ex) {
