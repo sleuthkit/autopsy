@@ -133,10 +133,12 @@ public class ServicesMonitor {
      * Fire an event signifying change in remote database (e.g. PostgreSQL) service status.
      */
     void fireRemoteDatabaseStatusChange(ServiceStatus status) {
-        AutopsyEvent event = new AutopsyEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status);
-        eventPublisher.publish(event);
+        eventPublisher.publish(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
     }    
 
+    void setServiceStatus(String service, String status, String details) {
+        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
+    }
 
     /**
      * A Runnable task that periodically checks the availability of
@@ -174,9 +176,8 @@ public class ServicesMonitor {
                     }
                 }
 
-                //KeywordSearchService kwsService = Case.getCurrentCase().getServices().getKeywordSearchService();
                 KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-
+                // TODO - do I need to check for kwsService == null?
                 if (kwsService.canConnectToRemoteSolrServer()) {
                     if (!solrServerIsRunning) {
                         solrServerIsRunning = true;
