@@ -99,43 +99,83 @@ public class ServicesMonitor {
         periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 
-    // Subscribes to all events
+    /**
+     * Adds an event subscriber to this publisher. Subscriber will be subscribed 
+     * to all events from this publisher.
+     *
+     * @param subscriber The subscriber to add.
+     */ 
     public void addSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(serviceNames, subscriber);
     }
 
-    
+    /**
+     * Adds an event subscriber to this publisher.
+     *
+     * @param eventNames The events the subscriber is interested in.
+     * @param subscriber The subscriber to add.
+     */    
     public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+        eventPublisher.addSubscriber(eventNames, subscriber);
     }
 
-    
+    /**
+     * Adds an event subscriber to this publisher.
+     *
+     * @param eventName The event the subscriber is interested in.
+     * @param subscriber The subscriber to add.
+     */    
     public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
-
+        eventPublisher.addSubscriber(eventName, subscriber);
     }
 
-
+    /**
+     * Removes an event subscriber from this publisher.
+     *
+     * @param eventNames The events the subscriber is no longer interested in.
+     * @param subscriber The subscriber to remove.
+     */
     public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
-
+        eventPublisher.removeSubscriber(eventNames, subscriber);
     }
 
-
+    /**
+     * Removes an event subscriber from this publisher.
+     *
+     * @param eventName The event the subscriber is no longer interested in.
+     * @param subscriber The subscriber to remove.
+     */
     public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
-        
+        eventPublisher.removeSubscriber(eventName, subscriber);
     }
 
-    // Unsubscribes from all events
+    /**
+     * Removes an event subscriber to this publisher. Subscriber will be removed 
+     * from all event notifications from this publisher.
+     *
+     * @param subscriber The subscriber to remove.
+     */ 
     public void removeSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(serviceNames, subscriber);
     }
     
     /**
-     * Fire an event signifying change in remote database (e.g. PostgreSQL) service status.
+     * Publish an event signifying change in remote database (e.g. PostgreSQL) service status.
+     * 
+     * @param status Updated status for the event.
      */
-    void fireRemoteDatabaseStatusChange(ServiceStatus status) {
+    void publishRemoteDatabaseStatusChange(ServiceStatus status) {
         eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
     }    
 
-    public void setServiceStatus(String service, String status, String details) {
+    /**
+     * Publish a custom event.
+     * 
+     * @param service Name of the service.
+     * @param status Updated status for the event.
+     * @param details Details of the event.
+     */    
+    public void publishServiceStatus(String service, String status, String details) {
         eventPublisher.publishLocally(new ServiceEvent(service, status, details));
     }
 
@@ -164,14 +204,14 @@ public class ServicesMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
-                        fireRemoteDatabaseStatusChange(ServiceStatus.UP);
+                        publishRemoteDatabaseStatusChange(ServiceStatus.UP);
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-                        fireRemoteDatabaseStatusChange(ServiceStatus.DOWN);
+                        publishRemoteDatabaseStatusChange(ServiceStatus.DOWN);
                     }
                 }
 

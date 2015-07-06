@@ -335,6 +335,9 @@ public class IngestManager {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
                     if (evt.getNewValue() == ServicesMonitor.ServiceStatus.DOWN) {
+                        
+                        // TODO - display notification
+                        
                         // cancel ingest if running
                         cancelAllIngestJobs();
                     }
