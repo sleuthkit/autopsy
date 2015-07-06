@@ -36,6 +36,7 @@
 from java.lang import System
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
+import os
 
 # TODO: Rename this to something more specific
 class SampleGeneralReportModule(GeneralReportModuleAdapter):
@@ -73,7 +74,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
             progressBar.increment()
             
             # Write the result to the report file.
-            report = open(baseReportDir + '\\' + self.getRelativeFilePath(), 'w')
+            report = open(os.path.join(baseReportDir, self.getRelativeFilePath()), 'w')
             report.write("file count = %d" % fileCount)
             Case.getCurrentCase().addReport(report.name, "SampleGeneralReportModule", "Sample Python Report");
             report.close()
