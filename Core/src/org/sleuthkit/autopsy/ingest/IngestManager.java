@@ -44,6 +44,8 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.ServiceEvent;
+import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -150,6 +152,12 @@ public class IngestManager {
      * is the default.
      */
     private volatile boolean runInteractively;
+    
+    /**
+     * Ingest manager subscribes to service outage notifications. If key services are down, 
+     * ingest manager cancels all ingest jobs in progress.
+     */
+    private final ServicesMonitor servicesMonitor;
 
     /**
      * Ingest job events.
@@ -264,6 +272,9 @@ public class IngestManager {
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
+        
+        this.servicesMonitor = ServicesMonitor.getInstance();
+        subscribeToServiceMonitorEvents();
 
         this.startDataSourceIngestThread();
 
@@ -312,6 +323,26 @@ public class IngestManager {
                 }
             }
         });
+    }
+    
+    /**
+     * Subscribe ingest manager to service monitor events.
+     */
+    private void subscribeToServiceMonitorEvents() {
+        PropertyChangeListener propChangeListener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
+                    if (evt.getNewValue() == ServicesMonitor.ServiceStatus.DOWN) {
+                        // cancel ingest if running
+                        cancelAllIngestJobs();
+                    }
+                }
+            }
+        };
+        // TODO: sunscribe to all events?
+        this.servicesMonitor.addSubscriber(propChangeListener);
     }
 
     synchronized void handleCaseOpened() {

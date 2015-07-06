@@ -74,7 +74,7 @@ public class ServicesMonitor {
         MESSAGING
     };
 
-    enum ServiceStatus {
+    public enum ServiceStatus {
 
         UP,
         DOWN
@@ -100,31 +100,31 @@ public class ServicesMonitor {
     }
 
     // Subscribes to all events
-    void addSubscriber(PropertyChangeListener subscriber) {
+    public void addSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(serviceNames, subscriber);
     }
 
     
-    void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
     }
 
     
-    void addSubscriber(String eventName, PropertyChangeListener subscriber) {
+    public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
 
     }
 
 
-    void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
 
     }
 
 
-    void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
+    public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
         
     }
 
     // Unsubscribes from all events
-    void removeSubscriber(PropertyChangeListener subscriber) {
+    public void removeSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(serviceNames, subscriber);
     }
     
@@ -132,10 +132,10 @@ public class ServicesMonitor {
      * Fire an event signifying change in remote database (e.g. PostgreSQL) service status.
      */
     void fireRemoteDatabaseStatusChange(ServiceStatus status) {
-        eventPublisher.publish(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
+        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
     }    
 
-    void setServiceStatus(String service, String status, String details) {
+    public void setServiceStatus(String service, String status, String details) {
         eventPublisher.publishLocally(new ServiceEvent(service, status, details));
     }
 
