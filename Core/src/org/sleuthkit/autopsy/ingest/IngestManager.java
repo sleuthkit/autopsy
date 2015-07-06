@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -332,20 +333,34 @@ public class IngestManager {
         PropertyChangeListener propChangeListener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
-                    if (evt.getNewValue() == ServicesMonitor.ServiceStatus.DOWN) {
-                        
-                        // TODO - display notification
-                        
-                        // cancel ingest if running
-                        cancelAllIngestJobs();
+                String serviceName = evt.getPropertyName();
+                if (evt.getNewValue() == ServicesMonitor.ServiceStatus.DOWN.toString()) {
+                    // one of the services we subscribed for went down
+                    
+                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceName); //NON-NLS                  
+
+                    // display notification if running interactively
+                    if (isRunningInteractively()){
+                        // TODO
+                        //MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
+                        //                          NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+                        //                          MessageNotifyUtil.MessageType.ERROR);  
+                        MessageNotifyUtil.Notify.show("Service " + serviceName + " is down!",
+                                                  "Service " + serviceName + " is down!",
+                                                  MessageNotifyUtil.MessageType.ERROR);
                     }
+                    
+                    // cancel ingest if running
+                    cancelAllIngestJobs();
                 }
             }
         };
-        // TODO: sunscribe to all events?
-        this.servicesMonitor.addSubscriber(propChangeListener);
+        
+        // subscribe to services of interest
+        Set<String> servicesList = new HashSet<>();
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
     synchronized void handleCaseOpened() {
@@ -395,6 +410,7 @@ public class IngestManager {
      * The ingest manager can be directed to forgo use of message boxes, the
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
+     * @return true if running interactively, false otherwise.
      */
     public boolean isRunningInteractively() {
         return this.runInteractively;
