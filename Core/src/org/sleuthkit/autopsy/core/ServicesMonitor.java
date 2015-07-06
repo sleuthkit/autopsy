@@ -40,9 +40,9 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 
 /**
- * This class periodically checks availability of collaboration resources
- * (PostgreSQL server, Solr server, Active MQ message broker) and reports status
- * to the user in case of a gap in service.
+ * This class periodically checks availability of collaboration resources -
+ * remote database, remote keyword search server, messaging service - and
+ * reports status updates to the user in case of a gap in service.
  */
 public class ServicesMonitor {
 
@@ -54,7 +54,7 @@ public class ServicesMonitor {
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
-    
+
     private static final Set<String> serviceNames = Stream.of(ServicesMonitor.Service.values())
             .map(ServicesMonitor.Service::toString)
             .collect(Collectors.toSet());
@@ -100,11 +100,11 @@ public class ServicesMonitor {
     }
 
     /**
-     * Adds an event subscriber to this publisher. Subscriber will be subscribed 
+     * Adds an event subscriber to this publisher. Subscriber will be subscribed
      * to all events from this publisher.
      *
      * @param subscriber The subscriber to add.
-     */ 
+     */
     public void addSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(serviceNames, subscriber);
     }
@@ -114,7 +114,7 @@ public class ServicesMonitor {
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
-     */    
+     */
     public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
@@ -124,7 +124,7 @@ public class ServicesMonitor {
      *
      * @param eventName The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
-     */    
+     */
     public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventName, subscriber);
     }
@@ -150,31 +150,52 @@ public class ServicesMonitor {
     }
 
     /**
-     * Removes an event subscriber to this publisher. Subscriber will be removed 
+     * Removes an event subscriber to this publisher. Subscriber will be removed
      * from all event notifications from this publisher.
      *
      * @param subscriber The subscriber to remove.
-     */ 
+     */
     public void removeSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(serviceNames, subscriber);
     }
-    
+
     /**
-     * Publish an event signifying change in remote database (e.g. PostgreSQL) service status.
-     * 
+     * Publish an event signifying change in remote database (e.g. PostgreSQL)
+     * service status.
+     *
      * @param status Updated status for the event.
      */
-    void publishRemoteDatabaseStatusChange(ServiceStatus status) {
+    private void publishRemoteDatabaseStatusChange(ServiceStatus status) {
         eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
-    }    
+    }
+
+    /**
+     * Publish an event signifying change in remote database (e.g. PostgreSQL)
+     * service status.
+     *
+     * @param status Updated status for the event.
+     */
+    private void publishRemoteKeywordSearchStatusChange(ServiceStatus status) {
+        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
+    }
+
+    /**
+     * Publish an event signifying change in remote database (e.g. PostgreSQL)
+     * service status.
+     *
+     * @param status Updated status for the event.
+     */
+    private void publishMessagingStatusChange(ServiceStatus status) {
+        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
+    }
 
     /**
      * Publish a custom event.
-     * 
+     *
      * @param service Name of the service.
      * @param status Updated status for the event.
      * @param details Details of the event.
-     */    
+     */
     public void publishServiceStatus(String service, String status, String details) {
         eventPublisher.publishLocally(new ServiceEvent(service, status, details));
     }
@@ -222,12 +243,14 @@ public class ServicesMonitor {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+                        publishRemoteKeywordSearchStatusChange(ServiceStatus.UP);
                     }
                 } else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+                        publishRemoteKeywordSearchStatusChange(ServiceStatus.DOWN);
                     }
                 }
 
@@ -241,12 +264,14 @@ public class ServicesMonitor {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
+                        publishMessagingStatusChange(ServiceStatus.UP);
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                        publishMessagingStatusChange(ServiceStatus.DOWN);
                     }
                 }
             }
