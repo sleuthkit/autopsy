@@ -63,7 +63,7 @@ public class ServicesMonitor {
     /**
      * The service monitor maintains a mapping of each service to it's last status update.
      */
-    private final ConcurrentHashMap<Service, ServiceStatus> statusByService;    
+    private final ConcurrentHashMap<String, String> statusByService;    
 
     /**
      * List of services that are being monitored.
@@ -116,6 +116,11 @@ public class ServicesMonitor {
 
         this.eventPublisher = new AutopsyEventPublisher();
         this.statusByService = new ConcurrentHashMap<>();
+        
+        // Services are assumed to be "UP" by default. See CrashDetectionTask class for more info.
+        for (String serviceName : serviceNames) {
+            this.statusByService.put(serviceName, ServiceStatus.UP.toString());
+        }
 
         /**
          * Start periodic task that check the availability of key collaboration
@@ -131,7 +136,7 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the service.
      */
-    private void setServiceStatus(Service service, ServiceStatus status){
+    private void setServiceStatus(String service, String status){
         this.statusByService.put(service, status);
         publishServiceStatusUpdate(service, status);
     }
@@ -141,10 +146,21 @@ public class ServicesMonitor {
      * 
      * @param service Name of the service.
      * @return ServiceStatus Status for the service.
+     * @throws org.sleuthkit.autopsy.core.UnknownServiceException
      */
-    public ServiceStatus getServiceStatus(Service service){
-        // Services are assumed to be "UP" by default. See CrashDetectionTask class for more info.
-        return this.statusByService.getOrDefault(service, ServiceStatus.UP);
+    public String getServiceStatus(String service) throws UnknownServiceException {
+        
+        if (service == null){
+            // TODO NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.existNotDir"));
+            throw new UnknownServiceException("Requested service name is null");
+        }
+        
+        String status = this.statusByService.get(service);
+        if (status == null){
+            // no such service
+            throw new UnknownServiceException("Requested service name " + service + " is unknown");
+        }
+        return status;
     }
     
     /**
@@ -153,8 +169,8 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the event.
      */
-    private void publishServiceStatusUpdate(Service service, ServiceStatus status) {
-        eventPublisher.publishLocally(new ServiceEvent(service.toString(), status.toString(), ""));
+    private void publishServiceStatusUpdate(String service, String status) {
+        eventPublisher.publishLocally(new ServiceEvent(service, status, ""));
     }
 
     /**
@@ -236,8 +252,8 @@ public class ServicesMonitor {
      */
     private final class CrashDetectionTask implements Runnable {
 
-        // Services are assumed to be "UP" by default. Change default value in getServiceStatus() 
-        // if this assumption changes.
+        // Services are assumed to be "UP" by default. Change default value in ServicesMonitor() 
+        // constructor if this assumption changes.
         private boolean dbServerIsRunning = true;
         private boolean solrServerIsRunning = true;
         private boolean messageServerIsRunning = true;
@@ -256,14 +272,14 @@ public class ServicesMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_CASE_DATABASE, ServiceStatus.UP);
+                        setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_CASE_DATABASE, ServiceStatus.DOWN);
+                        setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
 
@@ -274,14 +290,14 @@ public class ServicesMonitor {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
-                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH, ServiceStatus.UP);
+                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH, ServiceStatus.DOWN);
+                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
 
@@ -295,14 +311,14 @@ public class ServicesMonitor {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
-                        setServiceStatus(Service.MESSAGING, ServiceStatus.UP);
+                        setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString());
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
-                        setServiceStatus(Service.MESSAGING, ServiceStatus.DOWN);
+                        setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
             }
