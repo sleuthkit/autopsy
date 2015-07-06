@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
 import java.net.URISyntaxException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -58,6 +59,11 @@ public class ServicesMonitor {
     private static final Set<String> serviceNames = Stream.of(ServicesMonitor.Service.values())
             .map(ServicesMonitor.Service::toString)
             .collect(Collectors.toSet());
+    
+    /**
+     * The service monitor maintains a mapping of each service to it's last status update.
+     */
+    private final ConcurrentHashMap<Service, ServiceStatus> statusByService;    
 
     /**
      * List of services that are being monitored.
@@ -65,18 +71,37 @@ public class ServicesMonitor {
     public enum Service {
 
         /**
-         * Property change event fired when ....TODO.... The old value of the
-         * PropertyChangeEvent object is set to the ingest job id, and the new
-         * value is set to null.
+         * Property change event fired when remote case database status changes. 
+         * New value is set to updated ServiceStatus, old value is null.
          */
         REMOTE_CASE_DATABASE,
+        
+        /**
+         * Property change event fired when remote keyword search service status changes.
+         * New value is set to updated ServiceStatus, old value is null.
+         */        
         REMOTE_KEYWORD_SEARCH,
+        
+        /**
+         * Property change event fired when messaging service status changes.
+         * New value is set to updated ServiceStatus, old value is null.
+         */        
         MESSAGING
     };
 
+    /**
+     * List of possible service statuses.
+     */    
     public enum ServiceStatus {
 
+        /**
+         * Service is currently up.
+         */
         UP,
+        
+        /**
+         * Service is currently down.
+         */
         DOWN
     };
 
@@ -90,6 +115,7 @@ public class ServicesMonitor {
     private ServicesMonitor() {
 
         this.eventPublisher = new AutopsyEventPublisher();
+        this.statusByService = new ConcurrentHashMap<>();
 
         /**
          * Start periodic task that check the availability of key collaboration
@@ -98,6 +124,49 @@ public class ServicesMonitor {
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
         periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
+    
+    /**
+     * Store and publish service status update. 
+     * 
+     * @param service Name of the service.
+     * @param status Updated status for the service.
+     */
+    private void setServiceStatus(Service service, ServiceStatus status){
+        this.statusByService.put(service, status);
+        publishServiceStatusUpdate(service, status);
+    }
+    
+    /**
+     * Get last status update for a service.
+     * 
+     * @param service Name of the service.
+     * @return ServiceStatus Status for the service.
+     */
+    public ServiceStatus getServiceStatus(Service service){
+        // Services are assumed to be "UP" by default. See CrashDetectionTask class for more info.
+        return this.statusByService.getOrDefault(service, ServiceStatus.UP);
+    }
+    
+    /**
+     * Publish an event signifying change in service status. Event is published locally.
+     *
+     * @param service Name of the service.
+     * @param status Updated status for the event.
+     */
+    private void publishServiceStatusUpdate(Service service, ServiceStatus status) {
+        eventPublisher.publishLocally(new ServiceEvent(service.toString(), status.toString(), ""));
+    }
+
+    /**
+     * Publish a custom event. Event is published locally.
+     *
+     * @param service Name of the service.
+     * @param status Updated status for the event.
+     * @param details Details of the event.
+     */
+    public void publishCustomServiceStatus(String service, String status, String details) {
+        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
+    }    
 
     /**
      * Adds an event subscriber to this publisher. Subscriber will be subscribed
@@ -160,47 +229,6 @@ public class ServicesMonitor {
     }
 
     /**
-     * Publish an event signifying change in remote database (e.g. PostgreSQL)
-     * service status.
-     *
-     * @param status Updated status for the event.
-     */
-    private void publishRemoteDatabaseStatusChange(ServiceStatus status) {
-        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
-    }
-
-    /**
-     * Publish an event signifying change in remote database (e.g. PostgreSQL)
-     * service status.
-     *
-     * @param status Updated status for the event.
-     */
-    private void publishRemoteKeywordSearchStatusChange(ServiceStatus status) {
-        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
-    }
-
-    /**
-     * Publish an event signifying change in remote database (e.g. PostgreSQL)
-     * service status.
-     *
-     * @param status Updated status for the event.
-     */
-    private void publishMessagingStatusChange(ServiceStatus status) {
-        eventPublisher.publishLocally(new ServiceEvent(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), null, status.toString()));
-    }
-
-    /**
-     * Publish a custom event.
-     *
-     * @param service Name of the service.
-     * @param status Updated status for the event.
-     * @param details Details of the event.
-     */
-    public void publishServiceStatus(String service, String status, String details) {
-        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
-    }
-
-    /**
      * A Runnable task that periodically checks the availability of
      * collaboration resources (PostgreSQL server, Solr server, Active MQ
      * message broker) and reports status to the user in case of a gap in
@@ -208,9 +236,12 @@ public class ServicesMonitor {
      */
     private final class CrashDetectionTask implements Runnable {
 
+        // Services are assumed to be "UP" by default. Change default value in getServiceStatus() 
+        // if this assumption changes.
         private boolean dbServerIsRunning = true;
         private boolean solrServerIsRunning = true;
         private boolean messageServerIsRunning = true;
+        
         private final Object lock = new Object();
 
         /**
@@ -225,14 +256,14 @@ public class ServicesMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
-                        publishRemoteDatabaseStatusChange(ServiceStatus.UP);
+                        setServiceStatus(Service.REMOTE_CASE_DATABASE, ServiceStatus.UP);
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
-                        publishRemoteDatabaseStatusChange(ServiceStatus.DOWN);
+                        setServiceStatus(Service.REMOTE_CASE_DATABASE, ServiceStatus.DOWN);
                     }
                 }
 
@@ -243,14 +274,14 @@ public class ServicesMonitor {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
-                        publishRemoteKeywordSearchStatusChange(ServiceStatus.UP);
+                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH, ServiceStatus.UP);
                     }
                 } else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
-                        publishRemoteKeywordSearchStatusChange(ServiceStatus.DOWN);
+                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH, ServiceStatus.DOWN);
                     }
                 }
 
@@ -264,18 +295,17 @@ public class ServicesMonitor {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
                         //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
-                        publishMessagingStatusChange(ServiceStatus.UP);
+                        setServiceStatus(Service.MESSAGING, ServiceStatus.UP);
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
                         //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
-                        publishMessagingStatusChange(ServiceStatus.DOWN);
+                        setServiceStatus(Service.MESSAGING, ServiceStatus.DOWN);
                     }
                 }
             }
         }
-
     }
 }
