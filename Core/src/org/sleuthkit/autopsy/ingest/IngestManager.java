@@ -341,13 +341,10 @@ public class IngestManager {
 
                     // display notification if running interactively
                     if (isRunningInteractively()){
-                        // TODO
-                        //MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
-                        //                          NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
-                        //                          MessageNotifyUtil.MessageType.ERROR);  
-                        MessageNotifyUtil.Notify.show("Service " + serviceName + " is down!",
-                                                  "Service " + serviceName + " is down!",
-                                                  MessageNotifyUtil.MessageType.ERROR);
+                        JOptionPane.showMessageDialog(null,
+                                          NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                          NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceName),
+                                          JOptionPane.ERROR_MESSAGE);
                     }
                     
                     // cancel ingest if running

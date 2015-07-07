@@ -271,14 +271,14 @@ public class ServicesMonitor {
                     if (!dbServerIsRunning) {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
-                        //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredDbService.notify.msg"));
                         setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
-                        //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedDbService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedDbService.notify.msg"));
                         setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
@@ -289,14 +289,14 @@ public class ServicesMonitor {
                     if (!solrServerIsRunning) {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
-                        //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredSolrService.notify.msg"));                    
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredSolrService.notify.msg"));                    
                         setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
-                        //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedSolrService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedSolrService.notify.msg"));
                         setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
@@ -310,14 +310,14 @@ public class ServicesMonitor {
                     if (!messageServerIsRunning) {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
-                        //MessageNotifyUtil.Notify.info(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.restoredMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredMessageService.notify.msg"));
                         setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString());
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
-                        //MessageNotifyUtil.Notify.error(NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedService.notify.title"), NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.failedMessageService.notify.msg"));
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedMessageService.notify.msg"));
                         setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
