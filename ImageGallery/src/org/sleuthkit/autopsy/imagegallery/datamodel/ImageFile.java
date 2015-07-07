@@ -60,7 +60,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         }
 
         if (image == null) {
-
             try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
@@ -68,8 +67,8 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
                 Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
                 return null;
             }
-            imageRef = new SoftReference<>(image);
         }
+        imageRef = new SoftReference<>(image);
         return image;
     }
 
