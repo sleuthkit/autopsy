@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.poi.OldFileFormatException;
 import org.apache.poi.hslf.model.Picture;
 import org.apache.poi.hslf.usermodel.PictureData;
 import org.apache.poi.hslf.usermodel.SlideShow;
@@ -58,6 +59,9 @@ class ImageExtractor {
     private String parentFileName;
     private final String UNKNOWN_NAME_PREFIX = "image_";
     private final FileTypeDetector fileTypeDetector;
+
+    private String moduleDirRelative;
+    private String moduleDirAbsolute;
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -84,12 +88,14 @@ class ImageExtractor {
     }
     private SupportedImageExtractionFormats abstractFileExtractionFormat;
 
-    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector) {
+    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
 
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;
+        this.moduleDirRelative = moduleDirRelative;
+        this.moduleDirAbsolute = moduleDirAbsolute;
     }
     
     /**
@@ -125,7 +131,7 @@ class ImageExtractor {
      * @param format
      * @param abstractFile The abstract file to be processed.
      */
-    protected void extractImage(AbstractFile abstractFile) {
+    void extractImage(AbstractFile abstractFile) {
         // 
         // switchcase for different supported formats
         // process abstractFile according to the format by calling appropriate methods.
@@ -133,7 +139,19 @@ class ImageExtractor {
         List<ExtractedImage> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
-
+        //check if already has derived files, skip
+        try {
+            if (abstractFile.hasChildren()) {
+                //check if local unpacked dir exists
+                if (new File(getOutputFolderPath(parentFileName)).exists()) {
+                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                    return;
+                }
+            }
+        } catch (TskCoreException e) {
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", parentFileName); //NON-NLS
+            return;
+        }
         switch (abstractFileExtractionFormat) {
             case DOC:
                 listOfExtractedImages = extractImagesFromDoc(abstractFile);
@@ -189,8 +207,9 @@ class ImageExtractor {
         HWPFDocument doc = null;
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         PicturesTable pictureTable = doc.getPicturesTable();
@@ -227,8 +246,9 @@ class ImageExtractor {
         XWPFDocument docx = null;
         try {
             docx = new XWPFDocument(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XWPFPictureData> listOfAllPictures = docx.getAllPictures();
@@ -266,8 +286,9 @@ class ImageExtractor {
         SlideShow ppt = null;
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 
@@ -336,8 +357,9 @@ class ImageExtractor {
         XMLSlideShow pptx;
         try {
             pptx = new XMLSlideShow(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
         List<XSLFPictureData> listOfAllPictures = pptx.getAllPictures();
@@ -383,8 +405,9 @@ class ImageExtractor {
         Workbook xls;
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName(), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()) + af.getName()); //NON-NLS
             return null;
         }
 
@@ -426,8 +449,9 @@ class ImageExtractor {
         Workbook xlsx;
         try {
             xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
+        } catch (Throwable ex) {
+            // instantiating POI containers throw RuntimeExceptions
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName())); //NON-NLS
             return null;
         }
 
@@ -481,7 +505,7 @@ class ImageExtractor {
      * @return path to the image extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
-        String outputFolderPath = EmbeddedFileExtractorIngestModule.moduleDirAbsolute + File.separator + parentFileName;
+        String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
         File outputFilePath = new File(outputFolderPath);
         if (!outputFilePath.exists()) {
             try {
@@ -504,7 +528,7 @@ class ImageExtractor {
      */
     private String getFileRelativePath(String fileName) {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + EmbeddedFileExtractorIngestModule.moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
+        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
     }
 
     /**

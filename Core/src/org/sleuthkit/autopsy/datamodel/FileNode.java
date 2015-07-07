@@ -177,6 +177,9 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
     @Override
     public boolean isLeafTypeNode() {
+        // This seems wrong, but it also seems that it is never called
+        // because the visitor to figure out if there are children or 
+        // not will check if it has children using the Content API
         return true;
     }
 }

@@ -26,10 +26,10 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,12 +38,18 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -51,10 +57,6 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with unallocated space files as input.
@@ -74,6 +76,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private Path rootOutputDirPath;
     private File executableFile;
+    private IngestServices services;
 
     /**
      * @inheritDoc
@@ -81,6 +84,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         this.context = context;
+        this.services = IngestServices.getInstance();
 
         // If the global unallocated space processing setting and the module
         // process unallocated space only setting are not in sych, throw an 
@@ -143,9 +147,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // Check that we have roughly enough disk space left to complete the operation
             long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
-            if ((file.getSize() * 2) > freeDiskSpace) {
-                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to carve unallocated space.", // NON-NLS
+            // Some network drives always return -1 for free disk space.
+            // In this case, expect enough space and move on.
+
+            if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
+                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to save unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.UnableToCarve", file.getName()),
+                        NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
+
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -177,22 +187,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
-                // cleanup the output path
-                FileUtil.deleteDir(new File(outputDirPath.toString()));
-                if (null != tempFilePath && Files.exists(tempFilePath)) {
-                    tempFilePath.toFile().delete();
-                }
+                cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 return IngestModule.ProcessResult.OK;
-            }
-
-            else if (0 != exitValue) {
+            } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
-                // cleanup the output path
-                FileUtil.deleteDir(new File(outputDirPath.toString()));
-                if (null != tempFilePath && Files.exists(tempFilePath)) {
-                    tempFilePath.toFile().delete();
-                }
+                cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}", // NON-NLS
                         new Object[]{exitValue, file.getName()}); // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
@@ -217,6 +217,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
             if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 context.addFilesToJob(new ArrayList<>(theList));
+                services.fireModuleContentEvent(new ModuleContentEvent(theList.get(0))); // fire an event to update the tree
             }
         }
         catch (IOException ex) {
@@ -233,6 +234,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return IngestModule.ProcessResult.OK;
 
     }
+    
+    private void cleanup(Path outputDirPath, Path tempFilePath) {
+        // cleanup the output path
+        FileUtil.deleteDir(new File(outputDirPath.toString()));
+        if (null != tempFilePath && Files.exists(tempFilePath)) {
+            tempFilePath.toFile().delete();
+        }
+    }
+
 
     /**
      * @inheritDoc

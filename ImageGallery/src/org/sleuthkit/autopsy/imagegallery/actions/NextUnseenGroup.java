@@ -28,7 +28,7 @@ import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
  * Marks the currently fisplayed group as "seen" and advances to the next unseen
@@ -51,19 +51,21 @@ public class NextUnseenGroup extends Action {
         this.controller = controller;
         setGraphic(new ImageView(ADVANCE));
 
+        //TODO: do we need both these listeners?
         controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> {
             Platform.runLater(this::updateButton);
 
         });
         controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            updateButton();
+            Platform.runLater(this::updateButton);
+
         });
 
         setEventHandler((ActionEvent t) -> {
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
-                    .ifPresent(controller.getGroupManager()::markGroupSeen);
+                    .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
 
             if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
                 controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));

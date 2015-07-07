@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import java.util.Objects;
 import java.util.Optional;

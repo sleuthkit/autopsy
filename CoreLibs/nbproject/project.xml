@@ -64,7 +64,6 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
-                <package>javafx.scene.control</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -617,10 +616,6 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/openjfx-dialogs-1.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
             </class-path-extension>
@@ -749,10 +744,6 @@
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.20.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.20.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r1.jar</binary-origin>
             </class-path-extension>
@@ -775,6 +766,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.40.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.40.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>

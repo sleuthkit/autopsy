@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- * Abstraction for certain top level items displayed in the GUI
+ * AutopsyVisitableItems are the nodes in the directory tree that 
+ * are for structure only.  They are not associated with content 
+ * objects.
  */
  interface AutopsyVisitableItem {
 

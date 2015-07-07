@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.grouping;
+package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -41,13 +41,15 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     private final ObservableList<Long> fileIDs = FXCollections.observableArrayList();
+    private final ObservableList<Long> unmodifiableFileIDS = FXCollections.unmodifiableObservableList(fileIDs);
 
     //cache the number of files in this groups with hashset hits
     private long hashSetHitsCount = -1;
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     synchronized public ObservableList<Long> fileIds() {
-        return FXCollections.unmodifiableObservableList(fileIDs);
+        return unmodifiableFileIDS;
     }
 
     final public GroupKey<?> groupKey;
@@ -68,9 +70,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return groupKey.getValueDisplayName();
     }
 
-    DrawableGroup(GroupKey<?> groupKey, List<Long> filesInGroup) {
+    DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
-        fileIDs.setAll(filesInGroup);
+        this.fileIDs.setAll(filesInGroup);
+        this.seen.set(seen);
     }
 
     synchronized public int getSize() {
@@ -131,18 +134,33 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 ((DrawableGroup) obj).groupKey);
     }
 
-    synchronized public void addFile(Long f) {
+    synchronized void addFile(Long f) {
         invalidateHashSetHitsCount();
-        seen.set(false);
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
+            seen.set(false);
         }
     }
 
-    synchronized public void removeFile(Long f) {
+    synchronized void setFiles(Set<? extends Long> newFileIds) {
         invalidateHashSetHitsCount();
-        seen.set(false);
-        fileIDs.removeAll(f);
+        boolean filesRemoved = fileIDs.removeIf((Long t) -> newFileIds.contains(t) == false);
+        if (filesRemoved) {
+            seen.set(false);
+        }
+        for (Long f : newFileIds) {
+            if (fileIDs.contains(f) == false) {
+                fileIDs.add(f);
+                seen.set(false);
+            }
+        }
+    }
+
+    synchronized void removeFile(Long f) {
+        invalidateHashSetHitsCount();
+        if (fileIDs.removeAll(f)) {
+            seen.set(false);
+        }
     }
 
     // By default, sort by group key name
@@ -151,8 +169,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
     }
 
-    void setSeen() {
-        this.seen.set(true);
+    void setSeen(boolean isSeen) {
+        this.seen.set(isSeen);
     }
 
     public ReadOnlyBooleanWrapper seenProperty() {
@@ -162,4 +180,5 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public boolean isSeen() {
         return seen.get();
     }
+
 }

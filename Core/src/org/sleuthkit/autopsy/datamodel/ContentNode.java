@@ -22,12 +22,14 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 
 /**
- * Interface class that all Data nodes inherit from.
+ * Content Nodes are for the content objects in the data
+ * source area of the tree.  Other parts of the directory 
+ * tree do not extend this. 
+ * 
  * Provides basic information such as ID, parent ID, etc.
  */
-
- abstract class ContentNode extends DisplayableItemNode{
-
+ abstract class ContentNode extends DisplayableItemNode {
+     
     public ContentNode(Children children) {
         super(children);
     }
