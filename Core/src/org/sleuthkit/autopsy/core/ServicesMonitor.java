@@ -153,14 +153,13 @@ public class ServicesMonitor {
     public String getServiceStatus(String service) throws UnknownServiceException {
 
         if (service == null) {
-            // TODO NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.existNotDir"));
-            throw new UnknownServiceException("Requested service name is null");
+            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
         }
 
         String status = this.statusByService.get(service);
         if (status == null) {
             // no such service
-            throw new UnknownServiceException("Requested service name " + service + " is unknown");
+            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt"));
 
         } else if (status.equals(ServiceStatus.UNKNOWN.toString())) {
             // status for the service is not known. This is likely because we haven't 
