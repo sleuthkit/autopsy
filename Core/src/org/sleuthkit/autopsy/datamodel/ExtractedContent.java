@@ -210,33 +210,31 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
-            if (skCase == null) {
-                return false;
-            }
-            
-            try {
-                List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
-                inUse.removeAll(doNotShow);
-                Collections.sort(inUse,
-                        new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
-                    @Override
-                    public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
-                        return a.getDisplayName().compareTo(b.getDisplayName());
-                    }
-                });
-                list.addAll(inUse);
 
-                // the create node method will get called only for new types
-                // refresh the counts if we already created them from a previous update
-                for (BlackboardArtifact.ARTIFACT_TYPE art : inUse) {
-                    TypeNode node = typeNodeList.get(art);
-                    if (node != null) {
-                        node.updateDisplayName();
+            if (skCase != null) {
+                try {
+                    List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
+                    inUse.removeAll(doNotShow);
+                    Collections.sort(inUse,
+                            new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
+                        @Override
+                        public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
+                            return a.getDisplayName().compareTo(b.getDisplayName());
+                        }
+                    });
+                    list.addAll(inUse);
+
+                    // the create node method will get called only for new types
+                    // refresh the counts if we already created them from a previous update
+                    for (BlackboardArtifact.ARTIFACT_TYPE art : inUse) {
+                        TypeNode node = typeNodeList.get(art);
+                        if (node != null) {
+                            node.updateDisplayName();
+                        }
                     }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
-                return false;
             }
             return true;
         }
@@ -446,15 +444,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            if (skCase == null) {
-                return false;
-            }
             
-            try {
-                List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
-                list.addAll(arts);
-            } catch (TskException ex) {
-                Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
+            if (skCase != null) {
+                try {
+                    List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
+                    list.addAll(arts);
+                } catch (TskException ex) {
+                    Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
+                }
             }
             return true;
         }

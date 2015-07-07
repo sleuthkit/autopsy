@@ -363,11 +363,7 @@ public class FileSize implements AutopsyVisitableItem {
 
             @Override
             protected boolean createKeys(List<AbstractFile> list) {
-                List<AbstractFile> l = runFsQuery();
-                if (l == null) {
-                    return false;
-                }
-                list.addAll(l);
+                list.addAll(runFsQuery());
                 return true;
             }
 
@@ -386,8 +382,7 @@ public class FileSize implements AutopsyVisitableItem {
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: {0}", filter); //NON-NLS
-                        return null;
+                        throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
                 }
                 // ignore unalloc block files
                 query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
@@ -398,19 +393,15 @@ public class FileSize implements AutopsyVisitableItem {
             private List<AbstractFile> runFsQuery() {
                 List<AbstractFile> ret = new ArrayList<>();
 
-                String query = makeQuery(filter);
-                if (query == null) {
-                    return null;
-                }
-
                 try {
+                    String query = makeQuery(filter);
+
                     ret = skCase.findAllFilesWhere(query);
-                } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the file size view using: " + query, e); //NON-NLS
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Error getting files for the file size view: " + e.getMessage()); //NON-NLS
                 }
 
                 return ret;
-
             }
 
             /**
