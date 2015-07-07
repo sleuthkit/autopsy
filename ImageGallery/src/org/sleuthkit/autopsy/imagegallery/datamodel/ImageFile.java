@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.Objects;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
@@ -51,8 +53,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return ThumbnailCache.getDefault().get(this);
     }
 
-   
-
     public Image getFullSizeImage() {
         Image image = null;
         if (imageRef != null) {
@@ -60,17 +60,30 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         }
 
         if (image == null) {
+            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
+                image = new Image(readContentInputStream);
+            } catch (IOException ex) {
+                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file with JavaFX" + getName());
+            }
+        }
 
-            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
+        if (image == null || image.errorProperty().get()) {
+            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
             } catch (IOException | NullPointerException ex) {
-                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
+                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file with Swing" + getName());
                 return null;
             }
             imageRef = new SoftReference<>(image);
         }
         return image;
+    }
+
+    @Override
+    public boolean isDisplayable() {
+        Image fullSizeImage = getFullSizeImage();
+        return Objects.nonNull(fullSizeImage) && fullSizeImage.errorProperty().get() == false;
     }
 
     @Override
@@ -95,4 +108,4 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     public boolean isVideo() {
         return false;
     }
- }
+}

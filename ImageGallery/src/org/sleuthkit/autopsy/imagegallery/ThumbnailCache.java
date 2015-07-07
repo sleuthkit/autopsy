@@ -38,9 +38,9 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -99,6 +99,7 @@ public enum ThumbnailCache {
      * @return a thumbnail for the given file, returns null if the thumbnail
      *         could not be generated
      */
+    @Nullable
     public Image get(DrawableFile<?> file) {
         try {
             return cache.get(file.getId(), () -> load(file)).orElse(null);
@@ -108,11 +109,12 @@ public enum ThumbnailCache {
         }
     }
 
+    @Nullable
     public Image get(Long fileID) {
         try {
             return get(ImageGalleryController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.WARNING, "failed to load icon for file id : " + fileID, ex.getCause());
             return null;
         }
     }
@@ -181,6 +183,7 @@ public enum ThumbnailCache {
      * @return the newly generated thumbnail {@link Image}, or {@code null} if a
      *         thumbnail could not be generated
      */
+    @Nullable
     private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
         //create a buffered input stream for the underlying Abstractfile
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
@@ -212,6 +215,7 @@ public enum ThumbnailCache {
      * @return a thumbnail generated for the given file, or {@code null} if a
      *         thumbnail could not be generated
      */
+    @Nullable
     private Image fallbackToSwingImage(final DrawableFile<?> file) {
         final BufferedImage generateSwingIcon = generateSwingThumbnail(file);
         if (generateSwingIcon == null) {    //if swing failed,
