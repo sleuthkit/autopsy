@@ -56,8 +56,8 @@ public class ServicesMonitor {
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
 
-    private static final Set<String> serviceNames = Stream.of(ServicesMonitor.Service.values())
-            .map(ServicesMonitor.Service::toString)
+    private static final Set<String> serviceNames = Stream.of(ServicesMonitor.ServiceName.values())
+            .map(ServicesMonitor.ServiceName::toString)
             .collect(Collectors.toSet());
     
     /**
@@ -66,9 +66,11 @@ public class ServicesMonitor {
     private final ConcurrentHashMap<String, String> statusByService;    
 
     /**
-     * List of services that are being monitored.
+     * List of services that are being monitored. The service names should be 
+     * representative of the service functionality and readable as they get 
+     * logged when service outage occurs.
      */
-    public enum Service {
+    public enum ServiceName {
 
         /**
          * Property change event fired when remote case database status changes. 
@@ -272,14 +274,14 @@ public class ServicesMonitor {
                         dbServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
                         MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredDbService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
+                        setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (dbServerIsRunning) {
                         dbServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedDbService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
+                        setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
 
@@ -290,14 +292,14 @@ public class ServicesMonitor {
                         solrServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
                         MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredSolrService.notify.msg"));                    
-                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
+                        setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
                     }
                 } else {
                     if (solrServerIsRunning) {
                         solrServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedSolrService.notify.msg"));
-                        setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
+                        setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
 
@@ -311,14 +313,14 @@ public class ServicesMonitor {
                         messageServerIsRunning = true;
                         logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
                         MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredMessageService.notify.msg"));
-                        setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString());
+                        setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString());
                     }
                 } catch (URISyntaxException | JMSException ex) {
                     if (messageServerIsRunning) {
                         messageServerIsRunning = false;
                         logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server", ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedMessageService.notify.msg"));
-                        setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString());
+                        setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString());
                     }
                 }
             }

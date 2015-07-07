@@ -327,16 +327,16 @@ public class IngestManager {
     }
     
     /**
-     * Subscribe ingest manager to service monitor events.
+     * Subscribe ingest manager to service monitor events. Cancels ingest
+     * if one of services it's subscribed to goes down.
      */
     private void subscribeToServiceMonitorEvents() {
         PropertyChangeListener propChangeListener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String serviceName = evt.getPropertyName();
-                if (evt.getNewValue() == ServicesMonitor.ServiceStatus.DOWN.toString()) {
-                    // one of the services we subscribed for went down
-                    
+                if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                    // one of the services we subscribed to went down                    
+                    String serviceName = evt.getPropertyName();
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceName); //NON-NLS                  
 
                     // display notification if running interactively
@@ -355,8 +355,8 @@ public class IngestManager {
         
         // subscribe to services of interest
         Set<String> servicesList = new HashSet<>();
-        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        servicesList.add(ServicesMonitor.ServiceName.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.ServiceName.REMOTE_KEYWORD_SEARCH.toString());
         this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
