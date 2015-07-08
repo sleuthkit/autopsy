@@ -149,13 +149,16 @@ public class ServicesMonitor {
 
         // status has changed
         if (status.equals(ServiceStatus.UP.toString())) {
-            logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
-            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg"));
+            // do not send notification to UI for initial check
+            if (!statusByService.get(service).equals(ServiceStatus.UNKNOWN.toString())) {
+                logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
+                MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", service));
+            }
         } else if (status.equals(ServiceStatus.DOWN.toString())) {
             logger.log(Level.SEVERE, "Failed to connect to {0}", service); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg"));
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", service));
         }
 
         // update and publish new status
