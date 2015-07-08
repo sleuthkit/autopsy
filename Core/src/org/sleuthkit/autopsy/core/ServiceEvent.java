@@ -22,8 +22,11 @@ import java.io.Serializable;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
- *
- * @author elivis
+ * A class for events to be published to registered subscribers of Service
+ * Monitor on this Autopsy node. The class extends PropertyChangeEvent (via
+ * AutopsyEvent) to integrate with legacy use of JavaBeans PropertyChangeEvents
+ * and PropertyChangeListeners as an application event system, and implements
+ * Serializable to allow it to be published over a network in serialized form.
  */
 public final class ServiceEvent extends AutopsyEvent implements Serializable {
 
