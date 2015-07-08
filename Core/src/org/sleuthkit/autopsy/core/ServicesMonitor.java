@@ -104,7 +104,8 @@ public class ServicesMonitor {
          */
         DOWN,
         /**
-         * Service status is unknown.
+         * Service status is unknown. This is the initial status for all
+         * services.
          */
         UNKNOWN,
     };
@@ -133,13 +134,32 @@ public class ServicesMonitor {
     }
 
     /**
-     * Store and publish service status update.
+     * Updates service status and publishes the service status update if it is
+     * different from previous status. Logs status changes.
      *
      * @param service Name of the service.
      * @param status Updated status for the service.
      */
     private void setServiceStatus(String service, String status) {
-        this.statusByService.put(service, status);
+
+        // verify that status has changed
+        if (status.equals(statusByService.get(service))) {
+            return;
+        }
+
+        // status has changed
+        if (status.equals(ServiceStatus.UP.toString())) {
+            logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
+            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg"));
+        } else if (status.equals(ServiceStatus.DOWN.toString())) {
+            logger.log(Level.SEVERE, "Failed to connect to {0}", service); //NON-NLS
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg"));
+        }
+
+        // update and publish new status
+        statusByService.put(service, status);
         publishServiceStatusUpdate(service, status);
     }
 
@@ -156,7 +176,7 @@ public class ServicesMonitor {
             throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
         }
 
-        String status = this.statusByService.get(service);
+        String status = statusByService.get(service);
         if (status == null) {
             // no such service
             throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt"));
@@ -185,7 +205,7 @@ public class ServicesMonitor {
                 setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
                 return ServiceStatus.DOWN.toString();
             }
-        } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())){
+        } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())) {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
             // TODO - do I need to check for kwsService == null?
             if (kwsService.canConnectToRemoteSolrServer()) {
@@ -202,7 +222,7 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString());
                 return ServiceStatus.DOWN.toString();
-            }            
+            }
         }
         return ServiceStatus.UNKNOWN.toString();
     }
@@ -332,54 +352,9 @@ public class ServicesMonitor {
         @Override
         public void run() {
             synchronized (lock) {
-                try {
-                    if (canConnectToRemoteDb()) {
-                        if (!getServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString()).equals(ServiceStatus.UP.toString())) {
-                            logger.log(Level.INFO, "Connection to PostgreSQL server restored"); //NON-NLS
-                            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredDbService.notify.msg"));
-                            setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
-                        }
-                    } else {
-                        if (!getServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString()).equals(ServiceStatus.DOWN.toString())) {
-                            logger.log(Level.SEVERE, "Failed to connect to PostgreSQL server"); //NON-NLS
-                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedDbService.notify.msg"));
-                            setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
-                        }
-                    }
-
-                    KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-                    // TODO - do I need to check for kwsService == null?
-                    if (kwsService.canConnectToRemoteSolrServer()) {
-                        if (!getServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString()).equals(ServiceStatus.UP.toString())) {
-                            logger.log(Level.INFO, "Connection to Solr server restored"); //NON-NLS
-                            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredSolrService.notify.msg"));
-                            setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
-                        }
-                    } else {
-                        if (!getServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString()).equals(ServiceStatus.DOWN.toString())) {
-                            logger.log(Level.SEVERE, "Failed to connect to Solr server"); //NON-NLS
-                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedSolrService.notify.msg"));
-                            setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
-                        }
-                    }
-
-                    if (canConnectToMessagingService()) {
-                        if (!getServiceStatus(ServiceName.MESSAGING.toString()).equals(ServiceStatus.UP.toString())) {
-                            logger.log(Level.INFO, "Connection to ActiveMQ server restored"); //NON-NLS
-                            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredMessageService.notify.msg"));
-                            setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString());
-                        }
-                    } else {
-                        if (!getServiceStatus(ServiceName.MESSAGING.toString()).equals(ServiceStatus.DOWN.toString())) {
-                            logger.log(Level.SEVERE, "Failed to connect to ActiveMQ server"); //NON-NLS
-                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"), NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedMessageService.notify.msg"));
-                            setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString());
-                        }
-                    }
-
-                } catch (UnknownServiceException ex) {
-                    logger.log(Level.SEVERE, "Exception while checking current service status", ex); //NON-NLS
-                }
+                checkServiceStatusStatus(ServiceName.REMOTE_CASE_DATABASE.toString());
+                checkServiceStatusStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString());
+                checkServiceStatusStatus(ServiceName.MESSAGING.toString());
             }
         }
     }
