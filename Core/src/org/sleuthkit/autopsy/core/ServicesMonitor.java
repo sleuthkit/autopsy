@@ -127,10 +127,10 @@ public class ServicesMonitor {
 
         /**
          * Start periodic task that check the availability of key collaboration
-         * services.
+         * services. First check is triggered immediately. 
          */
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
-        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), 0, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 
     /**
@@ -140,7 +140,7 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the service.
      */
-    private void setServiceStatus(String service, String status) {
+    private synchronized void setServiceStatus(String service, String status) {
 
         // verify that status has changed
         if (status.equals(statusByService.get(service))) {
