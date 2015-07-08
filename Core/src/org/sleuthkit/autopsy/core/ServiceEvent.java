@@ -28,14 +28,10 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 public final class ServiceEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    //private final String service;
-    //private final String status;
     private final String details;
 
     public ServiceEvent(String serviceName, String status, String details) {
         super(serviceName, null, status);
-        //this.service = service;
-        //this.status = status;
         this.details = details;
     }
     
