@@ -30,15 +30,18 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -68,10 +71,8 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
             supportedMimes.add(type);
         }
         supportedMimes.add("image/x-ms-bmp"); //NON-NLS)
-
-        System.out.println("imageview " + supportedExtensions);
-        System.out.println("imageview " + supportedMimes);
     }
+    private BorderPane borderpane;
 
     /**
      * Creates new form MediaViewImagePanel
@@ -80,36 +81,33 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
-            setupFx();
+            Platform.runLater(() -> {
+                fxImageView = new ImageView();
+                borderpane = new BorderPane(fxImageView);
+                borderpane.setBackground(new Background(new BackgroundFill(javafx.scene.paint.Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+                fxPanel = new JFXPanel();
+                Scene scene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
+
+                fxImageView.fitWidthProperty().bind(scene.widthProperty());
+                fxImageView.fitHeightProperty().bind(scene.heightProperty());
+                fxPanel.setScene(scene);
+
+                // resizes the image to have width of 100 while preserving the ratio and using
+                // higher quality filtering method; this ImageView is also cached to
+                // improve performance
+                fxImageView.setPreserveRatio(true);
+                fxImageView.setSmooth(true);
+                fxImageView.setCache(true);
+
+                EventQueue.invokeLater(() -> {
+                    add(fxPanel);
+                });
+            });
         }
     }
 
     public boolean isInited() {
         return fxInited;
-    }
-
-    /**
-     * Setup FX components
-     */
-    private void setupFx() {
-        // load the image
-        Platform.runLater(() -> {
-            fxPanel = new JFXPanel();
-            fxImageView = new ImageView();
-            // resizes the image to have width of 100 while preserving the ratio and using
-            // higher quality filtering method; this ImageView is also cached to
-            // improve performance
-            fxImageView.setPreserveRatio(true);
-            fxImageView.setSmooth(true);
-            fxImageView.setCache(true);
-
-            EventQueue.invokeLater(() -> {
-                add(fxPanel);
-
-                //TODO
-                // setVisible(true);
-            });
-        });
     }
 
     public void reset() {
@@ -132,6 +130,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
         final String fileName = file.getName();
 
         //hide the panel during loading/transformations
+        //TODO: repalce this with a progress indicator
         fxPanel.setVisible(false);
 
         // load the image
@@ -144,20 +143,18 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                     return;
                 }
 
-                final InputStream inputStream = new ReadContentInputStream(file);
-
                 final Image fxImage;
-                try {
+                try (InputStream inputStream = new ReadContentInputStream(file);) {
+
+//                    fxImage = new Image(inputStream);
                     //original input stream
                     BufferedImage bi = ImageIO.read(inputStream);
                     if (bi == null) {
                         logger.log(Level.WARNING, "Could image reader not found for file: " + fileName); //NON-NLS
                         return;
                     }
-                    //scale image using Scalr
-                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int) dims.getWidth(), (int) dims.getHeight());
                     //convert from awt imageto fx image
-                    fxImage = SwingFXUtils.toFXImage(biScaled, null);
+                    fxImage = SwingFXUtils.toFXImage(bi, null);
                 } catch (IllegalArgumentException | IOException ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex); //NON-NLS
                     return;
@@ -167,33 +164,14 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
                             ex.getMessage());
                     return;
-                } finally {
-                    try {
-                        inputStream.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex); //NON-NLS
-                    }
                 }
 
-                if (fxImage == null || fxImage.isError()) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName); //NON-NLS
+                if (fxImage.isError()) {
+                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, fxImage.getException()); //NON-NLS
                     return;
                 }
-
-                //use border pane to center the image in the scene
-                BorderPane borderpane = new BorderPane();
-                borderpane.setCenter(fxImageView);
-
                 fxImageView.setImage(fxImage);
-                fxImageView.setFitWidth(dims.getWidth());
-                fxImageView.setFitHeight(dims.getHeight());
-
-                //Group fxRoot = new Group();
-                //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
-                Scene fxScene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
-                // borderpane.getChildren().add(fxImageView);
-
-                fxPanel.setScene(fxScene);
+                borderpane.setCenter(fxImageView);
 
                 SwingUtilities.invokeLater(() -> {
                     //show the panel after fully loaded
@@ -201,7 +179,6 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 });
             }
         });
-
     }
 
     /**
