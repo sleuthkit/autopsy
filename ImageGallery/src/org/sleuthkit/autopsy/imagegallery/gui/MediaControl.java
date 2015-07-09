@@ -112,13 +112,13 @@ public class MediaControl extends BorderPane {
             return new MediaControl(new MediaPlayer(file.getMedia()), file);
         } catch (IOException ex) {
             Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.");
+            return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
         } catch (MediaException ex) {
             Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text(ex.getType() + "\nSee the logs for details.");
+            return new Text(ex.getType() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
         } catch (OutOfMemoryError ex) {
             Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text("There was a problem playing video file.\nSee the logs for details.");
+            return new Text("There was a problem playing video file.\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
         }
     }
 
