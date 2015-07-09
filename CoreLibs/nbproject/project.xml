@@ -651,15 +651,15 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-bmp-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-bmp-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pcx-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-pcx-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-pcx-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-jpeg-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-jpeg-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-jpeg-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
@@ -723,15 +723,15 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-tiff-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-tiff-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-tiff-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pnm-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-pnm-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-pnm-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-lang-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\common-lang-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/common-lang-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
@@ -771,7 +771,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\common-image-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/common-image-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
@@ -807,7 +807,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-io-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\common-io-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/common-io-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r1.jar</runtime-relative-path>
@@ -859,7 +859,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-icns-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-icns-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-icns-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
@@ -871,7 +871,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-psd-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-psd-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
@@ -879,7 +879,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-sgi-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-sgi-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-sgi-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
@@ -887,7 +887,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-thumbsdb-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-thumbsdb-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-thumbsdb-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
@@ -899,15 +899,15 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-iff-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-iff-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-iff-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-tga-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-tga-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-tga-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-core-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-core-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-core-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
@@ -919,7 +919,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-metadata-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-metadata-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-metadata-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-controls-8.0-r1-sources.jar</runtime-relative-path>
@@ -927,7 +927,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pict-3.1.1.jar</runtime-relative-path>
-                <binary-origin>C:\dev\autopsy\CoreLibs\release\modules\ext\imageio-pict-3.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/imageio-pict-3.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
