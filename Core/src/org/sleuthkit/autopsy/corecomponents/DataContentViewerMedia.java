@@ -58,8 +58,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final SortedSet<String> videoMimes;
     private final SortedSet<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
-    private boolean videoPanelInited;
-    private boolean imagePanelInited;
+    private final boolean videoPanelInited;
+    private final boolean imagePanelInited;
     private static final String IMAGE_VIEWER_LAYER = "IMAGE"; //NON-NLS
     private static final String VIDEO_VIEWER_LAYER = "VIDEO"; //NON-NLS
 
@@ -195,9 +195,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         //TODO: is this what we want, to require both extension and mimetype support?
         if (AUDIO_EXTENSIONS.contains("." + name) || videoExtensions.contains("." + name)) {
             try {
-                String mimeType = new FileTypeDetector().detect(file);
-                if (nonNull(mimeType) && videoMimes.contains(mimeType)) {
-                    return true;
+                String mimeType = new FileTypeDetector().getFileType(file);
+                if (nonNull(mimeType)) {
+                    return videoMimes.contains(mimeType);
                 }
             } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
@@ -221,9 +221,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         // blackboard
         try {
-            String mimeType = new FileTypeDetector().detect(file);
-            if (nonNull(mimeType) && imageMimes.contains(mimeType)) {
-                return true;
+            String mimeType = new FileTypeDetector().getFileType(file);
+            if (nonNull(mimeType)) {
+                return imageMimes.contains(mimeType);
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
@@ -243,10 +243,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
 
         // our own signature checks for important types
-        if (ImageUtils.isJpegFileHeader(file)) {
-            return true;
-        }
-        return ImageUtils.isPngFileHeader(file);
+        return ImageUtils.isJpegFileHeader(file) || ImageUtils.isPngFileHeader(file);
     }
 
     @Override
@@ -264,19 +261,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return false;
         }
 
-        if (imagePanelInited) {
-            if (isImageSupported(file)) {
-                return true;
-            }
+        if (imagePanelInited && isImageSupported(file)) {
+            return true;
         }
 
-        if (videoPanelInited && videoPanel.isInited()) {
-            if (isVideoSupported(file)) {
-                return true;
-            }
-        }
-
-        return false;
+        return videoPanelInited && isVideoSupported(file);
     }
 
     @Override
