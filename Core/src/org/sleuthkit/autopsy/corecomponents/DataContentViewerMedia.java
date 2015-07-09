@@ -217,33 +217,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        String name = file.getNameExtension();
-
-        // blackboard
-        try {
-            String mimeType = new FileTypeDetector().getFileType(file);
-            if (nonNull(mimeType)) {
-                return imageMimes.contains(mimeType);
-            }
-        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-            if (!imageMimes.isEmpty()) {
-                MimeMatchEnum mimeMatch = file.isMimeType(imageMimes);
-                if (mimeMatch == MimeMatchEnum.TRUE) {
-                    return true;
-                } else if (mimeMatch == MimeMatchEnum.FALSE) {
-                    return false;
-                }
-            }
-        }
-
-        // extension
-        if (imageExtensions.contains("." + name)) {
-            return true;
-        }
-
-        // our own signature checks for important types
-        return ImageUtils.isJpegFileHeader(file) || ImageUtils.isPngFileHeader(file);
+        return ImageUtils.thumbnailSupported(file);
     }
 
     @Override

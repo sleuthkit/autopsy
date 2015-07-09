@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.collect.Lists;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
@@ -25,9 +26,9 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -45,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -69,7 +71,8 @@ public class MediaViewImagePanel extends JPanel {
      * mime types we shoul dbe able to display. if the mimetype is unknown we
      * will fall back on extension (and jpg/png header
      */
-    static private final List<String> supportedMimes = new ArrayList<>();
+    static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedMimeTypes();
+
     /**
      * extensions we should be able to display
      */
@@ -84,8 +87,6 @@ public class MediaViewImagePanel extends JPanel {
         for (String suffix : ImageIO.getReaderFileSuffixes()) {
             supportedExtensions.add("." + suffix);
         }
-        supportedMimes.addAll(Arrays.asList(ImageIO.getReaderMIMETypes()));
-        supportedMimes.add("image/x-ms-bmp"); //NON-NLS)
     }
 
     /**
@@ -195,7 +196,7 @@ public class MediaViewImagePanel extends JPanel {
      * @return supported mime types
      */
     public List<String> getMimeTypes() {
-        return Collections.unmodifiableList(supportedMimes);
+        return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
 
     /**

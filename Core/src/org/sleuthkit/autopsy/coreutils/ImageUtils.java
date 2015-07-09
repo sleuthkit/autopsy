@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-15 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -30,11 +30,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import static java.util.Objects.isNull;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -53,20 +55,31 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Utilities for creating and manipulating thumbnail and icon images.
+ * Utilities for working with Images and creating thumbnails. Reuses thumbnails
+ * by storing them in the case's cache directory.
  */
 public class ImageUtils {
 
+    private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
     /** save thumbnails to disk as this format */
     private static final String FORMAT = "png";
 
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
-    private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
+
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
+
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-    private static final List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+
+    public static List<String> getSupportedExtensions() {
+        return SUPP_EXTENSIONS;
+    }
+
+    public static SortedSet<String> getSupportedMimeTypes() {
+        return Collections.unmodifiableSortedSet(SUPP_MIME_TYPES);
+    }
+    private static final TreeSet<String> SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
 
     /** thread that saves generated thumbnails to disk for use later */
     private static final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
@@ -107,7 +120,16 @@ public class ImageUtils {
                 return SUPP_MIME_TYPES.contains(mimeType);
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
+
+            LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+            if (!SUPP_MIME_TYPES.isEmpty()) {
+                AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPP_MIME_TYPES);
+                if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
+                    return true;
+                } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
+                    return false;
+                }
+            }
         }
 
         // if we have an extension, check it
