@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,40 +41,52 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javax.imageio.ImageIO;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Container for the image viewer part of media view, on a layered pane. To be
- * used with JavaFx image viewer only.
+ * Video viewer part of the Media View layered pane. Uses JavaFX to display the
+ * image.
  */
-public class MediaViewImagePanel extends javax.swing.JPanel {
+public class MediaViewImagePanel extends JPanel {
+
+    private static final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
+
+    private final boolean fxInited;
 
     private JFXPanel fxPanel;
     private ImageView fxImageView;
-    private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
-    private boolean fxInited = false;
+    private BorderPane borderpane;
 
-    static private final List<String> supportedExtensions = new ArrayList<>();
+    /**
+     * mime types we shoul dbe able to display. if the mimetype is unknown we
+     * will fall back on extension (and jpg/png header
+     */
     static private final List<String> supportedMimes = new ArrayList<>();
+    /**
+     * extensions we should be able to display
+     */
+    static private final List<String> supportedExtensions = new ArrayList<>();
 
+    /**
+     * initialize supported extension and mimetypes
+     */
     static {
-        ImageIO.scanForPlugins();
+        ImageIO.scanForPlugins();  //make sure we include get all plugins
+
         for (String suffix : ImageIO.getReaderFileSuffixes()) {
             supportedExtensions.add("." + suffix);
         }
-
-        for (String type : ImageIO.getReaderMIMETypes()) {
-            supportedMimes.add(type);
-        }
+        supportedMimes.addAll(Arrays.asList(ImageIO.getReaderMIMETypes()));
         supportedMimes.add("image/x-ms-bmp"); //NON-NLS)
     }
-    private BorderPane borderpane;
 
     /**
      * Creates new form MediaViewImagePanel
@@ -81,26 +95,23 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
-            Platform.runLater(() -> {
-                fxImageView = new ImageView();
-                borderpane = new BorderPane(fxImageView);
+            Platform.runLater(() -> { // build jfx ui (we could do this in FXML?)
+                fxImageView = new ImageView();  // will hold image
+                borderpane = new BorderPane(fxImageView); // centers and sizes imageview
                 borderpane.setBackground(new Background(new BackgroundFill(javafx.scene.paint.Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-                fxPanel = new JFXPanel();
-                Scene scene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
-
-                fxImageView.fitWidthProperty().bind(scene.widthProperty());
-                fxImageView.fitHeightProperty().bind(scene.heightProperty());
+                fxPanel = new JFXPanel(); // bridge jfx-swing
+                Scene scene = new Scene(borderpane, javafx.scene.paint.Color.BLACK); //root of jfx tree
                 fxPanel.setScene(scene);
 
-                // resizes the image to have width of 100 while preserving the ratio and using
-                // higher quality filtering method; this ImageView is also cached to
-                // improve performance
+                //bind size of image to that of scene, while keeping proportions
+                fxImageView.fitWidthProperty().bind(scene.widthProperty());
+                fxImageView.fitHeightProperty().bind(scene.heightProperty());
                 fxImageView.setPreserveRatio(true);
                 fxImageView.setSmooth(true);
                 fxImageView.setCache(true);
 
                 EventQueue.invokeLater(() -> {
-                    add(fxPanel);
+                    add(fxPanel);//add jfx ui to JPanel
                 });
             });
         }
@@ -110,6 +121,9 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
         return fxInited;
     }
 
+    /**
+     * clear the displayed image
+     */
     public void reset() {
         Platform.runLater(() -> {
             fxImageView.setImage(null);
@@ -117,20 +131,19 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Show image
+     * Show the contents of the given AbstractFile as a visual image.
      *
      * @param file image file to show
-     * @param dims dimension of the parent window
+     * @param dims dimension of the parent window (ignored)
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showImageFx(final AbstractFile file, final Dimension dims) {
         if (!fxInited) {
             return;
         }
 
-        final String fileName = file.getName();
-
-        //hide the panel during loading/transformations
-        //TODO: repalce this with a progress indicator
+        /* hide the panel during loading/transformations
+         * TODO: repalce this with a progress indicator */
         fxPanel.setVisible(false);
 
         // load the image
@@ -144,22 +157,19 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 }
 
                 final Image fxImage;
-                try (InputStream inputStream = new ReadContentInputStream(file);) {
+                try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
-//                    fxImage = new Image(inputStream);
-                    //original input stream
-                    BufferedImage bi = ImageIO.read(inputStream);
-                    if (bi == null) {
-                        logger.log(Level.WARNING, "Could image reader not found for file: " + fileName); //NON-NLS
+                    BufferedImage bufferedImage = ImageIO.read(inputStream);
+                    if (bufferedImage == null) {
+                        LOGGER.log(Level.WARNING, "Could image reader not found for file: {0}", file.getName()); //NON-NLS
                         return;
                     }
-                    //convert from awt imageto fx image
-                    fxImage = SwingFXUtils.toFXImage(bi, null);
+                    fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
                 } catch (IllegalArgumentException | IOException ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
                     return;
                 } catch (OutOfMemoryError ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.warn(
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
                             ex.getMessage());
@@ -167,7 +177,7 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
                 }
 
                 if (fxImage.isError()) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, fxImage.getException()); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
                     return;
                 }
                 fxImageView.setImage(fxImage);
@@ -182,18 +192,14 @@ public class MediaViewImagePanel extends javax.swing.JPanel {
     }
 
     /**
-     * returns supported mime types
-     *
-     * @return
+     * @return supported mime types
      */
     public List<String> getMimeTypes() {
         return Collections.unmodifiableList(supportedMimes);
     }
 
     /**
-     * returns supported extensions (each starting with .)
-     *
-     * @return
+     * @return supported extensions (each starting with .)
      */
     public List<String> getExtensions() {
         return Collections.unmodifiableList(supportedExtensions);
