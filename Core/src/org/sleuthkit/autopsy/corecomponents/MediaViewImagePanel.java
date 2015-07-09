@@ -24,7 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -48,14 +48,30 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Container for the image viewer part of media view, on a layered pane. To be
  * used with JavaFx image viewer only.
  */
- public class MediaViewImagePanel extends javax.swing.JPanel {
+public class MediaViewImagePanel extends javax.swing.JPanel {
+
     private JFXPanel fxPanel;
     private ImageView fxImageView;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
     private boolean fxInited = false;
-    
-    private final List<String> supportedExtensions;
-    static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/x-ms-bmp"); //NON-NLS
+
+    static private final List<String> supportedExtensions = new ArrayList<>();
+    static private final List<String> supportedMimes = new ArrayList<>();
+
+    static {
+        ImageIO.scanForPlugins();
+        for (String suffix : ImageIO.getReaderFileSuffixes()) {
+            supportedExtensions.add("." + suffix);
+        }
+
+        for (String type : ImageIO.getReaderMIMETypes()) {
+            supportedMimes.add(type);
+        }
+        supportedMimes.add("image/x-ms-bmp"); //NON-NLS)
+
+        System.out.println("imageview " + supportedExtensions);
+        System.out.println("imageview " + supportedMimes);
+    }
 
     /**
      * Creates new form MediaViewImagePanel
@@ -66,15 +82,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
         if (fxInited) {
             setupFx();
         }
-        
-        supportedExtensions = new ArrayList<>();
-        //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
-        for (String suffix : ImageIO.getReaderFileSuffixes()) {
-            //logger.log(Level.INFO, "suffix: " + suffix);
-            supportedExtensions.add("." + suffix);
-        }
     }
-    
+
     public boolean isInited() {
         return fxInited;
     }
@@ -84,40 +93,31 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
      */
     private void setupFx() {
         // load the image
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                fxPanel = new JFXPanel();
-                fxImageView = new ImageView();
-                // resizes the image to have width of 100 while preserving the ratio and using
-                // higher quality filtering method; this ImageView is also cached to
-                // improve performance
-                fxImageView.setPreserveRatio(true);
-                fxImageView.setSmooth(true);
-                fxImageView.setCache(true);
+        Platform.runLater(() -> {
+            fxPanel = new JFXPanel();
+            fxImageView = new ImageView();
+            // resizes the image to have width of 100 while preserving the ratio and using
+            // higher quality filtering method; this ImageView is also cached to
+            // improve performance
+            fxImageView.setPreserveRatio(true);
+            fxImageView.setSmooth(true);
+            fxImageView.setCache(true);
 
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        add(fxPanel);
+            EventQueue.invokeLater(() -> {
+                add(fxPanel);
 
-                        //TODO
-                        // setVisible(true);
-                    }
-                });
-            }
+                //TODO
+                // setVisible(true);
+            });
         });
     }
 
     public void reset() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                fxImageView.setImage(null);
-            }
+        Platform.runLater(() -> {
+            fxImageView.setImage(null);
         });
     }
-    
+
     /**
      * Show image
      *
@@ -158,7 +158,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                     BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int) dims.getWidth(), (int) dims.getHeight());
                     //convert from awt imageto fx image
                     fxImage = SwingFXUtils.toFXImage(biScaled, null);
-                } catch (IOException ex) {
+                } catch (IllegalArgumentException | IOException ex) {
                     logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex); //NON-NLS
                     return;
                 } catch (OutOfMemoryError ex) {
@@ -189,40 +189,37 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                 fxImageView.setFitHeight(dims.getHeight());
 
                 //Group fxRoot = new Group();
-
                 //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
                 Scene fxScene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
                 // borderpane.getChildren().add(fxImageView);
 
                 fxPanel.setScene(fxScene);
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        //show the panel after fully loaded
-                        fxPanel.setVisible(true);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    //show the panel after fully loaded
+                    fxPanel.setVisible(true);
                 });
-
             }
         });
 
     }
-    
+
     /**
      * returns supported mime types
-     * @return 
+     *
+     * @return
      */
     public List<String> getMimeTypes() {
-        return supportedMimes;
+        return Collections.unmodifiableList(supportedMimes);
     }
-    
+
     /**
      * returns supported extensions (each starting with .)
-     * @return 
+     *
+     * @return
      */
     public List<String> getExtensions() {
-        return supportedExtensions;
+        return Collections.unmodifiableList(supportedExtensions);
     }
 
     /**

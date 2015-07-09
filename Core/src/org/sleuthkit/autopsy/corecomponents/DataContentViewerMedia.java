@@ -217,7 +217,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        String name = file.getName().toLowerCase();
+        String name = file.getNameExtension();
 
         // blackboard
         try {

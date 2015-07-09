@@ -100,6 +100,7 @@ public enum FileTypeUtils {
                 , "ai" //illustrator
                 , "svg" //scalable vector graphics
                 , "sn", "ras" //sun raster
+                , "ico"
         ));
 
         //add list of known video extensions
@@ -117,6 +118,8 @@ public enum FileTypeUtils {
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
+        System.out.println(supportedExtensions);
+        System.out.println(supportedMimeTypes);
     }
 
     /**

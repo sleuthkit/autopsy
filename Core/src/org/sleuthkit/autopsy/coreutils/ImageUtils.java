@@ -54,6 +54,7 @@ public class ImageUtils {
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
     private static final List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+
     static {
         SUPP_MIME_TYPES.add("image/x-ms-bmp");
     }
