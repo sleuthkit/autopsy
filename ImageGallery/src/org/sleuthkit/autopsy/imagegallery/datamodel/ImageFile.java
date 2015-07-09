@@ -41,6 +41,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
+    static {
+        ImageIO.scanForPlugins();
+    }
     private SoftReference<Image> imageRef;
 
     ImageFile(T f, Boolean analyzed) {
@@ -58,32 +61,24 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         if (imageRef != null) {
             image = imageRef.get();
         }
-
-        if (image == null) {
-            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
-                image = new Image(readContentInputStream);
-            } catch (IOException ex) {
-                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file with JavaFX" + getName());
-            }
-        }
-
-        if (image == null || image.errorProperty().get()) {
+        if (image == null || image.isError()) {
             try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
             } catch (IOException | NullPointerException ex) {
-                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file with Swing" + getName());
+                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file " + getName());
                 return null;
             }
-            imageRef = new SoftReference<>(image);
         }
+        imageRef = new SoftReference<>(image);
+
         return image;
     }
 
     @Override
     public boolean isDisplayable() {
-        Image fullSizeImage = getFullSizeImage();
-        return Objects.nonNull(fullSizeImage) && fullSizeImage.errorProperty().get() == false;
+        Image thumbnail = getThumbnail();
+        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
     }
 
     @Override

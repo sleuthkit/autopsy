@@ -453,15 +453,19 @@ public final class ImageGalleryController {
                      * getOldValue has fileID getNewValue has
                      * {@link Abstractfile}
                      */
+
                     AbstractFile file = (AbstractFile) evt.getNewValue();
+
                     if (isListeningEnabled()) {
-                        if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
-                            //this file should be included and we don't already know about it from hash sets (NSRL)
-                            queueDBWorkerTask(new UpdateFileTask(file, db));
-                        } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                        if (file.isFile()) {
+                            if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
+                                //this file should be included and we don't already know about it from hash sets (NSRL)
+                                queueDBWorkerTask(new UpdateFileTask(file, db));
+                            } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
                             //doing this check results in fewer tasks queued up, and faster completion of db update
-                            //this file would have gotten scooped up in initial grab, but actually we don't need it
-                            queueDBWorkerTask(new RemoveFileTask(file, db));
+                                //this file would have gotten scooped up in initial grab, but actually we don't need it
+                                queueDBWorkerTask(new RemoveFileTask(file, db));
+                            }
                         }
                     } else {   //TODO: keep track of what we missed for later
                         setStale(true);

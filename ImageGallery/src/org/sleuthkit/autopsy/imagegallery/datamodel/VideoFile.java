@@ -72,7 +72,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     private File getCacheFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id);
+        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "videos", "" + id).toFile();
     }
 
     @Override
