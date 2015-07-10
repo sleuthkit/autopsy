@@ -30,6 +30,7 @@ import javafx.scene.media.MediaException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
@@ -46,8 +47,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     public Image getThumbnail() {
-        //TODO: implement video thumbnailing here?
-        return getGenericVideoThumbnail();
+        return ThumbnailCache.getDefault().get(this);
     }
 
     SoftReference<Media> mediaRef;

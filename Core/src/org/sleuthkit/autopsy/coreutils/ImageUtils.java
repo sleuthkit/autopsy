@@ -22,23 +22,26 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -76,7 +79,7 @@ public class ImageUtils {
                     "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
                     "flm", "tmv", "4xm");  //NON-NLS
     private static final List<String> SUPP_VIDEO_MIME_TYPES
-            = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo",
+            = Arrays.asList("video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
@@ -197,7 +200,7 @@ public class ImageUtils {
                 } else {
                     icon = bicon;
                 }
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
                 icon = DEFAULT_ICON;
             }
@@ -253,7 +256,7 @@ public class ImageUtils {
      *
      */
     private static File getCachedThumbnailLocation(long fileID) {
-        return Paths.get(Case.getCurrentCase().getCacheDirectory(), fileID + ".png").toFile();
+        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", fileID + ".png").toFile();
     }
 
     /**
@@ -311,49 +314,54 @@ public class ImageUtils {
                 && ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A)
                 && ((fileHeaderBuffer[7] & 0xff) == 0x0A));
     }
+    private final static int THUMB_COLUMNS = 3;
+    private final static int THUMB_ROWS = 3;
 
-    private static BufferedImage generateVideoIcon(AbstractFile file, int iconSize) {
+    private static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
 
         final String extension = file.getNameExtension();
 
-        java.io.File tempFile = Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + extension).toFile();
+        java.io.File tempFile = Paths.get(Case.getCurrentCase().getCacheDirectory(), "videos", file.getId() + "." + extension).toFile();
 
         try {
-
-            copyFileUsingStream(file, tempFile); //create small file in TEMP directory from the content object
+            if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+                copyFileUsingStream(file, tempFile);
+            }
         } catch (IOException ex) {
-            return DEFAULT_ICON;
+            return null;
         }
 
-        VideoCapture videoFile = new VideoCapture(); // will contain the video     
+        VideoCapture videoFile = new VideoCapture(); // will contain the video
 
         if (!videoFile.open(tempFile.toString())) {
-            return DEFAULT_ICON;
+            return null;
         }
         double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
         double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
         if (fps <= 0 || totalFrames <= 0) {
-            return DEFAULT_ICON;
+            return null;
         }
         double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
 
         double timestamp = Math.min(milliseconds, 500); //default time to check for is 500ms, unless the files is extremely small
 
-        int framkeskip = Double.valueOf(Math.floor(milliseconds / 9)).intValue();
+        int framkeskip = Double.valueOf(Math.floor((milliseconds - timestamp) / (THUMB_COLUMNS * THUMB_ROWS))).intValue();
 
         Mat imageMatrix = new Mat();
         BufferedImage bufferedImage = null;
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip)) {
-                    return DEFAULT_ICON;
+
+        for (int x = 0; x < THUMB_COLUMNS; x++) {
+            for (int y = 0; y < THUMB_ROWS; y++) {
+                if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
+                    break;
                 }
-                if (!videoFile.read(imageMatrix)) { //read the frame into the image/matrix
-                    return DEFAULT_ICON; //if the image for some reason is bad, return default icon
+                //read the frame into the image/matrix
+                if (!videoFile.read(imageMatrix)) {
+                    break; //if the image for some reason is bad, return default icon
                 }
 
                 if (bufferedImage == null) {
-                    bufferedImage = new BufferedImage(imageMatrix.cols() * 3, imageMatrix.rows() * 3, BufferedImage.TYPE_3BYTE_BGR);
+                    bufferedImage = new BufferedImage(imageMatrix.cols() * THUMB_COLUMNS, imageMatrix.rows() * THUMB_ROWS, BufferedImage.TYPE_3BYTE_BGR);
                 }
 
                 byte[] data = new byte[imageMatrix.rows() * imageMatrix.cols() * (int) (imageMatrix.elemSize())];
@@ -374,12 +382,7 @@ public class ImageUtils {
 
         videoFile.release(); // close the file
 
-        bufferedImage = ScalrWrapper.resizeFast(bufferedImage, iconSize);
-        if (bufferedImage == null) {
-            return DEFAULT_ICON;
-        } else {
-            return bufferedImage;
-        }
+        return ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 
     private static final int CV_CAP_PROP_POS_MSEC = 0;
@@ -402,12 +405,12 @@ public class ImageUtils {
         try {
             if (SUPP_VIDEO_EXTENSIONS.contains(extension)) {
                 if (openCVLoaded) {
-                    icon = generateVideoIcon((AbstractFile) content, iconSize);
+                    icon = generateVideoThumbnail((AbstractFile) content, iconSize);
                 } else {
                     return DEFAULT_ICON;
                 }
             } else if (SUPP_IMAGE_EXTENSIONS.contains(extension)) {
-                icon = generateIcon(content, iconSize);
+                icon = generateImageThumbnail(content, iconSize);
             }
 
             if (icon == null) {
@@ -417,19 +420,19 @@ public class ImageUtils {
                 if (saveFile.exists()) {
                     saveFile.delete();
                 }
+                Files.createParentDirs(saveFile);
                 ImageIO.write(icon, "png", saveFile); //NON-NLS
             }
         } catch (NullPointerException | IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }
         return icon;
-
     }
 
     /*
      * Generate and return a scaled image
      */
-    private static BufferedImage generateIcon(Content content, int iconSize) {
+    private static BufferedImage generateImageThumbnail(Content content, int iconSize) {
 
         InputStream inputStream = null;
         BufferedImage bi = null;
@@ -440,11 +443,8 @@ public class ImageUtils {
                 logger.log(Level.WARNING, "No image reader for file: " + content.getName()); //NON-NLS
                 return null;
             }
-            BufferedImage biScaled = ScalrWrapper.resizeFast(bi, iconSize);
-            if (biScaled == null) {
-                return DEFAULT_ICON;
-            }
-            return biScaled;
+            return ScalrWrapper.resizeFast(bi, iconSize);
+         
         } catch (IllegalArgumentException e) {
             // if resizing does not work due to extremely small height/width ratio,
             // crop the image instead.
@@ -464,43 +464,28 @@ public class ImageUtils {
                     logger.log(Level.WARNING, "Could not close input stream after resizing thumbnail: " + content.getName(), ex); //NON-NLS
                 }
             }
-
         }
-
     }
 
     /**
      * copy the first 500kb to a temporary file
      *
      * @param file
-     * @param jFile
+     * @param tempFile
      *
      * @throws IOException
      */
-    public static void copyFileUsingStream(Content file, java.io.File jFile) throws IOException {
+    public static void copyFileUsingStream(Content file, java.io.File tempFile) throws IOException {
+        com.google.common.io.Files.createParentDirs(tempFile);
 
-        try (InputStream is = new ReadContentInputStream(file);) {
-            // copy the file data to the temporary file
-
-//        OutputStream os = new FileOutputStream(jFile);
-            Files.copy(is, jFile.toPath());
+        ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
+        progress.start();
+        progress.switchToDeterminate(100);
+        try {
+            ContentUtils.writeToFile(file, tempFile, progress, null, true);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
         }
-
-//        byte[] buffer = new byte[8192];
-//        int length;
-//        int counter = 0;
-//        try {
-//            while ((length = is.read(buffer)) != -1) {
-//                os.write(buffer, 0, length);
-//                counter++;
-//                if (counter >= 63) {
-//                    break; //after saving 500 KB (63*8192)
-//                }
-//            }
-//
-//        } finally {
-//            is.close();
-//            os.close();
-//        }
+        progress.finish();
     }
 }
