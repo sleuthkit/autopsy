@@ -339,7 +339,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceName); //NON-NLS                  
 
                     // display notification if running interactively
-                    if (isRunningInteractively()){
+                    if (isIngestRunning() && isRunningInteractively()){
                         JOptionPane.showMessageDialog(null,
                                           NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
                                           NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceName),
