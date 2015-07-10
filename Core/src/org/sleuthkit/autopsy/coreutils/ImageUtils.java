@@ -25,10 +25,9 @@ package org.sleuthkit.autopsy.coreutils;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,7 +77,7 @@ public class ImageUtils {
                     "flm", "tmv", "4xm");  //NON-NLS
     private static final List<String> SUPP_VIDEO_MIME_TYPES
             = Arrays.asList("video/avi", "video/msvideo", "video/x-msvideo",
-                    "video/mp4", "video/x-ms-wmv", "mpeg", "asf"); //NON-NLS
+                    "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
     static {
@@ -317,19 +316,18 @@ public class ImageUtils {
 
         final String extension = file.getNameExtension();
 
-        String tempFileName = file.getId() + "." + extension;
-        java.io.File tempFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), tempFileName);
+        java.io.File tempFile = Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + extension).toFile();
 
         try {
+
             copyFileUsingStream(file, tempFile); //create small file in TEMP directory from the content object
         } catch (IOException ex) {
             return DEFAULT_ICON;
         }
 
-        tempFileName = tempFile.toString(); //store filepath as String
         VideoCapture videoFile = new VideoCapture(); // will contain the video     
 
-        if (!videoFile.open(tempFileName)) {
+        if (!videoFile.open(tempFile.toString())) {
             return DEFAULT_ICON;
         }
         double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
@@ -341,7 +339,7 @@ public class ImageUtils {
 
         double timestamp = Math.min(milliseconds, 500); //default time to check for is 500ms, unless the files is extremely small
 
-        int framkeskip = Double.valueOf(Math.floor(timestamp / 9)).intValue();
+        int framkeskip = Double.valueOf(Math.floor(milliseconds / 9)).intValue();
 
         Mat imageMatrix = new Mat();
         BufferedImage bufferedImage = null;
@@ -480,26 +478,29 @@ public class ImageUtils {
      * @throws IOException
      */
     public static void copyFileUsingStream(Content file, java.io.File jFile) throws IOException {
-        InputStream is = new ReadContentInputStream(file);
-        // copy the file data to the temporary file
 
-        OutputStream os = new FileOutputStream(jFile);
-        byte[] buffer = new byte[8192];
-        int length;
-        int counter = 0;
-        try {
-            while ((length = is.read(buffer)) != -1) {
-                os.write(buffer, 0, length);
-                counter++;
-                if (counter >= 63) {
-                    break; //after saving 500 KB (63*8192)
-                }
-            }
+        try (InputStream is = new ReadContentInputStream(file);) {
+            // copy the file data to the temporary file
 
-        } finally {
-            is.close();
-            os.close();
+//        OutputStream os = new FileOutputStream(jFile);
+            Files.copy(is, jFile.toPath());
         }
 
+//        byte[] buffer = new byte[8192];
+//        int length;
+//        int counter = 0;
+//        try {
+//            while ((length = is.read(buffer)) != -1) {
+//                os.write(buffer, 0, length);
+//                counter++;
+//                if (counter >= 63) {
+//                    break; //after saving 500 KB (63*8192)
+//                }
+//            }
+//
+//        } finally {
+//            is.close();
+//            os.close();
+//        }
     }
 }
