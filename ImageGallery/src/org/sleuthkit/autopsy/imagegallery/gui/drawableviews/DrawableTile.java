@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
@@ -113,9 +114,30 @@ public class DrawableTile extends DrawableTileBase {
     @Override
     protected Runnable getContentUpdateRunnable() {
         if (getFile().isPresent()) {
-            Image image = getFile().get().getThumbnail();
+            
 
             return () -> {
+                new Task<Image>() {
+
+                    @Override
+                    protected Image call() throws Exception {
+                        Image image = getFile().get().getThumbnail();
+
+                    }
+
+                    @Override
+                    protected void failed() {
+                        super.failed();
+                        LOGGER.log(null);
+                    }
+
+                    @Override
+                    protected void succeeded() {
+                        super.succeeded(); //To change body of generated methods, choose Tools | Templates.
+                    }
+                }
+
+
                 imageView.setImage(image);
             };
         } else {
