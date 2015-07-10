@@ -10,8 +10,14 @@ This can help a reviewer discover more information about files that used to be o
 
 Configuration
 =======
+Custom File Signatures
+------
+To add custom file signatures, create a file (if it does not exist) photorec.sig in the user home directory. The photorec.sig file should contain one expression per line.
+For example, to detect a file foo.bar which has header signature - 0x4141414141414141, add an expression
 
-There is nothing to configure for this module.
+	bar 0 0x4141414141414141
+in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature.
+Add another expression of new line to detect another custom file based on its signature.
 
 
 Using the Module
@@ -30,3 +36,5 @@ The results of carving show up on the tree under the appropriate data source wit
 
 Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
 */
+
+Adding new file signatures
