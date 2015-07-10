@@ -245,7 +245,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     public void shutDown() {
         logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
        
-        if (initialized == false) {
+        if ((initialized == false) || (context == null)) {
             return;
         }
 
@@ -314,6 +314,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         synchronized(ingestStatus) {
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(jobId);
+            if(ingestStatusForJob == null){
+                return;
+            }
             for (IngestStatus s : ingestStatusForJob.values()) {
                 switch (s) {
                     case TEXT_INGESTED:
