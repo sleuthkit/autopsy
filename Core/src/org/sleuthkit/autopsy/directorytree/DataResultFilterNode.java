@@ -237,6 +237,12 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(AddBlackboardArtifactTagAction.getInstance());
                 actions.addAll(ContextMenuExtensionPoint.getActions());
             }
+            else{
+                // There's no specific file associated with the artifact, but
+                // we can still tag the artifact itself
+                actions.add(null);
+                actions.add(AddBlackboardArtifactTagAction.getInstance());
+            }
             return actions;
         }
 

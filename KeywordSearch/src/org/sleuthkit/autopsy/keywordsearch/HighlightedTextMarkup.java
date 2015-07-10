@@ -34,7 +34,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the content viewer. 
@@ -379,12 +378,8 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
                 return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex); //NON-NLS
-            return "";
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not query markup for page: " + currentPage, ex); //NON-NLS
-            return "";
+        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
 

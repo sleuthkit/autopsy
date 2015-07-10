@@ -33,7 +33,6 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -65,6 +64,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Handles for keeping track of a Solr server and its cores
@@ -665,6 +665,23 @@ public class Server {
      * @return
      */
     private synchronized Core openCore(Case theCase) throws KeywordSearchModuleException {
+        try {
+            if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                currentSolrServer = this.localSolrServer;
+            }
+            else {
+                String host = UserPreferences.getIndexingServerHost();
+                String port = UserPreferences.getIndexingServerPort();
+
+                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+            }
+            connectToSolrServer(currentSolrServer);
+        }
+        catch (SolrServerException | IOException ex) {
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex.getCause().getMessage());
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"));
+        }
+
         String dataDir = getIndexDirPath(theCase);
         String coreName = theCase.getTextIndexName();
         return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
@@ -696,7 +713,7 @@ public class Server {
      *
      * @return int representing number of indexed files
      * @throws KeywordSearchModuleException
-     * @throws NoOpenCoreExceptionn
+     * @throws NoOpenCoreException
      */
     public int queryNumIndexedFiles() throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
@@ -940,6 +957,7 @@ public class Server {
      * @return new core
      */
     private Core openCore(String coreName, File dataDir, CaseType caseType) throws KeywordSearchModuleException {
+        
         try {
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
@@ -952,14 +970,6 @@ public class Server {
                         NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            if (caseType == CaseType.SINGLE_USER_CASE) {
-                currentSolrServer = this.localSolrServer;
-                //createCore.setInstanceDir(instanceDir);
-            }
-            else {
-                currentSolrServer = connectToRemoteSolrServer();
-            }
-            
             if (!isCoreLoaded(coreName)) {
                 CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
                 createCore.setDataDir(dataDir.getAbsolutePath());
@@ -984,11 +994,14 @@ public class Server {
         }
     }
 
-    HttpSolrServer connectToRemoteSolrServer() {
-        String host = UserPreferences.getIndexingServerHost();
-        String port = UserPreferences.getIndexingServerPort();
-        
-        return new HttpSolrServer("http://" + host + ":" + port + "/solr");
+    /**
+     * Attempts to connect to the given Solr server.
+     * @param solrServer
+     * @throws SolrServerException
+     * @throws IOException 
+     */
+    void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
+        CoreAdminRequest.getStatus(null, solrServer);
     }
 
     /**
