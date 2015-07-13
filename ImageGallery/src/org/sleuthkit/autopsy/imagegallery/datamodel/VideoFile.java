@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -62,6 +63,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         }
         final File cacheFile = getCacheFile(this.getId());
         if (cacheFile.exists() == false) {
+            Files.createParentDirs(cacheFile);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile);
         }
 

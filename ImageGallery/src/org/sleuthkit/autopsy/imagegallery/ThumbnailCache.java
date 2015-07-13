@@ -24,6 +24,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +35,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
+import org.openide.util.Exceptions;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -88,7 +91,7 @@ public enum ThumbnailCache {
     @Nullable
     public Image get(DrawableFile<?> file) {
         try {
-            return cache.get(file.getId(), () -> load(file)).orElse(null);
+            return cache.get(file.getId(), () -> ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE)).orElse(null);
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
             LOGGER.log(Level.WARNING, "failed to load icon for file: " + file.getName(), ex.getCause());
             return null;
@@ -114,6 +117,7 @@ public enum ThumbnailCache {
      * @return an (possibly empty) optional containing a thumbnail
      */
     private Optional<Image> load(DrawableFile<?> file) {
+
         Image thumbnail;
 
         try {
@@ -123,10 +127,16 @@ public enum ThumbnailCache {
                     if (cachFile.exists()) {
                         // If a thumbnail file is already saved locally, load it
                         try {
+                            BufferedImage read = ImageIO.read(cachFile);
+                            if (read.getWidth() < MAX_ICON_SIZE) {
+                                read = ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE);
+                            }
 
                             return new Image(Utilities.toURI(cachFile).toURL().toString(), MAX_ICON_SIZE, MAX_ICON_SIZE, true, false, true);
                         } catch (MalformedURLException ex) {
                             LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                        } catch (IOException ex) {
+                            Exceptions.printStackTrace(ex);
                         }
                     }
                     return null;
