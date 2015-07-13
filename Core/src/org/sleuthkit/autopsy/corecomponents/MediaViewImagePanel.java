@@ -32,14 +32,11 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -67,6 +64,10 @@ public class MediaViewImagePanel extends JPanel {
     private ImageView fxImageView;
     private BorderPane borderpane;
 
+    private final Label errorLabel = new Label("Could not load image file into media view.");
+    private final Label tooLargeLabel = new Label("Could not load image file into media view (too large).");
+    private final Label noReaderLabel = new Label("Image reader not found for file.");
+
     /**
      * mime types we shoul dbe able to display. if the mimetype is unknown we
      * will fall back on extension (and jpg/png header
@@ -79,7 +80,6 @@ public class MediaViewImagePanel extends JPanel {
     static private final List<String> supportedExtensions = ImageUtils.getSupportedExtensions().stream()
             .map("."::concat)
             .collect(Collectors.toList());
-    
 
     /**
      * Creates new form MediaViewImagePanel
@@ -88,12 +88,15 @@ public class MediaViewImagePanel extends JPanel {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
-            Platform.runLater(() -> { // build jfx ui (we could do this in FXML?)
+            Platform.runLater(() -> {
+
+                // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
                 borderpane = new BorderPane(fxImageView); // centers and sizes imageview
-                borderpane.setBackground(new Background(new BackgroundFill(javafx.scene.paint.Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+                borderpane.getStyleClass().add("bg");
                 fxPanel = new JFXPanel(); // bridge jfx-swing
-                Scene scene = new Scene(borderpane, javafx.scene.paint.Color.BLACK); //root of jfx tree
+                Scene scene = new Scene(borderpane); //root of jfx tree
+                scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm());
                 fxPanel.setScene(scene);
 
                 //bind size of image to that of scene, while keeping proportions
@@ -120,6 +123,7 @@ public class MediaViewImagePanel extends JPanel {
     public void reset() {
         Platform.runLater(() -> {
             fxImageView.setImage(null);
+            borderpane.setCenter(null);
         });
     }
 
@@ -144,40 +148,37 @@ public class MediaViewImagePanel extends JPanel {
             @Override
             public void run() {
                 if (!Case.isCaseOpen()) {
-                    //handle in-between condition when case is being closed
-                    //and an image was previously selected
+                    /* handle in-between condition when case is being closed
+                     * and an image was previously selected */
                     return;
                 }
-
-                final Image fxImage;
-
                 try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
                     if (bufferedImage == null) {
-                        LOGGER.log(Level.WARNING, "Could image reader not found for file: {0}", file.getName()); //NON-NLS
-                        return;
+                        LOGGER.log(Level.WARNING, "Image reader not found for file: {0}", file.getName()); //NON-NLS
+                        borderpane.setCenter(noReaderLabel);
+                    } else {
+                        Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+                        if (fxImage.isError()) {
+                            LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
+                            borderpane.setCenter(errorLabel);
+                            return;
+                        } else {
+                            fxImageView.setImage(fxImage);
+                            borderpane.setCenter(fxImageView);
+                        }
                     }
-                    fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
                 } catch (IllegalArgumentException | IOException ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
-
-                    return;
+                    borderpane.setCenter(errorLabel);
                 } catch (OutOfMemoryError ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.warn(
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
                             ex.getMessage());
-                    return;
+                    borderpane.setCenter(tooLargeLabel);
                 }
-
-                if (fxImage.isError()) {
-
-                    LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
-                    return;
-                }
-                fxImageView.setImage(fxImage);
-                borderpane.setCenter(fxImageView);
 
                 SwingUtilities.invokeLater(() -> {
                     //show the panel after fully loaded

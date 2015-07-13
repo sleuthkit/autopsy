@@ -206,7 +206,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 }
             }
         }
-              
+
         return false;
     }
 
@@ -218,8 +218,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        return ImageUtils.thumbnailSupported(file);
 
+        return ImageUtils.thumbnailSupported(file);
     }
 
     @Override

@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.coreutils;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +49,7 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -63,20 +64,16 @@ public class ImageUtils {
     private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
 
     /** save thumbnails to disk as this format */
-    private static final String FORMAT = "png";
+    private static final String FORMAT = "png"; //NON-NLS
 
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
+
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
 
-    public static List<String> getSupportedExtensions() {
-        return Collections.unmodifiableList(SUPP_EXTENSIONS);
-    }
-
-    public static SortedSet<String> getSupportedMimeTypes() {
-        return Collections.unmodifiableSortedSet(SUPP_MIME_TYPES);
-    }
+    //initialized lazily
+    private static FileTypeDetector fileTypeDetector;
 
     private static final List<String> SUPP_EXTENSIONS;
     private static final TreeSet<String> SUPP_MIME_TYPES;
@@ -90,9 +87,18 @@ public class ImageUtils {
 
         SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         SUPP_MIME_TYPES.addAll(Arrays.asList("image/x-ms-bmp", "application/x-123"));
+        SUPP_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
     private ImageUtils() {
+    }
+
+    public static List<String> getSupportedExtensions() {
+        return Collections.unmodifiableList(SUPP_EXTENSIONS);
+    }
+
+    public static SortedSet<String> getSupportedMimeTypes() {
+        return Collections.unmodifiableSortedSet(SUPP_MIME_TYPES);
     }
 
     /**
@@ -122,12 +128,12 @@ public class ImageUtils {
         }
 
         try {
-            String mimeType = new FileTypeDetector().getFileType(file);
+            String mimeType = getFileTypeDetector().getFileType(file);
             if (Objects.nonNull(mimeType)) {
-                return SUPP_MIME_TYPES.contains(mimeType);
+                return SUPP_MIME_TYPES.contains(mimeType)
+                        || (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(file.getNameExtension()));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
             if (!SUPP_MIME_TYPES.isEmpty()) {
                 AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPP_MIME_TYPES);
@@ -141,13 +147,27 @@ public class ImageUtils {
 
         // if we have an extension, check it
         final String extension = file.getNameExtension();
-        if (StringUtils.isNotBlank(extension)) {
-            if (SUPP_EXTENSIONS.contains(extension)) {
-                return true;
-            }
+        if (StringUtils.isNotBlank(extension) && SUPP_EXTENSIONS.contains(extension)) {
+            return true;
         }
+
         // if no extension or one that is not for an image, then read the content
         return isJpegFileHeader(file) || isPngFileHeader(file);
+    }
+
+    /**
+     * lazily instantiates and returns a FileTypeDetector
+     *
+     * @return a FileTypeDetector
+     *
+     * @throws FileTypeDetectorInitException if a initializing the
+     *                                       FileTypeDetector failed.
+     */
+    synchronized private static FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
+        if (fileTypeDetector == null) {
+            fileTypeDetector = new FileTypeDetector();
+        }
+        return fileTypeDetector;
     }
 
     /**
@@ -281,21 +301,28 @@ public class ImageUtils {
     /**
      * Generate a thumbnail and save it to specified location.
      *
-     * @param content  File to generate icon for
-     * @param size     the size of thumbnail to generate in pixels
-     * @param saveFile Location to save thumbnail to
+     * @param content   File to generate icon for
+     * @param size      the size of thumbnail to generate in pixels
+     * @param cacheFile Location to save thumbnail to
      *
      * @return Generated icon or a default icon if a thumbnail could not be
      *         made.
      */
-    private static Image generateAndSaveThumbnail(Content content, int size, File saveFile) {
-        BufferedImage thumbNail = generateThumbnail(content, size);
-        if (Objects.nonNull(thumbNail)) {
+    private static Image generateAndSaveThumbnail(Content content, int size, File cacheFile) {
+        BufferedImage thumbnail = generateThumbnail(content, size);
+        if (Objects.nonNull(thumbnail)) {
             imageSaver.execute(() -> {
-
-                saveThumbnail(content, thumbNail, saveFile);
+                try {
+                    Files.createParentDirs(cacheFile);
+                    if (cacheFile.exists()) {
+                        cacheFile.delete();
+                    }
+                    ImageIO.write(thumbnail, FORMAT, cacheFile);
+                } catch (IllegalArgumentException | IOException ex1) {
+                    LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex1); //NON-NLS
+                }
             });
-            return thumbNail;
+            return thumbnail;
         } else {
             return getDefaultIcon();
         }
@@ -313,8 +340,7 @@ public class ImageUtils {
     @Nullable
     private static BufferedImage generateThumbnail(Content content, int iconSize) {
 
-        try (InputStream inputStream = new ReadContentInputStream(content);) {
-
+        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(content));) {
             BufferedImage bi = ImageIO.read(inputStream);
             if (bi == null) {
                 LOGGER.log(Level.WARNING, "No image reader for file: {0}", content.getName()); //NON-NLS
@@ -323,7 +349,7 @@ public class ImageUtils {
             try {
                 return ScalrWrapper.resizeFast(bi, iconSize);
             } catch (IllegalArgumentException e) {
-                // if resizing does not work due to extremely small height/width ratio,
+                // if resizing does not work due to extreme aspect ratio,
                 // crop the image instead.
                 return ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
             }
@@ -333,26 +359,6 @@ public class ImageUtils {
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
             return null;
-        }
-    }
-
-    /**
-     * save the generated thumbnail to disk in the cache folder with
-     * the obj_id as the name.
-     *
-     * @param file      the file the given image is a thumbnail for
-     * @param thumbnail the thumbnail to save for the given DrawableFile
-     */
-    static private void saveThumbnail(Content content, final RenderedImage thumbnail, File cacheFile) {
-        try {
-            Files.createParentDirs(cacheFile);
-            if (cacheFile.exists()) {
-                cacheFile.delete();
-            }
-            //convert back to swing to save
-            ImageIO.write(thumbnail, FORMAT, cacheFile);
-        } catch (IllegalArgumentException | IOException ex) {
-            LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }
     }
 }
