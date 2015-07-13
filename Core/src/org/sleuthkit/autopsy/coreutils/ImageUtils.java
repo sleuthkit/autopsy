@@ -74,11 +74,13 @@ public class ImageUtils {
     //initialized lazily
     private static FileTypeDetector fileTypeDetector;
 
-    private static final List<String> SUPP_EXTENSIONS;
-    private static final TreeSet<String> SUPP_MIME_TYPES;
+    private static final List<String> SUPPORTED_EXTENSIONS;
+    private static final TreeSet<String> SUPPORTED_MIME_TYPES;
 
     /** thread that saves generated thumbnails to disk for use later */
-    private static final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+                    .namingPattern("icon saver-%d").build());
 
     static {
         ImageIO.scanForPlugins();
@@ -89,26 +91,35 @@ public class ImageUtils {
         }
         DEFAULT_ICON = defaultIcon;
 
-        SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+        SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
-        SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-        SUPP_MIME_TYPES.addAll(Arrays.asList("image/x-rgb", "image/x-ms-bmp", "application/x-123"));
-        SUPP_MIME_TYPES.removeIf("application/octet-stream"::equals);
+        SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+
+        /* special cases and variants that we support, but don't get registered
+         * with ImageIO automatically */
+        SUPPORTED_MIME_TYPES.addAll(Arrays.asList(
+                "image/x-rgb",
+                "image/x-ms-bmp",
+                "application/x-123"));
+
+        //this is rarely usefull
+        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
     private ImageUtils() {
     }
 
     public static List<String> getSupportedExtensions() {
-        return Collections.unmodifiableList(SUPP_EXTENSIONS);
+        return Collections.unmodifiableList(SUPPORTED_EXTENSIONS);
     }
 
     public static SortedSet<String> getSupportedMimeTypes() {
-        return Collections.unmodifiableSortedSet(SUPP_MIME_TYPES);
+        return Collections.unmodifiableSortedSet(SUPPORTED_MIME_TYPES);
     }
 
     /**
-     * Get the default Icon, which is the icon for a file.
+     * Get the default Icon, which is the icon for a file. Used when we can not
+     * generate content based thumbnail.
      *
      * @return
      */
@@ -117,12 +128,27 @@ public class ImageUtils {
     }
 
     /**
+     * Can a thumbnail be generated for the file?
+     *
+     * @param file
+     *
+     * @return
+     *
+     */
+    public static boolean thumbnailSupported(AbstractFile file) {
+        return thumbnailSupported((Content) file);
+    }
+
+    /**
      * Can a thumbnail be generated for the content?
      *
      * @param content
      *
      * @return
+     *
+     * @deprecated use {@link #thumbnailSupported(org.sleuthkit.datamodel.AbstractFile) instead.
      */
+    @Deprecated
     public static boolean thumbnailSupported(Content content) {
         if (content instanceof AbstractFile == false) {
             return false;
@@ -136,13 +162,13 @@ public class ImageUtils {
         try {
             String mimeType = getFileTypeDetector().getFileType(file);
             if (Objects.nonNull(mimeType)) {
-                return SUPP_MIME_TYPES.contains(mimeType)
+                return SUPPORTED_MIME_TYPES.contains(mimeType)
                         || (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(file.getNameExtension()));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-            if (!SUPP_MIME_TYPES.isEmpty()) {
-                AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPP_MIME_TYPES);
+            if (!SUPPORTED_MIME_TYPES.isEmpty()) {
+                AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
                 if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
                     return true;
                 } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
@@ -153,7 +179,7 @@ public class ImageUtils {
 
         // if we have an extension, check it
         final String extension = file.getNameExtension();
-        if (StringUtils.isNotBlank(extension) && SUPP_EXTENSIONS.contains(extension)) {
+        if (StringUtils.isNotBlank(extension) && SUPPORTED_EXTENSIONS.contains(extension)) {
             return true;
         }
 
