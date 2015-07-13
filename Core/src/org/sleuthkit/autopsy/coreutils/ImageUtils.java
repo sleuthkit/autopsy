@@ -61,31 +61,38 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ImageUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
+
     /** save thumbnails to disk as this format */
     private static final String FORMAT = "png";
 
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
-
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
 
-    private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-
     public static List<String> getSupportedExtensions() {
-        return SUPP_EXTENSIONS;
+        return Collections.unmodifiableList(SUPP_EXTENSIONS);
     }
 
     public static SortedSet<String> getSupportedMimeTypes() {
         return Collections.unmodifiableSortedSet(SUPP_MIME_TYPES);
     }
-    private static final TreeSet<String> SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+
+    private static final List<String> SUPP_EXTENSIONS;
+    private static final TreeSet<String> SUPP_MIME_TYPES;
 
     /** thread that saves generated thumbnails to disk for use later */
     private static final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
 
     static {
+        ImageIO.scanForPlugins();
+        SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+
+        SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         SUPP_MIME_TYPES.addAll(Arrays.asList("image/x-ms-bmp", "application/x-123"));
+    }
+
+    private ImageUtils() {
     }
 
     /**
@@ -327,9 +334,6 @@ public class ImageUtils {
             LOGGER.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
             return null;
         }
-    }
-
-    private ImageUtils() {
     }
 
     /**

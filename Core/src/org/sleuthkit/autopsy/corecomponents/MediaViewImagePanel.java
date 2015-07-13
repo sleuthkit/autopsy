@@ -18,18 +18,17 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.google.common.collect.Lists;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
@@ -45,6 +44,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -76,18 +76,10 @@ public class MediaViewImagePanel extends JPanel {
     /**
      * extensions we should be able to display
      */
-    static private final List<String> supportedExtensions = new ArrayList<>();
-
-    /**
-     * initialize supported extension and mimetypes
-     */
-    static {
-        ImageIO.scanForPlugins();  //make sure we include get all plugins
-
-        for (String suffix : ImageIO.getReaderFileSuffixes()) {
-            supportedExtensions.add("." + suffix);
-        }
-    }
+    static private final List<String> supportedExtensions = ImageUtils.getSupportedExtensions().stream()
+            .map("."::concat)
+            .collect(Collectors.toList());
+    
 
     /**
      * Creates new form MediaViewImagePanel
@@ -143,8 +135,8 @@ public class MediaViewImagePanel extends JPanel {
             return;
         }
 
-        /* hide the panel during loading/transformations
-         * TODO: repalce this with a progress indicator */
+        //hide the panel during loading/transformations
+        //TODO: repalce this with a progress indicator
         fxPanel.setVisible(false);
 
         // load the image
@@ -158,6 +150,7 @@ public class MediaViewImagePanel extends JPanel {
                 }
 
                 final Image fxImage;
+
                 try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
@@ -168,6 +161,7 @@ public class MediaViewImagePanel extends JPanel {
                     fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
                 } catch (IllegalArgumentException | IOException ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
+
                     return;
                 } catch (OutOfMemoryError ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
@@ -178,6 +172,7 @@ public class MediaViewImagePanel extends JPanel {
                 }
 
                 if (fxImage.isError()) {
+
                     LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
                     return;
                 }
@@ -200,7 +195,9 @@ public class MediaViewImagePanel extends JPanel {
     }
 
     /**
-     * @return supported extensions (each starting with .)
+     * returns supported extensions (each starting with .)
+     *
+     * @return
      */
     public List<String> getExtensions() {
         return Collections.unmodifiableList(supportedExtensions);
