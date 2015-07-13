@@ -86,7 +86,7 @@ public class ImageUtils {
         SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
         SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-        SUPP_MIME_TYPES.addAll(Arrays.asList("image/x-ms-bmp", "application/x-123"));
+        SUPP_MIME_TYPES.addAll(Arrays.asList("image/x-rgb", "image/x-ms-bmp", "application/x-123"));
         SUPP_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
