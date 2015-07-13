@@ -43,7 +43,6 @@ import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -70,7 +69,7 @@ public class ImageUtils {
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
 
-    private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
+    private static final Image DEFAULT_ICON;
 
     //initialized lazily
     private static FileTypeDetector fileTypeDetector;
@@ -83,6 +82,13 @@ public class ImageUtils {
 
     static {
         ImageIO.scanForPlugins();
+        BufferedImage defaultIcon = null;
+        try {
+            defaultIcon = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
+        } catch (IOException ex) {
+        }
+        DEFAULT_ICON = defaultIcon;
+
         SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
         SUPP_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
