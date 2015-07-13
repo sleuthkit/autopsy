@@ -144,7 +144,7 @@ public class CategorizeAction extends AddTagAction {
                                     LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
                                 }
                             });
-                }  else {
+                } else {
                     //add cat tag if no existing cat tag for that cat
                     if (fileTags.stream()
                             .map(Tag::getName)

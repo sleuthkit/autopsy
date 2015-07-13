@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -582,27 +583,25 @@ public final class DrawableDB {
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
 
-            final Collection<String> hashSetNames = DrawableAttribute.HASHSET.getValue(f);
+            final Collection<String> hashSetNames = getHashSetsForFileFromAutopsy(f.getId());
 
-            if (hashSetNames.isEmpty() == false) {
-                for (String name : hashSetNames) {
+            for (String name : hashSetNames) {
 
-                    // "INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"
-                    insertHashSetStmt.setString(1, name);
-                    insertHashSetStmt.executeUpdate();
+                // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                insertHashSetStmt.setString(1, name);
+                insertHashSetStmt.executeUpdate();
 
-                    //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                    //"SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"
-                    selectHashSetStmt.setString(1, name);
-                    try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                        while (rs.next()) {
-                            int hashsetID = rs.getInt("hash_set_id");
-                            //"INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)";
-                            insertHashHitStmt.setInt(1, hashsetID);
-                            insertHashHitStmt.setLong(2, f.getId());
-                            insertHashHitStmt.executeUpdate();
-                            break;
-                        }
+                //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                //"select hash_set_id from hash_sets where hash_set_name = ?"
+                selectHashSetStmt.setString(1, name);
+                try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                    while (rs.next()) {
+                        int hashsetID = rs.getInt("hash_set_id");
+                        //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                        insertHashHitStmt.setInt(1, hashsetID);
+                        insertHashHitStmt.setLong(2, f.getId());
+                        insertHashHitStmt.executeUpdate();
+                        break;
                     }
                 }
             }
@@ -1095,6 +1094,8 @@ public final class DrawableDB {
             removeFileStmt.setLong(1, id);
             removeFileStmt.executeUpdate();
             tr.addRemovedFile(id);
+
+            //TODO: delete from hash_set_hits table also...
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "failed to delete row for obj_id = " + id, ex);
         } finally {
@@ -1122,16 +1123,13 @@ public final class DrawableDB {
      *
      * @return a set of names, each of which is a hashset that the given file is
      *         in.
-     *
-     *
-     * //TODO: why does this go to the SKC? don't we already have this info
-     * in the drawable db?
      */
     @Nonnull
-    public Set<String> getHashSetsForFile(long fileID) {
+    public Set<String> getHashSetsForFileFromAutopsy(long fileID) {
         try {
             Set<String> hashNames = new HashSet<>();
             List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+
             for (BlackboardArtifact a : arts) {
                 List<BlackboardAttribute> attrs = a.getAttributes();
                 for (BlackboardAttribute attr : attrs) {
@@ -1139,8 +1137,8 @@ public final class DrawableDB {
                         hashNames.add(attr.getValueString());
                     }
                 }
-                return hashNames;
             }
+            return hashNames;
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "failed to get hash sets for file", ex);
         }
@@ -1199,10 +1197,24 @@ public final class DrawableDB {
     /**
      * For performance reasons, keep the file type in memory
      */
-    private final Map<AbstractFile, Boolean> videoFileMap = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> videoFileMap = new ConcurrentHashMap<>();
 
+    /**
+     * is this File a video file?
+     *
+     * @param f check if this file is a video. will return false for null file.
+     *
+     * @return returns true if this file is a video as determined by {@link ImageGalleryModule#isVideoFile(org.sleuthkit.datamodel.AbstractFile)
+     *         } but caches the result.
+     *         returns false if passed a null AbstractFile
+     */
     public boolean isVideoFile(AbstractFile f) {
-        return videoFileMap.computeIfAbsent(f, ImageGalleryModule::isVideoFile);
+
+        if (Objects.isNull(f)) {
+            return false;
+        } else {
+            return videoFileMap.computeIfAbsent(f.getId(), (id) -> ImageGalleryModule.isVideoFile(f));
+        }
     }
 
     /**

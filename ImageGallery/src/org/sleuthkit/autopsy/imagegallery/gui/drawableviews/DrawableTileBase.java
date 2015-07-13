@@ -283,7 +283,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     }
 
     @Override
-    protected void setFileHelper(final Long newFileID) {
+    synchronized protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         disposeContent();
 

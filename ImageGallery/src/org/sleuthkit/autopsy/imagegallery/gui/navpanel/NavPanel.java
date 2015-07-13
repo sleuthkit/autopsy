@@ -28,7 +28,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
@@ -151,13 +150,15 @@ public class NavPanel extends TabPane {
             }
         });
 
-        initHashTree();
-        initNavTree();
-
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
             boolean wasPermuted = false;
             while (change.next()) {
+                if (change.wasPermutated()) {
+                    // Handle this afterward
+                    wasPermuted = true;
+                    break;
+                }
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
                     if (g.getHashSetHitsCount() > 0) {
@@ -168,11 +169,6 @@ public class NavPanel extends TabPane {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
                 }
-                if (change.wasPermutated()) {
-                    // Handle this afterward
-                    wasPermuted = true;
-                    break;
-                }
             }
 
             if (wasPermuted) {
@@ -182,16 +178,10 @@ public class NavPanel extends TabPane {
                 Platform.runLater(() -> {
                     setFocusedGroup(selectedItem.getValue().getGroup());
                 });
-
             }
         });
 
-        for (DrawableGroup g : controller.getGroupManager().getAnalyzedGroups()) {
-            insertIntoNavTree(g);
-            if (g.getHashSetHitsCount() > 0) {
-                insertIntoHashTree(g);
-            }
-        }
+        rebuildTrees();
 
         controller.viewState().addListener((ObservableValue<? extends GroupViewState> observable, GroupViewState oldValue, GroupViewState newValue) -> {
             if (newValue != null && newValue.getGroup() != null) {
@@ -204,9 +194,7 @@ public class NavPanel extends TabPane {
         navTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
         hashTreeRoot = new GroupTreeItem("", null, sortByBox.getSelectionModel().selectedItemProperty().get());
 
-        ObservableList<DrawableGroup> groups = controller.getGroupManager().getAnalyzedGroups();
-
-        for (DrawableGroup g : groups) {
+        for (DrawableGroup g : controller.getGroupManager().getAnalyzedGroups()) {
             insertIntoNavTree(g);
             if (g.getHashSetHitsCount() > 0) {
                 insertIntoHashTree(g);

@@ -107,7 +107,6 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 setStyle("");
             });
         } else {
-
             if (isNull(treeNode.getGroup())) {
                 final String groupName = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
@@ -141,7 +140,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
 
     private String getGroupName() {
         return Optional.ofNullable(getItem())
-                .map((TreeNode t) -> StringUtils.defaultIfBlank(t.getPath(), DrawableGroup.getBlankGroupName()))
+                .map(treeNode -> StringUtils.defaultIfBlank(treeNode.getPath(), DrawableGroup.getBlankGroupName()))
                 .orElse("");
     }
 

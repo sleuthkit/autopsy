@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +43,6 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import static javafx.concurrent.Worker.State.CANCELLED;
 import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.READY;
@@ -108,12 +106,12 @@ public class GroupManager {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
-    private final SortedList<DrawableGroup> unmodifiableAnalyzedGroups = new SortedList<>(analyzedGroups);
+    private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
     /** list of unseen groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
-    private final SortedList<DrawableGroup> unmodifiableUnSeenGroups = new SortedList<>(unSeenGroups);
+    private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
@@ -248,15 +246,7 @@ public class GroupManager {
 
     /**
      * 'mark' the given group as seen. This removes it from the queue of
-     * groups
-     * files.
-     * public DrawableGroup makeGroup(GroupKey<?> groupKey, Set<Long> files) {
-     *
-     * Set<Long> newFiles = ObjectUtils.defaultIfNull(files, new
-     * HashSet<Long>());
-     * }
-     * groups
-     * to review, and is persisted in the drawable db.
+     * groups to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
@@ -270,6 +260,7 @@ public class GroupManager {
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
         }
+        FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
     }
 
     /**
@@ -294,11 +285,12 @@ public class GroupManager {
                     Platform.runLater(() -> {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
+                            FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
                         }
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
+                            FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
                         }
-
                     });
                 }
             } else { //group == null
@@ -535,8 +527,8 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                unmodifiableAnalyzedGroups.setComparator(sortBy.getGrpComparator(sortOrder));
-                unmodifiableUnSeenGroups.setComparator(sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
+                FXCollections.sort(unSeenGroups, sortBy.getGrpComparator(sortOrder));
             });
         }
     }
@@ -681,6 +673,9 @@ public class GroupManager {
                         Platform.runLater(() -> {
                             if (analyzedGroups.contains(group) == false) {
                                 analyzedGroups.add(group);
+                                if (Objects.isNull(task)) {
+                                    FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
+                                }
                             }
                             markGroupSeen(group, groupSeen);
                         });
@@ -733,10 +728,6 @@ public class GroupManager {
             Platform.runLater(() -> {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
-
-                final Comparator<DrawableGroup> grpComparator = sortBy.getGrpComparator(sortOrder);
-                unmodifiableAnalyzedGroups.setComparator(grpComparator);
-                unmodifiableUnSeenGroups.setComparator(grpComparator);
             });
 
             // Get the list of group keys
@@ -756,7 +747,7 @@ public class GroupManager {
                 groupProgress.progress("regrouping files by " + groupBy.attrName.toString() + " : " + val, p);
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
             }
-
+            FXCollections.sort(analyzedGroups, sortBy.getGrpComparator(sortOrder));
             updateProgress(1, 1);
             return null;
         }

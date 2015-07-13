@@ -200,7 +200,7 @@ public class DrawableTagsManager {
 
     public ContentTag addContentTag(DrawableFile<?> file, TagName tagName, String comment) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.addContentTag(file, tagName, comment);
+            return autopsyTagsManager.addContentTag(file.getAbstractFile(), tagName, comment);
         }
     }
 

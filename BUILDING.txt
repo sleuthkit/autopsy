@@ -11,9 +11,10 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install JDK version 1.8.  You can now use 32-bit or 64-bit, but
-special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 32-bit 
-is easier, but if you intend to use PostgreSQL, choose 64-bit.
+1a) Download and install JDK version 1.8.  For the current version of JavaFX 
+that we use, you'll need 1.8.0_40 or greater. You can now use 32-bit or 64-bit, 
+but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 
+32-bit is easier, but if you intend to use PostgreSQL, choose 64-bit.
 
 Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
 (http://www.oracle.com/technetwork/java/javase/downloads/index.html).
