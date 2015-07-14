@@ -54,9 +54,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     //UI
     private final MediaViewVideoPanel videoPanel;
     private final SortedSet<String> videoExtensions; // get them from the panel
-    private final SortedSet<String> imageExtensions;
     private final SortedSet<String> videoMimes;
-    private final SortedSet<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
     private final boolean videoPanelInited;
     private final boolean imagePanelInited;
@@ -78,8 +76,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();
-        imageMimes = new TreeSet<>(imagePanel.getMimeTypes());
-        imageExtensions = new TreeSet<>(imagePanel.getExtensions());
 
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this); //NON-NLS
