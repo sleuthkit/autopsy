@@ -69,8 +69,8 @@ public class MediaViewImagePanel extends JPanel {
     private final Label noReaderLabel = new Label("Image reader not found for file.");
 
     /**
-     * mime types we shoul dbe able to display. if the mimetype is unknown we
-     * will fall back on extension (and jpg/png header
+     * mime types we should be able to display. if the mimetype is unknown we
+     * will fall back on extension and jpg/png header
      */
     static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedMimeTypes();
 
