@@ -22,6 +22,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.Arrays;
+import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -33,8 +34,10 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AbstractFile.MimeMatchEnum;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -51,7 +54,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     //UI
     private final MediaViewVideoPanel videoPanel;
     private final SortedSet<String> videoExtensions; // get them from the panel
-    private final SortedSet<String> imageExtensions; 
+    private final SortedSet<String> imageExtensions;
     private final SortedSet<String> videoMimes;
     private final SortedSet<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
@@ -77,7 +80,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         imagePanelInited = imagePanel.isInited();
         imageMimes = new TreeSet<>(imagePanel.getMimeTypes());
         imageExtensions = new TreeSet<>(imagePanel.getExtensions());
-        
+
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this); //NON-NLS
     }
@@ -180,56 +183,72 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * 
+     * is the given file a video we can display?
+     *
      * @param file
-     * @return True if a video file that can be displayed 
+     *
+     * @return True if a video file that can be displayed
      */
     private boolean isVideoSupported(AbstractFile file) {
         String name = file.getName().toLowerCase();
-        
-        if ((containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions)) && 
-                (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE)) {
-            return true;
+
+        //TODO: is this what we want, to require both extension and mimetype support?
+        if (AUDIO_EXTENSIONS.contains("." + name) || videoExtensions.contains("." + name)) {
+            try {
+                String mimeType = new FileTypeDetector().detect(file);
+                if (nonNull(mimeType) && videoMimes.contains(mimeType)) {
+                    return true;
+                }
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE) {
+                    return true;
+                }
+            }
         }
         return false;
     }
-    
+
     /**
-     * 
+     * is the given file an image that we can display?
+     *
      * @param file
-     * @return  True if an image file that can be displayed
+     *
+     * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
         String name = file.getName().toLowerCase();
-        
+
         // blackboard
-        if (!imageMimes.isEmpty()) {
-            MimeMatchEnum mimeMatch = file.isMimeType(imageMimes);
-            if (mimeMatch == MimeMatchEnum.TRUE) {
+        try {
+            String mimeType = new FileTypeDetector().detect(file);
+            if (nonNull(mimeType) && imageMimes.contains(mimeType)) {
                 return true;
             }
-            else if (mimeMatch == MimeMatchEnum.FALSE) {
-                return false;
+        } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+            if (!imageMimes.isEmpty()) {
+                MimeMatchEnum mimeMatch = file.isMimeType(imageMimes);
+                if (mimeMatch == MimeMatchEnum.TRUE) {
+                    return true;
+                } else if (mimeMatch == MimeMatchEnum.FALSE) {
+                    return false;
+                }
             }
         }
-        
+
         // extension
-        if (containsExt(name, imageExtensions)) {
+        if (imageExtensions.contains("." + name)) {
             return true;
         }
+
         // our own signature checks for important types
-        else if (ImageUtils.isJpegFileHeader(file)) {
+        if (ImageUtils.isJpegFileHeader(file)) {
             return true;
         }
-        else if (ImageUtils.isPngFileHeader(file)) {
-            return true;
-        }
-        
-        //for gstreamer formats, check if initialized first, then
-        //support audio formats, and video formats
-        return false;
+        return ImageUtils.isPngFileHeader(file);
     }
-    
+
     @Override
     public boolean isSupported(Node node) {
         if (node == null) {
@@ -244,15 +263,17 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (file.getSize() == 0) {
             return false;
         }
-        
+
         if (imagePanelInited) {
-            if (isImageSupported(file))
+            if (isImageSupported(file)) {
                 return true;
-        } 
-        
+            }
+        }
+
         if (videoPanelInited && videoPanel.isInited()) {
-            if (isVideoSupported(file))
+            if (isVideoSupported(file)) {
                 return true;
+            }
         }
 
         return false;
@@ -265,24 +286,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (file == null) {
             return 0;
         }
-        String name = file.getName().toLowerCase();
+        String extension = file.getNameExtension();
         boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
 
-        if (containsExt(name, videoExtensions) && deleted) {
+        if (videoExtensions.contains("." + extension) && deleted) {
             return 0;
-        } 
-        else {
+        } else {
             return 7;
         }
-        
-    }
-
-    private static boolean containsExt(String name, Set<String> exts) {
-        int extStart = name.lastIndexOf(".");
-        String ext = "";
-        if (extStart != -1) {
-            ext = name.substring(extStart, name.length()).toLowerCase();
-        }
-        return exts.contains(ext);
     }
 }
