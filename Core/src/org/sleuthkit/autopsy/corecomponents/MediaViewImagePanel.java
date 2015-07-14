@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Video viewer part of the Media View layered pane. Uses JavaFX to display the
+ * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
 public class MediaViewImagePanel extends JPanel {
