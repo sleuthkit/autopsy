@@ -41,8 +41,6 @@ class ThumbnailViewNode extends FilterNode {
 
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
-    //private final BufferedImage defaultIconBI;
-
    
     private SwingWorker<Image, Object> swingWorker;
 
@@ -111,6 +109,6 @@ class ThumbnailViewNode extends FilterNode {
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
         iconCache = null;
+        swingWorker = null;
     }
-
 }

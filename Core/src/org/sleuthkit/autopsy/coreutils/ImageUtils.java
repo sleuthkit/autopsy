@@ -195,7 +195,7 @@ public class ImageUtils {
                 BufferedImage bicon = ImageIO.read(iconFile);
                 if (bicon == null) {
                     icon = DEFAULT_ICON;
-                } else if (bicon.getWidth() < iconSize) {
+                } else if (bicon.getWidth() != iconSize) {
                     icon = generateAndSaveIcon(content, iconSize, iconFile);
                 } else {
                     icon = bicon;

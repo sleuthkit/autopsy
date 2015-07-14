@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -33,6 +32,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
@@ -241,38 +241,34 @@ public class SlideShowView extends DrawableTileBase {
         stopVideo();
     }
 
-    @Override
-    @ThreadConfined(type = ThreadType.UI)
-    protected void clearContent() {
-        stopVideo();
-        imageBorder.setCenter(null);
-    }
+
 
     /** {@inheritDoc } */
     @Override
-    protected Runnable getContentUpdateRunnable() {
+    synchronized protected void updateContent() {
+        if (getFile().isPresent()) {
+            DrawableFile<?> file = getFile().get();
+            if (file.isVideo()) {
+                Platform.runLater(() -> {
+                    imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
+                });
 
-        return getFile().map(new Function<DrawableFile<?>, Runnable>() {
-
-            @Override
-            public Runnable apply(DrawableFile<?> file) {
-
-                if (file.isVideo()) {
-                    return () -> {
-                        imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
-                    };
-                } else {
-                    ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
+            } else {
+                final Image fullSizeImage = ((ImageFile<?>) file).getFullSizeImage();
+                Platform.runLater(() -> {
+                    ImageView imageView = new ImageView(fullSizeImage);
                     imageView.setPreserveRatio(true);
                     imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
                     imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
-                    return () -> {
-                        imageBorder.setCenter(imageView);
-                    };
-                }
+
+                    imageBorder.setCenter(imageView);
+                });
             }
-        }).orElse(() -> {
-        });
+        } else {
+            Platform.runLater(() -> {
+                imageBorder.setCenter(null);
+            });
+        }
     }
 
     /** {@inheritDoc } */

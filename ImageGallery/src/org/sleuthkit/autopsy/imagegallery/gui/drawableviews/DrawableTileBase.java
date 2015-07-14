@@ -54,8 +54,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -242,12 +240,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         return groupPane;
     }
 
-    @ThreadConfined(type = ThreadType.UI)
-    protected abstract void clearContent();
-
     protected abstract void disposeContent();
-
-    protected abstract Runnable getContentUpdateRunnable();
 
     protected abstract String getTextForLabel();
 
@@ -286,6 +279,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Override
     synchronized protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
+        setFileOpt(Optional.empty());
+
         disposeContent();
 
         if (getFileID().isPresent() == false || Case.isCaseOpen() == false) {
@@ -294,23 +289,18 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 getController().getTagsManager().unregisterListener(this);
                 registered = false;
             }
-            setFileOpt(Optional.empty());
-            Platform.runLater(() -> {
-                clearContent();
-            });
+            updateContent();
         } else {
             if (registered == false) {
                 getController().getCategoryManager().registerListener(this);
                 getController().getTagsManager().registerListener(this);
                 registered = true;
             }
-            setFileOpt(Optional.empty());
-
             updateSelectionState();
             updateCategory();
             updateFollowUpIcon();
             updateUI();
-            Platform.runLater(getContentUpdateRunnable());
+            updateContent();
         }
     }
 
@@ -394,4 +384,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             followUpToggle.setSelected(hasFollowUp);
         });
     }
+
+    abstract protected void updateContent();
 }

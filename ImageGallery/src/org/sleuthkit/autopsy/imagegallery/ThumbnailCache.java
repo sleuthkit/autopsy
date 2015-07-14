@@ -24,21 +24,21 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.logging.Level;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.annotation.Nullable;
-import org.openide.util.Utilities;
-import org.sleuthkit.autopsy.casemodule.Case;
+import javax.imageio.ImageIO;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Singleton to manage creation and access of icons. Keeps a cache in memory of
@@ -69,10 +69,6 @@ public enum ThumbnailCache {
         return instance;
     }
 
-    /** currently desired icon size. is bound in {@link Toolbar} */
-    public final SimpleIntegerProperty iconSize = new SimpleIntegerProperty(200);
-
- 
     /**
      * Clear out the cache between cases
      */
@@ -120,17 +116,24 @@ public enum ThumbnailCache {
         Image thumbnail;
 
         try {
-            thumbnail = getCacheFile(file.getId()).map((File cachFile) -> {
-                if (cachFile.exists()) {
-                    // If a thumbnail file is already saved locally, load it
-                    try {
-                        int dim = iconSize.get();
-                        return new Image(Utilities.toURI(cachFile).toURL().toString(), dim, dim, true, false, true);
-                    } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+            thumbnail = getCacheFile(file.getId()).map(new Function<File, Image>() {
+                @Override
+                public Image apply(File cachFile) {
+                    if (cachFile.exists()) {
+                        // If a thumbnail file is already saved locally, load it
+                        try {
+                            BufferedImage read = ImageIO.read(cachFile);
+                            if (read.getWidth() == MAX_ICON_SIZE) {
+                                return SwingFXUtils.toFXImage(read, null);
+                            }
+                        } catch (MalformedURLException ex) {
+                            LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                        } catch (IOException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
                     }
+                    return null;
                 }
-                return null;
             }).orElse(null);
 
         } catch (IllegalStateException e) {
@@ -156,8 +159,7 @@ public enum ThumbnailCache {
      */
     private static Optional<File> getCacheFile(long id) {
         try {
-            // @@@ should use ImageUtils.getFile();
-            return Optional.of(new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png"));
+            return Optional.of(ImageUtils.getFile(id));
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
@@ -177,6 +179,5 @@ public enum ThumbnailCache {
 
         return SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE), null);
     }
-
 
 }

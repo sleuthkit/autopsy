@@ -18,21 +18,24 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import java.lang.ref.SoftReference;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -57,9 +60,16 @@ public class DrawableTile extends DrawableTileBase {
     @FXML
     private ImageView imageView;
 
+    private Task<Image> task;
+    private SoftReference<Image> thumbCache;
+
     @Override
-    protected void disposeContent() {
-        //no-op
+    synchronized protected void disposeContent() {
+        if (task != null) {
+            task.cancel(true);
+        }
+        task = null;
+        thumbCache = null;
     }
 
     @FXML
@@ -92,13 +102,6 @@ public class DrawableTile extends DrawableTileBase {
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
 
-
-    @Override
-    @ThreadConfined(type = ThreadType.JFX)
-    protected void clearContent() {
-        imageView.setImage(null);
-    }
-
     /**
      * {@inheritDoc }
      */
@@ -112,42 +115,73 @@ public class DrawableTile extends DrawableTileBase {
     }
 
     @Override
-    protected Runnable getContentUpdateRunnable() {
-        if (getFile().isPresent()) {
-            
+    synchronized protected void updateContent() {
 
-            return () -> {
-                new Task<Image>() {
+        Node thumbnail = getThumbnail();
+        Platform.runLater(() -> {
+            imageBorder.setCenter(thumbnail);
+        });
 
-                    @Override
-                    protected Image call() throws Exception {
-                        Image image = getFile().get().getThumbnail();
-
-                    }
-
-                    @Override
-                    protected void failed() {
-                        super.failed();
-                        LOGGER.log(null);
-                    }
-
-                    @Override
-                    protected void succeeded() {
-                        super.succeeded(); //To change body of generated methods, choose Tools | Templates.
-                    }
-                }
-
-
-                imageView.setImage(image);
-            };
-        } else {
-            return () -> { //no-op
-            };
-        }
     }
 
     @Override
     protected String getTextForLabel() {
         return getFile().map(AbstractContent::getName).orElse("");
+    }
+
+    synchronized private Node getThumbnail() {
+        if (getFile().isPresent() == false) {
+            return null;
+        } else {
+            Image thumbnail = (thumbCache == null)
+                    ? null : thumbCache.get();
+
+            if (thumbnail != null) {
+                Platform.runLater(() -> {
+                    imageView.setImage(thumbnail);
+                });
+                return imageView;
+            } else {
+                if (task == null || task.isDone()) {
+                    DrawableFile<?> file = getFile().get();
+                    task = new Task<Image>() {
+                        @Override
+                        protected Image call() throws Exception {
+                            if (isCancelled() == false) {
+                                return file.getThumbnail();
+                            } else {
+                                return null;
+                            }
+                        }
+
+                        @Override
+                        protected void failed() {
+                            super.failed();
+                        }
+
+                        @Override
+                        protected void succeeded() {
+                            super.succeeded();
+                            if (isCancelled() == false) {
+                                try {
+                                    synchronized (DrawableTile.this) {
+                                        thumbCache = new SoftReference<>(get());
+                                    }
+                                    updateContent();
+
+                                } catch (InterruptedException | ExecutionException ex) {
+                                    LOGGER.log(Level.WARNING, "failed to get thumbnail for" + file.getName(), ex);
+                                }
+                            }
+                            synchronized (DrawableTile.this) {
+                                task = null;
+                            }
+                        }
+                    };
+                    new Thread(task).start();
+                }
+                return new ProgressIndicator();
+            }
+        }
     }
 }
