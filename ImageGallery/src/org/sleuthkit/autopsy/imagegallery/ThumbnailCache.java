@@ -139,7 +139,7 @@ public enum ThumbnailCache {
                     return null;
                 }
             }).orElseGet(() -> {
-                return (BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE);
+                return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_ICON_SIZE);
             });
 
         } catch (IllegalStateException e) {
@@ -147,7 +147,7 @@ public enum ThumbnailCache {
             return Optional.empty();
         }
         WritableImage jfxthumbnail;
-        if (thumbnail == ImageUtils.getDefaultIcon()) {
+        if (thumbnail == ImageUtils.getDefaultThumbnail()) {
             jfxthumbnail = null // if we go the default icon, ignore it
                     ;
         } else {
@@ -163,12 +163,11 @@ public enum ThumbnailCache {
      * @param id the obj id of the file to get a cache file for
      *
      * @return a Optional containing a File to store the cahced icon in or an
-     *         empty optional if there was a
-     *         problem.
+     *         empty optional if there was a problem.
      */
     private static Optional<File> getCacheFile(DrawableFile<?> file) {
         try {
-            return Optional.of(ImageUtils.getIconFile(file.getAbstractFile(), MAX_ICON_SIZE));
+            return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_ICON_SIZE));
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();

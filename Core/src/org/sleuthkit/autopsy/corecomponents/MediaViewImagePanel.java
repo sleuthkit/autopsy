@@ -172,7 +172,7 @@ public class MediaViewImagePanel extends JPanel {
                 } catch (IllegalArgumentException | IOException ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
                     borderpane.setCenter(errorLabel);
-                } catch (OutOfMemoryError ex) {
+                } catch (OutOfMemoryError ex) {  // this might be redundant since we are not attempting to rescale the image anymore
                     LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.warn(
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),

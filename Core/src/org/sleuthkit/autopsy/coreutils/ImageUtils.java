@@ -69,15 +69,15 @@ public class ImageUtils {
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
 
-    private static final Image DEFAULT_ICON;
+    private static final Image DEFAULT_THUMBNAIL;
 
-    //initialized lazily
+    /** initialized lazily */
     private static FileTypeDetector fileTypeDetector;
 
     private static final List<String> SUPPORTED_EXTENSIONS;
     private static final TreeSet<String> SUPPORTED_MIME_TYPES;
 
-    /** thread that saves generated thumbnails to disk for use later */
+    /** thread that saves generated thumbnails to disk in the background */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
@@ -88,11 +88,11 @@ public class ImageUtils {
         try {
             defaultIcon = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
         } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Failed to read default thumbnail.");
         }
-        DEFAULT_ICON = defaultIcon;
+        DEFAULT_THUMBNAIL = defaultIcon;
 
         SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-
         SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
 
         /* special cases and variants that we support, but don't get registered
@@ -118,13 +118,27 @@ public class ImageUtils {
     }
 
     /**
-     * Get the default Icon, which is the icon for a file. Used when we can not
+     * Get the default thumbnail, which is the icon for a file. Used when we can
+     * not
      * generate content based thumbnail.
      *
      * @return
+     *
+     * @deprecated use {@link  #getDefaultThumbnail() } instead.
      */
+    @Deprecated
     public static Image getDefaultIcon() {
-        return DEFAULT_ICON;
+        return getDefaultThumbnail();
+    }
+
+    /**
+     * Get the default thumbnail, which is the icon for a file. Used when we can
+     * not generate content based thumbnail.
+     *
+     * @return the default thumbnail
+     */
+    public static Image getDefaultThumbnail() {
+        return DEFAULT_THUMBNAIL;
     }
 
     /**
@@ -136,25 +150,6 @@ public class ImageUtils {
      *
      */
     public static boolean thumbnailSupported(AbstractFile file) {
-        return thumbnailSupported((Content) file);
-    }
-
-    /**
-     * Can a thumbnail be generated for the content?
-     *
-     * @param content
-     *
-     * @return
-     *
-     * @deprecated use {@link #thumbnailSupported(org.sleuthkit.datamodel.AbstractFile) instead.
-     */
-    @Deprecated
-    public static boolean thumbnailSupported(Content content) {
-        if (content instanceof AbstractFile == false) {
-            return false;
-        }
-
-        AbstractFile file = (AbstractFile) content;
         if (file.getSize() == 0) {
             return false;
         }
@@ -188,7 +183,23 @@ public class ImageUtils {
     }
 
     /**
-     * lazily instantiates and returns a FileTypeDetector
+     * Can a thumbnail be generated for the content?
+     *
+     * @param content
+     *
+     * @return
+     *
+     * @deprecated use {@link #thumbnailSupported(org.sleuthkit.datamodel.AbstractFile) instead.
+     */
+    @Deprecated
+    public static boolean thumbnailSupported(Content content) {
+        return (content instanceof AbstractFile)
+                ? thumbnailSupported((AbstractFile) content)
+                : false;
+    }
+
+    /**
+     * returns a lazily instatiated FileTypeDetector
      *
      * @return a FileTypeDetector
      *
@@ -211,11 +222,29 @@ public class ImageUtils {
      *
      * @return a thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
+     *
+     * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
+     * } instead.
      */
     @Nonnull
+    @Deprecated
     public static Image getIcon(Content content, int iconSize) {
+        return getThumbnail(content, iconSize);
+    }
+
+    /**
+     * Get a thumbnail of a specified size. Generates the image if it is
+     * not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return a thumbnail for the given image or a default one if there was a
+     *         problem making a thumbnail.
+     */
+    public static Image getThumbnail(Content content, int iconSize) {
         // If a thumbnail file is already saved locally
-        File cacheFile = getCachedThumnailLocation(content.getId());
+        File cacheFile = getCachedThumbnailLocation(content.getId());
         if (cacheFile.exists()) {
             try {
                 BufferedImage thumbnail = ImageIO.read(cacheFile);
@@ -242,12 +271,31 @@ public class ImageUtils {
      *
      * @return File object for cached image. Is guaranteed to exist, as long as
      *         there was not an error generating or saving the thumbnail.
+     *
+     * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
+     * } instead.
      */
     @Nullable
+    @Deprecated
     public static File getIconFile(Content content, int iconSize) {
-        getIcon(content, iconSize);
-        return getCachedThumnailLocation(content.getId());
+        return getCachedThumbnailFile(content, iconSize);
 
+    }
+
+    /**
+     * Get a thumbnail of a specified size. Generates the image if it is
+     * not already cached.
+     *
+     * @param content
+     * @param iconSize
+     *
+     * @return File object for cached image. Is guaranteed to exist, as long as
+     *         there was not an error generating or saving the thumbnail.
+     */
+    @Nullable
+    public static File getCachedThumbnailFile(Content content, int iconSize) {
+        getThumbnail(content, iconSize);
+        return getCachedThumbnailLocation(content.getId());
     }
 
     /**
@@ -258,14 +306,14 @@ public class ImageUtils {
      *
      * @return
      *
-     * @deprecated this should never have been public
+     * @deprecated this should never have been public.
      */
     @Deprecated
     public static File getFile(long id) {
-        return getCachedThumnailLocation(id);
+        return getCachedThumbnailLocation(id);
     }
 
-    private static File getCachedThumnailLocation(long id) {
+    private static File getCachedThumbnailLocation(long id) {
         return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", id + ".png").toFile();
     }
 
@@ -356,7 +404,7 @@ public class ImageUtils {
             });
             return thumbnail;
         } else {
-            return getDefaultIcon();
+            return getDefaultThumbnail();
         }
     }
 
@@ -374,6 +422,7 @@ public class ImageUtils {
 
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(content));) {
             BufferedImage bi = ImageIO.read(inputStream);
+
             if (bi == null) {
                 LOGGER.log(Level.WARNING, "No image reader for file: {0}", content.getName()); //NON-NLS
                 return null;

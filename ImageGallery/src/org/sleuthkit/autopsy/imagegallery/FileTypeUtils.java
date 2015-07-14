@@ -38,7 +38,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Enum style singleton to provide utilities related to questions about a files
- * type
+ * type, and wheather it should be supported in Image Gallery.
+ *
+ * TODO: refactor this to remove code that duplicates
+ * org.sleuthkit.autopsy.coreutils.ImageUtils
  */
 public enum FileTypeUtils {
 
