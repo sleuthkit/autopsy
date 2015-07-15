@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.actions;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -61,21 +62,26 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
 
     @Override
     protected void addTag(TagName tagName, String comment) {
-        Collection<? extends BlackboardArtifact> selectedArtifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
-        for (BlackboardArtifact artifact : selectedArtifacts) {
-            try {
-                Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
-            }
-            catch (TskCoreException ex) {                        
-                Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "AddBlackboardArtifactTagAction.unableToTag.msg",
-                                                                  artifact.getDisplayName()),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "AddBlackboardArtifactTagAction.taggingErr"),
-                                              JOptionPane.ERROR_MESSAGE);
-            }                    
-        }                                     
+        final Collection<? extends BlackboardArtifact> selectedArtifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
+
+        new Thread(() -> {
+            for (BlackboardArtifact artifact : selectedArtifacts) {
+                try {
+                    Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
+                }
+                catch (TskCoreException ex) {                        
+                    Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "AddBlackboardArtifactTagAction.unableToTag.msg",
+                                                                      artifact.getDisplayName()),
+                                                  NbBundle.getMessage(this.getClass(),
+                                                                      "AddBlackboardArtifactTagAction.taggingErr"),
+                                                  JOptionPane.ERROR_MESSAGE);
+                    });
+                }                    
+            }      
+        }).start();
     }        
 }

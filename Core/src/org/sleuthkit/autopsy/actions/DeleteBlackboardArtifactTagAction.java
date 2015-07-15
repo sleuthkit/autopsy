@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -55,22 +56,26 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
     
     @Override
     public void actionPerformed(ActionEvent event) {
-        Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
-        for (BlackboardArtifactTag tag : selectedTags) {
-            try {
-                Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
-            }
-            catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
-                                                                  tag.getName()),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "DeleteBlackboardArtifactTagAction.tagDelErr"),
-                                              JOptionPane.ERROR_MESSAGE);
-            }                    
-        }                             
+        final Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
+        new Thread(() -> {    
+            for (BlackboardArtifactTag tag : selectedTags) {
+                try {
+                    Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
+                }
+                catch (TskCoreException ex) {                        
+                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
+                                                                          tag.getName()),
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "DeleteBlackboardArtifactTagAction.tagDelErr"),
+                                                      JOptionPane.ERROR_MESSAGE);
+                    });
+                }                    
+            }    
+        }).start();
     }    
 }    
 
