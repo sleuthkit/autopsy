@@ -48,7 +48,7 @@ public class ServicesMonitor {
 
     private AutopsyEventPublisher eventPublisher;
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
-    private static ServicesMonitor instance;
+    private static ServicesMonitor instance = new ServicesMonitor();
     private final ScheduledThreadPoolExecutor periodicTasksExecutor;
 
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
@@ -102,12 +102,7 @@ public class ServicesMonitor {
         /**
          * Service is currently down.
          */
-        DOWN,
-        /**
-         * Service status is unknown. This is the initial status for all
-         * services.
-         */
-        UNKNOWN,
+        DOWN
     };
 
     public synchronized static ServicesMonitor getInstance() {
@@ -121,16 +116,16 @@ public class ServicesMonitor {
 
         this.eventPublisher = new AutopsyEventPublisher();
         this.statusByService = new ConcurrentHashMap<>();
-        for (String serviceName : serviceNames) {
-            this.statusByService.put(serviceName, ServiceStatus.UNKNOWN.toString());
-        }
+        
+        // First check is triggered immediately on current thread.
+        checkAllServices();
 
         /**
          * Start periodic task that check the availability of key collaboration
-         * services. First check is triggered immediately. 
+         * services.
          */
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
-        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), 0, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 
     /**
@@ -149,12 +144,9 @@ public class ServicesMonitor {
 
         // status has changed
         if (status.equals(ServiceStatus.UP.toString())) {
-            // do not send notification to UI for initial check
-            if (!statusByService.get(service).equals(ServiceStatus.UNKNOWN.toString())) {
-                logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
-                MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", service));
-            }
+            logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
+            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", service));
         } else if (status.equals(ServiceStatus.DOWN.toString())) {
             logger.log(Level.SEVERE, "Failed to connect to {0}", service); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
@@ -183,11 +175,6 @@ public class ServicesMonitor {
         if (status == null) {
             // no such service
             throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt"));
-
-        } else if (status.equals(ServiceStatus.UNKNOWN.toString())) {
-            // status for the service is not known. This is likely because we haven't 
-            // checked it's status yet. Perform an on-demand check of the service status.
-            status = checkServiceStatusStatus(service);
         }
         return status;
     }
@@ -210,8 +197,7 @@ public class ServicesMonitor {
             }
         } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())) {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            // TODO - do I need to check for kwsService == null?
-            if (kwsService.canConnectToRemoteSolrServer()) {
+            if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
                 setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
                 return ServiceStatus.UP.toString();
             } else {
@@ -227,7 +213,10 @@ public class ServicesMonitor {
                 return ServiceStatus.DOWN.toString();
             }
         }
-        return ServiceStatus.UNKNOWN.toString();
+        
+        // can't check for any other services, treat them as "down"
+        setServiceStatus(service, ServiceStatus.DOWN.toString());
+        return ServiceStatus.DOWN.toString();
     }
 
     /**
@@ -338,6 +327,15 @@ public class ServicesMonitor {
             return false;
         }
     }
+    
+    /**
+     * Verifies connectivity to all services.
+     */
+    private void checkAllServices() {
+        for (String serviceName : serviceNames) {
+            checkServiceStatusStatus(serviceName);
+        }
+    }
 
     /**
      * A Runnable task that periodically checks the availability of
@@ -347,18 +345,12 @@ public class ServicesMonitor {
      */
     private final class CrashDetectionTask implements Runnable {
 
-        private final Object lock = new Object();
-
         /**
          * Monitor the availability of collaboration resources
          */
         @Override
         public void run() {
-            synchronized (lock) {
-                checkServiceStatusStatus(ServiceName.REMOTE_CASE_DATABASE.toString());
-                checkServiceStatusStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString());
-                checkServiceStatusStatus(ServiceName.MESSAGING.toString());
-            }
+            checkAllServices();
         }
     }
 }
