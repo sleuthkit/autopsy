@@ -18,16 +18,19 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.logging.Level;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
@@ -48,6 +51,11 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     @Override
     public Image getThumbnail() {
         return ThumbnailCache.getDefault().get(this);
+    }
+
+    @Override
+    public Image getFullSizeImage() {
+        return SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(getAbstractFile(), 1024), null);
     }
 
     SoftReference<Media> mediaRef;

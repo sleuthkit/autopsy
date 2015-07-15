@@ -288,6 +288,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public abstract Image getThumbnail();
 
+    public abstract Image getFullSizeImage();
+
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);
     }

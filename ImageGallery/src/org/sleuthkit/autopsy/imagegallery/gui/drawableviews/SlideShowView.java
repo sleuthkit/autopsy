@@ -18,21 +18,26 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
@@ -46,6 +51,10 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaException;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.text.Text;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -56,10 +65,9 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
-import org.sleuthkit.autopsy.imagegallery.gui.MediaControl;
+import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -100,6 +108,7 @@ public class SlideShowView extends DrawableTileBase {
     private ToolBar toolBar;
     @FXML
     private BorderPane footer;
+    private Task<Node> mediaTask;
 
     SlideShowView(GroupPane gp) {
         super(gp);
@@ -124,6 +133,11 @@ public class SlideShowView extends DrawableTileBase {
             HBox.setHgrow(spring, Priority.ALWAYS);
             spring.setMinWidth(Region.USE_PREF_SIZE);
         });
+
+        imageView = new ImageView();
+        imageView.setPreserveRatio(true);
+        imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
+        imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
 
         tagSplitButton.setOnAction((ActionEvent t) -> {
             try {
@@ -221,8 +235,8 @@ public class SlideShowView extends DrawableTileBase {
 
     @ThreadConfined(type = ThreadType.JFX)
     public void stopVideo() {
-        if (imageBorder.getCenter() instanceof MediaControl) {
-            ((MediaControl) imageBorder.getCenter()).stopVideo();
+        if (imageBorder.getCenter() instanceof VideoPlayer) {
+            ((VideoPlayer) imageBorder.getCenter()).stopVideo();
         }
     }
 
@@ -239,35 +253,50 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     protected void disposeContent() {
         stopVideo();
+
+        super.disposeContent();
+        if (mediaTask != null) {
+            mediaTask.cancel(true);
+        }
+        mediaTask = null;
+        mediaCache = null;
     }
-
-
+    private SoftReference<Node> mediaCache;
 
     /** {@inheritDoc } */
     @Override
-    synchronized protected void updateContent() {
-        if (getFile().isPresent()) {
-            DrawableFile<?> file = getFile().get();
-            if (file.isVideo()) {
-                Platform.runLater(() -> {
-                    imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
-                });
-
-            } else {
-                final Image fullSizeImage = ((ImageFile<?>) file).getFullSizeImage();
-                Platform.runLater(() -> {
-                    ImageView imageView = new ImageView(fullSizeImage);
-                    imageView.setPreserveRatio(true);
-                    imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-                    imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
-
-                    imageBorder.setCenter(imageView);
-                });
-            }
-        } else {
+    Node getContentNode() {
+        if (getFile().isPresent() == false) {
+            imageCache = null;
+            mediaCache = null;
             Platform.runLater(() -> {
-                imageBorder.setCenter(null);
+                imageView.setImage(null);
             });
+            return null;
+        } else {
+            DrawableFile<?> file = getFile().get();
+            if ((file.isVideo() && file.isDisplayable()) == false) {
+                return super.getContentNode();
+            } else {
+                Node media = (isNull(mediaCache)) ? null : mediaCache.get();
+                if (nonNull(media)) {
+                    return media;
+                } else {
+                    if (isNull(mediaTask) || mediaTask.isDone()) {
+                        mediaTask = new MediaLoadTask(((VideoFile<?>) file)) {
+                            @Override
+                            void saveToCache(Node result) {
+                                synchronized (SlideShowView.this) {
+                                    mediaCache = new SoftReference<>(result);
+                                }
+                            }
+                        };
+
+                        new Thread(mediaTask).start();
+                    }
+                    return getLoadingProgressIndicator();
+                }
+            }
         }
     }
 
@@ -359,6 +388,30 @@ public class SlideShowView extends DrawableTileBase {
                     new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
                 }
             });
+        }
+    }
+
+    abstract private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
+
+        public MediaLoadTask(VideoFile<?> file) {
+            super(file);
+        }
+
+        @Override
+        Node load() {
+            try {
+                final Media media = file.getMedia();
+                return new VideoPlayer(new MediaPlayer(media), file);
+            } catch (IOException ex) {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+                return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+            } catch (MediaException ex) {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
+                return new Text(ex.getType() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+            } catch (OutOfMemoryError ex) {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+                return new Text("There was a problem playing video file.\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+            }
         }
     }
 }

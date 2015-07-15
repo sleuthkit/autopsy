@@ -18,25 +18,16 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
-import java.lang.ref.SoftReference;
 import java.util.Objects;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -55,23 +46,11 @@ public class DrawableTile extends DrawableTileBase {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTile.class.getName());
 
-    /**
-     * the central ImageView that shows a thumbnail of the represented file
-     */
-    @FXML
-    private ImageView imageView;
 
-    private Task<Image> task;
-    private SoftReference<Image> thumbnailCache;
 
-    @Override
-    synchronized protected void disposeContent() {
-        if (task != null) {
-            task.cancel(true);
-        }
-        task = null;
-        thumbnailCache = null;
-    }
+
+
+   
 
     @FXML
     @Override
@@ -115,70 +94,7 @@ public class DrawableTile extends DrawableTileBase {
         });
     }
 
-    @Override
-    synchronized protected void updateContent() {
-
-        if (getFile().isPresent() == false) {
-            thumbnailCache = null;
-            Platform.runLater(() -> {
-                imageView.setImage(null);
-                imageBorder.setCenter(null);
-            });
-        } else {
-            Image thumbnail = isNull(thumbnailCache) ? null : thumbnailCache.get();
-
-            if (nonNull(thumbnail)) {
-                setImageHelper(thumbnail);
-            } else if (isNull(task) || task.isDone()) {
-                DrawableFile<?> file = getFile().get();
-                task = new Task<Image>() {
-                    @Override
-                    protected Image call() throws Exception {
-                        if (isCancelled() == false) {
-                            return file.getThumbnail();
-                        } else {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    protected void failed() {
-                        super.failed();
-                    }
-
-                    @Override
-                    protected void succeeded() {
-                        super.succeeded();
-                        if (isCancelled() == false) {
-                            try {
-                                synchronized (DrawableTile.this) {
-                                    final Image thumbnail = get();
-                                    thumbnailCache = new SoftReference<>(thumbnail);
-                                    setImageHelper(thumbnailCache.get());
-                                }
-                            } catch (InterruptedException | ExecutionException ex) {
-                                LOGGER.log(Level.WARNING, "failed to get thumbnail for" + file.getName(), ex);
-                            }
-                        }
-                        synchronized (DrawableTile.this) {
-                            task = null;
-                        }
-                    }
-                };
-                Platform.runLater(() -> {
-                    imageBorder.setCenter(new ProgressIndicator());
-                });
-                new Thread(task).start();
-            }
-        }
-    }
-
-    private void setImageHelper(final Image t) {
-        Platform.runLater(() -> {
-            imageView.setImage(t);
-            imageBorder.setCenter(imageView);
-        });
-    }
+   
 
     @Override
     protected String getTextForLabel() {

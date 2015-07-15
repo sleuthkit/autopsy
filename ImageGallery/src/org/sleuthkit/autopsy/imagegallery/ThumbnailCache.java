@@ -123,7 +123,7 @@ public enum ThumbnailCache {
                         // If a thumbnail file is already saved locally, load it
                         try {
                             BufferedImage read = ImageIO.read(cachFile);
-                            if (read.getWidth() == MAX_ICON_SIZE) {
+                            if (read.getWidth() < MAX_ICON_SIZE) {
                                 return SwingFXUtils.toFXImage(read, null);
                             }
                         } catch (MalformedURLException ex) {
@@ -176,8 +176,6 @@ public enum ThumbnailCache {
      */
     @Nullable
     private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
-
-        return SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE), null);
+        return  SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_ICON_SIZE), null);
     }
-
 }

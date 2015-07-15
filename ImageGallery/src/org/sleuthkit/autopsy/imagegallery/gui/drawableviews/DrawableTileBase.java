@@ -20,18 +20,25 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
@@ -126,11 +133,18 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     protected BorderPane imageBorder;
 
+    @FXML
+    protected ImageView imageView;
     /**
      * the groupPane this {@link DrawableTileBase} is embedded in
      */
     final private GroupPane groupPane;
+
+    private ProgressIndicator progressIndicator;
     volatile private boolean registered = false;
+
+    private Task<Image> imageTask;
+    SoftReference<Image> imageCache;
 
     protected DrawableTileBase(GroupPane groupPane) {
         super(groupPane.getController());
@@ -239,8 +253,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     GroupPane getGroupPane() {
         return groupPane;
     }
-
-    protected abstract void disposeContent();
 
     protected abstract String getTextForLabel();
 
@@ -385,5 +397,103 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         });
     }
 
-    abstract protected void updateContent();
+    synchronized protected void updateContent() {
+        Node content = getContentNode();
+        Platform.runLater(() -> {
+            imageBorder.setCenter(content);
+        });
+    }
+
+    ProgressIndicator getLoadingProgressIndicator() {
+        if (progressIndicator == null) {
+            progressIndicator = new ProgressIndicator();
+        }
+        return progressIndicator;
+    }
+
+    Node getContentNode() {
+        if (getFile().isPresent() == false) {
+            imageCache = null;
+            Platform.runLater(() -> {
+                imageView.setImage(null);
+            });
+            return null;
+        } else {
+            Image thumbnail = isNull(imageCache) ? null : imageCache.get();
+
+            if (nonNull(thumbnail)) {
+                Platform.runLater(() -> {
+                    imageView.setImage(thumbnail);
+                });
+                return imageView;
+            } else {
+                DrawableFile<?> file = getFile().get();
+
+                if (isNull(imageTask) || imageTask.isDone()) {
+                    imageTask = new ImageLoadTask(file) {
+
+                        @Override
+                        void saveToCache(Image result) {
+                            synchronized (DrawableTileBase.this) {
+                                imageCache = new SoftReference<>(result);
+                            }
+                        }
+                    };
+                    new Thread(imageTask).start();
+                }
+                return getLoadingProgressIndicator();
+            }
+        }
+    }
+
+    synchronized protected void disposeContent() {
+        if (imageTask != null) {
+            imageTask.cancel(true);
+        }
+        imageTask = null;
+        imageCache = null;
+    }
+
+    abstract class CachedLoaderTask<X, Y extends DrawableFile<?>> extends Task<X> {
+
+        protected final Y file;
+
+        public CachedLoaderTask(Y file) {
+            this.file = file;
+        }
+
+        @Override
+        protected X call() throws Exception {
+            return (isCancelled() == false) ? load() : null;
+        }
+
+        abstract X load();
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            if (isCancelled() == false) {
+                try {
+                    saveToCache(get());
+                    updateContent();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to content for" + file.getName(), ex);
+                }
+            }
+        }
+
+        abstract void saveToCache(X result);
+    }
+
+    abstract class ImageLoadTask extends CachedLoaderTask<Image, DrawableFile<?>> {
+
+        public ImageLoadTask(DrawableFile<?> file) {
+            super(file);
+        }
+
+        @Override
+        Image load() {
+            return file.getThumbnail();
+        }
+    }
 }

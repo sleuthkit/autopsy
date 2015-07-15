@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -27,7 +26,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -46,7 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 
-public class MediaControl extends BorderPane {
+public class VideoPlayer extends BorderPane {
 
     private static final Image VOLUME_HIGH = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume.png");
     private static final Image VOLUME_LOW = new Image("/org/sleuthkit/autopsy/imagegallery/images/speaker-volume-low.png");
@@ -106,21 +104,6 @@ public class MediaControl extends BorderPane {
         }
     };
     private final VideoFile<?> file;
-
-    public static Node create(VideoFile<?> file) {
-        try {
-            return new MediaControl(new MediaPlayer(file.getMedia()), file);
-        } catch (IOException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
-        } catch (MediaException ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text(ex.getType() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
-        } catch (OutOfMemoryError ex) {
-            Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-            return new Text("There was a problem playing video file.\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
-        }
-    }
 
     @FXML
     void initialize() {
@@ -250,7 +233,7 @@ public class MediaControl extends BorderPane {
         }
     }
 
-    private MediaControl(MediaPlayer mp, VideoFile<?> file) {
+    public VideoPlayer(MediaPlayer mp, VideoFile<?> file) {
         this.file = file;
         this.mp = mp;
         FXMLConstructor.construct(this, "MediaControl.fxml");

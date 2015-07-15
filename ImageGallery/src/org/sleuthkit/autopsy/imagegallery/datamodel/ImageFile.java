@@ -53,6 +53,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return ThumbnailCache.getDefault().get(this);
     }
 
+    @Override
     public Image getFullSizeImage() {
         Image image = null;
         if (imageRef != null) {
