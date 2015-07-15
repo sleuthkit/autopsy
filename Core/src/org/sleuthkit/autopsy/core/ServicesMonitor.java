@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -48,7 +49,6 @@ public class ServicesMonitor {
 
     private AutopsyEventPublisher eventPublisher;
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
-    private static ServicesMonitor instance = new ServicesMonitor();
     private final ScheduledThreadPoolExecutor periodicTasksExecutor;
 
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
@@ -58,13 +58,19 @@ public class ServicesMonitor {
     private static final Set<String> serviceNames = Stream.of(ServicesMonitor.ServiceName.values())
             .map(ServicesMonitor.ServiceName::toString)
             .collect(Collectors.toSet());
-
+    
     /**
      * The service monitor maintains a mapping of each service to it's last
      * status update.
      */
     private final ConcurrentHashMap<String, String> statusByService;
 
+    /**
+     * Call constructor on start-up so that the first check of services is 
+     * done as soon as possible.
+     */
+    private static ServicesMonitor instance = new ServicesMonitor();
+    
     /**
      * List of services that are being monitored. The service names should be
      * representative of the service functionality and readable as they get
@@ -130,19 +136,29 @@ public class ServicesMonitor {
 
     /**
      * Updates service status and publishes the service status update if it is
-     * different from previous status. Logs status changes.
+     * different from previous status. Event is published locally. Logs status changes.
      *
      * @param service Name of the service.
      * @param status Updated status for the service.
+     * @param details Details of the event.
+     * @throws org.sleuthkit.autopsy.core.UnknownServiceException Thrown if either of input parameters is null
      */
-    private synchronized void setServiceStatus(String service, String status) {
+    public void setServiceStatus(String service, String status, String details) throws UnknownServiceException {
 
-        // verify that status has changed
+        if (service == null) {
+            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
+        }
+        
+        if (status == null || details == null){
+            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullStatusOrDetails.excepton.txt"));
+        }
+        
+        // if the status update is for an existing service who's status hasn't changed - do nothing.
         if (status.equals(statusByService.get(service))) {
             return;
         }
 
-        // status has changed
+        // new service or status has changed
         if (status.equals(ServiceStatus.UP.toString())) {
             logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
@@ -155,7 +171,7 @@ public class ServicesMonitor {
 
         // update and publish new status
         statusByService.put(service, status);
-        publishServiceStatusUpdate(service, status);
+        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
     }
 
     /**
@@ -185,60 +201,41 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @return String Status for the service.
      */
-    private String checkServiceStatusStatus(String service) {
+    private String checkServiceStatus(String service) {
+        try {
+            if (service.equals(ServiceName.REMOTE_CASE_DATABASE.toString())) {
+                if (canConnectToRemoteDb()) {
+                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
+                    return ServiceStatus.UP.toString();
+                } else {
+                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
+                    return ServiceStatus.DOWN.toString();
+                }
+            } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())) {
+                KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+                if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
+                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
+                    return ServiceStatus.UP.toString();
+                } else {
+                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");
+                    return ServiceStatus.DOWN.toString();
+                }
+            } else if (service.equals(ServiceName.MESSAGING.toString())) {
+                if (canConnectToMessagingService()) {
+                    setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
+                    return ServiceStatus.UP.toString();
+                } else {
+                    setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
+                    return ServiceStatus.DOWN.toString();
+                }
+            }
 
-        if (service.equals(ServiceName.REMOTE_CASE_DATABASE.toString())) {
-            if (canConnectToRemoteDb()) {
-                setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString());
-                return ServiceStatus.UP.toString();
-            } else {
-                setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString());
-                return ServiceStatus.DOWN.toString();
-            }
-        } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())) {
-            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
-                setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString());
-                return ServiceStatus.UP.toString();
-            } else {
-                setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString());
-                return ServiceStatus.DOWN.toString();
-            }
-        } else if (service.equals(ServiceName.MESSAGING.toString())) {
-            if (canConnectToMessagingService()) {
-                setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString());
-                return ServiceStatus.UP.toString();
-            } else {
-                setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString());
-                return ServiceStatus.DOWN.toString();
-            }
+            // can't check for any other services, treat them as "down"
+            setServiceStatus(service, ServiceStatus.DOWN.toString(), "");
+        } catch (UnknownServiceException ex) {
+            logger.log(Level.SEVERE, "Exception while checking status of service " + service, ex); //NON-NLS 
         }
-        
-        // can't check for any other services, treat them as "down"
-        setServiceStatus(service, ServiceStatus.DOWN.toString());
         return ServiceStatus.DOWN.toString();
-    }
-
-    /**
-     * Publish an event signifying change in service status. Event is published
-     * locally.
-     *
-     * @param service Name of the service.
-     * @param status Updated status for the event.
-     */
-    private void publishServiceStatusUpdate(String service, String status) {
-        eventPublisher.publishLocally(new ServiceEvent(service, status, ""));
-    }
-
-    /**
-     * Publish a custom event. Event is published locally.
-     *
-     * @param service Name of the service.
-     * @param status Updated status for the event.
-     * @param details Details of the event.
-     */
-    public void publishCustomServiceStatus(String service, String status, String details) {
-        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
     }
 
     /**
@@ -333,7 +330,7 @@ public class ServicesMonitor {
      */
     private void checkAllServices() {
         for (String serviceName : serviceNames) {
-            checkServiceStatusStatus(serviceName);
+            checkServiceStatus(serviceName);
         }
     }
 
