@@ -75,6 +75,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
+
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -83,7 +84,6 @@ public class MetaDataPane extends DrawableUIBase {
             fxmlLoader.load();
         } catch (IOException exception) {
             throw new RuntimeException(exception);
-
         }
     }
 
@@ -211,5 +211,4 @@ public class MetaDataPane extends DrawableUIBase {
             }
         });
     }
-
 }

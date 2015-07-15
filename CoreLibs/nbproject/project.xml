@@ -64,7 +64,6 @@
                 <package>com.sun.mail.smtp</package>
                 <package>com.sun.mail.util</package>
                 <package>com.sun.mail.util.logging</package>
-                <package>javafx.scene.control</package>
                 <package>javassist</package>
                 <package>javassist.bytecode</package>
                 <package>javassist.bytecode.analysis</package>
@@ -617,10 +616,6 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/openjfx-dialogs-1.0.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
             </class-path-extension>
@@ -769,12 +764,12 @@
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.40.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.40.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>

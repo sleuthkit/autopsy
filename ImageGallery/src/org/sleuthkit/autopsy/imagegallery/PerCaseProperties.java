@@ -88,7 +88,7 @@ class PerCaseProperties {
      * @return true if the config exists, false otherwise.
      */
     public synchronized boolean configExists(String moduleName) {
-        Path get = Paths.get(theCase.getModulesOutputDirAbsPath(), moduleName, theCase.getName() + ".properties");
+        Path get = Paths.get(theCase.getModuleDirectory(), moduleName, theCase.getName() + ".properties");
         return Files.exists(get);
     }
 
@@ -114,7 +114,7 @@ class PerCaseProperties {
      *         file doesn't exist.
      */
     private synchronized Path getPropertyPath(String moduleName) {
-        return Paths.get(theCase.getModulesOutputDirAbsPath(), moduleName, theCase.getName() + ".properties"); //NON-NLS
+        return Paths.get(theCase.getModuleDirectory(), moduleName, theCase.getName() + ".properties"); //NON-NLS
     }
 
     /**

@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -104,7 +103,6 @@ abstract class AddTagAction {
                     TagName tagName = GetTagNameDialog.doDialog();
                     if (tagName != null) {
                         addTag(tagName, NO_COMMENT);
-                 
                     }
                 });
             });
@@ -124,7 +122,6 @@ abstract class AddTagAction {
                         } else {
                             new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
-                      
                     }
                 });
             });

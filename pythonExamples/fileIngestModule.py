@@ -48,6 +48,7 @@ from org.sleuthkit.autopsy.ingest import FileIngestModule
 from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
@@ -107,20 +108,28 @@ class SampleJythonFileIngestModule(FileIngestModule):
     # TODO: Add your analysis code in here.
     def process(self, file):
         # Skip non-files
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or (file.isFile() == False)):
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
+            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or 
+            (file.isFile() == False)):
             return IngestModule.ProcessResult.OK
 
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
-        if file.getName().find(".txt") != -1:
+        if file.getName().lower().endswith(".txt"):
 
             self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
-            # artfiact.  Refer to the developer docs for other examples.
+            # artifact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), 
+                  SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
+  
+            # Fire an event to notify the UI and others that there is a new artifact  
+            IngestServices.getInstance().fireModuleDataEvent(
+                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None));
 
             # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
             # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
@@ -146,5 +155,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
     # TODO: Add any shutdown code that you need here.
     def shutDown(self):
         # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
-        message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName, str(self.filesFound) + " files found")
+        message = IngestMessage.createMessage(
+            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName, 
+                str(self.filesFound) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
