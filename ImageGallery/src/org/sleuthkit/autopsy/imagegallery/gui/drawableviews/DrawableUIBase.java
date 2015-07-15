@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.util.Objects;
-import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.scene.layout.AnchorPane;
@@ -86,9 +85,11 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     synchronized public void setFile(Long newFileID) {
         if (getFileID().isPresent()) {
             if (Objects.equals(newFileID, getFileID().get()) == false) {
-                setFileHelper(newFileID);
+                if (Objects.nonNull(newFileID)) {
+                    setFileHelper(newFileID);
+                }
             }
-        } else if (nonNull(newFileID)) {
+        } else if (Objects.nonNull(newFileID)) {
             setFileHelper(newFileID);
         }
     }

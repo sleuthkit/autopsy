@@ -195,8 +195,8 @@ public class SlideShowView extends DrawableTileBase {
 
         getGroupPane().grouping().addListener((Observable observable) -> {
             syncButtonVisibility();
-            if (getGroupPane().getGrouping() != null) {
-                getGroupPane().getGrouping().fileIds().addListener((Observable observable1) -> {
+            if (getGroupPane().getGroup() != null) {
+                getGroupPane().getGroup().fileIds().addListener((Observable observable1) -> {
                     syncButtonVisibility();
                 });
             }
@@ -206,7 +206,7 @@ public class SlideShowView extends DrawableTileBase {
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
         try {
-            final boolean hasMultipleFiles = getGroupPane().getGrouping().fileIds().size() > 1;
+            final boolean hasMultipleFiles = getGroupPane().getGroup().fileIds().size() > 1;
             Platform.runLater(() -> {
                 rightButton.setVisible(hasMultipleFiles);
                 leftButton.setVisible(hasMultipleFiles);
@@ -288,12 +288,12 @@ public class SlideShowView extends DrawableTileBase {
     @ThreadConfined(type = ThreadType.JFX)
     synchronized private void cycleSlideShowImage(int direction) {
         stopVideo();
-        final int groupSize = getGroupPane().getGrouping().fileIds().size();
+        final int groupSize = getGroupPane().getGroup().fileIds().size();
         final Integer nextIndex = getFileID().map(fileID -> {
-            final int currentIndex = getGroupPane().getGrouping().fileIds().indexOf(fileID);
+            final int currentIndex = getGroupPane().getGroup().fileIds().indexOf(fileID);
             return (currentIndex + direction + groupSize) % groupSize;
         }).orElse(0);
-        setFile(getGroupPane().getGrouping().fileIds().get(nextIndex)
+        setFile(getGroupPane().getGroup().fileIds().get(nextIndex)
         );
     }
 
@@ -302,7 +302,7 @@ public class SlideShowView extends DrawableTileBase {
      *         of y"
      */
     private String getSupplementalText() {
-        final ObservableList<Long> fileIds = getGroupPane().getGrouping().fileIds();
+        final ObservableList<Long> fileIds = getGroupPane().getGroup().fileIds();
         return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
                 .orElse("");
 

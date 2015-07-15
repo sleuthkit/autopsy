@@ -20,13 +20,14 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.lang.ref.SoftReference;
 import java.util.Objects;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
-import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.effect.DropShadow;
@@ -61,7 +62,7 @@ public class DrawableTile extends DrawableTileBase {
     private ImageView imageView;
 
     private Task<Image> task;
-    private SoftReference<Image> thumbCache;
+    private SoftReference<Image> thumbnailCache;
 
     @Override
     synchronized protected void disposeContent() {
@@ -69,7 +70,7 @@ public class DrawableTile extends DrawableTileBase {
             task.cancel(true);
         }
         task = null;
-        thumbCache = null;
+        thumbnailCache = null;
     }
 
     @FXML
@@ -117,11 +118,66 @@ public class DrawableTile extends DrawableTileBase {
     @Override
     synchronized protected void updateContent() {
 
-        Node thumbnail = getThumbnail();
-        Platform.runLater(() -> {
-            imageBorder.setCenter(thumbnail);
-        });
+        if (getFile().isPresent() == false) {
+            thumbnailCache = null;
+            Platform.runLater(() -> {
+                imageView.setImage(null);
+                imageBorder.setCenter(null);
+            });
+        } else {
+            Image thumbnail = isNull(thumbnailCache) ? null : thumbnailCache.get();
 
+            if (nonNull(thumbnail)) {
+                setImageHelper(thumbnail);
+            } else if (isNull(task) || task.isDone()) {
+                DrawableFile<?> file = getFile().get();
+                task = new Task<Image>() {
+                    @Override
+                    protected Image call() throws Exception {
+                        if (isCancelled() == false) {
+                            return file.getThumbnail();
+                        } else {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    protected void failed() {
+                        super.failed();
+                    }
+
+                    @Override
+                    protected void succeeded() {
+                        super.succeeded();
+                        if (isCancelled() == false) {
+                            try {
+                                synchronized (DrawableTile.this) {
+                                    final Image thumbnail = get();
+                                    thumbnailCache = new SoftReference<>(thumbnail);
+                                    setImageHelper(thumbnailCache.get());
+                                }
+                            } catch (InterruptedException | ExecutionException ex) {
+                                LOGGER.log(Level.WARNING, "failed to get thumbnail for" + file.getName(), ex);
+                            }
+                        }
+                        synchronized (DrawableTile.this) {
+                            task = null;
+                        }
+                    }
+                };
+                Platform.runLater(() -> {
+                    imageBorder.setCenter(new ProgressIndicator());
+                });
+                new Thread(task).start();
+            }
+        }
+    }
+
+    private void setImageHelper(final Image t) {
+        Platform.runLater(() -> {
+            imageView.setImage(t);
+            imageBorder.setCenter(imageView);
+        });
     }
 
     @Override
@@ -129,59 +185,4 @@ public class DrawableTile extends DrawableTileBase {
         return getFile().map(AbstractContent::getName).orElse("");
     }
 
-    synchronized private Node getThumbnail() {
-        if (getFile().isPresent() == false) {
-            return null;
-        } else {
-            Image thumbnail = (thumbCache == null)
-                    ? null : thumbCache.get();
-
-            if (thumbnail != null) {
-                Platform.runLater(() -> {
-                    imageView.setImage(thumbnail);
-                });
-                return imageView;
-            } else {
-                if (task == null || task.isDone()) {
-                    DrawableFile<?> file = getFile().get();
-                    task = new Task<Image>() {
-                        @Override
-                        protected Image call() throws Exception {
-                            if (isCancelled() == false) {
-                                return file.getThumbnail();
-                            } else {
-                                return null;
-                            }
-                        }
-
-                        @Override
-                        protected void failed() {
-                            super.failed();
-                        }
-
-                        @Override
-                        protected void succeeded() {
-                            super.succeeded();
-                            if (isCancelled() == false) {
-                                try {
-                                    synchronized (DrawableTile.this) {
-                                        thumbCache = new SoftReference<>(get());
-                                    }
-                                    updateContent();
-
-                                } catch (InterruptedException | ExecutionException ex) {
-                                    LOGGER.log(Level.WARNING, "failed to get thumbnail for" + file.getName(), ex);
-                                }
-                            }
-                            synchronized (DrawableTile.this) {
-                                task = null;
-                            }
-                        }
-                    };
-                    new Thread(task).start();
-                }
-                return new ProgressIndicator();
-            }
-        }
-    }
 }
