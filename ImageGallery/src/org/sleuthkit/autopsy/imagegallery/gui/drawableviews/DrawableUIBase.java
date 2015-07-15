@@ -18,10 +18,22 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import java.lang.ref.SoftReference;
 import java.util.Objects;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -32,11 +44,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
+    private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
+
+    @FXML
+    protected BorderPane imageBorder;
+    @FXML
+    protected ImageView imageView;
+
     private final ImageGalleryController controller;
 
     private Optional<DrawableFile<?>> fileOpt = Optional.empty();
 
     private Optional<Long> fileIDOpt = Optional.empty();
+    private Task<Image> imageTask;
+    SoftReference<Image> imageCache;
+    private ProgressIndicator progressIndicator;
 
     public DrawableUIBase(ImageGalleryController controller) {
         this.controller = controller;
@@ -93,4 +115,102 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             setFileHelper(newFileID);
         }
     }
+
+    synchronized protected void updateContent() {
+        Node content = getContentNode();
+        Platform.runLater(() -> {
+            imageBorder.setCenter(content);
+        });
+    }
+
+    synchronized protected void disposeContent() {
+        if (imageTask != null) {
+            imageTask.cancel(true);
+        }
+        imageTask = null;
+        imageCache = null;
+    }
+
+    ProgressIndicator getLoadingProgressIndicator() {
+        if (progressIndicator == null) {
+            progressIndicator = new ProgressIndicator();
+        }
+        return progressIndicator;
+    }
+
+    Node getContentNode() {
+        if (getFile().isPresent() == false) {
+            imageCache = null;
+            Platform.runLater(() -> {
+                if (imageView != null) {
+                    imageView.setImage(null);
+                }
+            });
+            return null;
+        } else {
+            Image thumbnail = isNull(imageCache) ? null : imageCache.get();
+
+            if (nonNull(thumbnail)) {
+                Platform.runLater(() -> {
+                    if (imageView != null) {
+                        imageView.setImage(thumbnail);
+                    }
+                });
+                return imageView;
+            } else {
+                DrawableFile<?> file = getFile().get();
+
+                if (isNull(imageTask) || imageTask.isDone()) {
+                    imageTask = getNewImageLoadTask(file);
+                    new Thread(imageTask).start();
+                }
+                return getLoadingProgressIndicator();
+            }
+        }
+    }
+
+    abstract CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file);
+
+    abstract class CachedLoaderTask<X, Y extends DrawableFile<?>> extends Task<X> {
+
+        protected final Y file;
+
+        public CachedLoaderTask(Y file) {
+            this.file = file;
+        }
+
+        @Override
+        protected X call() throws Exception {
+            return (isCancelled() == false) ? load() : null;
+        }
+
+        abstract X load();
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            if (isCancelled() == false) {
+                try {
+                    saveToCache(get());
+                    updateContent();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to content for" + file.getName(), ex);
+                }
+            }
+        }
+
+        abstract void saveToCache(X result);
+    }
+
+//    abstract class ImageLoadTask extends CachedLoaderTask<Image, DrawableFile<?>> {
+//
+//        public ImageLoadTask(DrawableFile<?> file) {
+//            super(file);
+//        }
+//
+//        @Override
+//        Image load() {
+//            return file.getThumbnail();
+//        }
+//    }
 }

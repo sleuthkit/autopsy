@@ -38,6 +38,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
@@ -134,8 +135,6 @@ public class SlideShowView extends DrawableTileBase {
             spring.setMinWidth(Region.USE_PREF_SIZE);
         });
 
-        imageView = new ImageView();
-        imageView.setPreserveRatio(true);
         imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
         imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
 
@@ -389,6 +388,25 @@ public class SlideShowView extends DrawableTileBase {
                 }
             });
         }
+    }
+
+    @Override
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+
+        return new CachedLoaderTask<Image, DrawableFile<?>>(file) {
+
+            @Override
+            void saveToCache(Image result) {
+                synchronized (SlideShowView.this) {
+                    imageCache = new SoftReference<>(result);
+                }
+            }
+
+            @Override
+            Image load() {
+                return isCancelled() ? null : file.getFullSizeImage();
+            }
+        };
     }
 
     abstract private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {

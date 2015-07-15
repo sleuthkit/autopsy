@@ -127,7 +127,10 @@
                                         </BorderPane>
                                     </bottom>
                                     <center>
-                                        <BorderPane fx:id="imageBorder" center="$imageView" maxHeight="-1.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-border-color: lightgray;&#10;-fx-border-width:10;&#10;-fx-border-radius:2;" BorderPane.alignment="CENTER" />
+                                        <BorderPane fx:id="imageBorder" center="$imageView" maxHeight="-1.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-border-color: lightgray;&#10;-fx-border-width:10;&#10;-fx-border-radius:2;" BorderPane.alignment="CENTER">
+                                 <center>
+                                    <ImageView fx:id="imageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER" />
+                                 </center></BorderPane>
                                     </center>
                                 </BorderPane>
                             </children>
