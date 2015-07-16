@@ -190,10 +190,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if a video file that can be displayed
      */
     private boolean isVideoSupported(AbstractFile file) {
-        String name = file.getName().toLowerCase();
+        String extension = file.getNameExtension();
 
         //TODO: is this what we want, to require both extension and mimetype support?
-        if (AUDIO_EXTENSIONS.contains("." + name) || videoExtensions.contains("." + name)) {
+        if (AUDIO_EXTENSIONS.contains("." + extension) || videoExtensions.contains("." + extension)) {
             try {
                 String mimeType = new FileTypeDetector().detect(file);
                 if (nonNull(mimeType) && videoMimes.contains(mimeType)) {
@@ -217,7 +217,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-        String name = file.getName().toLowerCase();
+        String extension = file.getNameExtension();
 
         // blackboard
         try {
@@ -238,7 +238,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
 
         // extension
-        if (imageExtensions.contains("." + name)) {
+        if (imageExtensions.contains("." + extension)) {
             return true;
         }
 
