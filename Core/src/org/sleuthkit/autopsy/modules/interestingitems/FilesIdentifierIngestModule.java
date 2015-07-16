@@ -126,11 +126,13 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
      */
     @Override
     public void shutDown() {
-        if (refCounter.decrementAndGet(this.context.getJobId()) == 0) {
-            // Shutting down the last instance of this module for this ingest 
-            // job, so discard the interesting file sets definitions snapshot 
-            // for the job.
-            FilesIdentifierIngestModule.interestingFileSetsByJob.remove(this.context.getJobId());
+        if(context != null){
+            if (refCounter.decrementAndGet(this.context.getJobId()) == 0) {
+                // Shutting down the last instance of this module for this ingest 
+                // job, so discard the interesting file sets definitions snapshot 
+                // for the job.
+                FilesIdentifierIngestModule.interestingFileSetsByJob.remove(this.context.getJobId());
+            }
         }
     }
 }
