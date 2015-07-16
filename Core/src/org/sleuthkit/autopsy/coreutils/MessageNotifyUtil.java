@@ -114,7 +114,7 @@ public class MessageNotifyUtil {
         }
         
         /**
-         * Show an confirm dialog
+         * Show an confirm, yes-no dialog
          *
          * @param message message to show
          * @return true if yes is clicked
