@@ -266,28 +266,25 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     Node getContentNode() {
         if (getFile().isPresent() == false) {
-            imageCache = null;
             mediaCache = null;
-            Platform.runLater(() -> {
-                imageView.setImage(null);
-            });
-            return null;
+            return super.getContentNode();
         } else {
             DrawableFile<?> file = getFile().get();
-            if ((file.isVideo() && file.isDisplayable()) == false) {
-                return super.getContentNode();
-            } else {
-                Node media = (isNull(mediaCache)) ? null : mediaCache.get();
-                if (nonNull(media)) {
-                    return media;
+            if (file.isVideo()) {
+                Node mediaNode = (isNull(mediaCache)) ? null : mediaCache.get();
+                if (nonNull(mediaNode)) {
+                    return mediaNode;
                 } else {
-                    if (isNull(mediaTask) || mediaTask.isDone()) {
+                    if (isNull(mediaTask)) {
                         mediaTask = new MediaLoadTask(((VideoFile<?>) file));
                         new Thread(mediaTask).start();
+                    } else if (mediaTask.isDone()) {
+                        return null;
                     }
                     return getLoadingProgressIndicator();
                 }
             }
+            return super.getContentNode();
         }
     }
 
@@ -412,15 +409,17 @@ public class SlideShowView extends DrawableTileBase {
             try {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
-            } catch (IOException ex) {
+            } catch (MediaException | IOException | OutOfMemoryError ex) {
                 Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+
+                if (file.isDisplayableAsImage()) {
+                    Image fullSizeImage = file.getFullSizeImage();
+                    Platform.runLater(() -> {
+                        imageView.setImage(fullSizeImage);
+                    });
+                    return imageView;
+                }
                 return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
-            } catch (MediaException ex) {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, ex.getType() + " Failed to initialize MediaControl for file " + file.getName(), ex);
-                return new Text(ex.getType() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
-            } catch (OutOfMemoryError ex) {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
-                return new Text("There was a problem playing video file.\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
             }
         }
     }

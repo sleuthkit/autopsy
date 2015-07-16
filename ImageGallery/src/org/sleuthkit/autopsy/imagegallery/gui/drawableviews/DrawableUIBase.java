@@ -57,7 +57,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     private Optional<Long> fileIDOpt = Optional.empty();
     private Task<Image> imageTask;
-    SoftReference<Image> imageCache;
+    private SoftReference<Image> imageCache;
     private ProgressIndicator progressIndicator;
 
     public DrawableUIBase(ImageGalleryController controller) {
@@ -160,9 +160,11 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             } else {
                 DrawableFile<?> file = getFile().get();
 
-                if (isNull(imageTask) || imageTask.isDone()) {
+                if (isNull(imageTask)) {
                     imageTask = getNewImageLoadTask(file);
                     new Thread(imageTask).start();
+                } else if (imageTask.isDone()) {
+                    return null;
                 }
                 return getLoadingProgressIndicator();
             }

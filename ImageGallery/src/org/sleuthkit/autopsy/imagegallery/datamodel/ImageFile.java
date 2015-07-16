@@ -22,7 +22,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Objects;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
@@ -41,8 +40,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
-    private SoftReference<Image> imageRef;
-
     ImageFile(T f, Boolean analyzed) {
         super(f, analyzed);
 
@@ -55,10 +52,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     public Image getFullSizeImage() {
-        Image image = null;
-        if (imageRef != null) {
-            image = imageRef.get();
-        }
+        Image image = (imageRef != null) ? imageRef.get() : null;
 
         if (image == null) {
             try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
@@ -80,11 +74,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return image;
     }
 
-    @Override
-    public boolean isDisplayable() {
-        Image fullSizeImage = getFullSizeImage();
-        return Objects.nonNull(fullSizeImage) && fullSizeImage.errorProperty().get() == false;
-    }
 
     @Override
     Double getWidth() {

@@ -69,6 +69,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -133,10 +134,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      */
     final private GroupPane groupPane;
 
-
     volatile private boolean registered = false;
-
- 
 
     protected DrawableTileBase(GroupPane groupPane) {
         super(groupPane.getController());
@@ -312,7 +310,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
-            final boolean isUndisplayable = file.isDisplayable() == false;
+            final boolean isUndisplayable = (isVideo ? ((VideoFile<?>) file).isDisplayableAsMedia() : file.isDisplayableAsImage()) == false;
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
@@ -389,9 +387,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         });
     }
 
-   
-
-
 //    @Override
 //    Node getContentNode() {
 //        if (getFile().isPresent() == false) {
@@ -427,6 +422,4 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 //            }
 //        }
 //    }
-
-
 }

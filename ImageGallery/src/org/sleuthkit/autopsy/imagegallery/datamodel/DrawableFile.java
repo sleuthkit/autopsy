@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -89,6 +91,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return new ImageFile<>(abstractFileById, analyzed);
         }
     }
+
+    SoftReference<Image> imageRef;
 
     private String drawablePath;
 
@@ -320,5 +324,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract boolean isDisplayable();
+    public boolean isDisplayableAsImage() {
+        Image fullSizeImage = getFullSizeImage();
+        return Objects.nonNull(fullSizeImage) && fullSizeImage.errorProperty().get() == false;
+    }
 }

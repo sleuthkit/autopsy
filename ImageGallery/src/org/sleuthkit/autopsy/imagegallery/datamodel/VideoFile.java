@@ -55,16 +55,22 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     @Override
     public Image getFullSizeImage() {
-        return SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(getAbstractFile(), 1024), null);
+        Image image = (imageRef != null) ? imageRef.get() : null;
+
+        if (image == null) {
+            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getIcon(getAbstractFile(), 1024);
+            imageRef = new SoftReference<>((bufferedImage == ImageUtils.getDefaultIcon()) ? null : SwingFXUtils.toFXImage(bufferedImage, null));
+        }
+
+        return image;
+
     }
 
-    SoftReference<Media> mediaRef;
+    private SoftReference<Media> mediaRef;
 
     public Media getMedia() throws IOException, MediaException {
-        Media media = null;
-        if (mediaRef != null) {
-            media = mediaRef.get();
-        }
+        Media media = (mediaRef != null) ? mediaRef.get() : null;
+
         if (media != null) {
             return media;
         }
@@ -83,8 +89,7 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id);
     }
 
-    @Override
-    public boolean isDisplayable() {
+    public boolean isDisplayableAsMedia() {
         try {
             Media media = getMedia();
             return Objects.nonNull(media) && Objects.isNull(media.getError());

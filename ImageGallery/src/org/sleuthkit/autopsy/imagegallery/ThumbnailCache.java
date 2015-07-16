@@ -186,6 +186,7 @@ public enum ThumbnailCache {
      */
     @Nullable
     private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
-        return SwingFXUtils.toFXImage((BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_THUMBNAIL_SIZE), null);
+        final BufferedImage thumbnail = (BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+        return (thumbnail == ImageUtils.getDefaultIcon()) ? null : SwingFXUtils.toFXImage(thumbnail, null);
     }
 }
