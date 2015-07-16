@@ -234,7 +234,6 @@ public class ServicesMonitor {
         }
 
         // no method to check any other services
-        setServiceStatus(service, ServiceStatus.DOWN.toString(), "");
         logger.log(Level.SEVERE, "No method exists to check status of service {0}", service); //NON-NLS 
         throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
     }
