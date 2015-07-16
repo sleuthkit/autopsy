@@ -201,16 +201,4 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
         abstract void saveToCache(X result);
     }
-
-//    abstract class ImageLoadTask extends CachedLoaderTask<Image, DrawableFile<?>> {
-//
-//        public ImageLoadTask(DrawableFile<?> file) {
-//            super(file);
-//        }
-//
-//        @Override
-//        Image load() {
-//            return file.getThumbnail();
-//        }
-//    }
 }
