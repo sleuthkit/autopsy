@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.core;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
-import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -28,16 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.jms.Connection;
-import javax.jms.JMSException;
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 
 /**
@@ -82,18 +76,28 @@ public class ServicesMonitor {
          * Property change event fired when remote case database status changes.
          * New value is set to updated ServiceStatus, old value is null.
          */
-        REMOTE_CASE_DATABASE,
+        REMOTE_CASE_DATABASE("Remote Case Database"),
         /**
          * Property change event fired when remote keyword search service status
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_KEYWORD_SEARCH,
+        REMOTE_KEYWORD_SEARCH("Remote Keyword Search"),
         /**
          * Property change event fired when messaging service status changes.
          * New value is set to updated ServiceStatus, old value is null.
          */
-        MESSAGING
+        MESSAGING("Messaging Service");
+        
+        private final String displayName;
+
+        private ServiceName(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getName() {
+            return displayName;
+        }        
     };
 
     /**
@@ -141,7 +145,7 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the service.
      * @param details Details of the event.
-     * @throws org.sleuthkit.autopsy.core.UnknownServiceException Thrown if either of input parameters is null
+     * @throws org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown if either of input parameters is null
      */
     public void setServiceStatus(String service, String status, String details) throws UnknownServiceException {
 
@@ -179,7 +183,7 @@ public class ServicesMonitor {
      *
      * @param service Name of the service.
      * @return ServiceStatus Status for the service.
-     * @throws org.sleuthkit.autopsy.core.UnknownServiceException
+     * @throws org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown if service name is null or service doesn't exist.
      */
     public String getServiceStatus(String service) throws UnknownServiceException {
 
@@ -203,29 +207,29 @@ public class ServicesMonitor {
      */
     private String checkServiceStatus(String service) {
         try {
-            if (service.equals(ServiceName.REMOTE_CASE_DATABASE.toString())) {
+            if (service.equals(ServiceName.REMOTE_CASE_DATABASE.getName())) {
                 if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
-                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
+                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.getName(), ServiceStatus.UP.toString(), "");
                     return ServiceStatus.UP.toString();
                 } else {
-                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
+                    setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.getName(), ServiceStatus.DOWN.toString(), "");
                     return ServiceStatus.DOWN.toString();
                 }
-            } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.toString())) {
+            } else if (service.equals(ServiceName.REMOTE_KEYWORD_SEARCH.getName())) {
                 KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
                 if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
-                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
+                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.UP.toString(), "");
                     return ServiceStatus.UP.toString();
                 } else {
-                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");
+                    setServiceStatus(ServiceName.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.DOWN.toString(), "");
                     return ServiceStatus.DOWN.toString();
                 }
-            } else if (service.equals(ServiceName.MESSAGING.toString())) {
+            } else if (service.equals(ServiceName.MESSAGING.getName())) {
                 if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
-                    setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
+                    setServiceStatus(ServiceName.MESSAGING.getName(), ServiceStatus.UP.toString(), "");
                     return ServiceStatus.UP.toString();
                 } else {
-                    setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
+                    setServiceStatus(ServiceName.MESSAGING.getName(), ServiceStatus.DOWN.toString(), "");
                     return ServiceStatus.DOWN.toString();
                 }
             }
