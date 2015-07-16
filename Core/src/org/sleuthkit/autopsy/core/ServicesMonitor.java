@@ -350,4 +350,18 @@ public class ServicesMonitor {
             checkAllServices();
         }
     }
+
+    /**
+     * Exception thrown when service status query results in an error.
+     */
+    public class UnknownServiceException extends Exception {
+
+        public UnknownServiceException(String message) {
+            super(message);
+        }
+
+        public UnknownServiceException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }
