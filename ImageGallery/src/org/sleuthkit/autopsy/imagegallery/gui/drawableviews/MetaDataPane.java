@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
@@ -163,21 +162,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     @Override
     CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
-
-        return new CachedLoaderTask<Image, DrawableFile<?>>(file) {
-
-            @Override
-            void saveToCache(Image result) {
-                synchronized (MetaDataPane.this) {
-                    imageCache = new SoftReference<>(result);
-                }
-            }
-
-            @Override
-            Image load() {
-                return isCancelled() ? null : file.getThumbnail();
-            }
-        };
+        return new ThumbnailLoaderTask(file);
     }
 
     public void updateUI() {

@@ -282,15 +282,7 @@ public class SlideShowView extends DrawableTileBase {
                     return media;
                 } else {
                     if (isNull(mediaTask) || mediaTask.isDone()) {
-                        mediaTask = new MediaLoadTask(((VideoFile<?>) file)) {
-                            @Override
-                            void saveToCache(Node result) {
-                                synchronized (SlideShowView.this) {
-                                    mediaCache = new SoftReference<>(result);
-                                }
-                            }
-                        };
-
+                        mediaTask = new MediaLoadTask(((VideoFile<?>) file));
                         new Thread(mediaTask).start();
                     }
                     return getLoadingProgressIndicator();
@@ -393,14 +385,7 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
 
-        return new CachedLoaderTask<Image, DrawableFile<?>>(file) {
-
-            @Override
-            void saveToCache(Image result) {
-                synchronized (SlideShowView.this) {
-                    imageCache = new SoftReference<>(result);
-                }
-            }
+        return new ImageLoaderTask(file) {
 
             @Override
             Image load() {
@@ -409,10 +394,17 @@ public class SlideShowView extends DrawableTileBase {
         };
     }
 
-    abstract private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
+    private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
 
         public MediaLoadTask(VideoFile<?> file) {
             super(file);
+        }
+
+        @Override
+        void saveToCache(Node result) {
+            synchronized (SlideShowView.this) {
+                mediaCache = new SoftReference<>(result);
+            }
         }
 
         @Override

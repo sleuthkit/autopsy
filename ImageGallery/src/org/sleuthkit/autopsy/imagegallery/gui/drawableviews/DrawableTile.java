@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
-import java.lang.ref.SoftReference;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -93,21 +92,7 @@ public class DrawableTile extends DrawableTileBase {
 
     @Override
     CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
-
-        return new CachedLoaderTask<Image, DrawableFile<?>>(file) {
-
-            @Override
-            void saveToCache(Image result) {
-                synchronized (DrawableTile.this) {
-                    imageCache = new SoftReference<>(result);
-                }
-            }
-
-            @Override
-            Image load() {
-                return isCancelled() ? null : file.getThumbnail();
-            }
-        };
+        return new ThumbnailLoaderTask(file);
     }
 
     @Override
