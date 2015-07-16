@@ -19,10 +19,12 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ExecutionException;
-import javax.swing.ImageIcon;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.FilterNode;
@@ -37,12 +39,13 @@ import org.sleuthkit.datamodel.Content;
  */
 class ThumbnailViewNode extends FilterNode {
 
-    private static final Image waitingIcon = new ImageIcon(ImageUtils.class.getResource("/org/sleuthkit/autopsy/images/Throbber_allbackgrounds_cyanblue.gif")).getImage();
+    static private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
 
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
-   
+
     private SwingWorker<Image, Object> swingWorker;
+    private Timer timer;
 
     /**
      * the constructor
@@ -62,7 +65,7 @@ class ThumbnailViewNode extends FilterNode {
     }
 
     @Override
-     public Image getIcon(int type) {
+    public Image getIcon(int type) {
         Image icon = null;
 
         if (iconCache != null) {
@@ -93,6 +96,10 @@ class ThumbnailViewNode extends FilterNode {
                             iconCache = new SoftReference<>(super.get());
                             progressHandle.finish();
                             fireIconChange();
+                            if (timer != null) {
+                                timer.stop();
+                                timer = null;
+                            }
                         } catch (InterruptedException | ExecutionException ex) {
                             Exceptions.printStackTrace(ex);
                         }
@@ -101,7 +108,12 @@ class ThumbnailViewNode extends FilterNode {
                 };
                 swingWorker.execute();
             }
-
+            if (timer == null) {
+                timer = new Timer(100, (ActionEvent e) -> {
+                    fireIconChange();
+                });
+                timer.start();
+            }
             return waitingIcon;
         }
     }
