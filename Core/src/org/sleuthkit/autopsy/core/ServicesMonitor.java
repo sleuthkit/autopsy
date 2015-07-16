@@ -204,7 +204,7 @@ public class ServicesMonitor {
     private String checkServiceStatus(String service) {
         try {
             if (service.equals(ServiceName.REMOTE_CASE_DATABASE.toString())) {
-                if (canConnectToRemoteDb()) {
+                if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
                     setServiceStatus(ServiceName.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
                     return ServiceStatus.UP.toString();
                 } else {
@@ -221,7 +221,7 @@ public class ServicesMonitor {
                     return ServiceStatus.DOWN.toString();
                 }
             } else if (service.equals(ServiceName.MESSAGING.toString())) {
-                if (canConnectToMessagingService()) {
+                if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
                     setServiceStatus(ServiceName.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
                     return ServiceStatus.UP.toString();
                 } else {
@@ -296,33 +296,6 @@ public class ServicesMonitor {
      */
     public void removeSubscriber(PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(serviceNames, subscriber);
-    }
-
-    /**
-     * Verifies connection to remote database.
-     *
-     * @return True if connection can be established, false otherwise.
-     */
-    private boolean canConnectToRemoteDb() {
-        return UserPreferences.getDatabaseConnectionInfo().canConnect();
-    }
-
-    /**
-     * Verifies connection to messaging service.
-     *
-     * @return True if connection can be established, false otherwise.
-     */
-    private boolean canConnectToMessagingService() {
-        MessageServiceConnectionInfo msgInfo = UserPreferences.getMessageServiceConnectionInfo();
-        try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(msgInfo.getUserName(), msgInfo.getPassword(), msgInfo.getURI());
-            Connection connection = connectionFactory.createConnection();
-            connection.start();
-            connection.close();
-            return true;
-        } catch (URISyntaxException | JMSException ex) {
-            return false;
-        }
     }
     
     /**
