@@ -460,7 +460,7 @@ public class Case {
      *
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
-    private static String sanitizeCaseName(String caseName) {
+    public static String sanitizeCaseName(String caseName) {
 
         String result;
 
@@ -1572,11 +1572,8 @@ public class Case {
      * Set the host name variable. Sometimes the network can be finicky, so the
      * answer returned by getHostName() could throw an exception or be null.
      * Have it read the environment variable if getHostName() is unsuccessful.
-     * Also note that some calls into the Case class are static via Case.*, so
-     * anywhere we use HOSTNAME prior to a Case class being instantiated, we
-     * must call getLocalHostName() first.
      */
-    private static String getLocalHostName() {
+    public static String getLocalHostName() {
         if (HostName == null || HostName.isEmpty()) {
             try {
                 HostName = java.net.InetAddress.getLocalHost().getHostName();

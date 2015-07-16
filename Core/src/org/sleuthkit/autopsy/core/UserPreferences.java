@@ -109,7 +109,7 @@ public final class UserPreferences {
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
         DbType dbType;
         try {
-            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "UNKOWN"));
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
         } catch (Exception ex) {
             dbType = DbType.SQLITE;
         }
