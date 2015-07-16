@@ -53,7 +53,9 @@ public class MessageNotifyUtil {
 
         INFO(NotifyDescriptor.INFORMATION_MESSAGE, "info-icon-16.png"), //NON-NLS
         ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"), //NON-NLS
-        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"); //NON-NLS
+        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"), //NON-NLS
+        CONFIRM(NotifyDescriptor.YES_NO_OPTION, "warning-icon-16.png"); //NON-NLS
+        
         private final int notifyDescriptorType;
         private final Icon icon;
 
@@ -110,6 +112,17 @@ public class MessageNotifyUtil {
             getDialogDisplayer().notify(new NotifyDescriptor.Message(message,
                     messageType.getNotifyDescriptorType()));
         }
+        
+        /**
+         * Show an confirm dialog
+         *
+         * @param message message to show
+         * @return true if yes is clicked
+         */
+        public static boolean confirm(String message) {
+            return getDialogDisplayer().notify(new NotifyDescriptor.Confirmation(message, 
+                    MessageType.CONFIRM.getNotifyDescriptorType())) == NotifyDescriptor.YES_OPTION;
+        }
 
         /**
          * Show an information dialog
@@ -123,7 +136,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error dialog
          *
-         * @param message message to shpw
+         * @param message message to show
          */
         public static void error(String message) {
             show(message, MessageType.ERROR);
@@ -137,6 +150,7 @@ public class MessageNotifyUtil {
         public static void warn(String message) {
             show(message, MessageType.WARNING);
         }
+        
     }
 
     /**
@@ -164,6 +178,10 @@ public class MessageNotifyUtil {
 
         /**
          * Show message with the specified type and action listener
+         * @param title message title
+         * @param message message text
+         * @param type type of the message
+         * @param actionListener action listener
          */
         public static void show(String title, String message, MessageType type, ActionListener actionListener) {
             Notification newNotification
