@@ -354,8 +354,8 @@ public class IngestManager {
         
         // subscribe to services of interest
         Set<String> servicesList = new HashSet<>();
-        servicesList.add(ServicesMonitor.ServiceName.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.ServiceName.REMOTE_KEYWORD_SEARCH.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.getName());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getName());
         this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
