@@ -650,6 +650,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
      *                     should be used to call notifyNewDataSource() after the
@@ -662,6 +664,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source failed to be added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source.
      */
@@ -672,6 +676,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newDataSource New data source added.
      * @param dataSourceId  A unique identifier for the data source. Should be
@@ -684,6 +690,8 @@ public class Case {
 
     /**
      * Notifies the UI that a new ContentTag has been added.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new ContentTag added
      */
@@ -693,6 +701,8 @@ public class Case {
 
     /**
      * Notifies the UI that a ContentTag has been deleted.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag ContentTag deleted
      */
@@ -702,6 +712,8 @@ public class Case {
 
     /**
      * Notifies the UI that a new BlackboardArtifactTag has been added.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new BlackboardArtifactTag added
      */
@@ -710,7 +722,9 @@ public class Case {
     }
 
     /**
-     * Notifies the UI that a BlackboardArtifactTag has been.
+     * Notifies the UI that a BlackboardArtifactTag has been deleted.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag BlackboardArtifactTag deleted
      */
