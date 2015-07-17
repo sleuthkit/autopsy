@@ -367,7 +367,7 @@ public class CaseConverter implements Runnable {
                     biggestPK = value;
                 }
                 Statement check = postgresqlConnection.createStatement();
-                ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_attribute_types WHERE artifact_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
+                ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_attribute_types WHERE attribute_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
                     String sql = "INSERT INTO blackboard_attribute_types (attribute_type_id, type_name, display_name) VALUES ("
                             + value + ", '"
@@ -676,7 +676,7 @@ public class CaseConverter implements Runnable {
         numberingPK.execute("ALTER SEQUENCE reports_report_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_artifacts
-        biggestPK = Long.MIN_VALUE;
+        biggestPK = Long.MIN_VALUE; // This table uses very large negative primary key values, so start at Long.MIN_VALUE
         inputStatement = sqliteConnection.createStatement();
         inputResultSet = inputStatement.executeQuery("SELECT * FROM blackboard_artifacts"); //NON-NLS
 
@@ -699,13 +699,7 @@ public class CaseConverter implements Runnable {
             }
         }
         numberingPK = postgresqlConnection.createStatement();
-        String seq;
-        if (biggestPK < 0) {
-            seq = Long.toString(biggestPK - 1);
-        } else {
-            seq = Long.toString(biggestPK + 1);
-        }
-        numberingPK.execute("ALTER SEQUENCE blackboard_artifacts_artifact_id_seq RESTART WITH " + seq); //NON-NLS
+        numberingPK.execute("ALTER SEQUENCE blackboard_artifacts_artifact_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_attributes, no primary key
         inputStatement = sqliteConnection.createStatement();
