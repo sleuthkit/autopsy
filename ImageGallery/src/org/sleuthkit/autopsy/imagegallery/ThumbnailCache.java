@@ -27,9 +27,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -42,7 +40,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -118,7 +115,10 @@ public enum ThumbnailCache {
      * @return an (possibly empty) optional containing a thumbnail
      */
     private Optional<Image> load(DrawableFile<?> file) {
-        if (file.isMimeType(GIF_MIME_SET) == AbstractFile.MimeMatchEnum.TRUE) {
+
+        if (FileTypeUtils.isGIF(file)) {
+            //directly read gif to preserve potential animation,
+            //NOTE: not saved to disk!
             return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
         }
 
@@ -156,7 +156,6 @@ public enum ThumbnailCache {
 
         return Optional.ofNullable(thumbnail); //return icon, or null if generation failed
     }
-    private static final TreeSet<String> GIF_MIME_SET = new TreeSet<>(Arrays.asList("image/gif"));
 
     /**
      * get a File to store the cached icon in.

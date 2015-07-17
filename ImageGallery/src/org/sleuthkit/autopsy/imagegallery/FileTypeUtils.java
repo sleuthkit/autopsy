@@ -26,6 +26,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,6 +77,10 @@ public enum FileTypeUtils {
      * file is needed
      */
     private static FileTypeDetector FILE_TYPE_DETECTOR;
+
+    private static final String IMAGE_GIF_MIME = "image/gif";
+
+    private static final TreeSet<String> GIF_MIME_SET = new TreeSet<>(Arrays.asList(IMAGE_GIF_MIME));
 
     /**
      * static initalizer block to initialize sets of extensions and mimetypes
@@ -154,12 +159,36 @@ public enum FileTypeUtils {
      *
      * @return true if this file is supported or false if not
      */
-    public static Boolean isDrawable(AbstractFile file) {
+    public static boolean isDrawable(AbstractFile file) {
         return hasDrawableMimeType(file).orElseGet(() -> {
             return FileTypeUtils.supportedExtensions.contains(file.getNameExtension())
                     || ImageUtils.isJpegFileHeader(file)
                     || ImageUtils.isPngFileHeader(file);
         });
+    }
+
+    public static boolean isGIF(AbstractFile file) {
+        try {
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String fileType = fileTypeDetector.getFileType(file);
+                return IMAGE_GIF_MIME.equalsIgnoreCase(fileType);
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get mime type with FileTypeDetector.", ex);
+        }
+        LOGGER.log(Level.WARNING, "Falling back on direct mime type check.");
+        switch (file.isMimeType(GIF_MIME_SET)) {
+
+            case TRUE:
+                return true;
+            case UNDEFINED:
+                LOGGER.log(Level.WARNING, "Falling back on extension check.");
+                return "gif".equals(file.getNameExtension());
+            case FALSE:
+            default:
+                return false;
+        }
     }
 
     /**
