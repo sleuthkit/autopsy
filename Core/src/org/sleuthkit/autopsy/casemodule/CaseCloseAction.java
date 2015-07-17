@@ -89,21 +89,6 @@ import org.openide.util.actions.Presenter;
                 StartupWindowProvider.getInstance().open();
             }
         }.execute();
-        
-        /*
-        Case result = Case.getCurrentCase();
-        try {
-            result.closeCase();
-        } catch (Exception ex) {
-            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex); //NON-NLS
-        }
-        
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                StartupWindowProvider.getInstance().open();
-            }
-        });*/
     }
 
     /**

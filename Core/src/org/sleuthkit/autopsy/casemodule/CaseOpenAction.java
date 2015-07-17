@@ -146,22 +146,6 @@ public final class CaseOpenAction implements ActionListener {
                         }
                     }
                 }.execute();
-                
-                /*
-                try {
-                    Case.open(path); // open the case
-                } catch (CaseActionException ex) {
-                    JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
-                                                                      ex.getMessage()),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                  JOptionPane.ERROR_MESSAGE);
-                    logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS
-
-                    StartupWindowProvider.getInstance().open();
-                }*/
             }
         }
     }

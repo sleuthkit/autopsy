@@ -157,44 +157,6 @@ import org.sleuthkit.datamodel.TskData.DbType;
                 doFailedCaseCleanup(wizardDescriptor);
             }).start();
         }
-
-        /*
-        boolean finished = wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION; // check if it finishes (it's not cancelled)
-        boolean isCancelled = wizardDescriptor.getValue() == WizardDescriptor.CANCEL_OPTION; // check if the "Cancel" button is pressed
-
-        // if the finish button is pressed (not cancelled)
-        if (finished) {
-            // now start the 'Add Image' wizard
-            //TODO fix for local
-            CaseType currentCaseType = CaseType.fromString(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, ModuleSettings.CURRENT_CASE_TYPE));
-            CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-            if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.canConnect())) {
-                AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-                addImageAction.actionPerformed(null);
-            } else {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
-                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
-                        JOptionPane.ERROR_MESSAGE);
-                isCancelled = true;
-            }
-        }
-
-        // if Cancel button is pressed
-        if (isCancelled) {
-            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-            // if there's case opened, close the case
-             if (Case.existsCurrentCase()) {
-                 // close the previous case if there's any
-                 CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-                 closeCase.actionPerformed(null);
-             }
-             if (createdDirectory != null) {
-                 logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
-                 Case.deleteCaseDirectory(new File(createdDirectory));
-             }
-         }
-         panels = null; // reset the panel*/
      }
     
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor){

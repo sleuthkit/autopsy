@@ -113,16 +113,6 @@ class RecentItems implements ActionListener {
                     }
                 }
             }.execute();
-            /*
-            try {
-                Case.open(casePath); // open the case
-            } catch (CaseActionException ex) {
-                    JOptionPane.showMessageDialog(null, 
-                            NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.msg", casePath, 
-                            ex.getMessage()), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                  JOptionPane.ERROR_MESSAGE);
-                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
-            }*/
         }
     }
 }
