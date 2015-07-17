@@ -63,6 +63,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -142,11 +143,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
-        final File tempFile = getTempFile(currentFile);
+        final File tempFile = VideoUtils.getTempVideoFile(currentFile);
 
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-            ExtractMedia em = new ExtractMedia(currentFile, tempFile);
-            em.execute();
+            new ExtractMedia(currentFile, tempFile).execute();
         }
 
         mediaPane.setFit(dims);
@@ -160,18 +160,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             }
         });
         currentFile = null;
-    }
-
-    /**
-     * a file in the Case's temp folder to write the video content to for
-     * playback.
-     *
-     * @param file
-     *
-     * @return
-     */
-    private java.io.File getTempFile(AbstractFile file) {
-        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile();
     }
 
     /**
