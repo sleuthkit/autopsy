@@ -171,11 +171,14 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        NewCaseVisualPanel2 currentComponent = getComponent();
+        settings.putProperty("caseNumber", currentComponent.getCaseNumber());
+        settings.putProperty("caseExaminer", currentComponent.getExaminer());
     }
 
     @Override
     public void validate() throws WizardValidationException {
-
+        /*
         NewCaseVisualPanel2 currentComponent = getComponent();
         final String caseNumber = currentComponent.getCaseNumber();
         final String examiner = currentComponent.getExaminer();
@@ -198,6 +201,6 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         } catch (Exception ex) {
             throw new WizardValidationException(this.getComponent(),
                     NbBundle.getMessage(this.getClass(), "NewCaseWizardPanel2.validate.errCreateCase.msg"), null);
-        }
+        }*/
     }
 }

@@ -24,10 +24,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.SwingWorker;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
@@ -74,13 +76,32 @@ public class Installer extends ModuleInstall {
                 for (OptionProcessor processor : processors) {
                     if (processor instanceof OpenFromArguments) {
                         OpenFromArguments argsProcessor = (OpenFromArguments) processor;
-                        String caseFile = argsProcessor.getDefaultArg();
+                        final String caseFile = argsProcessor.getDefaultArg();
                         if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
-                            try {
-                                Case.open(caseFile);
-                                return;
-                            } catch (Exception e) {
-                            }
+
+                            new SwingWorker<Void, Void>() {
+
+                                @Override
+                                protected Void doInBackground() throws Exception {
+                                    // Create case.
+                                    try{
+                                        Case.open(caseFile);
+                                    } catch(Exception ex){
+                                        logger.log(Level.WARNING, "Error opening case. ", ex); //NON-NLS  
+                                    }
+                                    return null;
+                                }
+
+                                @Override
+                                protected void done() {
+                                    try {
+                                        get();
+                                    } catch (ExecutionException | InterruptedException ex) {
+                                        logger.log(Level.WARNING, "Error opening case. ", ex); //NON-NLS  
+                                    }
+                                }
+                            }.execute();                            
+                            return;
                         }
                     }
                 }
@@ -99,13 +120,15 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void close() {
-        try {
-            if (Case.isCaseOpen())
-                Case.getCurrentCase().closeCase();
-        }
-        catch (CaseActionException ex) {
-            logger.log(Level.WARNING, "Error closing case. ", ex); //NON-NLS            
-        }
+        new Thread(() -> {
+            try {
+                if (Case.isCaseOpen())
+                    Case.getCurrentCase().closeCase();
+            }
+            catch (CaseActionException | IllegalStateException ex) {
+                logger.log(Level.WARNING, "Error closing case. ", ex); //NON-NLS            
+            }
+        }).start();
     }
     
     private void setupLAF() {

@@ -23,9 +23,12 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
@@ -76,7 +79,7 @@ public final class CaseOpenAction implements ActionListener {
         int retval = fc.showOpenDialog(WindowManager.getDefault().getMainWindow());
                 
         if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
+            final String path = fc.getSelectedFile().getPath();
             String dirPath = fc.getSelectedFile().getParent();
             ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
             // check if the file exists
@@ -96,6 +99,55 @@ public final class CaseOpenAction implements ActionListener {
                     // no need to show the error message to the user.
                     logger.log(Level.WARNING, "Error closing startup window.", ex); //NON-NLS
                 }
+                
+                new SwingWorker<Void, Void>() {
+
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        // Create case.
+                        try{
+                            Case.open(path);
+                        } catch (CaseActionException ex) {
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(null,
+                                                            NbBundle.getMessage(this.getClass(),
+                                                                                "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
+                                                                                ex.getMessage()),
+                                                            NbBundle.getMessage(this.getClass(),
+                                                                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                                            JOptionPane.ERROR_MESSAGE);
+                                
+
+                                StartupWindowProvider.getInstance().open();
+                            });
+                            logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
+                        }   
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            get();
+                        } catch (ExecutionException | InterruptedException ex) {
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(null,
+                                                            NbBundle.getMessage(this.getClass(),
+                                                                                "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
+                                                                                ex.getMessage()),
+                                                            NbBundle.getMessage(this.getClass(),
+                                                                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                                            JOptionPane.ERROR_MESSAGE);
+                                
+
+                                StartupWindowProvider.getInstance().open();
+                            });
+                            logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
+                        }
+                    }
+                }.execute();
+                
+                /*
                 try {
                     Case.open(path); // open the case
                 } catch (CaseActionException ex) {
@@ -109,7 +161,7 @@ public final class CaseOpenAction implements ActionListener {
                     logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS
 
                     StartupWindowProvider.getInstance().open();
-                }
+                }*/
             }
         }
     }

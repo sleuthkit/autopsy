@@ -24,7 +24,10 @@ import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JComponent;
+import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -81,7 +84,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
      * The method to perform new case creation
      */
     private void newCaseAction() {
-        WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
+        final WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
@@ -89,7 +92,73 @@ import org.sleuthkit.datamodel.TskData.DbType;
         dialog.setVisible(true);
         dialog.toFront();
 
+        if(wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION){
+            new SwingWorker<Void, Void>() {
 
+                @Override
+                protected Void doInBackground() throws Exception {
+                    // Create case.
+                    
+                    String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
+                    String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
+                    String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
+                    CaseType caseType = CaseType.values()[(int)wizardDescriptor.getProperty("caseType")]; //NON-NLS
+
+                    try {
+                        Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    } catch (Exception ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
+                                NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                JOptionPane.ERROR_MESSAGE);
+                        });
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        CaseType currentCaseType = CaseType.values()[(int)wizardDescriptor.getProperty("caseType")]; //NON-NLS
+                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+                        if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.canConnect())) {
+                            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                            addImageAction.actionPerformed(null);
+                        } else {
+                            JOptionPane.showMessageDialog(null,
+                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
+                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
+                                    JOptionPane.ERROR_MESSAGE);
+                            doFailedCaseCleanup(wizardDescriptor);
+                        }
+                    
+                    
+                    } catch (ExecutionException | InterruptedException ex) {
+                        final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
+                                NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                JOptionPane.ERROR_MESSAGE);
+                        });
+                        doFailedCaseCleanup(wizardDescriptor);
+                    }
+                }
+            }.execute();            
+            
+            
+        } else {
+            new Thread(() -> {
+                doFailedCaseCleanup(wizardDescriptor);
+            }).start();
+        }
+
+        /*
         boolean finished = wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION; // check if it finishes (it's not cancelled)
         boolean isCancelled = wizardDescriptor.getValue() == WizardDescriptor.CANCEL_OPTION; // check if the "Cancel" button is pressed
 
@@ -125,8 +194,22 @@ import org.sleuthkit.datamodel.TskData.DbType;
                  Case.deleteCaseDirectory(new File(createdDirectory));
              }
          }
-         panels = null; // reset the panel
+         panels = null; // reset the panel*/
      }
+    
+    private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor){
+        String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
+        // if there's case opened, close the case
+        if (Case.existsCurrentCase()) {
+             // close the previous case if there's any
+            CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
+            closeCase.actionPerformed(null);
+        }
+        if (createdDirectory != null) {
+            logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
+            Case.deleteCaseDirectory(new File(createdDirectory));        
+        }
+    }
 
     /**
      * Initialize panels representing individual wizard's steps and sets

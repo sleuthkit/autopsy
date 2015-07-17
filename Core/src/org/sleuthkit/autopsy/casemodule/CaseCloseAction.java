@@ -27,6 +27,7 @@ import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingWorker;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -70,6 +71,26 @@ import org.openide.util.actions.Presenter;
             return;
         }
 
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try{
+                    Case result = Case.getCurrentCase();
+                    result.closeCase();
+                } catch (CaseActionException | IllegalStateException ex){
+                    Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex); //NON-NLS
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                StartupWindowProvider.getInstance().open();
+            }
+        }.execute();
+        
+        /*
         Case result = Case.getCurrentCase();
         try {
             result.closeCase();
@@ -82,7 +103,7 @@ import org.openide.util.actions.Presenter;
             public void run() {
                 StartupWindowProvider.getInstance().open();
             }
-        });
+        });*/
     }
 
     /**

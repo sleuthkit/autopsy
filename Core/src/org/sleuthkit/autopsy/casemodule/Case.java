@@ -44,6 +44,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
@@ -523,20 +524,24 @@ public class Case {
                 String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
                 db = SleuthkitCase.openCase(dbPath);
                 if (null != db.getBackupDatabasePath()) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                    db.getBackupDatabasePath()),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                        db.getBackupDatabasePath()),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    });
                 }
             } else {
                 db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 if (null != db.getBackupDatabasePath()) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                    db.getBackupDatabasePath()),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                        db.getBackupDatabasePath()),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    });
                 }
             }
 
@@ -786,7 +791,9 @@ public class Case {
             name = newCaseName; // change the local value
             RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
-            updateMainWindowTitle(newCaseName);
+            SwingUtilities.invokeLater(() -> {
+                updateMainWindowTitle(newCaseName);
+            });
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseName.exception.msg"), e);
         }
@@ -1474,25 +1481,35 @@ public class Case {
 
                 if (toChangeTo.hasData()) {
                     // open all top components
-                    CoreComponentControl.openCoreWindows();
+                    SwingUtilities.invokeLater(() -> {
+                        CoreComponentControl.openCoreWindows();
+                    });
                 } else {
                     // close all top components
-                    CoreComponentControl.closeCoreWindows();
+                    SwingUtilities.invokeLater(() -> {
+                        CoreComponentControl.closeCoreWindows();
+                    });
                 }
             }
 
             if (IngestManager.getInstance().isRunningInteractively()) {
-                updateMainWindowTitle(currentCase.name);
+                SwingUtilities.invokeLater(() -> {
+                    updateMainWindowTitle(currentCase.name);
+                });
             } else {
-                Frame f = WindowManager.getDefault().getMainWindow();
-                f.setTitle(Case.getAppName()); // set the window name to just application name                
+                SwingUtilities.invokeLater(() -> {
+                    Frame f = WindowManager.getDefault().getMainWindow();
+                    f.setTitle(Case.getAppName()); // set the window name to just application name           
+                });
             }
 
         } else { // case is closed
             if (IngestManager.getInstance().isRunningInteractively()) {
                 // close all top components first
-                CoreComponentControl.closeCoreWindows();
-
+                SwingUtilities.invokeLater(() -> {
+                    CoreComponentControl.closeCoreWindows();
+                });
+                
                 // disable these menus
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
@@ -1503,8 +1520,10 @@ public class Case {
             //clear pending notifications
             MessageNotifyUtil.Notify.clear();
 
-            Frame f = WindowManager.getDefault().getMainWindow();
-            f.setTitle(Case.getAppName()); // set the window name to just application name
+            SwingUtilities.invokeLater(() -> {
+                Frame f = WindowManager.getDefault().getMainWindow();
+                f.setTitle(Case.getAppName()); // set the window name to just application name
+            });
 
             //try to force gc to happen
             System.gc();
