@@ -145,16 +145,18 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (PipelineModule module : this.modules) {
-            try {
-                module.shutDown();
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                String msg = ex.getMessage();
-                // Jython run-time errors don't seem to have a message, but have details in toString.
-                if (msg == null)
-                    msg = ex.toString();
-                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+        if(this.running == true){ // Don't shut down pipelines that never started
+            for (PipelineModule module : this.modules) {
+                try {
+                    module.shutDown();
+                } catch (Throwable ex) { // Catch-all exception firewall
+                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                    String msg = ex.getMessage();
+                    // Jython run-time errors don't seem to have a message, but have details in toString.
+                    if (msg == null)
+                        msg = ex.toString();
+                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                }
             }
         }
         this.running = false;
