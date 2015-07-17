@@ -321,7 +321,7 @@ public class ImageUtils {
 
         final String extension = file.getNameExtension();
 
-        java.io.File tempFile = Paths.get(Case.getCurrentCase().getCacheDirectory(), "videos", file.getId() + "." + extension).toFile();
+        java.io.File tempFile = Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + extension).toFile();
 
         try {
             if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
