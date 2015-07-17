@@ -146,7 +146,6 @@ public class CaseConverter implements Runnable {
 
             copyResults(input, newCaseFolder); // Copy items to new hostname folder structure
             dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
-            solrName = fixUpSolr(solrName); // Hook Solr back up
             File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
             fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
 
@@ -964,19 +963,6 @@ public class CaseConverter implements Runnable {
         }
 
         return sanitizedDbName;
-    }
-
-    /**
-     * Handle any Solr-specific plumbing to get it up and going on the new case.
-     *
-     * @param solrName
-     * @return The deconflicted name of the Solr core that should be stored in
-     * the .aut file
-     */
-    private String fixUpSolr(String solrName) {
-        // KDM
-        /// What does Solr need to find the new core?
-        return solrName;
     }
 
     /**
