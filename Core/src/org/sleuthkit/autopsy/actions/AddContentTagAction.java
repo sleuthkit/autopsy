@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -64,81 +65,98 @@ public class AddContentTagAction extends AddTagAction {
 
     @Override
     protected void addTag(TagName tagName, String comment) {
-        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        for (AbstractFile file : selectedFiles) {
-            try {
-                // Handle the special cases of current (".") and parent ("..") directory entries.
-                if (file.getName().equals(".")) {
-                    Content parentFile = file.getParent();                   
-                    if (parentFile instanceof AbstractFile) {
-                        file = (AbstractFile)parentFile;
-                    }
-                    else {
-                        JOptionPane.showMessageDialog(null,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentTagAction.unableToTag.msg",
-                                                                          parentFile.getName()),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentTagAction.cannotApplyTagErr"),
-                                                      JOptionPane.WARNING_MESSAGE);
-                        continue;
-                    }
-                }
-                else if (file.getName().equals("..")) {
-                    Content parentFile = file.getParent();                   
-                    if (parentFile instanceof AbstractFile) {
-                        parentFile = (AbstractFile)((AbstractFile)parentFile).getParent();
+        final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+
+        new Thread(() -> {
+            for (AbstractFile file : selectedFiles) {
+                try {
+                    // Handle the special cases of current (".") and parent ("..") directory entries.
+                    if (file.getName().equals(".")) {
+                        Content parentFile = file.getParent();                   
                         if (parentFile instanceof AbstractFile) {
                             file = (AbstractFile)parentFile;
                         }
                         else {
-                            JOptionPane.showMessageDialog(null,
-                                                          NbBundle.getMessage(this.getClass(),
-                                                                              "AddContentTagAction.unableToTag.msg",
-                                                                              parentFile.getName()),
-                                                          NbBundle.getMessage(this.getClass(),
-                                                                              "AddContentTagAction.cannotApplyTagErr"),
-                                                          JOptionPane.WARNING_MESSAGE);
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(null,
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "AddContentTagAction.unableToTag.msg",
+                                                                                  parentFile.getName()),
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "AddContentTagAction.cannotApplyTagErr"),
+                                                              JOptionPane.WARNING_MESSAGE);
+                            });
                             continue;
                         }
                     }
-                    else {
-                        JOptionPane.showMessageDialog(null,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentTagAction.unableToTag.msg",
-                                                                          parentFile.getName()),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "AddContentTagAction.cannotApplyTagErr"),
-                                                      JOptionPane.WARNING_MESSAGE);
-                        continue;
-                    }                    
-                }
-                // check if the same tag is being added for the same abstract file.
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-                List<ContentTag> contentTagList = tagsManager.getContentTagsByContent(file);
-                for (ContentTag contentTag : contentTagList) {
-                    if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName())) {
-                        JOptionPane.showMessageDialog(null,
-                                NbBundle.getMessage(this.getClass(),
-                                        "AddContentTagAction.tagExists",
-                                        file.getName(), tagName.getDisplayName()),
-                                NbBundle.getMessage(this.getClass(),
-                                        "AddContentTagAction.cannotApplyTagErr"),
-                                JOptionPane.WARNING_MESSAGE);
-                        return;
+                    else if (file.getName().equals("..")) {
+                        Content parentFile = file.getParent();                   
+                        if (parentFile instanceof AbstractFile) {
+                            parentFile = (AbstractFile)((AbstractFile)parentFile).getParent();
+                            if (parentFile instanceof AbstractFile) {
+                                file = (AbstractFile)parentFile;
+                            }
+                            else {
+                                final Content parentFileCopy = parentFile;
+                                SwingUtilities.invokeLater(() -> {
+                                    JOptionPane.showMessageDialog(null,
+                                                                  NbBundle.getMessage(this.getClass(),
+                                                                                      "AddContentTagAction.unableToTag.msg",
+                                                                                      parentFileCopy.getName()),
+                                                                  NbBundle.getMessage(this.getClass(),
+                                                                                      "AddContentTagAction.cannotApplyTagErr"),
+                                                                  JOptionPane.WARNING_MESSAGE);
+                                });
+                                continue;
+                            }
+                        }
+                        else {
+                            final Content parentFileCopy = parentFile;
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(null,
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "AddContentTagAction.unableToTag.msg",
+                                                                                  parentFileCopy.getName()),
+                                                              NbBundle.getMessage(this.getClass(),
+                                                                                  "AddContentTagAction.cannotApplyTagErr"),
+                                                              JOptionPane.WARNING_MESSAGE);
+                            });
+                            continue;
+                        }                    
                     }
+                    // check if the same tag is being added for the same abstract file.
+                    TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                    List<ContentTag> contentTagList = tagsManager.getContentTagsByContent(file);
+                    for (ContentTag contentTag : contentTagList) {
+                        if (contentTag.getName().getDisplayName().equals(tagName.getDisplayName())) {
+                            AbstractFile fileCopy = file;
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(null,
+                                        NbBundle.getMessage(this.getClass(),
+                                                "AddContentTagAction.tagExists",
+                                                fileCopy.getName(), tagName.getDisplayName()),
+                                        NbBundle.getMessage(this.getClass(),
+                                                "AddContentTagAction.cannotApplyTagErr"),
+                                        JOptionPane.WARNING_MESSAGE);
+                            });
+                            return;
+                        }
+                    }
+                    tagsManager.addContentTag(file, tagName, comment);
                 }
-                tagsManager.addContentTag(file, tagName, comment);
-            }
-            catch (TskCoreException ex) {                        
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "AddContentTagAction.unableToTag.msg2",
-                                                                  file.getName()),
-                                              NbBundle.getMessage(this.getClass(), "AddContentTagAction.taggingErr"),
-                                              JOptionPane.ERROR_MESSAGE);
-            }                    
-        }                             
-    }
+                catch (TskCoreException ex) {                        
+                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
+                    AbstractFile fileCopy = file;
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                                      NbBundle.getMessage(this.getClass(),
+                                                                          "AddContentTagAction.unableToTag.msg2",
+                                                                          fileCopy.getName()),
+                                                      NbBundle.getMessage(this.getClass(), "AddContentTagAction.taggingErr"),
+                                                      JOptionPane.ERROR_MESSAGE);
+                    });
+                }                    
+            } 
+        }).start();
+    }   
 }
