@@ -65,7 +65,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
-    private final RootNodeListener dummyNodeListener = new RootNodeListener();
+    private final RootNodeListener rootNodeListener = new RootNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private boolean listeningToTabbedPane = false;
@@ -369,7 +369,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public void setNode(Node selectedNode) {
         if (this.rootNode != null) {
-            this.rootNode.removeNodeListener(dummyNodeListener);
+            this.rootNode.removeNodeListener(rootNodeListener);
         }
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
@@ -380,8 +380,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
-            dummyNodeListener.reset();
-            this.rootNode.addNodeListener(dummyNodeListener);
+            rootNodeListener.reset();
+            this.rootNode.addNodeListener(rootNodeListener);
         }
         
         resetTabs(selectedNode);
