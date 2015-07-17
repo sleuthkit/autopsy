@@ -403,8 +403,7 @@ public class ImageUtils {
         com.google.common.io.Files.createParentDirs(tempFile);
 
         ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
-        progress.start();
-        progress.switchToDeterminate(100);
+        progress.start(100);
         try {
             ContentUtils.writeToFile(file, tempFile, progress, null, true);
         } catch (IOException ex) {
