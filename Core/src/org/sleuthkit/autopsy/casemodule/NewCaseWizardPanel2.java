@@ -178,29 +178,5 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
     @Override
     public void validate() throws WizardValidationException {
-        /*
-        NewCaseVisualPanel2 currentComponent = getComponent();
-        final String caseNumber = currentComponent.getCaseNumber();
-        final String examiner = currentComponent.getExaminer();
-        try {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                            "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
-                            NbBundle.getMessage(this.getClass(),
-                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
-        } catch (Exception ex) {
-            throw new WizardValidationException(this.getComponent(),
-                    NbBundle.getMessage(this.getClass(), "NewCaseWizardPanel2.validate.errCreateCase.msg"), null);
-        }*/
     }
 }
