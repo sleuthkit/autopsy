@@ -51,7 +51,7 @@ public class ServicesMonitor {
 
     private static final Set<Service> servicesList = Stream.of(ServicesMonitor.Service.values())
             .collect(Collectors.toSet());
-    
+
     /**
      * The service monitor maintains a mapping of each service to it's last
      * status update.
@@ -59,11 +59,11 @@ public class ServicesMonitor {
     private final ConcurrentHashMap<String, String> statusByService;
 
     /**
-     * Call constructor on start-up so that the first check of services is 
-     * done as soon as possible.
+     * Call constructor on start-up so that the first check of services is done
+     * as soon as possible.
      */
     private static ServicesMonitor instance = new ServicesMonitor();
-    
+
     /**
      * List of services that are being monitored. The service names should be
      * representative of the service functionality and readable as they get
@@ -72,31 +72,32 @@ public class ServicesMonitor {
     public enum Service {
 
         /**
-         * Property change event fired when remote case database status changes.
-         * New value is set to updated ServiceStatus, old value is null.
+         * Property change event fired when remote case database service status
+         * changes. New value is set to updated ServiceStatus, old value is
+         * null.
          */
-        REMOTE_CASE_DATABASE("Remote Case Database"),
+        REMOTE_CASE_DATABASE("multi-user case database service"),
         /**
          * Property change event fired when remote keyword search service status
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_KEYWORD_SEARCH("Remote Keyword Search"),
+        REMOTE_KEYWORD_SEARCH("multi-user keyword search service"),
         /**
          * Property change event fired when messaging service status changes.
          * New value is set to updated ServiceStatus, old value is null.
          */
-        MESSAGING("Messaging Service");
-        
+        MESSAGING("messaging service");
+
         private final String serviceName;
 
-        private Service(String displayName) {
-            this.serviceName = displayName;
+        private Service(String name) {
+            this.serviceName = name;
         }
 
         public String getName() {
             return serviceName;
-        }        
+        }
     };
 
     /**
@@ -125,7 +126,7 @@ public class ServicesMonitor {
 
         this.eventPublisher = new AutopsyEventPublisher();
         this.statusByService = new ConcurrentHashMap<>();
-        
+
         // First check is triggered immediately on current thread.
         checkAllServices();
 
@@ -139,15 +140,16 @@ public class ServicesMonitor {
 
     /**
      * Updates service status and publishes the service status update if it is
-     * different from previous status. Event is published locally. Logs status changes.
+     * different from previous status. Event is published locally. Logs status
+     * changes.
      *
      * @param service Name of the service.
      * @param status Updated status for the service.
      * @param details Details of the event.
      */
     private void setServiceStatus(String service, String status, String details) {
-        
-        // if the status update is for an existing service who's status hasn't changed - do nothing.
+
+        // if the status update is for an existing service who's status hasn't changed - do nothing.       
         if (status.equals(statusByService.get(service))) {
             return;
         }
@@ -161,6 +163,10 @@ public class ServicesMonitor {
             logger.log(Level.SEVERE, "Failed to connect to {0}", service); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", service));
+        } else {
+            logger.log(Level.INFO, "Connection status for {0} changed to {1}", new Object[]{service, status}); //NON-NLS
+            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{service, status}));
         }
 
         // update and publish new status
@@ -173,7 +179,9 @@ public class ServicesMonitor {
      *
      * @param service Name of the service.
      * @return ServiceStatus Status for the service.
-     * @throws org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown if service name is null or service doesn't exist.
+     * @throws
+     * org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown
+     * if service name is null or service doesn't exist.
      */
     public String getServiceStatus(String service) throws UnknownServiceException {
 
@@ -290,7 +298,7 @@ public class ServicesMonitor {
             eventPublisher.removeSubscriber(service.getName(), subscriber);
         }
     }
-    
+
     /**
      * Verifies connectivity to all services.
      */
