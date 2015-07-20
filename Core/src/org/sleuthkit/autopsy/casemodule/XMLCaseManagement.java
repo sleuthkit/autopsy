@@ -45,7 +45,7 @@ import org.xml.sax.SAXException;
  *
  * @author jantonius
  */
- class XMLCaseManagement implements CaseConfigFileInterface {
+public class XMLCaseManagement implements CaseConfigFileInterface {
 
     final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
     final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
@@ -98,7 +98,7 @@ import org.xml.sax.SAXException;
     /**
      * The constructor
      */
-    XMLCaseManagement() {
+    public XMLCaseManagement() {
         autopsySavedVersion = System.getProperty("netbeans.buildnumber");
     }
 
@@ -152,6 +152,22 @@ import org.xml.sax.SAXException;
         writeFile();
 
     }
+
+    /**
+     * Sets the created date on the XML configuration file. This method is for 
+     * preserving the created date when converting a case from single-user to
+     * multi-user.
+     *
+     * @param createdDate the date the case was originally created
+     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
+     */
+    public void setCreatedDate(String createdDate) throws CaseActionException {
+        String newDate = dateFormat.format(new Date());
+        Element rootEl = getRootElement();
+        rootEl.getElementsByTagName(CREATED_DATE_NAME).item(0).setTextContent(createdDate);
+        rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+        writeFile();
+    }    
 
     /**
      * Sets the examiner on the XML configuration file
@@ -369,7 +385,7 @@ import org.xml.sax.SAXException;
      *
      * @return createdDate the creation date of this case
      */
-    protected String getCreatedDate() {
+    public String getCreatedDate() {
         if (doc != null) {
             Element crDateElement = (Element) getRootElement().getElementsByTagName(CREATED_DATE_NAME).item(0);
             return crDateElement.getTextContent();
@@ -533,7 +549,7 @@ import org.xml.sax.SAXException;
      * a Postgre db name.
      * @param textIndexName The name of the index where extracted text is stored.
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {
+    public void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
