@@ -79,28 +79,14 @@ public class Installer extends ModuleInstall {
                         final String caseFile = argsProcessor.getDefaultArg();
                         if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
 
-                            new SwingWorker<Void, Void>() {
-
-                                @Override
-                                protected Void doInBackground() throws Exception {
-                                    // Create case.
-                                    try{
-                                        Case.open(caseFile);
-                                    } catch(Exception ex){
-                                        logger.log(Level.WARNING, "Error opening case. ", ex); //NON-NLS  
-                                    }
-                                    return null;
+                            new Thread(() -> {
+                                // Create case.
+                                try{
+                                    Case.open(caseFile);
+                                } catch(Exception ex){
+                                    logger.log(Level.WARNING, "Error opening case. ", ex); //NON-NLS  
                                 }
-
-                                @Override
-                                protected void done() {
-                                    try {
-                                        get();
-                                    } catch (ExecutionException | InterruptedException ex) {
-                                        logger.log(Level.WARNING, "Error opening case. ", ex); //NON-NLS  
-                                    }
-                                }
-                            }.execute();                            
+                            }).start();                            
                             return;
                         }
                     }

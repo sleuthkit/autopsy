@@ -79,40 +79,20 @@ class RecentItems implements ActionListener {
             }
         }
         else {
-            new SwingWorker<Void, Void>() {
-
-                @Override
-                protected Void doInBackground() throws Exception {
-                    // Create case.
-                    try{
-                        Case.open(casePath);
-                    } catch (CaseActionException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null, 
-                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.msg", casePath, 
-                                ex.getMessage()), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                      JOptionPane.ERROR_MESSAGE);
-                        });
-                        Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
-                    }    
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (ExecutionException | InterruptedException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null, 
-                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.msg", casePath, 
-                                ex.getMessage()), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                      JOptionPane.ERROR_MESSAGE);
-                        });
-                        Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error opening recent case. ", ex); //NON-NLS  
-                    }
-                }
-            }.execute();
+            new Thread(() -> {
+                // Create case.
+                try{
+                    Case.open(casePath);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null, 
+                            NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.msg", casePath, 
+                            ex.getMessage()), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                                  JOptionPane.ERROR_MESSAGE);
+                    });
+                    Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
+                }    
+            }).start();
         }
     }
 }

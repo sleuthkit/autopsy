@@ -217,46 +217,23 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 }
 
             } else {
-                new SwingWorker<Void, Void>() {
-
-                    @Override
-                    protected Void doInBackground() throws Exception {
-                        // Create case.
-                        try{
-                            Case.open(casePath);
-                        } catch (CaseActionException ex) {
-                            SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
-                                    NbBundle.getMessage(this.getClass(),
-                                    "CaseOpenAction.msgDlg.cantOpenCase.msg", caseName,
-                                    ex.getMessage()),
-                                    NbBundle.getMessage(this.getClass(),
-                                    "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                    JOptionPane.ERROR_MESSAGE);
-                            });
-                            logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
-                        }    
-                        return null;
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            get();
-                        } catch (ExecutionException | InterruptedException ex) {
-                            SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
-                                    NbBundle.getMessage(this.getClass(),
-                                    "CaseOpenAction.msgDlg.cantOpenCase.msg", caseName,
-                                    ex.getMessage()),
-                                    NbBundle.getMessage(this.getClass(),
-                                    "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                    JOptionPane.ERROR_MESSAGE);
-                            });
-                            logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS  
-                        }
-                    }
-                }.execute();
+                new Thread(() -> {
+                    // Create case.
+                    try{
+                        Case.open(casePath);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.msg", caseName,
+                                ex.getMessage()),
+                                NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                JOptionPane.ERROR_MESSAGE);
+                        });
+                        logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+                    }    
+                }).start();
             }
         }
     }

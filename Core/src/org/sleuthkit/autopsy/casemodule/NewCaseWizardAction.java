@@ -105,17 +105,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int)wizardDescriptor.getProperty("caseType")]; //NON-NLS
 
-                    try {
-                        Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
-                    } catch (Exception ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
-                                NbBundle.getMessage(this.getClass(),
-                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                JOptionPane.ERROR_MESSAGE);
-                        });
-                    }
+                    Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
                 }
 
@@ -137,7 +127,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
                         }
                     
                     
-                    } catch (ExecutionException | InterruptedException ex) {
+                    } catch (Exception ex) {
                         final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
@@ -161,14 +151,9 @@ import org.sleuthkit.datamodel.TskData.DbType;
     
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor){
         String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-        // if there's case opened, close the case
-        if (Case.existsCurrentCase()) {
-             // close the previous case if there's any
-            CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-            closeCase.actionPerformed(null);
-        }
+
         if (createdDirectory != null) {
-            logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
+            logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: " + createdDirectory); //NON-NLS
             Case.deleteCaseDirectory(new File(createdDirectory));        
         }
     }

@@ -100,52 +100,26 @@ public final class CaseOpenAction implements ActionListener {
                     logger.log(Level.WARNING, "Error closing startup window.", ex); //NON-NLS
                 }
                 
-                new SwingWorker<Void, Void>() {
+                new Thread(() -> {
+                    // Create case.
+                    try{
+                        Case.open(path);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null,
+                                                        NbBundle.getMessage(this.getClass(),
+                                                                            "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
+                                                                            ex.getMessage()),
+                                                        NbBundle.getMessage(this.getClass(),
+                                                                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                                        JOptionPane.ERROR_MESSAGE);
 
-                    @Override
-                    protected Void doInBackground() throws Exception {
-                        // Create case.
-                        try{
-                            Case.open(path);
-                        } catch (CaseActionException ex) {
-                            SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
-                                                            NbBundle.getMessage(this.getClass(),
-                                                                                "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
-                                                                                ex.getMessage()),
-                                                            NbBundle.getMessage(this.getClass(),
-                                                                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                            JOptionPane.ERROR_MESSAGE);
-                                
 
-                                StartupWindowProvider.getInstance().open();
-                            });
-                            logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
-                        }   
-                        return null;
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            get();
-                        } catch (ExecutionException | InterruptedException ex) {
-                            SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
-                                                            NbBundle.getMessage(this.getClass(),
-                                                                                "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
-                                                                                ex.getMessage()),
-                                                            NbBundle.getMessage(this.getClass(),
-                                                                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                            JOptionPane.ERROR_MESSAGE);
-                                
-
-                                StartupWindowProvider.getInstance().open();
-                            });
-                            logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
-                        }
-                    }
-                }.execute();
+                            StartupWindowProvider.getInstance().open();
+                        });
+                        logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
+                    }   
+                }).start();
             }
         }
     }

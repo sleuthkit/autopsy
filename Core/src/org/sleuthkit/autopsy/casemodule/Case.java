@@ -329,7 +329,9 @@ public class Case {
             currentCase = newCase;
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
             doCaseChange(currentCase);
-            RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+            SwingUtilities.invokeLater(() -> {
+                RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+            });
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
                     /**
@@ -793,6 +795,8 @@ public class Case {
 
     /**
      * Updates the case name.
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldCaseName the old case name that wants to be updated
      * @param oldPath     the old path that wants to be updated
@@ -803,10 +807,14 @@ public class Case {
         try {
             xmlcm.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
-            RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
             SwingUtilities.invokeLater(() -> {
-                updateMainWindowTitle(newCaseName);
+                try{
+                    RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
+                    updateMainWindowTitle(newCaseName);
+                } catch (Exception e) {
+                    Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", e); //NON-NLS
+                }
             });
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseName.exception.msg"), e);
@@ -815,6 +823,8 @@ public class Case {
 
     /**
      * Updates the case examiner
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldExaminer the old examiner
      * @param newExaminer the new examiner
@@ -831,6 +841,8 @@ public class Case {
 
     /**
      * Updates the case number
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldCaseNumber the old case number
      * @param newCaseNumber the new case number
@@ -1488,10 +1500,12 @@ public class Case {
 
             if (IngestManager.getInstance().isRunningInteractively()) {
                 // enable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                SwingUtilities.invokeLater(() -> {
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                });
 
                 if (toChangeTo.hasData()) {
                     // open all top components
@@ -1519,20 +1533,23 @@ public class Case {
 
         } else { // case is closed
             if (IngestManager.getInstance().isRunningInteractively()) {
-                // close all top components first
-                SwingUtilities.invokeLater(() -> {
-                    CoreComponentControl.closeCoreWindows();
-                });
                 
-                // disable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+                SwingUtilities.invokeLater(() -> {
+                    // close all top components first
+                    CoreComponentControl.closeCoreWindows();
+                
+                    // disable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+                });
             }
 
             //clear pending notifications
-            MessageNotifyUtil.Notify.clear();
+            SwingUtilities.invokeLater(() -> {
+                MessageNotifyUtil.Notify.clear();
+            });
 
             SwingUtilities.invokeLater(() -> {
                 Frame f = WindowManager.getDefault().getMainWindow();
