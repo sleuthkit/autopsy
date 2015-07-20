@@ -104,7 +104,7 @@ public class Toolbar extends ToolBar {
 
         ImageGalleryController.getDefault().getGroupManager().regroup(groupByBox.getSelectionModel().getSelectedItem(), sortByBox.getSelectionModel().getSelectedItem(), getSortOrder(), false);
     };
-    private ImageGalleryController controller;
+    private final ImageGalleryController controller;
 
     synchronized public SortOrder getSortOrder() {
         return orderProperty.get();

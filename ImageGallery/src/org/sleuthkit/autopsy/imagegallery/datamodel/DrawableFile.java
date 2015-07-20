@@ -23,12 +23,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -144,12 +143,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return new ArrayList<>();
     }
 
-    public ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> getAttributesList() {
-        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributeList = FXCollections.observableArrayList();
-        for (DrawableAttribute<?> attr : DrawableAttribute.getValues()) {
-            attributeList.add(new Pair<>(attr, attr.getValue(this)));
-        }
-        return attributeList;
+    public List<Pair<DrawableAttribute<?>, ?>> getAttributesList() {
+        return DrawableAttribute.getValues().stream().map(new Function<DrawableAttribute<?>, Pair<DrawableAttribute<?>, ?>>() {
+            @Override
+            public Pair<DrawableAttribute<?>, ?> apply(DrawableAttribute<?> t) {
+                return new Pair<>(t, t.getValue(DrawableFile.this));
+            }
+
+        }).collect(Collectors.toList());
     }
 
     public String getModel() {
