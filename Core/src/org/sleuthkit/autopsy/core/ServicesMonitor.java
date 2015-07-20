@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import org.sleuthkit.autopsy.core.events.ServiceEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
 import java.util.Set;

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.core;
+package org.sleuthkit.autopsy.core.events;
 
 import java.io.Serializable;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
