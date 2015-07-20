@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,37 +61,25 @@ import org.sleuthkit.datamodel.TskCoreException;
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return create(abstractFileById, analyzed, ImageGalleryModule.isVideoFile(abstractFileById));
     }
 
     /**
      * Skip the database query if we have already determined the file type.
      */
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
-        if (isVideo) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return isVideo
+                ? new VideoFile<>(abstractFileById, analyzed)
+                : new ImageFile<>(abstractFileById, analyzed);
     }
 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
-
-        AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
     private String drawablePath;
 
-    protected T file;
+    private final T file;
 
     private final SimpleBooleanProperty analyzed;
 
@@ -125,7 +113,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     @Override
     public <T> T accept(SleuthkitItemVisitor<T> v) {
-
         return file.accept(v);
     }
 
@@ -144,8 +131,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return new ArrayList<>();
     }
 
-    public ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> getAttributesList() {
-        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributeList = FXCollections.observableArrayList();
+    public ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> getAttributesList() {
+        final ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> attributeList = FXCollections.observableArrayList();
         for (DrawableAttribute<?> attr : DrawableAttribute.getValues()) {
             attributeList.add(new Pair<>(attr, attr.getValue(this)));
         }
@@ -178,47 +165,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
         }
         return Collections.emptySet();
-    }
-
-    @Deprecated
-    protected final List<? extends Object> getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
-        ArrayList<Object> vals = new ArrayList<>();
-        try {
-            //why doesn't file.getArtifacts() work?
-            //TODO: this seams like overkill, use a more targeted query
-            ArrayList<BlackboardArtifact> artifacts = getAllArtifacts();
-
-            for (BlackboardArtifact artf : artifacts) {
-                if (artf.getArtifactTypeID() == artType.getTypeID()) {
-                    for (BlackboardAttribute attr : artf.getAttributes()) {
-                        if (attr.getAttributeTypeID() == attrType.getTypeID()) {
-
-                            switch (attr.getValueType()) {
-                                case BYTE:
-                                    vals.add(attr.getValueBytes());
-                                    break;
-                                case DOUBLE:
-                                    vals.add(attr.getValueDouble());
-                                    break;
-                                case INTEGER:
-                                    vals.add(attr.getValueInt());
-                                    break;
-                                case LONG:
-                                    vals.add(attr.getValueLong());
-                                    break;
-                                case STRING:
-                                    vals.add(attr.getValueString());
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (TskCoreException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()});
-        }
-
-        return vals;
     }
 
     protected Object getValueOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
