@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -1209,12 +1209,8 @@ public final class DrawableDB {
      *         returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
-
-        if (Objects.isNull(f)) {
-            return false;
-        } else {
-            return videoFileMap.computeIfAbsent(f.getId(), (id) -> ImageGalleryModule.isVideoFile(f));
-        }
+        return isNull(f) ? false
+                : videoFileMap.computeIfAbsent(f.getId(), id -> ImageGalleryModule.isVideoFile(f));
     }
 
     /**

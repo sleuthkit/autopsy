@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -37,13 +38,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
-import javafx.scene.input.KeyCharacterCombination;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -68,6 +69,8 @@ public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
+    private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
+
     @FXML
     private ImageView imageView;
 
@@ -82,6 +85,8 @@ public class MetaDataPane extends DrawableUIBase {
 
     @FXML
     private BorderPane imageBorder;
+    private final MenuItem copyMenuItem = new MenuItem("Copy");
+    private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
@@ -102,9 +107,22 @@ public class MetaDataPane extends DrawableUIBase {
             setFile(newFileID);
         });
 
+        copyMenuItem.setAccelerator(COPY_KEY_COMBINATION);
+        copyMenuItem.setOnAction(actionEvent -> {
+            copyValueToClipBoard();
+        });
+
+        tableView.setContextMenu(contextMenu);
+        tableView.setOnKeyPressed((KeyEvent event) -> {
+            if (COPY_KEY_COMBINATION.match(event)) {
+                contextMenu.hide();
+                copyMenuItem.fire();
+                event.consume();
+            }
+        });
+
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setPlaceholder(new Label("Select a file to show its details here."));
-        tableView.setRowFactory(table -> new DrawableTableRow());
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
@@ -224,31 +242,11 @@ public class MetaDataPane extends DrawableUIBase {
         });
     }
 
-    private static class DrawableTableRow extends TableRow<Pair<DrawableAttribute<?>, Collection<?>>> {
-
-        private static final KeyCharacterCombination COPY_KEY_COMBINATION = new KeyCharacterCombination("c", KeyCombination.SHORTCUT_DOWN);
-
-        public DrawableTableRow() {
-            setOnKeyTyped((KeyEvent event) -> {
-                if (COPY_KEY_COMBINATION.match(event)) {
-                    copyValueToClipBoard();
-                    event.consume();
-                }
-            });
-
-            final MenuItem menuItem = new MenuItem("Copy");
-            menuItem.setOnAction(actionEvent -> {
-                copyValueToClipBoard();
-            });
-            menuItem.setAccelerator(COPY_KEY_COMBINATION);
-
-            setContextMenu(new ContextMenu(menuItem));
-        }
-
-        private void copyValueToClipBoard() {
-            Clipboard.getSystemClipboard().setContent(Collections.singletonMap(
-                    DataFormat.PLAIN_TEXT,
-                    getValueDisplayString(getItem())));
+    private void copyValueToClipBoard() {
+        Pair<DrawableAttribute<?>, Collection<?>> selectedItem = tableView.getSelectionModel().getSelectedItem();
+        if (nonNull(selectedItem)) {
+            Clipboard.getSystemClipboard().setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT,
+                    getValueDisplayString(selectedItem)));
         }
     }
 }
