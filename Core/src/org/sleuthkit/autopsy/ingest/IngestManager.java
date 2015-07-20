@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -150,6 +152,12 @@ public class IngestManager {
      * is the default.
      */
     private volatile boolean runInteractively;
+    
+    /**
+     * Ingest manager subscribes to service outage notifications. If key services are down, 
+     * ingest manager cancels all ingest jobs in progress.
+     */
+    private final ServicesMonitor servicesMonitor;
 
     /**
      * Ingest job events.
@@ -264,6 +272,9 @@ public class IngestManager {
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
+        
+        this.servicesMonitor = ServicesMonitor.getInstance();
+        subscribeToServiceMonitorEvents();
 
         this.startDataSourceIngestThread();
 
@@ -313,6 +324,45 @@ public class IngestManager {
             }
         });
     }
+    
+    /**
+     * Subscribe ingest manager to service monitor events. Cancels ingest
+     * if one of services it's subscribed to goes down.
+     */
+    private void subscribeToServiceMonitorEvents() {
+        PropertyChangeListener propChangeListener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                    // one of the services we subscribed to went down                    
+                    String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
+                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
+
+                    // display notification if running interactively
+                    if (isIngestRunning() && isRunningInteractively()) {
+                        EventQueue.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JOptionPane.showMessageDialog(null,
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                    }
+
+                    // cancel ingest if running
+                    cancelAllIngestJobs();
+                }
+            }
+        };
+
+        // subscribe to services of interest
+        Set<String> servicesList = new HashSet<>();
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
+    }
 
     synchronized void handleCaseOpened() {
         this.jobCreationIsEnabled = true;
@@ -361,6 +411,7 @@ public class IngestManager {
      * The ingest manager can be directed to forgo use of message boxes, the
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
+     * @return true if running interactively, false otherwise.
      */
     public boolean isRunningInteractively() {
         return this.runInteractively;
