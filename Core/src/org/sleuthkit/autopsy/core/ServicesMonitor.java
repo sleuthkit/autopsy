@@ -88,14 +88,14 @@ public class ServicesMonitor {
          */
         MESSAGING("Messaging Service");
         
-        private final String displayName;
+        private final String serviceName;
 
         private Service(String displayName) {
-            this.displayName = displayName;
+            this.serviceName = displayName;
         }
 
         public String getName() {
-            return displayName;
+            return serviceName;
         }        
     };
 
