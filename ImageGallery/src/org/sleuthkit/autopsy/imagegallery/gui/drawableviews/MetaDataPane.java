@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +30,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -46,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.TagEvent;
+import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -77,16 +76,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
-
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-
-        try {
-            fxmlLoader.load();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+        FXMLConstructor.construct(this, "MetaDataPane.fxml");
     }
 
     @FXML
@@ -167,7 +157,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void updateUI() {
         getFile().ifPresent(file -> {
             final Image icon = file.getThumbnail();
-            final List<Pair<DrawableAttribute<?>, ?>> attributesList = file.getAttributesList();
+            final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
 
             Platform.runLater(() -> {
                 imageView.setImage(icon);
