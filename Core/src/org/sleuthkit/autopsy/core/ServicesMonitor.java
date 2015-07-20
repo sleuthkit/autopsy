@@ -169,19 +169,27 @@ public class ServicesMonitor {
             return;
         }
 
-        // new service or status has changed
+        // new service or status has changed - identify service's display name
+        String serviceDisplayName;
+        try {
+            serviceDisplayName = ServicesMonitor.Service.valueOf(service).getDisplayName();
+        } catch (IllegalArgumentException ignore) {
+            // custom service that is not listed in ServicesMonitor.Service enum. Use service name as display name.
+            serviceDisplayName = service;
+        }
+        
         if (status.equals(ServiceStatus.UP.toString())) {
-            logger.log(Level.INFO, "Connection to {0} restored", service); //NON-NLS
+            logger.log(Level.INFO, "Connection to {0} restored", serviceDisplayName); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", service));
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
         } else if (status.equals(ServiceStatus.DOWN.toString())) {
-            logger.log(Level.SEVERE, "Failed to connect to {0}", service); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to connect to {0}", serviceDisplayName); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", service));
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceDisplayName));
         } else {
-            logger.log(Level.INFO, "Status for {0} is {1}", new Object[]{service, status}); //NON-NLS
+            logger.log(Level.INFO, "Status for {0} is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{service, status}));
+                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{serviceDisplayName, status}));
         }
 
         // update and publish new status
@@ -336,7 +344,7 @@ public class ServicesMonitor {
     /**
      * Verifies connectivity to all services.
      */
-    private void checkAllServices() {
+    private void checkAllServices() {      
         for (String service : servicesList) {
             checkServiceStatus(service);
         }
