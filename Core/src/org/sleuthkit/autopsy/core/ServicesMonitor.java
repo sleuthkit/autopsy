@@ -50,7 +50,8 @@ public class ServicesMonitor {
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
     private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
 
-    private static final Set<Service> servicesList = Stream.of(ServicesMonitor.Service.values())
+    private static final Set<String> servicesList = Stream.of(ServicesMonitor.Service.values())
+            .map(Service::toString)
             .collect(Collectors.toSet());
 
     /**
@@ -90,14 +91,14 @@ public class ServicesMonitor {
          */
         MESSAGING("messaging service");
 
-        private final String serviceName;
+        private final String displayName;
 
         private Service(String name) {
-            this.serviceName = name;
+            this.displayName = name;
         }
 
-        public String getName() {
-            return serviceName;
+        public String getDisplayName() {
+            return displayName;
         }
     };
 
@@ -147,11 +148,24 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the service.
      * @param details Details of the event.
+     * @throws
+     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException
+     * Thrown if either of input parameters is null.
      */
-    private void setServiceStatus(String service, String status, String details) {
+    public void setServiceStatus(String service, String status, String details) throws ServicesMonitorException {
+
+        if (service == null) {
+            logger.log(Level.SEVERE, "Call to setServiceStatus() with null service name"); //NON-NLS
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
+        }
+
+        if (status == null || details == null) {
+            logger.log(Level.SEVERE, "Call to setServiceStatus() with null status or details"); //NON-NLS
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullStatusOrDetails.excepton.txt"));
+        }
 
         // if the status update is for an existing service who's status hasn't changed - do nothing.       
-        if (status.equals(statusByService.get(service))) {
+        if (statusByService.containsKey(service) && status.equals(statusByService.get(service))) {
             return;
         }
 
@@ -165,7 +179,7 @@ public class ServicesMonitor {
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", service));
         } else {
-            logger.log(Level.INFO, "Connection status for {0} changed to {1}", new Object[]{service, status}); //NON-NLS
+            logger.log(Level.INFO, "Status for {0} is {1}", new Object[]{service, status}); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{service, status}));
         }
@@ -181,19 +195,19 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @return ServiceStatus Status for the service.
      * @throws
-     * org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown
-     * if service name is null or service doesn't exist.
+     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException
+     * Thrown if service name is null or service doesn't exist.
      */
-    public String getServiceStatus(String service) throws UnknownServiceException {
+    public String getServiceStatus(String service) throws ServicesMonitorException {
 
         if (service == null) {
-            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
         }
 
         String status = statusByService.get(service);
         if (status == null) {
             // no such service
-            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
         }
         return status;
     }
@@ -204,36 +218,59 @@ public class ServicesMonitor {
      * @param service Name of the service.
      */
     private void checkServiceStatus(String service) {
-        if (service.equals(Service.REMOTE_CASE_DATABASE.getName())) {
+        if (service.equals(Service.REMOTE_CASE_DATABASE.toString())) {
+            checkDatabaseConnectionStatus();
+        } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.toString())) {
+            checkKeywordSearchServerConnectionStatus();
+        } else if (service.equals(Service.MESSAGING.toString())) {
+            checkMessagingServerConnectionStatus();
+        }
+    }
+
+    /**
+     * Performs case database service availability status check.
+     */
+    private void checkDatabaseConnectionStatus() {
+        try {
             if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
-                setServiceStatus(Service.REMOTE_CASE_DATABASE.getName(), ServiceStatus.UP.toString(), "");
-                return;
+                setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
             } else {
-                setServiceStatus(Service.REMOTE_CASE_DATABASE.getName(), ServiceStatus.DOWN.toString(), "");
-                return;
+                setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
             }
-        } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.getName())) {
+        } catch (ServicesMonitorException ex) {
+            logger.log(Level.SEVERE, "Exception  while checking database connection status", ex); //NON-NLS
+        }
+    }
+
+    /**
+     * Performs keyword search service availability status check.
+     */
+    private void checkKeywordSearchServerConnectionStatus() {
+        try {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
             if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.UP.toString(), "");
-                return;
+                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
             } else {
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.DOWN.toString(), "");
-                return;
+                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");
             }
-        } else if (service.equals(Service.MESSAGING.getName())) {
-            if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
-                setServiceStatus(Service.MESSAGING.getName(), ServiceStatus.UP.toString(), "");
-                return;
-            } else {
-                setServiceStatus(Service.MESSAGING.getName(), ServiceStatus.DOWN.toString(), "");
-                return;
-            }
+        } catch (ServicesMonitorException ex) {
+            logger.log(Level.SEVERE, "Exception  while checking keyword search server connection status", ex); //NON-NLS
         }
+    }
 
-        // no method to check any other services
-        logger.log(Level.SEVERE, "No method exists to check status of service {0}", service); //NON-NLS 
-        setServiceStatus(service, ServiceStatus.DOWN.toString(), "");
+    /**
+     * Performs messaging service availability status check.
+     */
+    private void checkMessagingServerConnectionStatus() {
+        try {
+            if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
+                setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
+            } else {
+                setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
+            }
+        } catch (ServicesMonitorException ex) {
+            logger.log(Level.SEVERE, "Exception  while checking messaging server connection status", ex); //NON-NLS
+        }
     }
 
     /**
@@ -243,9 +280,7 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(PropertyChangeListener subscriber) {
-        for (Service service : servicesList) {
-            eventPublisher.addSubscriber(service.getName(), subscriber);
-        }
+        eventPublisher.addSubscriber(servicesList, subscriber);
     }
 
     /**
@@ -295,17 +330,15 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(PropertyChangeListener subscriber) {
-        for (Service service : servicesList) {
-            eventPublisher.removeSubscriber(service.getName(), subscriber);
-        }
+        eventPublisher.removeSubscriber(servicesList, subscriber);
     }
 
     /**
      * Verifies connectivity to all services.
      */
     private void checkAllServices() {
-        for (Service service : servicesList) {
-            checkServiceStatus(service.getName());
+        for (String service : servicesList) {
+            checkServiceStatus(service);
         }
     }
 
@@ -329,13 +362,13 @@ public class ServicesMonitor {
     /**
      * Exception thrown when service status query results in an error.
      */
-    public class UnknownServiceException extends Exception {
+    public class ServicesMonitorException extends Exception {
 
-        public UnknownServiceException(String message) {
+        public ServicesMonitorException(String message) {
             super(message);
         }
 
-        public UnknownServiceException(String message, Throwable cause) {
+        public ServicesMonitorException(String message, Throwable cause) {
             super(message, cause);
         }
     }

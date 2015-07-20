@@ -335,27 +335,32 @@ public class IngestManager {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
                     // one of the services we subscribed to went down                    
-                    String serviceName = evt.getPropertyName();
-                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceName); //NON-NLS                  
+                    String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
+                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
 
                     // display notification if running interactively
-                    if (isIngestRunning() && isRunningInteractively()){
-                        JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
-                                          NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceName),
-                                          JOptionPane.ERROR_MESSAGE);
+                    if (isIngestRunning() && isRunningInteractively()) {
+                        EventQueue.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JOptionPane.showMessageDialog(null,
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
                     }
-                    
+
                     // cancel ingest if running
                     cancelAllIngestJobs();
                 }
             }
         };
-        
+
         // subscribe to services of interest
         Set<String> servicesList = new HashSet<>();
-        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.getName());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getName());
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
         this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
