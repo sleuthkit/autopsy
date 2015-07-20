@@ -144,17 +144,8 @@ public class ServicesMonitor {
      * @param service Name of the service.
      * @param status Updated status for the service.
      * @param details Details of the event.
-     * @throws org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown if either of input parameters is null
      */
-    public void setServiceStatus(String service, String status, String details) throws UnknownServiceException {
-
-        if (service == null) {
-            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
-        }
-        
-        if (status == null || details == null){
-            throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullStatusOrDetails.excepton.txt"));
-        }
+    private void setServiceStatus(String service, String status, String details) {
         
         // if the status update is for an existing service who's status hasn't changed - do nothing.
         if (status.equals(statusByService.get(service))) {
@@ -199,43 +190,41 @@ public class ServicesMonitor {
     }
 
     /**
-     * Performs service availability status lookup.
+     * Performs service availability status check.
      *
      * @param service Name of the service.
-     * @return String Status for the service.
-     * @throws org.sleuthkit.autopsy.core.ServicesMonitor.UnknownServiceException Thrown if no method exists to check service status.
      */
-    private String checkServiceStatus(String service) throws UnknownServiceException {
+    private void checkServiceStatus(String service) {
         if (service.equals(Service.REMOTE_CASE_DATABASE.getName())) {
             if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
                 setServiceStatus(Service.REMOTE_CASE_DATABASE.getName(), ServiceStatus.UP.toString(), "");
-                return ServiceStatus.UP.toString();
+                return;
             } else {
                 setServiceStatus(Service.REMOTE_CASE_DATABASE.getName(), ServiceStatus.DOWN.toString(), "");
-                return ServiceStatus.DOWN.toString();
+                return;
             }
         } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.getName())) {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
             if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.UP.toString(), "");
-                return ServiceStatus.UP.toString();
+                return;
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.getName(), ServiceStatus.DOWN.toString(), "");
-                return ServiceStatus.DOWN.toString();
+                return;
             }
         } else if (service.equals(Service.MESSAGING.getName())) {
             if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
                 setServiceStatus(Service.MESSAGING.getName(), ServiceStatus.UP.toString(), "");
-                return ServiceStatus.UP.toString();
+                return;
             } else {
                 setServiceStatus(Service.MESSAGING.getName(), ServiceStatus.DOWN.toString(), "");
-                return ServiceStatus.DOWN.toString();
+                return;
             }
         }
 
         // no method to check any other services
         logger.log(Level.SEVERE, "No method exists to check status of service {0}", service); //NON-NLS 
-        throw new UnknownServiceException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
+        setServiceStatus(service, ServiceStatus.DOWN.toString(), "");
     }
 
     /**
@@ -307,11 +296,7 @@ public class ServicesMonitor {
      */
     private void checkAllServices() {
         for (Service service : servicesList) {
-            try {
-                checkServiceStatus(service.getName());
-            } catch (UnknownServiceException ex) {
-                logger.log(Level.SEVERE, "Exception while checking status of service " + service, ex); //NON-NLS 
-            }
+            checkServiceStatus(service.getName());
         }
     }
 
