@@ -43,6 +43,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.KeyCharacterCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
@@ -101,18 +104,7 @@ public class MetaDataPane extends DrawableUIBase {
 
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setPlaceholder(new Label("Select a file to show its details here."));
-        tableView.setRowFactory(table -> {
-            final TableRow<Pair<DrawableAttribute<?>, Collection<?>>> tableRow = new TableRow<>();
-            final MenuItem menuItem = new MenuItem("Copy");
-            menuItem.setOnAction(actionEvent -> {
-                Clipboard.getSystemClipboard().setContent(Collections.singletonMap(
-                        DataFormat.PLAIN_TEXT,
-                        getValueDisplayString(tableRow.getItem())));
-
-            });
-            tableRow.setContextMenu(new ContextMenu(menuItem));
-            return tableRow;
-        });
+        tableView.setRowFactory(table -> new DrawableTableRow());
         tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
 
         attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
@@ -149,7 +141,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @SuppressWarnings("unchecked")
-    private String getValueDisplayString(Pair<DrawableAttribute<?>, Collection<?>> p) {
+    static private String getValueDisplayString(Pair<DrawableAttribute<?>, Collection<?>> p) {
         if (p.getKey() == DrawableAttribute.TAGS) {
             return ((Collection<TagName>) p.getValue()).stream()
                     .map(TagName::getDisplayName)
@@ -230,5 +222,33 @@ public class MetaDataPane extends DrawableUIBase {
                 runnable.run();
             }
         });
+    }
+
+    private static class DrawableTableRow extends TableRow<Pair<DrawableAttribute<?>, Collection<?>>> {
+
+        private static final KeyCharacterCombination COPY_KEY_COMBINATION = new KeyCharacterCombination("c", KeyCombination.SHORTCUT_DOWN);
+
+        public DrawableTableRow() {
+            setOnKeyTyped((KeyEvent event) -> {
+                if (COPY_KEY_COMBINATION.match(event)) {
+                    copyValueToClipBoard();
+                    event.consume();
+                }
+            });
+
+            final MenuItem menuItem = new MenuItem("Copy");
+            menuItem.setOnAction(actionEvent -> {
+                copyValueToClipBoard();
+            });
+            menuItem.setAccelerator(COPY_KEY_COMBINATION);
+
+            setContextMenu(new ContextMenu(menuItem));
+        }
+
+        private void copyValueToClipBoard() {
+            Clipboard.getSystemClipboard().setContent(Collections.singletonMap(
+                    DataFormat.PLAIN_TEXT,
+                    getValueDisplayString(getItem())));
+        }
     }
 }
