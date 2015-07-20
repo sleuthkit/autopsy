@@ -386,9 +386,11 @@ final class DataSourceIngestJob {
                 // errors are likely redundant.
                 while (!this.fileIngestPipelinesQueue.isEmpty()) {
                     pipeline = this.fileIngestPipelinesQueue.poll();
-                    List<IngestModuleError> shutDownErrors = pipeline.shutDown();
-                    if (!shutDownErrors.isEmpty()) {
-                        logIngestModuleErrors(shutDownErrors);
+                    if(pipeline.isRunning()){
+                        List<IngestModuleError> shutDownErrors = pipeline.shutDown();
+                        if (!shutDownErrors.isEmpty()) {
+                            logIngestModuleErrors(shutDownErrors);
+                        }
                     }
                 }
                 break;
@@ -565,7 +567,9 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = new ArrayList<>();
         while (!this.fileIngestPipelinesQueue.isEmpty()) {
             FileIngestPipeline pipeline = fileIngestPipelinesQueue.poll();
-            errors.addAll(pipeline.shutDown());
+            if(pipeline.isRunning()){
+                errors.addAll(pipeline.shutDown());
+            }
         }
         if (!errors.isEmpty()) {
             logIngestModuleErrors(errors);
