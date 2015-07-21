@@ -78,18 +78,18 @@ public class ServicesMonitor {
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_CASE_DATABASE("multi-user case database service"),
+        REMOTE_CASE_DATABASE("Multi-user case database service"),
         /**
          * Property change event fired when remote keyword search service status
          * changes. New value is set to updated ServiceStatus, old value is
          * null.
          */
-        REMOTE_KEYWORD_SEARCH("multi-user keyword search service"),
+        REMOTE_KEYWORD_SEARCH("Multi-user keyword search service"),
         /**
          * Property change event fired when messaging service status changes.
          * New value is set to updated ServiceStatus, old value is null.
          */
-        MESSAGING("messaging service");
+        MESSAGING("Messaging service");
 
         private final String displayName;
 
@@ -245,7 +245,7 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
             }
-        } catch (ServicesMonitorException ex) {
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception  while checking database connection status", ex); //NON-NLS
         }
     }
@@ -261,7 +261,7 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");
             }
-        } catch (ServicesMonitorException ex) {
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception  while checking keyword search server connection status", ex); //NON-NLS
         }
     }
@@ -276,7 +276,7 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
             }
-        } catch (ServicesMonitorException ex) {
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception  while checking messaging server connection status", ex); //NON-NLS
         }
     }

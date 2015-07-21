@@ -334,6 +334,17 @@ public class IngestManager {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                    
+                    // check whether a milti-user case is currently being processed
+                    try {
+                        if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                            return;
+                        }
+                    } catch (IllegalStateException ignore) {
+                        // thorown by Case.getCurrentCase() when no case is open
+                        return;
+                    }
+                    
                     // one of the services we subscribed to went down                    
                     String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
