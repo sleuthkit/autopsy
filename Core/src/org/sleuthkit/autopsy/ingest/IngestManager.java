@@ -43,6 +43,7 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -529,6 +530,18 @@ public class IngestManager {
              */
             if (runInteractively && jobsById.size() == 1) {
                 clearIngestMessageBox();
+            }
+            
+            // for multi-user cases need to have both multi-user database and multi-user keyword search services running            
+            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                try {
+                    if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())
+                            || !servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())){
+                        return false;
+                    }
+                } catch (ServicesMonitor.ServicesMonitorException ignore) {
+                    return false;
+                }
             }
 
             if (!ingestMonitor.isRunning()) {

@@ -27,9 +27,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -50,27 +52,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
-        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        if (info.getDbType() == DbType.SQLITE) {
-            rbSingleUserCase.setSelected(true);
-            rbSingleUserCase.setEnabled(false);
-            rbMultiUserCase.setEnabled(false);
-            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
-            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
-        } else {
-            rbSingleUserCase.setEnabled(true);
-            rbMultiUserCase.setEnabled(true);
-            if (true == info.canConnect()) {
-                    rbMultiUserCase.setSelected(true); // default to multi-user if available
-            } else {
-                // if we cannot connect to the shared database, don't present the option
-                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
-                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
-                rbSingleUserCase.setSelected(true);
-                rbSingleUserCase.setEnabled(false);
-                rbMultiUserCase.setEnabled(false);
-            }
-        }
     }
 
     /**
@@ -324,6 +305,11 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     @Override
     public void insertUpdate(DocumentEvent e) {
         this.wizPanel.fireChangeEvent();
+        /*
+        NOTE: verifyMultiUserSettings() is called from here as opposed to updateUI()
+        because updateUI() is called several times when this wizard is loaded.
+        */
+        verifyMultiUserSettings();
         updateUI(e);
     }
 
@@ -376,6 +362,37 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(parentDir);              
+    }
+    
+    /**
+     * Tests multi-user settings by verifying connectivity to all required
+     * multi-user services.
+     */
+    private void verifyMultiUserSettings(){
+        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+        if (info.getDbType() == DbType.SQLITE) {
+            rbSingleUserCase.setSelected(true);
+            rbSingleUserCase.setEnabled(false);
+            rbMultiUserCase.setEnabled(false);
+            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
+            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
+        } else {
+            rbSingleUserCase.setEnabled(true);
+            rbMultiUserCase.setEnabled(true);
+            // for multi-user cases need to have both multi-user database and multi-user keyword search services running
+            if (info.canConnect() && kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
+                rbMultiUserCase.setSelected(true); // default to multi-user if available
+            } else {
+                // if we cannot connect to the shared database, don't present the option
+                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
+                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
+                lbBadMultiUserSettings.setVisible(true);
+                rbSingleUserCase.setSelected(true);
+                rbSingleUserCase.setEnabled(false);
+                rbMultiUserCase.setEnabled(false);
+            }
+        }        
     }
     
     /**
