@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -154,13 +155,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                         case PRIMARY:
                             if (t.getClickCount() == 1) {
                                 if (t.isControlDown()) {
-
                                     globalSelectionModel.toggleSelection(fileID);
                                 } else {
                                     groupPane.makeSelection(t.isShiftDown(), fileID);
                                 }
                             } else if (t.getClickCount() > 1) {
-                                groupPane.activateSlideShowViewer(fileID);
+                                if (groupPane.getGroupViewMode() == GroupViewMode.TILE) {
+                                    groupPane.activateSlideShowViewer(globalSelectionModel.lastSelectedProperty().get());
+                                } else {
+                                    groupPane.activateTileViewer();
+                                }
                             }
                             break;
                         case SECONDARY:
