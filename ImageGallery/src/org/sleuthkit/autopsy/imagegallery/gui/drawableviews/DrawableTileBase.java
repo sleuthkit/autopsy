@@ -78,7 +78,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
- * since they share a similar node tree and many behaviors, other implementers
+ * since they share a similar node tree and many behaviors, other implementors
  * of {@link DrawableView}s should implement the interface directly
  *
  */
@@ -87,7 +87,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     private static final Logger LOGGER = Logger.getLogger(DrawableTileBase.class.getName());
 
     private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
-
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     //TODO: do this in CSS? -jm
@@ -99,39 +98,29 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
     private static ContextMenu contextMenu;
 
-    /**
-     * displays the icon representing video files
-     */
+    /** displays the icon representing video files */
     @FXML
-    protected ImageView fileTypeImageView;
+    private ImageView fileTypeImageView;
 
-    /**
-     * displays the icon representing hash hits
-     */
+    /** displays the icon representing hash hits */
     @FXML
-    protected ImageView hashHitImageView;
+    private ImageView hashHitImageView;
 
-    /**
-     * displays the icon representing follow up tag
-     */
+    /** displays the icon representing follow up tag */
     @FXML
-    protected ImageView followUpImageView;
+    private ImageView followUpImageView;
 
     @FXML
-    protected ToggleButton followUpToggle;
-
-    /**
-     * the label that shows the name of the represented file
-     */
-    @FXML
-    protected Label nameLabel;
+    private ToggleButton followUpToggle;
 
     @FXML
-    protected BorderPane imageBorder;
+    BorderPane imageBorder;
 
-    /**
-     * the groupPane this {@link DrawableTileBase} is embedded in
-     */
+    /** the label that shows the name of the represented file */
+    @FXML
+    Label nameLabel;
+
+    /** the groupPane this {@link DrawableTileBase} is embedded in */
     final private GroupPane groupPane;
     volatile private boolean registered = false;
 
@@ -161,7 +150,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                                 }
                             } else if (t.getClickCount() > 1) {
                                 if (groupPane.getGroupViewMode() == GroupViewMode.TILE) {
-                                    groupPane.activateSlideShowViewer(globalSelectionModel.lastSelectedProperty().get());
+                                    groupPane.activateSlideShowViewer(fileID);
                                 } else {
                                     groupPane.activateTileViewer();
                                 }

@@ -198,7 +198,7 @@ public class GroupPane extends BorderPane {
 
     private Integer selectionAnchorIndex;
 
-    public GroupViewMode getGroupViewMode() {
+    GroupViewMode getGroupViewMode() {
         return groupViewMode.get();
     }
 

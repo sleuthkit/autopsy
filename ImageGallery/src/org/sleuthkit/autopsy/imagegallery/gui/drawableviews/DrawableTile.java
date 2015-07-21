@@ -65,9 +65,8 @@ public class DrawableTile extends DrawableTileBase {
     @Override
     protected void initialize() {
         super.initialize();
-        assert imageBorder != null : "fx:id=\"imageAnchor\" was not injected: check your FXML file 'DrawableTile.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'DrawableTile.fxml'.";
-        assert nameLabel != null : "fx:id=\"nameLabel\" was not injected: check your FXML file 'DrawableTile.fxml'.";
+
         //set up properties and binding
         setCache(true);
         setCacheHint(CacheHint.SPEED);
@@ -90,7 +89,6 @@ public class DrawableTile extends DrawableTileBase {
 
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
-
 
     @Override
     @ThreadConfined(type = ThreadType.JFX)
