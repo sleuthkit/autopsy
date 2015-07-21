@@ -188,6 +188,7 @@
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.core</package>
+                <package>org.sleuthkit.autopsy.core.events</package>
                 <package>org.sleuthkit.autopsy.corecomponentinterfaces</package>
                 <package>org.sleuthkit.autopsy.corecomponents</package>
                 <package>org.sleuthkit.autopsy.coreutils</package>
