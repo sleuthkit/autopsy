@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -1016,7 +1017,7 @@ public class Case {
     public String getModuleOutputDirectoryRelativePath() {
         Path thePath;
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
-            thePath = Paths.get(getLocalHostName(), MODULE_FOLDER);
+            thePath = Paths.get(NetworkUtils.getLocalHostName(), MODULE_FOLDER);
         } else {
             thePath = Paths.get(MODULE_FOLDER);
         }
@@ -1029,7 +1030,7 @@ public class Case {
      * Get the host output directory path where modules should save their
      * permanent data. If single-user case, the directory is a subdirectory of
      * the case directory. If multi-user case, the directory is a subdirectory
-     * of HostName, which is a subdirectory of the case directory.
+     * of the hostName, which is a subdirectory of the case directory.
      *
      * @return the path to the host output directory
      */
@@ -1037,7 +1038,7 @@ public class Case {
         String caseDirectory = getCaseDirectory();
         Path hostPath;
         if (caseType == CaseType.MULTI_USER_CASE) {
-            hostPath = Paths.get(caseDirectory, getLocalHostName());
+            hostPath = Paths.get(caseDirectory, NetworkUtils.getLocalHostName());
         } else {
             hostPath = Paths.get(caseDirectory);
         }
@@ -1353,7 +1354,7 @@ public class Case {
             String hostClause = "";
 
             if (caseType == CaseType.MULTI_USER_CASE) {
-                hostClause = File.separator + getLocalHostName();
+                hostClause = File.separator + NetworkUtils.getLocalHostName();
             }
             result = result && (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
@@ -1568,24 +1569,5 @@ public class Case {
         return hasData;
     }
 
-    /**
-     * Set the host name variable. Sometimes the network can be finicky, so the
-     * answer returned by getHostName() could throw an exception or be null.
-     * Have it read the environment variable if getHostName() is unsuccessful.
-     */
-    public static String getLocalHostName() {
-        if (HostName == null || HostName.isEmpty()) {
-            try {
-                HostName = java.net.InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException ex) {
-                // getLocalHost().getHostName() can fail in some situations. 
-                // Use environment variable if so.
-                HostName = System.getenv("COMPUTERNAME");
-            }
-            if (HostName == null || HostName.isEmpty()) {
-                HostName = System.getenv("COMPUTERNAME");
-            }
-        }
-        return HostName;
-    }
+
 }

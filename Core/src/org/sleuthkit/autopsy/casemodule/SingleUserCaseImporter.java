@@ -45,23 +45,25 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * Convert case(s) from single-user to multi-user. Recursively scans subfolders.
  */
-public class CaseConverter implements Runnable {
+public class SingleUserCaseImporter implements Runnable {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = ".aut"; //NON-NLS
-    private static final String CACHE_FOLDER = "Cache"; //NON-NLS
-    private static final String EXPORT_FOLDER = "Export"; //NON-NLS
-    private static final String LOG_FOLDER = "Log"; //NON-NLS
-    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
-    private static final String TEMP_FOLDER = "Temp"; //NON-NLS
-    private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
-    private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
-    private final static String TIMELINE_FILE = "events.db"; //NON-NLS
+    //private static final String CACHE_FOLDER = "Cache"; //NON-NLS
+    //private static final String EXPORT_FOLDER = "Export"; //NON-NLS
+    //private static final String LOG_FOLDER = "Log"; //NON-NLS
+    //private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
+    //private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
+    //private static final String TEMP_FOLDER = "Temp"; //NON-NLS
+    //private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
+    //private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
+    //private final static String TIMELINE_FILE = "events.db"; //NON-NLS
     public static final String CASE_CONVERSION_LOG_FILE = "case_conversion.txt"; //NON-NLS
     private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
@@ -89,7 +91,7 @@ public class CaseConverter implements Runnable {
      * @param callback a callback from the calling panel for notification when
      * the conversion has completed. This is a Runnable on a different thread.
      */
-    public CaseConverter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database, ConversionDoneCallback callback) {
+    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database, ConversionDoneCallback callback) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
@@ -127,7 +129,7 @@ public class CaseConverter implements Runnable {
             // read old xml config
             oldXmlCaseManagement.open(input.resolve(oldCaseName + DOTAUT).toString());
             if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
-                throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.AlreadyMultiUser"));
+                throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.AlreadyMultiUser"));
             }
 
             String newCaseFolder = prepareOutput(caseOutputFolder, oldCaseFolder);
@@ -144,7 +146,7 @@ public class CaseConverter implements Runnable {
 
             File imageDestination = Paths.get(imageOutputFolder, caseName).toFile();
 
-            copyResults(input, newCaseFolder); // Copy items to new hostname folder structure
+            copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
             dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
             File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
             fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
@@ -159,8 +161,8 @@ public class CaseConverter implements Runnable {
             // Set created date. This calls writefile, no need to call it again
             newXmlCaseManagement.setCreatedDate(oldXmlCaseManagement.getCreatedDate());
 
-            log(NbBundle.getMessage(CaseConverter.class, "CaseConverter.FinishedConverting")
-                    + input.toString() + NbBundle.getMessage(CaseConverter.class, "CaseConverter.To")
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
+                    + input.toString() + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
         } catch (Exception exp) {
             /// clean up here
@@ -179,13 +181,13 @@ public class CaseConverter implements Runnable {
      */
     private void checkInput(File caseInput, File imageInput) throws Exception {
         if (false == caseInput.exists()) {
-            throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.BadCaseSourceFolder"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadCaseSourceFolder"));
         } else if (false == imageInput.exists()) {
-            throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.BadImageSourceFolder"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadImageSourceFolder"));
         }
         Path path = Paths.get(caseInput.toString(), AUTOPSY_DB_FILE);
         if (false == path.toFile().exists()) {
-            throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.BadDatabaseFileName"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadDatabaseFileName"));
         }
     }
 
@@ -213,7 +215,7 @@ public class CaseConverter implements Runnable {
             while (specificOutputFolder.exists()) {
                 if (number == Integer.MAX_VALUE) {
                     // oops. it never became unique. give up.
-                    throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.NonUniqueOutputFolder") + caseFolder);
+                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.NonUniqueOutputFolder") + caseFolder);
                 }
                 temp = sanitizedCaseName + "_" + Integer.toString(number) + timeStamp; //NON-NLS
                 specificOutputFolder = Paths.get(caseOutputFolder, temp).toFile();
@@ -235,9 +237,27 @@ public class CaseConverter implements Runnable {
      * @param newCaseFolder deconflicted case name for the new multi-user case
      * @throws IOException
      */
-    private void copyResults(Path input, String newCaseFolder) throws IOException {
+    private void copyResults(Path input, String newCaseFolder, String caseName) throws IOException {
         /// get hostname
-        String hostName = Case.getLocalHostName();
+        String hostName = NetworkUtils.getLocalHostName();
+
+        if(input.toFile().exists()){
+            Path destination = Paths.get(caseOutputFolder, newCaseFolder, hostName);
+            FileUtils.copyDirectory(input.toFile(), destination.toFile());
+        }
+
+        // Remove the single-user .aut file and database
+        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + ".aut").toFile();
+        if(oldDatabaseFile.exists()){
+            oldDatabaseFile.delete();
+        }
+        
+        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, "autopsy.db").toFile();
+        if(oldAutopsyFile.exists()){
+            oldAutopsyFile.delete();
+        }
+        
+        /*
         Path source = input.resolve(CACHE_FOLDER);
         Path destination;
 
@@ -287,11 +307,11 @@ public class CaseConverter implements Runnable {
             destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
             FileUtils.copyFile(source.toFile(), destination.toFile());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-                out.println(NbBundle.getMessage(CaseConverter.class, "CaseConverter.ConvertedToMultiUser") + new Date());
+                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
             } catch (IOException e) {
                 // if unable to log it, no problem
             }
-        }
+        }*/
     }
 
     /**
@@ -944,7 +964,7 @@ public class CaseConverter implements Runnable {
                     // not unique. add numbers before dbName.
                     if (number == Integer.MAX_VALUE) {
                         // oops. it never became unique. give up.
-                        throw new Exception(NbBundle.getMessage(CaseConverter.class, "CaseConverter.NonUniqueDatabaseName"));
+                        throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.NonUniqueDatabaseName"));
                     }
                     sanitizedDbName = "_" + Integer.toString(number) + "_" + baseDbName; //NON-NLS
 
@@ -959,7 +979,7 @@ public class CaseConverter implements Runnable {
         } else {
             // Could be caused by database credentials, using user accounts that 
             // can not check if other databases exist, so allow it to continue
-            log(NbBundle.getMessage(CaseConverter.class, "CaseConverter.PotentiallyNonUniqueDatabaseName"));
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.PotentiallyNonUniqueDatabaseName"));
         }
 
         return sanitizedDbName;
@@ -992,7 +1012,7 @@ public class CaseConverter implements Runnable {
         if (chosenInput != null && chosenInput.exists()) {
             FileUtils.copyDirectory(chosenInput, output);
         } else {
-            log(NbBundle.getMessage(CaseConverter.class, "CaseConverter.UnableToCopySourceImages"));
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.UnableToCopySourceImages"));
         }
         return chosenInput;
     }
@@ -1005,7 +1025,7 @@ public class CaseConverter implements Runnable {
         /// Fix paths in reports, tsk_files_path, and tsk_image_names tables
 
         Connection postgresqlConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
-        String hostName = Case.getLocalHostName();
+        String hostName = NetworkUtils.getLocalHostName();
 
         // add hostname to reports
         Statement updateStatement = postgresqlConnection.createStatement();
@@ -1180,11 +1200,11 @@ public class CaseConverter implements Runnable {
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log(NbBundle.getMessage(CaseConverter.class, "CaseConverter.FinishedConverting")
+        log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
                 + caseInputFolder
-                + NbBundle.getMessage(CaseConverter.class, "CaseConverter.To")
+                + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                 + caseOutputFolder
-                + NbBundle.getMessage(CaseConverter.class, "CaseConverter.ConversionSuccessful")
+                + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.ConversionSuccessful")
                 + result);
 
         if (writer != null) {
