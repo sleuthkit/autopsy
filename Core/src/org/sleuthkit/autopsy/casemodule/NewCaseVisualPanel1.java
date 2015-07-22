@@ -384,6 +384,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             // multi-user cases must have multi-user database service running
             if (info.canConnect()) {
                 rbMultiUserCase.setSelected(true); // default to multi-user if available
+                
+                /* NOTE: natural way would be to call lbBadMultiUserSettings.setVisible(false) 
+                 but if you do that Netbeans for some reason resizes the entire panel so it
+                 becomes much narrower horizontally.                 
+                 */
+                lbBadMultiUserSettings.setText("");
             } else {
                 // if we cannot connect to the shared database, don't present the option
                 lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
