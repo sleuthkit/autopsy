@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -35,6 +37,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -141,46 +144,59 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
         if (refCounter.incrementAndGet(jobId) == 1) {
-            final Server server = KeywordSearch.getServer();
-            try {
-                if (!server.isRunning()) {
+            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                // for multi-user cases need to verify connection to remore SOLR server
+                KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+                if (kwsService == null || !kwsService.canConnectToRemoteSolrServer()) {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     logger.log(Level.SEVERE, msg);
+                    String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.verifyConnection");
+                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
+                    throw new IngestModuleException(msg);
+                }
+            } else {
+                // for single-user cases need to verify connection to local SOLR service
+                final Server server = KeywordSearch.getServer();
+                try {
+                    if (!server.isRunning()) {
+                        String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+                        logger.log(Level.SEVERE, msg);
+                        String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
+                        services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
+                        throw new IngestModuleException(msg);
+                    }
+                } catch (KeywordSearchModuleException ex) {
+                    logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex); //NON-NLS
+                    //this means Solr is not properly initialized
+                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                     throw new IngestModuleException(msg);
                 }
-            } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex); //NON-NLS
-                //this means Solr is not properly initialized
-                String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.tryStopSolrMsg", msg);
-                services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
-                throw new IngestModuleException(msg);
-            }
-            try {
+                try {
                 // make an actual query to verify that server is responding
-                // we had cases where getStatus was OK, but the connection resulted in a 404
-                server.queryNumIndexedDocuments();
-            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                throw new IngestModuleException(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                        ex.getMessage()));
-            }
+                    // we had cases where getStatus was OK, but the connection resulted in a 404
+                    server.queryNumIndexedDocuments();
+                } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                    throw new IngestModuleException(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
+                                    ex.getMessage()));
+                }
 
-            // check if this job has any searchable keywords    
-            List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
-            boolean hasKeywordsForSearch = false;
-            for (KeywordList keywordList : keywordLists) {
-                if (settings.keywordListIsEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
-                    hasKeywordsForSearch = true;
-                    break;
+                // check if this job has any searchable keywords    
+                List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
+                boolean hasKeywordsForSearch = false;
+                for (KeywordList keywordList : keywordLists) {
+                    if (settings.keywordListIsEnabled(keywordList.getName()) && !keywordList.getKeywords().isEmpty()) {
+                        hasKeywordsForSearch = true;
+                        break;
+                    }
+                }
+                if (!hasKeywordsForSearch) {
+                    services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
                 }
             }
-            if (!hasKeywordsForSearch) {
-                services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-            }            
         }
         
         //initialize extractors
