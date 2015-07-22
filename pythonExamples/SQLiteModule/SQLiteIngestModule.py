@@ -64,7 +64,7 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 
 ################################################################################
 
-DATABASE    = "temp"
+DATABASE    = Case.getCurrentCase().getTempDirectory() + r"\temp"
 JDBC_URL    = "jdbc:sqlite:%s"  % DATABASE
 JDBC_DRIVER = "org.sqlite.JDBC"
             
@@ -137,7 +137,6 @@ class SQLiteIngestModule(FileIngestModule):
             f.close
         except IOError:
             raise IngestModuleException(IngestModule(), "Couldn't create %s file" % DATABASE)
-
         pass
 
     # Where the analysis is done.  Each file will be passed into here.
@@ -177,7 +176,6 @@ class SQLiteIngestModule(FileIngestModule):
                 name  = resultSet.getString("name")
                 email = resultSet.getString("email")
                 phone = resultSet.getString("phone")
-                print "%-16.16s  %-8.8s  %s" % (name, email, phone)
 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
                 art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
@@ -200,15 +198,11 @@ class SQLiteIngestModule(FileIngestModule):
                 ModuleDataEvent(SQLiteIngestModuleFactory.moduleName, 
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, None));
 
-
         return IngestModule.ProcessResult.OK
 
     # Where any shutdown code is run and resources are freed.
     def shutDown(self):
         # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
-        
-        # remove temp
-        #os.remove(DATABASE)
         
         message = IngestMessage.createMessage(
             IngestMessage.MessageType.DATA, SQLiteIngestModuleFactory.moduleName, 
