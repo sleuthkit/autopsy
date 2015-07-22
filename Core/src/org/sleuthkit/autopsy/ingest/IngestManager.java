@@ -549,6 +549,7 @@ public class IngestManager {
                                 }
                             });
                         }
+                        // abort ingest
                         return false;
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ignore) {
