@@ -27,11 +27,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -175,6 +173,10 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.errorLabel.text")); // NOI18N
+        errorLabel.setMaximumSize(new java.awt.Dimension(500, 14));
+        errorLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        errorLabel.setPreferredSize(new java.awt.Dimension(500, 14));
+        errorLabel.setVerifyInputWhenFocusTarget(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -207,13 +209,13 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(rbSingleUserCase)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(rbMultiUserCase))
-                            .addComponent(errorLabel))
+                        .addComponent(rbSingleUserCase)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(rbMultiUserCase)
                         .addGap(0, 0, Short.MAX_VALUE))))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 490, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -238,7 +240,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(rbSingleUserCase)
                     .addComponent(rbMultiUserCase))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(errorLabel)
+                .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(1, 1, 1)
                 .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -370,7 +372,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      */
     private void verifyMultiUserSettings(){
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         if (info.getDbType() == DbType.SQLITE) {
             rbSingleUserCase.setSelected(true);
             rbSingleUserCase.setEnabled(false);
@@ -380,8 +381,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         } else {
             rbSingleUserCase.setEnabled(true);
             rbMultiUserCase.setEnabled(true);
-            // for multi-user cases need to have both multi-user database and multi-user keyword search services running
-            if (info.canConnect() && kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
+            // multi-user cases must have multi-user database service running
+            if (info.canConnect()) {
                 rbMultiUserCase.setSelected(true); // default to multi-user if available
             } else {
                 // if we cannot connect to the shared database, don't present the option
