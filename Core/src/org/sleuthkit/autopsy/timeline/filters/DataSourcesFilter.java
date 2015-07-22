@@ -46,7 +46,7 @@ public class DataSourcesFilter extends UnionFilter {
 
     @Override
     public String getHTMLReportString() {
-        String string = getDisplayName();
+        String string = getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
             string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
