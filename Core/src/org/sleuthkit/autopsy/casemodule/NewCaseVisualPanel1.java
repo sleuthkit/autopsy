@@ -50,6 +50,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
+        rbMultiUserCase.setSelected(true); // default to multi-user if available
     }
 
     /**
@@ -192,9 +193,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(caseDirLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(caseParentDirTextField))
@@ -202,8 +200,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
                                         .addComponent(caseNameTextField))
-                                    .addComponent(errorLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE)
-                                    .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(errorLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(0, 227, Short.MAX_VALUE)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
@@ -379,8 +381,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             rbMultiUserCase.setEnabled(true);
             // multi-user cases must have multi-user database service running
             if (info.canConnect()) {
-                rbMultiUserCase.setSelected(true); // default to multi-user if available
-                
                 /* NOTE: natural way would be to call lbBadMultiUserSettings.setVisible(false) 
                  but if you do that Netbeans for some reason resizes the entire panel so it
                  becomes much narrower horizontally.                 
