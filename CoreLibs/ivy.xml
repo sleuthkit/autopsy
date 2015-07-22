@@ -41,8 +41,8 @@
 
         <!-- timeline and -->
         <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="8.0-r1" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r3" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r3" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="8.0-r3" />
     </dependencies>
 </ivy-module>
