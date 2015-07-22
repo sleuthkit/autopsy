@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -225,7 +225,7 @@ public class TimeLineController {
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
-                Filter.getDefaultFilter(),
+                filteredEvents.filter().get(),
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
@@ -239,7 +239,7 @@ public class TimeLineController {
     }
 
     public void applyDefaultFilters() {
-        pushFilters(Filter.getDefaultFilter());
+        pushFilters(filteredEvents.getDefaultFilter());
     }
 
     public void zoomOutToActivity() {
@@ -516,7 +516,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushFilters(Filter filter) {
+    synchronized public void pushFilters(RootFilter filter) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));
@@ -713,10 +713,11 @@ public class TimeLineController {
                 case CANCELLED:
                 case COMPLETED:
                     //if we are doing incremental updates, drop this
-                    if (isWindowOpen()) {
-                        outOfDatePromptAndRebuild();
-                    }
-                    break;
+                    SwingUtilities.invokeLater(() -> {
+                        if (isWindowOpen()) {
+                            outOfDatePromptAndRebuild();
+                        }
+                    });
             }
         }
     }
@@ -730,13 +731,15 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
 //                    Content content = (Content) evt.getNewValue();
                     //if we are doing incremental updates, drop this
-                    if (isWindowOpen()) {
-                        outOfDatePromptAndRebuild();
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        if (isWindowOpen()) {
+                            outOfDatePromptAndRebuild();
+                        }
+                    });
                     break;
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
-                    closeTimeLine();
+                    SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }
         }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,20 +24,16 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
 
 /**
- *
+ * Action that resets the filters to their default state.
  */
-public class DefaultFilters extends Action {
-
-    private final TimeLineController controller;
+public class DefaultFiltersAction extends Action {
 
     private FilteredEventsModel eventsModel;
 
-    public DefaultFilters(final TimeLineController controller) {
-        super(NbBundle.getMessage(DefaultFilters.class, "DefaultFilters.action.name.text"));
-        this.controller = controller;
+    public DefaultFiltersAction(final TimeLineController controller) {
+        super(NbBundle.getMessage(DefaultFiltersAction.class, "DefaultFilters.action.name.text"));
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {
@@ -46,7 +42,8 @@ public class DefaultFilters extends Action {
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.getRequestedZoomParamters().getValue().getFilter().equals(Filter.getDefaultFilter());
+                //TODO: this is probably broken now that we have dynamic filters for the datasources
+                return eventsModel.getRequestedZoomParamters().getValue().getFilter().equals(eventsModel.getDefaultFilter());
             }
         });
         setEventHandler((ActionEvent t) -> {

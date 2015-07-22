@@ -25,6 +25,7 @@ import java.util.Set;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 
 /**
  * This class encapsulates all the zoom(and filter) parameters into one object
@@ -99,7 +100,7 @@ public class ZoomParams {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.DESCRIPTION_LOD));
     }
 
-    public ZoomParams withFilter(Filter filter) {
+    public ZoomParams withFilter(RootFilter filter) {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.FILTER));
     }
 

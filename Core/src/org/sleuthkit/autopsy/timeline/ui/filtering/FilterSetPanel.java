@@ -40,10 +40,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.actions.DefaultFilters;
+import org.sleuthkit.autopsy.timeline.actions.DefaultFiltersAction;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 
 /** The FXML controller for the filter ui.
  *
@@ -78,7 +79,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
-            controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
+            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue().copyOf());
         });
         applyButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.applyButton.text"));
         defaultButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.defaultButton.text"));
@@ -154,7 +155,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setController(TimeLineController timeLineController) {
         this.controller = timeLineController;
-        Action defaultFiltersAction = new DefaultFilters(controller);
+        Action defaultFiltersAction = new DefaultFiltersAction(controller);
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());

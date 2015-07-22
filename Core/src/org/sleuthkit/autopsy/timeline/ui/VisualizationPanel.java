@@ -63,7 +63,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
-import org.sleuthkit.autopsy.timeline.actions.DefaultFilters;
+import org.sleuthkit.autopsy.timeline.actions.DefaultFiltersAction;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -591,7 +591,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             dismissButton.setOnAction(e -> {
                 closeCallback.run();
             });
-            Action defaultFiltersAction = new DefaultFilters(controller);
+            Action defaultFiltersAction = new DefaultFiltersAction(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
             resetFiltersButton.setText(
