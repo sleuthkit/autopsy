@@ -122,13 +122,7 @@ public class TypeFilter extends UnionFilter {
         if (this.eventType != other.eventType) {
             return false;
         }
-
-        for (int i = 0; i < getSubFilters().size(); i++) {
-            if (getSubFilters().get(i).equals(other.getSubFilters().get(i)) == false) {
-                return false;
-            }
-        }
-        return true;
+        return hashEqualSubFilters(this, other);
     }
 
     @Override

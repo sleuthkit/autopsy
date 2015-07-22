@@ -50,8 +50,7 @@ public class HideKnownFilter extends AbstractFilter {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        return hash;
+        return 7;
     }
 
     @Override
@@ -65,7 +64,5 @@ public class HideKnownFilter extends AbstractFilter {
         final HideKnownFilter other = (HideKnownFilter) obj;
 
         return isActive() == other.isActive();
-
     }
-
 }
