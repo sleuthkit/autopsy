@@ -61,39 +61,6 @@ from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 
 
-
-################################################################################
-
-DATABASE    = Case.getCurrentCase().getTempDirectory() + r"\temp"
-JDBC_URL    = "jdbc:sqlite:%s"  % DATABASE
-JDBC_DRIVER = "org.sqlite.JDBC"
-            
-TABLE_NAME      = "contacts"
-SELECT_QUERY    = "SELECT * FROM %s ORDER BY ID" % TABLE_NAME
-
-
-def getConnection(jdbc_url, driverName):
-    """
-        Given the name of a JDBC driver class and the url to be used 
-        to connect to a database, attempt to obtain a connection to 
-        the database.
-    """
-    try:
-        Class.forName(driverName).newInstance()
-    except Exception, msg:
-        print msg
-        sys.exit(-1)
-
-    try:
-        dbConn = DriverManager.getConnection(jdbc_url)
-    except SQLException, msg:
-        print msg
-        sys.exit(-1)
-
-    return dbConn
-
-################################################################################
-
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
 class SQLiteIngestModuleFactory(IngestModuleFactoryAdapter):
@@ -131,12 +98,6 @@ class SQLiteIngestModule(FileIngestModule):
     # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     def startUp(self, context):
         self.filesFound = 0
-
-        try:
-            f = open(DATABASE, 'wb')
-            f.close
-        except IOError:
-            raise IngestModuleException(IngestModule(), "Couldn't create %s file" % DATABASE)
         pass
 
     # Where the analysis is done.  Each file will be passed into here.
@@ -149,8 +110,8 @@ class SQLiteIngestModule(FileIngestModule):
             (file.isFile() == False)):
             return IngestModule.ProcessResult.OK
 
-        # We will flag files with .db in the name and make a blackboard artifact.
-        if file.getName().lower().endswith(".db"):
+        # As an example, we will flag files with name contacts.db and make a blackboard artifact
+        if file.getName().lower() == "contacts.db":
 
             self.log(Level.INFO, "Found a database file: " + file.getName())
             self.filesFound+=1
@@ -159,19 +120,24 @@ class SQLiteIngestModule(FileIngestModule):
             bytes = zeros(file.getSize(), 'b')
             if file.canRead():
                 file.read(bytes, 0, file.getSize())
+            barray = bytearray(bytes)
+
+            # get the directory of the temp file and use file id as name
+            db    = "%s\\%s" % (Case.getCurrentCase().getTempDirectory(), file.getId())
+            table = "contacts"
 
             # save byte array as temp file to open it with jdbc
-            barray = bytearray(bytes)
-            f = open(DATABASE, 'wb')
+            f = open(db, 'wb')
             f.write(barray)
             f.close()
 
             # connet to db
-            dbConn = getConnection(JDBC_URL, JDBC_DRIVER)
+            Class.forName("org.sqlite.JDBC").newInstance()
+            dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % db)
             stmt = dbConn.createStatement()
 
             # get information from db (name, email and phone)
-            resultSet = stmt.executeQuery(SELECT_QUERY)
+            resultSet = stmt.executeQuery("SELECT * FROM %s ORDER BY ID" % table)
             while resultSet.next():
                 name  = resultSet.getString("name")
                 email = resultSet.getString("email")
@@ -192,6 +158,7 @@ class SQLiteIngestModule(FileIngestModule):
 
             stmt.close()
             dbConn.close()
+            os.remove(db)
 
             # Fire an event to notify the UI and others that there is a new artifact  
             IngestServices.getInstance().fireModuleDataEvent(
