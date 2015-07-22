@@ -146,8 +146,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (refCounter.incrementAndGet(jobId) == 1) {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
-                KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-                if (kwsService == null || !kwsService.canConnectToRemoteSolrServer()) {
+                KeywordSearchService kwsService = new SolrSearchService();
+                if (!kwsService.canConnectToRemoteSolrServer()) {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     logger.log(Level.SEVERE, msg);
                     String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.verifyConnection");
