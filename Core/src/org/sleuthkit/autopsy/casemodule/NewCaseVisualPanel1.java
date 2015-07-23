@@ -50,27 +50,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         this.wizPanel = wizPanel;
         caseNameTextField.getDocument().addDocumentListener(this);
         caseParentDirTextField.getDocument().addDocumentListener(this);
-        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        if (info.getDbType() == DbType.SQLITE) {
-            rbSingleUserCase.setSelected(true);
-            rbSingleUserCase.setEnabled(false);
-            rbMultiUserCase.setEnabled(false);
-            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
-            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
-        } else {
-            rbSingleUserCase.setEnabled(true);
-            rbMultiUserCase.setEnabled(true);
-            if (true == info.canConnect()) {
-                    rbMultiUserCase.setSelected(true); // default to multi-user if available
-            } else {
-                // if we cannot connect to the shared database, don't present the option
-                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
-                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
-                rbSingleUserCase.setSelected(true);
-                rbSingleUserCase.setEnabled(false);
-                rbMultiUserCase.setEnabled(false);
-            }
-        }
+        rbMultiUserCase.setSelected(true); // default to multi-user if available
     }
 
     /**
@@ -208,12 +188,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(0, 58, Short.MAX_VALUE)
-                                        .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(jLabel1)
-                                        .addGap(0, 0, Short.MAX_VALUE))
+                                        .addGap(0, 227, Short.MAX_VALUE))
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(caseDirLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -221,7 +198,8 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
-                                        .addComponent(caseNameTextField)))
+                                        .addComponent(caseNameTextField))
+                                    .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
@@ -324,6 +302,11 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     @Override
     public void insertUpdate(DocumentEvent e) {
         this.wizPanel.fireChangeEvent();
+        /*
+        NOTE: verifyMultiUserSettings() is called from here as opposed to updateUI()
+        because updateUI() is called several times when this wizard is loaded.
+        */
+        verifyMultiUserSettings();
         updateUI(e);
     }
 
@@ -376,6 +359,40 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(parentDir);              
+    }
+    
+    /**
+     * Tests multi-user settings by verifying connectivity to all required
+     * multi-user services.
+     */
+    private void verifyMultiUserSettings(){
+        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+        if (info.getDbType() == DbType.SQLITE) {
+            rbSingleUserCase.setSelected(true);
+            rbSingleUserCase.setEnabled(false);
+            rbMultiUserCase.setEnabled(false);
+            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
+            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
+        } else {
+            rbSingleUserCase.setEnabled(true);
+            rbMultiUserCase.setEnabled(true);
+            // multi-user cases must have multi-user database service running
+            if (info.canConnect()) {
+                /* NOTE: natural way would be to call lbBadMultiUserSettings.setVisible(false) 
+                 but if you do that Netbeans for some reason resizes the entire panel so it
+                 becomes much narrower horizontally.                 
+                 */
+                lbBadMultiUserSettings.setText("");
+            } else {
+                // if we cannot connect to the shared database, don't present the option
+                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
+                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
+                lbBadMultiUserSettings.setVisible(true);
+                rbSingleUserCase.setSelected(true);
+                rbSingleUserCase.setEnabled(false);
+                rbMultiUserCase.setEnabled(false);
+            }
+        }        
     }
     
     /**

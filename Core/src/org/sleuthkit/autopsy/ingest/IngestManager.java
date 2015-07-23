@@ -530,6 +530,31 @@ public class IngestManager {
             if (runInteractively && jobsById.size() == 1) {
                 clearIngestMessageBox();
             }
+            
+            // multi-user cases must have multi-user database service running            
+            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                try {
+                    if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                        // display notification if running interactively
+                        if (isRunningInteractively()) {
+                            EventQueue.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
+                                    JOptionPane.showMessageDialog(null,
+                                            NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                            NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                            JOptionPane.ERROR_MESSAGE);
+                                }
+                            });
+                        }
+                        // abort ingest
+                        return false;
+                    }
+                } catch (ServicesMonitor.ServicesMonitorException ignore) {
+                    return false;
+                }
+            }
 
             if (!ingestMonitor.isRunning()) {
                 ingestMonitor.start();
