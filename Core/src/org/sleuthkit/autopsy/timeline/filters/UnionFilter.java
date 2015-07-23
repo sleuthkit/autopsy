@@ -22,7 +22,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
- *
  * Union(or) filter
  */
 abstract public class UnionFilter<SubFilterType extends Filter> extends CompoundFilter<SubFilterType> {

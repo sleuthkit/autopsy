@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -128,9 +128,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         Platform.runLater(() -> {
             //assemble ui componenets together
             jFXstatusPanel.setScene(new Scene(statusBar));
-
-            splitPane.setDividerPositions(0);
             jFXVizPanel.setScene(new Scene(splitPane));
+            splitPane.setDividerPositions(0);
 
             filterTab.setClosable(false);
             filterTab.setContent(filtersPanel);
@@ -152,23 +151,24 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         });
     }
 
+    @Override
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
 
         tlrv.setController(controller);
         Platform.runLater(() -> {
             jFXVizPanel.getScene().addEventFilter(KeyEvent.KEY_PRESSED, (
-                                                  KeyEvent event) -> {
-                                                      if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                                                          new Back(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
-                                                          new Back(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                                                          new Forward(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
-                                                          new Forward(controller).handle(new ActionEvent());
-                                                      }
-                                                  });
+                    KeyEvent event) -> {
+                        if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                            new Back(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
+                            new Back(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                            new Forward(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
+                            new Forward(controller).handle(new ActionEvent());
+                        }
+                    });
             controller.getViewMode().addListener((Observable observable) -> {
                 if (controller.getViewMode().get().equals(VisualizationMode.COUNTS)) {
                     tabPane.getSelectionModel().select(filterTab);

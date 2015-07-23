@@ -60,47 +60,9 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
         this.subFilters.addListener((ListChangeListener.Change<? extends SubFilterType> c) -> {
             while (c.next()) {
                 addSubFilterListeners(c.getAddedSubList());
-                //TODO: remove listeners from removed subfilters
             }
         });
         this.subFilters.setAll(subFilters);
-
-//        //disable subfilters if this filter is disabled
-//        getDisabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-//            if (newValue) {
-//                getSubFilters().forEach((Filter t) -> {
-//                    t.setDisabled(true);
-//                });
-//            } else {
-//                final boolean isActive = !isActive();
-//                getSubFilters().forEach((Filter t) -> {
-//                    t.setDisabled(isActive);
-//                });
-//            }
-//        });
-//        //listen to active property and adjust subfilters active property
-//        getActiveProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-//            if (newValue) {
-//                // if this filter become active, and all its subfilters were inactive, make them all active
-//                if (getSubFilters().stream().noneMatch(Filter::isActive)) {
-//                    getSubFilters().forEach((Filter filter) -> {
-//                        filter.setActive(true);
-//                    });
-//                }
-//            } else {
-//                //if this filter beceoms inactive and all its subfilters where active, make them inactive
-//                if (getSubFilters().stream().allMatch(Filter::isActive)) {
-//                    getSubFilters().forEach((Filter filter) -> {
-//                        filter.setActive(false);
-//                    });
-//                }
-//            }
-//
-//            //disabled subfilters if this filter is not active
-//            getSubFilters().forEach((Filter t) -> {
-//                t.setDisabled(!newValue);
-//            });
-//        });
     }
 
     private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {

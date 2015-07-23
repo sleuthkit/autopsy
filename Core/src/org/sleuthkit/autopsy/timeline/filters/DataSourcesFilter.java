@@ -25,11 +25,11 @@ import javafx.beans.binding.Bindings;
  * union of {@link DataSourceFilter}s
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
-
+    
     public DataSourcesFilter() {
-        this.getDisabledProperty().bind(Bindings.size(getSubFilters()).greaterThan(1));
+        getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
     }
-
+    
     @Override
     public DataSourcesFilter copyOf() {
         //make a nonrecursive copy of this filter
@@ -63,6 +63,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
                 .map(DataSourceFilter::getDataSourceID)
                 .filter(t -> t == dataSourceFilter.getDataSourceID())
                 .findAny().isPresent() == false) {
+            dataSourceFilter.getDisabledProperty().bind(getDisabledProperty());
             getSubFilters().add(dataSourceFilter);
         }
     }
