@@ -23,9 +23,12 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -35,8 +38,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class RecentItems implements ActionListener {
 
-    String caseName;
-    String casePath;
+    final String caseName;
+    final String casePath;
     private JPanel caller; // for error handling
 
     /** the constructor */
@@ -76,15 +79,20 @@ class RecentItems implements ActionListener {
             }
         }
         else {
-            try {
-                Case.open(casePath); // open the case
-            } catch (CaseActionException ex) {
-                    JOptionPane.showMessageDialog(null, 
+            new Thread(() -> {
+                // Create case.
+                try{
+                    Case.open(casePath);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null, 
                             NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.msg", casePath, 
                             ex.getMessage()), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                                                   JOptionPane.ERROR_MESSAGE);
-                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
-            }
+                    });
+                    Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
+                }    
+            }).start();
         }
     }
 }

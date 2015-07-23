@@ -62,7 +62,7 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
     /**
      * Gets the source type (local or remote).
      *
-     * @param sourceType The source type of the event, local or remote.
+     * @return SourceType The source type of the event, local or remote.
      */
     public SourceType getSourceType() {
         return sourceType;
