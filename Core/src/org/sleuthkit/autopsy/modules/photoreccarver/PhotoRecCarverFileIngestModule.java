@@ -87,7 +87,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static class IngestJobTotals {
 
         private AtomicLong totalPhotosRecovered = new AtomicLong(0);
-        private AtomicLong totalCalctime = new AtomicLong(0);
+        private AtomicLong totalWritetime = new AtomicLong(0);
+        private AtomicLong totalParsetime = new AtomicLong(0);
     }
     
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -184,6 +185,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
 
             // Write the file to disk.
+            long writestart = System.currentTimeMillis();
             WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.jobId);
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
             ContentUtils.writeToFile(file, tempFilePath.toFile());
@@ -235,13 +237,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     }
                 }
             }
-               
+            long writedelta = (System.currentTimeMillis() - writestart);
+            totals.totalWritetime.addAndGet(writedelta);
+            
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
             carvedItems = parser.parse(newAuditFile, id, file);            
-            long delta = (System.currentTimeMillis() - calcstart);
-            totals.totalCalctime.addAndGet(delta);
+            long calcdelta = (System.currentTimeMillis() - calcstart);
+            totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 totals.totalPhotosRecovered.addAndGet(carvedItems.size());
                 context.addFilesToJob(new ArrayList<>(carvedItems));
@@ -276,18 +280,21 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.photosRecovered"))
-                .append("</td>"); //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.numberOfCarved"))
+                 .append("</td>"); //NON-NLS
         detailsSb.append("<td>").append(jobTotals.totalPhotosRecovered.get()).append("</td></tr>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalCalcTime"))
-                .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n"); //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalWritetime"))
+                 .append("</td><td>").append(jobTotals.totalWritetime.get()).append("</td></tr>\n"); //NON-NLS
+        detailsSb.append("<tr><td>") //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalParsetime"))
+                 .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("</table>"); //NON-NLS
 
         detailsSb.append("<p>") //NON-NLS
-                .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.listUsed"))
-                .append("</p>\n<ul>"); //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.recFiles"))
+                 .append("</p>\n<ul>"); //NON-NLS
         for (LayoutFile lf : carvedItems) {
             detailsSb.append("<li>").append(lf.getName()).append("</li>\n"); //NON-NLS
         }
@@ -298,7 +305,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 IngestMessage.MessageType.INFO,
                 PhotoRecCarverIngestModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
-                                    "PhotoRecIngestModule.complete.photoRecResults"),
+                        "PhotoRecIngestModule.complete.photoRecResults"),
                 detailsSb.toString()));
 
     }
