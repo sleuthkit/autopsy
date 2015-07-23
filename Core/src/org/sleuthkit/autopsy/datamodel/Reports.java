@@ -101,7 +101,7 @@ public final class Reports implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORTS_DELETED.toString())) {
+                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
                         ReportNodeFactory.this.refresh(true);
                     }
                 }

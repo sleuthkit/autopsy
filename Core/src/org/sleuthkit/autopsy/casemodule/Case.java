@@ -136,7 +136,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * from the case. Both the old value and the new value supplied by the
          * event object are null.
          */
-        REPORTS_DELETED;
+        REPORT_DELETED;
     };
 
     private String name;
@@ -1228,9 +1228,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             // fire property change event.
             try {
-                Case.pcs.firePropertyChange(Events.REPORTS_DELETED.toString(), null, null);
+                Case.pcs.firePropertyChange(Events.REPORT_DELETED.toString(), null, null);
             } catch (Exception ex) {
-                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORTS_DELETED.toString()); //NON-NLS
+                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_DELETED.toString()); //NON-NLS
                 logger.log(Level.SEVERE, errorMessage, ex);
             }
         }
