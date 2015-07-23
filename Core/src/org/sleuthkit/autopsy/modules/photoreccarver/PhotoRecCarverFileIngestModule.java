@@ -82,7 +82,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private File executableFile;
     private IngestServices services;
     private long jobId;
-    private List<LayoutFile> carvedItems;
 
     private static class IngestJobTotals {
 
@@ -243,7 +242,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            carvedItems = parser.parse(newAuditFile, id, file);            
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);            
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
@@ -291,15 +290,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                  .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalParsetime"))
                  .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("</table>"); //NON-NLS
-
-        detailsSb.append("<p>") //NON-NLS
-                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.recFiles"))
-                 .append("</p>\n<ul>"); //NON-NLS
-        for (LayoutFile lf : carvedItems) {
-            detailsSb.append("<li>").append(lf.getName()).append("</li>\n"); //NON-NLS
-        }
-
-        detailsSb.append("</ul>"); //NON-NLS
 
         services.postMessage(IngestMessage.createMessage(
                 IngestMessage.MessageType.INFO,
