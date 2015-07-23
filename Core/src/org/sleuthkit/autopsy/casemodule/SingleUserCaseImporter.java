@@ -39,10 +39,12 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -55,16 +57,7 @@ public class SingleUserCaseImporter implements Runnable {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = ".aut"; //NON-NLS
-    //private static final String CACHE_FOLDER = "Cache"; //NON-NLS
-    //private static final String EXPORT_FOLDER = "Export"; //NON-NLS
-    //private static final String LOG_FOLDER = "Log"; //NON-NLS
-    //private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    //private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
-    //private static final String TEMP_FOLDER = "Temp"; //NON-NLS
-    //private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
-    //private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
-    //private final static String TIMELINE_FILE = "events.db"; //NON-NLS
-    public static final String CASE_CONVERSION_LOG_FILE = "case_conversion.txt"; //NON-NLS
+    public static final String CASE_CONVERSION_LOG_FILE = "case_import_log.txt"; //NON-NLS
     private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
     private static final int MAX_DB_NAME_LENGTH = 63;
@@ -73,6 +66,8 @@ public class SingleUserCaseImporter implements Runnable {
     private final String caseOutputFolder;
     private final String imageInputFolder;
     private final String imageOutputFolder;
+    private final boolean copyImages;
+    private final boolean deleteCase;
     private final CaseDbConnectionInfo db;
     private final ConversionDoneCallback notifyOnComplete;
     private PrintWriter writer;
@@ -88,14 +83,19 @@ public class SingleUserCaseImporter implements Runnable {
      * @param imageInput the folder that holds the images to copy over
      * @param imageOutput the destination folder for the images
      * @param database the connection information to talk to the PostgreSQL db
+     * @param copyImages true if images should be copied
+     * @param deleteCase true if the old version of the case should be deleted after import
      * @param callback a callback from the calling panel for notification when
      * the conversion has completed. This is a Runnable on a different thread.
      */
-    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database, ConversionDoneCallback callback) {
+    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database, 
+            boolean copyImages, boolean deleteCase, ConversionDoneCallback callback) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
         this.imageOutputFolder = imageOutput;
+        this.copyImages = copyImages;
+        this.deleteCase = deleteCase;
         this.db = database;
         this.notifyOnComplete = callback;
     }
@@ -117,7 +117,12 @@ public class SingleUserCaseImporter implements Runnable {
         try {
             log("Beginning to convert " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
 
-            checkInput(input.toFile(), new File(imageInputFolder));
+            if(copyImages){
+                checkInput(input.toFile(), new File(imageInputFolder));
+            }
+            else{
+                checkInput(input.toFile(), null);
+            }
             String oldCaseName = oldCaseFolder;
             if (TimeStampUtils.endsWithTimeStamp(oldCaseName)) {
                 oldCaseName = oldCaseName.substring(0, oldCaseName.length() - TimeStampUtils.getTimeStampLength());
@@ -148,8 +153,10 @@ public class SingleUserCaseImporter implements Runnable {
 
             copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
             dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
-            File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
-            fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
+            if(copyImages){
+                File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
+                fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
+            }
 
             // create new XML config
             newXmlCaseManagement.create(Paths.get(caseOutputFolder, newCaseFolder).toString(),
@@ -161,6 +168,15 @@ public class SingleUserCaseImporter implements Runnable {
             // Set created date. This calls writefile, no need to call it again
             newXmlCaseManagement.setCreatedDate(oldXmlCaseManagement.getCreatedDate());
 
+            // At this point the import has been finished successfully so we can delete the original case
+            // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file
+            // and database in the given directory so the user shouldn't be able to accidently blow away
+            // their C drive.
+            if(deleteCase){
+                log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.DeletingCase") + " " + input);
+                FileUtils.deleteDirectory(input.toFile());
+            }
+            
             log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
                     + input.toString() + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
@@ -176,13 +192,13 @@ public class SingleUserCaseImporter implements Runnable {
      * Ensure the input source has an autopsy.db and exists.
      *
      * @param caseInput The folder containing a case to convert.
-     * @param imageInput The folder containing the images to copy.
+     * @param imageInput The folder containing the images to copy or null if images are not being copied.
      * @throws Exception
      */
     private void checkInput(File caseInput, File imageInput) throws Exception {
         if (false == caseInput.exists()) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadCaseSourceFolder"));
-        } else if (false == imageInput.exists()) {
+        } else if ((imageInput != null) && (false == imageInput.exists())) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadImageSourceFolder"));
         }
         Path path = Paths.get(caseInput.toString(), AUTOPSY_DB_FILE);
@@ -256,62 +272,6 @@ public class SingleUserCaseImporter implements Runnable {
         if(oldAutopsyFile.exists()){
             oldAutopsyFile.delete();
         }
-        
-        /*
-        Path source = input.resolve(CACHE_FOLDER);
-        Path destination;
-
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, CACHE_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(EXPORT_FOLDER);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, EXPORT_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(LOG_FOLDER);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, LOG_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(MODULE_FOLDER);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, MODULE_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(REPORTS_FOLDER);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, REPORTS_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(TEMP_FOLDER);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, TEMP_FOLDER);
-            FileUtils.copyDirectory(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(TIMELINE_FILE);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
-            FileUtils.copyFile(source.toFile(), destination.toFile());
-        }
-
-        source = input.resolve(AIM_LOG_FILE_NAME);
-        if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
-            FileUtils.copyFile(source.toFile(), destination.toFile());
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
-            } catch (IOException e) {
-                // if unable to log it, no problem
-            }
-        }*/
     }
 
     /**
@@ -924,6 +884,7 @@ public class SingleUserCaseImporter implements Runnable {
         numberingPK = postgresqlConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE blackboard_artifact_tags_tag_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
+        sqliteConnection.close();
         postgresqlConnection.close();
 
         return dbName;
@@ -1177,7 +1138,7 @@ public class SingleUserCaseImporter implements Runnable {
             writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true);
         } catch (IOException ex) {
             writer = null;
-            Exceptions.printStackTrace(ex);
+            Logger.getLogger(SingleUserCaseImporter.class.getName()).log(Level.WARNING, "Error opening log file " + logFile.toString(), ex);
         }
     }
 
