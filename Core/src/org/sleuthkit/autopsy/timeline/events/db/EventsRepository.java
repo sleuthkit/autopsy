@@ -96,9 +96,10 @@ public class EventsRepository {
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
+    private final Case autoCase;
 
     public ObservableMap<Long, String> getDatasourcesMap() {
-        return FXCollections.unmodifiableObservableMap(datasourcesMap);
+        return datasourcesMap;
     }
 
     public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
@@ -113,11 +114,12 @@ public class EventsRepository {
         return modelInstance;
     }
 
-    public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
+    public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
+        this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
+        this.eventDB = EventDB.getEventDB(autoCase);
 
-        populateDataSourceMap(Case.getCurrentCase().getSleuthkitCase());
+        populateDataSourceMap(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
             //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getEventById));
@@ -130,6 +132,7 @@ public class EventsRepository {
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
+
     }
 
     /** @return min time (in seconds from unix epoch) */
@@ -209,6 +212,10 @@ public class EventsRepository {
         return Collections.unmodifiableMap(datasourcesMap);
     }
 
+    public boolean hasDataSourceInfo() {
+        return eventDB.hasDataSourceInfo();
+    }
+
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
 
         private final ProgressWindow progressDialog;
@@ -229,11 +236,11 @@ public class EventsRepository {
                     "EventsRepository.progressWindow.msg.reinit_db"), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
-            eventDB.dropTable();
+            eventDB.dropEventsTable();
             eventDB.initializeDB();
 
             //grab ids of all files
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = autoCase.getSleuthkitCase();
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
@@ -399,7 +406,7 @@ public class EventsRepository {
      * @param skCase
      */
     private void populateDataSourceMap(SleuthkitCase skCase) {
-        //because there is no way to remove a datasource we only add.
+        //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventDB.getDataSourceIDs()) {
             try {
                 datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());

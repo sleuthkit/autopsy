@@ -42,14 +42,10 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
-    synchronized static void invalidateController() {
-        timeLineController = null;
-    }
-
     private static TimeLineController timeLineController = null;
 
-    public OpenTimelineAction() {
-        super();
+    synchronized static void invalidateController() {
+        timeLineController = null;
     }
 
     @Override
@@ -63,7 +59,7 @@ public class OpenTimelineAction extends CallableSystemAction {
     public void performAction() {
 
         //check case
-        if (!Case.existsCurrentCase()) {
+        if (!Case.isCaseOpen()) {
             return;
         }
         final Case currentCase = Case.getCurrentCase();
@@ -76,8 +72,10 @@ public class OpenTimelineAction extends CallableSystemAction {
         }
         synchronized (OpenTimelineAction.class) {
             if (timeLineController == null) {
-                timeLineController = new TimeLineController();
-                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");// NON-NLS
+                timeLineController = new TimeLineController(currentCase);
+            } else if (timeLineController.getAutopsyCase() != currentCase) {
+                timeLineController.closeTimeLine();
+                timeLineController = new TimeLineController(currentCase);
             }
         }
         timeLineController.openTimeLine();

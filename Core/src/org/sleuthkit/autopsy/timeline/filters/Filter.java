@@ -31,8 +31,8 @@ public interface Filter {
      * @param filters a set of filters to intersect
      *
      * @return a filter that is the intersection of the given filters */
-    public static IntersectionFilter intersect(ObservableList<Filter> filters) {
-        return new IntersectionFilter(filters);
+    public static IntersectionFilter<Filter> intersect(ObservableList<Filter> filters) {
+        return new IntersectionFilter<>(filters);
     }
 
     /**
@@ -40,8 +40,8 @@ public interface Filter {
      *
      * @return a filter that is the intersection of the given filters
      */
-    public static IntersectionFilter intersect(Filter[] filters) {
-        return new IntersectionFilter(FXCollections.observableArrayList(filters));
+    public static IntersectionFilter<Filter> intersect(Filter[] filters) {
+        return new IntersectionFilter<>(FXCollections.observableArrayList(filters));
     }
 
     /**
@@ -61,9 +61,9 @@ public interface Filter {
 
     String getStringCheckBox();
 
-    boolean isActive();
+    boolean isSelected();
 
-    void setActive(Boolean act);
+    void setSelected(Boolean act);
 
     SimpleBooleanProperty getActiveProperty();
 

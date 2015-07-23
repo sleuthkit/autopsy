@@ -104,7 +104,7 @@ public final class FilteredEventsModel {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
-            dataSourceFilter.setActive(Boolean.TRUE);
+            dataSourceFilter.setSelected(Boolean.TRUE);
             dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
         });
         return new RootFilter(new HideKnownFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
@@ -155,7 +155,7 @@ public final class FilteredEventsModel {
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
-        final IntersectionFilter intersect;
+        final IntersectionFilter<?> intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
             intersect = Filter.intersect(new Filter[]{filter, requestedFilter.get()});

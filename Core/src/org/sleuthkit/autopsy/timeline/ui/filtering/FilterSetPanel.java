@@ -94,13 +94,13 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
             MenuItem all = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.all"));
             all.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
-                    t.getValue().setActive(Boolean.TRUE);
+                    t.getValue().setSelected(Boolean.TRUE);
                 });
             });
             MenuItem none = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.none"));
             none.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
-                    t.getValue().setActive(Boolean.FALSE);
+                    t.getValue().setSelected(Boolean.FALSE);
                 });
             });
 
@@ -108,9 +108,9 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
             only.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
-                        t.getValue().setActive(Boolean.TRUE);
+                        t.getValue().setSelected(Boolean.TRUE);
                     } else {
-                        t.getValue().setActive(Boolean.FALSE);
+                        t.getValue().setSelected(Boolean.FALSE);
                     }
                 });
             });
@@ -118,16 +118,16 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
             others.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
-                        t.getValue().setActive(Boolean.FALSE);
+                        t.getValue().setSelected(Boolean.FALSE);
                     } else {
-                        t.getValue().setActive(Boolean.TRUE);
+                        t.getValue().setSelected(Boolean.TRUE);
                     }
                 });
             });
             final ContextMenu rowMenu = new ContextMenu();
             Menu select = new Menu(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.select"));
             select.setOnAction(e -> {
-                row.getItem().setActive(!row.getItem().isActive());
+                row.getItem().setSelected(!row.getItem().isSelected());
             });
             select.getItems().addAll(all, none, only, others);
             rowMenu.getItems().addAll(select);
@@ -174,36 +174,4 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf(), expansionMap));
     }
 
-    /**
-     * A {@link TreeTableCell} that represents the active state of a
-     * {@link AbstractFilter} as a checkbox
-     */
-    private static class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
-
-        private final CheckBox checkBox = new CheckBox();
-        private SimpleBooleanProperty activeProperty;
-
-        @Override
-        protected void updateItem(AbstractFilter item, boolean empty) {
-            super.updateItem(item, empty);
-            Platform.runLater(() -> {
-                if (activeProperty != null) {
-                    checkBox.selectedProperty().unbindBidirectional(activeProperty);
-                }
-                checkBox.disableProperty().unbind();
-                if (item == null) {
-                    setText(null);
-                    setGraphic(null);
-
-                } else {
-                    setText(item.getDisplayName());
-                    activeProperty = item.getActiveProperty();
-                    checkBox.selectedProperty().bindBidirectional(activeProperty);
-                    checkBox.disableProperty().bind(item.getDisabledProperty());
-                    setGraphic(checkBox);
-                }
-            });
-        }
-
-    }
 }

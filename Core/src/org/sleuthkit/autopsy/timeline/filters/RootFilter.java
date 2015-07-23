@@ -24,7 +24,7 @@ import javafx.collections.FXCollections;
  * an implementation of (@link IntersectionFilter} designed to be used as the
  * root of a filter tree. provides named access to specific subfilters.
  */
-public class RootFilter extends IntersectionFilter {
+public class RootFilter extends IntersectionFilter<Filter> {
 
     private final HideKnownFilter knwonFilter;
     private final TextFilter textFilter;
@@ -46,7 +46,7 @@ public class RootFilter extends IntersectionFilter {
     @Override
     public RootFilter copyOf() {
         RootFilter filter = new RootFilter(knwonFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
-        filter.setActive(isActive());
+        filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
     }
@@ -57,6 +57,7 @@ public class RootFilter extends IntersectionFilter {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;
@@ -64,6 +65,6 @@ public class RootFilter extends IntersectionFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        return hashEqualSubFilters(this, (CompoundFilter) obj);
+        return hashEqualSubFilters(this, (CompoundFilter<Filter>) obj);
     }
 }

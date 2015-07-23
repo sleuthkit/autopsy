@@ -128,6 +128,11 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
+    private final Case autoCase;
+
+    public Case getAutopsyCase() {
+        return autoCase;
+    }
 
     synchronized public ReadOnlyListProperty<Task<?>> getTasks() {
         return tasks.getReadOnlyProperty();
@@ -218,9 +223,9 @@ public class TimeLineController {
     }
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
-    public TimeLineController() {
-        //initalize repository and filteredEvents on creation
-        eventsRepository = new EventsRepository(historyManager.currentState());
+    public TimeLineController(Case autoCase) {
+        this.autoCase = autoCase;        //initalize repository and filteredEvents on creation
+        eventsRepository = new EventsRepository(autoCase, historyManager.currentState());
 
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
@@ -275,12 +280,14 @@ public class TimeLineController {
                         eventsRepository.recordWasIngestRunning(injestRunning);
                     }
                     synchronized (TimeLineController.this) {
+                        //TODO: this looks hacky.  what is going on? should this be an event?
                         needsHistogramRebuild.set(true);
                         needsHistogramRebuild.set(false);
                         showWindow();
                     }
 
                     Platform.runLater(() -> {
+                        //TODO: should this be an event?
                         newEventsFlag.set(false);
                         TimeLineController.this.showFullRange();
                     });
@@ -330,17 +337,31 @@ public class TimeLineController {
             if (timeLineLastObjectId == -1) {
                 rebuildingRepo = rebuildRepo();
             }
-            if (rebuildingRepo == false
-                    && eventsRepository.getWasIngestRunning()) {
-                if (showLastPopulatedWhileIngestingConfirmation() == JOptionPane.YES_OPTION) {
-                    rebuildingRepo = rebuildRepo();
+            if (rebuildingRepo == false) {
+                if (eventsRepository.getWasIngestRunning()) {
+                    if (showLastPopulatedWhileIngestingConfirmation() == JOptionPane.YES_OPTION) {
+                        rebuildingRepo = rebuildRepo();
+                    }
                 }
             }
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            if ((rebuildingRepo == false)
-                    && (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
-                    || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID())) {
-                rebuildingRepo = outOfDatePromptAndRebuild();
+
+            if (rebuildingRepo == false) {
+                final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
+                if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
+                        || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
+                    if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                        rebuildingRepo = rebuildRepo();
+                    }
+                }
+            }
+
+            if (rebuildingRepo == false) {
+                boolean hasDSInfo = eventsRepository.hasDataSourceInfo();
+                if (hasDSInfo == false) {
+                    if (showDataSourcesMissingConfirmation() == JOptionPane.YES_OPTION) {
+                        rebuildingRepo = rebuildRepo();
+                    }
+                }
             }
 
             if (rebuildingRepo == false) {
@@ -638,9 +659,11 @@ public class TimeLineController {
      * prompt the user to rebuild and then rebuild if the user chooses to
      */
     synchronized private boolean outOfDatePromptAndRebuild() {
-        return showOutOfDateConfirmation() == JOptionPane.YES_OPTION
-                ? rebuildRepo()
-                : false;
+        if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+            return rebuildRepo();
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -652,6 +675,16 @@ public class TimeLineController {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
+    synchronized int showDataSourcesMissingConfirmation() {
+        return JOptionPane.showConfirmDialog(mainFrame,
+                "The Timeline events database was previously populated with an old version of Autopsy."
+                + "\nThe data source filter will be unavailable unless you update the events database."
+                + "\nDo you want to update the events database now?",
+                "Update Timeline database?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+    }
+
     synchronized int showLastPopulatedWhileIngestingConfirmation() {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
@@ -659,7 +692,6 @@ public class TimeLineController {
                         "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
-
     }
 
     synchronized int showOutOfDateConfirmation() throws MissingResourceException, HeadlessException {
@@ -715,7 +747,9 @@ public class TimeLineController {
                     //if we are doing incremental updates, drop this
                     SwingUtilities.invokeLater(() -> {
                         if (isWindowOpen()) {
-                            outOfDatePromptAndRebuild();
+                            if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                                rebuildRepo();
+                            }
                         }
                     });
             }
@@ -733,7 +767,9 @@ public class TimeLineController {
                     //if we are doing incremental updates, drop this
                     SwingUtilities.invokeLater(() -> {
                         if (isWindowOpen()) {
-                            outOfDatePromptAndRebuild();
+                            if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                                rebuildRepo();
+                            }
                         }
                     });
                     break;

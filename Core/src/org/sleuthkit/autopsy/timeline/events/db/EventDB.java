@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.events.db;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import java.io.File;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -50,6 +50,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
@@ -57,13 +58,8 @@ import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
-import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
@@ -73,15 +69,21 @@ import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class provides access to the Timeline SQLite database. This
- * class borrows a lot of ideas and techniques from {@link  SleuthkitCase},
- * Creating an abstract base class for sqlite databases, or using a higherlevel
- * persistence api may make sense in the future.
+ * Provides access to the Timeline SQLite database.
+ *
+ * This class borrows a lot of ideas and techniques from
+ * {@link  SleuthkitCase}. Creating an abstract base class for SQLite
+ * databases, or using a higherlevel persistence api may make sense in the
+ * future.
  */
 public class EventDB {
 
+    boolean hasDataSourceInfo() {
+        return hasDataSourceIDColumn() && (getDataSourceIDs().isEmpty() == false);
+    }
+
     /** enum to represent columns in the events table */
-    private enum EventTableColumn {
+    enum EventTableColumn {
 
         ARTIFACT_ID("artifact_id"), // NON-NLS
         BASE_TYPE("base_type"), // NON-NLS
@@ -147,9 +149,9 @@ public class EventDB {
      *
      * @return
      */
-    public static EventDB getEventDB(String dbPath) {
+    public static EventDB getEventDB(Case autoCase) {
         try {
-            return new EventDB(dbPath + File.separator + "events.db"); // NON-NLS
+            return new EventDB(autoCase); // NON-NLS
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex); // NON-NLS
             return null;
@@ -159,105 +161,6 @@ public class EventDB {
         }
     }
 
-    static List<Integer> getActiveSubTypes(TypeFilter filter) {
-        if (filter.isActive()) {
-            if (filter.getSubFilters().isEmpty()) {
-                return Collections.singletonList(RootEventType.allTypes.indexOf(filter.getEventType()));
-            } else {
-                return filter.getSubFilters().stream().flatMap((Filter t) -> getActiveSubTypes((TypeFilter) t).stream()).collect(Collectors.toList());
-            }
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    static String getSQLWhere(IntersectionFilter filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isActive)
-                .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" and ", "( ", ")")); // NON-NLS
-    }
-
-    static String getSQLWhere(UnionFilter filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isActive)
-                .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" or ", "( ", ")")); // NON-NLS
-    }
-
-    private static String getSQLWhere(Filter filter) {
-        //TODO: this is here so that the filters don't depend, even implicitly, on the db, but it leads to some nasty code
-        //it would all be much easier if all the getSQLWhere methods where moved to their respective filter classes
-        String result = "";
-        if (filter == null) {
-            return "1";
-        } else if (filter instanceof DataSourceFilter) {
-            result = getSQLWhere((DataSourceFilter) filter);
-        } else if (filter instanceof HideKnownFilter) {
-            result = getSQLWhere((HideKnownFilter) filter);
-        } else if (filter instanceof TextFilter) {
-            result = getSQLWhere((TextFilter) filter);
-        } else if (filter instanceof TypeFilter) {
-            result = getSQLWhere((TypeFilter) filter);
-        } else if (filter instanceof IntersectionFilter) {
-            result = getSQLWhere((IntersectionFilter) filter);
-        } else if (filter instanceof UnionFilter) {
-            result = getSQLWhere((UnionFilter) filter);
-        } else {
-            return "1";
-        }
-        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result; // NON-NLS
-        result = StringUtils.deleteWhitespace(result).equals("()") ? "1" : result; // NON-NLS
-        //System.out.println(result);
-        return result;
-    }
-
-    private static String getSQLWhere(HideKnownFilter filter) {
-        return (filter.isActive())
-                ? "(" + EventTableColumn.KNOWN.toString() + " is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
-                : "1";
-    }
-
-    private static String getSQLWhere(DataSourceFilter filter) {
-        return (filter.isActive())
-                ? "(" + EventTableColumn.DATA_SOURCE_ID.toString() + " = '" + filter.getDataSourceID() + "')"
-                : "1"; // NON-NLS
-    }
-
-    private static String getSQLWhere(TextFilter filter) {
-        if (filter.isActive()) {
-            if (StringUtils.isBlank(filter.getText())) {
-                return "1";
-            }
-            String strip = StringUtils.strip(filter.getText());
-            return "((" + EventTableColumn.MED_DESCRIPTION.toString() + " like '%" + strip + "%') or (" // NON-NLS
-                    + EventTableColumn.FULL_DESCRIPTION.toString() + " like '%" + strip + "%') or (" // NON-NLS
-                    + EventTableColumn.SHORT_DESCRIPTION.toString() + " like '%" + strip + "%'))"; // NON-NLS
-        } else {
-            return "1";
-        }
-    }
-
-    /**
-     * generate a sql where clause for the given type filter, while trying to be
-     * as simple as possible to improve performance.
-     *
-     * @param filter
-     *
-     * @return
-     */
-    private static String getSQLWhere(TypeFilter filter) {
-        if (filter.isActive() == false) {
-            return "0";
-        } else if (filter.getEventType() instanceof RootEventType) {
-            //if the filter is a root filter and all base type filtes and subtype filters are active,
-            if (filter.getSubFilters().stream().allMatch(f
-                    -> f.isActive() && ((TypeFilter) f).getSubFilters().stream().allMatch(Filter::isActive))) {
-                return "1"; //then collapse clause to true
-            }
-        }
-        return "(" + EventTableColumn.SUB_TYPE.toString() + " in (" + StringUtils.join(getActiveSubTypes(filter), ",") + "))"; // NON-NLS
-    }
 
     private volatile Connection con;
 
@@ -281,8 +184,8 @@ public class EventDB {
 
     private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
 
-    private EventDB(String dbPath) throws SQLException, Exception {
-        this.dbPath = dbPath;
+    private EventDB(Case autoCase) throws SQLException, Exception {
+        this.dbPath = Paths.get(autoCase.getModulesOutputDirAbsPath(), "events.db").toString();
         initializeDB();
     }
 
@@ -398,7 +301,7 @@ public class EventDB {
         DBLock.unlock();
     }
 
-    void dropTable() {
+    void dropEventsTable() {
         //TODO: use prepared statement - jm
         dbWriteLock();
         try (Statement createStatement = con.createStatement()) {
@@ -417,7 +320,7 @@ public class EventDB {
     Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;
-        final String sqlWhere = getSQLWhere(filter);
+        final String sqlWhere = SQLHelper.getSQLWhere(filter);
 
         dbReadLock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
@@ -472,7 +375,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         dbReadLock();
-        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter); // NON-NLS
+        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
@@ -503,7 +406,10 @@ public class EventDB {
         dbReadLock();
         try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
             while (rs.next()) {
-                hashSet.add(rs.getLong(EventTableColumn.DATA_SOURCE_ID.toString())); // NON-NLS
+                long datasourceID = rs.getLong(EventTableColumn.DATA_SOURCE_ID.toString());
+                if (datasourceID != 0) {
+                    hashSet.add(datasourceID); // NON-NLS
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
@@ -601,6 +507,39 @@ public class EventDB {
                 LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
             }
 
+            boolean hasDSInfo = hasDataSourceIDColumn();
+            if (hasDSInfo == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
+                }
+            }
+
+            try {
+                insertRowStmt = prepareStatement(
+                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
+
+                getDataSourceIDsStmt = prepareStatement("select distinct datasource_id from events"); // NON-NLS
+                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
+                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
+                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
+                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
+                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
+            } catch (SQLException sQLException) {
+                LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
+            }
+            if (hasDataSourceInfo() == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
+                }
+            }
+
             try (Statement stmt = con.createStatement()) {
                 String sql = "CREATE INDEX if not exists file_idx ON events(file_id)"; // NON-NLS
                 stmt.execute(sql);
@@ -642,24 +581,24 @@ public class EventDB {
                 LOGGER.log(Level.SEVERE, "problem creating known_idx", ex); // NON-NLS
             }
 
-            try {
-                insertRowStmt = prepareStatement(
-                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
-                        + "VALUES (?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
-
-                getDataSourceIDsStmt = prepareStatement("select distinct datasource_id from events"); // NON-NLS
-                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
-                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
-                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
-                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
-                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
-            } catch (SQLException sQLException) {
-                LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
-            }
-
         } finally {
             dbWriteUnlock();
         }
+    }
+
+    private boolean hasDataSourceIDColumn() {
+        try (Statement stmt = con.createStatement()) {
+
+            ResultSet executeQuery = stmt.executeQuery("PRAGMA table_info(events)");
+            while (executeQuery.next()) {
+                if (EventTableColumn.DATA_SOURCE_ID.toString().equals(executeQuery.getString("name"))) {
+                    return true;
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
+        }
+        return false;
     }
 
     void insertEvent(long time, EventType type, long datasourceID, Long objID, Long artifactID, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
@@ -830,7 +769,7 @@ public class EventDB {
 
         //get some info about the range of dates requested
         final String queryString = "select count(*), " + useSubTypeHelper(useSubTypes)
-                + " from events where time >= " + startTime + " and time < " + endTime + " and " + getSQLWhere(filter) // NON-NLS
+                + " from events where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
 
         ResultSet rs = null;
@@ -912,7 +851,7 @@ public class EventDB {
         //get all agregate events in this time unit
         dbReadLock();
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
-                + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter) // NON-NLS
+                + " from events where time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
         //System.out.println(query);
@@ -1068,6 +1007,7 @@ public class EventDB {
             LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex); // NON-NLS
         } finally {
             dbWriteUnlock();
+
         }
     }
 
@@ -1146,17 +1086,6 @@ public class EventDB {
 
         public Boolean isClosed() {
             return closed;
-        }
-    }
-
-    public class MultipleTransactionException extends IllegalStateException {
-
-        private static final long serialVersionUID = 1L;
-
-        static private final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "cannot have more than one open transaction"; // NON-NLS
-
-        public MultipleTransactionException() {
-            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
         }
     }
 }

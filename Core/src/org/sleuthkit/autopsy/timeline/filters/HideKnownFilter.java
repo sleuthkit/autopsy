@@ -38,7 +38,7 @@ public class HideKnownFilter extends AbstractFilter {
     @Override
     public HideKnownFilter copyOf() {
         HideKnownFilter hideKnownFilter = new HideKnownFilter();
-        hideKnownFilter.setActive(isActive());
+        hideKnownFilter.setSelected(isSelected());
         hideKnownFilter.setDisabled(isDisabled());
         return hideKnownFilter;
     }
@@ -63,6 +63,6 @@ public class HideKnownFilter extends AbstractFilter {
         }
         final HideKnownFilter other = (HideKnownFilter) obj;
 
-        return isActive() == other.isActive();
+        return isSelected() == other.isSelected();
     }
 }

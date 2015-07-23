@@ -56,7 +56,7 @@ public class TextFilter extends AbstractFilter {
     @Override
     synchronized public TextFilter copyOf() {
         TextFilter textFilter = new TextFilter(getText());
-        textFilter.setActive(isActive());
+        textFilter.setSelected(isSelected());
         textFilter.setDisabled(isDisabled());
         return textFilter;
     }
@@ -76,7 +76,7 @@ public class TextFilter extends AbstractFilter {
         }
         final TextFilter other = (TextFilter) obj;
         
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
         return Objects.equals(text.get(), other.text.get());

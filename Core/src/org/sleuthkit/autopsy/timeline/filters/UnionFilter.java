@@ -11,15 +11,14 @@ import javafx.collections.ObservableList;
  *
  * Union(or) filter
  */
-abstract public class UnionFilter extends CompoundFilter{
+abstract public class UnionFilter<SubFilterType extends Filter> extends CompoundFilter<SubFilterType> {
 
-    public UnionFilter(ObservableList<Filter> subFilters) {
+    public UnionFilter(ObservableList<SubFilterType> subFilters) {
         super(subFilters);
     }
 
     public UnionFilter() {
-        super(FXCollections.<Filter>observableArrayList());
+        super(FXCollections.<SubFilterType>observableArrayList());
     }
-    
-   
+
 }

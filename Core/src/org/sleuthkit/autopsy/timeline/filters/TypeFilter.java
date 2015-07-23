@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 
 /** Event Type Filter. An instance of TypeFilter is usually a tree that
  * parallels the event type hierarchy with one filter/node for each event type. */
-public class TypeFilter extends UnionFilter {
+public class TypeFilter extends UnionFilter<TypeFilter> {
 
     /** the event type this filter passes */
     private final EventType eventType;
@@ -86,10 +86,10 @@ public class TypeFilter extends UnionFilter {
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
         final TypeFilter typeFilter = new TypeFilter(eventType, false);
-        typeFilter.setActive(isActive());
+        typeFilter.setSelected(isSelected());
         typeFilter.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((Filter t) -> {
+        this.getSubFilters().forEach((TypeFilter t) -> {
             typeFilter.getSubFilters().add(t.copyOf());
         });
 
@@ -100,7 +100,7 @@ public class TypeFilter extends UnionFilter {
     public String getHTMLReportString() {
         String string = getEventType().getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }
@@ -115,7 +115,7 @@ public class TypeFilter extends UnionFilter {
         }
         final TypeFilter other = (TypeFilter) obj;
 
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
 

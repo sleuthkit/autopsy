@@ -19,40 +19,45 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.stream.Collectors;
+import javafx.beans.binding.Bindings;
 
 /**
  * union of {@link DataSourceFilter}s
  */
-public class DataSourcesFilter extends UnionFilter {
+public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
+
+    public DataSourcesFilter() {
+        this.getDisabledProperty().bind(Bindings.size(getSubFilters()).greaterThan(1));
+    }
 
     @Override
     public DataSourcesFilter copyOf() {
         //make a nonrecursive copy of this filter
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
-        filterCopy.setActive(isActive());
-        filterCopy.setDisabled(isDisabled());
+        filterCopy.setSelected(isSelected());
+//        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((Filter t) -> {
-            filterCopy.addDataSourceFilter((DataSourceFilter) t.copyOf());
+        this.getSubFilters().forEach((DataSourceFilter t) -> {
+            filterCopy.addDataSourceFilter(t.copyOf());
         });
-
+        
         return filterCopy;
     }
-
+    
     @Override
     public String getDisplayName() {
         return "Data Source";
     }
-
+    
     @Override
     public String getHTMLReportString() {
         String string = getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }
-
+    
     public void addDataSourceFilter(DataSourceFilter dataSourceFilter) {
         if (getSubFilters().stream().map(DataSourceFilter.class::cast)
                 .map(DataSourceFilter::getDataSourceID)
@@ -61,7 +66,7 @@ public class DataSourcesFilter extends UnionFilter {
             getSubFilters().add(dataSourceFilter);
         }
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -71,18 +76,18 @@ public class DataSourcesFilter extends UnionFilter {
             return false;
         }
         final DataSourcesFilter other = (DataSourcesFilter) obj;
-
-        if (isActive() != other.isActive()) {
+        
+        if (isSelected() != other.isSelected()) {
             return false;
         }
-
+        
         return hashEqualSubFilters(this, other);
-
+        
     }
-
+    
     @Override
     public int hashCode() {
         return 9;
     }
-
+    
 }

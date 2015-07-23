@@ -36,8 +36,8 @@ public class FilterTreeItem extends TreeItem<Filter> {
             expansionMap.put(f.getDisplayName(), isExpanded());
         });
 
-        if (f instanceof CompoundFilter) {
-            CompoundFilter cf = (CompoundFilter) f;
+        if (f instanceof CompoundFilter<?>) {
+            CompoundFilter<?> cf = (CompoundFilter<?>) f;
 
             for (Filter af : cf.getSubFilters()) {
                 getChildren().add(new FilterTreeItem(af, expansionMap));

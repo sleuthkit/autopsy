@@ -44,7 +44,7 @@ public class DataSourceFilter extends AbstractFilter {
     @Override
     synchronized public DataSourceFilter copyOf() {
         DataSourceFilter filterCopy = new DataSourceFilter(getDisplayName(), getDataSourceID());
-        filterCopy.setActive(isActive());
+        filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         return filterCopy;
     }
@@ -82,7 +82,7 @@ public class DataSourceFilter extends AbstractFilter {
         if (this.dataSourceID != other.dataSourceID) {
             return false;
         }
-        return isActive() == other.isActive();
+        return isSelected() == other.isSelected();
     }
 
 }

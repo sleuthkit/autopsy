@@ -4,29 +4,30 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.List;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import org.openide.util.NbBundle;
 
 /** Intersection(And) filter */
-public class IntersectionFilter extends CompoundFilter {
+public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
 
-    public IntersectionFilter(ObservableList<Filter> subFilters) {
+    public IntersectionFilter(List<S> subFilters) {
         super(subFilters);
     }
 
     public IntersectionFilter() {
-        super(FXCollections.<Filter>observableArrayList());
+        super(FXCollections.<S>observableArrayList());
     }
 
     @Override
-    public IntersectionFilter copyOf() {
-        IntersectionFilter filter = new IntersectionFilter(FXCollections.observableArrayList(
-                this.getSubFilters().stream()
+    public IntersectionFilter<S> copyOf() {
+        @SuppressWarnings("unchecked")
+        IntersectionFilter<S> filter = new IntersectionFilter<>(
+                (List<S>) this.getSubFilters().stream()
                 .map(Filter::copyOf)
-                .collect(Collectors.toList())));
-        filter.setActive(isActive());
+                .collect(Collectors.toList()));
+        filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
     }
@@ -34,15 +35,15 @@ public class IntersectionFilter extends CompoundFilter {
     @Override
     public String getDisplayName() {
         return NbBundle.getMessage(this.getClass(),
-                                   "IntersectionFilter.displayName.text",
-                                   getSubFilters().stream()
-                                                  .map(Filter::getDisplayName)
-                                                  .collect(Collectors.joining(",", "[", "]")));
+                "IntersectionFilter.displayName.text",
+                getSubFilters().stream()
+                .map(Filter::getDisplayName)
+                .collect(Collectors.joining(",", "[", "]")));
     }
 
     @Override
     public String getHTMLReportString() {
-        return getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+        return getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
     }
 
     @Override
@@ -53,9 +54,10 @@ public class IntersectionFilter extends CompoundFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IntersectionFilter other = (IntersectionFilter) obj;
+        @SuppressWarnings("unchecked")
+        final IntersectionFilter<S> other = (IntersectionFilter<S>) obj;
 
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
 
