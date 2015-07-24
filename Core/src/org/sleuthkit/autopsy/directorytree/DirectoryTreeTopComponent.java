@@ -769,7 +769,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node imagesNode = imagesNodeOrig.getNode();
 
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();
+        RootContentChildren contentRootChildren = (RootContentChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
         //final TreeView tree = getTree();
@@ -777,7 +777,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
 
     }
-
+    
     /**
      * Set the selected node using a path to a previously selected node.
      *
