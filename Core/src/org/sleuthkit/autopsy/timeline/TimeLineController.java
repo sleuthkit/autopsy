@@ -252,6 +252,13 @@ public class TimeLineController {
         advance(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
     }
 
+    /**
+     * rebuld the repo.
+     *
+     * @return False if the repo was not rebuilt because of an error or because
+     *         the user aborted after prompt about ingest running.
+     *         True if the repo was rebuilt.
+     */
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
             //confirm timeline during ingest
@@ -334,38 +341,40 @@ public class TimeLineController {
         try {
             long timeLineLastObjectId = eventsRepository.getLastObjID();
 
-            boolean rebuildingRepo = false;
+            boolean repoRebuilt = false;
             if (timeLineLastObjectId == -1) {
-                rebuildingRepo = rebuildRepo();
+                repoRebuilt = rebuildRepo();
             }
-            if (rebuildingRepo == false) {
+            if (repoRebuilt == false) {
                 if (eventsRepository.getWasIngestRunning()) {
                     if (showLastPopulatedWhileIngestingConfirmation() == JOptionPane.YES_OPTION) {
-                        rebuildingRepo = rebuildRepo();
+                        repoRebuilt = rebuildRepo();
                     }
                 }
             }
 
-            if (rebuildingRepo == false) {
+            if (repoRebuilt == false) {
                 final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
                 if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
                         || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
                     if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
-                        rebuildingRepo = rebuildRepo();
+                        repoRebuilt = rebuildRepo();
                     }
                 }
             }
 
-            if (rebuildingRepo == false) {
+            if (repoRebuilt == false) {
                 boolean hasDSInfo = eventsRepository.hasDataSourceInfo();
                 if (hasDSInfo == false) {
                     if (showDataSourcesMissingConfirmation() == JOptionPane.YES_OPTION) {
-                        rebuildingRepo = rebuildRepo();
+                        repoRebuilt = rebuildRepo();
                     }
                 }
             }
 
-            if (rebuildingRepo == false) {
+            /* if the repo was not rebuilt show the UI. If the repo was rebuild
+             * it will be displayed as part of that process */
+            if (repoRebuilt == false) {
                 showWindow();
                 showFullRange();
             }
