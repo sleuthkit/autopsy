@@ -211,6 +211,12 @@ public class ServicesMonitor {
         if (service == null) {
             throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
         }
+        
+        // if request is for one of our "core" services - perform an on demand check
+        // to make sure we have the latest status.
+        if (servicesList.contains(service)){
+            checkServiceStatus(service);
+        }
 
         String status = statusByService.get(service);
         if (status == null) {

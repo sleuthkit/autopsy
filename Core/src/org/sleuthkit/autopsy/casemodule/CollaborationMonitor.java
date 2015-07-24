@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -42,6 +41,7 @@ import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -84,7 +84,7 @@ final class CollaborationMonitor {
          * Get the local host name so it can be used to identify the source of
          * collaboration tasks broadcast by this node.
          */
-        hostName = getHostName();
+        hostName = NetworkUtils.getLocalHostName();
 
         /**
          * Create an event publisher that will be used to communicate with
@@ -122,24 +122,6 @@ final class CollaborationMonitor {
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
         periodicTasksExecutor.scheduleAtFixedRate(new HeartbeatTask(), HEARTBEAT_INTERVAL_MINUTES, HEARTBEAT_INTERVAL_MINUTES, TimeUnit.MINUTES);
         periodicTasksExecutor.scheduleAtFixedRate(new StaleTaskDetectionTask(), STALE_TASKS_DETECTION_INTERVAL_MINUTES, STALE_TASKS_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
-    }
-
-    /**
-     * Determines the name of the local host for use in describing local tasks.
-     *
-     * @return The host name of this Autopsy node.
-     */
-    private static String getHostName() {
-        String name;
-        try {
-            name = java.net.InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException notUsed) {
-            name = System.getenv("COMPUTERNAME");
-        }
-        if (name.isEmpty()) {
-            name = "Collaborator";
-        }
-        return name;
     }
 
     /**
