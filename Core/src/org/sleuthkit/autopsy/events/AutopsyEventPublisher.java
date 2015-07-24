@@ -120,7 +120,7 @@ public final class AutopsyEventPublisher {
     /**
      * Removes an event subscriber from this publisher.
      *
-     * @param eventNames The event the subscriber is no longer interested in.
+     * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {

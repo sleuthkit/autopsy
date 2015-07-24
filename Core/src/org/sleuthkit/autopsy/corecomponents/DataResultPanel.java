@@ -65,7 +65,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent customContentViewer;
     private boolean isMain;
     private String title;
-    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
+    private final RootNodeListener rootNodeListener = new RootNodeListener();
     
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
     private boolean listeningToTabbedPane = false;
@@ -369,7 +369,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public void setNode(Node selectedNode) {
         if (this.rootNode != null) {
-            this.rootNode.removeNodeListener(dummyNodeListener);
+            this.rootNode.removeNodeListener(rootNodeListener);
         }
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
@@ -380,8 +380,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
-            dummyNodeListener.reset();
-            this.rootNode.addNodeListener(dummyNodeListener);
+            rootNodeListener.reset();
+            this.rootNode.addNodeListener(rootNodeListener);
         }
         
         resetTabs(selectedNode);
@@ -620,28 +620,33 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
     
-    private class DummyNodeListener implements NodeListener {
+    private class RootNodeListener implements NodeListener {
 
-        private volatile boolean load = true;
-        
+        private volatile boolean waitingForData = true;
+
         public void reset() {
-            load = true;
+            waitingForData = true;
         }
-        
+
         @Override
         public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
-            if (load && containsReal(delta)) {
-                load = false;
+            updateMatches();
+            
+            /* There is a known issue in this code whereby we will only
+             call setupTabs() once even though childrenAdded could be
+             called multiple times.  That means that each panel may not
+             have access to all of the children when they decide if they
+             support the content */
+            if (waitingForData && containsReal(delta)) {
+                waitingForData = false;
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTabs(nme.getNode());
-                    updateMatches(); 	
                 } else {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             setupTabs(nme.getNode());
-                	    updateMatches();
                         }
                     });
                 }

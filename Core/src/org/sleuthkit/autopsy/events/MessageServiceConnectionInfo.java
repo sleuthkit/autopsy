@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.events;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.annotation.concurrent.Immutable;
+import javax.jms.Connection;
+import javax.jms.JMSException;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Connection info for a Java Message Service (JMS) provider. Thread-safe.
@@ -99,4 +103,20 @@ public final class MessageServiceConnectionInfo {
         return new URI(String.format(MESSAGE_SERVICE_URI, host, port));
     }
 
+    /**
+     * Verifies connection to messaging service.
+     *
+     * @return True if connection can be established, false otherwise.
+     */
+    public boolean canConnect() {
+        try {
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getUserName(), getPassword(), getURI());
+            Connection connection = connectionFactory.createConnection();
+            connection.start();
+            connection.close();
+            return true;
+        } catch (URISyntaxException | JMSException ex) {
+            return false;
+        }
+    }
 }

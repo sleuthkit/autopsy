@@ -44,6 +44,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
@@ -60,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -328,7 +330,9 @@ public class Case {
             currentCase = newCase;
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
             doCaseChange(currentCase);
-            RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+            SwingUtilities.invokeLater(() -> {
+                RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
+            });
             if (CaseType.MULTI_USER_CASE == newCase.getCaseType()) {
                 try {
                     /**
@@ -460,7 +464,7 @@ public class Case {
      *
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
-    private static String sanitizeCaseName(String caseName) {
+    public static String sanitizeCaseName(String caseName) {
 
         String result;
 
@@ -523,20 +527,24 @@ public class Case {
                 String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
                 db = SleuthkitCase.openCase(dbPath);
                 if (null != db.getBackupDatabasePath()) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                    db.getBackupDatabasePath()),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                        db.getBackupDatabasePath()),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    });
                 }
             } else {
                 db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 if (null != db.getBackupDatabasePath()) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                    db.getBackupDatabasePath()),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                        db.getBackupDatabasePath()),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    });
                 }
             }
 
@@ -645,6 +653,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
      *                     should be used to call notifyNewDataSource() after the
@@ -657,6 +667,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source failed to be added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source.
      */
@@ -667,6 +679,8 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newDataSource New data source added.
      * @param dataSourceId  A unique identifier for the data source. Should be
@@ -679,6 +693,8 @@ public class Case {
 
     /**
      * Notifies the UI that a new ContentTag has been added.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new ContentTag added
      */
@@ -688,6 +704,8 @@ public class Case {
 
     /**
      * Notifies the UI that a ContentTag has been deleted.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag ContentTag deleted
      */
@@ -697,6 +715,8 @@ public class Case {
 
     /**
      * Notifies the UI that a new BlackboardArtifactTag has been added.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new BlackboardArtifactTag added
      */
@@ -705,7 +725,9 @@ public class Case {
     }
 
     /**
-     * Notifies the UI that a BlackboardArtifactTag has been.
+     * Notifies the UI that a BlackboardArtifactTag has been deleted.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag BlackboardArtifactTag deleted
      */
@@ -774,6 +796,8 @@ public class Case {
 
     /**
      * Updates the case name.
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldCaseName the old case name that wants to be updated
      * @param oldPath     the old path that wants to be updated
@@ -784,9 +808,15 @@ public class Case {
         try {
             xmlcm.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
-            RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
-            updateMainWindowTitle(newCaseName);
+            SwingUtilities.invokeLater(() -> {
+                try{
+                    RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
+                    updateMainWindowTitle(newCaseName);
+                } catch (Exception e) {
+                    Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", e); //NON-NLS
+                }
+            });
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.updateCaseName.exception.msg"), e);
         }
@@ -794,6 +824,8 @@ public class Case {
 
     /**
      * Updates the case examiner
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldExaminer the old examiner
      * @param newExaminer the new examiner
@@ -810,6 +842,8 @@ public class Case {
 
     /**
      * Updates the case number
+     * 
+     * This should not be called from the EDT.
      *
      * @param oldCaseNumber the old case number
      * @param newCaseNumber the new case number
@@ -1016,7 +1050,7 @@ public class Case {
     public String getModuleOutputDirectoryRelativePath() {
         Path thePath;
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
-            thePath = Paths.get(getLocalHostName(), MODULE_FOLDER);
+            thePath = Paths.get(NetworkUtils.getLocalHostName(), MODULE_FOLDER);
         } else {
             thePath = Paths.get(MODULE_FOLDER);
         }
@@ -1029,7 +1063,7 @@ public class Case {
      * Get the host output directory path where modules should save their
      * permanent data. If single-user case, the directory is a subdirectory of
      * the case directory. If multi-user case, the directory is a subdirectory
-     * of HostName, which is a subdirectory of the case directory.
+     * of the hostName, which is a subdirectory of the case directory.
      *
      * @return the path to the host output directory
      */
@@ -1037,7 +1071,7 @@ public class Case {
         String caseDirectory = getCaseDirectory();
         Path hostPath;
         if (caseType == CaseType.MULTI_USER_CASE) {
-            hostPath = Paths.get(caseDirectory, getLocalHostName());
+            hostPath = Paths.get(caseDirectory, NetworkUtils.getLocalHostName());
         } else {
             hostPath = Paths.get(caseDirectory);
         }
@@ -1353,7 +1387,7 @@ public class Case {
             String hostClause = "";
 
             if (caseType == CaseType.MULTI_USER_CASE) {
-                hostClause = File.separator + getLocalHostName();
+                hostClause = File.separator + NetworkUtils.getLocalHostName();
             }
             result = result && (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
@@ -1467,44 +1501,61 @@ public class Case {
 
             if (IngestManager.getInstance().isRunningInteractively()) {
                 // enable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                SwingUtilities.invokeLater(() -> {
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                });
 
                 if (toChangeTo.hasData()) {
                     // open all top components
-                    CoreComponentControl.openCoreWindows();
+                    SwingUtilities.invokeLater(() -> {
+                        CoreComponentControl.openCoreWindows();
+                    });
                 } else {
                     // close all top components
-                    CoreComponentControl.closeCoreWindows();
+                    SwingUtilities.invokeLater(() -> {
+                        CoreComponentControl.closeCoreWindows();
+                    });
                 }
             }
 
             if (IngestManager.getInstance().isRunningInteractively()) {
-                updateMainWindowTitle(currentCase.name);
+                SwingUtilities.invokeLater(() -> {
+                    updateMainWindowTitle(currentCase.name);
+                });
             } else {
-                Frame f = WindowManager.getDefault().getMainWindow();
-                f.setTitle(Case.getAppName()); // set the window name to just application name                
+                SwingUtilities.invokeLater(() -> {
+                    Frame f = WindowManager.getDefault().getMainWindow();
+                    f.setTitle(Case.getAppName()); // set the window name to just application name           
+                });
             }
 
         } else { // case is closed
             if (IngestManager.getInstance().isRunningInteractively()) {
-                // close all top components first
-                CoreComponentControl.closeCoreWindows();
-
-                // disable these menus
-                CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+                
+                SwingUtilities.invokeLater(() -> {
+                    // close all top components first
+                    CoreComponentControl.closeCoreWindows();
+                
+                    // disable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
+                });
             }
 
             //clear pending notifications
-            MessageNotifyUtil.Notify.clear();
+            SwingUtilities.invokeLater(() -> {
+                MessageNotifyUtil.Notify.clear();
+            });
 
-            Frame f = WindowManager.getDefault().getMainWindow();
-            f.setTitle(Case.getAppName()); // set the window name to just application name
+            SwingUtilities.invokeLater(() -> {
+                Frame f = WindowManager.getDefault().getMainWindow();
+                f.setTitle(Case.getAppName()); // set the window name to just application name
+            });
 
             //try to force gc to happen
             System.gc();
@@ -1568,27 +1619,5 @@ public class Case {
         return hasData;
     }
 
-    /**
-     * Set the host name variable. Sometimes the network can be finicky, so the
-     * answer returned by getHostName() could throw an exception or be null.
-     * Have it read the environment variable if getHostName() is unsuccessful.
-     * Also note that some calls into the Case class are static via Case.*, so
-     * anywhere we use HOSTNAME prior to a Case class being instantiated, we
-     * must call getLocalHostName() first.
-     */
-    private static String getLocalHostName() {
-        if (HostName == null || HostName.isEmpty()) {
-            try {
-                HostName = java.net.InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException ex) {
-                // getLocalHost().getHostName() can fail in some situations. 
-                // Use environment variable if so.
-                HostName = System.getenv("COMPUTERNAME");
-            }
-            if (HostName == null || HostName.isEmpty()) {
-                HostName = System.getenv("COMPUTERNAME");
-            }
-        }
-        return HostName;
-    }
+
 }

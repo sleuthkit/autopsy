@@ -24,9 +24,12 @@ import java.awt.EventQueue;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
 import org.openide.util.NbBundle;
@@ -187,8 +190,8 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
             return;
         }
-        String casePath = casePaths[imagesTable.getSelectedRow()];
-        String caseName = caseNames[imagesTable.getSelectedRow()];
+        final String casePath = casePaths[imagesTable.getSelectedRow()];
+        final String caseName = caseNames[imagesTable.getSelectedRow()];
         if (!casePath.equals("")) {
             // Close the startup menu
             try {
@@ -198,34 +201,39 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
             }
             // Open the recent cases
-            try {
-                if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                    JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                                                      caseName),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "OpenRecentCasePanel.openCase.msgDlg.err"),
-                                                  JOptionPane.ERROR_MESSAGE);
-                    RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-
-                     //if case is not opened, open the start window
-                    if (Case.isCaseOpen() == false) {
-                        StartupWindowProvider.getInstance().open();
-                    }
- 
-                } else {
-                    Case.open(casePath); // open the case
-                }
-            } catch (CaseActionException ex) {
+            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
+                                                                  caseName),
+                                              NbBundle.getMessage(this.getClass(),
+                                                                  "OpenRecentCasePanel.openCase.msgDlg.err"),
+                                              JOptionPane.ERROR_MESSAGE);
+                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+
+                 //if case is not opened, open the start window
+                if (Case.isCaseOpen() == false) {
+                    StartupWindowProvider.getInstance().open();
+                }
+
+            } else {
+                new Thread(() -> {
+                    // Create case.
+                    try{
+                        Case.open(casePath);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
                                 "CaseOpenAction.msgDlg.cantOpenCase.msg", caseName,
                                 ex.getMessage()),
                                 NbBundle.getMessage(this.getClass(),
                                 "CaseOpenAction.msgDlg.cantOpenCase.title"),
                                 JOptionPane.ERROR_MESSAGE);
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+                        });
+                        logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+                    }    
+                }).start();
             }
         }
     }

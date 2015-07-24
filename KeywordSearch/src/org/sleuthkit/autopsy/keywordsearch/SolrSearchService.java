@@ -53,9 +53,13 @@ public class SolrSearchService implements KeywordSearchService {
         if (artifactId > 0)
             return;
         
-        Case currentCase = Case.getCurrentCase();
-        if (currentCase == null)
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCase();
+        } catch (IllegalStateException ignore) {
+            // thorown by Case.getCurrentCase() if currentCase is null
             return;
+        }
         
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
         if (sleuthkitCase == null)
@@ -153,6 +157,9 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             String host = UserPreferences.getIndexingServerHost();
             String port = UserPreferences.getIndexingServerPort();
+            if (host.isEmpty() || port.isEmpty()){
+                return false;
+            }
             HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
             KeywordSearch.getServer().connectToSolrServer(solrServer);
         }

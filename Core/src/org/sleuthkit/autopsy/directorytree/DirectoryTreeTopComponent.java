@@ -567,8 +567,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  */
                 try {
                     Case.getCurrentCase();
-                    CoreComponentControl.openCoreWindows();
-                    SwingUtilities.invokeLater(this::componentOpened);
+                    SwingUtilities.invokeLater(() -> {
+                        CoreComponentControl.openCoreWindows();
+                        componentOpened();
+                    });
                 } catch (IllegalStateException notUsed) {
                     /**
                      * Case is closed, do nothing.
