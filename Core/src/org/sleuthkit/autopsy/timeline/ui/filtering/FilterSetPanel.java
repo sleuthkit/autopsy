@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
@@ -177,7 +178,8 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     }
 
     private void refresh() {
-        filterTreeTable.setRoot(new FilterTreeItem(this.filteredEvents.filter().get().copyOf(), expansionMap));
+        Platform.runLater(() -> {
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filter().get().copyOf(), expansionMap));
+        });
     }
-
 }

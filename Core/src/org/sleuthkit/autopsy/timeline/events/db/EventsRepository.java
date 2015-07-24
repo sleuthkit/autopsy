@@ -98,7 +98,7 @@ public class EventsRepository {
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final Case autoCase;
 
-    public ObservableMap<Long, String> getDatasourcesMap() {
+    synchronized public ObservableMap<Long, String> getDatasourcesMap() {
         return datasourcesMap;
     }
 
@@ -405,7 +405,7 @@ public class EventsRepository {
      *
      * @param skCase
      */
-    private void populateDataSourceMap(SleuthkitCase skCase) {
+    synchronized private void populateDataSourceMap(SleuthkitCase skCase) {
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventDB.getDataSourceIDs()) {
             try {
