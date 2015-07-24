@@ -64,9 +64,9 @@ class ThumbnailViewNode extends FilterNode {
             Content content = this.getLookup().lookup(Content.class);
 
             if (content != null) {
-                icon = ImageUtils.getIcon(content, iconSize);
+                icon = ImageUtils.getThumbnail(content, iconSize);
             } else {
-                icon = ImageUtils.getDefaultIcon();
+                icon = ImageUtils.getDefaultThumbnail();
             }
 
             iconCache = new SoftReference<>(icon);
