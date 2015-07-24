@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,14 +32,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.logging.Level;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -53,8 +56,6 @@ public enum ThumbnailCache {
 
     instance;
 
-    /** save thumbnails to disk as this format */
-    private static final String FORMAT = "png";
     private static final int MAX_THUMBNAIL_SIZE = 300;
 
     private static final Logger LOGGER = Logger.getLogger(ThumbnailCache.class.getName());
@@ -70,6 +71,9 @@ public enum ThumbnailCache {
     public static ThumbnailCache getDefault() {
         return instance;
     }
+
+    /** currently desired icon size. is bound in {@link Toolbar} */
+    public final SimpleIntegerProperty iconSize = new SimpleIntegerProperty(200);
 
     /**
      * Clear out the cache between cases
@@ -122,39 +126,43 @@ public enum ThumbnailCache {
             return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
         }
 
-        Image thumbnail;
+        BufferedImage thumbnail = getCacheFile(file).map(new Function<File, BufferedImage>() {
+            @Override
+            public BufferedImage apply(File cachFile) {
+                if (cachFile.exists()) {
+                    // If a thumbnail file is already saved locally, load it
+                    try {
+                        BufferedImage read = ImageIO.read(cachFile);
 
-        try {
-            thumbnail = getCacheFile(file.getId()).map(new Function<File, Image>() {
-                @Override
-                public Image apply(File cachFile) {
-                    if (cachFile.exists()) {
-                        // If a thumbnail file is already saved locally, load it
-                        try {
-                            BufferedImage read = ImageIO.read(cachFile);
-                            if (read.getWidth() < MAX_THUMBNAIL_SIZE) {
-                                return SwingFXUtils.toFXImage(read, null);
-                            }
-                        } catch (MalformedURLException ex) {
-                            LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
-                        } catch (IOException ex) {
-                            Exceptions.printStackTrace(ex);
+                        if (read.getWidth() < MAX_THUMBNAIL_SIZE) {
+                            return read;
+
                         }
+                    } catch (MalformedURLException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
                     }
-                    return null;
                 }
-            }).orElse(null);
+                return null;
+            }
+        }).orElseGet(() -> {
+            return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+        });
 
-        } catch (IllegalStateException e) {
-            LOGGER.log(Level.WARNING, "can't load icon when no case is open");
-            return Optional.empty();
+//        } catch (IllegalStateException e) {
+//            LOGGER.log(Level.WARNING, "can't load icon when no case is open");
+//            return Optional.empty();
+//        }
+        WritableImage jfxthumbnail;
+        if (thumbnail == ImageUtils.getDefaultThumbnail()) {
+            // if we go the default icon, ignore it
+            jfxthumbnail = null;
+        } else {
+            jfxthumbnail = SwingFXUtils.toFXImage(thumbnail, null);
         }
 
-        if (thumbnail == null) {  //if we failed to load the icon, try to generate it
-            thumbnail = generateAndSaveThumbnail(file);
-        }
-
-        return Optional.ofNullable(thumbnail); //return icon, or null if generation failed
+        return Optional.ofNullable(jfxthumbnail); //return icon, or null if generation failed
     }
 
     /**
@@ -163,12 +171,12 @@ public enum ThumbnailCache {
      * @param id the obj id of the file to get a cache file for
      *
      * @return a Optional containing a File to store the cahced icon in or an
-     *         empty optional if there was a
-     *         problem.
+     *         empty optional if there was a problem.
      */
-    private static Optional<File> getCacheFile(long id) {
+    private static Optional<File> getCacheFile(DrawableFile<?> file) {
         try {
-            return Optional.of(ImageUtils.getFile(id));
+            return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
+
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
@@ -188,4 +196,5 @@ public enum ThumbnailCache {
         final BufferedImage thumbnail = (BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
         return (thumbnail == ImageUtils.getDefaultIcon()) ? null : SwingFXUtils.toFXImage(thumbnail, null);
     }
+
 }

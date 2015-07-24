@@ -43,7 +43,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     static final int IMAGES_PER_PAGE = 200;
     private Node parent;
-    private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
+    private final HashMap<Integer, List<Node>> pages = new HashMap<>();
     private int totalImages = 0;
     private int totalPages = 0;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
@@ -85,7 +85,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         //TODO when lazy loading of original nodes is fixed
         //we should be asking the datamodel for the children instead
         //and not counting the children nodes (which might not be preloaded at this point)
-        final List<Node> suppContent = new ArrayList<Node>();
+        final List<Node> suppContent = new ArrayList<>();
         for (Node child : parent.getChildren().getNodes()) {
             if (isSupported(child)) {
                 ++totalImages;

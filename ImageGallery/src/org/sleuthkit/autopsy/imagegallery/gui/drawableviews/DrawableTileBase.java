@@ -315,10 +315,10 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
             Platform.runLater(() -> {
                 fileTypeImageView.setManaged(isVideo);
-                hashHitImageView.setManaged(hasHashSetHits);
-                undisplayableImageView.setManaged(isUndisplayable);
                 fileTypeImageView.setVisible(isVideo);
+                hashHitImageView.setManaged(hasHashSetHits);
                 hashHitImageView.setVisible(hasHashSetHits);
+                undisplayableImageView.setManaged(isUndisplayable);
                 undisplayableImageView.setVisible(isUndisplayable);
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));

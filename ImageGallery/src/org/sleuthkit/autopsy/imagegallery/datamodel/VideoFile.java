@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -60,8 +61,8 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         Image image = (imageRef != null) ? imageRef.get() : null;
 
         if (image == null) {
-            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getIcon(getAbstractFile(), 1024);
-            imageRef = new SoftReference<>((bufferedImage == ImageUtils.getDefaultIcon()) ? null : SwingFXUtils.toFXImage(bufferedImage, null));
+            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
+            imageRef = new SoftReference<>((bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null));
         }
 
         return image;
@@ -79,10 +80,13 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
+
+            Files.createParentDirs(cacheFile);
             ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();
+
         }
 
         media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());

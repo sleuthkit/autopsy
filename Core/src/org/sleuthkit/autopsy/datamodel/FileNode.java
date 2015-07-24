@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -118,7 +118,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
         // Images
         for (String s : FileTypeExtensions.getImageExtensions()) {
-            if (ext.equals(s)) {
+            if (ImageUtils.thumbnailSupported(file) || ext.equals(s)) {
                 return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
             }
         }

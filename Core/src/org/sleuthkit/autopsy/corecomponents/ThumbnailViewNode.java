@@ -77,7 +77,7 @@ class ThumbnailViewNode extends FilterNode {
         } else {
             final Content content = this.getLookup().lookup(Content.class);
             if (content == null) {
-                return ImageUtils.getDefaultIcon();
+                return ImageUtils.getDefaultThumbnail();
             }
             if (swingWorker == null || swingWorker.isDone()) {
                 swingWorker = new SwingWorker<Image, Object>() {
@@ -86,7 +86,7 @@ class ThumbnailViewNode extends FilterNode {
                     @Override
                     protected Image doInBackground() throws Exception {
                         progressHandle.start();
-                        return ImageUtils.getIcon(content, iconSize);
+                        return ImageUtils.getThumbnail(content, iconSize);
                     }
 
                     @Override

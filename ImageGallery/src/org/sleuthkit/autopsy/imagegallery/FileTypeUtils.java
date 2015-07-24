@@ -39,7 +39,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Enum style singleton to provide utilities related to questions about a files
- * type
+ * type, and wheather it should be supported in Image Gallery.
+ *
+ * TODO: refactor this to remove code that duplicates
+ * org.sleuthkit.autopsy.coreutils.ImageUtils
  */
 public enum FileTypeUtils {
 
@@ -87,6 +90,7 @@ public enum FileTypeUtils {
      * to be supported
      */
     static {
+        ImageIO.scanForPlugins();
         //add all extension ImageIO claims to support
         imageExtensions.addAll(Stream.of(ImageIO.getReaderFileSuffixes())
                 .map(String::toLowerCase)
@@ -105,6 +109,8 @@ public enum FileTypeUtils {
                 , "ai" //illustrator
                 , "svg" //scalable vector graphics
                 , "sn", "ras" //sun raster
+                , "ico" //windows icons
+                , "tga" //targa
         ));
 
         //add list of known video extensions
@@ -118,10 +124,14 @@ public enum FileTypeUtils {
         videoMimeTypes.addAll(Arrays.asList("application/x-shockwave-flash"));
 
         supportedMimeTypes.addAll(videoMimeTypes);
+        supportedMimeTypes.addAll(Arrays.asList("application/x-123"));
+
         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
+
+        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rearely usefull
     }
 
     /**
@@ -161,9 +171,12 @@ public enum FileTypeUtils {
      */
     public static boolean isDrawable(AbstractFile file) {
         return hasDrawableMimeType(file).orElseGet(() -> {
-            return FileTypeUtils.supportedExtensions.contains(file.getNameExtension())
-                    || ImageUtils.isJpegFileHeader(file)
-                    || ImageUtils.isPngFileHeader(file);
+            final boolean contains = FileTypeUtils.supportedExtensions.contains(file.getNameExtension());
+            final boolean jpegFileHeader = ImageUtils.isJpegFileHeader(file);
+            final boolean pngFileHeader = ImageUtils.isPngFileHeader(file);
+            return contains
+                    || jpegFileHeader
+                    || pngFileHeader;
         });
     }
 
