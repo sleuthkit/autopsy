@@ -175,7 +175,7 @@ public class EventDB {
 
     private EventDB(Case autoCase) throws SQLException, Exception {
         //should this go into module output (or even cache, we should be able to rebuild it)?
-        this.dbPath = Paths.get(autoCase.getCaseDirectory(), "events.db").toString();
+        this.dbPath = Paths.get(autoCase.getCaseDirectory(), "events.db").toString(); //NON-NLS
         initializeDB();
     }
 
@@ -191,7 +191,7 @@ public class EventDB {
     public Interval getSpanningInterval(Collection<Long> eventIDs) {
 
         Interval span = null;
-        dbReadLock();
+        DBLock.lock();
         try (Statement stmt = con.createStatement();
                 //You can't inject multiple values into one ? paramater in prepared statement,
                 //so we make new statement each time...
@@ -203,7 +203,7 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return span;
     }
@@ -233,7 +233,7 @@ public class EventDB {
 
     int countAllEvents() {
         int result = -1;
-        dbReadLock();
+        DBLock.lock();
         //TODO convert this to prepared statement -jm
         try (ResultSet rs = con.createStatement().executeQuery("select count(*) as count from events")) { // NON-NLS
             while (rs.next()) {
@@ -243,63 +243,30 @@ public class EventDB {
         } catch (SQLException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return result;
     }
 
     Map<EventType, Long> countEvents(ZoomParams params) {
         if (params.getTimeRange() != null) {
-            return countEvents(params.getTimeRange().getStartMillis() / 1000, params.getTimeRange().getEndMillis() / 1000, params.getFilter(), params.getTypeZoomLevel());
+            return countEvents(params.getTimeRange().getStartMillis() / 1000,
+                    params.getTimeRange().getEndMillis() / 1000,
+                    params.getFilter(), params.getTypeZoomLevel());
         } else {
             return Collections.emptyMap();
         }
     }
 
-    /**
-     * Lock to protect against read while it is in a write transaction state.
-     * Supports multiple concurrent readers if there is no writer. MUST always
-     * call dbReadUnLock() as early as possible, in the same thread where
-     * dbReadLock() was called.
-     */
-    void dbReadLock() {
-        DBLock.lock();
-    }
-
-    /**
-     * Release previously acquired read lock acquired in this thread using
-     * dbReadLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-    void dbReadUnlock() {
-        DBLock.unlock();
-    }
-
-    //////////////general database logic , mostly borrowed from sleuthkitcase
-    void dbWriteLock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "Locking " + rwLock.toString());
-        DBLock.lock();
-    }
-
-    /**
-     * Release previously acquired write lock acquired in this thread using
-     * dbWriteLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-    void dbWriteUnlock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "UNLocking " + rwLock.toString());
-        DBLock.unlock();
-    }
-
     void dropEventsTable() {
         //TODO: use prepared statement - jm
-        dbWriteLock();
+        DBLock.lock();
         try (Statement createStatement = con.createStatement()) {
             createStatement.execute("drop table if exists events"); // NON-NLS
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "could not drop old events table", ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
     }
 
@@ -312,7 +279,7 @@ public class EventDB {
         long end = timeRange.getEndMillis() / 1000;
         final String sqlWhere = SQLHelper.getSQLWhere(filter);
 
-        dbReadLock();
+        DBLock.lock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
                 ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
             while (rs.next()) {
@@ -329,14 +296,14 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return null;
     }
 
     TimeLineEvent getEventById(Long eventID) {
         TimeLineEvent result = null;
-        dbReadLock();
+        DBLock.lock();
         try {
             getEventByIDStmt.clearParameters();
             getEventByIDStmt.setLong(1, eventID);
@@ -349,7 +316,7 @@ public class EventDB {
         } catch (SQLException sqlEx) {
             LOGGER.log(Level.SEVERE, "exception while querying for event with id = " + eventID, sqlEx); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return result;
     }
@@ -364,7 +331,7 @@ public class EventDB {
         }
         Set<Long> resultIDs = new HashSet<>();
 
-        dbReadLock();
+        DBLock.lock();
         final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
@@ -377,7 +344,7 @@ public class EventDB {
         } catch (SQLException sqlEx) {
             LOGGER.log(Level.SEVERE, "failed to execute query for event ids in range", sqlEx); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
 
         return resultIDs;
@@ -400,7 +367,7 @@ public class EventDB {
 
     Set<Long> getDataSourceIDs() {
         HashSet<Long> hashSet = new HashSet<>();
-        dbReadLock();
+        DBLock.lock();
         try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
             while (rs.next()) {
                 long datasourceID = rs.getLong(EventTableColumn.DATA_SOURCE_ID.toString());
@@ -412,14 +379,14 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return hashSet;
     }
 
     /** @return maximum time in seconds from unix epoch */
     Long getMaxTime() {
-        dbReadLock();
+        DBLock.lock();
         try (ResultSet rs = getMaxTimeStmt.executeQuery()) {
             while (rs.next()) {
                 return rs.getLong("max"); // NON-NLS
@@ -427,14 +394,14 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return -1l;
     }
 
     /** @return maximum time in seconds from unix epoch */
     Long getMinTime() {
-        dbReadLock();
+        DBLock.lock();
         try (ResultSet rs = getMinTimeStmt.executeQuery()) {
             while (rs.next()) {
                 return rs.getLong("min"); // NON-NLS
@@ -442,7 +409,7 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return -1l;
     }
@@ -475,7 +442,7 @@ public class EventDB {
             return;
         }
 
-        dbWriteLock();
+        DBLock.lock();
         try {
             try (Statement stmt = con.createStatement()) {
                 String sql = "CREATE TABLE if not exists db_info " // NON-NLS
@@ -580,7 +547,7 @@ public class EventDB {
             }
 
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
     }
 
@@ -621,7 +588,7 @@ public class EventDB {
         typeNum = RootEventType.allTypes.indexOf(type);
         superTypeNum = type.getSuperType().ordinal();
 
-        dbWriteLock();
+        DBLock.lock();
         try {
 
             //"INSERT INTO events (datasource_id, file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description) "
@@ -657,7 +624,7 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
     }
 
@@ -697,7 +664,7 @@ public class EventDB {
     }
 
     private void configureDB() throws SQLException {
-        dbWriteLock();
+        DBLock.lock();
         //this should match Sleuthkit db setupt
         try (Statement statement = con.createStatement()) {
             //reduce i/o operations, we have no OS crash recovery anyway
@@ -714,7 +681,7 @@ public class EventDB {
             //allow to query while in transaction - no need read locks
             statement.execute("PRAGMA read_uncommitted = True;"); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
 
         try {
@@ -771,7 +738,7 @@ public class EventDB {
                 + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
 
         ResultSet rs = null;
-        dbReadLock();
+        DBLock.lock();
         //System.out.println(queryString);
         try (Statement stmt = con.createStatement();) {
             Stopwatch stopwatch = new Stopwatch();
@@ -797,7 +764,7 @@ public class EventDB {
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return typeMap;
     }
@@ -847,7 +814,7 @@ public class EventDB {
         Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
 
         //get all agregate events in this time unit
-        dbReadLock();
+        DBLock.lock();
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
                 + " from events where time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
@@ -889,7 +856,7 @@ public class EventDB {
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            dbReadUnlock();
+            DBLock.unlock();
         }
 
         //result list to return
@@ -936,7 +903,7 @@ public class EventDB {
     }
 
     private long getDBInfo(DBInfoKey key, long defaultValue) {
-        dbReadLock();
+        DBLock.lock();
         try {
             getDBInfoStmt.setString(1, key.toString());
 
@@ -949,7 +916,7 @@ public class EventDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "failed to read key: " + key + " from db_info", ex); // NON-NLS
             } finally {
-                dbReadUnlock();
+                DBLock.unlock();
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to set key: " + key + " on getDBInfoStmt ", ex); // NON-NLS
@@ -996,7 +963,7 @@ public class EventDB {
     }
 
     private void recordDBInfo(DBInfoKey key, long value) {
-        dbWriteLock();
+        DBLock.lock();
         try {
             recordDBInfoStmt.setString(1, key.toString());
             recordDBInfoStmt.setLong(2, value);
@@ -1004,7 +971,7 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
 
         }
     }
@@ -1028,7 +995,7 @@ public class EventDB {
         private EventTransaction() {
 
             //get the write lock, released in close()
-            dbWriteLock();
+            DBLock.lock();
             try {
                 con.setAutoCommit(false);
 
@@ -1077,7 +1044,7 @@ public class EventDB {
                 } finally {
                     closed = true;
 
-                    dbWriteUnlock();
+                    DBLock.unlock();
                 }
             }
         }
