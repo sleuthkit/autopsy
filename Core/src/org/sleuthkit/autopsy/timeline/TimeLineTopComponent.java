@@ -129,6 +129,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             //assemble ui componenets together
             jFXstatusPanel.setScene(new Scene(statusBar));
             jFXVizPanel.setScene(new Scene(splitPane));
+
             splitPane.setDividerPositions(0);
 
             filterTab.setClosable(false);
@@ -147,7 +148,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
             SplitPane.setResizableWithParent(leftVBox, Boolean.FALSE);
             splitPane.getItems().addAll(leftVBox, visualizationPanel);
-
         });
     }
 
@@ -157,8 +157,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         tlrv.setController(controller);
         Platform.runLater(() -> {
-            jFXVizPanel.getScene().addEventFilter(KeyEvent.KEY_PRESSED, (
-                    KeyEvent event) -> {
+            jFXVizPanel.getScene().addEventFilter(KeyEvent.KEY_PRESSED,
+                    (KeyEvent event) -> {
                         if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
                             new Back(controller).handle(new ActionEvent());
                         } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
@@ -257,7 +257,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     @Override
     public void componentOpened() {
         WindowManager.getDefault().setTopComponentFloating(this, true);
-
         putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 

@@ -26,14 +26,14 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 
 /**
- * Action that resets the filters to their default state.
+ * Action that resets the filters to their initial/default state.
  */
-public class DefaultFiltersAction extends Action {
+public class ResetFilters extends Action {
 
     private FilteredEventsModel eventsModel;
 
-    public DefaultFiltersAction(final TimeLineController controller) {
-        super(NbBundle.getMessage(DefaultFiltersAction.class, "DefaultFilters.action.name.text"));
+    public ResetFilters(final TimeLineController controller) {
+        super(NbBundle.getMessage(ResetFilters.class, "DefaultFilters.action.name.text"));
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {

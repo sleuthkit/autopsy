@@ -40,7 +40,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.actions.DefaultFiltersAction;
+import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -155,7 +155,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setController(TimeLineController timeLineController) {
         this.controller = timeLineController;
-        Action defaultFiltersAction = new DefaultFiltersAction(controller);
+        Action defaultFiltersAction = new ResetFilters(controller);
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());
