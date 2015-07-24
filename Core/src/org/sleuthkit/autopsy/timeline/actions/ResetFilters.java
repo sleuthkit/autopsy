@@ -42,7 +42,6 @@ public class ResetFilters extends Action {
 
             @Override
             protected boolean computeValue() {
-                //TODO: this is probably broken now that we have dynamic filters for the datasources
                 return eventsModel.getRequestedZoomParamters().getValue().getFilter().equals(eventsModel.getDefaultFilter());
             }
         });

@@ -26,7 +26,6 @@ import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableMap;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -280,8 +279,5 @@ public final class FilteredEventsModel {
         return requestedLOD.get();
     }
 
-    public ObservableMap<Long, String> getDataSources() {
-        return repo.getDatasourcesMap();
-    }
 
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
-import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
@@ -42,9 +38,13 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
+import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_none;
+import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_only;
+import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_select;
 
 /** The FXML controller for the filter ui.
  *
@@ -75,36 +75,43 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
 
     @FXML
+    @NbBundle.Messages({"FilterSetPanel.applyButton.text=Apply",
+        "Timeline.ui.filtering.menuItem.all=all",
+        "FilterSetPanel.defaultButton.text=Default",
+        "Timeline.ui.filtering.menuItem.none=none",
+        "Timeline.ui.filtering.menuItem.only=only",
+        "Timeline.ui.filtering.menuItem.others=others",
+        "Timeline.ui.filtering.menuItem.select=select"})
     void initialize() {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
-            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue().copyOf());
+            controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
         });
-        applyButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.applyButton.text"));
-        defaultButton.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.defaultButton.text"));
+        applyButton.setText(Bundle.FilterSetPanel_applyButton_text());
+        defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
 
         //remove column headers via css.
-        filterTreeTable.getStylesheets().addAll(getClass().getResource("FilterTable.css").toExternalForm()); // NON-NLS
+        filterTreeTable.getStylesheets().addAll(FilterSetPanel.class.getResource("FilterTable.css").toExternalForm()); // NON-NLS
 
         //use row factory as hook to attach context menus to.
         filterTreeTable.setRowFactory((TreeTableView<Filter> param) -> {
             final TreeTableRow<Filter> row = new TreeTableRow<>();
 
-            MenuItem all = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.all"));
+            MenuItem all = new MenuItem(Bundle.Timeline_ui_filtering_menuItem_all());
             all.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setSelected(Boolean.TRUE);
                 });
             });
-            MenuItem none = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.none"));
+            MenuItem none = new MenuItem(Timeline_ui_filtering_menuItem_none());
             none.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     t.getValue().setSelected(Boolean.FALSE);
                 });
             });
 
-            MenuItem only = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.only"));
+            MenuItem only = new MenuItem(Timeline_ui_filtering_menuItem_only());
             only.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -114,7 +121,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                     }
                 });
             });
-            MenuItem others = new MenuItem(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.others"));
+            MenuItem others = new MenuItem(Bundle.Timeline_ui_filtering_menuItem_others());
             others.setOnAction(e -> {
                 row.getTreeItem().getParent().getChildren().forEach((TreeItem<Filter> t) -> {
                     if (t == row.getTreeItem()) {
@@ -125,7 +132,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
                 });
             });
             final ContextMenu rowMenu = new ContextMenu();
-            Menu select = new Menu(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.menuItem.select"));
+            Menu select = new Menu(Timeline_ui_filtering_menuItem_select());
             select.setOnAction(e -> {
                 row.getItem().setSelected(!row.getItem().isSelected());
             });
@@ -139,17 +146,16 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         treeColumn.setCellFactory(col -> new FilterCheckBoxCell());
-        treeColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.treeColumn.text"));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
-        legendColumn.setText(NbBundle.getMessage(this.getClass(), "FilterSetPanel.legendColumn.text"));
+
     }
 
     public FilterSetPanel() {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
-        expansionMap.put(NbBundle.getMessage(this.getClass(), "FilterSetPanel.eventTypeFilter.title"), Boolean.TRUE);
+        expansionMap.put(new TypeFilter(RootEventType.getInstance()).getDisplayName(), Boolean.TRUE);
     }
 
     @Override
