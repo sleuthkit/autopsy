@@ -44,7 +44,6 @@ import java.util.TimeZone;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -59,7 +58,6 @@ import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
@@ -78,23 +76,19 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public class EventDB {
 
-    boolean hasDataSourceInfo() {
-        return hasDataSourceIDColumn() && (getDataSourceIDs().isEmpty() == false);
-    }
-
     /** enum to represent columns in the events table */
     enum EventTableColumn {
 
-        ARTIFACT_ID("artifact_id"), // NON-NLS
-        BASE_TYPE("base_type"), // NON-NLS
         EVENT_ID("event_id"), // NON-NLS
         FILE_ID("file_id"), // NON-NLS
-        FULL_DESCRIPTION("full_description"), // NON-NLS
+        ARTIFACT_ID("artifact_id"), // NON-NLS
+        BASE_TYPE("base_type"), // NON-NLS
+        SUB_TYPE("sub_type"), // NON-NLS
         KNOWN("known_state"), // NON-NLS
         DATA_SOURCE_ID("datasource_id"), // NON-NLS
+        FULL_DESCRIPTION("full_description"), // NON-NLS
         MED_DESCRIPTION("med_description"), // NON-NLS
         SHORT_DESCRIPTION("short_description"), // NON-NLS
-        SUB_TYPE("sub_type"), // NON-NLS
         TIME("time"); // NON-NLS
 
         private final String columnName;
@@ -132,7 +126,7 @@ public class EventDB {
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
     static {
-        //make sure sqlite driver is loaded // possibly redundant
+        //make sure sqlite driver is loaded, possibly redundant
         try {
             Class.forName("org.sqlite.JDBC"); // NON-NLS
         } catch (ClassNotFoundException ex) {
@@ -145,13 +139,13 @@ public class EventDB {
      * the given path. If a database does not already exist at that path, one is
      * created.
      *
-     * @param dbPath
+     * @param autoCase the Autopsy {@link Case} the is events database is for.
      *
-     * @return
+     * @return a new EventDB or null if there was an error.
      */
     public static EventDB getEventDB(Case autoCase) {
         try {
-            return new EventDB(autoCase); // NON-NLS
+            return new EventDB(autoCase);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex); // NON-NLS
             return null;
@@ -161,31 +155,27 @@ public class EventDB {
         }
     }
 
-
     private volatile Connection con;
 
     private final String dbPath;
 
     private PreparedStatement getDBInfoStmt;
-
     private PreparedStatement getEventByIDStmt;
-
     private PreparedStatement getMaxTimeStmt;
     private PreparedStatement getMinTimeStmt;
     private PreparedStatement getDataSourceIDsStmt;
-
     private PreparedStatement insertRowStmt;
+    private PreparedStatement recordDBInfoStmt;
 
     private final Set<PreparedStatement> preparedStatements = new HashSet<>();
 
-    private PreparedStatement recordDBInfoStmt;
-
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
-    private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
+    private final Lock DBLock = rwLock.writeLock(); //using exclusive lock for all db ops for now
 
     private EventDB(Case autoCase) throws SQLException, Exception {
-        this.dbPath = Paths.get(autoCase.getModulesOutputDirAbsPath(), "events.db").toString();
+        //should this go into module output (or even cache, we should be able to rebuild it)?
+        this.dbPath = Paths.get(autoCase.getCaseDirectory(), "events.db").toString();
         initializeDB();
     }
 
@@ -401,14 +391,22 @@ public class EventDB {
         return getDBInfo(DBInfoKey.LAST_OBJECT_ID, -1);
     }
 
+    boolean hasDataSourceInfo() {
+        /* this relies on the fact that no tskObj has ID 0 but 0 is the default
+         * value for the datasource_id column in the events table. */
+        return hasDataSourceIDColumn()
+                && (getDataSourceIDs().isEmpty() == false);
+    }
+
     Set<Long> getDataSourceIDs() {
         HashSet<Long> hashSet = new HashSet<>();
         dbReadLock();
         try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
             while (rs.next()) {
                 long datasourceID = rs.getLong(EventTableColumn.DATA_SOURCE_ID.toString());
+                //this relies on the fact that no tskObj has ID 0 but 0 is the default value for the datasource_id column in the events table.
                 if (datasourceID != 0) {
-                    hashSet.add(datasourceID); // NON-NLS
+                    hashSet.add(datasourceID);
                 }
             }
         } catch (SQLException ex) {
