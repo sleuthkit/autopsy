@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -546,7 +546,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushFilters(RootFilter filter) {
+    synchronized public void pushFilters(Filter filter) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));
