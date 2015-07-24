@@ -289,6 +289,7 @@ public class TimeLineController {
                     Platform.runLater(() -> {
                         //TODO: should this be an event?
                         newEventsFlag.set(false);
+                        historyManager.reset(filteredEvents.getRequestedZoomParamters().get());
                         TimeLineController.this.showFullRange();
                     });
                 });

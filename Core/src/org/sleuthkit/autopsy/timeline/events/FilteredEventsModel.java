@@ -117,7 +117,7 @@ public final class FilteredEventsModel {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilter rootFilter = (RootFilter) filter().get();
             rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
-            requestedFilter.set(rootFilter);
+            requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
 
@@ -207,7 +207,7 @@ public final class FilteredEventsModel {
      * @return the smallest interval spanning all the events from the
      *         repository, ignoring any filters or requested ranges
      */
-    public final Interval getSpanningInterval() {
+    public  Interval getSpanningInterval() {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000, DateTimeZone.UTC);
     }
 

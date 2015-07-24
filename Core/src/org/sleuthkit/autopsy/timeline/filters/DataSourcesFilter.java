@@ -25,39 +25,39 @@ import javafx.beans.binding.Bindings;
  * union of {@link DataSourceFilter}s
  */
 public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
-    
+
     public DataSourcesFilter() {
         getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThanOrEqualTo(1));
+        setSelected(false);
     }
-    
+
     @Override
     public DataSourcesFilter copyOf() {
-        //make a nonrecursive copy of this filter
         final DataSourcesFilter filterCopy = new DataSourcesFilter();
         filterCopy.setSelected(isSelected());
-//        filterCopy.setDisabled(isDisabled());
         //add a copy of each subfilter
         this.getSubFilters().forEach((DataSourceFilter t) -> {
             filterCopy.addDataSourceFilter(t.copyOf());
         });
-        
+
         return filterCopy;
     }
-    
+
     @Override
     public String getDisplayName() {
         return "Data Source";
     }
-    
+
     @Override
     public String getHTMLReportString() {
+        //move this logic into SaveSnapshot
         String string = getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
             string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }
-    
+
     public void addDataSourceFilter(DataSourceFilter dataSourceFilter) {
         if (getSubFilters().stream().map(DataSourceFilter.class::cast)
                 .map(DataSourceFilter::getDataSourceID)
@@ -66,8 +66,11 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
             dataSourceFilter.getDisabledProperty().bind(getDisabledProperty());
             getSubFilters().add(dataSourceFilter);
         }
+        if (getSubFilters().size() > 1) {
+            setSelected(Boolean.TRUE);
+        }
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -77,18 +80,18 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
             return false;
         }
         final DataSourcesFilter other = (DataSourcesFilter) obj;
-        
+
         if (isSelected() != other.isSelected()) {
             return false;
         }
-        
+
         return hashEqualSubFilters(this, other);
-        
+
     }
-    
+
     @Override
     public int hashCode() {
         return 9;
     }
-    
+
 }
