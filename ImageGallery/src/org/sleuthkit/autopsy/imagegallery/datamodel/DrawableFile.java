@@ -325,7 +325,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     }
 
     public boolean isDisplayableAsImage() {
-        Image fullSizeImage = getFullSizeImage();
-        return Objects.nonNull(fullSizeImage) && fullSizeImage.errorProperty().get() == false;
+        Image thumbnail = getThumbnail();
+        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
     }
 }

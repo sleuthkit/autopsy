@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -46,12 +45,9 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Core;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -76,11 +72,10 @@ public class ImageUtils {
     public static final int ICON_SIZE_LARGE = 200;
 
     private static final Logger logger = LOGGER;
-    private static final BufferedImage DEFAULT_ICON;
-    private static final Image DEFAULT_THUMBNAIL;
-    private static final List<String> SUPP_IMAGE_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes())); //final
-    private static final List<String> SUPP_IMAGE_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes())); // final
-    private static final List<String> SUPP_VIDEO_EXTENSIONS
+    private static final BufferedImage DEFAULT_THUMBNAIL;
+    private static final TreeSet<String> SUPPORTED_MIME_TYPES;
+    private static final List<String> SUPPORTED_EXTENSIONS;
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
             = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
                     "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
                     "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
@@ -93,12 +88,13 @@ public class ImageUtils {
                     "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
                     "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
                     "flm", "tmv", "4xm");  //NON-NLS
-    private static final List<String> SUPP_VIDEO_MIME_TYPES
+    private static final List<String> SUPPORTED_VIDEO_MIME_TYPES
             = Arrays.asList("video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
     static {
+        ImageIO.scanForPlugins();
         BufferedImage tempImage;
         try {
             tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
@@ -106,9 +102,7 @@ public class ImageUtils {
             LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex);
             tempImage = null;
         }
-        DEFAULT_ICON = tempImage;
-
-        SUPP_IMAGE_MIME_TYPES.add("image/x-ms-bmp");
+        DEFAULT_THUMBNAIL = tempImage;
 
         //load opencv libraries
         boolean openCVLoadedTemp;
@@ -129,6 +123,21 @@ public class ImageUtils {
         }
 
         openCVLoaded = openCVLoadedTemp;
+
+        SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_VIDEO_EXTENSIONS);
+
+        SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
+        /* special cases and variants that we support, but don't get registered
+         * with ImageIO automatically */
+        SUPPORTED_MIME_TYPES.addAll(Arrays.asList(
+                "image/x-rgb",
+                "image/x-ms-bmp",
+                "application/x-123"));
+
+        //this is rarely usefull
+        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
     /**
@@ -141,37 +150,10 @@ public class ImageUtils {
      *         /** initialized lazily */
     private static FileTypeDetector fileTypeDetector;
 
-    private static final List<String> SUPPORTED_EXTENSIONS;
-    private static final TreeSet<String> SUPPORTED_MIME_TYPES;
-
     /** thread that saves generated thumbnails to disk in the background */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
-
-    static {
-        ImageIO.scanForPlugins();
-        BufferedImage defaultIcon = null;
-        try {
-            defaultIcon = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to read default thumbnail.");
-        }
-        DEFAULT_THUMBNAIL = defaultIcon;
-
-        SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-        SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-
-        /* special cases and variants that we support, but don't get registered
-         * with ImageIO automatically */
-        SUPPORTED_MIME_TYPES.addAll(Arrays.asList(
-                "image/x-rgb",
-                "image/x-ms-bmp",
-                "application/x-123"));
-
-        //this is rarely usefull
-        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
-    }
 
     private ImageUtils() {
     }
@@ -227,7 +209,6 @@ public class ImageUtils {
         AbstractFile file = (AbstractFile) content;
 
         try {
-
             String mimeType = getFileTypeDetector().getFileType(file);
             if (Objects.nonNull(mimeType)) {
                 return SUPPORTED_MIME_TYPES.contains(mimeType)
@@ -235,14 +216,12 @@ public class ImageUtils {
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-            if (!SUPPORTED_MIME_TYPES.isEmpty()) {
-                AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
-                if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
 
-                    return true;
-                } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
-                    return false;
-                }
+            AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
+            if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
+                return true;
+            } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
+                return false;
             }
         }
 
@@ -313,8 +292,8 @@ public class ImageUtils {
                 } else {
                     return thumbnail;
                 }
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Error while reading image: " + content.getName(), ex); //NON-NLS
                 return generateAndSaveThumbnail(content, iconSize, cacheFile);
             }
         } else {
@@ -369,7 +348,7 @@ public class ImageUtils {
      * @return
      *
      *
-     * @deprecated this should never have been public.
+     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
      */
     @Deprecated
 
@@ -465,18 +444,18 @@ public class ImageUtils {
         final String extension = f.getNameExtension();
         BufferedImage thumbnail = null;
         try {
-            if (SUPP_VIDEO_EXTENSIONS.contains(extension)) {
+            if (SUPPORTED_VIDEO_EXTENSIONS.contains(extension)) {
                 if (openCVLoaded) {
                     thumbnail = VideoUtils.generateVideoThumbnail((AbstractFile) content, iconSize);
                 } else {
-                    return DEFAULT_ICON;
+                    return DEFAULT_THUMBNAIL;
                 }
-            } else if (SUPP_IMAGE_EXTENSIONS.contains(extension)) {
+            } else {
                 thumbnail = generateImageThumbnail(content, iconSize);
             }
 
             if (thumbnail == null) {
-                return DEFAULT_ICON;
+                return DEFAULT_THUMBNAIL;
 
             } else {
                 BufferedImage toSave = thumbnail;
@@ -530,30 +509,10 @@ public class ImageUtils {
 
             return null;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
+            LOGGER.log(Level.WARNING, "Could not load image: " + content.getName(), e); //NON-NLS
             return null;
 
         }
     }
 
-    /**
-     * copy the first 500kb to a temporary file
-     *
-     * @param file
-     * @param tempFile
-     *
-     * @throws IOException
-     */
-    public static void copyFileUsingStream(Content file, java.io.File tempFile) throws IOException {
-        com.google.common.io.Files.createParentDirs(tempFile);
-
-        ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
-        progress.start(100);
-        try {
-            ContentUtils.writeToFile(file, tempFile, progress, null, true);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-        }
-        progress.finish();
-    }
 }

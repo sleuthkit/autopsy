@@ -182,19 +182,4 @@ public enum ThumbnailCache {
             return Optional.empty();
         }
     }
-
-    /**
-     * generate a new thumbnail for the given file and save it to the disk cache
-     *
-     * @param file
-     *
-     * @return the newly generated thumbnail {@link Image}, or {@code null} if a
-     *         thumbnail could not be generated
-     */
-    @Nullable
-    private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
-        final BufferedImage thumbnail = (BufferedImage) ImageUtils.getIcon(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
-        return (thumbnail == ImageUtils.getDefaultIcon()) ? null : SwingFXUtils.toFXImage(thumbnail, null);
-    }
-
 }

@@ -22,23 +22,32 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.logging.Level;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
-import static org.sleuthkit.autopsy.coreutils.ImageUtils.copyFileUsingStream;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  *
  */
 public class VideoUtils {
 
-    private final static int THUMB_COLUMNS = 3;
-    private final static int THUMB_ROWS = 3;
+    private static final int THUMB_COLUMNS = 3;
+    private static final int THUMB_ROWS = 3;
     private static final int CV_CAP_PROP_POS_MSEC = 0;
     private static final int CV_CAP_PROP_FRAME_COUNT = 7;
     private static final int CV_CAP_PROP_FPS = 5;
+
+    static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
+
+    private VideoUtils() {
+    }
 
     public static File getTempVideoFile(AbstractFile file) {
         return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile();
@@ -109,6 +118,25 @@ public class VideoUtils {
         return ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 
-    private VideoUtils() {
+    /**
+     * copy the first 500kb to a temporary file
+     *
+     * @param file
+     * @param tempFile
+     *
+     * @throws IOException
+     */
+    public static void copyFileUsingStream(Content file, java.io.File tempFile) throws IOException {
+        com.google.common.io.Files.createParentDirs(tempFile);
+
+        ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
+        progress.start(100);
+        try {
+            ContentUtils.writeToFile(file, tempFile, progress, null, true);
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
+        }
+        progress.finish();
     }
+
 }
