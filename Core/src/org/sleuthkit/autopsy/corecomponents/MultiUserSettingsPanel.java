@@ -370,11 +370,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             tbIndexingServerPort.setText(indexingServerPort);
         }
         
-        if (dbInfo.getDbType() == DbType.SQLITE) {
-            cbEnableMultiUser.setSelected(false);
-        } else {
-            cbEnableMultiUser.setSelected(true);
-        }
+        cbEnableMultiUser.setSelected(UserPreferences.getIsMultiUserModeEnabled());
     }
 
     /**
@@ -397,6 +393,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (cbEnableMultiUser.isSelected()) {
             dbType = DbType.POSTGRESQL;
         }
+        
+        UserPreferences.setIsMultiUserModeEnabled(cbEnableMultiUser.isSelected());
 
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
                 tbHostnameOrIp.getText().trim(),

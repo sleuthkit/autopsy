@@ -179,7 +179,7 @@ public class ServicesMonitor {
         }
         
         if (status.equals(ServiceStatus.UP.toString())) {
-            logger.log(Level.INFO, "Connection to {0} restored", serviceDisplayName); //NON-NLS
+            logger.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
         } else if (status.equals(ServiceStatus.DOWN.toString())) {
@@ -351,6 +351,10 @@ public class ServicesMonitor {
      * Verifies connectivity to all services.
      */
     private void checkAllServices() {      
+        if (!UserPreferences.getIsMultiUserModeEnabled()){
+            return;
+        }
+        
         for (String service : servicesList) {
             checkServiceStatus(service);
         }
