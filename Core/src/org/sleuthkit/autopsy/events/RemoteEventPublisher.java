@@ -169,9 +169,7 @@ final class RemoteEventPublisher {
                         if (object instanceof AutopsyEvent) {
                             AutopsyEvent event = (AutopsyEvent) object;
                             event.setSourceType(AutopsyEvent.SourceType.REMOTE);
-                            new Thread(() -> {
-                                localPublisher.publish(event);
-                            }).start();
+                            localPublisher.publish(event);
                         }
                     }
                 } catch (Exception ex) {
