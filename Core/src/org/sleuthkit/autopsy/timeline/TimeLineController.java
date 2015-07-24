@@ -677,9 +677,7 @@ public class TimeLineController {
 
     synchronized int showDataSourcesMissingConfirmation() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                "The Timeline events database was previously populated with an old version of Autopsy."
-                + "\nThe data source filter will be unavailable unless you update the events database."
-                + "\nDo you want to update the events database now?",
+                NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
                 "Update Timeline database?",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
