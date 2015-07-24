@@ -45,6 +45,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -548,7 +549,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         em.getRootContext().setName(newCaseName);
                         em.getRootContext().setDisplayName(newCaseName);
 
-                    // Reset the forward and back
+                        // Reset the forward and back
                         // buttons. Note that a call to CoreComponentControl.openCoreWindows()
                         // by the new Case object will lead to a componentOpened() call
                         // that will repopulate the tree.
@@ -566,12 +567,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  * already closed.
                  */
                 try {
-                    Case.getCurrentCase();
-                    SwingUtilities.invokeLater(() -> {
-                        CoreComponentControl.openCoreWindows();
-                        componentOpened();
-                    });
-                } catch (IllegalStateException notUsed) {
+                    Case currentCase = Case.getCurrentCase();
+                    // We only need to trigger openCoreWindows() when the
+                    // first data source is added.
+                    if (currentCase.getDataSources().size() == 1) {
+                        SwingUtilities.invokeLater(() -> {
+                            CoreComponentControl.openCoreWindows();
+                        });                        
+                    }
+                } catch (IllegalStateException | TskCoreException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
@@ -582,25 +586,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
                 });
             } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            // nothing to do here.
+                // nothing to do here.
                 // all nodes should be listening for these events and update accordingly.
-            } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                    || changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
-                try {
-                    Case.getCurrentCase();
-                    SwingUtilities.invokeLater(this::refreshDataSourceTree);
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
             }
         }
     }
