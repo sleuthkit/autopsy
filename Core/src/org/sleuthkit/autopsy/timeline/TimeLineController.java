@@ -128,8 +128,12 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
+
     private final Case autoCase;
 
+    /**
+     * @return the autopsy Case assigned to the controller
+     */
     public Case getAutopsyCase() {
         return autoCase;
     }
@@ -262,7 +266,7 @@ public class TimeLineController {
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
             //confirm timeline during ingest
-            if (showIngestConfirmation() != JOptionPane.YES_OPTION) {
+            if (confirmRebuildDuringIngest() == false) {
                 return false;
             }
         }
@@ -347,7 +351,7 @@ public class TimeLineController {
             }
             if (repoRebuilt == false) {
                 if (eventsRepository.getWasIngestRunning()) {
-                    if (showLastPopulatedWhileIngestingConfirmation() == JOptionPane.YES_OPTION) {
+                    if (confirmLastBuiltDuringIngestRebuild()) {
                         repoRebuilt = rebuildRepo();
                     }
                 }
@@ -357,7 +361,7 @@ public class TimeLineController {
                 final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
                 if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
                         || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
-                    if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                    if (confirmOutOfDateRebuild()) {
                         repoRebuilt = rebuildRepo();
                     }
                 }
@@ -366,7 +370,7 @@ public class TimeLineController {
             if (repoRebuilt == false) {
                 boolean hasDSInfo = eventsRepository.hasDataSourceInfo();
                 if (hasDSInfo == false) {
-                    if (showDataSourcesMissingConfirmation() == JOptionPane.YES_OPTION) {
+                    if (confirmDataSourceIDsMissingRebuild()) {
                         repoRebuilt = rebuildRepo();
                     }
                 }
@@ -665,17 +669,6 @@ public class TimeLineController {
     }
 
     /**
-     * prompt the user to rebuild and then rebuild if the user chooses to
-     */
-    synchronized private boolean outOfDatePromptAndRebuild() {
-        if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
-            return rebuildRepo();
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * is the timeline window open.
      *
      * @return true if the timeline window is open
@@ -684,39 +677,63 @@ public class TimeLineController {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
-    synchronized int showDataSourcesMissingConfirmation() {
+    /**
+     * prompt the user to rebuild the db because that datasource_ids are missing
+     * from the database and that the datasource filter will not work
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmDataSourceIDsMissingRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
                 "Update Timeline database?",
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
+                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
 
-    synchronized int showLastPopulatedWhileIngestingConfirmation() {
+    /**
+     * prompt the user to rebuild the db because the db was last build during
+     * ingest and may be incomplete
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmLastBuiltDuringIngestRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
                 NbBundle.getMessage(TimeLineTopComponent.class,
                         "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
+                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
 
-    synchronized int showOutOfDateConfirmation() throws MissingResourceException, HeadlessException {
+    /**
+     * prompt the user to rebuild the db because the db is out of date and
+     * doesn't include things from subsequent ingests
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmOutOfDateRebuild() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.propChg.confDlg.timelineOOD.msg"),
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.propChg.confDlg.timelineOOD.details"),
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
-    synchronized int showIngestConfirmation() throws MissingResourceException, HeadlessException {
+    /**
+     * prompt the user that ingest is running and the db may not end up
+     * complete.
+     *
+     * @return true if they want to continue anyways
+     */
+    synchronized boolean confirmRebuildDuringIngest() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
@@ -754,7 +771,7 @@ public class TimeLineController {
                     //if we are doing incremental updates, drop this
                     SwingUtilities.invokeLater(() -> {
                         if (isWindowOpen()) {
-                            if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                            if (confirmOutOfDateRebuild()) {
                                 rebuildRepo();
                             }
                         }
@@ -774,7 +791,7 @@ public class TimeLineController {
                     //if we are doing incremental updates, drop this
                     SwingUtilities.invokeLater(() -> {
                         if (isWindowOpen()) {
-                            if (showOutOfDateConfirmation() == JOptionPane.YES_OPTION) {
+                            if (confirmOutOfDateRebuild()) {
                                 rebuildRepo();
                             }
                         }
