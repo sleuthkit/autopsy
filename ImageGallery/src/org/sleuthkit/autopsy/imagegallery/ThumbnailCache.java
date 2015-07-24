@@ -23,31 +23,25 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.Exceptions;
-import org.openide.util.Utilities;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Singleton to manage creation and access of icons. Keeps a cache in memory of
@@ -60,8 +54,6 @@ public enum ThumbnailCache {
 
     instance;
 
-    /** save thumbnails to disk as this format */
-    private static final String FORMAT = "png";
     private static final int MAX_ICON_SIZE = 300;
 
     private static final Logger LOGGER = Logger.getLogger(ThumbnailCache.class.getName());
@@ -81,9 +73,6 @@ public enum ThumbnailCache {
     /** currently desired icon size. is bound in {@link Toolbar} */
     public final SimpleIntegerProperty iconSize = new SimpleIntegerProperty(200);
 
-    /** thread that saves generated thumbnails to disk for use later */
-    private final Executor imageSaver = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("icon saver-%d").build());
-
     /**
      * Clear out the cache between cases
      */
@@ -99,6 +88,7 @@ public enum ThumbnailCache {
      * @return a thumbnail for the given file, returns null if the thumbnail
      *         could not be generated
      */
+    @Nullable
     public Image get(DrawableFile<?> file) {
         try {
             return cache.get(file.getId(), () -> load(file)).orElse(null);
@@ -108,11 +98,12 @@ public enum ThumbnailCache {
         }
     }
 
+    @Nullable
     public Image get(Long fileID) {
         try {
             return get(ImageGalleryController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.WARNING, "failed to load icon for file id : " + fileID, ex.getCause());
             return null;
         }
     }
@@ -126,32 +117,44 @@ public enum ThumbnailCache {
      * @return an (possibly empty) optional containing a thumbnail
      */
     private Optional<Image> load(DrawableFile<?> file) {
-        Image thumbnail;
 
+        BufferedImage thumbnail;
         try {
-            thumbnail = getCacheFile(file.getId()).map((File cachFile) -> {
-                if (cachFile.exists()) {
-                    // If a thumbnail file is already saved locally, load it
-                    try {
-                        int dim = iconSize.get();
-                        return new Image(Utilities.toURI(cachFile).toURL().toString(), dim, dim, true, false, true);
-                    } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+            thumbnail = getCacheFile(file).map(new Function<File, BufferedImage>() {
+                @Override
+                public BufferedImage apply(File cachFile) {
+                    if (cachFile.exists()) {
+                        // If a thumbnail file is already saved locally, load it
+                        try {
+                            BufferedImage read = ImageIO.read(cachFile);
+                            if (read.getWidth() == MAX_ICON_SIZE) {
+                                return read;
+                            }
+                        } catch (MalformedURLException ex) {
+                            LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                        } catch (IOException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
                     }
+                    return null;
                 }
-                return null;
-            }).orElse(null);
+            }).orElseGet(() -> {
+                return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_ICON_SIZE);
+            });
 
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "can't load icon when no case is open");
             return Optional.empty();
         }
-
-        if (thumbnail == null) {  //if we failed to load the icon, try to generate it
-            thumbnail = generateAndSaveThumbnail(file);
+        WritableImage jfxthumbnail;
+        if (thumbnail == ImageUtils.getDefaultThumbnail()) {
+            jfxthumbnail = null // if we go the default icon, ignore it
+                    ;
+        } else {
+            jfxthumbnail = SwingFXUtils.toFXImage(thumbnail, null);
         }
 
-        return Optional.ofNullable(thumbnail); //return icon, or null if generation failed
+        return Optional.ofNullable(jfxthumbnail); //return icon, or null if generation failed
     }
 
     /**
@@ -160,125 +163,14 @@ public enum ThumbnailCache {
      * @param id the obj id of the file to get a cache file for
      *
      * @return a Optional containing a File to store the cahced icon in or an
-     *         empty optional if there was a
-     *         problem.
+     *         empty optional if there was a problem.
      */
-    private static Optional<File> getCacheFile(long id) {
+    private static Optional<File> getCacheFile(DrawableFile<?> file) {
         try {
-            // @@@ should use ImageUtils.getFile();
-            return Optional.of(new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png"));
+            return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_ICON_SIZE));
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
-        }
-    }
-
-    /**
-     * generate a new thumbnail for the given file and save it to the disk cache
-     *
-     * @param file
-     *
-     * @return the newly generated thumbnail {@link Image}, or {@code null} if a
-     *         thumbnail could not be generated
-     */
-    private Image generateAndSaveThumbnail(final DrawableFile<?> file) {
-        //create a buffered input stream for the underlying Abstractfile
-        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
-            final Image thumbnail = new Image(inputStream, MAX_ICON_SIZE, MAX_ICON_SIZE, true, true);
-            if (thumbnail.isError()) {  //if there was an error loading the image via JFX, fall back on Swing
-                LOGGER.log(Level.WARNING, "problem loading thumbnail for image: " + file.getName() + " .");
-                // Doing it this way puts the whole stack trace in the console output, which is probably not
-                // needed. There are a significant number of cases where this is expected to fail (bitmaps,
-                // empty files, etc.)
-                //LOGGER.log(Level.WARNING, "problem loading image: " + file.getName() + " .", thumbnail.getException());
-                return fallbackToSwingImage(file);
-            } else { //if the load went successfully, save the thumbnail to disk on a background thread
-                imageSaver.execute(() -> {
-                    saveIcon(file, thumbnail);
-                });
-                return thumbnail;
-            }
-        } catch (IOException ex) {
-            //if the JX load throws an exception fall back to Swing
-            return fallbackToSwingImage(file);
-        }
-    }
-
-    /**
-     * use Swing to generate and save a thumbnail for the given file
-     *
-     * @param file
-     *
-     * @return a thumbnail generated for the given file, or {@code null} if a
-     *         thumbnail could not be generated
-     */
-    private Image fallbackToSwingImage(final DrawableFile<?> file) {
-        final BufferedImage generateSwingIcon = generateSwingThumbnail(file);
-        if (generateSwingIcon == null) {    //if swing failed,
-            return null;                    //propagate failure up cal stack.
-        } else {//Swing load succeeded, convert to JFX Image
-            final WritableImage toFXImage = SwingFXUtils.toFXImage(generateSwingIcon, null);
-            if (toFXImage != null) { //if conversion succeeded save to disk cache
-                imageSaver.execute(() -> {
-                    saveIcon(file, toFXImage);
-                });
-            }
-            return toFXImage;  //could be null
-        }
-    }
-
-    /**
-     * use Swing/ImageIO to generate a thumbnail for the given file
-     *
-     * @param file
-     *
-     * @return a BufferedImage thumbail for the given file, or {@code null} if a
-     *         thumbnail could not be generated
-     */
-    private BufferedImage generateSwingThumbnail(DrawableFile<?> file) {
-        //create a buffered input stream for the underlying Abstractfile
-        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile()))) {
-            BufferedImage bi = ImageIO.read(inputStream);
-            if (bi != null) {
-                try { // resize (shrink) the buffered image if needed
-                    if (Math.max(bi.getWidth(), bi.getHeight()) > MAX_ICON_SIZE) {
-                        bi = ScalrWrapper.resizeFast(bi, iconSize.get());
-                    }
-                } catch (IllegalArgumentException e) {
-                    //if scalr failed, just use unscaled image
-                    LOGGER.log(Level.WARNING, "scalr could not scale image to 0: {0}", file.getName());
-                } catch (OutOfMemoryError e) {
-                    LOGGER.log(Level.WARNING, "scalr could not scale image (too large): {0}", file.getName());
-                    return null;
-                }
-            } else { //ImageIO failed to read the image
-                LOGGER.log(Level.WARNING, "No image reader for file: {0}", file.getName());
-                return null;
-            }
-            return bi;
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Could not read image: " + file.getName());
-            return null;
-        }
-    }
-
-    /**
-     * save the generated thumbnail to disk in the cache folder with
-     * the obj_id as the name.
-     *
-     * @param file the file the given image is a thumbnail for
-     * @param bi   the thumbnail to save for the given DrawableFile
-     */
-    private void saveIcon(final DrawableFile<?> file, final Image bi) {
-        if (bi != null) {
-            getCacheFile(file.getId()).ifPresent((File cacheFile) -> {
-                try {
-                    //convert back to swing to save
-                    ImageIO.write(SwingFXUtils.fromFXImage(bi, null), FORMAT, cacheFile);
-                } catch (IllegalArgumentException | IOException ex) {
-                    LOGGER.log(Level.WARNING, "failed to save generated icon");
-                }
-            });
         }
     }
 }
