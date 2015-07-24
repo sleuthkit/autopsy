@@ -47,12 +47,13 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
     }
 
     @Override
+    @NbBundle.Messages({"# {0} - sub filter displaynames",
+        "IntersectionFilter.displayName.text=Intersection{0}"})
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(),
-                "IntersectionFilter.displayName.text",
-                getSubFilters().stream()
+        String collect = getSubFilters().stream()
                 .map(Filter::getDisplayName)
-                .collect(Collectors.joining(",", "[", "]")));
+                .collect(Collectors.joining(",", "[", "]"));
+        return Bundle.IntersectionFilter_displayName_text(collect);
     }
 
     @Override

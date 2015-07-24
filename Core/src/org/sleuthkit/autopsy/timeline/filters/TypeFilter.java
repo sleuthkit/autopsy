@@ -64,12 +64,11 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
     }
 
     @Override
+    @NbBundle.Messages("TypeFilter.displayName.text=Event Type Filter")
     public String getDisplayName() {
-        if (eventType == RootEventType.getInstance()) {
-            return NbBundle.getMessage(this.getClass(), "TypeFilter.displayName.text");
-        } else {
-            return eventType.getDisplayName();
-        }
+        return (eventType == RootEventType.getInstance())
+                ? Bundle.TypeFilter_displayName_text()
+                : eventType.getDisplayName();
     }
 
     /** @return a color to use in GUI components representing this filter */

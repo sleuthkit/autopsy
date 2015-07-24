@@ -26,8 +26,9 @@ import org.openide.util.NbBundle;
 public class HideKnownFilter extends AbstractFilter {
 
     @Override
+    @NbBundle.Messages("hideKnownFilter.displayName.text=Hide Known Files")
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(), "hideKnownFilter.displayName.text");
+        return Bundle.hideKnownFilter_displayName_text();
     }
 
     public HideKnownFilter() {

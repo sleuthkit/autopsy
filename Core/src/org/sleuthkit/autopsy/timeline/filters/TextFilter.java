@@ -26,33 +26,34 @@ import org.openide.util.NbBundle;
 
 /** Filter for text matching */
 public class TextFilter extends AbstractFilter {
-    
+
     public TextFilter() {
     }
-    
+
     public TextFilter(String text) {
         this.text.set(text);
     }
-    
+
     private final SimpleStringProperty text = new SimpleStringProperty();
-    
+
     synchronized public void setText(String text) {
         this.text.set(text);
     }
-    
+
     @Override
+    @NbBundle.Messages("TextFilter.displayName.text=Text Filter")
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(), "TextFilter.displayName.text");
+        return Bundle.TextFilter_displayName_text();
     }
-    
+
     synchronized public String getText() {
         return text.getValue();
     }
-    
+
     public Property<String> textProperty() {
         return text;
     }
-    
+
     @Override
     synchronized public TextFilter copyOf() {
         TextFilter textFilter = new TextFilter(getText());
@@ -60,12 +61,12 @@ public class TextFilter extends AbstractFilter {
         textFilter.setDisabled(isDisabled());
         return textFilter;
     }
-    
+
     @Override
     public String getHTMLReportString() {
         return "text like \"" + StringUtils.defaultIfBlank(text.getValue(), "") + "\"" + getStringCheckBox(); // NON-NLS
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -75,18 +76,18 @@ public class TextFilter extends AbstractFilter {
             return false;
         }
         final TextFilter other = (TextFilter) obj;
-        
+
         if (isSelected() != other.isSelected()) {
             return false;
         }
         return Objects.equals(text.get(), other.text.get());
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 5;
         hash = 29 * hash + Objects.hashCode(this.text.get());
         return hash;
     }
-    
+
 }

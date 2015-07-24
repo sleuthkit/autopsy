@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import org.openide.util.NbBundle;
 
 /**
  * union of {@link DataSourceFilter}s
@@ -44,8 +45,9 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     }
 
     @Override
+    @NbBundle.Messages("DataSourcesFilter.displayName.text=Data Source")
     public String getDisplayName() {
-        return "Data Source";
+        return Bundle.DataSourcesFilter_displayName_text();
     }
 
     @Override
@@ -53,7 +55,10 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
         //move this logic into SaveSnapshot
         String string = getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+            string = string + " : " + getSubFilters().stream()
+                    .filter(Filter::isSelected)
+                    .map(Filter::getHTMLReportString)
+                    .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }
