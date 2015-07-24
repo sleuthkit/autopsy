@@ -18,7 +18,7 @@
                             <graphic>
                                 <ImageView fitHeight="128.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="false" rotate="180.0" scaleX="1.0" translateX="0.0">
                                     <image>
-                                        <Image url="@../images/right_arrow_128.png" />
+                                        <Image url="@../../images/right_arrow_128.png" />
                                     </image>
                                 </ImageView>
                             </graphic>
@@ -42,7 +42,7 @@
                                     <graphic>
                                         <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
                                             <image>
-                                                <Image url="@../images/category-icon.png" />
+                                                <Image url="@../../images/category-icon.png" />
                                             </image>
                                         </ImageView>
                                     </graphic>
@@ -88,12 +88,12 @@
                                                     <children>
                                                         <ImageView fx:id="fileTypeImageView" fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" scaleX="1.0" scaleY="1.0">
                                                             <image>
-                                                                <Image url="@../images/video-file.png" />
+                                                                <Image url="@../../images/video-file.png" />
                                                             </image>
                                                         </ImageView>
                                                         <ImageView fx:id="hashHitImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true" style="">
                                                             <image>
-                                                                <Image url="@../images/hashset_hits.png" />
+                                                                <Image url="@../../images/hashset_hits.png" />
                                                             </image>
                                                             <HBox.margin>
                                                                 <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
@@ -110,7 +110,7 @@
                                                     <graphic>
                                                         <ImageView id="followUpImageview" fx:id="followUpImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                                             <image>
-                                                                <Image url="@../images/flag_gray.png" />
+                                                                <Image url="@../../images/flag_gray.png" />
                                                             </image>
                                                         </ImageView>
                                                     </graphic>
@@ -135,7 +135,7 @@
                             <graphic>
                                 <ImageView fitHeight="128.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="false" scaleX="1.0" smooth="true" translateX="0.0">
                                     <image>
-                                        <Image url="@../images/right_arrow_128.png" />
+                                        <Image url="@../../images/right_arrow_128.png" />
                                     </image>
                                 </ImageView>
                             </graphic>

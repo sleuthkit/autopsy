@@ -16,29 +16,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.datamodel;
+package org.sleuthkit.autopsy.events;
 
-import java.util.Collection;
-import java.util.Collections;
 import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Tag;
 
 /**
- * Event broadcast to various UI componenets when one or more files' category
- * has been changed
+ * Base Class for events that are fired when a Tag is added
  */
 @Immutable
-public class CategoryChangeEvent {
+abstract class TagAddedEvent<T extends Tag> extends TagEvent<T> {
 
-    private final Collection<Long> ids;
+    protected TagAddedEvent(String propertyName, T newValue) {
+        super(Case.class, propertyName, null, newValue);
+    }
 
     /**
-     * @return the fileIDs of the files whose categories have changed
+     * get the Tag that was added
+     *
+     * @return the tTag
      */
-    public Collection<Long> getIds() {
-        return Collections.unmodifiableCollection(ids);
+    @SuppressWarnings("unchecked")
+    @Override
+    public T getTag() {
+        return (T) getNewValue();
     }
 
-    public CategoryChangeEvent(Collection<Long> ids) {
-        this.ids = ids;
-    }
 }

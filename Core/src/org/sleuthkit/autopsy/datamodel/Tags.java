@@ -35,8 +35,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -119,19 +117,14 @@ public class Tags implements AutopsyVisitableItem {
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
-            @SuppressWarnings("deprecation")
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    /* Note: this is a hack. In an ideal world, TagsManager
-                     * would fire events so that the directory tree would
-                     * refresh. But, we haven't had a chance to add that so, we
-                     * fire these events and the tree refreshes based on them. */
-                    if ((((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)
-                            || ((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE) {
+                if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                         refresh(true);
                         tagResults.update();
-                    }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
                     tagResults.update();

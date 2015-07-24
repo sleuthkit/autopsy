@@ -136,7 +136,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             try {
                 Message msg = messageBuilder.parseMessage(message.asInputStream(theEncoder.charset()));
                 emails.add(extractEmail(msg));
-            } catch (IOException ex) {
+            } catch (RuntimeException | IOException ex) {
                 logger.log(Level.WARNING, "Failed to get message from mbox: {0}", ex.getMessage()); //NON-NLS
                 failCount++;
             }

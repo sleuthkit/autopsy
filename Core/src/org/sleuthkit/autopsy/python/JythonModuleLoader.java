@@ -120,7 +120,7 @@ public final class JythonModuleLoader {
         interpreter.exec("import sys"); //NON-NLS
         String path = Matcher.quoteReplacement(script.getParent());
         interpreter.exec("sys.path.append('" + path + "')"); //NON-NLS
-        String moduleName = script.getName().replaceAll(".py", ""); //NON-NLS
+        String moduleName = script.getName().replaceAll("\\.py$", ""); //NON-NLS
 
         // reload the module so that the changes made to it can be loaded.
         interpreter.exec("import " + moduleName); //NON-NLS

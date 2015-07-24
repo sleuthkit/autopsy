@@ -31,7 +31,7 @@ import javafx.scene.image.ImageView;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  * A cell in the NavPanel tree that listens to its associated group's fileids
@@ -107,7 +107,6 @@ class GroupTreeCell extends TreeCell<TreeNode> {
                 setStyle("");
             });
         } else {
-
             if (isNull(treeNode.getGroup())) {
                 final String groupName = getGroupName();
                 //"dummy" group in file system tree <=>  a folder with no drawables
@@ -141,7 +140,7 @@ class GroupTreeCell extends TreeCell<TreeNode> {
 
     private String getGroupName() {
         return Optional.ofNullable(getItem())
-                .map((TreeNode t) -> StringUtils.defaultIfBlank(t.getPath(), DrawableGroup.getBlankGroupName()))
+                .map(treeNode -> StringUtils.defaultIfBlank(treeNode.getPath(), DrawableGroup.getBlankGroupName()))
                 .orElse("");
     }
 

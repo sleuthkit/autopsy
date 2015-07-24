@@ -27,7 +27,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  * A node in the nav/hash tree. Manages inserts and removals. Has parents and

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.imagegallery.gui;
+package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
@@ -104,7 +104,6 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
@@ -113,9 +112,10 @@ import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewMode;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -126,13 +126,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  *
  * TODO: Extract the The GridView instance to a separate class analogous to the
- * SlideShow. Move selection model into controlsfx GridView and submit pull
+ * SlideShow.
+ *
+ * TODO: Move selection model into controlsfx GridView and submit pull
  * request to them.
  * https://bitbucket.org/controlsfx/controlsfx/issue/4/add-a-multipleselectionmodel-to-gridview
- *
- *
  */
-public class GroupPane extends BorderPane implements GroupView {
+public class GroupPane extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
 
@@ -277,7 +277,7 @@ public class GroupPane extends BorderPane implements GroupView {
             @Override
             public void handle(ActionEvent t) {
                 Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
-                new CategorizeAction().addTagsToFiles(cat.getTagName(), "", fileIdSet);
+                new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
 
                 grpCatSplitMenu.setText(cat.getDisplayName());
                 grpCatSplitMenu.setOnAction(this);
@@ -292,7 +292,7 @@ public class GroupPane extends BorderPane implements GroupView {
             @Override
             public void handle(ActionEvent t) {
                 Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
-                AddDrawableTagAction.getInstance().addTagsToFiles(tn, "", fileIdSet);
+                new AddDrawableTagAction(controller).addTagsToFiles(tn, "", fileIdSet);
 
                 grpTagSplitMenu.setText(tn.getDisplayName());
                 grpTagSplitMenu.setOnAction(this);
@@ -340,8 +340,8 @@ public class GroupPane extends BorderPane implements GroupView {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        gridView.cellHeightProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
-        gridView.cellWidthProperty().bind(Toolbar.getDefault().sizeSliderValue().add(75));
+        gridView.cellHeightProperty().bind(Toolbar.getDefault(controller).sizeSliderValue().add(75));
+        gridView.cellWidthProperty().bind(Toolbar.getDefault(controller).sizeSliderValue().add(75));
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
 
         //configure toolbar properties
@@ -349,8 +349,8 @@ public class GroupPane extends BorderPane implements GroupView {
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
         try {
-            grpTagSplitMenu.setText(TagUtils.getFollowUpTagName().getDisplayName());
-            grpTagSplitMenu.setOnAction(createGrpTagMenuItem(TagUtils.getFollowUpTagName()).getOnAction());
+            grpTagSplitMenu.setText(getController().getTagsManager().getFollowUpTagName().getDisplayName());
+            grpTagSplitMenu.setOnAction(createGrpTagMenuItem(getController().getTagsManager().getFollowUpTagName()).getOnAction());
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
@@ -358,8 +358,8 @@ public class GroupPane extends BorderPane implements GroupView {
         grpTagSplitMenu.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
             if (t1) {
                 ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : TagUtils.getNonCategoryTagNames()) {
-                    MenuItem menuItem = TagUtils.createSelTagMenuItem(tn, grpTagSplitMenu);
+                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
+                    MenuItem menuItem = createGrpTagMenuItem(tn);
                     selTagMenues.add(menuItem);
                 }
                 grpTagSplitMenu.getItems().setAll(selTagMenues);
@@ -419,9 +419,8 @@ public class GroupPane extends BorderPane implements GroupView {
             private ContextMenu buildContextMenu() {
                 ArrayList<MenuItem> menuItems = new ArrayList<>();
 
-                menuItems.add(CategorizeAction.getPopupMenu());
-
-                menuItems.add(AddDrawableTagAction.getInstance().getPopupMenu());
+                menuItems.add(new CategorizeAction(controller).getPopupMenu());
+                menuItems.add(new AddDrawableTagAction(controller).getPopupMenu());
 
                 Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
 
@@ -590,6 +589,7 @@ public class GroupPane extends BorderPane implements GroupView {
             Platform.runLater(() -> {
                 gridView.getItems().setAll(Collections.emptyList());
                 setCenter(null);
+                slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
                 if (false == Case.isCaseOpen()) {
@@ -651,6 +651,10 @@ public class GroupPane extends BorderPane implements GroupView {
             selectionAnchorIndex = null;
             globalSelectionModel.clearAndSelect(newFileID);
         }
+    }
+
+    ImageGalleryController getController() {
+        return controller;
     }
 
     private class DrawableCell extends GridCell<Long> {
@@ -751,27 +755,27 @@ public class GroupPane extends BorderPane implements GroupView {
                     switch (t.getCode()) {
                         case NUMPAD0:
                         case DIGIT0:
-                            new CategorizeAction().addTag(Category.ZERO.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.ZERO), "");
                             break;
                         case NUMPAD1:
                         case DIGIT1:
-                            new CategorizeAction().addTag(Category.ONE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.ONE), "");
                             break;
                         case NUMPAD2:
                         case DIGIT2:
-                            new CategorizeAction().addTag(Category.TWO.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.TWO), "");
                             break;
                         case NUMPAD3:
                         case DIGIT3:
-                            new CategorizeAction().addTag(Category.THREE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.THREE), "");
                             break;
                         case NUMPAD4:
                         case DIGIT4:
-                            new CategorizeAction().addTag(Category.FOUR.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.FOUR), "");
                             break;
                         case NUMPAD5:
                         case DIGIT5:
-                            new CategorizeAction().addTag(Category.FIVE.getTagName(), "");
+                            new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(Category.FIVE), "");
                             break;
                     }
                 }
