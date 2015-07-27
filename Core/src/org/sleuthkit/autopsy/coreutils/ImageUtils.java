@@ -74,8 +74,9 @@ public class ImageUtils {
 
     private static final Logger logger = LOGGER;
     private static final BufferedImage DEFAULT_THUMBNAIL;
-    private static final TreeSet<String> SUPPORTED_MIME_TYPES;
-    private static final List<String> SUPPORTED_EXTENSIONS;
+    private static final TreeSet<String> SUPPORTED_MIME_TYPES = new TreeSet<>();
+    private static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
+    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
     private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
             = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
                     "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
@@ -88,9 +89,10 @@ public class ImageUtils {
                     "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
                     "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
                     "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
-                    "flm", "tmv", "4xm", "swf");  //NON-NLS
+                    "flm", "tmv", "4xm");  //NON-NLS
+    private static final TreeSet<String> SUPPORTED_IMAGE_MIME_TYPES;
     private static final List<String> SUPPORTED_VIDEO_MIME_TYPES
-            = Arrays.asList("application/x-shockwave-flash","video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
+            = Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
@@ -124,18 +126,20 @@ public class ImageUtils {
         }
 
         openCVLoaded = openCVLoadedTemp;
+        SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
-        SUPPORTED_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes()));
+        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_IMAGE_EXTENSIONS);
         SUPPORTED_EXTENSIONS.addAll(SUPPORTED_VIDEO_EXTENSIONS);
 
-        SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
+        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /* special cases and variants that we support, but don't get registered
          * with ImageIO automatically */
-        SUPPORTED_MIME_TYPES.addAll(Arrays.asList(
+        SUPPORTED_IMAGE_MIME_TYPES.addAll(Arrays.asList(
                 "image/x-rgb",
                 "image/x-ms-bmp",
                 "application/x-123"));
+        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_IMAGE_MIME_TYPES);
+        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
 
         //this is rarely usefull
         SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
@@ -157,6 +161,22 @@ public class ImageUtils {
                     .namingPattern("icon saver-%d").build());
 
     private ImageUtils() {
+    }
+
+    public static List<String> getSupportedImageExtensions() {
+        return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
+    }
+
+    public static List<String> getSupportedVideoExtensions() {
+        return SUPPORTED_VIDEO_EXTENSIONS;
+    }
+
+    public static SortedSet<String> getSupportedImageMimeTypes() {
+        return Collections.unmodifiableSortedSet(SUPPORTED_IMAGE_MIME_TYPES);
+    }
+
+    public static List<String> getSupportedVideoMimeTypes() {
+        return SUPPORTED_VIDEO_MIME_TYPES;
     }
 
     public static List<String> getSupportedExtensions() {
@@ -368,6 +388,10 @@ public class ImageUtils {
      */
     private static File getCachedThumbnailLocation(long fileID) {
         return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", fileID + ".png").toFile();
+    }
+
+    public static boolean hasImageFileHeader(AbstractFile file) {
+        return isJpegFileHeader(file) || isPngFileHeader(file);
     }
 
     /**

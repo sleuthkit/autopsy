@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
@@ -52,21 +51,16 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Image getThumbnail() {
-        return ThumbnailCache.getDefault().get(this);
-    }
-
-    @Override
     public Image getFullSizeImage() {
-        Image image = (imageRef != null) ? imageRef.get() : null;
+        Image image = (null == imageRef) ? null : imageRef.get();
 
         if (image == null) {
             final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
-            imageRef = new SoftReference<>((bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null));
+            image = (bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null);
+            imageRef = new SoftReference<>(image);
         }
 
         return image;
-
     }
 
     private SoftReference<Media> mediaRef;

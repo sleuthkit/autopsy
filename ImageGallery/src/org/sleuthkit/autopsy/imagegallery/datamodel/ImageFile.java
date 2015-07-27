@@ -28,7 +28,6 @@ import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -50,10 +49,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     }
 
-    @Override
-    public Image getThumbnail() {
-        return ThumbnailCache.getDefault().get(this);
-    }
 
     @Override
     public Image getFullSizeImage() {

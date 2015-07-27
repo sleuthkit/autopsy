@@ -21,30 +21,34 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Video viewer part of the Media View layered pane.
  * Uses different engines depending on platform.
  */
-public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
-    
+public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, DataContentViewerMedia.MediaViewPanel {
+
+    private static final Set<String> AUDIO_EXTENSIONS = new TreeSet<>(Arrays.asList(".mp3", ".wav", ".wma")); //NON-NLS
+
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
-    
+
     // 64 bit architectures
     private static final String[] ARCH64 = new String[]{"amd64", "x86_64"}; //NON-NLS NON-NLS
-    
+
     // 32 bit architectures
     private static final String[] ARCH32 = new String[]{"x86"}; //NON-NLS
-    
+
     /**
-     * Factory Method to create a MediaViewVideoPanel. 
-     * 
+     * Factory Method to create a MediaViewVideoPanel.
+     *
      * Implementation is dependent on the architecture of the JVM.
-     * 
+     *
      * @return a MediaViewVideoPanel instance.
      */
     public static MediaViewVideoPanel createVideoPanel() {
@@ -56,10 +60,10 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
             return getGstImpl();
         }
     }
-    
+
     /**
      * Is the JVM architecture 64 bit?
-     * 
+     *
      * @return
      */
     private static boolean is64BitJVM() {
@@ -69,34 +73,34 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
 
     /**
      * Get a GStreamer video player implementation.
-     * 
+     *
      * @return a GstVideoPanel
      */
     private static MediaViewVideoPanel getGstImpl() {
         return new GstVideoPanel();
     }
 
-     /**
+    /**
      * Get a JavaFX video player implementation.
-     * 
+     *
      * @return a FXVideoPanel
      */
     private static MediaViewVideoPanel getFXImpl() {
         return new FXVideoPanel();
     }
-    
+
     /**
      * Has this MediaViewVideoPanel been initialized correctly?
-     * 
-     * @return 
+     *
+     * @return
      */
     public abstract boolean isInited();
-    
+
     /**
      * Prepare this MediaViewVideoPanel to accept a different media file.
      */
     abstract void reset();
-    
+
     /**
      * Initialize all the necessary vars to play a video/audio file.
      *
@@ -104,13 +108,33 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @param dims dimension of the parent window
      */
     abstract void setupVideo(final AbstractFile file, final Dimension dims);
-    
+
     /**
      * Return the extensions supported by this video panel.
+     *
+     * @return
      */
     abstract public String[] getExtensions();
+
     /**
      * Return the MimeTypes supported by this video panel.
      */
+    @Override
     abstract public List<String> getMimeTypes();
+
+    @Override
+    public List<String> getExtensionsList() {
+        return Arrays.asList(getExtensions());
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        String extension = file.getNameExtension();
+        //TODO: is this what we want, to require both extension and mimetype support?
+        if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
+            return DataContentViewerMedia.MediaViewPanel.super.isSupported(file); //To change body of generated methods, choose Tools | Templates.
+        }
+        return false;
+    }
+
 }

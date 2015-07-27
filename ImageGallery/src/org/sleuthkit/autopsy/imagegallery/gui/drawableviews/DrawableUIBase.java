@@ -196,10 +196,17 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                     saveToCache(get());
                     updateContent();
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.WARNING, "Failed to content for" + file.getName(), ex);
+                    LOGGER.log(Level.WARNING, "Failed to cache content for" + file.getName(), ex);
                 }
             }
         }
+
+        @Override
+        protected void failed() {
+            super.failed();
+            LOGGER.log(Level.SEVERE, "Failed to cache content for" + file.getName(), getException());
+        }
+        
 
         abstract void saveToCache(X result);
     }
