@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import com.google.common.cache.RemovalNotification;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -55,6 +58,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Provides public API (over EventsDB) to access events. In theory this
@@ -72,11 +76,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class EventsRepository {
 
-    private static final String FILES_AND_DIRS_WHERE_CLAUSE = "name != '.' AND name != '..'";
+    private final static Logger LOGGER = Logger.getLogger(EventsRepository.class.getName());
 
     private final EventDB eventDB;
-
-    private final static Logger LOGGER = Logger.getLogger(EventsRepository.class.getName());
 
     @GuardedBy("this")
     private SwingWorker<Void, ProgressWindow.ProgressUpdate> dbPopulationWorker;
@@ -93,6 +95,13 @@ public class EventsRepository {
 
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
+    private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
+    private final Case autoCase;
+
+    synchronized public ObservableMap<Long, String> getDatasourcesMap() {
+        return datasourcesMap;
+    }
+
     public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
@@ -105,10 +114,12 @@ public class EventsRepository {
         return modelInstance;
     }
 
-    public EventsRepository(ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
+    public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
+        this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(Case.getCurrentCase().getCaseDirectory());
+        this.eventDB = EventDB.getEventDB(autoCase);
 
+        populateDataSourceMap(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
             //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getEventById));
@@ -121,9 +132,8 @@ public class EventsRepository {
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
-    }
 
-  
+    }
 
     /** @return min time (in seconds from unix epoch) */
     public Long getMaxTime() {
@@ -156,9 +166,11 @@ public class EventsRepository {
     public Long getLastObjID() {
         return eventDB.getLastObjID();
     }
+
     public long getLastArtfactID() {
         return eventDB.getLastArtfactID();
     }
+
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
@@ -170,7 +182,6 @@ public class EventsRepository {
 
     public Map<EventType, Long> countEvents(ZoomParams params) {
         return eventCountsCache.getUnchecked(params);
-
     }
 
     private void invalidateCaches() {
@@ -197,12 +208,14 @@ public class EventsRepository {
         dbPopulationWorker.execute();
     }
 
-    /**
-     * SwingWorker to populate event db with data from main autopsy database.
-     *
-     * has only local state. accesses eventDB but that is internally
-     * synchronized/ thread-safe.
-     */
+    public Map<Long, String> getDataSources() {
+        return Collections.unmodifiableMap(datasourcesMap);
+    }
+
+    public boolean hasDataSourceInfo() {
+        return eventDB.hasDataSourceInfo();
+    }
+
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
 
         private final ProgressWindow progressDialog;
@@ -220,19 +233,19 @@ public class EventsRepository {
         @Override
         protected Void doInBackground() throws Exception {
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
-                                                                                               "EventsRepository.progressWindow.msg.reinit_db"), "")));
+                    "EventsRepository.progressWindow.msg.reinit_db"), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
-            eventDB.dropTable();
+            eventDB.dropEventsTable();
             eventDB.initializeDB();
 
             //grab ids of all files
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-            List<Long> files = skCase.findAllFileIdsWhere(FILES_AND_DIRS_WHERE_CLAUSE);
+            SleuthkitCase skCase = autoCase.getSleuthkitCase();
+            List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, NbBundle.getMessage(this.getClass(),
-                                                                                                     "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
+                    "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
 
             //insert file events into db
             int i = 1;
@@ -243,36 +256,39 @@ public class EventsRepository {
                 } else {
                     try {
                         AbstractFile f = skCase.getAbstractFileById(fID);
-                        
-                        if(f != null){
+
+                        if (f != null) {
                             //TODO: This is broken for logical files? fix -jm
                             //TODO: logical files don't necessarily have valid timestamps, so ... -jm
                             final String uniquePath = f.getUniquePath();
                             final String parentPath = f.getParentPath();
+                            long datasourceID = f.getDataSource().getId();
                             String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
                             String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
-                            String medD = datasourceName  + parentPath;
+                            String medD = datasourceName + parentPath;
+                            final TskData.FileKnown known = f.getKnown();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
+                            long time;
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, fID, null, uniquePath, medD, shortDesc, f.getKnown(), trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                                                                                NbBundle.getMessage(this.getClass(),
-                                                                                                        "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
+                                    NbBundle.getMessage(this.getClass(),
+                                            "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
                         } else {
-                            LOGGER.log(Level.WARNING, "failed to look up data for file : " + fID); // NON-NLS
+                            LOGGER.log(Level.WARNING, "failed to look up data for file : {0}", fID); // NON-NLS
                         }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
@@ -294,13 +310,14 @@ public class EventsRepository {
             }
 
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
-                                                                                               "EventsRepository.progressWindow.msg.commitingDb"), "")));
+                    "EventsRepository.progressWindow.msg.commitingDb"), "")));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
                 eventDB.commitTransaction(trans, true);
             }
 
+            populateDataSourceMap(skCase);
             invalidateCaches();
 
             return null;
@@ -330,11 +347,11 @@ public class EventsRepository {
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                        "EventsRepository.msgdlg.problem.text"));
+                        "EventsRepository.msgdlg.problem.text"));
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                        "EventsRepository.msgdlg.problem.text"));
+                        "EventsRepository.msgdlg.problem.text"));
             }
             r.run();  //execute post db population operation
         }
@@ -353,9 +370,9 @@ public class EventsRepository {
                 final int numArtifacts = blackboardArtifacts.size();
 
                 process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                                                                        NbBundle.getMessage(this.getClass(),
-                                                                                            "EventsRepository.progressWindow.populatingXevents",
-                                                                                            type.toString()), "")));
+                        NbBundle.getMessage(this.getClass(),
+                                "EventsRepository.progressWindow.populatingXevents",
+                                type.toString()), "")));
 
                 int i = 0;
                 for (final BlackboardArtifact bbart : blackboardArtifacts) {
@@ -363,17 +380,38 @@ public class EventsRepository {
                     ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.AttributeEventDescription.buildEventDescription(type, bbart);
 
                     if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
-                        eventDB.insertEvent(eventDescription.getTime(), type, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, trans);
+                        long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
+                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, trans);
                     }
 
                     i++;
                     process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                                                                            NbBundle.getMessage(this.getClass(),
-                                                                                                "EventsRepository.progressWindow.populatingXevents",
-                                                                                                type.toString()), "")));
+                            NbBundle.getMessage(this.getClass(),
+                                    "EventsRepository.progressWindow.populatingXevents",
+                                    type.toString()), "")));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
+            }
+        }
+    }
+
+    /**
+     * use the given SleuthkitCase to look up the names for the datasources in
+     * the events table.
+     *
+     * TODO: we could keep a table of id -> name in the eventdb but I am wary of
+     * having too much redundant info.
+     *
+     * @param skCase
+     */
+    synchronized private void populateDataSourceMap(SleuthkitCase skCase) {
+        //because there is no way to remove a datasource we only add to this map.
+        for (Long id : eventDB.getDataSourceIDs()) {
+            try {
+                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
             }
         }
     }

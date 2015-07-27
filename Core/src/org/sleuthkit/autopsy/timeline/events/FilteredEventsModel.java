@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,14 +25,22 @@ import java.util.Set;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
+import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TextFilter;
+import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -49,7 +57,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * unnecessary db calls through the {@link EventsRepository} -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
- * access the repo atomicaly do not need further synchronization
+ * access the repo atomically do not need further synchronization
  *
  * all other member state variables should only be accessed with intrinsic lock
  * of containing FilteredEventsModel held. Many methods delegate to a task
@@ -59,17 +67,19 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * the tasks to obtain.
  *
  */
-public class FilteredEventsModel {
+public final class FilteredEventsModel {
 
+    /* requested time range, filter, event_type zoom, and description level of
+     * detail. if specifics are not passed to methods, the values of these
+     * members are used to query repository. */
     /**
      * time range that spans the filtered events
      */
-    //requested time range, filter, event_type zoom, and description level of detail.  if specifics are not passed to methods, the values of these members are used to query repository.
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<Filter> requestedFilter = new ReadOnlyObjectWrapper<>(Filter.getDefaultFilter());
+    private final ReadOnlyObjectWrapper<Filter> requestedFilter = new ReadOnlyObjectWrapper<>();
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
@@ -88,8 +98,28 @@ public class FilteredEventsModel {
     @GuardedBy("this")
     private final EventsRepository repo;
 
+    /** @return the default filter used at startup */
+    public RootFilter getDefaultFilter() {
+        DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
+        repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
+            DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
+            dataSourceFilter.setSelected(Boolean.TRUE);
+            dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
+        });
+        return new RootFilter(new HideKnownFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+    }
+
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
+
+        repo.getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+            DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
+            RootFilter rootFilter = (RootFilter) filter().get();
+            rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
+            requestedFilter.set(rootFilter.copyOf());
+        });
+        requestedFilter.set(getDefaultFilter());
+
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
@@ -124,7 +154,7 @@ public class FilteredEventsModel {
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
-        final IntersectionFilter intersect;
+        final IntersectionFilter<?> intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
             intersect = Filter.intersect(new Filter[]{filter, requestedFilter.get()});
@@ -176,7 +206,7 @@ public class FilteredEventsModel {
      * @return the smallest interval spanning all the events from the
      *         repository, ignoring any filters or requested ranges
      */
-    public final Interval getSpanningInterval() {
+    public  Interval getSpanningInterval() {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000, DateTimeZone.UTC);
     }
 
@@ -245,21 +275,9 @@ public class FilteredEventsModel {
         return requestedTypeZoom.get();
     }
 
-//    synchronized public void requestZoomState(ZoomParams zCrumb, boolean force) {
-//        if (force
-//                || zCrumb.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-//                || zCrumb.getDescrLOD().equals(requestedLOD.get()) == false
-//                || zCrumb.getFilter().equals(requestedFilter.get()) == false
-//                || zCrumb.getTimeRange().equals(requestedTimeRange.get()) == false) {
-//
-//            requestedZoomParamters.set(zCrumb);
-//            requestedTypeZoom.set(zCrumb.getTypeZoomLevel());
-//            requestedFilter.set(zCrumb.getFilter().copyOf());
-//            requestedTimeRange.set(zCrumb.getTimeRange());
-//            requestedLOD.set(zCrumb.getDescrLOD());
-//        }
-//    }
-    public DescriptionLOD getDescriptionLOD() {
+    synchronized public DescriptionLOD getDescriptionLOD() {
         return requestedLOD.get();
     }
+
+
 }
