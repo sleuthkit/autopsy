@@ -31,7 +31,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  *
@@ -58,7 +57,15 @@ public class VideoUtils {
 
         try {
             if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
-                copyFileUsingStream(file, tempFile);
+                com.google.common.io.Files.createParentDirs(tempFile);
+                ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
+                progress.start(100);
+                try {
+                    ContentUtils.writeToFile(file, tempFile, progress, null, true);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
+                }
+                progress.finish();
             }
         } catch (IOException ex) {
             return null;
@@ -117,26 +124,4 @@ public class VideoUtils {
 
         return ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
-
-    /**
-     * copy the first 500kb to a temporary file
-     *
-     * @param file
-     * @param tempFile
-     *
-     * @throws IOException
-     */
-    public static void copyFileUsingStream(Content file, java.io.File tempFile) throws IOException {
-        com.google.common.io.Files.createParentDirs(tempFile);
-
-        ProgressHandle progress = ProgressHandleFactory.createHandle("extracting temporary file " + file.getName());
-        progress.start(100);
-        try {
-            ContentUtils.writeToFile(file, tempFile, progress, null, true);
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-        }
-        progress.finish();
-    }
-
 }

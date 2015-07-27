@@ -637,7 +637,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
      */
     @Override
     public List<VideoFrame> captureFrames(java.io.File file, int numFrames) throws Exception {
-        //What is / was te point of this method /interface.
+        //What is/was the point of this method /interface.
         return null;
     }
 

@@ -536,9 +536,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                 }
             } else if (state.equals(State.READY)) {
                 final File tempVideoFile = VideoUtils.getTempVideoFile(currentFile);
-                if (tempVideoFile.exists() == false || tempVideoFile.length() < currentFile.getSize()) {
-                    new ExtractMedia(currentFile, tempVideoFile).execute();
-                }
+
+                new ExtractMedia(currentFile, tempVideoFile).execute();
+
             }
         }
     }//GEN-LAST:event_pauseButtonActionPerformed
@@ -673,17 +673,18 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
         @Override
         protected Long doInBackground() throws Exception {
-
-            progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> ExtractMedia.this.cancel(true));
-            progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
-            progress.start(100);
-            try {
-                return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                return 0L;
+            if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
+                progress = ProgressHandleFactory.createHandle(NbBundle.getMessage(GstVideoPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> ExtractMedia.this.cancel(true));
+                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
+                progress.start(100);
+                try {
+                    return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
+                    return 0L;
+                }
             }
-
+            return 0L;
         }
 
         /* clean up or start the worker threads */
@@ -698,7 +699,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
             } finally {
-                progress.finish();
+                if (progress != null) {
+                    progress.finish();
+                }
                 if (!this.isCancelled()) {
                     playMedia();
                 }
@@ -762,6 +765,5 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     public List<String> getMimeTypes() {
         return MIMETYPES;
     }
-    
-    
+
 }
