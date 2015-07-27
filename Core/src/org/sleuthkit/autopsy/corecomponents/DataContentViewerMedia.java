@@ -125,12 +125,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
             final Dimension dims = DataContentViewerMedia.this.getSize();
             //logger.info("setting node on media viewer"); //NON-NLS
-            if (imagePanelInited && isImageSupported(file)) {
-                imagePanel.showImageFx(file, dims);
-                this.showVideoPanel(false);
-            } else if (videoPanelInited && isVideoSupported(file)) {
+            if (videoPanelInited && isVideoSupported(file)) {
                 videoPanel.setupVideo(file, dims);
                 this.showVideoPanel(true);
+            } else if (imagePanelInited && isImageSupported(file)) {
+                imagePanel.showImageFx(file, dims);
+                this.showVideoPanel(false);
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS

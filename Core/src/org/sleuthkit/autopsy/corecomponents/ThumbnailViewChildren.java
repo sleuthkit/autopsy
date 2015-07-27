@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,13 +57,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         this.parent = arg;
         this.iconSize = iconSize;
-        //
     }
 
-    //   @Override
-//    protected Node copyNode(Node arg0) {
-    //      return new ThumbnailViewNode(arg0);
-//    }
+
     @Override
     protected void addNotify() {
         super.addNotify();

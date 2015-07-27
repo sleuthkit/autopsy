@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -87,9 +88,9 @@ public class ImageUtils {
                     "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
                     "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
                     "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
-                    "flm", "tmv", "4xm");  //NON-NLS
+                    "flm", "tmv", "4xm", "swf");  //NON-NLS
     private static final List<String> SUPPORTED_VIDEO_MIME_TYPES
-            = Arrays.asList("video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
+            = Arrays.asList("application/x-shockwave-flash","video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
                     "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
     private static final boolean openCVLoaded;
 
@@ -124,7 +125,7 @@ public class ImageUtils {
 
         openCVLoaded = openCVLoadedTemp;
 
-        SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+        SUPPORTED_EXTENSIONS = new ArrayList<>(Arrays.asList(ImageIO.getReaderFileSuffixes()));
         SUPPORTED_EXTENSIONS.addAll(SUPPORTED_VIDEO_EXTENSIONS);
 
         SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));

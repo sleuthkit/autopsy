@@ -462,7 +462,7 @@ public final class ImageGalleryController {
                                 //this file should be included and we don't already know about it from hash sets (NSRL)
                                 queueDBWorkerTask(new UpdateFileTask(file, db));
                             } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                            //doing this check results in fewer tasks queued up, and faster completion of db update
+                                //doing this check results in fewer tasks queued up, and faster completion of db update
                                 //this file would have gotten scooped up in initial grab, but actually we don't need it
                                 queueDBWorkerTask(new RemoveFileTask(file, db));
                             }
@@ -751,9 +751,9 @@ public final class ImageGalleryController {
                         "' or name LIKE '%.")
                 + "')";
         static private final String MIMETYPE_CLAUSE
-                = "blackboard_attributes.value_text LIKE "
+                = "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
-                        " OR blackboard_attributes.value_text LIKE ");
+                        "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
         static private final String DRAWABLE_QUERY = FILE_EXTESNION_CLAUSE + " OR tsk_files.obj_id IN ("
                 + "SELECT tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"

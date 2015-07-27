@@ -66,7 +66,6 @@ public class MediaViewImagePanel extends JPanel {
 
     private final Label errorLabel = new Label("Could not load image file into media view.");
     private final Label tooLargeLabel = new Label("Could not load image file into media view (too large).");
-    private final Label noReaderLabel = new Label("Image reader not found for file.");
 
     /**
      * mime types we should be able to display. if the mimetype is unknown we
@@ -157,7 +156,7 @@ public class MediaViewImagePanel extends JPanel {
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
                     if (bufferedImage == null) {
                         LOGGER.log(Level.WARNING, "Image reader not found for file: {0}", file.getName()); //NON-NLS
-                        borderpane.setCenter(noReaderLabel);
+                        borderpane.setCenter(errorLabel);
                     } else {
                         Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
                         if (fxImage.isError()) {

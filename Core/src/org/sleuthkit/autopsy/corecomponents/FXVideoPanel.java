@@ -134,22 +134,22 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             removeAll();
             return;
         }
+        mediaPane.setFit(dims);
 
         String path = "";
         try {
             path = file.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
+            logger.log(Level.SEVERE, "Cannot get unique path of video file", ex); //NON-NLS
         }
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
-        final File tempFile = VideoUtils.getTempVideoFile(currentFile);
 
+        final File tempFile = VideoUtils.getTempVideoFile(currentFile);
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             new ExtractMedia(currentFile, tempFile).execute();
         }
 
-        mediaPane.setFit(dims);
     }
 
     @Override
