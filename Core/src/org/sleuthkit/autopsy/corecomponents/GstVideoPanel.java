@@ -762,4 +762,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     public List<String> getMimeTypes() {
         return MIMETYPES;
     }
+    
+    
 }
