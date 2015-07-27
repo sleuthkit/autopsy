@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
@@ -35,16 +36,16 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 class AbstractFileChunk {
     private int chunkID;
     private TextExtractor parent;
-    private final CharsetDecoder de = Charset.forName("utf-8").newDecoder();
+    private final CharsetDecoder charsetDecoder = Charset.forName("utf-8").newDecoder(); // NON-NLS
     private final String replacement_string = "?";
     private static final Logger logger = Logger.getLogger(AbstractFileChunk.class.getName());
 
     AbstractFileChunk(TextExtractor parent, int chunkID) {
         this.parent = parent;
         this.chunkID = chunkID;
-        this.de.onMalformedInput(CodingErrorAction.REPLACE);
-        this.de.onUnmappableCharacter(CodingErrorAction.REPLACE);
-        this.de.replaceWith(replacement_string); // white questionmark in black diamond - Replacement Character U+FFFD
+        this.charsetDecoder.onMalformedInput(CodingErrorAction.REPLACE);
+        this.charsetDecoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+        this.charsetDecoder.replaceWith(replacement_string); // white questionmark in black diamond - Replacement Character U+FFFD
     }
 
     public TextExtractor getParent() {
@@ -67,21 +68,21 @@ class AbstractFileChunk {
     public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
         boolean success = true;
         // content need to to sanitized for invalid utf-8 data
-        CharBuffer decodedCB;
-        byte[] decodedContent = {};
+        byte[] sanitizedContent = {};
         try {
-            decodedCB = this.de.decode(ByteBuffer.wrap(content));
-            decodedContent = decodedCB.toString().getBytes();
+            sanitizedContent = this.charsetDecoder.decode(ByteBuffer.wrap(content)).toString().getBytes();
         } catch (CharacterCodingException ex) {
-            logger.log(Level.WARNING, "Error encoding the content: " + ByteBuffer.wrap(content).toString(), ex);
+            logger.log(Level.WARNING, "Error sanitizing the " + ByteBuffer.wrap(content).toString(), ex);
+            throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.charCodingException.msg", parent.getSourceFile().getName()), ex);
         }
-        ByteContentStream bcs = new ByteContentStream(decodedContent, contentSize, parent.getSourceFile(), indexCharset);
+        ByteContentStream bcs = new ByteContentStream(sanitizedContent, sanitizedContent.length, parent.getSourceFile(), indexCharset);
         try {
-            ingester.ingest(this, bcs, decodedContent.length);
+            ingester.ingest(this, bcs, sanitizedContent.length);
             //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);
         } catch (Exception ingEx) {
             success = false;
-            throw ingEx;
+            throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
+                                                            parent.getSourceFile().getId(), chunkID), ingEx);
         }
         return success;
     }
