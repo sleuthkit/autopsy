@@ -118,7 +118,10 @@ public class DataResultFilterNode extends FilterNode {
         List<Action> actions = new ArrayList<>();
 
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
-        actions.addAll(originalNode.accept(getActionsDIV));
+        List<Action> accept = originalNode.accept(getActionsDIV);
+        if(accept != null) {
+            actions.addAll(accept);
+        }
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
         return actions.toArray(new Action[actions.size()]);

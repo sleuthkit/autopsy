@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.Objects;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
@@ -33,11 +35,15 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 /**
  * ImageGallery data model object that represents an image file. It is a
  * wrapper(/decorator?/adapter?) around {@link AbstractFile} and provides
- * methods to get an icon sized and a full sized {@link  Image}.
- *
- *
+ * methods to get an thumbnail sized and a full sized {@link  Image}.
  */
 public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
+
+    private static final Logger LOGGER = Logger.getLogger(ImageFile.class.getName());
+
+    static {
+        ImageIO.scanForPlugins();
+    }
 
     private SoftReference<Image> imageRef;
 
@@ -51,25 +57,28 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         return ThumbnailCache.getDefault().get(this);
     }
 
-   
-
     public Image getFullSizeImage() {
         Image image = null;
         if (imageRef != null) {
             image = imageRef.get();
         }
-
-        if (image == null) {
-            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
+        if (image == null || image.isError()) {
+            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
             } catch (IOException | NullPointerException ex) {
-                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
+                LOGGER.log(Level.WARNING, "unable to read file " + getName());
                 return null;
             }
         }
         imageRef = new SoftReference<>(image);
         return image;
+    }
+
+    @Override
+    public boolean isDisplayable() {
+        Image thumbnail = getThumbnail();
+        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
     }
 
     @Override
@@ -94,4 +103,4 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     public boolean isVideo() {
         return false;
     }
- }
+}

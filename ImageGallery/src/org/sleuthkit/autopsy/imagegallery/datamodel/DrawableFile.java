@@ -35,8 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -47,6 +47,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
@@ -61,7 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
+        if (FileTypeUtils.isVideoFile(abstractFileById)) {
             return new VideoFile<>(abstractFileById, analyzed);
         } else {
             return new ImageFile<>(abstractFileById, analyzed);
@@ -82,7 +83,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
 
         AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
+        if (FileTypeUtils.isVideoFile(abstractFileById)) {
             return new VideoFile<>(abstractFileById, analyzed);
         } else {
             return new ImageFile<>(abstractFileById, analyzed);
@@ -316,4 +317,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             }
         }
     }
+
+    public abstract boolean isDisplayable();
 }

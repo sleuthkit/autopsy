@@ -23,24 +23,9 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -87,6 +72,10 @@ import org.openide.util.actions.Presenter;
             return;
         
         Case result = Case.getCurrentCase();
+        
+        if(!MessageNotifyUtil.Message.confirm("Are you sure you want to close current case?")) 
+            return;
+        
         try {
             result.closeCase();
             EventQueue.invokeLater(new Runnable() {
