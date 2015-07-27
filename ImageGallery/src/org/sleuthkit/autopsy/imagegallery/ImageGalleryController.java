@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -204,7 +205,7 @@ public final class ImageGalleryController {
             //if we just turned on listening and a case is open and that case is not up to date
             if (newValue && !oldValue && Case.existsCurrentCase() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
                 //populate the db
-                queueDBWorkerTask(new CopyAnalyzedFiles());
+                queueDBWorkerTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
             }
         });
 
@@ -452,15 +453,19 @@ public final class ImageGalleryController {
                      * getOldValue has fileID getNewValue has
                      * {@link Abstractfile}
                      */
+
                     AbstractFile file = (AbstractFile) evt.getNewValue();
+
                     if (isListeningEnabled()) {
-                        if (ImageGalleryModule.isSupportedAndNotKnown(file)) {
-                            //this file should be included and we don't already know about it from hash sets (NSRL)
-                            queueDBWorkerTask(new UpdateFileTask(file));
-                        } else if (ImageGalleryModule.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                        if (file.isFile()) {
+                            if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
+                                //this file should be included and we don't already know about it from hash sets (NSRL)
+                                queueDBWorkerTask(new UpdateFileTask(file, db));
+                            } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
                             //doing this check results in fewer tasks queued up, and faster completion of db update
-                            //this file would have gotten scooped up in initial grab, but actually we don't need it
-                            queueDBWorkerTask(new RemoveFileTask(file));
+                                //this file would have gotten scooped up in initial grab, but actually we don't need it
+                                queueDBWorkerTask(new RemoveFileTask(file, db));
+                            }
                         }
                     } else {   //TODO: keep track of what we missed for later
                         setStale(true);
@@ -501,7 +506,7 @@ public final class ImageGalleryController {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
-                
+
             }
         });
     }
@@ -517,8 +522,6 @@ public final class ImageGalleryController {
     public DrawableTagsManager getTagsManager() {
         return tagsManager;
     }
-
-   
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
     //TODO: concept seems like  the controller deal with how much work to do at a given time
@@ -651,14 +654,20 @@ public final class ImageGalleryController {
     static public abstract class FileTask extends InnerTask {
 
         private final AbstractFile file;
+        private final DrawableDB taskDB;
+
+        public DrawableDB getTaskDB() {
+            return taskDB;
+        }
 
         public AbstractFile getFile() {
             return file;
         }
 
-        public FileTask(AbstractFile f) {
+        public FileTask(AbstractFile f, DrawableDB taskDB) {
             super();
             this.file = f;
+            this.taskDB = taskDB;
         }
 
     }
@@ -666,10 +675,10 @@ public final class ImageGalleryController {
     /**
      * task that updates one file in database with results from ingest
      */
-    private class UpdateFileTask extends FileTask {
+    static private class UpdateFileTask extends FileTask {
 
-        public UpdateFileTask(AbstractFile f) {
-            super(f);
+        public UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
+            super(f, taskDB);
         }
 
         /**
@@ -678,8 +687,8 @@ public final class ImageGalleryController {
         @Override
         public void run() {
             try {
-                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, db.isVideoFile(getFile()));
-                db.updateFile(drawableFile);
+                DrawableFile<?> drawableFile = DrawableFile.create(getFile(), true, getTaskDB().isVideoFile(getFile()));
+                getTaskDB().updateFile(drawableFile);
             } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
@@ -693,10 +702,10 @@ public final class ImageGalleryController {
     /**
      * task that updates one file in database with results from ingest
      */
-    private class RemoveFileTask extends FileTask {
+    static private class RemoveFileTask extends FileTask {
 
-        public RemoveFileTask(AbstractFile f) {
-            super(f);
+        public RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
+            super(f, taskDB);
         }
 
         /**
@@ -705,7 +714,7 @@ public final class ImageGalleryController {
         @Override
         public void run() {
             try {
-                db.removeFile(getFile().getId());
+                getTaskDB().removeFile(getFile().getId());
             } catch (NullPointerException ex) {
                 // This is one of the places where we get many errors if the case is closed during processing.
                 // We don't want to print out a ton of exceptions if this is the case.
@@ -720,13 +729,42 @@ public final class ImageGalleryController {
     /**
      * Task that runs when image gallery listening is (re) enabled.
      *
-     * Uses the presence of TSK_FILE_TYPE_SIG attributes as a approximation to
-     * 'analyzed'. Grabs all files with supported image/video mime types, and
-     * adds them to the Drawable DB
+     * Grabs all files with supported image/video mime types or extensions, and
+     * adds them to the Drawable DB. Uses the presence of TSK_FILE_TYPE_SIG
+     * attributes as a approximation to 'analyzed'.
+     *
      */
-    private class CopyAnalyzedFiles extends InnerTask {
+    static private class CopyAnalyzedFiles extends InnerTask {
 
-        final private String DRAWABLE_QUERY = "name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "'";
+        private final ImageGalleryController controller;
+        private final DrawableDB taskDB;
+        private final SleuthkitCase tskCase;
+
+        public CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+            this.controller = controller;
+            this.taskDB = taskDB;
+            this.tskCase = tskCase;
+        }
+
+        static private final String FILE_EXTESNION_CLAUSE = "(name LIKE '%."
+                + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
+                        "' or name LIKE '%.")
+                + "')";
+        static private final String MIMETYPE_CLAUSE
+                = "blackboard_attributes.value_text LIKE "
+                + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
+                        " OR blackboard_attributes.value_text LIKE ");
+
+        static private final String DRAWABLE_QUERY = FILE_EXTESNION_CLAUSE + " OR tsk_files.obj_id IN ("
+                + "SELECT tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
+                + " WHERE  blackboard_artifacts.obj_id = tsk_files.obj_id"
+                + " AND blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
+                + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
+                + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
+                + " AND (blackboard_attributes.value_text LIKE 'video/%'"
+                + "     OR blackboard_attributes.value_text LIKE 'image/%'"
+                + "     OR " + MIMETYPE_CLAUSE
+                + "     )";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
@@ -737,18 +775,13 @@ public final class ImageGalleryController {
 
             try {
                 //grab all files with supported extension or detected mime types
-                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(DRAWABLE_QUERY + " or tsk_files.obj_id in (select tsk_files.obj_id from tsk_files , blackboard_artifacts,  blackboard_attributes"
-                        + " where  blackboard_artifacts.obj_id = tsk_files.obj_id"
-                        + " and blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id"
-                        + " and blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()
-                        + " and blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()
-                        + " and blackboard_attributes.value_text in ('" + StringUtils.join(ImageGalleryModule.getSupportedMimes(), "','") + "'))");
+                final List<AbstractFile> files = tskCase.findAllFilesWhere(DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 updateProgress(0.0);
 
                 //do in transaction
-                DrawableDB.DrawableTransaction tr = db.beginTransaction();
+                DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
                 int units = 0;
                 for (final AbstractFile f : files) {
                     if (cancelled) {
@@ -756,25 +789,26 @@ public final class ImageGalleryController {
                         progressHandle.finish();
                         break;
                     }
-                    final Boolean hasMimeType = ImageGalleryModule.hasSupportedMimeType(f);
+
                     final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
                     if (known) {
-                        db.removeFile(f.getId(), tr);  //remove known files
+                        taskDB.removeFile(f.getId(), tr);  //remove known files
                     } else {
-                        if (hasMimeType == null) {
-                            if (ImageGalleryModule.isSupported(f)) {
-                                //no mime type but supported =>  add as not analyzed
-                                db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
-                            } else {
-                                //no mime type, not supported  => remove ( should never get here)
-                                db.removeFile(f.getId(), tr);
+                        final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
+                        if (hasMimeType.isPresent()) {
+                            if (hasMimeType.get()) {  // supported mimetype => analyzed
+                                taskDB.updateFile(DrawableFile.create(f, true, taskDB.isVideoFile(f)), tr);
+                            } else { //unsupported mimtype => analyzed but shouldn't include
+                                taskDB.removeFile(f.getId(), tr);
                             }
                         } else {
-                            if (hasMimeType) {  // supported mimetype => analyzed
-                                db.updateFile(DrawableFile.create(f, true, db.isVideoFile(f)), tr);
-                            } else { //unsupported mimtype => analyzed but shouldn't include
-                                db.removeFile(f.getId(), tr);
+                            if (FileTypeUtils.isDrawable(f)) {
+                                //no mime type but supported =>  add as not analyzed
+                                taskDB.insertFile(DrawableFile.create(f, false, taskDB.isVideoFile(f)), tr);
+                            } else {
+                                //no mime type, not supported  => remove ( should never get here)
+                                taskDB.removeFile(f.getId(), tr);
                             }
                         }
                     }
@@ -793,7 +827,7 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                db.commitTransaction(tr, true);
+                taskDB.commitTransaction(tr, true);
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
@@ -803,23 +837,20 @@ public final class ImageGalleryController {
 
             progressHandle.finish();
 
-            updateMessage(
-                    "");
-            updateProgress(
-                    -1.0);
-            setStale(false);
+            updateMessage("");
+            updateProgress(-1.0);
+            controller.setStale(false);
         }
-
     }
 
     /**
-     * task that does pre-ingest copy over of files from a new datasource with
+     * task that does pre-ingest copy over of files from a new datasource
      * (uses fs_obj_id to identify files from new datasource) *
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
      */
-    class PrePopulateDataSourceFiles extends InnerTask {
+    private class PrePopulateDataSourceFiles extends InnerTask {
 
         private final Content dataSource;
 
@@ -829,7 +860,7 @@ public final class ImageGalleryController {
          * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(ImageGalleryModule.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
+        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
@@ -864,10 +895,12 @@ public final class ImageGalleryController {
                         fsObjIds.add(fs.getId());
                     }
                     fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
-                } // NOTE: Logical files currently (Apr '15) have a null value for fs_obj_id in DB.
-                // for them, we will not specify a fs_obj_id, which means we will grab files
-                // from another data source, but the drawable DB is smart enough to de-dupe them.
-                else {
+                } else {
+                    /* NOTE: Logical files currently (Apr '15) have a null
+                     * value for fs_obj_id in DB. for them, we will not specify
+                     * a fs_obj_id, which means we will grab files from another
+                     * data source, but the drawable DB is smart enough to
+                     * de-dupe them. */
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 
@@ -885,7 +918,6 @@ public final class ImageGalleryController {
                     }
                     db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
                     units++;
-                    final int prog = units;
                     progressHandle.progress(f.getName(), units);
                 }
 
@@ -904,5 +936,4 @@ public final class ImageGalleryController {
             progressHandle.finish();
         }
     }
-
 }

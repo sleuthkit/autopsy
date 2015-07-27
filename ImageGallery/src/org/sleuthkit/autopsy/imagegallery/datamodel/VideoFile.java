@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,18 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
+import java.util.Objects;
+import java.util.logging.Level;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -37,11 +41,16 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         super(file, analyzed);
     }
 
+    public static Image getGenericVideoThumbnail() {
+        return VIDEO_ICON;
+    }
+
     @Override
     public Image getThumbnail() {
         //TODO: implement video thumbnailing here?
-        return VIDEO_ICON;
+        return getGenericVideoThumbnail();
     }
+
     SoftReference<Media> mediaRef;
 
     public Media getMedia() throws IOException, MediaException {
@@ -54,20 +63,31 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         }
         final File cacheFile = getCacheFile(this.getId());
         if (cacheFile.exists() == false) {
+            Files.createParentDirs(cacheFile);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile);
         }
-        try {
-            media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
-            mediaRef = new SoftReference<>(media);
-            return media;
-        } catch (MediaException ex) {
-            throw ex;
-        }
+
+        media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
+        mediaRef = new SoftReference<>(media);
+        return media;
+
     }
 
-
     private File getCacheFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id);
+        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "videos", "" + id).toFile();
+    }
+
+    @Override
+    public boolean isDisplayable() {
+        try {
+            Media media = getMedia();
+            return Objects.nonNull(media) && Objects.isNull(media.getError());
+        } catch (IOException ex) {
+            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to write video to cache for playback.", ex);
+            return false;
+        } catch (MediaException ex) {
+            return false;
+        }
     }
 
     @Override
