@@ -85,7 +85,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static class IngestJobTotals {
 
-        private AtomicLong totalPhotosRecovered = new AtomicLong(0);
+        private AtomicLong totalItemsRecovered = new AtomicLong(0);
         private AtomicLong totalWritetime = new AtomicLong(0);
         private AtomicLong totalParsetime = new AtomicLong(0);
     }
@@ -246,7 +246,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
-                totals.totalPhotosRecovered.addAndGet(carvedItems.size());
+                totals.totalItemsRecovered.addAndGet(carvedItems.size());
                 context.addFilesToJob(new ArrayList<>(carvedItems));
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
@@ -281,7 +281,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         detailsSb.append("<tr><td>") //NON-NLS
                  .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.numberOfCarved"))
                  .append("</td>"); //NON-NLS
-        detailsSb.append("<td>").append(jobTotals.totalPhotosRecovered.get()).append("</td></tr>"); //NON-NLS
+        detailsSb.append("<td>").append(jobTotals.totalItemsRecovered.get()).append("</td></tr>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
                  .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalWritetime"))
