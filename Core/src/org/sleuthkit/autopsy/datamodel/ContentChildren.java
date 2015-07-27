@@ -46,7 +46,7 @@ class ContentChildren extends AbstractContentChildren<Content> {
         super(); //initialize lazy behavior
         this.parent = parent;
     }
-    
+
     /**
      * Get the children of the Content object based on what we want to display.
      * As an example, we don't display the direct children of VolumeSystems
@@ -66,7 +66,7 @@ class ContentChildren extends AbstractContentChildren<Content> {
             tmpChildren = Collections.emptyList();
         }
 
-           // Cycle through the list and make a new one based
+        // Cycle through the list and make a new one based
         // on what we actually want to display. 
         List<Content> children = new ArrayList<>();
         for (Content c : tmpChildren) {
@@ -118,6 +118,16 @@ class ContentChildren extends AbstractContentChildren<Content> {
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        setKeys(new ArrayList<Content>());
+        setKeys(new ArrayList<>());
     }    
+    
+    /**
+     * Refresh the list of children due to a change in one (or more) of
+     * our children (e.g. archive files can change as new content is
+     * extracted from them).
+     */
+    void refreshChildren() {
+        List<Content> children = getDisplayChildren(parent);
+        setKeys(children);
+    }
 }

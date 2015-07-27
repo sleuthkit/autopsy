@@ -18,15 +18,21 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.logging.Level;
+import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -46,8 +52,43 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
+        String name = abstractFile.getName();
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex > 0) {
+            String ext = name.substring(dotIndex).toLowerCase();
+
+            for (String s : FileTypeExtensions.getArchiveExtensions()) {
+                if (ext.equals(s)) {
+                    IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                }
+            }        
+        }
+        
     }
 
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+
+        // See if the new file is a child of ours
+        if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                return;
+            }
+            ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+            if ((moduleContentEvent.getSource() instanceof Content) == false) {
+                return;
+            }
+            Content newContent = (Content) moduleContentEvent.getSource();
+            if (getContent().getId() == newContent.getId()) {
+                Children parentsChildren = getParentNode().getChildren();
+                if (parentsChildren != null) {
+                    ((ContentChildren)parentsChildren).refreshChildren();
+                    parentsChildren.getNodesCount();
+                }
+            }
+        } 
+    };
+    
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum AbstractFilePropertyType {
 
