@@ -59,6 +59,10 @@ public class SingleUserCaseImporter implements Runnable {
     private static final String DOTAUT = ".aut"; //NON-NLS
     public static final String CASE_CONVERSION_LOG_FILE = "case_import_log.txt"; //NON-NLS
     private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
+    private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
+    private final static String TIMELINE_FILE = "events.db"; //NON-NLS
+    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
+    private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
     private static final int MAX_DB_NAME_LENGTH = 63;
 
@@ -84,11 +88,12 @@ public class SingleUserCaseImporter implements Runnable {
      * @param imageOutput the destination folder for the images
      * @param database the connection information to talk to the PostgreSQL db
      * @param copyImages true if images should be copied
-     * @param deleteCase true if the old version of the case should be deleted after import
+     * @param deleteCase true if the old version of the case should be deleted
+     * after import
      * @param callback a callback from the calling panel for notification when
      * the conversion has completed. This is a Runnable on a different thread.
      */
-    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database, 
+    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
             boolean copyImages, boolean deleteCase, ConversionDoneCallback callback) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
@@ -117,10 +122,9 @@ public class SingleUserCaseImporter implements Runnable {
         try {
             log("Beginning to convert " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
 
-            if(copyImages){
+            if (copyImages) {
                 checkInput(input.toFile(), new File(imageInputFolder));
-            }
-            else{
+            } else {
                 checkInput(input.toFile(), null);
             }
             String oldCaseName = oldCaseFolder;
@@ -153,7 +157,7 @@ public class SingleUserCaseImporter implements Runnable {
 
             copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
             dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
-            if(copyImages){
+            if (copyImages) {
                 File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
                 fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
             }
@@ -172,11 +176,11 @@ public class SingleUserCaseImporter implements Runnable {
             // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file
             // and database in the given directory so the user shouldn't be able to accidently blow away
             // their C drive.
-            if(deleteCase){
+            if (deleteCase) {
                 log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.DeletingCase") + " " + input);
                 FileUtils.deleteDirectory(input.toFile());
             }
-            
+
             log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
                     + input.toString() + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
@@ -192,7 +196,8 @@ public class SingleUserCaseImporter implements Runnable {
      * Ensure the input source has an autopsy.db and exists.
      *
      * @param caseInput The folder containing a case to convert.
-     * @param imageInput The folder containing the images to copy or null if images are not being copied.
+     * @param imageInput The folder containing the images to copy or null if
+     * images are not being copied.
      * @throws Exception
      */
     private void checkInput(File caseInput, File imageInput) throws Exception {
@@ -256,21 +261,50 @@ public class SingleUserCaseImporter implements Runnable {
     private void copyResults(Path input, String newCaseFolder, String caseName) throws IOException {
         /// get hostname
         String hostName = NetworkUtils.getLocalHostName();
-
-        if(input.toFile().exists()){
-            Path destination = Paths.get(caseOutputFolder, newCaseFolder, hostName);
+        Path destination;
+        Path source;
+        
+        if (input.toFile().exists()) {
+            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName);
             FileUtils.copyDirectory(input.toFile(), destination.toFile());
         }
 
-        // Remove the single-user .aut file and database
-        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + ".aut").toFile();
-        if(oldDatabaseFile.exists()){
-            oldDatabaseFile.delete();
+        source = input.resolve(TIMELINE_FILE);
+        if (source.toFile().exists()) {
+            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
+            FileUtils.copyFile(source.toFile(), destination.toFile());
+        }
+
+        source = input.resolve(AIM_LOG_FILE_NAME);
+        if (source.toFile().exists()) {
+            destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
+            FileUtils.copyFile(source.toFile(), destination.toFile());
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
+                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.ConvertedToMultiUser") + new Date());
+            } catch (IOException e) {
+                // if unable to log it, no problem
+            }
         }
         
-        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, "autopsy.db").toFile();
-        if(oldAutopsyFile.exists()){
+        // Remove the single-user .aut file, database, Timeline database and log
+        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + DOTAUT).toFile();
+        if (oldDatabaseFile.exists()) {
+            oldDatabaseFile.delete();
+        }
+
+        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, AUTOPSY_DB_FILE).toFile();
+        if (oldAutopsyFile.exists()) {
             oldAutopsyFile.delete();
+        }
+
+        File oldTimelineFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, TIMELINE_FILE).toFile();
+        if (oldTimelineFile.exists()) {
+            oldTimelineFile.delete();
+        }
+
+        File oldIngestLog = Paths.get(caseOutputFolder, newCaseFolder, hostName, AIM_LOG_FILE_NAME).toFile();
+        if (oldIngestLog.exists()) {
+            oldIngestLog.delete();
         }
     }
 
