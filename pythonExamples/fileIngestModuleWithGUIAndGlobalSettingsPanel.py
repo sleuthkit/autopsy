@@ -137,6 +137,7 @@ class SampleIngestModuleGlobalSettingsPanel(IngestModuleGlobalSettingsPanel):
     def load(self):
         self.loadSettingsFromDisk()
 
+    # settings are written to the disk in XML format in the config directory.
     def writeSettingsToDisk(self):
         document_builder_factory_instance = DocumentBuilderFactory.newInstance()
         try:
@@ -224,6 +225,10 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
 
 class SampleIngestModuleSettings(IngestModuleIngestJobSettings):
+    '''
+    This is a sample demonstrating ingest module settings which are serialized to the disk.
+    This sample setting store the state of the flag which can be set/unset using the ingest module settings panel.
+    '''
     serialVersionUID = 1L
 
     def __init__(self):
@@ -240,6 +245,11 @@ class SampleIngestModuleSettings(IngestModuleIngestJobSettings):
 
 
 class SampleIngestModuleSettingsPanel(IngestModuleIngestJobSettingsPanel):
+    '''
+    This is a sample demonstrating ingest module settings panel. It has a checkbox which can be set/unset.
+    It used the deserialized ingest modules settings to set the initial state of the checkbox. The current state of the
+    flag is serialized to ingest module settings on the disk.
+    '''
     # self.settings instance variable not used. Rather, self.local_settings is used.
     # https://wiki.python.org/jython/UserGuide#javabean-properties
     # Jython Introspector generates a property - 'settings' on the basis
