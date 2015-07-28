@@ -130,7 +130,7 @@ final class DataSourceIngestJob {
      * A data source ingest job can run interactively using NetBeans progress
      * handles.
      */
-    private final boolean runInteractively;
+    private final boolean doUI;
 
     /**
      * A data source ingest job uses these fields to report data source level
@@ -170,7 +170,7 @@ final class DataSourceIngestJob {
         this.id = DataSourceIngestJob.nextJobId.getAndIncrement();
         this.dataSource = dataSource;
         this.settings = settings;
-        this.runInteractively = runInteractively;
+        this.doUI = runInteractively;
         this.createTime = new Date().getTime();
         this.createIngestPipelines();
     }
@@ -343,7 +343,6 @@ final class DataSourceIngestJob {
      * @return A collection of ingest module startup errors, empty on success.
      */
     List<IngestModuleError> start() {
-        IngestManager.getInstance().fireDataSourceAnalysisStarted(parentJob.getId(), id, dataSource);
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
@@ -413,7 +412,7 @@ final class DataSourceIngestJob {
             }
         }
 
-        if (this.runInteractively) {
+        if (this.doUI) {
             /**
              * Start one or both of the first stage ingest progress bars.
              */
@@ -464,7 +463,7 @@ final class DataSourceIngestJob {
     private void startSecondStage() {
         logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
         this.stage = DataSourceIngestJob.Stages.SECOND;
-        if (this.runInteractively) {
+        if (this.doUI) {
             this.startDataSourceIngestProgressBar();
         }
         synchronized (this.dataSourceIngestPipelineLock) {
@@ -478,7 +477,7 @@ final class DataSourceIngestJob {
      * Starts a data source level ingest progress bar for this job.
      */
     private void startDataSourceIngestProgressBar() {
-        if (this.runInteractively) {
+        if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
@@ -513,7 +512,7 @@ final class DataSourceIngestJob {
      * Starts the file level ingest progress bar for this job.
      */
     private void startFileIngestProgressBar() {
-        if (this.runInteractively) {
+        if (this.doUI) {
             synchronized (this.fileIngestProgressLock) {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.fileIngest.displayName",
@@ -575,7 +574,7 @@ final class DataSourceIngestJob {
             logIngestModuleErrors(errors);
         }
 
-        if (this.runInteractively) {
+        if (this.doUI) {
             // Finish the first stage data source ingest progress bar, if it hasn't 
             // already been finished.
             synchronized (this.dataSourceIngestProgressLock) {
@@ -612,7 +611,7 @@ final class DataSourceIngestJob {
         logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id});
         this.stage = DataSourceIngestJob.Stages.FINALIZATION;
 
-        if (this.runInteractively) {
+        if (this.doUI) {
             // Finish the second stage data source ingest progress bar, if it hasn't 
             // already been finished.
             synchronized (this.dataSourceIngestProgressLock) {
@@ -644,7 +643,7 @@ final class DataSourceIngestJob {
                 }
             }
 
-            if (this.runInteractively) {
+            if (this.doUI) {
                 /**
                  * Shut down the data source ingest progress bar right away.
                  * Data source-level processing is finished for this stage.
@@ -681,7 +680,7 @@ final class DataSourceIngestJob {
 
                     synchronized (this.fileIngestProgressLock) {
                         ++this.processedFiles;
-                        if (this.runInteractively) {
+                        if (this.doUI) {
                             /**
                              * Update the file ingest progress bar.
                              */
@@ -703,7 +702,7 @@ final class DataSourceIngestJob {
                         logIngestModuleErrors(errors);
                     }
 
-                    if (this.runInteractively && !this.cancelled) {
+                    if (this.doUI && !this.cancelled) {
                         synchronized (this.fileIngestProgressLock) {
                             /**
                              * Update the file ingest progress bar again, in
@@ -758,7 +757,7 @@ final class DataSourceIngestJob {
      * @param displayName The new display name.
      */
     void updateDataSourceIngestProgressBarDisplayName(String displayName) {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 this.dataSourceIngestProgress.setDisplayName(displayName);
             }
@@ -774,7 +773,7 @@ final class DataSourceIngestJob {
      * data source.
      */
     void switchDataSourceIngestProgressBarToDeterminate(int workUnits) {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
                     this.dataSourceIngestProgress.switchToDeterminate(workUnits);
@@ -789,7 +788,7 @@ final class DataSourceIngestJob {
      * process the data source is unknown.
      */
     void switchDataSourceIngestProgressBarToIndeterminate() {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
                     this.dataSourceIngestProgress.switchToIndeterminate();
@@ -805,7 +804,7 @@ final class DataSourceIngestJob {
      * @param workUnits Number of work units performed.
      */
     void advanceDataSourceIngestProgressBar(int workUnits) {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
                     this.dataSourceIngestProgress.progress("", workUnits);
@@ -821,7 +820,7 @@ final class DataSourceIngestJob {
      * @param currentTask The task name.
      */
     void advanceDataSourceIngestProgressBar(String currentTask) {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != this.dataSourceIngestProgress) {
                     this.dataSourceIngestProgress.progress(currentTask);
@@ -839,7 +838,7 @@ final class DataSourceIngestJob {
      * @param workUnits Number of work units performed.
      */
     void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
-        if (this.runInteractively && !this.cancelled) {
+        if (this.doUI && !this.cancelled) {
             synchronized (this.fileIngestProgressLock) {
                 this.dataSourceIngestProgress.progress(currentTask, workUnits);
             }
@@ -867,7 +866,7 @@ final class DataSourceIngestJob {
         this.currentDataSourceIngestModuleCancelled = false;
         this.cancelledDataSourceIngestModules.add(moduleDisplayName);
 
-        if (this.runInteractively) {
+        if (this.doUI) {
             /**
              * A new progress bar must be created because the cancel button of
              * the previously constructed component is disabled by NetBeans when
@@ -909,7 +908,7 @@ final class DataSourceIngestJob {
      * level and file level ingest pipelines.
      */
     void cancel() {
-        if (this.runInteractively) {
+        if (this.doUI) {
             /**
              * Put a cancellation message on data source level ingest progress
              * bar, if it is still running.
@@ -942,7 +941,6 @@ final class DataSourceIngestJob {
             }
         }
       
-        IngestManager.getInstance().fireDataSourceAnalysisCancelled(parentJob.getId(), id, dataSource);
         this.cancelled = true;
 
         /**

@@ -50,14 +50,14 @@ public final class IngestJob {
      *
      * @param dataSources The data sources to be ingested.
      * @param settings The ingest job settings.
-     * @param runInteractively Whether or not this job should use progress bars,
-     * message boxes for errors, etc.
+     * @param doUI Whether or not this job should use progress bars, message
+     * boxes for errors, etc.
      */
-    IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean runInteractively) {
+    IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.dataSourceJobs = new ConcurrentHashMap<>();
         for (Content dataSource : dataSources) {
-            DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings, runInteractively);
+            DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings, doUI);
             this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
         }
         incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
@@ -73,12 +73,19 @@ public final class IngestJob {
     }
 
     /**
-     * Checks to see if this ingest job has at least one ingest pipeline when
-     * its settings are applied.
+     * Checks to see if this ingest job has at least one non-empty ingest module
+     * pipeline (first or second stage data-source-level pipeline or file-level
+     * pipeline).
      *
      * @return True or false.
      */
     boolean hasIngestPipeline() {
+        /**
+         * TODO: This could actually be done more simply by adding a method to
+         * the IngestJobSettings to check for at least one enabled ingest module
+         * template. The test could then be done in the ingest manager before
+         * even constructing an ingest job.
+         */
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             if (dataSourceJob.hasIngestPipeline()) {
                 return true;
@@ -95,33 +102,26 @@ public final class IngestJob {
      */
     synchronized List<IngestModuleError> start() {
         List<IngestModuleError> errors = new ArrayList<>();
+
         if (started) {
             errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
             return errors;
         }
         started = true;
 
+        List<DataSourceIngestJob> startedDataSourceJobs = new ArrayList<>();
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
-            if (!errors.isEmpty()) {
+            if (errors.isEmpty()) {
+                IngestManager.getInstance().fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
+                startedDataSourceJobs.add(dataSourceJob);
+            } else {
+                startedDataSourceJobs.stream().forEach((startedDataSourceJob) -> {
+                    startedDataSourceJob.cancel();
+                });
                 break;
             }
         }
-
-        /**
-         * TODO: Need to let successfully started data source ingest jobs know
-         * they should shut down. This means that the start up of the ingest
-         * module pipelines and the submission of ingest tasks should be
-         * separated. This cancellation is just a stop gap; fortunately, if
-         * startup is going to fail, it will likely fail for the first child
-         * data source ingest job.
-         */
-        if(! errors.isEmpty()) {
-            this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
-                dataSourceJob.cancel();
-            });
-        }
-
         return errors;
     }
 
@@ -163,7 +163,7 @@ public final class IngestJob {
      * but there may be a delay before all of the ingest modules in the
      * pipelines respond by stopping processing.
      */
-    public void cancel() {
+    synchronized public void cancel() {
         IngestManager ingestManager = IngestManager.getInstance();
         this.dataSourceJobs.values().stream().forEach((job) -> {
             job.cancel();
@@ -189,7 +189,11 @@ public final class IngestJob {
      */
     void dataSourceJobFinished(DataSourceIngestJob job) {
         IngestManager ingestManager = IngestManager.getInstance();
-        ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
+        if (!job.isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
+        } else {
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
+        }
         if (incompleteJobsCount.decrementAndGet() == 0) {
             ingestManager.finishIngestJob(this);
         }

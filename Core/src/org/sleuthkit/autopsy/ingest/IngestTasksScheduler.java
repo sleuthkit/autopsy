@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,13 +151,15 @@ final class IngestTasksScheduler {
      * full tasks queue and is interrupted.
      */
     synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
-        // Scheduling of both a data source ingest task and file ingest tasks 
-        // for a job must be an atomic operation. Otherwise, the data source 
-        // task might be completed before the file tasks are scheduled, 
-        // resulting in a potential false positive when another thread checks 
-        // whether or not all the tasks for the job are completed.
-        this.scheduleDataSourceIngestTask(job);
-        this.scheduleFileIngestTasks(job);
+        if (!job.isCancelled()) {
+            // Scheduling of both a data source ingest task and file ingest tasks 
+            // for a job must be an atomic operation. Otherwise, the data source 
+            // task might be completed before the file tasks are scheduled, 
+            // resulting in a potential false positive when another thread checks 
+            // whether or not all the tasks for the job are completed.
+            this.scheduleDataSourceIngestTask(job);
+            this.scheduleFileIngestTasks(job);
+        }
     }
 
     /**
@@ -166,17 +168,19 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      */
     synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
-        DataSourceIngestTask task = new DataSourceIngestTask(job);
-        this.tasksInProgress.add(task);
-        try {
-            this.pendingDataSourceTasks.put(task);
-        } catch (InterruptedException ex) {
-            /**
-             * The current thread was interrupted while blocked on a full queue.
-             * Discard the task and reset the interrupted flag.
-             */
-            this.tasksInProgress.remove(task);
-            Thread.currentThread().interrupt();
+        if (!job.isCancelled()) {
+            DataSourceIngestTask task = new DataSourceIngestTask(job);
+            this.tasksInProgress.add(task);
+            try {
+                this.pendingDataSourceTasks.put(task);
+            } catch (InterruptedException ex) {
+                /**
+                 * The current thread was interrupted while blocked on a full
+                 * queue. Discard the task and reset the interrupted flag.
+                 */
+                this.tasksInProgress.remove(task);
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -186,17 +190,19 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      */
     synchronized void scheduleFileIngestTasks(DataSourceIngestJob job) {
-        // Get the top level files for the data source associated with this job
-        // and add them to the root directories priority queue.  
-        List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
-        for (AbstractFile firstLevelFile : topLevelFiles) {
-            FileIngestTask task = new FileIngestTask(job, firstLevelFile);
-            if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-                this.tasksInProgress.add(task);
-                this.rootDirectoryTasks.add(task);
+        if (!job.isCancelled()) {
+            // Get the top level files for the data source associated with this job
+            // and add them to the root directories priority queue.  
+            List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
+            for (AbstractFile firstLevelFile : topLevelFiles) {
+                FileIngestTask task = new FileIngestTask(job, firstLevelFile);
+                if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+                    this.tasksInProgress.add(task);
+                    this.rootDirectoryTasks.add(task);
+                }
             }
+            shuffleFileTaskQueues();
         }
-        shuffleFileTaskQueues();
     }
 
     /**
@@ -206,10 +212,12 @@ final class IngestTasksScheduler {
      * @param file The file to be associated with the task.
      */
     synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
-        FileIngestTask task = new FileIngestTask(job, file);
-        if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-            this.tasksInProgress.add(task);
-            addToPendingFileTasksQueue(task);
+        if (!job.isCancelled()) {
+            FileIngestTask task = new FileIngestTask(job, file);
+            if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+                this.tasksInProgress.add(task);
+                addToPendingFileTasksQueue(task);
+            }
         }
     }
 
@@ -466,7 +474,7 @@ final class IngestTasksScheduler {
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
             if (task.getIngestJob().getId() == jobId) {
-                this.tasksInProgress.remove(task);                
+                this.tasksInProgress.remove(task);
                 iterator.remove();
             }
         }
@@ -533,17 +541,17 @@ final class IngestTasksScheduler {
             static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<>();
 
             static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
-            /* prioritize root directory folders based on the assumption that we
-             * are
-             * looking for user content. Other types of investigations may want
-             * different
-             * priorities. */
+            /*
+             * prioritize root directory folders based on the assumption that we
+             * are looking for user content. Other types of investigations may
+             * want different priorities.
+             */
 
-            static /* prioritize root directory
-             * folders based on the assumption that we are
-             * looking for user content. Other types of investigations may want
-             * different
-             * priorities. */ {
+            static /*
+             * prioritize root directory folders based on the assumption that we
+             * are looking for user content. Other types of investigations may
+             * want different priorities.
+             */ {
                 // these files have no structure, so they go last
                 //unalloc files are handled as virtual files in getPriority()
                 //LAST_PRI_PATHS.schedule(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
