@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     static final int IMAGES_PER_PAGE = 200;
     private Node parent;
-    private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
+    private final HashMap<Integer, List<Node>> pages = new HashMap<>();
     private int totalImages = 0;
     private int totalPages = 0;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
@@ -57,13 +57,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         this.parent = arg;
         this.iconSize = iconSize;
-        //
     }
 
-    //   @Override
-//    protected Node copyNode(Node arg0) {
-    //      return new ThumbnailViewNode(arg0);
-//    }
+
     @Override
     protected void addNotify() {
         super.addNotify();
@@ -85,7 +81,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         //TODO when lazy loading of original nodes is fixed
         //we should be asking the datamodel for the children instead
         //and not counting the children nodes (which might not be preloaded at this point)
-        final List<Node> suppContent = new ArrayList<Node>();
+        final List<Node> suppContent = new ArrayList<>();
         for (Node child : parent.getChildren().getNodes()) {
             if (isSupported(child)) {
                 ++totalImages;
@@ -122,8 +118,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             pageNums[i] = i + 1;
         }
         setKeys(pageNums);
-
-
     }
 
     @Override
