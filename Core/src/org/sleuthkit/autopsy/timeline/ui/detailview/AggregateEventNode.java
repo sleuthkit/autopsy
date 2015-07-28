@@ -140,6 +140,20 @@ public class AggregateEventNode extends StackPane {
         HBox.setHgrow(region, Priority.ALWAYS);
         ImageView imageView = new ImageView(IMAGE);
         final HBox hBox = new HBox(descrLabel, countLabel, region, imageView, minusButton, plusButton);
+        if (event.getEventIDsWithHashHits().isEmpty()) {
+            hBox.getChildren().remove(imageView);
+        }else{
+            imageView.setOnMouseEntered(new EventHandler<MouseEvent>() {
+
+                @Override
+                public void handle(MouseEvent event) {
+            
+                    
+                    
+                }
+            });
+            
+        }
         hBox.setPrefWidth(USE_COMPUTED_SIZE);
         hBox.setMinWidth(USE_PREF_SIZE);
         hBox.setPadding(new Insets(2, 5, 2, 5));

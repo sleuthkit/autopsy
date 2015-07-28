@@ -363,7 +363,7 @@ public class EventDB {
     boolean hasNewColumns() {
         /* this relies on the fact that no tskObj has ID 0 but 0 is the default
          * value for the datasource_id column in the events table. */
-        return hasHashHitColumn() && hasDataSourceIDColumn()
+        return hasHashTables() && hasDataSourceIDColumn()
                 && (getDataSourceIDs().isEmpty() == false);
     }
 
@@ -484,11 +484,29 @@ public class EventDB {
                     LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
                 }
             }
+            try (Statement stmt = con.createStatement()) {
+                String sql = "CREATE TABLE  if not exists hash_sets "
+                        + "( hash_set_id INTEGER primary key,"
+                        + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)";
+                stmt.execute(sql);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "problem creating hash_sets table", ex);
+            }
 
+            try (Statement stmt = con.createStatement()) {
+                String sql = "CREATE TABLE  if not exists hash_set_hits "
+                        + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, "
+                        + " event_id INTEGER REFERENCES events(event_id) not null, "
+                        + " PRIMARY KEY (hash_set_id, event_id))";
+                stmt.execute(sql);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
+
+            }
             try {
                 insertRowStmt = prepareStatement(
-                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit) " // NON-NLS
-                        + "VALUES (?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
+                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
                 getDataSourceIDsStmt = prepareStatement("select distinct datasource_id from events"); // NON-NLS
                 getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
@@ -579,8 +597,17 @@ public class EventDB {
         return hasDBColumn(EventTableColumn.DATA_SOURCE_ID);
     }
 
-    private boolean hasHashHitColumn() {
-        return hasDBColumn(EventTableColumn.HASH_HIT);
+    private boolean hasHashTables() {
+        try (Statement stmt = con.createStatement()) {
+
+            ResultSet executeQuery = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='hash_hits'");
+            while (executeQuery.next()) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problemexecuting pragma", ex); // NON-NLS
+        }
+        return false;
     }
 
     void insertEvent(long time, EventType type, long datasourceID, Long objID,
@@ -857,13 +884,23 @@ public class EventDB {
             stopwatch.stop();
             //System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
+                String eventIDS = rs.getString("event_ids");
+                HashSet<Long> hashHits = new HashSet<>();
+                try (Statement st2 = con.createStatement();) {
+
+                    ResultSet executeQuery = st2.executeQuery("select event_id from events where event_id in (" + eventIDS + ") and hash_hit = 1");
+                    while (executeQuery.next()) {
+                        hashHits.add(executeQuery.getLong(EventTableColumn.EVENT_ID.toString()));
+                    }
+                }
+
                 EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt(EventTableColumn.SUB_TYPE.toString())) : BaseTypes.values()[rs.getInt(EventTableColumn.BASE_TYPE.toString())];
 
                 AggregateEvent aggregateEvent = new AggregateEvent(
                         new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()), // NON-NLS
                         type,
-                        Stream.of(rs.getString("event_ids").split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
-                        null,
+                        Stream.of(eventIDS.split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
+                        hashHits,
                         rs.getString(descriptionColumn), lod);
 
                 //put events in map from type/descrition -> event

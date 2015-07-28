@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
+import com.google.common.collect.Sets;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
@@ -44,7 +44,7 @@ public class AggregateEvent {
 
     private final DescriptionLOD lod;
 
-    private Set<Long> hashHits;
+    private final Set<Long> hashHits;
 
     public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, String description, DescriptionLOD lod) {
 
@@ -66,7 +66,7 @@ public class AggregateEvent {
         return Collections.unmodifiableSet(eventIDs);
     }
 
-    public Set<Long> geEventIDsWithHashHits() {
+    public Set<Long> getEventIDsWithHashHits() {
         return Collections.unmodifiableSet(hashHits);
     }
 
@@ -95,11 +95,10 @@ public class AggregateEvent {
         if (!ag1.getDescription().equals(ag2.getDescription())) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
         }
-        HashSet<Long> ids = new HashSet<>(ag1.getEventIDs());
-        ids.addAll(ag2.getEventIDs());
+        Sets.SetView<Long> idsUnion = Sets.union(ag1.getEventIDs(), ag2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(ag1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
 
-        //TODO: check that types/descriptions are actually the same -jm
-        return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), ids, null,ag1.getDescription(), ag1.lod);
+        return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), idsUnion, hashHitsUnion, ag1.getDescription(), ag1.lod);
     }
 
     public DescriptionLOD getLOD() {

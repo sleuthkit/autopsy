@@ -14,6 +14,7 @@ import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.HashHitFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
@@ -59,6 +60,8 @@ public class SQLHelper {
             result = getSQLWhere((DataSourcesFilter) filter);
         } else if (filter instanceof HideKnownFilter) {
             result = getSQLWhere((HideKnownFilter) filter);
+        } else if (filter instanceof HashHitFilter) {
+            result = getSQLWhere((HashHitFilter) filter);
         } else if (filter instanceof TextFilter) {
             result = getSQLWhere((TextFilter) filter);
         } else if (filter instanceof TypeFilter) {
@@ -77,6 +80,10 @@ public class SQLHelper {
     
     static String getSQLWhere(HideKnownFilter filter) {
         return (filter.isSelected()) ? "(" + EventDB.EventTableColumn.KNOWN.toString() + " is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
+                : "1";
+    }
+    static String getSQLWhere(HashHitFilter filter) {
+        return (filter.isSelected()) ? "(" + EventDB.EventTableColumn.HASH_HIT.toString() + " is not 0)" // NON-NLS
                 : "1";
     }
     

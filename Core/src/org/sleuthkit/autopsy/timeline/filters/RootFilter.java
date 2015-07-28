@@ -27,6 +27,7 @@ import javafx.collections.FXCollections;
 public class RootFilter extends IntersectionFilter<Filter> {
 
     private final HideKnownFilter knwonFilter;
+    private final HashHitFilter hashFilter;
     private final TextFilter textFilter;
     private final TypeFilter typeFilter;
     private final DataSourcesFilter dataSourcesFilter;
@@ -35,9 +36,10 @@ public class RootFilter extends IntersectionFilter<Filter> {
         return dataSourcesFilter;
     }
 
-    public RootFilter(HideKnownFilter knownFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter) {
-        super(FXCollections.observableArrayList(knownFilter, textFilter, dataSourceFilter, typeFilter));
+    public RootFilter(HideKnownFilter knownFilter,HashHitFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter) {
+        super(FXCollections.observableArrayList(knownFilter,hashFilter, textFilter, dataSourceFilter, typeFilter));
         this.knwonFilter = knownFilter;
+        this.hashFilter = hashFilter;
         this.textFilter = textFilter;
         this.typeFilter = typeFilter;
         this.dataSourcesFilter = dataSourceFilter;
@@ -45,7 +47,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public RootFilter copyOf() {
-        RootFilter filter = new RootFilter(knwonFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
+        RootFilter filter = new RootFilter(knwonFilter.copyOf(),hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
         filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
