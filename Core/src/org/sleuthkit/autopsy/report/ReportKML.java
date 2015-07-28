@@ -94,22 +94,17 @@ class ReportKML implements GeneralReportModule {
         progressPanel.setMaximumProgress(5);
         progressPanel.increment();
 
-
         // @@@ BC: I don't get why we do this in two passes.  
         // Why not just print the coordinates as we find them and make some utility methods to do the printing?
         // Should pull out time values for all of these points and store in TimeSpan element
         try {
-
-            BufferedWriter out = null;
-            try {
-                out = new BufferedWriter(new FileWriter(reportPath2));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(reportPath2))) {
 
                 double lat = 0; // temp latitude
                 double lon = 0; //temp longitude
                 AbstractFile aFile;
                 String geoPath = ""; // will hold values of images to put in kml
                 String imageName = "";
-
 
                 File f;
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
@@ -131,7 +126,7 @@ class ReportKML implements GeneralReportModule {
                     if (lon != 0 && lat != 0) {
                         aFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
 
-                        if(aFile != null){
+                        if (aFile != null) {
                             extractedToPath = reportPath + aFile.getName();
                             geoPath = extractedToPath;
                             f = new File(extractedToPath);
@@ -150,7 +145,7 @@ class ReportKML implements GeneralReportModule {
                         // lat lon path name
                     }
                 }
-                
+
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
                     lat = 0;
                     lon = 0;
@@ -168,7 +163,7 @@ class ReportKML implements GeneralReportModule {
                         out.write(lat + ";" + lon + "\n");
                     }
                 }
-                
+
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
                     lat = 0;
                     lon = 0;
@@ -197,24 +192,23 @@ class ReportKML implements GeneralReportModule {
                             location = attribute.getValueString();
                         }
                     }
-                    
+
                     // @@@ Should do something more fancy with these in KML and store them as a single point.
                     String display = name;
                     if (display.isEmpty()) 
                         display = location;
-                    
+
                     if (lon != 0 && lat != 0) {
                         out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongStartPoint", lat, lon, display));
                     }
                     if (destlat != 0 && destlon != 0) {
                         out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongEndPoint", destlat, destlon,
-                                                      display));
+                                display));
                     }
                 }
-                
+
                 out.flush();
-                out.close();
-                
+
                 progressPanel.increment();
                 /*
                  * Step 1: generate XML stub
@@ -236,7 +230,6 @@ class ReportKML implements GeneralReportModule {
                 /*
                  * Step 2: add in Style elements
                  */
-
                 // Style
                 Element style = new Element("Style", ns); //NON-NLS
                 style.setAttribute("id", "redIcon"); //NON-NLS
@@ -266,72 +259,69 @@ class ReportKML implements GeneralReportModule {
                  */
 
                 File file = new File(reportPath2);
-                BufferedReader reader;
+                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    String line = reader.readLine();
+                    while (line != null) {
+                        String[] lineParts = line.split(";");
+                        if (lineParts.length > 1) {
+                            String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
+                            // Placemark
+                            Element placemark = new Element("Placemark", ns); //NON-NLS
+                            document.addContent(placemark);
 
-                reader = new BufferedReader(new FileReader(file));
+                            if (lineParts.length == 4) {
+                                // name
+                                Element pmName = new Element("name", ns); //NON-NLS
+                                pmName.setText(lineParts[3].trim());
+                                placemark.addContent(pmName);
 
-                String line = reader.readLine();
-                while (line != null) {
-                    String[] lineParts = line.split(";");
-                    if (lineParts.length > 1) {
-                        String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
-                        // Placemark
-                        Element placemark = new Element("Placemark", ns); //NON-NLS
-                        document.addContent(placemark);
+                                String savedPath = lineParts[2].trim();
+                                if (savedPath.isEmpty() == false) {
+                                    // Path
+                                    Element pmPath = new Element("Path", ns); //NON-NLS
+                                    pmPath.setText(savedPath);
+                                    placemark.addContent(pmPath);
 
-                        if (lineParts.length == 4) {
-                            // name
-                            Element pmName = new Element("name", ns); //NON-NLS
-                            pmName.setText(lineParts[3].trim());
-                            placemark.addContent(pmName);
-
-                            String savedPath = lineParts[2].trim();
-                            if (savedPath.isEmpty() == false) {
-                                // Path
-                                Element pmPath = new Element("Path", ns); //NON-NLS
-                                pmPath.setText(savedPath);
-                                placemark.addContent(pmPath);
-
-                                // description
-                                Element pmDescription = new Element("description", ns); //NON-NLS
-                                String xml = "<![CDATA[  \n" + " <img src='file:///" + savedPath + "' width='400' /><br/&gt;  \n"; //NON-NLS
-                                StringEscapeUtils.unescapeXml(xml);
-                                pmDescription.setText(xml);
-                                placemark.addContent(pmDescription);
+                                    // description
+                                    Element pmDescription = new Element("description", ns); //NON-NLS
+                                    String xml = "<![CDATA[  \n" + " <img src='file:///" + savedPath + "' width='400' /><br/&gt;  \n"; //NON-NLS
+                                    StringEscapeUtils.unescapeXml(xml);
+                                    pmDescription.setText(xml);
+                                    placemark.addContent(pmDescription);
+                                }
                             }
+
+                            // styleUrl
+                            Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
+                            pmStyleUrl.setText("#redIcon"); //NON-NLS
+                            placemark.addContent(pmStyleUrl);
+
+                            // Point
+                            Element pmPoint = new Element("Point", ns); //NON-NLS
+                            placemark.addContent(pmPoint);
+
+                            // coordinates
+                            Element pmCoordinates = new Element("coordinates", ns); //NON-NLS
+
+                            pmCoordinates.setText(coordinates);
+                            pmPoint.addContent(pmCoordinates);
+
                         }
 
-                        // styleUrl
-                        Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
-                        pmStyleUrl.setText("#redIcon"); //NON-NLS
-                        placemark.addContent(pmStyleUrl);
-
-                        // Point
-                        Element pmPoint = new Element("Point", ns); //NON-NLS
-                        placemark.addContent(pmPoint);
-
-                        // coordinates
-                        Element pmCoordinates = new Element("coordinates", ns); //NON-NLS
-
-                        pmCoordinates.setText(coordinates);
-                        pmPoint.addContent(pmCoordinates);
-
+                        // read the next line
+                        line = reader.readLine();
                     }
-                    
-                    // read the next line
-                    line = reader.readLine();
+
                 }
                 progressPanel.increment();
                 /*
                  * Step 4: write the XML file
                  */
-                try {
+                try (FileOutputStream writer = new FileOutputStream(reportPath)) {
                     XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
-                    FileOutputStream writer = new FileOutputStream(reportPath);
                     outputter.output(kmlDocument, writer);
-                    writer.close();
                     Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
-                                                                                    "ReportKML.genReport.srcModuleName.text"), "");
+                            "ReportKML.genReport.srcModuleName.text"), "");
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
                 } catch (TskCoreException ex) {

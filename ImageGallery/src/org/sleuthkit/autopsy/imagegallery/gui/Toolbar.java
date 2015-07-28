@@ -46,7 +46,6 @@ import javax.swing.SortOrder;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -201,7 +200,6 @@ public class Toolbar extends ToolBar {
 
         orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
 
-        ThumbnailCache.getDefault().iconSize.bind(sizeSlider.valueProperty());
 
     }
 

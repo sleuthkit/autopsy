@@ -36,7 +36,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
@@ -49,6 +48,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
@@ -60,9 +60,6 @@ public class MetaDataPane extends DrawableUIBase {
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
     @FXML
-    private ImageView imageView;
-
-    @FXML
     private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>> attributeColumn;
 
     @FXML
@@ -70,9 +67,6 @@ public class MetaDataPane extends DrawableUIBase {
 
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, String> valueColumn;
-
-    @FXML
-    private BorderPane imageBorder;
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
@@ -145,22 +139,27 @@ public class MetaDataPane extends DrawableUIBase {
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
+                imageBorder.setCenter(null);
                 tableView.getItems().clear();
                 getCategoryBorderRegion().setBorder(null);
-
             });
         } else {
+            disposeContent();
             updateUI();
+            updateContent();
         }
+    }
+
+    @Override
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+        return new ThumbnailLoaderTask(file);
     }
 
     public void updateUI() {
         getFile().ifPresent(file -> {
-            final Image icon = file.getThumbnail();
             final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
 
             Platform.runLater(() -> {
-                imageView.setImage(icon);
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });

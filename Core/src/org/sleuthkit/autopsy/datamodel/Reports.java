@@ -27,18 +27,22 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -97,7 +101,7 @@ public final class Reports implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
+                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
                         ReportNodeFactory.this.refresh(true);
                     }
                 }
@@ -183,12 +187,65 @@ public final class Reports implements AutopsyVisitableItem {
             List<Action> actions = new ArrayList<>();
             actions.addAll(Arrays.asList(super.getActions(true)));
             actions.add(new OpenReportAction());
+            actions.add(DeleteReportAction.getInstance());
             return actions.toArray(new Action[actions.size()]);
         }
 
         @Override
         public AbstractAction getPreferredAction() {
             return new OpenReportAction();
+        }
+
+        private static class DeleteReportAction extends AbstractAction {
+
+            private static DeleteReportAction instance;
+
+            // This class is a singleton to support multi-selection of nodes,
+            // since org.openide.nodes.NodeOp.findActions(Node[] nodes) will
+            // only pick up an Action if every node in the array returns a
+            // reference to the same action object from Node.getActions(boolean).
+            private static DeleteReportAction getInstance() {
+                if (instance == null) {
+                    instance = new DeleteReportAction();
+                }
+                if (Utilities.actionsGlobalContext().lookupAll(Report.class).size() == 1) {
+                    instance.putValue(Action.NAME, NbBundle.getMessage(Reports.class, "DeleteReportAction.actionDisplayName.singleReport"));
+                } else {
+                    instance.putValue(Action.NAME, NbBundle.getMessage(Reports.class, "DeleteReportAction.actionDisplayName.multipleReports"));
+                }
+                return instance;
+            }
+
+            /**
+             * Do not instantiate directly. Use
+             * DeleteReportAction.getInstance(), instead.
+             */
+            private DeleteReportAction() {
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Collection<? extends Report> selectedReportsCollection = Utilities.actionsGlobalContext().lookupAll(Report.class);
+
+                String jOptionPaneMessage = selectedReportsCollection.size() > 1
+                        ? NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg", selectedReportsCollection.size())
+                        : NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.single.msg");
+                JCheckBox checkbox = new JCheckBox(NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.checkbox.msg"));
+                checkbox.setSelected(false);
+
+                Object[] jOptionPaneContent = {jOptionPaneMessage, checkbox};
+
+                if (JOptionPane.showConfirmDialog(null, jOptionPaneContent,
+                        NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
+                        JOptionPane.YES_NO_OPTION) == 0) {
+                    try {
+                        Case.getCurrentCase().deleteReports(selectedReportsCollection, checkbox.isSelected());
+                        DataContentTopComponent.findInstance().repaint();
+                    } catch (TskCoreException | IllegalStateException ex) {
+                        Logger.getLogger(DeleteReportAction.class.getName()).log(Level.INFO, "Error deleting the reports. ", ex); // NON-NLS - Provide solution to the user?
+                    }
+                }
+            }
         }
 
         private final class OpenReportAction extends AbstractAction {
