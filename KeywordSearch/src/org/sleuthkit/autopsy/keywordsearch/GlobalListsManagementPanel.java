@@ -210,10 +210,15 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
 
         JFileChooser chooser = new JFileChooser();
-        final String[] EXTENSION = new String[]{"xml", "txt"}; //NON-NLS
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.fileExtensionFilterLbl"), EXTENSION);
-        chooser.setFileFilter(filter);
+        final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
+        final String[] ENCASE_EXTENSIONS = new String[]{"txt"}; //NON-NLS
+        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.fileExtensionFilterLbl"), AUTOPSY_EXTENSIONS);
+        FileNameExtensionFilter encaseFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.fileExtensionFilterLb2"), ENCASE_EXTENSIONS);
+        chooser.addChoosableFileFilter(autopsyFilter);
+        chooser.addChoosableFileFilter(encaseFilter);
+        chooser.setAcceptAllFileFilterUsed(false);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         String listName = null;
