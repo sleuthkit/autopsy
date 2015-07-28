@@ -26,12 +26,10 @@ import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -49,17 +47,6 @@ public class DrawableTile extends DrawableTileBase {
     private static final DropShadow LAST_SELECTED_EFFECT = new DropShadow(10, Color.BLUE);
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTile.class.getName());
-
-    /**
-     * the central ImageView that shows a thumbnail of the represented file
-     */
-    @FXML
-    private ImageView imageView;
-
-    @Override
-    protected void disposeContent() {
-        //no-op
-    }
 
     @FXML
     @Override
@@ -90,12 +77,6 @@ public class DrawableTile extends DrawableTileBase {
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
 
-    @Override
-    @ThreadConfined(type = ThreadType.JFX)
-    protected void clearContent() {
-        imageView.setImage(null);
-    }
-
     /**
      * {@inheritDoc }
      */
@@ -109,21 +90,13 @@ public class DrawableTile extends DrawableTileBase {
     }
 
     @Override
-    protected Runnable getContentUpdateRunnable() {
-        if (getFile().isPresent()) {
-            Image image = getFile().get().getThumbnail();
-
-            return () -> {
-                imageView.setImage(image);
-            };
-        } else {
-            return () -> { //no-op
-            };
-        }
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+        return new ThumbnailLoaderTask(file);
     }
 
     @Override
     protected String getTextForLabel() {
         return getFile().map(AbstractContent::getName).orElse("");
     }
+
 }
