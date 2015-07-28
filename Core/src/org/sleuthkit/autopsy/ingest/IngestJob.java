@@ -102,33 +102,26 @@ public final class IngestJob {
      */
     synchronized List<IngestModuleError> start() {
         List<IngestModuleError> errors = new ArrayList<>();
+
         if (started) {
             errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
             return errors;
         }
         started = true;
 
+        List<DataSourceIngestJob> startedDataSourceJobs = new ArrayList<>();
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
-            if (!errors.isEmpty()) {
+            if (errors.isEmpty()) {
+                IngestManager.getInstance().fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
+                startedDataSourceJobs.add(dataSourceJob);
+            } else {
+                startedDataSourceJobs.stream().forEach((startedDataSourceJob) -> {
+                    startedDataSourceJob.cancel();
+                });
                 break;
             }
         }
-
-        /**
-         * TODO: Need to let successfully started data source ingest jobs know
-         * they should shut down. This means that the start up of the ingest
-         * module pipelines and the submission of ingest tasks should be
-         * separated. This cancellation is just a stop gap; fortunately, if
-         * startup is going to fail, it will likely fail for the first child
-         * data source ingest job.
-         */
-        if (!errors.isEmpty()) {
-            this.dataSourceJobs.values().stream().forEach((dataSourceJob) -> {
-                dataSourceJob.cancel();
-            });
-        }
-
         return errors;
     }
 
@@ -196,7 +189,11 @@ public final class IngestJob {
      */
     void dataSourceJobFinished(DataSourceIngestJob job) {
         IngestManager ingestManager = IngestManager.getInstance();
-        ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
+        if (!job.isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(id, job.getId(), job.getDataSource());
+        } else {
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
+        }
         if (incompleteJobsCount.decrementAndGet() == 0) {
             ingestManager.finishIngestJob(this);
         }
