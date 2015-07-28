@@ -18,21 +18,27 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.function.Function;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import static javafx.scene.input.KeyCode.LEFT;
 import static javafx.scene.input.KeyCode.RIGHT;
@@ -46,6 +52,10 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaException;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.text.Text;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -56,10 +66,9 @@ import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.ImageFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
-import org.sleuthkit.autopsy.imagegallery.gui.MediaControl;
+import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -100,30 +109,34 @@ public class SlideShowView extends DrawableTileBase {
     private ToolBar toolBar;
     @FXML
     private BorderPane footer;
+    private Task<Node> mediaTask;
 
     SlideShowView(GroupPane gp) {
         super(gp);
-        FXMLConstructor.construct(this, "SlideShow.fxml");
+        FXMLConstructor.construct(this, "SlideShowView.fxml");
     }
 
     @FXML
     @Override
     protected void initialize() {
         super.initialize();
-        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert leftButton != null : "fx:id=\"leftButton\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert rightButton != null : "fx:id=\"rightButton\" was not injected: check your FXML file 'SlideShow.fxml'.";
-        assert tagSplitButton != null : "fx:id=\"tagSplitButton\" was not injected: check your FXML file 'SlideShow.fxml'.";
+        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert leftButton != null : "fx:id=\"leftButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert rightButton != null : "fx:id=\"rightButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert tagSplitButton != null : "fx:id=\"tagSplitButton\" was not injected: check your FXML file 'SlideShowView.fxml'.";
 
         Platform.runLater(() -> {
             HBox.setHgrow(spring, Priority.ALWAYS);
             spring.setMinWidth(Region.USE_PREF_SIZE);
         });
+
+        imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
+        imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
 
         tagSplitButton.setOnAction((ActionEvent t) -> {
             try {
@@ -195,8 +208,8 @@ public class SlideShowView extends DrawableTileBase {
 
         getGroupPane().grouping().addListener((Observable observable) -> {
             syncButtonVisibility();
-            if (getGroupPane().getGrouping() != null) {
-                getGroupPane().getGrouping().fileIds().addListener((Observable observable1) -> {
+            if (getGroupPane().getGroup() != null) {
+                getGroupPane().getGroup().fileIds().addListener((Observable observable1) -> {
                     syncButtonVisibility();
                 });
             }
@@ -206,7 +219,7 @@ public class SlideShowView extends DrawableTileBase {
     @ThreadConfined(type = ThreadType.ANY)
     private void syncButtonVisibility() {
         try {
-            final boolean hasMultipleFiles = getGroupPane().getGrouping().fileIds().size() > 1;
+            final boolean hasMultipleFiles = getGroupPane().getGroup().fileIds().size() > 1;
             Platform.runLater(() -> {
                 rightButton.setVisible(hasMultipleFiles);
                 leftButton.setVisible(hasMultipleFiles);
@@ -221,8 +234,8 @@ public class SlideShowView extends DrawableTileBase {
 
     @ThreadConfined(type = ThreadType.JFX)
     public void stopVideo() {
-        if (imageBorder.getCenter() instanceof MediaControl) {
-            ((MediaControl) imageBorder.getCenter()).stopVideo();
+        if (imageBorder.getCenter() instanceof VideoPlayer) {
+            ((VideoPlayer) imageBorder.getCenter()).stopVideo();
         }
     }
 
@@ -239,40 +252,40 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     protected void disposeContent() {
         stopVideo();
-    }
 
-    @Override
-    @ThreadConfined(type = ThreadType.UI)
-    protected void clearContent() {
-        stopVideo();
-        imageBorder.setCenter(null);
+        super.disposeContent();
+        if (mediaTask != null) {
+            mediaTask.cancel(true);
+        }
+        mediaTask = null;
+        mediaCache = null;
     }
+    private SoftReference<Node> mediaCache;
 
     /** {@inheritDoc } */
     @Override
-    protected Runnable getContentUpdateRunnable() {
-
-        return getFile().map(new Function<DrawableFile<?>, Runnable>() {
-
-            @Override
-            public Runnable apply(DrawableFile<?> file) {
-
-                if (file.isVideo()) {
-                    return () -> {
-                        imageBorder.setCenter(MediaControl.create((VideoFile<?>) file));
-                    };
+    Node getContentNode() {
+        if (getFile().isPresent() == false) {
+            mediaCache = null;
+            return super.getContentNode();
+        } else {
+            DrawableFile<?> file = getFile().get();
+            if (file.isVideo()) {
+                Node mediaNode = (isNull(mediaCache)) ? null : mediaCache.get();
+                if (nonNull(mediaNode)) {
+                    return mediaNode;
                 } else {
-                    ImageView imageView = new ImageView(((ImageFile<?>) file).getFullSizeImage());
-                    imageView.setPreserveRatio(true);
-                    imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
-                    imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
-                    return () -> {
-                        imageBorder.setCenter(imageView);
-                    };
+                    if (isNull(mediaTask)) {
+                        mediaTask = new MediaLoadTask(((VideoFile<?>) file));
+                        new Thread(mediaTask).start();
+                    } else if (mediaTask.isDone()) {
+                        return null;
+                    }
+                    return getLoadingProgressIndicator();
                 }
             }
-        }).orElse(() -> {
-        });
+            return super.getContentNode();
+        }
     }
 
     /** {@inheritDoc } */
@@ -292,12 +305,12 @@ public class SlideShowView extends DrawableTileBase {
     @ThreadConfined(type = ThreadType.JFX)
     synchronized private void cycleSlideShowImage(int direction) {
         stopVideo();
-        final int groupSize = getGroupPane().getGrouping().fileIds().size();
+        final int groupSize = getGroupPane().getGroup().fileIds().size();
         final Integer nextIndex = getFileID().map(fileID -> {
-            final int currentIndex = getGroupPane().getGrouping().fileIds().indexOf(fileID);
+            final int currentIndex = getGroupPane().getGroup().fileIds().indexOf(fileID);
             return (currentIndex + direction + groupSize) % groupSize;
         }).orElse(0);
-        setFile(getGroupPane().getGrouping().fileIds().get(nextIndex)
+        setFile(getGroupPane().getGroup().fileIds().get(nextIndex)
         );
     }
 
@@ -306,7 +319,7 @@ public class SlideShowView extends DrawableTileBase {
      *         of y"
      */
     private String getSupplementalText() {
-        final ObservableList<Long> fileIds = getGroupPane().getGrouping().fileIds();
+        final ObservableList<Long> fileIds = getGroupPane().getGroup().fileIds();
         return getFileID().map(fileID -> " ( " + (fileIds.indexOf(fileID) + 1) + " of " + fileIds.size() + " in group )")
                 .orElse("");
 
@@ -363,6 +376,51 @@ public class SlideShowView extends DrawableTileBase {
                     new CategorizeAction(getController()).addTag(getController().getTagsManager().getTagName(cat), "");
                 }
             });
+        }
+    }
+
+    @Override
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+
+        return new ImageLoaderTask(file) {
+
+            @Override
+            Image load() {
+                return isCancelled() ? null : file.getFullSizeImage();
+            }
+        };
+    }
+
+    private class MediaLoadTask extends CachedLoaderTask<Node, VideoFile<?>> {
+
+        public MediaLoadTask(VideoFile<?> file) {
+            super(file);
+        }
+
+        @Override
+        void saveToCache(Node result) {
+            synchronized (SlideShowView.this) {
+                mediaCache = new SoftReference<>(result);
+            }
+        }
+
+        @Override
+        Node load() {
+            try {
+                final Media media = file.getMedia();
+                return new VideoPlayer(new MediaPlayer(media), file);
+            } catch (MediaException | IOException | OutOfMemoryError ex) {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "failed to initialize MediaControl for file " + file.getName(), ex);
+
+                if (file.isDisplayableAsImage()) {
+                    Image fullSizeImage = file.getFullSizeImage();
+                    Platform.runLater(() -> {
+                        imageView.setImage(fullSizeImage);
+                    });
+                    return imageView;
+                }
+                return new Text(ex.getLocalizedMessage() + "\nSee the logs for details.\n\nTry the \"Open In External Viewer\" action.");
+            }
         }
     }
 }
