@@ -33,6 +33,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
@@ -175,6 +176,13 @@ public class EventsRepository {
         return idToEventCache.getUnchecked(eventID);
     }
 
+    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+        return eventIDs.stream()
+                .map(idToEventCache::getUnchecked)
+                .collect(Collectors.toSet());
+
+    }
+
     public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
 
         return aggregateEventsCache.getUnchecked(params);
@@ -213,7 +221,7 @@ public class EventsRepository {
     }
 
     public boolean hasDataSourceInfo() {
-        return eventDB.hasDataSourceInfo();
+        return eventDB.hasNewColumns();
     }
 
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -268,20 +276,21 @@ public class EventsRepository {
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
+                            boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             long time;
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
@@ -381,7 +390,9 @@ public class EventsRepository {
 
                     if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
-                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, trans);
+
+                        boolean hashHit = skCase.getAbstractFileById(bbart.getObjectID()).getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
+                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashHit, trans);
                     }
 
                     i++;
