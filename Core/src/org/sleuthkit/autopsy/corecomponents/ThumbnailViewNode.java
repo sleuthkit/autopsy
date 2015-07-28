@@ -19,9 +19,17 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.ExecutionException;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.Content;
 
@@ -31,9 +39,13 @@ import org.sleuthkit.datamodel.Content;
  */
 class ThumbnailViewNode extends FilterNode {
 
+    static private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
+
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
-    //private final BufferedImage defaultIconBI;
+
+    private SwingWorker<Image, Object> swingWorker;
+    private Timer timer;
 
     /**
      * the constructor
@@ -55,29 +67,60 @@ class ThumbnailViewNode extends FilterNode {
     @Override
     public Image getIcon(int type) {
         Image icon = null;
-                  
+
         if (iconCache != null) {
             icon = iconCache.get();
         }
 
-        if (icon == null) {
-            Content content = this.getLookup().lookup(Content.class);
-
-            if (content != null) {
-                icon = ImageUtils.getThumbnail(content, iconSize);
-            } else {
-                icon = ImageUtils.getDefaultThumbnail();
+        if (icon != null) {
+            return icon;
+        } else {
+            final Content content = this.getLookup().lookup(Content.class);
+            if (content == null) {
+                return ImageUtils.getDefaultThumbnail();
             }
+            if (swingWorker == null || swingWorker.isDone()) {
+                swingWorker = new SwingWorker<Image, Object>() {
+                    final private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("generating thumbnail for video file " + content.getName());
 
-            iconCache = new SoftReference<>(icon);
+                    @Override
+                    protected Image doInBackground() throws Exception {
+                        progressHandle.start();
+                        return ImageUtils.getThumbnail(content, iconSize);
+                    }
+
+                    @Override
+                    protected void done() {
+                        super.done();
+                        try {
+                            iconCache = new SoftReference<>(super.get());
+                            progressHandle.finish();
+                            fireIconChange();
+                            if (timer != null) {
+                                timer.stop();
+                                timer = null;
+                            }
+                        } catch (InterruptedException | ExecutionException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                        swingWorker = null;
+                    }
+                };
+                swingWorker.execute();
+            }
+            if (timer == null) {
+                timer = new Timer(100, (ActionEvent e) -> {
+                    fireIconChange();
+                });
+                timer.start();
+            }
+            return waitingIcon;
         }
-        
-        return icon;
     }
-    
+
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
         iconCache = null;
+        swingWorker = null;
     }
-
 }

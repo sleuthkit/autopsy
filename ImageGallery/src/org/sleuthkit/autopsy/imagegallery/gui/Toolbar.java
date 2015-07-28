@@ -44,7 +44,6 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -208,7 +207,6 @@ public class Toolbar extends ToolBar {
 
         orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
 
-        ThumbnailCache.getDefault().iconSize.bind(sizeSlider.valueProperty());
 
     }
 

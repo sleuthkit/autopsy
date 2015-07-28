@@ -219,7 +219,7 @@ public class GroupPane extends BorderPane {
 
     private final InvalidationListener filesSyncListener = (observable) -> {
         final String header = getHeaderString();
-        final List<Long> fileIds = getGrouping().fileIds();
+        final List<Long> fileIds = getGroup().fileIds();
         Platform.runLater(() -> {
             slideShowToggle.setDisable(fileIds.isEmpty());
             gridView.getItems().setAll(fileIds);
@@ -245,8 +245,8 @@ public class GroupPane extends BorderPane {
         }
 
         //assign last selected file or if none first file in group
-        if (slideShowFileID == null || getGrouping().fileIds().contains(slideShowFileID) == false) {
-            slideShowPane.setFile(getGrouping().fileIds().get(0));
+        if (slideShowFileID == null || getGroup().fileIds().contains(slideShowFileID) == false) {
+            slideShowPane.setFile(getGroup().fileIds().get(0));
         } else {
             slideShowPane.setFile(slideShowFileID);
         }
@@ -267,7 +267,7 @@ public class GroupPane extends BorderPane {
         this.scrollToFileID(globalSelectionModel.lastSelectedProperty().get());
     }
 
-    public DrawableGroup getGrouping() {
+    public DrawableGroup getGroup() {
         return grouping.get();
     }
 
@@ -276,7 +276,7 @@ public class GroupPane extends BorderPane {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
+                Set<Long> fileIdSet = new HashSet<>(getGroup().fileIds());
                 new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
 
                 grpCatSplitMenu.setText(cat.getDisplayName());
@@ -291,7 +291,7 @@ public class GroupPane extends BorderPane {
         menuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<>(getGrouping().fileIds());
+                Set<Long> fileIdSet = new HashSet<>(getGroup().fileIds());
                 new AddDrawableTagAction(controller).addTagsToFiles(tn, "", fileIdSet);
 
                 grpTagSplitMenu.setText(tn.getDisplayName());
@@ -302,14 +302,14 @@ public class GroupPane extends BorderPane {
     }
 
     private void selectAllFiles() {
-        globalSelectionModel.clearAndSelectAll(getGrouping().fileIds());
+        globalSelectionModel.clearAndSelectAll(getGroup().fileIds());
     }
 
     /** create the string to display in the group header */
     protected String getHeaderString() {
-        return isNull(getGrouping()) ? ""
-                : StringUtils.defaultIfBlank(getGrouping().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
-                + getGrouping().getHashSetHitsCount() + " hash set hits / " + getGrouping().getSize() + " files";
+        return isNull(getGroup()) ? ""
+                : StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
+                + getGroup().getHashSetHitsCount() + " hash set hits / " + getGroup().getSize() + " files";
     }
 
     ContextMenu getContextMenu() {
@@ -579,11 +579,11 @@ public class GroupPane extends BorderPane {
      * @param grouping the new grouping assigned to this group
      */
     void setViewState(GroupViewState viewState) {
-        if (nonNull(getGrouping())) {
-            getGrouping().fileIds().removeListener(filesSyncListener);
-        }
 
         if (isNull(viewState) || isNull(viewState.getGroup())) {
+            if (nonNull(getGroup())) {
+                getGroup().fileIds().removeListener(filesSyncListener);
+            }
             this.grouping.set(null);
 
             Platform.runLater(() -> {
@@ -599,15 +599,18 @@ public class GroupPane extends BorderPane {
             });
 
         } else {
-            if (this.grouping.get() != viewState.getGroup()) {
+            if (getGroup() != viewState.getGroup()) {
+                if (nonNull(getGroup())) {
+                    getGroup().fileIds().removeListener(filesSyncListener);
+                }
                 this.grouping.set(viewState.getGroup());
 
-                this.getGrouping().fileIds().addListener(filesSyncListener);
+                getGroup().fileIds().addListener(filesSyncListener);
 
                 final String header = getHeaderString();
 
-                gridView.getItems().setAll(getGrouping().fileIds());
                 Platform.runLater(() -> {
+                    gridView.getItems().setAll(getGroup().fileIds());
                     slideShowToggle.setDisable(gridView.getItems().isEmpty());
                     groupLabel.setText(header);
                     resetScrollBar();
@@ -686,6 +689,7 @@ public class GroupPane extends BorderPane {
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
+
             tile.setFile(item);
         }
 

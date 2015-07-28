@@ -21,9 +21,8 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.util.Arrays;
+import java.util.List;
 import static java.util.Objects.nonNull;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -32,7 +31,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -48,16 +46,18 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 })
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final Set<String> AUDIO_EXTENSIONS = new TreeSet<>(Arrays.asList(".mp3", ".wav", ".wma")); //NON-NLS
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private AbstractFile lastFile;
     //UI
     private final MediaViewVideoPanel videoPanel;
+    private final boolean videoPanelInited;
     private final SortedSet<String> videoExtensions; // get them from the panel
     private final SortedSet<String> videoMimes;
     private final MediaViewImagePanel imagePanel;
-    private final boolean videoPanelInited;
     private final boolean imagePanelInited;
+    private final SortedSet<String> imageExtensions; // get them from the panel
+    private final SortedSet<String> imageMimes;
+
     private static final String IMAGE_VIEWER_LAYER = "IMAGE"; //NON-NLS
     private static final String VIDEO_VIEWER_LAYER = "VIDEO"; //NON-NLS
 
@@ -71,14 +71,16 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         // get the right panel for our platform
         videoPanel = MediaViewVideoPanel.createVideoPanel();
         videoPanelInited = videoPanel.isInited();
-        videoExtensions = new TreeSet<>(Arrays.asList(videoPanel.getExtensions()));
+        videoExtensions = new TreeSet<>(videoPanel.getExtensionsList());
         videoMimes = new TreeSet<>(videoPanel.getMimeTypes());
 
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();
+        imageExtensions = new TreeSet<>(imagePanel.getExtensionsList());
+        imageMimes = new TreeSet<>(imagePanel.getMimeTypes());
 
         customizeComponents();
-        logger.log(Level.INFO, "Created MediaView instance: " + this); //NON-NLS
+        logger.log(Level.INFO, "Created MediaView instance: {0}", this); //NON-NLS
     }
 
     private void customizeComponents() {
@@ -125,12 +127,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
             final Dimension dims = DataContentViewerMedia.this.getSize();
             //logger.info("setting node on media viewer"); //NON-NLS
-            if (imagePanelInited && isImageSupported(file)) {
-                imagePanel.showImageFx(file, dims);
-                this.showVideoPanel(false);
-            } else if (videoPanelInited && isVideoSupported(file)) {
+            if (videoPanelInited && videoPanel.isSupported(file)) {
                 videoPanel.setupVideo(file, dims);
                 this.showVideoPanel(true);
+            } else if (imagePanelInited && imagePanel.isSupported(file)) {
+                imagePanel.showImageFx(file, dims);
+                this.showVideoPanel(false);
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS
@@ -186,24 +188,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      * @return True if a video file that can be displayed
      */
     private boolean isVideoSupported(AbstractFile file) {
-        String extension = file.getNameExtension();
-
-        //TODO: is this what we want, to require both extension and mimetype support?
-        if (AUDIO_EXTENSIONS.contains("." + extension) || videoExtensions.contains("." + extension)) {
-            try {
-                String mimeType = new FileTypeDetector().getFileType(file);
-                if (nonNull(mimeType)) {
-                    return videoMimes.contains(mimeType);
-                }
-            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-                if (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE) {
-                    return true;
-                }
-            }
+        if (null == file || file.getSize() == 0) {
+            return false;
         }
-
-        return false;
+        return videoPanel.isSupported(file);
     }
 
     /**
@@ -215,7 +203,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
      */
     private boolean isImageSupported(AbstractFile file) {
 
-        return ImageUtils.thumbnailSupported(file);
+        if (null == file || file.getSize() == 0) {
+            return false;
+        }
+
+        return imagePanel.isSupported(file);
     }
 
     @Override
@@ -255,5 +247,44 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         } else {
             return 7;
         }
+    }
+
+    interface MediaViewPanel {
+
+        /**
+         * @return supported mime types
+         */
+        List<String> getMimeTypes();
+
+        /**
+         * returns supported extensions (each starting with .)
+         *
+         * @return
+         */
+        List<String> getExtensionsList();
+
+        default boolean isSupported(AbstractFile file) {
+            SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
+            try {
+                String mimeType = new FileTypeDetector().getFileType(file);
+                if (nonNull(mimeType)) {
+                    return mimeTypes.contains(mimeType);
+                }
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == MimeMatchEnum.TRUE) {
+                    return true;
+                }
+            }
+
+            String extension = file.getNameExtension();
+
+            if (getExtensionsList().contains("." + extension)) {
+                return true;
+            }
+
+            return false;
+        }
+
     }
 }

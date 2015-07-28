@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +46,7 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.opencv.core.Core;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -55,6 +57,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ *
  * Utilities for working with Images and creating thumbnails. Reuses thumbnails
  * by storing them in the case's cache directory.
  */
@@ -69,44 +72,111 @@ public class ImageUtils {
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
 
-    private static final Image DEFAULT_THUMBNAIL;
+    private static final Logger logger = LOGGER;
+    private static final BufferedImage DEFAULT_THUMBNAIL;
+    private static final TreeSet<String> SUPPORTED_MIME_TYPES = new TreeSet<>();
+    private static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
+    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
+            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
+                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
+                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
+                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
+                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp",
+                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265",
+                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg",
+                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf",
+                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
+                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
+                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
+                    "flm", "tmv", "4xm");  //NON-NLS
+    private static final TreeSet<String> SUPPORTED_IMAGE_MIME_TYPES;
+    private static final List<String> SUPPORTED_VIDEO_MIME_TYPES
+            = Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
+                    "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
+    private static final boolean openCVLoaded;
 
-    /** initialized lazily */
+    static {
+        ImageIO.scanForPlugins();
+        BufferedImage tempImage;
+        try {
+            tempImage = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to load default icon.", ex);
+            tempImage = null;
+        }
+        DEFAULT_THUMBNAIL = tempImage;
+
+        //load opencv libraries
+        boolean openCVLoadedTemp;
+        try {
+            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) {
+                System.loadLibrary("opencv_ffmpeg248_64");
+            } else {
+                System.loadLibrary("opencv_ffmpeg248");
+            }
+
+            openCVLoadedTemp = true;
+        } catch (UnsatisfiedLinkError e) {
+            openCVLoadedTemp = false;
+            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e);
+            //TODO: show warning bubble
+
+        }
+
+        openCVLoaded = openCVLoadedTemp;
+        SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
+
+        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_IMAGE_EXTENSIONS);
+        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_VIDEO_EXTENSIONS);
+
+        SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+        /* special cases and variants that we support, but don't get registered
+         * with ImageIO automatically */
+        SUPPORTED_IMAGE_MIME_TYPES.addAll(Arrays.asList(
+                "image/x-rgb",
+                "image/x-ms-bmp",
+                "application/x-123"));
+        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_IMAGE_MIME_TYPES);
+        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
+
+        //this is rarely usefull
+        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
+    }
+
+    /**
+     * Get the default Icon, which is the icon for a file.
+     *
+     * @return
+     *
+     *
+     *
+     *         /** initialized lazily */
     private static FileTypeDetector fileTypeDetector;
-
-    private static final List<String> SUPPORTED_EXTENSIONS;
-    private static final TreeSet<String> SUPPORTED_MIME_TYPES;
 
     /** thread that saves generated thumbnails to disk in the background */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
 
-    static {
-        ImageIO.scanForPlugins();
-        BufferedImage defaultIcon = null;
-        try {
-            defaultIcon = ImageIO.read(ImageUtils.class.getResourceAsStream("/org/sleuthkit/autopsy/images/file-icon.png"));//NON-NLS
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to read default thumbnail.");
-        }
-        DEFAULT_THUMBNAIL = defaultIcon;
-
-        SUPPORTED_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
-        SUPPORTED_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-
-        /* special cases and variants that we support, but don't get registered
-         * with ImageIO automatically */
-        SUPPORTED_MIME_TYPES.addAll(Arrays.asList(
-                "image/x-rgb",
-                "image/x-ms-bmp",
-                "application/x-123"));
-
-        //this is rarely usefull
-        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
+    private ImageUtils() {
     }
 
-    private ImageUtils() {
+    public static List<String> getSupportedImageExtensions() {
+        return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
+    }
+
+    public static List<String> getSupportedVideoExtensions() {
+        return SUPPORTED_VIDEO_EXTENSIONS;
+    }
+
+    public static SortedSet<String> getSupportedImageMimeTypes() {
+        return Collections.unmodifiableSortedSet(SUPPORTED_IMAGE_MIME_TYPES);
+    }
+
+    public static List<String> getSupportedVideoMimeTypes() {
+        return SUPPORTED_VIDEO_MIME_TYPES;
     }
 
     public static List<String> getSupportedExtensions() {
@@ -142,17 +212,22 @@ public class ImageUtils {
     }
 
     /**
-     * Can a thumbnail be generated for the file?
+     * Can a thumbnail be generated for the content?
      *
-     * @param file
+     * @param content
      *
      * @return
      *
      */
-    public static boolean thumbnailSupported(AbstractFile file) {
-        if (file.getSize() == 0) {
+    public static boolean thumbnailSupported(Content content) {
+
+        if (content.getSize() == 0) {
             return false;
         }
+        if (!(content instanceof AbstractFile)) {
+            return false;
+        }
+        AbstractFile file = (AbstractFile) content;
 
         try {
             String mimeType = getFileTypeDetector().getFileType(file);
@@ -162,13 +237,12 @@ public class ImageUtils {
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-            if (!SUPPORTED_MIME_TYPES.isEmpty()) {
-                AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
-                if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
-                    return true;
-                } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
-                    return false;
-                }
+
+            AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
+            if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
+                return true;
+            } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
+                return false;
             }
         }
 
@@ -180,22 +254,6 @@ public class ImageUtils {
 
         // if no extension or one that is not for an image, then read the content
         return isJpegFileHeader(file) || isPngFileHeader(file);
-    }
-
-    /**
-     * Can a thumbnail be generated for the content?
-     *
-     * @param content
-     *
-     * @return
-     *
-     * @deprecated use {@link #thumbnailSupported(org.sleuthkit.datamodel.AbstractFile) instead.
-     */
-    @Deprecated
-    public static boolean thumbnailSupported(Content content) {
-        return (content instanceof AbstractFile)
-                ? thumbnailSupported((AbstractFile) content)
-                : false;
     }
 
     /**
@@ -220,11 +278,13 @@ public class ImageUtils {
      * @param content
      * @param iconSize
      *
+     *
      * @return a thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
      *
      * @deprecated use {@link #getThumbnail(org.sleuthkit.datamodel.Content, int)
      * } instead.
+     *
      */
     @Nonnull
     @Deprecated
@@ -253,8 +313,8 @@ public class ImageUtils {
                 } else {
                     return thumbnail;
                 }
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Error while reading image: " + content.getName(), ex); //NON-NLS
                 return generateAndSaveThumbnail(content, iconSize, cacheFile);
             }
         } else {
@@ -274,6 +334,7 @@ public class ImageUtils {
      *
      * @deprecated use {@link #getCachedThumbnailFile(org.sleuthkit.datamodel.Content, int)
      * } instead.
+     *
      */
     @Nullable
     @Deprecated
@@ -283,6 +344,7 @@ public class ImageUtils {
     }
 
     /**
+     *
      * Get a thumbnail of a specified size. Generates the image if it is
      * not already cached.
      *
@@ -306,15 +368,30 @@ public class ImageUtils {
      *
      * @return
      *
-     * @deprecated this should never have been public.
+     *
+     * @deprecated use {@link #getCachedThumbnailLocation(long) } instead
      */
     @Deprecated
+
     public static File getFile(long id) {
         return getCachedThumbnailLocation(id);
     }
 
-    private static File getCachedThumbnailLocation(long id) {
-        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", id + ".png").toFile();
+    /**
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
+     * @param fileID
+     *
+     * @return
+     *
+     */
+    private static File getCachedThumbnailLocation(long fileID) {
+        return Paths.get(Case.getCurrentCase().getCacheDirectory(), "thumbnails", fileID + ".png").toFile();
+    }
+
+    public static boolean hasImageFileHeader(AbstractFile file) {
+        return isJpegFileHeader(file) || isPngFileHeader(file);
     }
 
     /**
@@ -379,36 +456,54 @@ public class ImageUtils {
     }
 
     /**
-     * Generate a thumbnail and save it to specified location.
+     * Generate an icon and save it to specified location.
      *
      * @param content   File to generate icon for
-     * @param size      the size of thumbnail to generate in pixels
+     * @param iconSize
      * @param cacheFile Location to save thumbnail to
      *
-     * @return Generated icon or a default icon if a thumbnail could not be
-     *         made.
+     * @return Generated icon or null on error
      */
-    private static Image generateAndSaveThumbnail(Content content, int size, File cacheFile) {
-        BufferedImage thumbnail = generateThumbnail(content, size);
-        if (Objects.nonNull(thumbnail)) {
-            imageSaver.execute(() -> {
-                try {
-                    Files.createParentDirs(cacheFile);
-                    if (cacheFile.exists()) {
-                        cacheFile.delete();
-                    }
-                    ImageIO.write(thumbnail, FORMAT, cacheFile);
-                } catch (IllegalArgumentException | IOException ex1) {
-                    LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex1); //NON-NLS
+    private static Image generateAndSaveThumbnail(Content content, int iconSize, File cacheFile) {
+        AbstractFile f = (AbstractFile) content;
+        final String extension = f.getNameExtension();
+        BufferedImage thumbnail = null;
+        try {
+            if (SUPPORTED_VIDEO_EXTENSIONS.contains(extension)) {
+                if (openCVLoaded) {
+                    thumbnail = VideoUtils.generateVideoThumbnail((AbstractFile) content, iconSize);
+                } else {
+                    return DEFAULT_THUMBNAIL;
                 }
-            });
-            return thumbnail;
-        } else {
-            return getDefaultThumbnail();
+            } else {
+                thumbnail = generateImageThumbnail(content, iconSize);
+            }
+
+            if (thumbnail == null) {
+                return DEFAULT_THUMBNAIL;
+
+            } else {
+                BufferedImage toSave = thumbnail;
+                imageSaver.execute(() -> {
+                    try {
+                        Files.createParentDirs(cacheFile);
+                        if (cacheFile.exists()) {
+                            cacheFile.delete();
+                        }
+                        ImageIO.write(toSave, FORMAT, cacheFile);
+                    } catch (IllegalArgumentException | IOException ex1) {
+                        LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex1); //NON-NLS
+                    }
+                });
+            }
+        } catch (NullPointerException ex) {
+            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
         }
+        return thumbnail;
     }
 
     /**
+     *
      * Generate and return a scaled image
      *
      * @param content
@@ -418,7 +513,7 @@ public class ImageUtils {
      *         there was a problem.
      */
     @Nullable
-    private static BufferedImage generateThumbnail(Content content, int iconSize) {
+    private static BufferedImage generateImageThumbnail(Content content, int iconSize) {
 
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(content));) {
             BufferedImage bi = ImageIO.read(inputStream);
@@ -436,10 +531,13 @@ public class ImageUtils {
             }
         } catch (OutOfMemoryError e) {
             LOGGER.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
+
             return null;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not scale image: " + content.getName(), e); //NON-NLS
+            LOGGER.log(Level.WARNING, "Could not load image: " + content.getName(), e); //NON-NLS
             return null;
+
         }
     }
+
 }
