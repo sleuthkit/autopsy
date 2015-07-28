@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
-public class MediaViewImagePanel extends JPanel {
+public class MediaViewImagePanel extends JPanel implements DataContentViewerMedia.MediaViewPanel {
 
     private static final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
 
@@ -64,20 +64,23 @@ public class MediaViewImagePanel extends JPanel {
     private ImageView fxImageView;
     private BorderPane borderpane;
 
-    private final Label errorLabel = new Label("Could not load image file into media view.");
-    private final Label tooLargeLabel = new Label("Could not load image file into media view (too large).");
-    private final Label noReaderLabel = new Label("Image reader not found for file.");
+    private final Label errorLabel = new Label("Could not load file into media view.");
+    private final Label tooLargeLabel = new Label("Could not load file into media view (too large).");
 
+    static {
+        ImageIO.scanForPlugins();
+
+    }
     /**
      * mime types we should be able to display. if the mimetype is unknown we
      * will fall back on extension and jpg/png header
      */
-    static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedMimeTypes();
+    static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
 
     /**
      * extensions we should be able to display
      */
-    static private final List<String> supportedExtensions = ImageUtils.getSupportedExtensions().stream()
+    static private final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
             .map("."::concat)
             .collect(Collectors.toList());
 
@@ -157,7 +160,7 @@ public class MediaViewImagePanel extends JPanel {
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
                     if (bufferedImage == null) {
                         LOGGER.log(Level.WARNING, "Image reader not found for file: {0}", file.getName()); //NON-NLS
-                        borderpane.setCenter(noReaderLabel);
+                        borderpane.setCenter(errorLabel);
                     } else {
                         Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
                         if (fxImage.isError()) {
@@ -191,6 +194,7 @@ public class MediaViewImagePanel extends JPanel {
     /**
      * @return supported mime types
      */
+    @Override
     public List<String> getMimeTypes() {
         return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
@@ -200,8 +204,24 @@ public class MediaViewImagePanel extends JPanel {
      *
      * @return
      */
+    @Override
+    public List<String> getExtensionsList() {
+        return getExtensions();
+    }
+
+    /**
+     * returns supported extensions (each starting with .)
+     *
+     * @return
+     */
     public List<String> getExtensions() {
         return Collections.unmodifiableList(supportedExtensions);
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        return DataContentViewerMedia.MediaViewPanel.super.isSupported(file)
+                || ImageUtils.hasImageFileHeader(file);
     }
 
     /**
@@ -218,4 +238,5 @@ public class MediaViewImagePanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
 }

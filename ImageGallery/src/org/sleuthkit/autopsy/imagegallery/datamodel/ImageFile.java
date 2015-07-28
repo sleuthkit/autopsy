@@ -22,13 +22,12 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Objects;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -45,22 +44,20 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         ImageIO.scanForPlugins();
     }
 
-    private SoftReference<Image> imageRef;
-
     ImageFile(T f, Boolean analyzed) {
         super(f, analyzed);
 
     }
 
-    @Override
-    public Image getThumbnail() {
-        return ThumbnailCache.getDefault().get(this);
-    }
 
+    @Override
     public Image getFullSizeImage() {
-        Image image = null;
-        if (imageRef != null) {
-            image = imageRef.get();
+        Image image = (imageRef != null) ? imageRef.get() : null;
+        if (image == null || image.isError()) {
+            if (FileTypeUtils.isGIF(file)) {
+                //directly read gif to preserve potential animation,
+                image = new Image(new BufferedInputStream(new ReadContentInputStream(file)));
+            }
         }
         if (image == null || image.isError()) {
             try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
@@ -73,12 +70,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         }
         imageRef = new SoftReference<>(image);
         return image;
-    }
-
-    @Override
-    public boolean isDisplayable() {
-        Image thumbnail = getThumbnail();
-        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
     }
 
     @Override

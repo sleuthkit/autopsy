@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,14 +39,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -89,6 +87,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             return new ImageFile<>(abstractFileById, analyzed);
         }
     }
+
+    SoftReference<Image> imageRef;
 
     private String drawablePath;
 
@@ -286,7 +286,12 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract Image getThumbnail();
+   
+    public Image getThumbnail() {
+        return ThumbnailCache.getDefault().get(this);
+    }
+
+    public abstract Image getFullSizeImage();
 
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);
@@ -318,5 +323,8 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
-    public abstract boolean isDisplayable();
+    public boolean isDisplayableAsImage() {
+        Image thumbnail = getThumbnail();
+        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
+    }
 }
