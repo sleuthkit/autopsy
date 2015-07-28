@@ -63,6 +63,7 @@ import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.HandleUNC;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -652,6 +653,7 @@ public class Server {
     String getIndexDirPath(Case theCase) {
         String indexDir = theCase.getModuleDirectory() +
         File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
+        indexDir=HandleUNC.getInstance().attemptUNCSubstitution(indexDir);
         return indexDir;
     }
 
