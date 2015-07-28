@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
@@ -91,19 +90,16 @@ public class AddDrawableTagAction extends AddTagAction {
                                 .findAny();
 
                         if (duplicateTagName.isPresent()) {
-                            Platform.runLater(() -> {
-                                Alert alert = new Alert(Alert.AlertType.WARNING, "Unable to tag " + file.getName() + ". It has already been tagged as \"" + tagName.getDisplayName() + ". Cannot reapply the same tag.", ButtonType.OK);
-                                alert.setHeaderText("Tag Error");
-                                alert.show();
-                            });
+                            LOGGER.log(Level.INFO, "{0} already tagged as {1}. Skipping.", new Object[]{file.getName(), tagName.getDisplayName()});
                         } else {
+                            LOGGER.log(Level.INFO, "Tagging {0} as {1}", new Object[]{file.getName(), tagName.getDisplayName()});
                             controller.getTagsManager().addContentTag(file, tagName, comment);
                         }
 
                     } catch (TskCoreException tskCoreException) {
-                        LOGGER.log(Level.SEVERE, "Error tagging result", tskCoreException);
+                        LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException);
                         Platform.runLater(() -> {
-                            new Alert(Alert.AlertType.ERROR, "Unable to file " + fileID + ".").show();
+                            new Alert(Alert.AlertType.ERROR, "Unable to tag file " + fileID + ".").show();
                         });
                     }
                 }

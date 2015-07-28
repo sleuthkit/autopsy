@@ -47,7 +47,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
@@ -59,6 +58,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
@@ -72,9 +72,6 @@ public class MetaDataPane extends DrawableUIBase {
     private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
 
     @FXML
-    private ImageView imageView;
-
-    @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>> attributeColumn;
 
     @FXML
@@ -83,11 +80,8 @@ public class MetaDataPane extends DrawableUIBase {
     @FXML
     private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, String> valueColumn;
 
-    @FXML
-    private BorderPane imageBorder;
     private final MenuItem copyMenuItem = new MenuItem("Copy");
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
-
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "MetaDataPane.fxml");
@@ -178,22 +172,27 @@ public class MetaDataPane extends DrawableUIBase {
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
+                imageBorder.setCenter(null);
                 tableView.getItems().clear();
                 getCategoryBorderRegion().setBorder(null);
-
             });
         } else {
+            disposeContent();
             updateUI();
+            updateContent();
         }
+    }
+
+    @Override
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+        return new ThumbnailLoaderTask(file);
     }
 
     public void updateUI() {
         getFile().ifPresent(file -> {
-            final Image icon = file.getThumbnail();
             final ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
 
             Platform.runLater(() -> {
-                imageView.setImage(icon);
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });

@@ -13,7 +13,7 @@
           <children>
             <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
               <children>
-                <BorderPane id="imageAnchor" fx:id="imageBorder" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="NEVER">
+                <BorderPane id="imageAnchor" fx:id="imageBorder" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="220.0" minWidth="220.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="NEVER">
                   <center>
                     <ImageView fx:id="imageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
                   </center>

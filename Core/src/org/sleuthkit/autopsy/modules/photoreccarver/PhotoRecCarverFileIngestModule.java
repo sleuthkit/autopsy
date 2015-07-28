@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
@@ -46,6 +48,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -71,12 +74,30 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static final String LOG_FILE = "run_log.txt"; //NON-NLS
     private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Map<Long, WorkingPaths> pathsByJob = new ConcurrentHashMap<>();
     private IngestJobContext context;
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
+    private long jobId;
+
+    private static class IngestJobTotals {
+
+        private AtomicLong totalItemsRecovered = new AtomicLong(0);
+        private AtomicLong totalWritetime = new AtomicLong(0);
+        private AtomicLong totalParsetime = new AtomicLong(0);
+    }
+    
+    private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
+        IngestJobTotals totals = totalsForIngestJobs.get(ingestJobId);
+        if (totals == null) {
+            totals = new PhotoRecCarverFileIngestModule.IngestJobTotals();
+            totalsForIngestJobs.put(ingestJobId, totals);
+        }
+        return totals;
+    }
 
     /**
      * @inheritDoc
@@ -85,6 +106,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         this.context = context;
         this.services = IngestServices.getInstance();
+        this.jobId = this.context.getJobId();
 
         // If the global unallocated space processing setting and the module
         // process unallocated space only setting are not in sych, throw an 
@@ -99,7 +121,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
         executableFile = locateExecutable(execName.toString());
 
-        if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.context.getJobId()) == 1) {
+        if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.jobId) == 1) {
             try {
                 // The first instance creates an output subdirectory with a date and time stamp
                 DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss-SSSS");  // NON-NLS
@@ -113,9 +135,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 Files.createDirectory(tempDirPath);
 
                 // Save the directories for the current job.
-                PhotoRecCarverFileIngestModule.pathsByJob.put(this.context.getJobId(), new WorkingPaths(outputDirPath, tempDirPath));
-            }
-            catch (SecurityException | IOException | UnsupportedOperationException ex) {
+                PhotoRecCarverFileIngestModule.pathsByJob.put(this.jobId, new WorkingPaths(outputDirPath, tempDirPath));
+            } catch (SecurityException | IOException | UnsupportedOperationException ex) {
                 throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
         }
@@ -130,6 +151,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         if (file.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
             return IngestModule.ProcessResult.OK;
         }
+        
+        // Safely get a reference to the totalsForIngestJobs object
+        IngestJobTotals totals = getTotalsForIngestJobs(jobId);
 
         Path tempFilePath = null;
         try {
@@ -160,7 +184,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
 
             // Write the file to disk.
-            WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.context.getJobId());
+            long writestart = System.currentTimeMillis();
+            WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.get(this.jobId);
             tempFilePath = Paths.get(paths.getTempDirPath().toString(), file.getName());
             ContentUtils.writeToFile(file, tempFilePath.toFile());
 
@@ -184,7 +209,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             processAndSettings.redirectOutput(Redirect.appendTo(log));
 
             int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context));
-            
+
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
                 cleanup(outputDirPath, tempFilePath);
@@ -211,21 +236,24 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     }
                 }
             }
+            long writedelta = (System.currentTimeMillis() - writestart);
+            totals.totalWritetime.addAndGet(writedelta);
             
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
+            long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            List<LayoutFile> theList = parser.parse(newAuditFile, id, file);
-            if (theList != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
-                context.addFilesToJob(new ArrayList<>(theList));
-                services.fireModuleContentEvent(new ModuleContentEvent(theList.get(0))); // fire an event to update the tree
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);            
+            long calcdelta = (System.currentTimeMillis() - calcstart);
+            totals.totalParsetime.addAndGet(calcdelta);
+            if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
+                totals.totalItemsRecovered.addAndGet(carvedItems.size());
+                context.addFilesToJob(new ArrayList<>(carvedItems));
+                services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
             return IngestModule.ProcessResult.ERROR;
-        }
-
-        finally {
+        } finally {
             if (null != tempFilePath && Files.exists(tempFilePath)) {
                 // Get rid of the unallocated space file.
                 tempFilePath.toFile().delete();
@@ -234,7 +262,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return IngestModule.ProcessResult.OK;
 
     }
-    
+
     private void cleanup(Path outputDirPath, Path tempFilePath) {
         // cleanup the output path
         FileUtil.deleteDir(new File(outputDirPath.toString()));
@@ -243,19 +271,48 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
     }
 
+    private synchronized void postSummary() {
+        IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
+
+        StringBuilder detailsSb = new StringBuilder();
+        //details
+        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+
+        detailsSb.append("<tr><td>") //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.numberOfCarved"))
+                 .append("</td>"); //NON-NLS
+        detailsSb.append("<td>").append(jobTotals.totalItemsRecovered.get()).append("</td></tr>"); //NON-NLS
+
+        detailsSb.append("<tr><td>") //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalWritetime"))
+                 .append("</td><td>").append(jobTotals.totalWritetime.get()).append("</td></tr>\n"); //NON-NLS
+        detailsSb.append("<tr><td>") //NON-NLS
+                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalParsetime"))
+                 .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
+        detailsSb.append("</table>"); //NON-NLS
+
+        services.postMessage(IngestMessage.createMessage(
+                IngestMessage.MessageType.INFO,
+                PhotoRecCarverIngestModuleFactory.getModuleName(),
+                NbBundle.getMessage(this.getClass(),
+                        "PhotoRecIngestModule.complete.photoRecResults"),
+                detailsSb.toString()));
+
+    }
 
     /**
      * @inheritDoc
      */
     @Override
     public void shutDown() {
-        if (this.context != null && refCounter.decrementAndGet(this.context.getJobId()) == 0) {
+        if (this.context != null && refCounter.decrementAndGet(this.jobId) == 0) {
             try {
                 // The last instance of this module for an ingest job cleans out 
                 // the working paths map entry for the job and deletes the temp dir.
-                WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.context.getJobId());
+                WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
-            }
+                postSummary();
+            } 
             catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
             }
