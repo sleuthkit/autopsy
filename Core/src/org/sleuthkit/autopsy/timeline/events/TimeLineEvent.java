@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,26 @@ public class TimeLineEvent {
 
     private final TskData.FileKnown known;
 
+    private final boolean hashHit;
+
+    public TimeLineEvent(Long eventID, Long objID, Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit) {
+        this.eventID = eventID;
+        this.fileID = objID;
+        this.artifactID = artifactID;
+        this.time = time;
+        this.subType = type;
+
+        this.fullDescription = fullDescription;
+        this.medDescription = medDescription;
+        this.shortDescription = shortDescription;
+        this.known = known;
+        this.hashHit = hashHit;
+    }
+
+    public boolean isHashHit() {
+        return hashHit;
+    }
+
     public Long getArtifactID() {
         return artifactID;
     }
@@ -69,20 +89,6 @@ public class TimeLineEvent {
 
     public String getShortDescription() {
         return shortDescription;
-    }
-
-    public TimeLineEvent(Long eventID, Long objID, Long artifactID, Long time,
-                         EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
-        this.eventID = eventID;
-        this.fileID = objID;
-        this.artifactID = artifactID;
-        this.time = time;
-        this.subType = type;
-
-        this.fullDescription = fullDescription;
-        this.medDescription = medDescription;
-        this.shortDescription = shortDescription;
-        this.known = known;
     }
 
     public TskData.FileKnown getKnown() {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,7 +138,8 @@ public class AggregateEventNode extends StackPane {
         this.chart = chart;
         final Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
-        final HBox hBox = new HBox(descrLabel, countLabel, region, minusButton, plusButton);
+        ImageView imageView = new ImageView(IMAGE);
+        final HBox hBox = new HBox(descrLabel, countLabel, region, imageView, minusButton, plusButton);
         hBox.setPrefWidth(USE_COMPUTED_SIZE);
         hBox.setMinWidth(USE_PREF_SIZE);
         hBox.setPadding(new Insets(2, 5, 2, 5));
@@ -227,13 +228,14 @@ public class AggregateEventNode extends StackPane {
             }
         });
     }
+    static final Image IMAGE = new Image(AggregateEventNode.class.getResourceAsStream("/org/sleuthkit/autopsy/images/hashset_hits.png"));
 
     private void installTooltip() {
         Tooltip.install(AggregateEventNode.this, new Tooltip(
                 NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
-                                    getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
-                                    getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
-                                    getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))));
+                        getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
+                        getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
+                        getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))));
     }
 
     public Pane getSubNodePane() {
@@ -371,36 +373,36 @@ public class AggregateEventNode extends StackPane {
             LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
 
-                @Override
-                protected List<AggregateEventNode> call() throws Exception {
-                    //query for the sub-clusters
-                    List<AggregateEvent> aggregatedEvents = chart.getFilteredEvents().getAggregatedEvents(new ZoomParams(span,
-                            chart.getFilteredEvents().eventTypeZoom().get(),
-                            combinedFilter,
-                            newLOD));
-                    //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
-                    return aggregatedEvents.stream().map((AggregateEvent t) -> {
-                        AggregateEventNode subNode = new AggregateEventNode(t, AggregateEventNode.this, chart);
-                        subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - getLayoutXCompensation());
-                        return subNode;
-                    }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
-                }
+                        @Override
+                        protected List<AggregateEventNode> call() throws Exception {
+                            //query for the sub-clusters
+                            List<AggregateEvent> aggregatedEvents = chart.getFilteredEvents().getAggregatedEvents(new ZoomParams(span,
+                                            chart.getFilteredEvents().eventTypeZoom().get(),
+                                            combinedFilter,
+                                            newLOD));
+                            //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
+                            return aggregatedEvents.stream().map((AggregateEvent t) -> {
+                                AggregateEventNode subNode = new AggregateEventNode(t, AggregateEventNode.this, chart);
+                                subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - getLayoutXCompensation());
+                                return subNode;
+                            }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
+                        }
 
-                @Override
-                protected void succeeded() {
-                    try {
-                        chart.setCursor(Cursor.WAIT);
-                        //assign subNodes and request chart layout
-                        getSubNodePane().getChildren().setAll(get());
-                        setDescriptionVisibility(descrVis);
-                        chart.setRequiresLayout(true);
-                        chart.requestChartLayout();
-                        chart.setCursor(null);
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-            };
+                        @Override
+                        protected void succeeded() {
+                            try {
+                                chart.setCursor(Cursor.WAIT);
+                                //assign subNodes and request chart layout
+                                getSubNodePane().getChildren().setAll(get());
+                                setDescriptionVisibility(descrVis);
+                                chart.setRequiresLayout(true);
+                                chart.requestChartLayout();
+                                chart.setCursor(null);
+                            } catch (InterruptedException | ExecutionException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
+                        }
+                    };
 
             //start task
             chart.getController().monitorTask(loggedTask);
