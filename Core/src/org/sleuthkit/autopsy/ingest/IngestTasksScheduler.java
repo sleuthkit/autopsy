@@ -469,7 +469,7 @@ final class IngestTasksScheduler {
      * @param taskQueue The queue from which to remove the tasks.
      * @param jobId The id of the job for which the tasks are to be removed.
      */
-    private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
+    synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
