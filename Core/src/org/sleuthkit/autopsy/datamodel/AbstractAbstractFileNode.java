@@ -57,6 +57,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (dotIndex > 0) {
             String ext = name.substring(dotIndex).toLowerCase();
 
+            // If this is an archive file we will listen for ingest events
+            // that will notify us when new content has been identified.
             for (String s : FileTypeExtensions.getArchiveExtensions()) {
                 if (ext.equals(s)) {
                     IngestManager.getInstance().addIngestModuleEventListener(pcl);
@@ -66,10 +68,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         
     }
 
-    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+    protected final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
-        // See if the new file is a child of ours
+        // Is this a content changed event?
         if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
             if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
                 return;
@@ -79,16 +81,25 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 return;
             }
             Content newContent = (Content) moduleContentEvent.getSource();
+
+            // Does the event indicate that content has been added to *this* file?
             if (getContent().getId() == newContent.getId()) {
-                Children parentsChildren = getParentNode().getChildren();
-                if (parentsChildren != null) {
-                    ((ContentChildren)parentsChildren).refreshChildren();
-                    parentsChildren.getNodesCount();
+                // If so, refresh our children.
+                try {
+                    Children parentsChildren = getParentNode().getChildren();
+                    if (parentsChildren != null) {
+                        ((ContentChildren)parentsChildren).refreshChildren();
+                        parentsChildren.getNodesCount();
+                    }
                 }
+                catch (NullPointerException ex) {
+                    // Skip
+                }
+                
             }
         } 
     };
-    
+
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum AbstractFilePropertyType {
 

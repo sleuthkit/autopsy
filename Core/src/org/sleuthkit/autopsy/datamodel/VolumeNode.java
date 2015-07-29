@@ -18,13 +18,21 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -59,8 +67,47 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         this.setDisplayName(tempVolName);
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
+        // Listen for ingest events so that we can detect new added files (e.g. carved)
+        IngestManager.getInstance().addIngestModuleEventListener(pcl);
+        
     }
 
+    protected final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+
+        // See if the new file is a child of ours
+        if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                return;
+            }
+            ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+            if ((moduleContentEvent.getSource() instanceof Content) == false) {
+                return;
+            }
+            Content newContent = (Content) moduleContentEvent.getSource();
+            
+            try {
+                Content parent = newContent.getParent();
+                if (parent != null) {
+                    // Is this a new carved file?
+                    if (parent.getName().equals(VirtualDirectory.NAME_CARVED)) {
+                        // Was this new carved file produced from this volume?
+                        if (parent.getParent().getId() == getContent().getId()) {
+                            Children children = getChildren();
+                            if (children != null) {
+                                ((ContentChildren)children).refreshChildren();
+                                children.getNodesCount();
+                            }                        
+                        }
+                    }
+                }
+            }
+            catch (TskCoreException ex) {
+                // Do nothing.
+            }
+        }
+    };
+    
     /**
      * Right click action for volume node
      *
