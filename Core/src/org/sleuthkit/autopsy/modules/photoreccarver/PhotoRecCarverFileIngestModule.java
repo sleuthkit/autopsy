@@ -99,7 +99,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return totals;
     }
     
-    private static synchronized void initTotalIngestJob(long ingestJobId) {
+    private static synchronized void initTotalsForIngestJob(long ingestJobId) {
         IngestJobTotals totals = new PhotoRecCarverFileIngestModule.IngestJobTotals();
         totalsForIngestJobs.put(ingestJobId, totals);
     }
@@ -143,7 +143,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 PhotoRecCarverFileIngestModule.pathsByJob.put(this.jobId, new WorkingPaths(outputDirPath, tempDirPath));
                 
                 // Initialize job totals
-                initTotalIngestJob(jobId);
+                initTotalsForIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
                 throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
