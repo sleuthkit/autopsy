@@ -72,7 +72,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         
     }
 
-    protected final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
         // See if the new file is a child of ours

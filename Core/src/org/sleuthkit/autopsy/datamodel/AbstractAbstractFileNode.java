@@ -68,7 +68,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         
     }
 
-    protected final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
         // Is this a content changed event?
