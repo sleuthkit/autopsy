@@ -99,10 +99,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         return totals;
     }
     
-    private static synchronized IngestJobTotals initTotalsForIngestJobs(long ingestJobId) {
+    private static synchronized void initTotalIngestJob(long ingestJobId) {
         IngestJobTotals totals = new PhotoRecCarverFileIngestModule.IngestJobTotals();
         totalsForIngestJobs.put(ingestJobId, totals);
-        return totals;
     }
 
     /**
@@ -144,7 +143,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 PhotoRecCarverFileIngestModule.pathsByJob.put(this.jobId, new WorkingPaths(outputDirPath, tempDirPath));
                 
                 // Initialize job totals
-                initTotalsForIngestJobs(jobId);
+                initTotalIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
                 throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
@@ -280,7 +279,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
     }
 
-    private static synchronized void postSummary(long jobId, IngestServices services) {
+    private static synchronized void postSummary(long jobId) {
         IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
         StringBuilder detailsSb = new StringBuilder();
@@ -300,7 +299,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                  .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("</table>"); //NON-NLS
 
-        services.postMessage(IngestMessage.createMessage(
+        IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                 IngestMessage.MessageType.INFO,
                 PhotoRecCarverIngestModuleFactory.getModuleName(),
                 NbBundle.getMessage(PhotoRecCarverFileIngestModule.class,
@@ -320,7 +319,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // the working paths map entry for the job and deletes the temp dir.
                 WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
-                postSummary(jobId, services);
+                postSummary(jobId);
             } 
             catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS

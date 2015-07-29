@@ -331,7 +331,7 @@ public class HashDbIngestModule implements FileIngestModule {
         }
     }
 
-    private static synchronized void postSummary(long jobId, IngestServices services,
+    private static synchronized void postSummary(long jobId,
             List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
@@ -362,7 +362,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
             detailsSb.append("</ul>"); //NON-NLS
 
-            services.postMessage(IngestMessage.createMessage(
+            IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                 IngestMessage.MessageType.INFO,
                 HashLookupModuleFactory.getModuleName(),
                 NbBundle.getMessage(HashDbIngestModule.class,
@@ -374,7 +374,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
-            postSummary(jobId, services, knownBadHashSets, knownHashSets);
+            postSummary(jobId, knownBadHashSets, knownHashSets);
         }
     }
 }
