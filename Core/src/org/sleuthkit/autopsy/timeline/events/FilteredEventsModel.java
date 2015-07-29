@@ -36,7 +36,8 @@ import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.HashHitFilter;
+import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
+import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
@@ -107,7 +108,14 @@ public final class FilteredEventsModel {
             dataSourceFilter.setSelected(Boolean.TRUE);
             dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
         });
-        return new RootFilter(new HideKnownFilter(), new HashHitFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+        
+        HashHitsFilter hashHitsFilter = new HashHitsFilter();
+        repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
+            HashSetFilter hashSourceFilter = new HashSetFilter(t.getValue(), t.getKey());
+            hashSourceFilter.setSelected(Boolean.TRUE);
+            hashHitsFilter.addHashSetFilter(hashSourceFilter);
+        });
+        return new RootFilter(new HideKnownFilter(), hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
     }
 
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
@@ -117,6 +125,12 @@ public final class FilteredEventsModel {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilter rootFilter = (RootFilter) filter().get();
             rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
+            requestedFilter.set(rootFilter.copyOf());
+        });
+        repo.getHashSetMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+            HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
+            RootFilter rootFilter = (RootFilter) filter().get();
+            rootFilter.getHashHitsFilter().addHashSetFilter(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
@@ -152,6 +166,7 @@ public final class FilteredEventsModel {
     public TimeLineEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
     }
+
     public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
         return repo.getEventsById(eventIDs);
     }
