@@ -363,7 +363,7 @@ public class EventDB {
     boolean hasNewColumns() {
         /* this relies on the fact that no tskObj has ID 0 but 0 is the default
          * value for the datasource_id column in the events table. */
-        return hasHashTables() && hasDataSourceIDColumn()
+        return hasHashHitColumn() && hasDataSourceIDColumn()
                 && (getDataSourceIDs().isEmpty() == false);
     }
 
@@ -475,38 +475,28 @@ public class EventDB {
                 LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
             }
 
-            boolean hasDSInfo = hasDataSourceIDColumn();
-            if (hasDSInfo == false) {
+            if (hasDataSourceIDColumn() == false) {
                 try (Statement stmt = con.createStatement()) {
                     String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
+                    LOGGER.log(Level.SEVERE, "problem upgrading database table", ex); // NON-NLS
                 }
             }
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE TABLE  if not exists hash_sets "
-                        + "( hash_set_id INTEGER primary key,"
-                        + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)";
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating hash_sets table", ex);
+
+            if (hasHashHitColumn() == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN hash_hit INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "problem upgrading database table", ex); // NON-NLS
+                }
             }
 
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE TABLE  if not exists hash_set_hits "
-                        + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, "
-                        + " event_id INTEGER REFERENCES events(event_id) not null, "
-                        + " PRIMARY KEY (hash_set_id, event_id))";
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
-
-            }
             try {
                 insertRowStmt = prepareStatement(
-                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
-                        + "VALUES (?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
+                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit) " // NON-NLS
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
                 getDataSourceIDsStmt = prepareStatement("select distinct datasource_id from events"); // NON-NLS
                 getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
@@ -517,14 +507,7 @@ public class EventDB {
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
-            if (hasNewColumns() == false) {
-                try (Statement stmt = con.createStatement()) {
-                    String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
-                    stmt.execute(sql);
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
-                }
-            }
+         
 
             try (Statement stmt = con.createStatement()) {
                 String sql = "CREATE INDEX if not exists file_idx ON events(file_id)"; // NON-NLS
@@ -588,7 +571,7 @@ public class EventDB {
                 }
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problemexecuting pragma", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "problem executing pragma", ex); // NON-NLS
         }
         return false;
     }
@@ -597,17 +580,8 @@ public class EventDB {
         return hasDBColumn(EventTableColumn.DATA_SOURCE_ID);
     }
 
-    private boolean hasHashTables() {
-        try (Statement stmt = con.createStatement()) {
-
-            ResultSet executeQuery = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='hash_hits'");
-            while (executeQuery.next()) {
-                return true;
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problemexecuting pragma", ex); // NON-NLS
-        }
-        return false;
+    private boolean hasHashHitColumn() {
+        return hasDBColumn(EventTableColumn.HASH_HIT);
     }
 
     void insertEvent(long time, EventType type, long datasourceID, Long objID,
@@ -642,7 +616,7 @@ public class EventDB {
         DBLock.lock();
         try {
 
-            //"INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit) " 
+            //"INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hashHit) " 
             insertRowStmt.clearParameters();
             insertRowStmt.setLong(1, datasourceID);
             if (objID != null) {

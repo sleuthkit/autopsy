@@ -33,6 +33,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
@@ -173,6 +174,13 @@ public class EventsRepository {
 
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
+    }
+
+    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+        return eventIDs.stream()
+                .map(idToEventCache::getUnchecked)
+                .collect(Collectors.toSet());
+
     }
 
     public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {

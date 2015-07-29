@@ -152,6 +152,9 @@ public final class FilteredEventsModel {
     public TimeLineEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
     }
+    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+        return repo.getEventsById(eventIDs);
+    }
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;

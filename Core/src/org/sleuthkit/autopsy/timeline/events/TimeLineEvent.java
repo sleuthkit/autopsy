@@ -28,7 +28,9 @@ public class TimeLineEvent {
 
     private final Long eventID;
 
-    private final Long fileID, time;
+    private final Long fileID;
+    
+    private final Long time;
 
     private final Long artifactID;
 
