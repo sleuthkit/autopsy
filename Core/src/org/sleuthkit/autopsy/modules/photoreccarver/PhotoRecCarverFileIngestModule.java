@@ -147,13 +147,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      */
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
+        
+        // Safely get a reference to the totalsForIngestJobs object
+        IngestJobTotals totals = getTotalsForIngestJobs(jobId);
+        
         // Skip everything except unallocated space files.
         if (file.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
             return IngestModule.ProcessResult.OK;
         }
-        
-        // Safely get a reference to the totalsForIngestJobs object
-        IngestJobTotals totals = getTotalsForIngestJobs(jobId);
 
         Path tempFilePath = null;
         try {
