@@ -47,8 +47,10 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
@@ -220,8 +222,22 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
 
     @Override
     public boolean isSupported(AbstractFile file) {
-        return DataContentViewerMedia.MediaViewPanel.super.isSupported(file)
-                || ImageUtils.hasImageFileHeader(file);
+        if (DataContentViewerMedia.MediaViewPanel.super.isSupported(file)) {
+            return true;
+        } else {
+            String extension = file.getNameExtension();
+            try {
+                String mimeType = new FileTypeDetector().getFileType(file);
+
+                return (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(extension))
+                        || (mimeType.equalsIgnoreCase("application/octet-stream") && getExtensionsList().contains(extension));
+
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Failed to get mime type for file", ex);
+            }
+
+            return ImageUtils.thumbnailSupported(file);
+        }
     }
 
     /**

@@ -138,6 +138,7 @@ public class ImageUtils {
                 "image/x-rgb",
                 "image/x-ms-bmp",
                 "application/x-123"));
+        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals);
         SUPPORTED_MIME_TYPES.addAll(SUPPORTED_IMAGE_MIME_TYPES);
         SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
 
@@ -228,12 +229,13 @@ public class ImageUtils {
             return false;
         }
         AbstractFile file = (AbstractFile) content;
-
+        final String extension = file.getNameExtension();
         try {
             String mimeType = getFileTypeDetector().getFileType(file);
             if (Objects.nonNull(mimeType)) {
                 return SUPPORTED_MIME_TYPES.contains(mimeType)
-                        || (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(file.getNameExtension()));
+                        || (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(file.getNameExtension()))
+                        || (mimeType.equalsIgnoreCase("application/octet-stream") && SUPPORTED_EXTENSIONS.contains(extension));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
@@ -247,7 +249,6 @@ public class ImageUtils {
         }
 
         // if we have an extension, check it
-        final String extension = file.getNameExtension();
         if (StringUtils.isNotBlank(extension) && SUPPORTED_EXTENSIONS.contains(extension)) {
             return true;
         }
