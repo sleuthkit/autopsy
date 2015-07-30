@@ -325,6 +325,9 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 }
 
                 if (se != null && !query.equals("")) { //NON-NLS
+                    // If date doesn't exist, change to 0 (instead of 1969)
+                    if (last_accessed == -1)
+                        last_accessed = 0;
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
@@ -335,7 +338,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
                                                              NbBundle.getMessage(this.getClass(),
                                                                                  "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
                     this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
