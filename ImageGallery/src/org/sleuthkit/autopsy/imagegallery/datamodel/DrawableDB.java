@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -1123,8 +1124,6 @@ public final class DrawableDB {
      */
     @Nonnull
     public Set<String> getHashSetsForFileFromAutopsy(long fileID) {
-//        return hashh
-
         return HashHitUtils.getHashSetNamesForFile(tskCase, fileID);
 
     }
@@ -1193,12 +1192,9 @@ public final class DrawableDB {
      *         returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
-        if (Objects.isNull(f)) {
-            return false;
-        } else {
-            return videoFileMap.computeIfAbsent(f.getId(), (id) -> FileTypeUtils.isVideoFile(f));
-        }
-
+        return isNull(f) ? false
+                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
+        
     }
 
     /**
