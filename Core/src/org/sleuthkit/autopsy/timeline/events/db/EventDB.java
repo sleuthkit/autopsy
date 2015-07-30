@@ -62,9 +62,19 @@ import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.FULL;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.MEDIUM;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.SHORT;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MONTHS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.SECONDS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.YEARS;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
@@ -502,6 +512,7 @@ public class EventDB {
                     String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
+
                     LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
                 }
             }
@@ -564,7 +575,6 @@ public class EventDB {
     }
 
     /**
-     *
      * @param tableName  the value of tableName
      * @param columnList the value of columnList
      */
@@ -591,7 +601,6 @@ public class EventDB {
     }
 
     /**
-     *
      * @param dbColumn the value of dbColumn
      *
      * @return the boolean
@@ -678,6 +687,7 @@ public class EventDB {
             insertRowStmt.setString(9, shortDescription);
 
             insertRowStmt.setByte(10, known == null ? TskData.FileKnown.UNKNOWN.getFileKnownValue() : known.getFileKnownValue());
+
             insertRowStmt.setInt(11, hashSetNames.isEmpty() ? 0 : 1);
 
             insertRowStmt.executeUpdate();
@@ -904,7 +914,6 @@ public class EventDB {
         DBLock.lock();
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
                 + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
-                //                + "      , (select group_concat(event_id) as ids_with_hash_hits from events where event_id IN event_ids)"
                 + " from events" + useHashHitTablesHelper(filter) + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS

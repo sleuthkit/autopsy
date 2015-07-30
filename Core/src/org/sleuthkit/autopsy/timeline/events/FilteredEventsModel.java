@@ -241,7 +241,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or requested
      *         ranges
      */
-    public final Long getMinTime() {
+    public Long getMinTime() {
         return repo.getMinTime();
     }
 
@@ -250,7 +250,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or requested
      *         ranges
      */
-    public final Long getMaxTime() {
+    public Long getMaxTime() {
         return repo.getMaxTime();
     }
 

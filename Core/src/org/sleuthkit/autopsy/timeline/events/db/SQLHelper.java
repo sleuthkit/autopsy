@@ -97,8 +97,6 @@ public class SQLHelper {
         }
     }
 
-   
-
     static String getSQLWhere(HashHitsFilter filter) {
         if (filter.isSelected()
                 && (false == filter.isDisabled())

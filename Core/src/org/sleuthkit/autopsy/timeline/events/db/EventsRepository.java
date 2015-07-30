@@ -391,6 +391,7 @@ public class EventsRepository {
 
                     if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
+
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
                         boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
                         Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
