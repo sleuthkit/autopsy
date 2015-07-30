@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
@@ -281,14 +281,14 @@ public class EventDB {
         return getAggregatedEvents(params.getTimeRange(), params.getFilter(), params.getTypeZoomLevel(), params.getDescrLOD());
     }
 
-    Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
+    Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;
         final String sqlWhere = SQLHelper.getSQLWhere(filter);
-
         DBLock.lock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-                ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
+                ResultSet rs = stmt.executeQuery(" select (select Max(time) from events" + (SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits, hash_sets" : "") + " where time <=" + start + " and " + sqlWhere + ") as start,"
+                        + "(select Min(time) from  from events" + (SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits, hash_sets" : "") + " where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
             while (rs.next()) {
 
                 long start2 = rs.getLong("start"); // NON-NLS
@@ -328,18 +328,18 @@ public class EventDB {
         return result;
     }
 
-    Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return getEventIDs(timeRange.getStartMillis() / 1000, timeRange.getEndMillis() / 1000, filter);
     }
 
-    Set<Long> getEventIDs(Long startTime, Long endTime, Filter filter) {
+    Set<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
         Set<Long> resultIDs = new HashSet<>();
 
         DBLock.lock();
-        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "select event_id from  from events" + (SQLHelper.hasActiveHashFilter(filter)?", hash_set_hits, hash_sets":"") + " where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
@@ -809,7 +809,7 @@ public class EventDB {
      * @return a map organizing the counts in a hierarchy from date > eventtype>
      *         count
      */
-    private Map<EventType, Long> countEvents(Long startTime, Long endTime, Filter filter, EventTypeZoomLevel zoomLevel) {
+    private Map<EventType, Long> countEvents(Long startTime, Long endTime, RootFilter filter, EventTypeZoomLevel zoomLevel) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
@@ -821,7 +821,7 @@ public class EventDB {
 
         //get some info about the range of dates requested
         final String queryString = "select count(*), " + useSubTypeHelper(useSubTypes)
-                + " from events, hash_set_hits, hash_sets where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " from events" + (SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits, hash_sets" : "") + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
 
         ResultSet rs = null;
@@ -881,7 +881,7 @@ public class EventDB {
      *         the supplied filter, aggregated according to the given event type and
      *         description zoom levels
      */
-    private List<AggregateEvent> getAggregatedEvents(Interval timeRange, Filter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
+    private List<AggregateEvent> getAggregatedEvents(Interval timeRange, RootFilter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
         String descriptionColumn = getDescriptionColumn(lod);
         final boolean useSubTypes = (zoomLevel.equals(EventTypeZoomLevel.SUB_TYPE));
 
@@ -905,10 +905,10 @@ public class EventDB {
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
                 + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
                 //                + "      , (select group_concat(event_id) as ids_with_hash_hits from events where event_id IN event_ids)"
-                + " from events, hash_set_hits, hash_sets where time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " from events" + (SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits, hash_sets" : "") + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
-        //System.out.println(query);
+        System.out.println(query);
         ResultSet rs = null;
         try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription
                 ) {
@@ -918,7 +918,7 @@ public class EventDB {
 
             rs = stmt.executeQuery(query);
             stopwatch.stop();
-            //System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
+            System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
                 String eventIDS = rs.getString("event_ids");
                 HashSet<Long> hashHits = new HashSet<>();

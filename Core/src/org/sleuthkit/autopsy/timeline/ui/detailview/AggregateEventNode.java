@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -412,10 +412,10 @@ public class AggregateEventNode extends StackPane {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
+            RootFilter combinedFilter = chart.getFilteredEvents().filter().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-            final Filter combinedFilter = Filter.intersect(new Filter[]{new TextFilter(event.getDescription()),
-                new TypeFilter(event.getType()),
-                chart.getFilteredEvents().filter().get()});
+            combinedFilter.getSubFilters().addAll(new TextFilter(event.getDescription()),
+                    new TypeFilter(event.getType()));
 
             //make a new end inclusive span (to 'filter' with)
             final Interval span = event.getSpan().withEndMillis(event.getSpan().getEndMillis() + 1000);

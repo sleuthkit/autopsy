@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.timeline.events.type.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -109,7 +109,7 @@ public class EventsRepository {
         return hashSetMap;
     }
 
-    public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
+    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
 
@@ -204,7 +204,7 @@ public class EventsRepository {
         aggregateEventsCache.invalidateAll();
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return eventDB.getEventIDs(timeRange, filter);
     }
 

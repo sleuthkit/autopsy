@@ -18,6 +18,7 @@ import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
@@ -40,6 +41,11 @@ public class SQLHelper {
         }
     }
 
+    static boolean hasActiveHashFilter(RootFilter filter) {
+        HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
+        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled();
+    }
+
     private SQLHelper() {
     }
 
@@ -57,8 +63,6 @@ public class SQLHelper {
             return "1";
         } else if (filter instanceof HashHitsFilter) {
             result = getSQLWhere((HashHitsFilter) filter);
-        } else if (filter instanceof HashSetFilter) {
-            result = getSQLWhere((HashSetFilter) filter);
         } else if (filter instanceof DataSourceFilter) {
             result = getSQLWhere((DataSourceFilter) filter);
         } else if (filter instanceof DataSourcesFilter) {
@@ -93,16 +97,16 @@ public class SQLHelper {
         }
     }
 
-    static String getSQLWhere(HashSetFilter filter) {
-        return (filter.isSelected()) ? "( events.event_id == hash_set_hits.event_id AND hash_set_hits.hash_set_id == " + filter.getHashSetID() + ")" : "1";
-    }
+   
 
     static String getSQLWhere(HashHitsFilter filter) {
         if (filter.isSelected()
+                && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
-            return filter.getSubFilters().stream()
-                    .map(SQLHelper::getSQLWhere)
-                    .collect(Collectors.joining(" OR ", "(", ")"));
+            return "(hash_set_hits.hash_set_id in " + filter.getSubFilters().stream()
+                    .filter((HashSetFilter t) -> t.isSelected() && !t.isDisabled())
+                    .map((HashSetFilter t) -> String.valueOf(t.getHashSetID()))
+                    .collect(Collectors.joining(", ", "(", ")")) + " and hash_set_hits.event_id == events.event_id)";
         } else {
             return "1";
         }
