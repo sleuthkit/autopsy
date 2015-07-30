@@ -22,7 +22,6 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.List;
-import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -32,10 +31,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.AbstractFile.MimeMatchEnum;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -52,11 +48,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private final MediaViewVideoPanel videoPanel;
     private final boolean videoPanelInited;
     private final SortedSet<String> videoExtensions; // get them from the panel
-    private final SortedSet<String> videoMimes;
     private final MediaViewImagePanel imagePanel;
     private final boolean imagePanelInited;
-    private final SortedSet<String> imageExtensions; // get them from the panel
-    private final SortedSet<String> imageMimes;
 
     private static final String IMAGE_VIEWER_LAYER = "IMAGE"; //NON-NLS
     private static final String VIDEO_VIEWER_LAYER = "VIDEO"; //NON-NLS
@@ -72,12 +65,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoPanel = MediaViewVideoPanel.createVideoPanel();
         videoPanelInited = videoPanel.isInited();
         videoExtensions = new TreeSet<>(videoPanel.getExtensionsList());
-        videoMimes = new TreeSet<>(videoPanel.getMimeTypes());
 
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();
-        imageExtensions = new TreeSet<>(imagePanel.getExtensionsList());
-        imageMimes = new TreeSet<>(imagePanel.getMimeTypes());
 
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: {0}", this); //NON-NLS
@@ -239,10 +229,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (file == null) {
             return 0;
         }
-        String extension = file.getNameExtension();
         boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
 
-        if (videoExtensions.contains("." + extension) && deleted) {
+        if (videoPanel.isSupported(file) && deleted) {
             return 0;
         } else {
             return 7;
@@ -263,28 +252,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
          */
         List<String> getExtensionsList();
 
-        default boolean isSupported(AbstractFile file) {
-            SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
-            try {
-                String mimeType = new FileTypeDetector().getFileType(file);
-                if (nonNull(mimeType)) {
-                    return mimeTypes.contains(mimeType);
-                }
-            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
-                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == MimeMatchEnum.TRUE) {
-                    return true;
-                }
-            }
-
-            String extension = file.getNameExtension();
-
-            if (getExtensionsList().contains("." + extension)) {
-                return true;
-            }
-
-            return false;
-        }
-
+        boolean isSupported(AbstractFile file);
     }
 }
