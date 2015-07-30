@@ -131,11 +131,11 @@ public class VideoUtils {
         for (int x = 0; x < THUMB_COLUMNS; x++) {
             for (int y = 0; y < THUMB_ROWS; y++) {
                 if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
-                    break;
+                    break; // if we can't set the time, return black for that frame
                 }
                 //read the frame into the image/matrix
                 if (!videoFile.read(imageMatrix)) {
-                    break; //if the image for some reason is bad, return default icon
+                    break; //if the image for some reason is bad, return black for that frame
                 }
 
                 if (bufferedImage == null) {
@@ -160,6 +160,6 @@ public class VideoUtils {
 
         videoFile.release(); // close the file
 
-        return ScalrWrapper.resizeFast(bufferedImage, iconSize);
+        return bufferedImage == null ? bufferedImage : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 }
