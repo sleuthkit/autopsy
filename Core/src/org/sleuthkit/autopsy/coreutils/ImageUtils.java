@@ -118,6 +118,8 @@ public class ImageUtils {
         SUPPORTED_IMAGE_MIME_TYPES.addAll(Arrays.asList(
                 "image/x-rgb",
                 "image/x-ms-bmp",
+                "image/x-portable-graymap",
+                "image/x-portable-bitmap",
                 "application/x-123"));
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
