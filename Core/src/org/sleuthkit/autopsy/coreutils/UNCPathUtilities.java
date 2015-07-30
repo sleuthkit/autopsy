@@ -39,6 +39,7 @@ public class UNCPathUtilities {
     private static final String OK_TXT = "OK"; //NON-NLS
     private static final String COLON = ":"; //NON-NLS
     private static final String UNC_PATH_START = "\\\\"; //NON-NLS
+    private static final String C_DRIVE = "C:"; //NON-NLS
     private static final int DRIVE_LEN = 2;
     private static final int STARTING_OFFSET = 0;
     private static final int REPLACEMENT_SIZE = 2;
@@ -72,6 +73,10 @@ public class UNCPathUtilities {
      */
     synchronized public String mappedDriveToUNC(String inputPath) {
         if (inputPath != null) {
+            // If it is a C:, do not attempt to convert. This is for the single-user case.
+            if (inputPath.toUpperCase().startsWith(C_DRIVE)) {
+                return null;
+            }
             if (false == isUNC(inputPath)) {
                 String uncPath = null;
                 try {
@@ -229,10 +234,10 @@ public class UNCPathUtilities {
 
     /**
      * Updates the list of mapped drives this class contains. This list is used
- to resolve mappedDriveToUNC and isDriveMapped calls. This is useful to
- call if the user has potentially added mapped drives to their system
- after the module calling mappedDriveToUNC has already begun running. Note
- this uses system I/O, so call it with some care.
+     * to resolve mappedDriveToUNC and isDriveMapped calls. This is useful to
+     * call if the user has potentially added mapped drives to their system
+     * after the module calling mappedDriveToUNC has already begun running. Note
+     * this uses system I/O, so call it with some care.
      *
      */
     synchronized public void rescanDrives() {
@@ -241,8 +246,8 @@ public class UNCPathUtilities {
 
     /**
      * Populates the list of mapped drives this class contains. The list is used
- to resolve mappedDriveToUNC and isDriveMapped calls. Note this uses
- system I/O, so call it with some care.
+     * to resolve mappedDriveToUNC and isDriveMapped calls. Note this uses
+     * system I/O, so call it with some care.
      *
      * @return the hashmap
      */
