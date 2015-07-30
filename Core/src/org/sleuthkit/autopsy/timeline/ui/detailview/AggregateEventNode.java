@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -58,17 +63,25 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
 public class AggregateEventNode extends StackPane {
 
+    private static final Image HASH_PIN = new Image(AggregateEventNode.class.getResourceAsStream("/org/sleuthkit/autopsy/images/hashset_hits.png"));
     private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
     private final static Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
 
@@ -130,15 +143,25 @@ public class AggregateEventNode extends StackPane {
 
     private SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
     private DescriptionVisibility descrVis;
+    private final SleuthkitCase sleuthkitCase;
+    private final FilteredEventsModel eventsModel;
+    private Map<String, Long> hashSetCounts = null;
+    private Tooltip tooltip;
 
     public AggregateEventNode(final AggregateEvent event, AggregateEventNode parentEventNode, EventDetailChart chart) {
         this.event = event;
         descLOD.set(event.getLOD());
         this.parentEventNode = parentEventNode;
         this.chart = chart;
+        sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
+        eventsModel = chart.getController().getEventsModel();
         final Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
-        final HBox hBox = new HBox(descrLabel, countLabel, region, minusButton, plusButton);
+        ImageView imageView = new ImageView(HASH_PIN);
+        final HBox hBox = new HBox(descrLabel, countLabel, region, imageView, minusButton, plusButton);
+        if (event.getEventIDsWithHashHits().isEmpty()) {
+            hBox.getChildren().remove(imageView);
+        }
         hBox.setPrefWidth(USE_COMPUTED_SIZE);
         hBox.setMinWidth(USE_PREF_SIZE);
         hBox.setPadding(new Insets(2, 5, 2, 5));
@@ -229,11 +252,41 @@ public class AggregateEventNode extends StackPane {
     }
 
     private void installTooltip() {
-        Tooltip.install(AggregateEventNode.this, new Tooltip(
-                NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
-                                    getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
-                                    getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
-                                    getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))));
+
+        if (tooltip == null) {
+            String collect = "";
+            if (!event.getEventIDsWithHashHits().isEmpty()) {
+                if (Objects.isNull(hashSetCounts)) {
+                    hashSetCounts = new HashMap<>();
+                    try {
+                        for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithHashHits())) {
+                            ArrayList<BlackboardArtifact> blackboardArtifacts = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, tle.getFileID());
+                            for (BlackboardArtifact artf : blackboardArtifacts) {
+                                for (BlackboardAttribute attr : artf.getAttributes()) {
+                                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                                        hashSetCounts.merge(attr.getValueString(), 1L, Long::sum);
+                                    };
+                                }
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
+                    }
+                }
+
+                collect = hashSetCounts.entrySet().stream()
+                        .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
+                        .collect(Collectors.joining("\n"));
+
+            }
+            tooltip = new Tooltip(
+                    NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
+                            getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
+                            getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
+                            getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))
+                    + (collect.isEmpty() ? "" : "\n\nHash Set Hits\n" + collect));
+            Tooltip.install(AggregateEventNode.this, tooltip);
+        }
     }
 
     public Pane getSubNodePane() {
@@ -371,36 +424,36 @@ public class AggregateEventNode extends StackPane {
             LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
 
-                @Override
-                protected List<AggregateEventNode> call() throws Exception {
-                    //query for the sub-clusters
-                    List<AggregateEvent> aggregatedEvents = chart.getFilteredEvents().getAggregatedEvents(new ZoomParams(span,
-                            chart.getFilteredEvents().eventTypeZoom().get(),
-                            combinedFilter,
-                            newLOD));
-                    //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
-                    return aggregatedEvents.stream().map((AggregateEvent t) -> {
-                        AggregateEventNode subNode = new AggregateEventNode(t, AggregateEventNode.this, chart);
-                        subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - getLayoutXCompensation());
-                        return subNode;
-                    }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
-                }
+                        @Override
+                        protected List<AggregateEventNode> call() throws Exception {
+                            //query for the sub-clusters
+                            List<AggregateEvent> aggregatedEvents = chart.getFilteredEvents().getAggregatedEvents(new ZoomParams(span,
+                                            chart.getFilteredEvents().eventTypeZoom().get(),
+                                            combinedFilter,
+                                            newLOD));
+                            //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
+                            return aggregatedEvents.stream().map((AggregateEvent t) -> {
+                                AggregateEventNode subNode = new AggregateEventNode(t, AggregateEventNode.this, chart);
+                                subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - getLayoutXCompensation());
+                                return subNode;
+                            }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
+                        }
 
-                @Override
-                protected void succeeded() {
-                    try {
-                        chart.setCursor(Cursor.WAIT);
-                        //assign subNodes and request chart layout
-                        getSubNodePane().getChildren().setAll(get());
-                        setDescriptionVisibility(descrVis);
-                        chart.setRequiresLayout(true);
-                        chart.requestChartLayout();
-                        chart.setCursor(null);
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-            };
+                        @Override
+                        protected void succeeded() {
+                            try {
+                                chart.setCursor(Cursor.WAIT);
+                                //assign subNodes and request chart layout
+                                getSubNodePane().getChildren().setAll(get());
+                                setDescriptionVisibility(descrVis);
+                                chart.setRequiresLayout(true);
+                                chart.requestChartLayout();
+                                chart.setCursor(null);
+                            } catch (InterruptedException | ExecutionException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
+                        }
+                    };
 
             //start task
             chart.getController().monitorTask(loggedTask);

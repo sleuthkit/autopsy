@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.HashHitFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
@@ -106,7 +107,7 @@ public final class FilteredEventsModel {
             dataSourceFilter.setSelected(Boolean.TRUE);
             dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
         });
-        return new RootFilter(new HideKnownFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+        return new RootFilter(new HideKnownFilter(), new HashHitFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
     }
 
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
@@ -150,6 +151,9 @@ public final class FilteredEventsModel {
 
     public TimeLineEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
+    }
+    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+        return repo.getEventsById(eventIDs);
     }
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
@@ -206,7 +210,7 @@ public final class FilteredEventsModel {
      * @return the smallest interval spanning all the events from the
      *         repository, ignoring any filters or requested ranges
      */
-    public  Interval getSpanningInterval() {
+    public Interval getSpanningInterval() {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000, DateTimeZone.UTC);
     }
 
@@ -278,6 +282,5 @@ public final class FilteredEventsModel {
     synchronized public DescriptionLOD getDescriptionLOD() {
         return requestedLOD.get();
     }
-
 
 }
