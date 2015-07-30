@@ -54,9 +54,9 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     public Image getFullSizeImage() {
         Image image = (imageRef != null) ? imageRef.get() : null;
         if (image == null || image.isError()) {
-            if (FileTypeUtils.isGIF(file)) {
+            if (FileTypeUtils.isGIF(getAbstractFile())) {
                 //directly read gif to preserve potential animation,
-                image = new Image(new BufferedInputStream(new ReadContentInputStream(file)));
+                image = new Image(new BufferedInputStream(new ReadContentInputStream(getAbstractFile())));
             }
         }
         if (image == null || image.isError()) {

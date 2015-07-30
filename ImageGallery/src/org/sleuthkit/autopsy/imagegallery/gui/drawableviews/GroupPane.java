@@ -198,9 +198,11 @@ public class GroupPane extends BorderPane {
 
     private Integer selectionAnchorIndex;
 
-    /**
-     * the current GroupViewMode of this GroupPane
-     */
+    GroupViewMode getGroupViewMode() {
+        return groupViewMode.get();
+    }
+
+    /** the current GroupViewMode of this GroupPane */
     private final SimpleObjectProperty<GroupViewMode> groupViewMode = new SimpleObjectProperty<>(GroupViewMode.TILE);
 
     /**
@@ -505,7 +507,6 @@ public class GroupPane extends BorderPane {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW) {
                 slideShowPane.setFile(newFileId);
             } else {
-
                 scrollToFileID(newFileId);
             }
         });

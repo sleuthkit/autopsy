@@ -70,13 +70,14 @@ import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
- * since they share a similar node tree and many behaviors, other implementers
+ * since they share a similar node tree and many behaviors, other implementors
  * of {@link DrawableView}s should implement the interface directly
  *
  */
@@ -85,7 +86,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     private static final Logger LOGGER = Logger.getLogger(DrawableTileBase.class.getName());
 
     private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
-
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     //TODO: do this in CSS? -jm
@@ -95,37 +95,29 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
     private static ContextMenu contextMenu;
 
-    /**
-     * displays the icon representing video files
-     */
+    /** displays the icon representing video files */
     @FXML
-    protected ImageView fileTypeImageView;
+    private ImageView fileTypeImageView;
 
-    /**
-     * displays the icon representing hash hits
-     */
+    /** displays the icon representing hash hits */
     @FXML
-    protected ImageView hashHitImageView;
+    private ImageView hashHitImageView;
 
     @FXML
     protected ImageView undisplayableImageView;
-    /**
-     * displays the icon representing follow up tag
-     */
+    /** displays the icon representing follow up tag */
     @FXML
-    protected ImageView followUpImageView;
+    private ImageView followUpImageView;
 
     @FXML
-    protected ToggleButton followUpToggle;
-
-    /**
-     * the label that shows the name of the represented file
-     */
-    @FXML
-    protected Label nameLabel;
+    private ToggleButton followUpToggle;
 
     @FXML
-    protected BorderPane imageBorder;
+    BorderPane imageBorder;
+
+    /** the label that shows the name of the represented file */
+    @FXML
+    Label nameLabel;
 
     @FXML
     protected ImageView imageView;
@@ -156,13 +148,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                         case PRIMARY:
                             if (t.getClickCount() == 1) {
                                 if (t.isControlDown()) {
-
                                     globalSelectionModel.toggleSelection(fileID);
                                 } else {
                                     groupPane.makeSelection(t.isShiftDown(), fileID);
                                 }
                             } else if (t.getClickCount() > 1) {
-                                groupPane.activateSlideShowViewer(fileID);
+                                if (groupPane.getGroupViewMode() == GroupViewMode.TILE) {
+                                    groupPane.activateSlideShowViewer(fileID);
+                                } else {
+                                    groupPane.activateTileViewer();
+                                }
                             }
                             break;
                         case SECONDARY:

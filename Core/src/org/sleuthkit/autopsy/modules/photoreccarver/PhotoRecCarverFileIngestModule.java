@@ -98,6 +98,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
         return totals;
     }
+    
+    private static synchronized void initTotalsForIngestJob(long ingestJobId) {
+        IngestJobTotals totals = new PhotoRecCarverFileIngestModule.IngestJobTotals();
+        totalsForIngestJobs.put(ingestJobId, totals);
+    }
 
     /**
      * @inheritDoc
@@ -136,6 +141,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
                 // Save the directories for the current job.
                 PhotoRecCarverFileIngestModule.pathsByJob.put(this.jobId, new WorkingPaths(outputDirPath, tempDirPath));
+                
+                // Initialize job totals
+                initTotalsForIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
                 throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
@@ -271,7 +279,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
     }
 
-    private synchronized void postSummary() {
+    private static synchronized void postSummary(long jobId) {
         IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
         StringBuilder detailsSb = new StringBuilder();
@@ -279,22 +287,22 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.numberOfCarved"))
+                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.numberOfCarved"))
                  .append("</td>"); //NON-NLS
         detailsSb.append("<td>").append(jobTotals.totalItemsRecovered.get()).append("</td></tr>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalWritetime"))
+                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalWritetime"))
                  .append("</td><td>").append(jobTotals.totalWritetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.complete.totalParsetime"))
+                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalParsetime"))
                  .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("</table>"); //NON-NLS
 
-        services.postMessage(IngestMessage.createMessage(
+        IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                 IngestMessage.MessageType.INFO,
                 PhotoRecCarverIngestModuleFactory.getModuleName(),
-                NbBundle.getMessage(this.getClass(),
+                NbBundle.getMessage(PhotoRecCarverFileIngestModule.class,
                         "PhotoRecIngestModule.complete.photoRecResults"),
                 detailsSb.toString()));
 
@@ -311,7 +319,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // the working paths map entry for the job and deletes the temp dir.
                 WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
-                postSummary();
+                postSummary(jobId);
             } 
             catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
