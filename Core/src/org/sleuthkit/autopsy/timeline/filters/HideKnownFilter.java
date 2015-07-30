@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,9 @@ import org.openide.util.NbBundle;
 public class HideKnownFilter extends AbstractFilter {
 
     @Override
+    @NbBundle.Messages("hideKnownFilter.displayName.text=Hide Known Files")
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(), "hideKnownFilter.displayName.text");
+        return Bundle.hideKnownFilter_displayName_text();
     }
 
     public HideKnownFilter() {
@@ -38,7 +39,7 @@ public class HideKnownFilter extends AbstractFilter {
     @Override
     public HideKnownFilter copyOf() {
         HideKnownFilter hideKnownFilter = new HideKnownFilter();
-        hideKnownFilter.setActive(isActive());
+        hideKnownFilter.setSelected(isSelected());
         hideKnownFilter.setDisabled(isDisabled());
         return hideKnownFilter;
     }
@@ -50,8 +51,7 @@ public class HideKnownFilter extends AbstractFilter {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        return hash;
+        return 7;
     }
 
     @Override
@@ -64,8 +64,6 @@ public class HideKnownFilter extends AbstractFilter {
         }
         final HideKnownFilter other = (HideKnownFilter) obj;
 
-        return isActive() == other.isActive();
-
+        return isSelected() == other.isSelected();
     }
-
 }
