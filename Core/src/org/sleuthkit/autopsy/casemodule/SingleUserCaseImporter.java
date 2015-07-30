@@ -81,7 +81,7 @@ public class SingleUserCaseImporter implements Runnable {
     private XMLCaseManagement newXmlCaseManagement;
 
     /**
-     * CaseConverter constructor
+     * SingleUserCaseImporter constructor
      *
      * @param caseInput the folder to start our case search from. Will find
      * valid cases from this folder down, and process them.
@@ -140,7 +140,7 @@ public class SingleUserCaseImporter implements Runnable {
             // read old xml config
             oldXmlCaseManagement.open(input.resolve(oldCaseName + DOTAUT).toString());
             if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
-                throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.AlreadyMultiUser"));
+                throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.AlreadyMultiUser"));
             }
 
             String newCaseFolder = prepareOutput(caseOutputFolder, oldCaseFolder);
@@ -179,12 +179,12 @@ public class SingleUserCaseImporter implements Runnable {
             // and database in the given directory so the user shouldn't be able to accidently blow away
             // their C drive.
             if (deleteCase) {
-                log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.DeletingCase") + " " + input);
+                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.DeletingCase") + " " + input);
                 FileUtils.deleteDirectory(input.toFile());
             }
 
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
-                    + input.toString() + " " + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedConverting")
+                    + input.toString() + " " + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
         } catch (Exception exp) {
             /// clean up here
@@ -204,13 +204,13 @@ public class SingleUserCaseImporter implements Runnable {
      */
     private void checkInput(File caseInput, File imageInput) throws Exception {
         if (false == caseInput.exists()) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadCaseSourceFolder"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadCaseSourceFolder"));
         } else if ((imageInput != null) && (false == imageInput.exists())) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadImageSourceFolder"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadImageSourceFolder"));
         }
         Path path = Paths.get(caseInput.toString(), AUTOPSY_DB_FILE);
         if (false == path.toFile().exists()) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.BadDatabaseFileName"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadDatabaseFileName"));
         }
     }
 
@@ -238,7 +238,7 @@ public class SingleUserCaseImporter implements Runnable {
             while (specificOutputFolder.exists()) {
                 if (number == Integer.MAX_VALUE) {
                     // oops. it never became unique. give up.
-                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.NonUniqueOutputFolder") + caseFolder);
+                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueOutputFolder") + caseFolder);
                 }
                 temp = sanitizedCaseName + "_" + Integer.toString(number) + timeStamp; //NON-NLS
                 specificOutputFolder = Paths.get(caseOutputFolder, temp).toFile();
@@ -282,7 +282,7 @@ public class SingleUserCaseImporter implements Runnable {
             destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
             FileUtils.copyFile(source.toFile(), destination.toFile());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.ConvertedToMultiUser") + new Date());
+                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
             } catch (IOException e) {
                 // if unable to log it, no problem
             }
@@ -961,7 +961,7 @@ public class SingleUserCaseImporter implements Runnable {
                     // not unique. add numbers before dbName.
                     if (number == Integer.MAX_VALUE) {
                         // oops. it never became unique. give up.
-                        throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.NonUniqueDatabaseName"));
+                        throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueDatabaseName"));
                     }
                     sanitizedDbName = "_" + Integer.toString(number) + "_" + baseDbName; //NON-NLS
 
@@ -976,7 +976,7 @@ public class SingleUserCaseImporter implements Runnable {
         } else {
             // Could be caused by database credentials, using user accounts that 
             // can not check if other databases exist, so allow it to continue
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.PotentiallyNonUniqueDatabaseName"));
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.PotentiallyNonUniqueDatabaseName"));
         }
 
         return sanitizedDbName;
@@ -1009,7 +1009,7 @@ public class SingleUserCaseImporter implements Runnable {
         if (chosenInput != null && chosenInput.exists()) {
             FileUtils.copyDirectory(chosenInput, output);
         } else {
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.UnableToCopySourceImages"));
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.UnableToCopySourceImages"));
         }
         return chosenInput;
     }
@@ -1197,11 +1197,11 @@ public class SingleUserCaseImporter implements Runnable {
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
+        log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedConverting")
                 + caseInputFolder + " "
-                + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
+                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
                 + caseOutputFolder
-                + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.ConversionSuccessful")
+                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConversionSuccessful")
                 + result);
 
         if (writer != null) {
