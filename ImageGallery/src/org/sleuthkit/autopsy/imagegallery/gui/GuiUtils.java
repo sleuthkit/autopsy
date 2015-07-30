@@ -25,6 +25,8 @@ import javafx.scene.control.SplitMenuButton;
 import javafx.scene.image.ImageView;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.datamodel.TagName;
 
@@ -51,6 +53,19 @@ public class GuiUtils {
                 new AddDrawableTagAction(controller).addTag(tagName, "");
                 tagSelectedMenuButton.setText(tagName.getDisplayName());
                 tagSelectedMenuButton.setOnAction(this);
+            }
+        });
+        return menuItem;
+    }
+
+    public static MenuItem createSelCatMenuItem(Category cat, final SplitMenuButton catSelectedMenuButton, ImageGalleryController controller) {
+        final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        menuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+                new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
+                catSelectedMenuButton.setText(cat.getDisplayName());
+                catSelectedMenuButton.setOnAction(this);
             }
         });
         return menuItem;

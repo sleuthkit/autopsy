@@ -29,8 +29,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -132,12 +130,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return new ArrayList<>();
     }
 
-    public ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> getAttributesList() {
-        final ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> attributeList = FXCollections.observableArrayList();
-        for (DrawableAttribute<?> attr : DrawableAttribute.getValues()) {
-            attributeList.add(new Pair<>(attr, attr.getValue(this)));
-        }
-        return attributeList;
+    public List<Pair<DrawableAttribute<?>, Collection<?>>> getAttributesList() {
+        return DrawableAttribute.getValues().stream()
+                .map(this::makeAttributeValuePair)
+                .collect(Collectors.toList());
+    }
+
+    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> t) {
+        return new Pair<>(t, t.getValue(DrawableFile.this));
     }
 
     public String getModel() {

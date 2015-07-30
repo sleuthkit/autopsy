@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -82,6 +82,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     private final MenuItem copyMenuItem = new MenuItem("Copy");
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
+
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "MetaDataPane.fxml");
@@ -161,7 +162,7 @@ public class MetaDataPane extends DrawableUIBase {
                     .collect(Collectors.joining(" ; "));
         } else {
             return p.getValue().stream()
-                    .map(Object::toString)
+                    .map(value -> Objects.toString(value, ""))
                     .collect(Collectors.joining(" ; "));
         }
     }
@@ -190,8 +191,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     public void updateUI() {
         getFile().ifPresent(file -> {
-            final ObservableList<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
-
+            final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
             Platform.runLater(() -> {
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
