@@ -255,7 +255,7 @@ public class Case {
     private final static String CACHE_FOLDER = "Cache"; //NON-NLS
     private final static String EXPORT_FOLDER = "Export"; //NON-NLS
     private final static String LOG_FOLDER = "Log"; //NON-NLS
-    private final static String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
+    final static String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private final static String REPORTS_FOLDER = "Reports"; //NON-NLS
     private final static String TEMP_FOLDER = "Temp"; //NON-NLS
 

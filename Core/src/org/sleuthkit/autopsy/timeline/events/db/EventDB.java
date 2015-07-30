@@ -108,6 +108,9 @@ public class EventDB {
 
     private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
 
+    //If EVENTS_DATABASE changes, also update TIMELINE_FILE in SingleUserCaseImporter 
+    private static final String TIMELINE_FILE = "events.db"; // NON-NLS
+    
     static {
         //make sure sqlite driver is loaded // possibly redundant
         try {
@@ -128,7 +131,7 @@ public class EventDB {
      */
     public static EventDB getEventDB(String dbPath) {
         try {
-            EventDB eventDB = new EventDB(dbPath + File.separator + "events.db"); // NON-NLS
+            EventDB eventDB = new EventDB(dbPath + File.separator + TIMELINE_FILE); // NON-NLS
 
             return eventDB;
         } catch (SQLException ex) {

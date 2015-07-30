@@ -94,6 +94,7 @@ public class EventsRepository {
 
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
+    //If TIMELINE changes, also update TIMELINE_FOLDER in SingleUserCaseImporter 
     private static final String TIMELINE = "Timeline";
     
     public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
