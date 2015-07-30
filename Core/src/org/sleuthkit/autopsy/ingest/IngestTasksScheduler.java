@@ -248,19 +248,27 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Clears the task scheduling queues for an ingest job, but does nothing
-     * about tasks that have already been taken by ingest threads. Those tasks
-     * will be flushed out when the ingest threads call back with their task
-     * completed notifications.
+     * Clears the "upstream" task scheduling queues for an ingest job, but does
+     * nothing about tasks that have already been shuffled into the concurrently
+     * accessed blocking queues shared with the ingest threads. Note that tasks
+     * in the "downstream" queues or already taken by the ingest threads will be
+     * flushed out when the ingest threads call back with their task completed
+     * notifications.
      *
      * @param job The job for which the tasks are to to canceled.
      */
     synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
+        /**
+         * This code should not flush the blocking queues that are concurrently
+         * accessed by the ingest threads. This is because the "lock striping"
+         * and "weakly consistent" iterators of these collections make it so
+         * that this code could have a different view of the queues than the
+         * ingest threads. It does clean out the directory level tasks before
+         * they are exploded into file tasks.
+         */
         long jobId = job.getId();
         this.removeTasksForJob(this.rootDirectoryTasks, jobId);
         this.removeTasksForJob(this.directoryTasks, jobId);
-        this.removeTasksForJob(this.pendingFileTasks, jobId);
-        this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
         this.shuffleFileTaskQueues();
     }
 
@@ -469,7 +477,7 @@ final class IngestTasksScheduler {
      * @param taskQueue The queue from which to remove the tasks.
      * @param jobId The id of the job for which the tasks are to be removed.
      */
-    private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
+    synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
