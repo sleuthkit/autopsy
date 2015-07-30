@@ -72,7 +72,6 @@ class AbstractFileChunk {
         try {
             sanitizedContent = this.charsetDecoder.decode(ByteBuffer.wrap(content)).toString().getBytes();
         } catch (CharacterCodingException ex) {
-            logger.log(Level.WARNING, "Error sanitizing the " + ByteBuffer.wrap(content).toString(), ex);
             throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.charCodingException.msg", parent.getSourceFile().getName()), ex);
         }
         ByteContentStream bcs = new ByteContentStream(sanitizedContent, sanitizedContent.length, parent.getSourceFile(), indexCharset);
