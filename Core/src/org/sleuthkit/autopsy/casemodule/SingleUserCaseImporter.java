@@ -44,6 +44,7 @@ import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -59,9 +60,10 @@ public class SingleUserCaseImporter implements Runnable {
     private static final String DOTAUT = ".aut"; //NON-NLS
     public static final String CASE_CONVERSION_LOG_FILE = "case_import_log.txt"; //NON-NLS
     private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
+    //If TIMELINE_FOLDER changes, also update TIMELINE in EventsRepository 
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
+    //If TIMELINE_FILE changes, also update TIMELINE_FILE in EventDB 
     private final static String TIMELINE_FILE = "events.db"; //NON-NLS
-    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
     private static final int MAX_DB_NAME_LENGTH = 63;
@@ -182,7 +184,7 @@ public class SingleUserCaseImporter implements Runnable {
             }
 
             log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
-                    + input.toString() + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
+                    + input.toString() + " " + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
         } catch (Exception exp) {
             /// clean up here
@@ -263,7 +265,7 @@ public class SingleUserCaseImporter implements Runnable {
         String hostName = NetworkUtils.getLocalHostName();
         Path destination;
         Path source;
-        
+
         if (input.toFile().exists()) {
             destination = Paths.get(caseOutputFolder, newCaseFolder, hostName);
             FileUtils.copyDirectory(input.toFile(), destination.toFile());
@@ -285,7 +287,7 @@ public class SingleUserCaseImporter implements Runnable {
                 // if unable to log it, no problem
             }
         }
-        
+
         // Remove the single-user .aut file, database, Timeline database and log
         File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + DOTAUT).toFile();
         if (oldDatabaseFile.exists()) {
@@ -1196,7 +1198,7 @@ public class SingleUserCaseImporter implements Runnable {
      */
     private void closeLog(boolean result) {
         log(NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.FinishedConverting")
-                + caseInputFolder
+                + caseInputFolder + " "
                 + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.To")
                 + caseOutputFolder
                 + NbBundle.getMessage(SingleUserCaseImporter.class, "CaseConverter.ConversionSuccessful")

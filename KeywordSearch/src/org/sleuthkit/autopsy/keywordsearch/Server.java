@@ -63,7 +63,7 @@ import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.coreutils.HandleUNC;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -168,7 +168,8 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    
     public enum CORE_EVT_STATES {
 
         STOPPED, STARTED
@@ -651,10 +652,16 @@ public class Server {
      * @return absolute path to index dir
      */
     String getIndexDirPath(Case theCase) {
-        String indexDir = theCase.getModuleDirectory() +
-        File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        indexDir=HandleUNC.getInstance().attemptUNCSubstitution(indexDir);
-        return indexDir;
+        String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
+        String result = uncPathUtilities.MappedDriveToUNC(indexDir);
+        if (result == null) {
+            uncPathUtilities.rescanDrives();
+            result = uncPathUtilities.MappedDriveToUNC(indexDir);
+        }
+        if (result == null) {
+            return indexDir;
+        }
+        return result;
     }
 
     /**

@@ -38,18 +38,12 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -58,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.HandleUNC;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
@@ -87,6 +81,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
+    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
     /**
      * @inheritDoc
@@ -104,7 +99,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "unallocatedSpaceProcessingSettingsError.message"));
         }
 
-        this.rootOutputDirPath = PhotoRecCarverFileIngestModule.createModuleOutputDirectoryForCase();
+        this.rootOutputDirPath = createModuleOutputDirectoryForCase();
 
         Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
         executableFile = locateExecutable(execName.toString());
@@ -297,11 +292,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @return The absolute path of the output directory.
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
-    synchronized static Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
+    synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
         Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
-        if (HandleUNC.isUNC(path)) {
+        if (UNCPathUtilities.isUNC(path)) {
             // if the UNC path is using an IP address, convert to hostname
-            path = HandleUNC.getInstance().ipToHostName(path);
+            path = uncPathUtilities.ipToHostName(path);
+            if (path == null) {
+                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.nonHostnameUNCPathUsed"));
+            }
         }
         try {
             Files.createDirectory(path);
