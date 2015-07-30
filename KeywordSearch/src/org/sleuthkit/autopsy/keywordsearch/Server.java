@@ -653,10 +653,10 @@ public class Server {
      */
     String getIndexDirPath(Case theCase) {
         String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        String result = uncPathUtilities.MappedDriveToUNC(indexDir);
+        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
         if (result == null) {
             uncPathUtilities.rescanDrives();
-            result = uncPathUtilities.MappedDriveToUNC(indexDir);
+            result = uncPathUtilities.mappedDriveToUNC(indexDir);
         }
         if (result == null) {
             return indexDir;

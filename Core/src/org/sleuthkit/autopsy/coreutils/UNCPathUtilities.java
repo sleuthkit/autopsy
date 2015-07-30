@@ -70,7 +70,7 @@ public class UNCPathUtilities {
      * @return returns a successfully converted inputPath or null if unable to
      * find a matching drive and convert it to UNC
      */
-    synchronized public String MappedDriveToUNC(String inputPath) {
+    synchronized public String mappedDriveToUNC(String inputPath) {
         if (inputPath != null) {
             if (false == isUNC(inputPath)) {
                 String uncPath = null;
@@ -108,9 +108,9 @@ public class UNCPathUtilities {
      * @return returns a successfully converted inputPath or null if unable to
      * find a matching drive and convert it to UNC
      */
-    synchronized public Path MappedDriveToUNC(Path inputPath) {
+    synchronized public Path mappedDriveToUNC(Path inputPath) {
         if (inputPath != null) {
-            String uncPath = MappedDriveToUNC(inputPath.toString());
+            String uncPath = UNCPathUtilities.this.mappedDriveToUNC(inputPath.toString());
             if (uncPath == null) {
                 return null;
             } else {
@@ -127,9 +127,9 @@ public class UNCPathUtilities {
      * @param inputPath the Path to test.
      * @return true if the passed in drive is mapped, false otherwise
      */
-    synchronized public boolean IsDriveMapped(Path inputPath) {
+    synchronized public boolean isDriveMapped(Path inputPath) {
         if (inputPath != null) {
-            return IsDriveMapped(inputPath.toString());
+            return isDriveMapped(inputPath.toString());
         } else {
             return false;
         }
@@ -141,7 +141,7 @@ public class UNCPathUtilities {
      * @param inputPath the Path to test.
      * @return true if the passed in drive is mapped, false otherwise
      */
-    synchronized public boolean IsDriveMapped(String inputPath) {
+    synchronized public boolean isDriveMapped(String inputPath) {
         if (inputPath != null) {
             String shortenedPath = inputPath.substring(STARTING_OFFSET, DRIVE_LEN);
             for (String s : drives.keySet()) {
@@ -229,10 +229,10 @@ public class UNCPathUtilities {
 
     /**
      * Updates the list of mapped drives this class contains. This list is used
-     * to resolve MappedDriveToUNC and IsDriveMapped calls. This is useful to
-     * call if the user has potentially added mapped drives to their system
-     * after the module calling MappedDriveToUNC has already begun running. Note
-     * this uses system I/O, so call it with some care.
+ to resolve mappedDriveToUNC and isDriveMapped calls. This is useful to
+ call if the user has potentially added mapped drives to their system
+ after the module calling mappedDriveToUNC has already begun running. Note
+ this uses system I/O, so call it with some care.
      *
      */
     synchronized public void rescanDrives() {
@@ -241,8 +241,8 @@ public class UNCPathUtilities {
 
     /**
      * Populates the list of mapped drives this class contains. The list is used
-     * to resolve MappedDriveToUNC and IsDriveMapped calls. Note this uses
-     * system I/O, so call it with some care.
+ to resolve mappedDriveToUNC and isDriveMapped calls. Note this uses
+ system I/O, so call it with some care.
      *
      * @return the hashmap
      */
