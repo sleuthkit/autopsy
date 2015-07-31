@@ -127,7 +127,7 @@ public class SingleUserCaseImporter implements Runnable {
         boolean result = true;
 
         try {
-            log("Beginning to import " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
+            log("Importing case " + input.toString() + " to " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
 
             if (copySourceImages) {
                 checkInput(input.toFile(), new File(imageInputFolder));
@@ -190,9 +190,7 @@ public class SingleUserCaseImporter implements Runnable {
                 FileUtils.deleteDirectory(input.toFile());
             }
 
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedImporting")
-                    + input.toString() + " " + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
-                    + caseOutputFolder + File.separatorChar + newCaseFolder);
+            log("Finished importing case " + input.toString() + " to " + caseOutputFolder + File.separatorChar + newCaseFolder);
         } catch (Exception exp) {
             /// clean up here
             log(exp.getMessage());
@@ -1292,16 +1290,9 @@ public class SingleUserCaseImporter implements Runnable {
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedImporting")
-                + caseInputFolder + " "
-                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
-                + caseOutputFolder
-                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportSuccessful")
-                + result);
-
+        log("Completed batch processing of " + caseInputFolder + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success":"Failure"));
         if (writer != null) {
             writer.close();
-
         }
     }
 
