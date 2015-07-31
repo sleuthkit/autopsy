@@ -175,7 +175,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // Verify initialization succeeded.
             if (null == this.executableFile) {
-                logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.failedStartup"));
+                logger.log(Level.SEVERE, "PhotoRec carver called after failed start up");  // NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -186,7 +186,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
                 totals.totalItemsWithErrors.incrementAndGet();
-                logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.NotEnoughDiskSpace.detail.msg", new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}));
+                logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to save unallocated space.", // NON-NLS
+                        new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.UnableToCarve", file.getName()),
                         NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.NotEnoughDiskSpace"));
 
@@ -223,15 +224,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
                 cleanup(outputDirPath, tempFilePath);
-                logger.log(Level.INFO, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
+                logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
                 return IngestModule.ProcessResult.OK;
             } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
                 cleanup(outputDirPath, tempFilePath);
                 totals.totalItemsWithErrors.incrementAndGet();
-                logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.exitValue",
-                        new Object[]{exitValue, file.getName()}));
+                logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}", // NON-NLS
+                        new Object[]{exitValue, file.getName()}); // NON-NLS
                 MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.exitValue", // NON-NLS
                         new Object[]{exitValue, file.getName()}));
                 return IngestModule.ProcessResult.ERROR;
@@ -266,7 +267,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()), ex);
+            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
@@ -334,7 +335,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
                 postSummary(jobId);
             } catch (SecurityException ex) {
-                logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.shutdown.error"), ex);
+                logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
             }
         }
     }
@@ -396,7 +397,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 parent = parent.getParent();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.parentAbstractFile.error"), ex);
+            logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
         }
         return id;
     }
