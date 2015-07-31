@@ -48,7 +48,7 @@ splitToken:
                </SearchEngine>
 
 		<SearchEngine engine="Bing" domainSubstring=".bing" >
-			<splitToken plainToken="?q=" regexToken="\\?q=" />
+			<splitToken plainToken="search?q=" regexToken="search\\?q=" />
 
         </SearchEngine>
 		<SearchEngine engine="Baidu" domainSubstring=".baidu" >
