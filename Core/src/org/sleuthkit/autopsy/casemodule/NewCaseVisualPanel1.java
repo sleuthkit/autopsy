@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,33 +24,51 @@ import java.awt.*;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
- * The wizard panel for the new case creation.
- *
- * @author jantonius
+ * The JPanel for the first page of the new case wizard.
  */
-final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
+final class NewCaseVisualPanel1 extends JPanel {
 
-    private JFileChooser fc = new JFileChooser();
-    private NewCaseWizardPanel1 wizPanel;   
+    private final JFileChooser fileChooser = new JFileChooser();
+    private final NewCaseWizardPanel1 wizPanel;
 
+    /**
+     * Constructs the JPanel for the first page of the new case wizard.
+     *
+     * @param wizPanel The wizard panmel that owns this panel.
+     */
     NewCaseVisualPanel1(NewCaseWizardPanel1 wizPanel) {
-        initComponents();
-        errorLabel.setVisible(false);
-        lbBadMultiUserSettings.setText("");
         this.wizPanel = wizPanel;
-        caseNameTextField.getDocument().addDocumentListener(this);
-        caseParentDirTextField.getDocument().addDocumentListener(this);
-        rbMultiUserCase.setSelected(true); // default to multi-user if available
+        initComponents();
+        TextFieldListener listener = new TextFieldListener();
+        caseNameTextField.getDocument().addDocumentListener(listener);
+        caseParentDirTextField.getDocument().addDocumentListener(listener);
+        caseParentDirWarningLabel.setVisible(false);
+    }
+
+    /**
+     * Should be called by the readSettings() of the wizard panel that owns this
+     * UI panel so that this panel can read settings for each invocation of the
+     * wizard as well.
+     */
+    void readSettings() {
+        caseNameTextField.setText("");
+        if (UserPreferences.getIsMultiUserModeEnabled()) {
+            multiUserCaseRadioButton.setEnabled(true);
+            multiUserCaseRadioButton.setSelected(true);
+            multiUserSettingsWarningLabel.setVisible(false);
+        } else {
+            multiUserCaseRadioButton.setEnabled(false);
+            singleUserCaseRadioButton.setSelected(true);
+            multiUserSettingsWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
+        }
+        validateSettings();
     }
 
     /**
@@ -69,8 +87,19 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      *
      * @return caseName the case name from the case name text field
      */
-    public String getCaseName() {
+    String getCaseName() {
         return this.caseNameTextField.getText();
+    }
+
+    /**
+     * Allows the the wizard panel that owns this UI panel to set the base case
+     * directory to a persisted vlaue.
+     *
+     * @param caseParentDir The persisted path to the base case directory.
+     */
+    void setCaseParentDir(String caseParentDir) {
+        caseParentDirTextField.setText(caseParentDir);
+        validateSettings();
     }
 
     /**
@@ -79,17 +108,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      *
      * @return baseDirectory the base directory from the case dir text field
      */
-    public String getCaseParentDir() {
+    String getCaseParentDir() {
         String parentDir = this.caseParentDirTextField.getText();
-
         if (parentDir.endsWith(File.separator) == false) {
             parentDir = parentDir + File.separator;
         }
         return parentDir;
-    }
-
-    public JTextField getCaseParentDirTextField() {
-        return this.caseParentDirTextField;
     }
 
     /**
@@ -97,14 +121,78 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      *
      * @return CaseType as set via radio buttons
      */
-    public CaseType getCaseType() {
+    CaseType getCaseType() {
         CaseType value = CaseType.SINGLE_USER_CASE;
-        if (rbSingleUserCase.isSelected()) {
+        if (singleUserCaseRadioButton.isSelected()) {
             value = CaseType.SINGLE_USER_CASE;
-        } else if (rbMultiUserCase.isSelected()) {
+        } else if (multiUserCaseRadioButton.isSelected()) {
             value = CaseType.MULTI_USER_CASE;
         }
         return value;
+    }
+
+    /**
+     * Called when the user interacts with a child UI component of this panel,
+     * this method notifies the wizard panel that owns this panel and then
+     * validates the user's settings.
+     */
+    private void handleUpdate() {
+        wizPanel.fireChangeEvent();
+        validateSettings();
+    }
+
+    /**
+     * Does validation of the current settings and enables or disables the
+     * "Next" button of the wizard panel that owns this panel.
+     */
+    private void validateSettings() {
+        /**
+         * Check the base case directory for the selected case type and show a
+         * warning if it is a dubious choice.
+         */
+        caseParentDirWarningLabel.setVisible(false);
+        String parentDir = getCaseParentDir();
+        if (!PathValidator.isValid(parentDir, getCaseType())) {
+            caseParentDirWarningLabel.setVisible(true);
+            caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
+        }
+
+        /**
+         * Enable the "Next" button for the wizard if there is text entered for
+         * the case name and base case directory. Also make sure that multi-user
+         * cases are enabled if the multi-user case radio button is selected.
+         */
+        String caseName = getCaseName();
+        if (!caseName.equals("") && !parentDir.equals("")) {
+            caseDirTextField.setText(parentDir + caseName);
+            wizPanel.setIsFinish(true);
+        } else {
+            caseDirTextField.setText("");
+            wizPanel.setIsFinish(false);
+        }
+    }
+
+    /**
+     * Handles validation when the user provides input to text field components
+     * of this panel.
+     */
+    private class TextFieldListener implements DocumentListener {
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            handleUpdate();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            handleUpdate();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            handleUpdate();
+        }
+
     }
 
     /**
@@ -124,10 +212,10 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirBrowseButton = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         caseDirTextField = new javax.swing.JTextField();
-        rbSingleUserCase = new javax.swing.JRadioButton();
-        rbMultiUserCase = new javax.swing.JRadioButton();
-        lbBadMultiUserSettings = new javax.swing.JLabel();
-        errorLabel = new javax.swing.JLabel();
+        singleUserCaseRadioButton = new javax.swing.JRadioButton();
+        multiUserCaseRadioButton = new javax.swing.JRadioButton();
+        multiUserSettingsWarningLabel = new javax.swing.JLabel();
+        caseParentDirWarningLabel = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
@@ -152,28 +240,27 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirTextField.setEditable(false);
         caseDirTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseDirTextField.text_1")); // NOI18N
 
-        caseTypeButtonGroup.add(rbSingleUserCase);
-        org.openide.awt.Mnemonics.setLocalizedText(rbSingleUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbSingleUserCase.text")); // NOI18N
-        rbSingleUserCase.addActionListener(new java.awt.event.ActionListener() {
+        caseTypeButtonGroup.add(singleUserCaseRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(singleUserCaseRadioButton, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.singleUserCaseRadioButton.text")); // NOI18N
+        singleUserCaseRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbSingleUserCaseActionPerformed(evt);
+                singleUserCaseRadioButtonActionPerformed(evt);
             }
         });
 
-        caseTypeButtonGroup.add(rbMultiUserCase);
-        org.openide.awt.Mnemonics.setLocalizedText(rbMultiUserCase, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.rbMultiUserCase.text")); // NOI18N
-        rbMultiUserCase.addActionListener(new java.awt.event.ActionListener() {
+        caseTypeButtonGroup.add(multiUserCaseRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(multiUserCaseRadioButton, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.multiUserCaseRadioButton.text")); // NOI18N
+        multiUserCaseRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbMultiUserCaseActionPerformed(evt);
+                multiUserCaseRadioButtonActionPerformed(evt);
             }
         });
 
-        lbBadMultiUserSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbBadMultiUserSettings, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.lbBadMultiUserSettings.text")); // NOI18N
+        multiUserSettingsWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(multiUserSettingsWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.multiUserSettingsWarningLabel.text")); // NOI18N
 
-        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.errorLabel.text")); // NOI18N
+        caseParentDirWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(caseParentDirWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseParentDirWarningLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -199,17 +286,17 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
                                         .addComponent(caseNameTextField))
-                                    .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(rbSingleUserCase)
+                                .addComponent(singleUserCaseRadioButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(rbMultiUserCase))
-                            .addComponent(errorLabel))
+                                .addComponent(multiUserCaseRadioButton))
+                            .addComponent(caseParentDirWarningLabel))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -232,12 +319,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                 .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(rbSingleUserCase)
-                    .addComponent(rbMultiUserCase))
+                    .addComponent(singleUserCaseRadioButton)
+                    .addComponent(multiUserCaseRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(errorLabel)
+                .addComponent(caseParentDirWarningLabel)
                 .addGap(1, 1, 1)
-                .addComponent(lbBadMultiUserSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -250,32 +337,26 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @param evt the action event
      */
     private void caseDirBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_caseDirBrowseButtonActionPerformed
-        // show the directory chooser where the case directory will be created
-        fc.setDragEnabled(false);
+        fileChooser.setDragEnabled(false);
         if (!caseParentDirTextField.getText().trim().equals("")) {
-            fc.setCurrentDirectory(new File(caseParentDirTextField.getText()));
+            fileChooser.setCurrentDirectory(new File(caseParentDirTextField.getText()));
         }
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        //fc.setSelectedFile(new File("C:\\Program Files\\"));
-        //disableTextField(fc); // disable all the text field on the file chooser
-
-        int returnValue = fc.showDialog((Component) evt.getSource(), NbBundle.getMessage(this.getClass(),
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int choice = fileChooser.showDialog((Component) evt.getSource(), NbBundle.getMessage(this.getClass(),
                 "NewCaseVisualPanel1.caseDirBrowse.selectButton.text"));
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            caseParentDirTextField.setText(path); // put the path to the textfield
+        if (JFileChooser.APPROVE_OPTION == choice) {
+            String path = fileChooser.getSelectedFile().getPath();
+            caseParentDirTextField.setText(path);
         }
     }//GEN-LAST:event_caseDirBrowseButtonActionPerformed
 
-    private void rbSingleUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbSingleUserCaseActionPerformed
-        this.wizPanel.fireChangeEvent();
-        updateUI(null); // DocumentEvent is not used inside updateUI
-    }//GEN-LAST:event_rbSingleUserCaseActionPerformed
+    private void singleUserCaseRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_singleUserCaseRadioButtonActionPerformed
+        handleUpdate();
+    }//GEN-LAST:event_singleUserCaseRadioButtonActionPerformed
 
-    private void rbMultiUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbMultiUserCaseActionPerformed
-        this.wizPanel.fireChangeEvent();
-        updateUI(null); // DocumentEvent is not used inside updateUI
-    }//GEN-LAST:event_rbMultiUserCaseActionPerformed
+    private void multiUserCaseRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_multiUserCaseRadioButtonActionPerformed
+        handleUpdate();
+    }//GEN-LAST:event_multiUserCaseRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton caseDirBrowseButton;
@@ -284,127 +365,13 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JLabel caseNameLabel;
     private javax.swing.JTextField caseNameTextField;
     private javax.swing.JTextField caseParentDirTextField;
+    private javax.swing.JLabel caseParentDirWarningLabel;
     private javax.swing.ButtonGroup caseTypeButtonGroup;
-    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel lbBadMultiUserSettings;
-    private javax.swing.JRadioButton rbMultiUserCase;
-    private javax.swing.JRadioButton rbSingleUserCase;
+    private javax.swing.JRadioButton multiUserCaseRadioButton;
+    private javax.swing.JLabel multiUserSettingsWarningLabel;
+    private javax.swing.JRadioButton singleUserCaseRadioButton;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gives notification that there was an insert into the document. The range
-     * given by the DocumentEvent bounds the freshly inserted region.
-     *
-     * @param e the document event
-     */
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-        this.wizPanel.fireChangeEvent();
-        /*
-        NOTE: verifyMultiUserSettings() is called from here as opposed to updateUI()
-        because updateUI() is called several times when this wizard is loaded.
-        */
-        verifyMultiUserSettings();
-        updateUI(e);
-    }
-
-    /**
-     * Gives notification that a portion of the document has been removed. The
-     * range is given in terms of what the view last saw (that is, before
-     * updating sticky positions).
-     *
-     * @param e the document event
-     */
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-        this.wizPanel.fireChangeEvent();
-        updateUI(e);
-    }
-
-    /**
-     * Gives notification that an attribute or set of attributes changed.
-     *
-     * @param e the document event
-     */
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-        this.wizPanel.fireChangeEvent();
-        updateUI(e);
-    }
-
-    /**
-     * The "listener" that listens when the fields in this form are updated.
-     * This method is used to determine when to enable / disable the "Finish"
-     * button.
-     *
-     * @param e the document event
-     */
-    public void updateUI(DocumentEvent e) {
-        
-        // Note: DocumentEvent e can be null when called from rbSingleUserCaseActionPerformed()
-        // and rbMultiUserCaseActionPerformed().
-
-        String caseName = getCaseName();
-        String parentDir = getCaseParentDir();
-        
-        if (!caseName.equals("") && !parentDir.equals("")) {
-            caseDirTextField.setText(parentDir + caseName);
-            wizPanel.setIsFinish(true);
-        } else {
-            caseDirTextField.setText("");
-            wizPanel.setIsFinish(false);
-        }
-        
-        // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(parentDir);              
-    }
-    
-    /**
-     * Tests multi-user settings by verifying connectivity to all required
-     * multi-user services.
-     */
-    private void verifyMultiUserSettings(){
-        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-        if (info.getDbType() == DbType.SQLITE) {
-            rbSingleUserCase.setSelected(true);
-            rbSingleUserCase.setEnabled(false);
-            rbMultiUserCase.setEnabled(false);
-            lbBadMultiUserSettings.setForeground(new java.awt.Color(153, 153, 153)); // Gray
-            lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
-        } else {
-            rbSingleUserCase.setEnabled(true);
-            rbMultiUserCase.setEnabled(true);
-            // multi-user cases must have multi-user database service running
-            if (info.canConnect()) {
-                /* NOTE: natural way would be to call lbBadMultiUserSettings.setVisible(false) 
-                 but if you do that Netbeans for some reason resizes the entire panel so it
-                 becomes much narrower horizontally.                 
-                 */
-                lbBadMultiUserSettings.setText("");
-            } else {
-                // if we cannot connect to the shared database, don't present the option
-                lbBadMultiUserSettings.setForeground(new java.awt.Color(255, 0, 0)); // Red
-                lbBadMultiUserSettings.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.badCredentials.text"));
-                lbBadMultiUserSettings.setVisible(true);
-                rbSingleUserCase.setSelected(true);
-                rbSingleUserCase.setEnabled(false);
-                rbMultiUserCase.setEnabled(false);
-            }
-        }        
-    }
-    
-    /**
-     * Validates path to selected case output folder. Displays warning if path is invalid.
-     *
-     * @param path Absolute path to the selected case folder
-     */
-    private void warnIfPathIsInvalid(String path) {
-        errorLabel.setVisible(false);
-        if (!PathValidator.isValid(path, getCaseType())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
-        }
-    } 
 }

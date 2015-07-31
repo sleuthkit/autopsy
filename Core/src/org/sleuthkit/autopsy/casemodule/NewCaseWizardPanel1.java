@@ -170,7 +170,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         NewCaseVisualPanel1 component = getComponent();
         try {
             String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
-            component.getCaseParentDirTextField().setText(lastBaseDirectory);
+            component.setCaseParentDir(lastBaseDirectory);
+            component.readSettings();
             createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
             if (createdDirectory != null && !createdDirectory.equals("")) {
                 logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory); //NON-NLS
