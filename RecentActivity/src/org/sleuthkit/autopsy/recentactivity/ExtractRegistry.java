@@ -649,7 +649,6 @@ class ExtractRegistry extends Extract {
                                     break;
 
                                 default:
-                                    logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType); //NON-NLS
                                     break;
                             }
                         }
