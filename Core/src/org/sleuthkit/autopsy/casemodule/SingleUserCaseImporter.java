@@ -1269,6 +1269,7 @@ public class SingleUserCaseImporter implements Runnable {
             writer = null;
             Logger.getLogger(SingleUserCaseImporter.class.getName()).log(Level.WARNING, "Error opening log file " + logFile.toString(), ex);
         }
+        log("Starting batch processing of " + caseInputFolder + " to " + caseOutputFolder);
     }
 
     /**
@@ -1290,7 +1291,7 @@ public class SingleUserCaseImporter implements Runnable {
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log("Completed batch processing of " + caseInputFolder + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success":"Failure"));
+        log("Completed batch processing of " + caseInputFolder + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success" : "Failure"));
         if (writer != null) {
             writer.close();
         }
