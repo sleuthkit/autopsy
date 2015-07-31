@@ -51,11 +51,6 @@ import org.sleuthkit.autopsy.timeline.ProgressWindow;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
-import static org.sleuthkit.autopsy.timeline.events.db.Bundle.msgdlg_problem_text;
-import static org.sleuthkit.autopsy.timeline.events.db.Bundle.progressWindow_msg_commitingDb;
-import static org.sleuthkit.autopsy.timeline.events.db.Bundle.progressWindow_msg_populateMacEventsFiles;
-import static org.sleuthkit.autopsy.timeline.events.db.Bundle.progressWindow_msg_reinit_db;
-import static org.sleuthkit.autopsy.timeline.events.db.Bundle.progressWindow_populatingXevents;
 import org.sleuthkit.autopsy.timeline.events.type.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
@@ -64,6 +59,7 @@ import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -106,6 +102,7 @@ public class EventsRepository {
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
     private final Case autoCase;
+    
 
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
         return datasourcesMap;
@@ -230,6 +227,45 @@ public class EventsRepository {
         return eventDB.hasNewColumns();
     }
 
+    public void handleTagAdded(BlackboardArtifact artifact) {
+        boolean updateEvent = eventDB.updateEvent(artifact.getObjectID(), artifact.getArtifactID(), true);
+        if (updateEvent) {
+            aggregateEventsCache.invalidateAll();
+        }
+    }
+
+    public void handleTagDeleted(BlackboardArtifact artifact) {
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+            boolean updateEvent = eventDB.updateEvent(artifact.getObjectID(), artifact.getArtifactID(), tagged);
+            if (updateEvent) {
+                aggregateEventsCache.invalidateAll();
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of attribute.", ex);
+        }
+    }
+
+    public void handleTagAdded(Content content) {
+        boolean updateEvent = eventDB.updateEvent(content.getId(), null, true);
+        if (updateEvent) {
+            aggregateEventsCache.invalidateAll();
+        }
+
+    }
+
+    public void handleTagDeleted(Content content) {
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+            boolean updateEvent = eventDB.updateEvent(content.getId(), null, tagged);
+            if (updateEvent) {
+                aggregateEventsCache.invalidateAll();
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+        }
+    }
+
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
 
         private final ProgressWindow progressDialog;
@@ -255,7 +291,7 @@ public class EventsRepository {
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, progressWindow_msg_reinit_db(), "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
@@ -264,7 +300,7 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, progressWindow_msg_populateMacEventsFiles(), "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), "")));
 
             //insert file events into db
             int i = 1;
@@ -308,7 +344,7 @@ public class EventsRepository {
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                    progressWindow_msg_populateMacEventsFiles(), f.getName())));
+                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName())));
                         }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
@@ -329,7 +365,7 @@ public class EventsRepository {
                 }
             }
 
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, progressWindow_msg_commitingDb(), "")));
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), "")));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -367,10 +403,10 @@ public class EventsRepository {
                 LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, msgdlg_problem_text());
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, msgdlg_problem_text());
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
             }
             postPopulationOperation.run();  //execute post db population operation
         }
@@ -390,7 +426,7 @@ public class EventsRepository {
                 final int numArtifacts = blackboardArtifacts.size();
 
                 process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                        progressWindow_populatingXevents(type.toString()), "")));
+                        Bundle.progressWindow_populatingXevents(type.toString()), "")));
 
                 int i = 0;
                 for (final BlackboardArtifact bbart : blackboardArtifacts) {

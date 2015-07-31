@@ -37,7 +37,17 @@ import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Slider;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.KP_DOWN;
@@ -94,12 +104,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<NavTreeNode>> treeSelectionModel;
-
-    @FXML
-    protected ResourceBundle resources;
-
-    @FXML
-    protected URL location;
 
     //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();

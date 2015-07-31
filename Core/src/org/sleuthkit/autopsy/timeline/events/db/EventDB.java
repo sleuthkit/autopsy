@@ -760,6 +760,22 @@ public class EventDB {
         }
     }
 
+    boolean updateEvent(long objectID, Long artifactID, boolean tagged) {
+
+        DBLock.lock();
+        try {
+            //UPDATE events SET tagged = ? where file_id == ? AND artifact_id == ?
+            int executeUpdate = con.createStatement().executeUpdate("UPDATE events SET tagged =" + (tagged ? 1 : 0) + " WHERE file_id == " + objectID
+                    + " AND artifact_id IS " + (Objects.isNull(artifactID) ? "NULL" : artifactID.toString()));
+            return executeUpdate > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return false;
+    }
+
     void recordLastArtifactID(long lastArtfID) {
         recordDBInfo(DBInfoKey.LAST_ARTIFACT_ID, lastArtfID);
     }
