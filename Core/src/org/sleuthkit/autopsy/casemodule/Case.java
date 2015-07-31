@@ -49,6 +49,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
@@ -189,13 +190,13 @@ public class Case {
          */
         BLACKBOARD_ARTIFACT_TAG_DELETED,
         /**
-         * Property name for the event when a new ContentTag is
-         * added. The new value is tag added, the old value is empty
+         * Property name for the event when a new ContentTag is added. The new
+         * value is tag added, the old value is empty
          */
         CONTENT_TAG_ADDED,
         /**
-         * Property name for the event when a new ContentTag is
-         * deleted. The new value is empty, the old value is a
+         * Property name for the event when a new ContentTag is deleted. The new
+         * value is empty, the old value is a
          * {@link ContentTagDeletedEvent.DeletedContentTagInfo} object with info
          * about the deleted tag.
          */
@@ -363,12 +364,12 @@ public class Case {
      * Creates a new case (create the XML config file and database). Overload
      * for API consistency, defaults to a single-user case.
      *
-     * @param caseDir    The directory to store case data in. Will be created if
-     *                   it doesn't already exist. If it exists, it should have all of the
-     *                   needed sub dirs that createCaseDirectory() will create.
-     * @param caseName   the name of case
+     * @param caseDir The directory to store case data in. Will be created if it
+     * doesn't already exist. If it exists, it should have all of the needed sub
+     * dirs that createCaseDirectory() will create.
+     * @param caseName the name of case
      * @param caseNumber the case number
-     * @param examiner   the examiner for this case
+     * @param examiner the examiner for this case
      *
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
@@ -379,13 +380,13 @@ public class Case {
     /**
      * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir    The directory to store case data in. Will be created if
-     *                   it doesn't already exist. If it exists, it should have all of the needed
-     *                   sub dirs that createCaseDirectory() will create.
-     * @param caseName   the name of case
+     * @param caseDir The directory to store case data in. Will be created if it
+     * doesn't already exist. If it exists, it should have all of the needed sub
+     * dirs that createCaseDirectory() will create.
+     * @param caseName the name of case
      * @param caseNumber the case number
-     * @param examiner   the examiner for this case
-     * @param caseType   the type of case, single-user or multi-user
+     * @param examiner the examiner for this case
+     * @param caseType the type of case, single-user or multi-user
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
@@ -498,76 +499,89 @@ public class Case {
     }
 
     /**
-     * Opens the existing case (open the XML config file)
+     * Opens an existing case.
      *
-     * @param configFilePath the path of the configuration file that's opened
-     *
+     * @param caseMetadataFilePath The path of the case metadata file for the
+     * case to be opened.
      * @throws CaseActionException
      */
-    public static void open(String configFilePath) throws CaseActionException {
-        logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath); //NON-NLS
+    /**
+     * TODO: Deprecate this and throw a more general exception.
+     */
+    public static void open(String caseMetadataFilePath) throws CaseActionException {
+        logger.log(Level.INFO, "Opening case, case metadata file path: {0}", caseMetadataFilePath); //NON-NLS
         try {
-            XMLCaseManagement xmlcm = new XMLCaseManagement();
+            /**
+             * Get the case metadata from the file.
+             */
+            CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
+            String caseName = metadata.getCaseName();
+            String caseNumber = metadata.getCaseNumber();
+            String examiner = metadata.getExaminer();
+            CaseType caseType = metadata.getCaseType();
+            String caseDir = metadata.getCaseDirectory();
 
-            xmlcm.open(configFilePath); // open and load the config file to the document handler in the XML class
-
-            String caseName = xmlcm.getCaseName();
-            String caseNumber = xmlcm.getCaseNumber();
-            String examiner = xmlcm.getCaseExaminer();
-            CaseType caseType = xmlcm.getCaseType();
-            String caseDir = xmlcm.getCaseDirectory();
+            /**
+             * Open the case database.
+             */
             SleuthkitCase db;
-
             if (caseType == CaseType.SINGLE_USER_CASE) {
-                // if the caseType is "", case / config file can't be opened
-                if (caseName.equals("")) {
-                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.blankCase.msg"));
-                }
-
-                String dbPath = caseDir + File.separator + "autopsy.db"; //NON-NLS
+                String dbPath = Paths.get(caseDir, "autopsy.db").toString(); //NON-NLS
                 db = SleuthkitCase.openCase(dbPath);
-                if (null != db.getBackupDatabasePath()) {
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
-                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                        db.getBackupDatabasePath()),
-                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                                JOptionPane.INFORMATION_MESSAGE);
-                    });
-                }
             } else {
-                db = SleuthkitCase.openCase(xmlcm.getDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
-                if (null != db.getBackupDatabasePath()) {
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
-                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
-                                        db.getBackupDatabasePath()),
-                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                                JOptionPane.INFORMATION_MESSAGE);
-                    });
+                if (!UserPreferences.getIsMultiUserModeEnabled()) {
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
+                db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
             }
 
-            checkImagesExist(db);
+            /**
+             * Do things that require a UI.
+             */
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                /**
+                 * If the case database was upgraded for a new schema, notify
+                 * the user.
+                 */
+                if (null != db.getBackupDatabasePath()) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg",
+                                        db.getBackupDatabasePath()),
+                                NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    });
+                }
+
+                /**
+                 * TODO: This currently has no value if it there is no user to
+                 * interact with a fid missing images dialog.
+                 */
+                checkImagesExist(db);
+            }
 
             /**
              * Two-stage initialization to avoid leaking reference to "this" in
-             * constructor.
+             * constructor. TODO: Remove use of obsolete XMLCaseManagement
+             * class.
              */
-            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db, caseType);
+            XMLCaseManagement xmlcm = new XMLCaseManagement();
+            xmlcm.open(caseMetadataFilePath);
+            Case openedCase = new Case(caseName, caseNumber, examiner, caseMetadataFilePath, xmlcm, db, caseType);
             changeCase(openedCase);
 
-        } catch (Exception ex) {
+        } catch (CaseMetadataException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error opening the case: ", ex); //NON-NLS
-            // close the previous case if there's any
-            CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-            closeCase.actionPerformed(null);
-            if (!configFilePath.endsWith(CASE_DOT_EXTENSION)) {
-                throw new CaseActionException(
-                        NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION), ex);
-            } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
+
+            /**
+             * Closes the current case, if any, and pops up a new "cue banner
+             * panel." RJCTODO: Move this to the CaseOpenAction exception handler.
+             */
+            if (IngestManager.getInstance().isRunningInteractively()) {
+                CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
+                closeCase.actionPerformed(null);
             }
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
         }
     }
 
@@ -596,7 +610,7 @@ public class Case {
             String path = entry.getValue();
             boolean fileExists = (pathExists(path)
                     || driveExists(path));
-            if (!fileExists && IngestManager.getInstance().isRunningInteractively() == true) {
+            if (!fileExists) {
                 int ret = JOptionPane.showConfirmDialog(null,
                         NbBundle.getMessage(Case.class,
                                 "Case.checkImgExist.confDlg.doesntExist.msg",
@@ -621,7 +635,7 @@ public class Case {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId    the ID of the image that being added
+     * @param imgId the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      *
      * @deprecated Use notifyNewDataSource() instead.
@@ -653,12 +667,12 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
-     *                     should be used to call notifyNewDataSource() after the
-     *                     data source is added.
+     * should be used to call notifyNewDataSource() after the data source is
+     * added.
      */
     public void notifyAddingNewDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
@@ -667,7 +681,7 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source failed to be added to the case database.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source.
@@ -679,13 +693,13 @@ public class Case {
     /**
      * Notifies case event subscribers (property change listeners) that a data
      * source is being added to the case database.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newDataSource New data source added.
-     * @param dataSourceId  A unique identifier for the data source. Should be
-     *                      the same UUID used to call notifyAddingNewDataSource() when the process
-     *                      of adding the data source began.
+     * @param dataSourceId A unique identifier for the data source. Should be
+     * the same UUID used to call notifyAddingNewDataSource() when the process
+     * of adding the data source began.
      */
     public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
@@ -693,7 +707,7 @@ public class Case {
 
     /**
      * Notifies the UI that a new ContentTag has been added.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new ContentTag added
@@ -704,7 +718,7 @@ public class Case {
 
     /**
      * Notifies the UI that a ContentTag has been deleted.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag ContentTag deleted
@@ -715,7 +729,7 @@ public class Case {
 
     /**
      * Notifies the UI that a new BlackboardArtifactTag has been added.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newTag new BlackboardArtifactTag added
@@ -726,7 +740,7 @@ public class Case {
 
     /**
      * Notifies the UI that a BlackboardArtifactTag has been deleted.
-     * 
+     *
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param deletedTag BlackboardArtifactTag deleted
@@ -796,13 +810,13 @@ public class Case {
 
     /**
      * Updates the case name.
-     * 
+     *
      * This should not be called from the EDT.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath     the old path that wants to be updated
+     * @param oldPath the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath     the new path
+     * @param newPath the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -810,7 +824,7 @@ public class Case {
             name = newCaseName; // change the local value
             eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseName, newCaseName));
             SwingUtilities.invokeLater(() -> {
-                try{
+                try {
                     RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
                     updateMainWindowTitle(newCaseName);
                 } catch (Exception e) {
@@ -824,7 +838,7 @@ public class Case {
 
     /**
      * Updates the case examiner
-     * 
+     *
      * This should not be called from the EDT.
      *
      * @param oldExaminer the old examiner
@@ -842,7 +856,7 @@ public class Case {
 
     /**
      * Updates the case number
-     * 
+     *
      * This should not be called from the EDT.
      *
      * @param oldCaseNumber the old case number
@@ -1223,7 +1237,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName  The event the subscriber is interested in.
+     * @param eventName The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1234,7 +1248,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName  The event the subscriber is no longer interested in.
+     * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1344,7 +1358,7 @@ public class Case {
     /**
      * to create the case directory
      *
-     * @param caseDir  Path to the case directory (typically base + case name)
+     * @param caseDir Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1358,7 +1372,7 @@ public class Case {
     /**
      * Create the case directory and its needed subfolders.
      *
-     * @param caseDir  Path to the case directory (typically base + case name)
+     * @param caseDir Path to the case directory (typically base + case name)
      * @param caseType The type of case, single-user or multi-user
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1534,11 +1548,11 @@ public class Case {
 
         } else { // case is closed
             if (IngestManager.getInstance().isRunningInteractively()) {
-                
+
                 SwingUtilities.invokeLater(() -> {
                     // close all top components first
                     CoreComponentControl.closeCoreWindows();
-                
+
                     // disable these menus
                     CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
                     CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
@@ -1579,11 +1593,10 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath     The path of the report file, must be in the case
-     *                      directory or one of its subdirectories.
-     * @param srcModuleName The name of the module that created the
-     *                      report.
-     * @param reportName    The report name, may be empty.
+     * @param localPath The path of the report file, must be in the case
+     * directory or one of its subdirectories.
+     * @param srcModuleName The name of the module that created the report.
+     * @param reportName The report name, may be empty.
      *
      * @throws TskCoreException
      */
@@ -1618,6 +1631,5 @@ public class Case {
         }
         return hasData;
     }
-
 
 }

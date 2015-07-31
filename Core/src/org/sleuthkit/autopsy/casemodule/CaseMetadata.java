@@ -41,6 +41,11 @@ public final class CaseMetadata {
     }
 
     private final Case.CaseType caseType;
+    private final String caseName;
+    private final String caseNumber;
+    private final String examiner;
+    private final String caseDirectory;
+    private final String caseDatabaseName;
 
     /**
      * Constructs an object that provides access to case metadata.
@@ -54,7 +59,21 @@ public final class CaseMetadata {
             // case metadata may be moved into the case database.
             XMLCaseManagement metadata = new XMLCaseManagement();
             metadata.open(metadataFilePath.toString());
-            this.caseType = metadata.getCaseType();
+            caseType = metadata.getCaseType();                        
+            caseName = metadata.getCaseName();
+            if (caseName.isEmpty()) {
+                throw new CaseMetadataException("Case name missing");               
+            }
+            caseNumber = metadata.getCaseNumber();
+            examiner = metadata.getCaseExaminer();
+            caseDirectory = metadata.getCaseDirectory();
+            if (caseDirectory.isEmpty()) {
+                throw new CaseMetadataException("Case directory missing");                               
+            } 
+            caseDatabaseName = metadata.getDatabaseName();
+            if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
+                throw new CaseMetadataException("Case database name missing");                                               
+            }
         } catch (CaseActionException ex) {
             throw new CaseMetadataException(ex.getLocalizedMessage(), ex);
         }
@@ -69,4 +88,49 @@ public final class CaseMetadata {
         return this.caseType;
     }
 
+    /**
+     * Gets the case name.
+     *
+     * @return The case name.
+     */
+    public String getCaseName() {
+        return caseName;
+    }
+
+    /**
+     * Gets the case number.
+     *
+     * @return The case number, may be empty.
+     */
+    public String getCaseNumber() {
+        return caseNumber;
+    }
+    
+    /**
+     * Gets the examiner.
+     *
+     * @return The examiner, may be empty.
+     */
+    public String getExaminer() {
+        return examiner;
+    }
+    
+    /**
+     * Gets the case directory.
+     *
+     * @return The case directory.
+     */
+    public String getCaseDirectory() {
+        return caseDirectory;
+    }
+
+    /**
+     * Gets the case database name.
+     *
+     * @return The case database name, will be empty for a single-user case.
+     */
+    public String getCaseDatabaseName() {
+        return examiner;
+    }
+        
 }
