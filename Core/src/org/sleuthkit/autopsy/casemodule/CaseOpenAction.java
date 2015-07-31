@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,109 +18,94 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Component;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
+import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
- * The action to open a existing case. This class is always enabled.
+ * An action that opens an existing case.
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
 
-    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
-    private final JFileChooser fc = new JFileChooser();
-    private FileFilter autFilter;
+    private final JFileChooser fileChooser = new JFileChooser();
+    private final FileFilter caseMetadataFileFilter;
 
     /**
-     * The constructor
+     * Constructs an action that opens an existing case.
      */
     public CaseOpenAction() {
-        autFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(),
-                                    Case.CASE_DOT_EXTENSION),
+        caseMetadataFileFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(CaseOpenAction.class,
+                        "CaseOpenAction.autFilter.title", Version.getName(),
+                        Case.CASE_DOT_EXTENSION),
                 Case.CASE_EXTENSION);
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(autFilter);
-        try {
-            if (ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE) != null) {
-                fc.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
-            }
-        } catch (Exception e) {
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setFileFilter(caseMetadataFileFilter);
+        if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
+            fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
         }
     }
 
     /**
-     * Pop-up the File Chooser to open the existing case (.aut file)
+     * Pops up a file chooser to allow the user to select a case meta data file
+     * (.aut file) and attempts to open the case described by the file.
      *
-     * @param e the action event
+     * @param e The action event.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        int retval = fc.showOpenDialog(WindowManager.getDefault().getMainWindow());
-                
+        /**
+         * Pop up a file chooser to allow the user to select a case meta data
+         * file (.aut file)
+         */
+        int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
         if (retval == JFileChooser.APPROVE_OPTION) {
-            final String path = fc.getSelectedFile().getPath();
-            String dirPath = fc.getSelectedFile().getParent();
-            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
-            // check if the file exists
-            if (!new File(path).exists()) {
-                JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "CaseOpenAction.msgDlg.fileNotExist.msg"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "CaseOpenAction.msgDlg.fileNotExist.title"),
-                                              JOptionPane.ERROR_MESSAGE);
-                this.actionPerformed(e); // show the dialog box again
-            } else {
-                // try to close Startup window if there's one
-                try {
-                    StartupWindowProvider.getInstance().close();
-                } catch (Exception ex) {
-                    // no need to show the error message to the user.
-                    logger.log(Level.WARNING, "Error closing startup window.", ex); //NON-NLS
-                }
-                
-                new Thread(() -> {
-                    // Create case.
-                    try{
-                        Case.open(path);
-                    } catch (CaseActionException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null,
-                                                        NbBundle.getMessage(this.getClass(),
-                                                                            "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
-                                                                            ex.getMessage()),
-                                                        NbBundle.getMessage(this.getClass(),
-                                                                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                        JOptionPane.ERROR_MESSAGE);
-
-
-                            StartupWindowProvider.getInstance().open();
-                        });
-                        logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS  
-                    }   
-                }).start();
+            /**
+             * This is a bit of a hack, but close the startup window, if it was
+             * the source of the action invocation.
+             */
+            try {
+                StartupWindowProvider.getInstance().close();
+            } catch (Exception unused) {
             }
+
+            /**
+             * Try to open the caswe associated with the case meta data file the
+             * user selected.
+             */
+            final String path = fileChooser.getSelectedFile().getPath();
+            String dirPath = fileChooser.getSelectedFile().getParent();
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
+            new Thread(() -> {
+                try {
+                    Case.open(path);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                ex.getMessage(),
+                                NbBundle.getMessage(this.getClass(),
+                                        "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                JOptionPane.ERROR_MESSAGE);
+                        StartupWindowProvider.getInstance().open();
+                    });
+                }
+            }).start();
         }
     }
+
 }

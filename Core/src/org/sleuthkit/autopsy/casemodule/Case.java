@@ -572,15 +572,6 @@ public class Case {
 
         } catch (CaseMetadataException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error opening the case: ", ex); //NON-NLS
-
-            /**
-             * Closes the current case, if any, and pops up a new "cue banner
-             * panel." RJCTODO: Move this to the CaseOpenAction exception handler.
-             */
-            if (IngestManager.getInstance().isRunningInteractively()) {
-                CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-                closeCase.actionPerformed(null);
-            }
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
         }
     }

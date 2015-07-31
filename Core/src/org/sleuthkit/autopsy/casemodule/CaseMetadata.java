@@ -130,7 +130,7 @@ public final class CaseMetadata {
      * @return The case database name, will be empty for a single-user case.
      */
     public String getCaseDatabaseName() {
-        return examiner;
+        return caseDatabaseName;
     }
         
 }
