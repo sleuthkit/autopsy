@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,7 +32,8 @@ public final class TimeStampUtils {
     // Sample case name with time stamp: Case 1_2015_02_02_12_10_31 for case "Case 1"
     private static final Pattern timeStampPattern = Pattern.compile("\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}$");
     private static final int LENGTH_OF_DATE_TIME_STAMP = 20; // length of the above time stamp
-
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+    
     /**
      * Checks whether a string ends with a time stamp defined by pattern.
      *
@@ -50,4 +53,14 @@ public final class TimeStampUtils {
     public static int getTimeStampLength() {
         return LENGTH_OF_DATE_TIME_STAMP;
     }    
+    
+    /**
+     * Create a timestamp using the current time
+     * 
+     * @return the timestamp as a String
+     */
+    
+    public static String createTimeStamp() {
+        return dateFormat.format(Calendar.getInstance().getTime());
+    }
 }
