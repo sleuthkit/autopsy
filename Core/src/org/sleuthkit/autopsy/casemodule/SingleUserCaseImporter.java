@@ -81,6 +81,7 @@ public class SingleUserCaseImporter implements Runnable {
     private PrintWriter writer;
     private XMLCaseManagement oldXmlCaseManagement;
     private XMLCaseManagement newXmlCaseManagement;
+    private boolean addTimestamp;
 
     /**
      * SingleUserCaseImporter constructor
@@ -94,11 +95,13 @@ public class SingleUserCaseImporter implements Runnable {
      * @param copySourceImages true if images should be copied
      * @param deleteCase true if the old version of the case should be deleted
      * after import
+     * @param addTimestamp true if the output case name should end in a
+     * timestamp, false otherwise
      * @param callback a callback from the calling panel for notification when
      * the conversion has completed. This is a Runnable on a different thread.
      */
     public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
-            boolean copySourceImages, boolean deleteCase, ConversionDoneCallback callback) {
+            boolean copySourceImages, boolean deleteCase, ConversionDoneCallback callback, boolean addTimestamp) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
@@ -107,6 +110,7 @@ public class SingleUserCaseImporter implements Runnable {
         this.deleteCase = deleteCase;
         this.db = database;
         this.notifyOnComplete = callback;
+        this.addTimestamp = addTimestamp;
     }
 
     /**
@@ -303,7 +307,8 @@ public class SingleUserCaseImporter implements Runnable {
      * Handles case folder, PosgreSql database, and Solr core name deconfliction
      *
      * @param caseOutputFolder the case output folder
-     * @param caseFolder the case folder name, including timestamp
+     * @param caseFolder the case folder name, including timestamp deconflicted
+     * folder name
      * @return the deconflicted caseFolder name to use. Includes timestamp.
      * @throws Exception
      */
@@ -332,6 +337,9 @@ public class SingleUserCaseImporter implements Runnable {
             sanitizedCaseName = temp;
         }
 
+        if (addTimestamp && !TimeStampUtils.endsWithTimeStamp(sanitizedCaseName)) {
+            sanitizedCaseName += "_" + TimeStampUtils.createTimeStamp();
+        }
         // create output folders just in case
         Paths.get(caseOutputFolder, sanitizedCaseName).toFile().mkdirs();
         return sanitizedCaseName;
@@ -363,14 +371,14 @@ public class SingleUserCaseImporter implements Runnable {
         }
 
         source = input.resolve(AIM_LOG_FILE_NAME);
+        destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
         if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
             FileUtils.copyFile(source.toFile(), destination.toFile());
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-                out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
-            } catch (IOException e) {
-                // if unable to log it, no problem
-            }
+        }
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
+            out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
+        } catch (IOException e) {
+            // if unable to log it, no problem
         }
 
         // Remove the single-user .aut file, database, Timeline database and log

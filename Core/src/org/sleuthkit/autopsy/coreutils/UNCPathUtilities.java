@@ -35,6 +35,7 @@ public class UNCPathUtilities {
 
     private static Map<String, String> drives;
     private static final String MAPPED_DRIVES = "_mapped_drives.txt"; //NON-NLS
+    private static final String TEMP_FOLDER = "TEMP";
     private static final String DATA_TRIGGER = "----------"; //NON-NLS
     private static final String OK_TXT = "OK"; //NON-NLS
     private static final String COLON = ":"; //NON-NLS
@@ -253,7 +254,7 @@ public class UNCPathUtilities {
      */
     synchronized private Map<String, String> getMappedDrives() {
         Map<String, String> driveMap = new HashMap<>();
-        File mappedDrive = new File(nameString + MAPPED_DRIVES);
+        File mappedDrive = Paths.get(System.getenv(TEMP_FOLDER), nameString + MAPPED_DRIVES).toFile();
         try {
             Files.deleteIfExists(mappedDrive.toPath());
             ProcessBuilder builder = new ProcessBuilder("cmd", "/c", "net", "use"); //NON-NLS
