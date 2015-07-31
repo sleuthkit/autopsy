@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -73,9 +72,13 @@ import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
@@ -84,6 +87,7 @@ public class AggregateEventNode extends StackPane {
     private static final Image HASH_PIN = new Image(AggregateEventNode.class.getResourceAsStream("/org/sleuthkit/autopsy/images/hashset_hits.png"));
     private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
     private final static Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
+    private final static Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
 
     private static final CornerRadii CORNER_RADII = new CornerRadii(3);
 
@@ -145,7 +149,7 @@ public class AggregateEventNode extends StackPane {
     private DescriptionVisibility descrVis;
     private final SleuthkitCase sleuthkitCase;
     private final FilteredEventsModel eventsModel;
-    private Map<String, Long> hashSetCounts = null;
+
     private Tooltip tooltip;
 
     public AggregateEventNode(final AggregateEvent event, AggregateEventNode parentEventNode, EventDetailChart chart) {
@@ -157,10 +161,14 @@ public class AggregateEventNode extends StackPane {
         eventsModel = chart.getController().getEventsModel();
         final Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
-        ImageView imageView = new ImageView(HASH_PIN);
-        final HBox hBox = new HBox(descrLabel, countLabel, region, imageView, minusButton, plusButton);
+        ImageView hashIV = new ImageView(HASH_PIN);
+        ImageView tagIV = new ImageView(TAG);
+        final HBox hBox = new HBox(descrLabel, countLabel, region, hashIV, tagIV, minusButton, plusButton);
         if (event.getEventIDsWithHashHits().isEmpty()) {
-            hBox.getChildren().remove(imageView);
+            hBox.getChildren().remove(hashIV);
+        }
+        if (event.getEventIDsWithTags().isEmpty()) {
+            hBox.getChildren().remove(tagIV);
         }
         hBox.setPrefWidth(USE_COMPUTED_SIZE);
         hBox.setMinWidth(USE_PREF_SIZE);
@@ -252,39 +260,70 @@ public class AggregateEventNode extends StackPane {
     }
 
     private void installTooltip() {
-
+        //TODO: all this work should probably go on a background thread...
         if (tooltip == null) {
-            String collect = "";
+
+            HashMap<String, Long> hashSetCounts = new HashMap<>();
             if (!event.getEventIDsWithHashHits().isEmpty()) {
-                if (Objects.isNull(hashSetCounts)) {
-                    hashSetCounts = new HashMap<>();
-                    try {
-                        for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithHashHits())) {
-                            ArrayList<BlackboardArtifact> blackboardArtifacts = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, tle.getFileID());
-                            for (BlackboardArtifact artf : blackboardArtifacts) {
-                                for (BlackboardAttribute attr : artf.getAttributes()) {
-                                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                                        hashSetCounts.merge(attr.getValueString(), 1L, Long::sum);
-                                    };
+                try {
+                    for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithHashHits())) {
+                        ArrayList<BlackboardArtifact> blackboardArtifacts = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, tle.getFileID());
+                        for (BlackboardArtifact artf : blackboardArtifacts) {
+                            for (BlackboardAttribute attr : artf.getAttributes()) {
+                                if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                                    hashSetCounts.merge(attr.getValueString(), 1L, Long::sum);
                                 }
                             }
                         }
-                    } catch (TskCoreException ex) {
-                        Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
                     }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
                 }
-
-                collect = hashSetCounts.entrySet().stream()
-                        .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-                        .collect(Collectors.joining("\n"));
-
             }
+
+            Map<Long, TagName> tags = new HashMap<>();
+            if (!event.getEventIDsWithTags().isEmpty()) {
+                try {
+                    for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithTags())) {
+
+                        AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
+                        List<ContentTag> contentTagsByContent = sleuthkitCase.getContentTagsByContent(abstractFileById);
+                        for (ContentTag tag : contentTagsByContent) {
+                            tags.putIfAbsent(tag.getId(), tag.getName());
+                        }
+
+                        Long artifactID = tle.getArtifactID();
+                        if (artifactID != 0) {
+                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
+                            List<BlackboardArtifactTag> blackboardArtifactTagsByArtifact = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
+                            for (BlackboardArtifactTag tag : blackboardArtifactTagsByArtifact) {
+                                tags.putIfAbsent(tag.getId(), tag.getName());
+                            }
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting tag info for event.", ex);
+                }
+            }
+
+            Map<String, Long> tagCounts = tags.values().stream()
+                    .collect(Collectors.toMap(TagName::getDisplayName, anything -> 1L, Long::sum));
+
+            String hashSetCountsString = hashSetCounts.entrySet().stream()
+                    .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
+                    .collect(Collectors.joining("\n"));
+            String tagCountsString = tagCounts.entrySet().stream()
+                    .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
+                    .collect(Collectors.joining("\n"));
+
             tooltip = new Tooltip(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
                             getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
                             getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
                             getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))
-                    + (collect.isEmpty() ? "" : "\n\nHash Set Hits\n" + collect));
+                    + (hashSetCountsString.isEmpty() ? "" : "\n\nHash Set Hits\n" + hashSetCountsString)
+                    + (tagCountsString.isEmpty() ? "" : "\n\nTags\n" + tagCountsString)
+            );
             Tooltip.install(AggregateEventNode.this, tooltip);
         }
     }

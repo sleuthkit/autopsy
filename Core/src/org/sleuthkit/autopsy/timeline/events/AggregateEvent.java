@@ -27,37 +27,51 @@ import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
-/** An event that represent a set of other events aggregated together. All the
- * sub events should have the same type and matching descriptions at the
+/** Represents a set of other (TimeLineEvent) events aggregated together. All
+ * the sub events should have the same type and matching descriptions at the
  * designated 'zoom level'.
  */
 @Immutable
 public class AggregateEvent {
 
+    /** the smallest time interval containing all the aggregated events */
     final private Interval span;
 
+    /** the type of all the aggregted events */
     final private EventType type;
 
-    final private Set<Long> eventIDs;
-
+    /** the common description of all the aggregated events */
     final private String description;
 
+    /** the description level of detail that the events were aggregated at. */
     private final DescriptionLOD lod;
 
+    /** the set of ids of the aggregated events */
+    final private Set<Long> eventIDs;
+
+    /**
+     * the ids of the subset of aggregated events that have at least one tag
+     * applied to them
+     */
+    private final Set<Long> tagged;
+
+    /**
+     * the ids of the subset of aggregated events that have at least one hash
+     * set hit
+     */
     private final Set<Long> hashHits;
 
-    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, String description, DescriptionLOD lod) {
+    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
 
         this.span = spanningInterval;
         this.type = type;
         this.hashHits = hashHits;
+        this.tagged = tagged;
         this.description = description;
-
         this.eventIDs = eventIDs;
         this.lod = lod;
     }
 
-    /** @return the actual interval from the first event to the last event */
     public Interval getSpan() {
         return span;
     }
@@ -70,6 +84,10 @@ public class AggregateEvent {
         return Collections.unmodifiableSet(hashHits);
     }
 
+    public Set<Long> getEventIDsWithTags() {
+        return Collections.unmodifiableSet(tagged);
+    }
+
     public String getDescription() {
         return description;
     }
@@ -78,30 +96,33 @@ public class AggregateEvent {
         return type;
     }
 
-    /**
-     * merge two aggregate events into one new aggregate event.
-     *
-     * @param ag1
-     * @param ag2
-     *
-     * @return
-     */
-    public static AggregateEvent merge(AggregateEvent ag1, AggregateEvent ag2) {
-
-        if (ag1.getType() != ag2.getType()) {
-            throw new IllegalArgumentException("aggregate events are not compatible they have different types");
-        }
-
-        if (!ag1.getDescription().equals(ag2.getDescription())) {
-            throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
-        }
-        Sets.SetView<Long> idsUnion = Sets.union(ag1.getEventIDs(), ag2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(ag1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
-
-        return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), idsUnion, hashHitsUnion, ag1.getDescription(), ag1.lod);
-    }
-
     public DescriptionLOD getLOD() {
         return lod;
     }
+
+    /**
+     * merge two aggregate events into one new aggregate event.
+     *
+     * @param aggEvent1
+     * @param aggEVent2
+     *
+     * @return a new aggregate event that is the result of merging the given
+     *         events
+     */
+    public static AggregateEvent merge(AggregateEvent aggEvent1, AggregateEvent ag2) {
+
+        if (aggEvent1.getType() != ag2.getType()) {
+            throw new IllegalArgumentException("aggregate events are not compatible they have different types");
+        }
+
+        if (!aggEvent1.getDescription().equals(ag2.getDescription())) {
+            throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
+        }
+        Sets.SetView<Long> idsUnion = Sets.union(aggEvent1.getEventIDs(), ag2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(aggEvent1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
+
+        return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+    }
+
 }

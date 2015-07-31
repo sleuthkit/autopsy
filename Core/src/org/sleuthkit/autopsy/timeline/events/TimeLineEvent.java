@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
+import javax.annotation.Nullable;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.datamodel.TskData;
 
@@ -29,7 +30,7 @@ public class TimeLineEvent {
     private final Long eventID;
 
     private final Long fileID;
-    
+
     private final Long time;
 
     private final Long artifactID;
@@ -42,7 +43,7 @@ public class TimeLineEvent {
 
     private final boolean hashHit;
 
-    public TimeLineEvent(Long eventID, Long objID, Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit) {
+    public TimeLineEvent(Long eventID, Long objID, @Nullable Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit) {
         this.eventID = eventID;
         this.fileID = objID;
         this.artifactID = artifactID;
@@ -60,6 +61,7 @@ public class TimeLineEvent {
         return hashHit;
     }
 
+    @Nullable
     public Long getArtifactID() {
         return artifactID;
     }
