@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
@@ -53,13 +52,13 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
- * Convert case(s) from single-user to multi-user. Recursively scans subfolders.
+ * Import case(s) from single-user to multi-user. Recursively scans subfolders.
  */
 public class SingleUserCaseImporter implements Runnable {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = ".aut"; //NON-NLS
-    public static final String CASE_CONVERSION_LOG_FILE = "case_import_log.txt"; //NON-NLS
+    public static final String CASE_IMPORT_LOG_FILE = "case_import_log.txt"; //NON-NLS
     private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
     //If TIMELINE_FOLDER changes, also update TIMELINE in EventsRepository 
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
@@ -76,7 +75,7 @@ public class SingleUserCaseImporter implements Runnable {
     private final boolean copySourceImages;
     private final boolean deleteCase;
     private final CaseDbConnectionInfo db;
-    private final ConversionDoneCallback notifyOnComplete;
+    private final ImportDoneCallback notifyOnComplete;
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private PrintWriter writer;
     private XMLCaseManagement oldXmlCaseManagement;
@@ -98,10 +97,10 @@ public class SingleUserCaseImporter implements Runnable {
      * @param addTimestamp true if the output case name should end in a
      * timestamp, false otherwise
      * @param callback a callback from the calling panel for notification when
-     * the conversion has completed. This is a Runnable on a different thread.
+     * the import has completed. This is a Runnable on a different thread.
      */
     public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
-            boolean copySourceImages, boolean deleteCase, ConversionDoneCallback callback, boolean addTimestamp) {
+            boolean copySourceImages, boolean deleteCase, ImportDoneCallback callback, boolean addTimestamp) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
@@ -114,9 +113,9 @@ public class SingleUserCaseImporter implements Runnable {
     }
 
     /**
-     * Handles most of the heavy lifting for converting cases from single-user
-     * to multi-user. Creates new .aut file, moves folders to the right place,
-     * converts the database, and updates paths within the database.
+     * Handles most of the heavy lifting for importing cases from single-user to
+     * multi-user. Creates new .aut file, moves folders to the right place,
+     * imports the database, and updates paths within the database.
      *
      * @param input the full path of the folder to process.
      * @param oldCaseFolder the case folder holding the old case. This name will
@@ -128,7 +127,7 @@ public class SingleUserCaseImporter implements Runnable {
         boolean result = true;
 
         try {
-            log("Beginning to convert " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
+            log("Beginning to import " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
 
             if (copySourceImages) {
                 checkInput(input.toFile(), new File(imageInputFolder));
@@ -164,7 +163,7 @@ public class SingleUserCaseImporter implements Runnable {
             File imageDestination = Paths.get(imageOutputFolder, caseName).toFile();
 
             copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
-            dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
+            dbName = importDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
 
             File imageSource = findInputFolder(input, imageInputFolder, oldCaseName); // Find a folder for the input images
             fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
@@ -191,7 +190,7 @@ public class SingleUserCaseImporter implements Runnable {
                 FileUtils.deleteDirectory(input.toFile());
             }
 
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedConverting")
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedImporting")
                     + input.toString() + " " + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
                     + caseOutputFolder + File.separatorChar + newCaseFolder);
         } catch (Exception exp) {
@@ -244,10 +243,10 @@ public class SingleUserCaseImporter implements Runnable {
         Path partialAttempt = Paths.get(uncParent, oldCaseName);
 
         if (fullAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a batch convert
+            /// we've found it, they are running a batch import
             return fullAttempt.toFile();
         } else if (uncParent != null && !uncParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a specific convert
+            /// we've found it, they are running a specific import
             return partialAttempt.toFile();
         }
 
@@ -286,7 +285,7 @@ public class SingleUserCaseImporter implements Runnable {
     /**
      * Ensure the input source has an autopsy.db and exists.
      *
-     * @param caseInput The folder containing a case to convert.
+     * @param caseInput The folder containing a case to import.
      * @param imageInput The folder containing the images to copy or null if
      * images are not being copied.
      * @throws Exception
@@ -376,7 +375,7 @@ public class SingleUserCaseImporter implements Runnable {
             FileUtils.copyFile(source.toFile(), destination.toFile());
         }
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-            out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConvertedToMultiUser") + new Date());
+            out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportedAsMultiUser") + new Date());
         } catch (IOException e) {
             // if unable to log it, no problem
         }
@@ -416,7 +415,7 @@ public class SingleUserCaseImporter implements Runnable {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    private String convertDb(String dbName, Path inputPath, String outputCaseName) throws SQLException, ClassNotFoundException, Exception {
+    private String importDb(String dbName, Path inputPath, String outputCaseName) throws SQLException, ClassNotFoundException, Exception {
         // deconflict the database name
         dbName = deconflictDatabaseName(db, dbName);
 
@@ -1254,18 +1253,18 @@ public class SingleUserCaseImporter implements Runnable {
 
         closeLog(result);
         if (notifyOnComplete != null) {
-            notifyOnComplete.conversionDoneCallback(result);
+            notifyOnComplete.importDoneCallback(result);
         }
     }
 
     /**
-     * Open the case conversion log in the base output folder.
+     * Open the case import log in the base output folder.
      *
      */
     private void openLog() {
         File temp = new File(caseOutputFolder);
         temp.mkdirs();
-        File logFile = Paths.get(caseOutputFolder, CASE_CONVERSION_LOG_FILE).toFile();
+        File logFile = Paths.get(caseOutputFolder, CASE_IMPORT_LOG_FILE).toFile();
         try {
             writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true);
         } catch (IOException ex) {
@@ -1275,7 +1274,7 @@ public class SingleUserCaseImporter implements Runnable {
     }
 
     /**
-     * Log a message to the case conversion log in the base output folder.
+     * Log a message to the case import log in the base output folder.
      *
      * @param message the message to log.
      */
@@ -1287,17 +1286,17 @@ public class SingleUserCaseImporter implements Runnable {
 
     /**
      *
-     * Close the case conversion log in the base output folder.
+     * Close the case import log in the base output folder.
      *
      * @param result this informs the log if the end result was successful or
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedConverting")
+        log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.FinishedImporting")
                 + caseInputFolder + " "
                 + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.To")
                 + caseOutputFolder
-                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ConversionSuccessful")
+                + NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportSuccessful")
                 + result);
 
         if (writer != null) {
@@ -1360,7 +1359,7 @@ public class SingleUserCaseImporter implements Runnable {
 
         /**
          * This returns the list of folders we've found that need to be looked
-         * at for possible conversion to multi-user cases.
+         * at for possible import as multi-user cases.
          *
          * @return the theList
          */
