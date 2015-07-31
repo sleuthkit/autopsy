@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
  * Convert case(s) from single-user to multi-user. Recursively scans subfolders.
@@ -72,10 +73,11 @@ public class SingleUserCaseImporter implements Runnable {
     private final String caseOutputFolder;
     private final String imageInputFolder;
     private final String imageOutputFolder;
-    private final boolean copyImages;
+    private final boolean copySourceImages;
     private final boolean deleteCase;
     private final CaseDbConnectionInfo db;
     private final ConversionDoneCallback notifyOnComplete;
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private PrintWriter writer;
     private XMLCaseManagement oldXmlCaseManagement;
     private XMLCaseManagement newXmlCaseManagement;
@@ -89,19 +91,19 @@ public class SingleUserCaseImporter implements Runnable {
      * @param imageInput the folder that holds the images to copy over
      * @param imageOutput the destination folder for the images
      * @param database the connection information to talk to the PostgreSQL db
-     * @param copyImages true if images should be copied
+     * @param copySourceImages true if images should be copied
      * @param deleteCase true if the old version of the case should be deleted
      * after import
      * @param callback a callback from the calling panel for notification when
      * the conversion has completed. This is a Runnable on a different thread.
      */
     public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
-            boolean copyImages, boolean deleteCase, ConversionDoneCallback callback) {
+            boolean copySourceImages, boolean deleteCase, ConversionDoneCallback callback) {
         this.caseInputFolder = caseInput;
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
         this.imageOutputFolder = imageOutput;
-        this.copyImages = copyImages;
+        this.copySourceImages = copySourceImages;
         this.deleteCase = deleteCase;
         this.db = database;
         this.notifyOnComplete = callback;
@@ -124,7 +126,7 @@ public class SingleUserCaseImporter implements Runnable {
         try {
             log("Beginning to convert " + input.toString() + "  to  " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
 
-            if (copyImages) {
+            if (copySourceImages) {
                 checkInput(input.toFile(), new File(imageInputFolder));
             } else {
                 checkInput(input.toFile(), null);
@@ -159,9 +161,11 @@ public class SingleUserCaseImporter implements Runnable {
 
             copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
             dbName = convertDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
-            if (copyImages) {
-                File imageSource = copyInputImages(imageInputFolder, oldCaseName, imageDestination); // Copy images over
-                fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
+
+            File imageSource = findInputFolder(input, imageInputFolder, oldCaseName); // Find a folder for the input images
+            fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
+            if (copySourceImages) {
+                copyImages(imageSource, imageDestination); // Copy images over
             }
 
             // create new XML config
@@ -192,6 +196,87 @@ public class SingleUserCaseImporter implements Runnable {
             result = false;
         }
         return result;
+    }
+
+    /**
+     * Sanitize a path to UNC. First go to UNC based on drive mappings, then try
+     * to put hostname in place of IP address.
+     *
+     * @param rawInput the String to sanitize
+     * @return Returns best-effort results.
+     */
+    private String sanitizeToUNC(String rawInput) {
+        String uncWithIP = uncPathUtilities.mappedDriveToUNC(rawInput);
+        if (uncWithIP != null) {
+            rawInput = uncWithIP;
+        }
+        String uncWithHostName = uncPathUtilities.ipToHostName(rawInput);
+        if (uncWithHostName == null) {
+            uncWithHostName = rawInput;
+        }
+        return uncWithHostName;
+    }
+
+    /**
+     * Figure out what the name of the file source should be and return it. This
+     * could be one of three things: a portion of a name from the
+     * tsk_image_names table, the folder name passed in, or a child of the
+     * folder name passed in.
+     *
+     * @param sqliteDbFolder The path to the autopsy.db file
+     * @param rawInputFolder The path to the input folder
+     * @param oldCaseName The old name of the case
+     * @return
+     */
+    private File findInputFolder(Path sqliteDbFolder, String rawInputFolder, String oldCaseName) {
+
+        String uncInputFolder = sanitizeToUNC(rawInputFolder);
+        // By this point, uncInputFolder is as sanitized as we can get it. If we
+        // could resolve a UNC path and hostname, it's a hostname-based UNC path
+        File uncInputFile = new File(uncInputFolder);
+        String uncParent = uncInputFile.getParent();
+
+        Path fullAttempt = Paths.get(uncInputFolder, oldCaseName);
+        Path partialAttempt = Paths.get(uncParent, oldCaseName);
+
+        if (fullAttempt.toFile().isDirectory()) {
+            /// we've found it, they are running a batch convert
+            return fullAttempt.toFile();
+        } else if (uncParent != null && !uncParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
+            /// we've found it, they are running a specific convert
+            return partialAttempt.toFile();
+        }
+
+        // We still haven't found it. It must not be named the same as the output case. Search db.
+        try {
+            Class.forName("org.sqlite.JDBC"); //NON-NLS
+            Connection sqliteConnection = DriverManager.getConnection("jdbc:sqlite:" + sqliteDbFolder.resolve(AUTOPSY_DB_FILE).toString(), "", ""); //NON-NLS
+            Statement inputStatement = sqliteConnection.createStatement();
+            ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
+            Path passedIn = Paths.get(uncInputFolder);
+            while (inputResultSet.next()) {
+                String sanitizedNameFromDatabase = sanitizeToUNC(inputResultSet.getString(2));
+                Path fromDatabase = Paths.get(sanitizedNameFromDatabase);
+                Path relative = passedIn.relativize(fromDatabase);
+                if (relative != null && relative.getNameCount() > 0) {
+                    String databaseFolderName = relative.getName(0).toString();
+                    fullAttempt = Paths.get(uncInputFolder, databaseFolderName);
+                    partialAttempt = Paths.get(uncParent, databaseFolderName);
+                    if (fullAttempt.toFile().isDirectory()) {
+                        return fullAttempt.toFile();
+                    } else if (uncParent != null && !uncParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
+                        return partialAttempt.toFile();
+                    }
+                }
+            }
+            sqliteConnection.close();
+        } catch (ClassNotFoundException | SQLException ex) {
+            log(ex.getMessage());
+        }
+
+        // If we get here without finding an appropriate folder, return the UNC 
+        // resolved uncInputFolder as best effort.
+        return new File(uncInputFolder);
     }
 
     /**
@@ -289,14 +374,14 @@ public class SingleUserCaseImporter implements Runnable {
         }
 
         // Remove the single-user .aut file, database, Timeline database and log
-        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + DOTAUT).toFile();
-        if (oldDatabaseFile.exists()) {
-            oldDatabaseFile.delete();
-        }
-
-        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, AUTOPSY_DB_FILE).toFile();
+        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + DOTAUT).toFile();
         if (oldAutopsyFile.exists()) {
             oldAutopsyFile.delete();
+        }
+
+        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, AUTOPSY_DB_FILE).toFile();
+        if (oldDatabaseFile.exists()) {
+            oldDatabaseFile.delete();
         }
 
         File oldTimelineFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, TIMELINE_FILE).toFile();
@@ -984,34 +1069,19 @@ public class SingleUserCaseImporter implements Runnable {
 
     /**
      * Get the images from the other case and place them in the central
-     * repository
+     * repository if the user chose to.
      *
+     * @param imageSource the folder that the original images are in
+     * @param imageDestination the place to copy the images to
+     * @throws IOException
      */
-    private File copyInputImages(String rawInputFolder, String oldCaseName, File output) throws IOException {
-        /// If we can find the input images, copy if needed, then update data source paths in tsk_image_names if needed.
-
-        File chosenInput = null;
-
-        File rawInputFile = new File(rawInputFolder);
-        String rawParent = rawInputFile.getParent();
-
-        Path fullAttempt = Paths.get(rawInputFolder, oldCaseName);
-        Path partialAttempt = Paths.get(rawParent, oldCaseName);
-
-        if (fullAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a batch convert   
-            chosenInput = fullAttempt.toFile();
-        } else if (rawParent != null && !rawParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a specific convert   
-            chosenInput = partialAttempt.toFile();
-        }
-
-        if (chosenInput != null && chosenInput.exists()) {
-            FileUtils.copyDirectory(chosenInput, output);
+    private void copyImages(File imageSource, File imageDestination) throws IOException {
+        // If we can find the input images, copy if needed.
+        if (imageSource != null && imageSource.exists() && imageDestination != null) {
+            FileUtils.copyDirectory(imageSource, imageDestination);
         } else {
             log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.UnableToCopySourceImages"));
         }
-        return chosenInput;
     }
 
     /**
@@ -1020,21 +1090,39 @@ public class SingleUserCaseImporter implements Runnable {
      */
     private void fixPaths(String input, String output, String dbName) throws SQLException {
         /// Fix paths in reports, tsk_files_path, and tsk_image_names tables
-
         Connection postgresqlConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
-        String hostName = NetworkUtils.getLocalHostName();
+        if (postgresqlConnection != null) {
+            String hostName = NetworkUtils.getLocalHostName();
 
-        // add hostname to reports
-        Statement updateStatement = postgresqlConnection.createStatement();
-        updateStatement.executeUpdate("UPDATE reports SET path=CONCAT('" + hostName + "/', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
+            // add hostname to reports
+            Statement updateStatement = postgresqlConnection.createStatement();
+            updateStatement.executeUpdate("UPDATE reports SET path=CONCAT('" + hostName + "/', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
 
-        // add hostname to tsk_files_path
-        updateStatement = postgresqlConnection.createStatement();
-        updateStatement.executeUpdate("UPDATE tsk_files_path SET path=CONCAT('" + hostName + "\\', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
+            // add hostname to tsk_files_path
+            updateStatement = postgresqlConnection.createStatement();
+            updateStatement.executeUpdate("UPDATE tsk_files_path SET path=CONCAT('" + hostName + "\\', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
 
-        // update path for images
-        updateStatement = postgresqlConnection.createStatement();
-        updateStatement.executeUpdate("UPDATE tsk_image_names SET name=OVERLAY(name PLACING '" + output + "' FROM 1 FOR " + input.length() + ")"); //NON-NLS
+            // update path for images
+            Statement inputStatement = postgresqlConnection.createStatement();
+            ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
+            Path lastPart = Paths.get(input).getFileName();
+
+            while (inputResultSet.next()) {
+                Path oldPath = Paths.get(inputResultSet.getString(2));
+
+                for (int x = 0; x < oldPath.getNameCount(); ++x) {
+                    if (oldPath.getName(x).equals(lastPart)) {
+                        Path newPath = Paths.get(output, oldPath.subpath(x + 1, oldPath.getNameCount()).toString());
+                        updateStatement = postgresqlConnection.createStatement();
+                        updateStatement.executeUpdate("UPDATE tsk_image_names SET name='" + newPath.toString() + "' WHERE obj_id = " + inputResultSet.getInt(1)); //NON-NLS
+                        break;
+                    }
+                }
+            }
+            postgresqlConnection.close();
+        } else {
+            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.CanNotOpenDatabase"));
+        }
     }
 
     /**
