@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.events;
 
 import com.google.common.eventbus.EventBus;
-import static com.sun.xml.internal.ws.spi.db.BindingContextFactory.LOGGER;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
@@ -81,9 +81,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class FilteredEventsModel {
 
-    /* requested time range, filter, event_type zoom, and description level of
-     * detail. if specifics are not passed to methods, the values of these
-     * members are used to query repository. */
+    private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
+
     /**
      * time range that spans the filtered events
      */
