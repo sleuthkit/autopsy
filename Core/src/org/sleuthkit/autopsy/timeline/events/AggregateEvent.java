@@ -21,17 +21,17 @@ package org.sleuthkit.autopsy.timeline.events;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
-import javax.annotation.concurrent.Immutable;
+import java.util.stream.Collectors;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
-/** Represents a set of other (TimeLineEvent) events aggregated together. All
+/**
+ * Represents a set of other (TimeLineEvent) events aggregated together. All
  * the sub events should have the same type and matching descriptions at the
  * designated 'zoom level'.
  */
-@Immutable
 public class AggregateEvent {
 
     /** the smallest time interval containing all the aggregated events */
@@ -123,6 +123,16 @@ public class AggregateEvent {
         Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
 
         return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+    }
+
+    public boolean removeTags(Set<Long> eventIDs) {
+        return tagged.removeAll(eventIDs);
+    }
+
+    public boolean addTags(Set<Long> collect) {
+        return tagged.addAll(collect.stream()
+                .filter(eventIDs::contains)
+                .collect(Collectors.toSet()));
     }
 
 }

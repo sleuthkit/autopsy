@@ -46,6 +46,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -87,41 +88,6 @@ import org.sqlite.SQLiteJDBCLoader;
  * future.
  */
 public class EventDB {
-
-    private PreparedStatement dropEventsTableStmt;
-    private PreparedStatement dropHashSetHitsTableStmt;
-    private PreparedStatement dropHashSetsTableStmt;
-    private PreparedStatement dropDBInfoTableStmt;
-
-    /** enum to represent columns in the events table */
-    enum EventTableColumn {
-
-        EVENT_ID("event_id"), // NON-NLS
-        FILE_ID("file_id"), // NON-NLS
-        ARTIFACT_ID("artifact_id"), // NON-NLS
-        BASE_TYPE("base_type"), // NON-NLS
-        SUB_TYPE("sub_type"), // NON-NLS
-        KNOWN("known_state"), // NON-NLS
-        DATA_SOURCE_ID("datasource_id"), // NON-NLS
-        FULL_DESCRIPTION("full_description"), // NON-NLS
-        MED_DESCRIPTION("med_description"), // NON-NLS
-        SHORT_DESCRIPTION("short_description"), // NON-NLS
-        TIME("time"), // NON-NLS
-        HASH_HIT("hash_hit"), // NON-NLS
-        TAGGED("tagged"); // NON-NLS
-
-        private final String columnName;
-
-        private EventTableColumn(String columnName) {
-            this.columnName = columnName;
-        }
-
-        @Override
-        public String toString() {
-            return columnName;
-        }
-
-    }
 
     /** enum to represent keys stored in db_info table */
     private enum DBInfoKey {
@@ -189,6 +155,11 @@ public class EventDB {
     private PreparedStatement insertHashHitStmt;
     private PreparedStatement selectHashSetStmt;
     private PreparedStatement countAllEventsStmt;
+    private PreparedStatement dropEventsTableStmt;
+    private PreparedStatement dropHashSetHitsTableStmt;
+    private PreparedStatement dropHashSetsTableStmt;
+    private PreparedStatement dropDBInfoTableStmt;
+    private PreparedStatement selectEventsFromOBjectAndArtifactStmt;
 
     private final Set<PreparedStatement> preparedStatements = new HashSet<>();
 
@@ -369,7 +340,7 @@ public class EventDB {
                 ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                resultIDs.add(rs.getLong(EventTableColumn.EVENT_ID.toString()));
+                resultIDs.add(rs.getLong("event_id"));
             }
 
         } catch (SQLException sqlEx) {
@@ -401,7 +372,7 @@ public class EventDB {
         DBLock.lock();
         try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
             while (rs.next()) {
-                long datasourceID = rs.getLong(EventTableColumn.DATA_SOURCE_ID.toString());
+                long datasourceID = rs.getLong("datasource_id");
                 //this relies on the fact that no tskObj has ID 0 but 0 is the default value for the datasource_id column in the events table.
                 if (datasourceID != 0) {
                     hashSet.add(datasourceID);
@@ -568,31 +539,32 @@ public class EventDB {
                 LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
             }
 
-            createEventsIndex(Arrays.asList(EventTableColumn.FILE_ID));
-            createEventsIndex(Arrays.asList(EventTableColumn.ARTIFACT_ID));
-            createEventsIndex(Arrays.asList(EventTableColumn.SUB_TYPE, EventTableColumn.TIME));
-            createEventsIndex(Arrays.asList(EventTableColumn.BASE_TYPE, EventTableColumn.TIME));
-            createEventsIndex(Arrays.asList(EventTableColumn.KNOWN));
+            createIndex("events", Arrays.asList("file_id"));
+            createIndex("events", Arrays.asList("artifact_id"));
+            createIndex("events", Arrays.asList("sub_type", "time"));
+            createIndex("events", Arrays.asList("base_type", "time"));
+            createIndex("events", Arrays.asList("known_state"));
 
             try {
                 insertRowStmt = prepareStatement(
                         "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit, tagged) " // NON-NLS
                         + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
-                getDataSourceIDsStmt = prepareStatement("select distinct datasource_id from events"); // NON-NLS
-                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
-                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
-                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
-                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
-                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
-                insertHashSetStmt = prepareStatement("insert or ignore into hash_sets (hash_set_name)  values (?)");
-                selectHashSetStmt = prepareStatement("select hash_set_id from hash_sets where hash_set_name = ?");
-                insertHashHitStmt = prepareStatement("insert or ignore into hash_set_hits (hash_set_id, event_id) values (?,?)");
-                countAllEventsStmt = prepareStatement("select count(*) as count from events");
-                dropEventsTableStmt = prepareStatement("drop table if exists events");
-                dropHashSetHitsTableStmt = prepareStatement("drop table if exists hash_set_hits");
-                dropHashSetsTableStmt = prepareStatement("drop table if exists hash_sets");
-                dropDBInfoTableStmt = prepareStatement("drop table if exists db_ino");
+                getDataSourceIDsStmt = prepareStatement("SELECT DISTINCT datasource_id FROM events"); // NON-NLS
+                getMaxTimeStmt = prepareStatement("SELECT Max(time) AS max FROM events"); // NON-NLS
+                getMinTimeStmt = prepareStatement("SELECT Min(time) AS min FROM events"); // NON-NLS
+                getEventByIDStmt = prepareStatement("SELECT * FROM events WHERE event_id =  ?"); // NON-NLS
+                recordDBInfoStmt = prepareStatement("INSERT OR REPLACE INTO db_info (key, value) values (?, ?)"); // NON-NLS
+                getDBInfoStmt = prepareStatement("SELECT value FROM db_info WHERE key = ?"); // NON-NLS
+                insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)");
+                selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
+                insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)");
+                countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events");
+                dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events");
+                dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits");
+                dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets");
+                dropDBInfoTableStmt = prepareStatement("DROP TABLE IF EXISTS db_ino");
+                selectEventsFromOBjectAndArtifactStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS ?");
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
@@ -600,15 +572,6 @@ public class EventDB {
         } finally {
             DBLock.unlock();
         }
-    }
-
-    /**
-     * @param tableName  the value of tableName
-     * @param columnList the value of columnList
-     */
-    private void createEventsIndex(final List<EventTableColumn> columnList) {
-        createIndex("events",
-                columnList.stream().map(EventTableColumn::toString).collect(Collectors.toList()));
     }
 
     /**
@@ -633,12 +596,12 @@ public class EventDB {
      *
      * @return the boolean
      */
-    private boolean hasDBColumn(final EventTableColumn dbColumn) {
+    private boolean hasDBColumn(@Nonnull final String dbColumn) {
         try (Statement stmt = con.createStatement()) {
 
             ResultSet executeQuery = stmt.executeQuery("PRAGMA table_info(events)");
             while (executeQuery.next()) {
-                if (dbColumn.toString().equals(executeQuery.getString("name"))) {
+                if (dbColumn.equals(executeQuery.getString("name"))) {
                     return true;
                 }
             }
@@ -649,15 +612,15 @@ public class EventDB {
     }
 
     private boolean hasDataSourceIDColumn() {
-        return hasDBColumn(EventTableColumn.DATA_SOURCE_ID);
+        return hasDBColumn("datasource_id");
     }
 
     private boolean hasTaggedColumn() {
-        return hasDBColumn(EventTableColumn.TAGGED);
+        return hasDBColumn("tagged");
     }
 
     private boolean hasHashHitColumn() {
-        return hasDBColumn(EventTableColumn.HASH_HIT);
+        return hasDBColumn("hash_hit");
     }
 
     void insertEvent(long time, EventType type, long datasourceID, Long objID,
@@ -760,20 +723,36 @@ public class EventDB {
         }
     }
 
-    boolean updateEvent(long objectID, Long artifactID, boolean tagged) {
+    Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+        HashSet<Long> eventIDs = new HashSet<>();
 
         DBLock.lock();
         try {
-            //UPDATE events SET tagged = ? where file_id == ? AND artifact_id == ?
-            int executeUpdate = con.createStatement().executeUpdate("UPDATE events SET tagged =" + (tagged ? 1 : 0) + " WHERE file_id == " + objectID
-                    + " AND artifact_id IS " + (Objects.isNull(artifactID) ? "NULL" : artifactID.toString()));
-            return executeUpdate > 0;
+            selectEventsFromOBjectAndArtifactStmt.clearParameters();
+            selectEventsFromOBjectAndArtifactStmt.setLong(1, objectID);
+            if (Objects.isNull(artifactID)) {
+                selectEventsFromOBjectAndArtifactStmt.setNull(2, Types.INTEGER);
+            } else {
+                selectEventsFromOBjectAndArtifactStmt.setLong(2, artifactID);
+            }
+            try (ResultSet eventsToUpdateRS = selectEventsFromOBjectAndArtifactStmt.executeQuery();) {
+                while (eventsToUpdateRS.next()) {
+                    eventIDs.add(eventsToUpdateRS.getLong("event_id"));
+                }
+                try (Statement updateStatement = con.createStatement();) {
+                    int updatedRowCount = updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
+                            + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
+                    if (updatedRowCount != eventIDs.size()) {
+                        LOGGER.log(Level.SEVERE, "Updated row count did not match expectation when marking events as {0}", (tagged ? "" : "(un)") + tagged); // NON-NLS
+                    }
+                }
+            }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "failed to mark events as " + (tagged ? "" : "(un)") + tagged, ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
-        return false;
+        return eventIDs;
     }
 
     void recordLastArtifactID(long lastArtfID) {
@@ -841,15 +820,16 @@ public class EventDB {
     }
 
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
-        return new TimeLineEvent(rs.getLong(EventTableColumn.EVENT_ID.toString()),
-                rs.getLong(EventTableColumn.FILE_ID.toString()),
-                rs.getLong(EventTableColumn.ARTIFACT_ID.toString()),
-                rs.getLong(EventTableColumn.TIME.toString()), RootEventType.allTypes.get(rs.getInt(EventTableColumn.SUB_TYPE.toString())),
-                rs.getString(EventTableColumn.FULL_DESCRIPTION.toString()),
-                rs.getString(EventTableColumn.MED_DESCRIPTION.toString()),
-                rs.getString(EventTableColumn.SHORT_DESCRIPTION.toString()),
-                TskData.FileKnown.valueOf(rs.getByte(EventTableColumn.KNOWN.toString())),
-                rs.getInt(EventTableColumn.HASH_HIT.toString()) != 0);
+        return new TimeLineEvent(rs.getLong("event_id"),
+                rs.getLong("file_id"),
+                rs.getLong("artifact_id"),
+                rs.getLong("time"), RootEventType.allTypes.get(rs.getInt("sub_type")),
+                rs.getString("full_description"),
+                rs.getString("med_description"),
+                rs.getString("short_description"),
+                TskData.FileKnown.valueOf(rs.getByte("known_state")),
+                rs.getInt("hash_hit") != 0,
+                rs.getInt("tagged") != 0);
     }
 
     /**
@@ -897,8 +877,8 @@ public class EventDB {
             while (rs.next()) {
 
                 EventType type = useSubTypes
-                        ? RootEventType.allTypes.get(rs.getInt(EventTableColumn.SUB_TYPE.toString()))
-                        : BaseTypes.values()[rs.getInt(EventTableColumn.BASE_TYPE.toString())];
+                        ? RootEventType.allTypes.get(rs.getInt("sub_type"))
+                        : BaseTypes.values()[rs.getInt("base_type")];
 
                 typeMap.put(type, rs.getLong("count(*)")); // NON-NLS
             }
@@ -972,14 +952,12 @@ public class EventDB {
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
         System.out.println(query);
-        ResultSet rs = null;
-        try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription
-                ) {
+        // scoop up requested events in groups organized by interval, type, and desription
+        try (ResultSet rs = con.createStatement().executeQuery(query);) {
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.start();
 
-            rs = stmt.executeQuery(query);
             stopwatch.stop();
             System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
@@ -989,7 +967,7 @@ public class EventDB {
 
                     ResultSet executeQuery = st2.executeQuery("select event_id from events where event_id in (" + eventIDS + ") and hash_hit = 1");
                     while (executeQuery.next()) {
-                        hashHits.add(executeQuery.getLong(EventTableColumn.EVENT_ID.toString()));
+                        hashHits.add(executeQuery.getLong("event_id"));
                     }
                 }
                 HashSet<Long> tagged = new HashSet<>();
@@ -997,11 +975,11 @@ public class EventDB {
 
                     ResultSet executeQuery = st3.executeQuery("select event_id from events where event_id in (" + eventIDS + ") and tagged = 1");
                     while (executeQuery.next()) {
-                        tagged.add(executeQuery.getLong(EventTableColumn.EVENT_ID.toString()));
+                        tagged.add(executeQuery.getLong("event_id"));
                     }
                 }
 
-                EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt(EventTableColumn.SUB_TYPE.toString())) : BaseTypes.values()[rs.getInt(EventTableColumn.BASE_TYPE.toString())];
+                EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];
 
                 AggregateEvent aggregateEvent = new AggregateEvent(
                         new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()), // NON-NLS
@@ -1023,11 +1001,6 @@ public class EventDB {
         } catch (SQLException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
-            try {
-                rs.close();
-            } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
             DBLock.unlock();
         }
 
@@ -1075,7 +1048,7 @@ public class EventDB {
     }
 
     private static String useSubTypeHelper(final boolean useSubTypes) {
-        return useSubTypes ? EventTableColumn.SUB_TYPE.toString() : EventTableColumn.BASE_TYPE.toString();
+        return useSubTypes ? "sub_type" : "base_type";
     }
 
     private long getDBInfo(DBInfoKey key, long defaultValue) {
@@ -1104,12 +1077,12 @@ public class EventDB {
     private String getDescriptionColumn(DescriptionLOD lod) {
         switch (lod) {
             case FULL:
-                return EventTableColumn.FULL_DESCRIPTION.toString();
+                return "full_description";
             case MEDIUM:
-                return EventTableColumn.MED_DESCRIPTION.toString();
+                return "med_description";
             case SHORT:
             default:
-                return EventTableColumn.SHORT_DESCRIPTION.toString();
+                return "short_description";
         }
     }
 

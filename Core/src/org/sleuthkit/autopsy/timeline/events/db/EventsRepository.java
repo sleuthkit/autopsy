@@ -59,7 +59,6 @@ import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -102,7 +101,10 @@ public class EventsRepository {
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
     private final Case autoCase;
-    
+
+    public Case getAutoCase() {
+        return autoCase;
+    }
 
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
         return datasourcesMap;
@@ -225,45 +227,6 @@ public class EventsRepository {
 
     public boolean hasDataSourceInfo() {
         return eventDB.hasNewColumns();
-    }
-
-    public void handleTagAdded(BlackboardArtifact artifact) {
-        boolean updateEvent = eventDB.updateEvent(artifact.getObjectID(), artifact.getArtifactID(), true);
-        if (updateEvent) {
-            aggregateEventsCache.invalidateAll();
-        }
-    }
-
-    public void handleTagDeleted(BlackboardArtifact artifact) {
-        try {
-            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            boolean updateEvent = eventDB.updateEvent(artifact.getObjectID(), artifact.getArtifactID(), tagged);
-            if (updateEvent) {
-                aggregateEventsCache.invalidateAll();
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of attribute.", ex);
-        }
-    }
-
-    public void handleTagAdded(Content content) {
-        boolean updateEvent = eventDB.updateEvent(content.getId(), null, true);
-        if (updateEvent) {
-            aggregateEventsCache.invalidateAll();
-        }
-
-    }
-
-    public void handleTagDeleted(Content content) {
-        try {
-            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            boolean updateEvent = eventDB.updateEvent(content.getId(), null, tagged);
-            if (updateEvent) {
-                aggregateEventsCache.invalidateAll();
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
-        }
     }
 
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -398,7 +361,6 @@ public class EventsRepository {
             try {
                 progressDialog.close();
                 get();
-
             } catch (CancellationException ex) {
                 LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
@@ -448,9 +410,7 @@ public class EventsRepository {
 
                     i++;
                     process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            NbBundle.getMessage(this.getClass(),
-                                    "EventsRepository.progressWindow.populatingXevents",
-                                    type.toString()), "")));
+                            Bundle.progressWindow_populatingXevents(type), "")));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
@@ -480,5 +440,14 @@ public class EventsRepository {
                 LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
             }
         }
+    }
+
+    public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, true);
+        if (!updatedEventIDs.isEmpty()) {
+            aggregateEventsCache.invalidateAll();
+            idToEventCache.invalidateAll();
+        }
+        return updatedEventIDs;
     }
 }

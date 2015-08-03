@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +66,8 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
@@ -151,6 +154,8 @@ public class AggregateEventNode extends StackPane {
     private final FilteredEventsModel eventsModel;
 
     private Tooltip tooltip;
+    private final ImageView hashIV = new ImageView(HASH_PIN);
+    private final ImageView tagIV = new ImageView(TAG);
 
     public AggregateEventNode(final AggregateEvent event, AggregateEventNode parentEventNode, EventDetailChart chart) {
         this.event = event;
@@ -159,16 +164,18 @@ public class AggregateEventNode extends StackPane {
         this.chart = chart;
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
+        eventsModel.register(this);
         final Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
-        ImageView hashIV = new ImageView(HASH_PIN);
-        ImageView tagIV = new ImageView(TAG);
+
         final HBox hBox = new HBox(descrLabel, countLabel, region, hashIV, tagIV, minusButton, plusButton);
         if (event.getEventIDsWithHashHits().isEmpty()) {
-            hBox.getChildren().remove(hashIV);
+            hashIV.setManaged(false);
+            hashIV.setVisible(false);
         }
         if (event.getEventIDsWithTags().isEmpty()) {
-            hBox.getChildren().remove(tagIV);
+            tagIV.setManaged(false);
+            tagIV.setVisible(false);
         }
         hBox.setPrefWidth(USE_COMPUTED_SIZE);
         hBox.setMinWidth(USE_PREF_SIZE);
@@ -522,6 +529,29 @@ public class AggregateEventNode extends StackPane {
                     chart.selectedNodes.setAll(AggregateEventNode.this);
                 }
             }
+        }
+    }
+
+    @Subscribe
+    public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+        if (event.removeTags(tagEvent.getEventIDs())) {
+            tooltip = null;
+            boolean hasTags = event.getEventIDsWithTags().isEmpty() == false;
+            Platform.runLater(() -> {
+                tagIV.setManaged(hasTags);
+                tagIV.setVisible(hasTags);
+            });
+        }
+    }
+
+    @Subscribe
+    public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+        if (event.addTags(tagEvent.getEventIDs())) {
+            tooltip = null;
+            Platform.runLater(() -> {
+                tagIV.setManaged(true);
+                tagIV.setVisible(true);
+            });
         }
     }
 }

@@ -165,10 +165,8 @@ public class TimeLineController {
     @GuardedBy("this")
     private boolean listeningToAutopsy = false;
 
-    private final PropertyChangeListener caseListener;
-
+    private final PropertyChangeListener caseListener = new AutopsyCaseListener();
     private final PropertyChangeListener ingestJobListener = new AutopsyIngestJobListener();
-
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
@@ -242,8 +240,6 @@ public class TimeLineController {
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
-        //persistent listener instances
-        caseListener = new AutopsyCaseListener();
     }
 
     /** @return a shared events model */
@@ -791,20 +787,16 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                    BlackBoardArtifactTagAddedEvent bTagAddedEvent = (BlackBoardArtifactTagAddedEvent) evt;
-                    eventsRepository.handleTagAdded(bTagAddedEvent.getTag().getArtifact());
+                    filteredEvents.handleTagAdded((BlackBoardArtifactTagAddedEvent) evt);
                     break;
                 case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                    BlackBoardArtifactTagDeletedEvent bTagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) evt;
-                    eventsRepository.handleTagDeleted(bTagDeletedEvent.getTag().getArtifact());
+                    filteredEvents.handleTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
                     break;
                 case CONTENT_TAG_ADDED:
-                    ContentTagAddedEvent cTagAddedEvent = (ContentTagAddedEvent) evt;
-                    eventsRepository.handleTagAdded(cTagAddedEvent.getTag().getContent());
+                    filteredEvents.handleTagAdded((ContentTagAddedEvent) evt);
                     break;
                 case CONTENT_TAG_DELETED:
-                    ContentTagDeletedEvent cTagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    eventsRepository.handleTagDeleted(cTagDeletedEvent.getTag().getContent());
+                    filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
                     break;
                 case DATA_SOURCE_ADDED:
 //                    Content content = (Content) evt.getNewValue();

@@ -42,8 +42,9 @@ public class TimeLineEvent {
     private final TskData.FileKnown known;
 
     private final boolean hashHit;
+    private final boolean tagged;
 
-    public TimeLineEvent(Long eventID, Long objID, @Nullable Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit) {
+    public TimeLineEvent(Long eventID, Long objID, @Nullable Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
         this.artifactID = artifactID;
@@ -55,6 +56,11 @@ public class TimeLineEvent {
         this.shortDescription = shortDescription;
         this.known = known;
         this.hashHit = hashHit;
+        this.tagged = tagged;
+    }
+
+    public boolean isTagged() {
+        return tagged;
     }
 
     public boolean isHashHit() {

@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
+import com.google.common.eventbus.EventBus;
+import static com.sun.xml.internal.ws.spi.db.BindingContextFactory.LOGGER;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -29,6 +32,11 @@ import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
@@ -45,6 +53,9 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class acts as the model for a {@link TimeLineView}
@@ -91,6 +102,8 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
 
+    private final EventBus eventbus = new EventBus("Event_Repository_EventBus");
+
     /**
      * The underlying repo for events. Atomic access to repo is synchronized
      * internally, but compound access should be done with the intrinsic lock of
@@ -98,10 +111,12 @@ public final class FilteredEventsModel {
      */
     @GuardedBy("this")
     private final EventsRepository repo;
+    private final Case autoCase;
 
     /** @return the default filter used at startup */
     public RootFilter getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
+
         repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
             dataSourceFilter.setSelected(Boolean.TRUE);
@@ -119,7 +134,7 @@ public final class FilteredEventsModel {
 
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
-
+        this.autoCase = repo.getAutoCase();
         repo.getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilter rootFilter = filter().get();
@@ -298,4 +313,54 @@ public final class FilteredEventsModel {
         return requestedLOD.get();
     }
 
+    public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
+        BlackboardArtifact artifact = e.getTag().getArtifact();
+        Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
+        if (!updatedEventIDs.isEmpty()) {
+            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
+        }
+    }
+
+    public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
+        BlackboardArtifact artifact = e.getTag().getArtifact();
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+            Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
+            if (!updatedEventIDs.isEmpty()) {
+                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of attribute.", ex);
+        }
+    }
+
+    public void handleTagAdded(ContentTagAddedEvent e) {
+        Content content = e.getTag().getContent();
+        Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, true);
+        if (!updatedEventIDs.isEmpty()) {
+            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
+        }
+    }
+
+    public void handleTagDeleted(ContentTagDeletedEvent e) {
+        Content content = e.getTag().getContent();
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+
+            Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, tagged);
+            if (!updatedEventIDs.isEmpty()) {
+                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+        }
+    }
+
+    public void register(Object o) {
+        eventbus.register(o);
+    }
+
+    public void unRegister(Object o) {
+        eventbus.unregister(0);
+    }
 }

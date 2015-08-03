@@ -89,9 +89,7 @@ public class SQLHelper {
 
     static String getSQLWhere(HideKnownFilter filter) {
         if (filter.isSelected()) {
-            return "(" + EventDB.EventTableColumn.KNOWN.toString()
-                    + " is not '" + TskData.FileKnown.KNOWN.getFileKnownValue()
-                    + "')"; // NON-NLS
+            return "(known_state  IS NOT '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')"; // NON-NLS
         } else {
             return "1";
         }
@@ -111,11 +109,11 @@ public class SQLHelper {
     }
 
     static String getSQLWhere(DataSourceFilter filter) {
-        return (filter.isSelected()) ? "(" + EventDB.EventTableColumn.DATA_SOURCE_ID.toString() + " = '" + filter.getDataSourceID() + "')" : "1";
+        return (filter.isSelected()) ? "(datasource_id = '" + filter.getDataSourceID() + "')" : "1";
     }
 
     static String getSQLWhere(DataSourcesFilter filter) {
-        return (filter.isSelected()) ? "(" + EventDB.EventTableColumn.DATA_SOURCE_ID.toString() + " in ("
+        return (filter.isSelected()) ? "(datasource_id in ("
                 + filter.getSubFilters().stream()
                 .filter(AbstractFilter::isSelected)
                 .map((dataSourceFilter) -> String.valueOf(dataSourceFilter.getDataSourceID()))
@@ -127,10 +125,10 @@ public class SQLHelper {
             if (StringUtils.isBlank(filter.getText())) {
                 return "1";
             }
-            String strip = StringUtils.strip(filter.getText());
-            return "((" + EventDB.EventTableColumn.MED_DESCRIPTION.toString() + " like '%" + strip + "%') or (" // NON-NLS
-                    + EventDB.EventTableColumn.FULL_DESCRIPTION.toString() + " like '%" + strip + "%') or (" // NON-NLS
-                    + EventDB.EventTableColumn.SHORT_DESCRIPTION.toString() + " like '%" + strip + "%'))";
+            String strippedFilterText = StringUtils.strip(filter.getText());
+            return "((med_description like '%" + strippedFilterText + "%')"
+                    + " or (full_description like '%" + strippedFilterText + "%')"
+                    + " or (short_description like '%" + strippedFilterText + "%'))";
         } else {
             return "1";
         }
@@ -140,19 +138,20 @@ public class SQLHelper {
      * generate a sql where clause for the given type filter, while trying to be
      * as simple as possible to improve performance.
      *
-     * @param filter
+     * @param typeFilter
      *
      * @return
      */
-    static String getSQLWhere(TypeFilter filter) {
-        if (filter.isSelected() == false) {
+    static String getSQLWhere(TypeFilter typeFilter) {
+        if (typeFilter.isSelected() == false) {
             return "0";
-        } else if (filter.getEventType() instanceof RootEventType) {
-            if (filter.getSubFilters().stream().allMatch((Filter f) -> f.isSelected() && ((TypeFilter) f).getSubFilters().stream().allMatch(Filter::isSelected))) {
+        } else if (typeFilter.getEventType() instanceof RootEventType) {
+            if (typeFilter.getSubFilters().stream()
+                    .allMatch(subFilter -> subFilter.isSelected() && subFilter.getSubFilters().stream().allMatch(Filter::isSelected))) {
                 return "1"; //then collapse clause to true
             }
         }
-        return "(" + EventDB.EventTableColumn.SUB_TYPE.toString() + " in (" + StringUtils.join(getActiveSubTypes(filter), ",") + "))";
+        return "(sub_type IN (" + StringUtils.join(getActiveSubTypes(typeFilter), ",") + "))";
     }
 
 }
