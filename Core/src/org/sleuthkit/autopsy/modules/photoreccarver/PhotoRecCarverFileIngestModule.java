@@ -62,7 +62,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 
 /**
- * A file ingest module that runs the Unallocated Carver executable with unallocated space files as input.
+ * A file ingest module that runs the Unallocated Carver executable with
+ * unallocated space files as input.
  */
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
@@ -86,10 +87,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static class IngestJobTotals {
 
         private AtomicLong totalItemsRecovered = new AtomicLong(0);
+        private AtomicLong totalItemsWithErrors = new AtomicLong(0);
         private AtomicLong totalWritetime = new AtomicLong(0);
         private AtomicLong totalParsetime = new AtomicLong(0);
     }
-    
+
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
         IngestJobTotals totals = totalsForIngestJobs.get(ingestJobId);
         if (totals == null) {
@@ -98,7 +100,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
         return totals;
     }
-    
+
     private static synchronized void initTotalsForIngestJob(long ingestJobId) {
         IngestJobTotals totals = new PhotoRecCarverFileIngestModule.IngestJobTotals();
         totalsForIngestJobs.put(ingestJobId, totals);
@@ -118,7 +120,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         // exception. Although the result would not be incorrect, it would be
         // unfortunate for the user to get an accidental no-op for this module. 
         if (!this.context.processingUnallocatedSpace()) {
-            throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "unallocatedSpaceProcessingSettingsError.message"));
+            throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "unallocatedSpaceProcessingSettingsError.message"));
         }
 
         this.rootOutputDirPath = PhotoRecCarverFileIngestModule.createModuleOutputDirectoryForCase();
@@ -141,11 +143,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
                 // Save the directories for the current job.
                 PhotoRecCarverFileIngestModule.pathsByJob.put(this.jobId, new WorkingPaths(outputDirPath, tempDirPath));
-                
+
                 // Initialize job totals
                 initTotalsForIngestJob(jobId);
             } catch (SecurityException | IOException | UnsupportedOperationException ex) {
-                throw new IngestModule.IngestModuleException(NbBundle.getMessage(this.getClass(), "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
+                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
             }
         }
     }
@@ -159,7 +161,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         if (file.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
             return IngestModule.ProcessResult.OK;
         }
-        
+
         // Safely get a reference to the totalsForIngestJobs object
         IngestJobTotals totals = getTotalsForIngestJobs(jobId);
 
@@ -183,10 +185,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             // In this case, expect enough space and move on.
 
             if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
+                totals.totalItemsWithErrors.incrementAndGet();
                 logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to save unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.UnableToCarve", file.getName()),
-                        NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.UnableToCarve", file.getName()),
+                        NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.NotEnoughDiskSpace"));
 
                 return IngestModule.ProcessResult.ERROR;
             }
@@ -222,12 +225,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 // if it was cancelled by the user, result is OK
                 cleanup(outputDirPath, tempFilePath);
                 logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
+                MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
                 return IngestModule.ProcessResult.OK;
             } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
                 cleanup(outputDirPath, tempFilePath);
+                totals.totalItemsWithErrors.incrementAndGet();
                 logger.log(Level.SEVERE, "PhotoRec carver returned error exit value = {0} when scanning {1}", // NON-NLS
                         new Object[]{exitValue, file.getName()}); // NON-NLS
+                MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.exitValue", // NON-NLS
+                        new Object[]{exitValue, file.getName()}));
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -246,11 +253,11 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
             long writedelta = (System.currentTimeMillis() - writestart);
             totals.totalWritetime.addAndGet(writedelta);
-            
+
             // Now that we've cleaned up the folders and data files, parse the xml output file to add carved items into the database
             long calcstart = System.currentTimeMillis();
             PhotoRecCarverOutputParser parser = new PhotoRecCarverOutputParser(outputDirPath);
-            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);            
+            List<LayoutFile> carvedItems = parser.parse(newAuditFile, id, file);
             long calcdelta = (System.currentTimeMillis() - calcstart);
             totals.totalParsetime.addAndGet(calcdelta);
             if (carvedItems != null) { // if there were any results from carving, add the unallocated carving event to the reports list.
@@ -259,7 +266,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
         } catch (IOException ex) {
+            totals.totalItemsWithErrors.incrementAndGet();
             logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
+            MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
             if (null != tempFilePath && Files.exists(tempFilePath)) {
@@ -287,16 +296,21 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.numberOfCarved"))
-                 .append("</td>"); //NON-NLS
+                .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.numberOfCarved"))
+                .append("</td>"); //NON-NLS
         detailsSb.append("<td>").append(jobTotals.totalItemsRecovered.get()).append("</td></tr>"); //NON-NLS
 
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalWritetime"))
-                 .append("</td><td>").append(jobTotals.totalWritetime.get()).append("</td></tr>\n"); //NON-NLS
+                .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.numberOfErrors"))
+                .append("</td>"); //NON-NLS
+        detailsSb.append("<td>").append(jobTotals.totalItemsWithErrors.get()).append("</td></tr>"); //NON-NLS
+
         detailsSb.append("<tr><td>") //NON-NLS
-                 .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalParsetime"))
-                 .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
+                .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalWritetime"))
+                .append("</td><td>").append(jobTotals.totalWritetime.get()).append("</td></tr>\n"); //NON-NLS
+        detailsSb.append("<tr><td>") //NON-NLS
+                .append(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.complete.totalParsetime"))
+                .append("</td><td>").append(jobTotals.totalParsetime.get()).append("</td></tr>\n"); //NON-NLS
         detailsSb.append("</table>"); //NON-NLS
 
         IngestServices.getInstance().postMessage(IngestMessage.createMessage(
@@ -320,8 +334,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 WorkingPaths paths = PhotoRecCarverFileIngestModule.pathsByJob.remove(this.jobId);
                 FileUtil.deleteDir(new File(paths.getTempDirPath().toString()));
                 postSummary(jobId);
-            } 
-            catch (SecurityException ex) {
+            } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Error shutting down PhotoRec carver module", ex); // NON-NLS
             }
         }
@@ -347,7 +360,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Creates the output directory for this module for the current case, if it does not already exist.
+     * Creates the output directory for this module for the current case, if it
+     * does not already exist.
      *
      * @return The absolute path of the output directory.
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
@@ -356,11 +370,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         Path path = Paths.get(Case.getCurrentCase().getModulesOutputDirAbsPath(), PhotoRecCarverIngestModuleFactory.getModuleName());
         try {
             Files.createDirectory(path);
-        }
-        catch (FileAlreadyExistsException ex) {
+        } catch (FileAlreadyExistsException ex) {
             // No worries.
-        }
-        catch (IOException | SecurityException | UnsupportedOperationException ex) {
+        } catch (IOException | SecurityException | UnsupportedOperationException ex) {
             throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "cannotCreateOutputDir.message", ex.getLocalizedMessage()));
         }
         return path;
@@ -384,8 +396,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 }
                 parent = parent.getParent();
             }
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "PhotoRec carver exception while trying to get parent of AbstractFile.", ex); //NON-NLS
         }
         return id;
