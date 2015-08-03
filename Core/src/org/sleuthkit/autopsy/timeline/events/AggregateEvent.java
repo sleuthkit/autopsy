@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.events;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -125,14 +124,43 @@ public class AggregateEvent {
         return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
     }
 
-    public boolean removeTags(Set<Long> eventIDs) {
-        return tagged.removeAll(eventIDs);
+    /**
+     * get an AggregateEvent the same as this one but with the given eventIDs
+     * removed from the list of tagged events
+     *
+     * @param unTaggedIDs
+     *
+     * @return a new Aggregate event that is the same as this one but with the
+     *         given event Ids removed from the list of tagged ids, or, this
+     *         AggregateEvent if no event ids would be removed
+     */
+    public AggregateEvent withTagsRemoved(Set<Long> unTaggedIDs) {
+        Sets.SetView<Long> difference = Sets.difference(tagged, unTaggedIDs);
+        if (difference.size() < tagged.size()) {
+            return new AggregateEvent(span, type, unTaggedIDs, hashHits, difference.immutableCopy(), description, lod);
+        }
+        return this; //no change
     }
 
-    public boolean addTags(Set<Long> collect) {
-        return tagged.addAll(collect.stream()
-                .filter(eventIDs::contains)
-                .collect(Collectors.toSet()));
-    }
+    /**
+     * get an AggregateEvent the same as this one but with the given eventIDs
+     * added to the list of tagged events if there are part of this Aggregate
+     *
+     * @param taggedIDs
+     *
+     * @return a new Aggregate event that is the same as this one but with the
+     *         given event Ids added to the list of tagged ids, or, this
+     *         AggregateEvent if no event ids would be added
+     */
+    public AggregateEvent withTagsAdded(Set<Long> taggedIDs) {
+        Sets.SetView<Long> taggedIdsInAgg = Sets.intersection(eventIDs, taggedIDs);//events that are in this aggregate and marked as tagged
+        if (taggedIdsInAgg.size() > 0) {
+            Sets.SetView<Long> notYetIncludedTagged = Sets.difference(taggedIdsInAgg,tagged); // events that are tagged, but not already marked as tagged in this Agg
+            if (notYetIncludedTagged.size() > 0) {
+                return new AggregateEvent(span, type, eventIDs, hashHits, Sets.union(tagged, taggedIdsInAgg).immutableCopy(), description, lod);
+            }
+        }
 
+        return this;    //no change
+    }
 }

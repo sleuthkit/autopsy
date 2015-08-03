@@ -93,9 +93,7 @@ public class EventsRepository {
     private final FilteredEventsModel modelInstance;
 
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
-
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
@@ -442,7 +440,7 @@ public class EventsRepository {
         }
     }
 
-    public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+  synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
         Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, true);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();

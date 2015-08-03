@@ -810,7 +810,7 @@ public class TimeLineController {
                     });
                     break;
                 case CURRENT_CASE:
-                    OpenTimelineAction.invalidateController();
+                   OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }

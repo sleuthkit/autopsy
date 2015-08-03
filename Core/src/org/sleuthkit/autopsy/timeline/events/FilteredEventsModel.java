@@ -313,7 +313,7 @@ public final class FilteredEventsModel {
         return requestedLOD.get();
     }
 
-    public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
+    synchronized public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
         BlackboardArtifact artifact = e.getTag().getArtifact();
         Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
         if (!updatedEventIDs.isEmpty()) {
@@ -321,7 +321,7 @@ public final class FilteredEventsModel {
         }
     }
 
-    public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
+    synchronized public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
         BlackboardArtifact artifact = e.getTag().getArtifact();
         try {
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
@@ -334,7 +334,7 @@ public final class FilteredEventsModel {
         }
     }
 
-    public void handleTagAdded(ContentTagAddedEvent e) {
+    synchronized public void handleTagAdded(ContentTagAddedEvent e) {
         Content content = e.getTag().getContent();
         Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, true);
         if (!updatedEventIDs.isEmpty()) {
@@ -342,11 +342,10 @@ public final class FilteredEventsModel {
         }
     }
 
-    public void handleTagDeleted(ContentTagDeletedEvent e) {
+    synchronized public void handleTagDeleted(ContentTagDeletedEvent e) {
         Content content = e.getTag().getContent();
         try {
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-
             Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, tagged);
             if (!updatedEventIDs.isEmpty()) {
                 eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));

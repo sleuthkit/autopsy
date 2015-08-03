@@ -723,7 +723,7 @@ public class EventDB {
         }
     }
 
-    Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+  Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
         HashSet<Long> eventIDs = new HashSet<>();
 
         DBLock.lock();
@@ -740,11 +740,8 @@ public class EventDB {
                     eventIDs.add(eventsToUpdateRS.getLong("event_id"));
                 }
                 try (Statement updateStatement = con.createStatement();) {
-                    int updatedRowCount = updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
+                    updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
                             + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
-                    if (updatedRowCount != eventIDs.size()) {
-                        LOGGER.log(Level.SEVERE, "Updated row count did not match expectation when marking events as {0}", (tagged ? "" : "(un)") + tagged); // NON-NLS
-                    }
                 }
             }
         } catch (SQLException ex) {

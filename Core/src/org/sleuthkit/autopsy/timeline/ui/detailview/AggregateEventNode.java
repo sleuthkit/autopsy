@@ -98,7 +98,7 @@ public class AggregateEventNode extends StackPane {
     private static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
 
     /** The event this AggregateEventNode represents visually */
-    private final AggregateEvent event;
+    private AggregateEvent event;
 
     private final AggregateEventNode parentEventNode;
 
@@ -233,7 +233,6 @@ public class AggregateEventNode extends StackPane {
             minusButton.setManaged(true);
             plusButton.setManaged(true);
             toFront();
-
         });
 
         setOnMouseExited((MouseEvent e) -> {
@@ -242,7 +241,6 @@ public class AggregateEventNode extends StackPane {
             plusButton.setVisible(false);
             minusButton.setManaged(false);
             plusButton.setManaged(false);
-
         });
 
         setOnMouseClicked(new EventMouseHandler());
@@ -266,7 +264,7 @@ public class AggregateEventNode extends StackPane {
         });
     }
 
-    private void installTooltip() {
+    synchronized private void installTooltip() {
         //TODO: all this work should probably go on a background thread...
         if (tooltip == null) {
 
@@ -339,7 +337,7 @@ public class AggregateEventNode extends StackPane {
         return subNodePane;
     }
 
-    public AggregateEvent getEvent() {
+    synchronized public AggregateEvent getEvent() {
         return event;
     }
 
@@ -364,7 +362,7 @@ public class AggregateEventNode extends StackPane {
     }
 
     /** @param descrVis the level of description that should be displayed */
-    final void setDescriptionVisibility(DescriptionVisibility descrVis) {
+    synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = event.getEventIDs().size();
 
@@ -408,18 +406,18 @@ public class AggregateEventNode extends StackPane {
      *
      * @param applied true to apply the highlight 'effect', false to remove it
      */
-    void applyHighlightEffect(boolean applied) {
+    synchronized void applyHighlightEffect(boolean applied) {
 
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
         } else {
             descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(getEvent().getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         }
     }
 
@@ -451,7 +449,7 @@ public class AggregateEventNode extends StackPane {
      *
      * @param newLOD
      */
-    private void loadSubClusters(DescriptionLOD newLOD) {
+    synchronized private void loadSubClusters(DescriptionLOD newLOD) {
         getSubNodePane().getChildren().clear();
         if (newLOD == event.getLOD()) {
             getSubNodePane().getChildren().clear();
@@ -533,8 +531,10 @@ public class AggregateEventNode extends StackPane {
     }
 
     @Subscribe
-    public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        if (event.removeTags(tagEvent.getEventIDs())) {
+    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+        AggregateEvent withTagsRemoved = event.withTagsRemoved(tagEvent.getEventIDs());
+        if (withTagsRemoved != event) {
+            event = withTagsRemoved;
             tooltip = null;
             boolean hasTags = event.getEventIDsWithTags().isEmpty() == false;
             Platform.runLater(() -> {
@@ -545,8 +545,10 @@ public class AggregateEventNode extends StackPane {
     }
 
     @Subscribe
-    public void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        if (event.addTags(tagEvent.getEventIDs())) {
+    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+        AggregateEvent withTagsAdded = event.withTagsAdded(tagEvent.getEventIDs());
+        if (withTagsAdded != event) {
+            event = withTagsAdded;
             tooltip = null;
             Platform.runLater(() -> {
                 tagIV.setManaged(true);
