@@ -36,9 +36,9 @@ import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.HashHitFilter;
+import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
+import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
-import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -80,7 +80,7 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<Filter> requestedFilter = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<RootFilter> requestedFilter = new ReadOnlyObjectWrapper<>();
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
@@ -107,7 +107,14 @@ public final class FilteredEventsModel {
             dataSourceFilter.setSelected(Boolean.TRUE);
             dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
         });
-        return new RootFilter(new HideKnownFilter(), new HashHitFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+
+        HashHitsFilter hashHitsFilter = new HashHitsFilter();
+        repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
+            HashSetFilter hashSourceFilter = new HashSetFilter(t.getValue(), t.getKey());
+            hashSourceFilter.setSelected(Boolean.TRUE);
+            hashHitsFilter.addHashSetFilter(hashSourceFilter);
+        });
+        return new RootFilter(new HideKnownFilter(), hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
     }
 
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
@@ -115,8 +122,14 @@ public final class FilteredEventsModel {
 
         repo.getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = (RootFilter) filter().get();
+            RootFilter rootFilter = filter().get();
             rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
+            requestedFilter.set(rootFilter.copyOf());
+        });
+        repo.getHashSetMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+            HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
+            RootFilter rootFilter = filter().get();
+            rootFilter.getHashHitsFilter().addHashSetFilter(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
@@ -152,17 +165,19 @@ public final class FilteredEventsModel {
     public TimeLineEvent getEventById(Long eventID) {
         return repo.getEventById(eventID);
     }
+
     public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
         return repo.getEventsById(eventIDs);
     }
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
-        final IntersectionFilter<?> intersect;
+        final RootFilter intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersect = Filter.intersect(new Filter[]{filter, requestedFilter.get()});
+            intersect = requestedFilter.get().copyOf();
         }
+        intersect.getSubFilters().add(filter);
         return repo.getEventIDs(overlap, intersect);
     }
 
@@ -178,7 +193,7 @@ public final class FilteredEventsModel {
      */
     public Map<EventType, Long> getEventCounts(Interval timeRange) {
 
-        final Filter filter;
+        final RootFilter filter;
         final EventTypeZoomLevel typeZoom;
         synchronized (this) {
             filter = requestedFilter.get();
@@ -202,7 +217,7 @@ public final class FilteredEventsModel {
         return requestedLOD.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<Filter> filter() {
+    synchronized public ReadOnlyObjectProperty<RootFilter> filter() {
         return requestedFilter.getReadOnlyProperty();
     }
 
@@ -226,7 +241,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or requested
      *         ranges
      */
-    public final Long getMinTime() {
+    public Long getMinTime() {
         return repo.getMinTime();
     }
 
@@ -235,7 +250,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or requested
      *         ranges
      */
-    public final Long getMaxTime() {
+    public Long getMaxTime() {
         return repo.getMaxTime();
     }
 
@@ -248,7 +263,7 @@ public final class FilteredEventsModel {
      */
     public List<AggregateEvent> getAggregatedEvents() {
         final Interval range;
-        final Filter filter;
+        final RootFilter filter;
         final EventTypeZoomLevel zoom;
         final DescriptionLOD lod;
         synchronized (this) {

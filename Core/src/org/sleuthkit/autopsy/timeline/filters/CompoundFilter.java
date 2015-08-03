@@ -68,7 +68,7 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
     private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {
         for (SubFilterType sf : newSubfilters) {
             //if a subfilter changes active state
-            sf.getActiveProperty().addListener((Observable observable) -> {
+            sf.getSelectedProperty().addListener((Observable observable) -> {
                 //set this filter acttive af any of the subfilters are active.
                 setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
             });

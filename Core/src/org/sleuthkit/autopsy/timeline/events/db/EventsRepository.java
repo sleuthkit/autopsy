@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
@@ -53,7 +54,7 @@ import org.sleuthkit.autopsy.timeline.events.type.ArtifactEventType;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -97,13 +98,18 @@ public class EventsRepository {
     private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
+    private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
     private final Case autoCase;
 
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
         return datasourcesMap;
     }
 
-    public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
+    synchronized public ObservableMap<Long, String> getHashSetMap() {
+        return hashSetMap;
+    }
+
+    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
 
@@ -119,8 +125,7 @@ public class EventsRepository {
         this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(autoCase);
-
-        populateDataSourceMap(autoCase.getSleuthkitCase());
+        populateFilterMaps(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
             //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getEventById));
@@ -199,7 +204,7 @@ public class EventsRepository {
         aggregateEventsCache.invalidateAll();
     }
 
-    public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return eventDB.getEventIDs(timeRange, filter);
     }
 
@@ -214,10 +219,6 @@ public class EventsRepository {
         }
         dbPopulationWorker = new DBPopulationWorker(r);
         dbPopulationWorker.execute();
-    }
-
-    public Map<Long, String> getDataSources() {
-        return Collections.unmodifiableMap(datasourcesMap);
     }
 
     public boolean hasDataSourceInfo() {
@@ -277,20 +278,20 @@ public class EventsRepository {
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
                             boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
+                            Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
-                            long time;
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashHit, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, trans);
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
@@ -326,7 +327,7 @@ public class EventsRepository {
                 eventDB.commitTransaction(trans, true);
             }
 
-            populateDataSourceMap(skCase);
+            populateFilterMaps(skCase);
             invalidateCaches();
 
             return null;
@@ -391,8 +392,10 @@ public class EventsRepository {
                     if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
 
-                        boolean hashHit = skCase.getAbstractFileById(bbart.getObjectID()).getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
-                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashHit, trans);
+                        AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
+                        boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
+                        Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
+                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, trans);
                     }
 
                     i++;
@@ -416,7 +419,11 @@ public class EventsRepository {
      *
      * @param skCase
      */
-    synchronized private void populateDataSourceMap(SleuthkitCase skCase) {
+    synchronized private void populateFilterMaps(SleuthkitCase skCase) {
+
+        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
+            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
+        }
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventDB.getDataSourceIDs()) {
             try {

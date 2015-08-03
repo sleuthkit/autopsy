@@ -65,7 +65,7 @@ public interface Filter {
 
     void setSelected(Boolean act);
 
-    SimpleBooleanProperty getActiveProperty();
+    SimpleBooleanProperty getSelectedProperty();
 
     /*
      * TODO: disabled state only affects the state of the checkboxes in the ui

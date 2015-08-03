@@ -46,6 +46,7 @@ import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -55,8 +56,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -584,9 +583,7 @@ public final class DrawableDB {
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
 
-            final Collection<String> hashSetNames = getHashSetsForFileFromAutopsy(f.getId());
-
-            for (String name : hashSetNames) {
+            for (String name : HashHitUtils.getHashSetNamesForFile(tskCase, f.getId())) {
 
                 // "insert or ignore into hash_sets (hash_set_name)  values (?)"
                 insertHashSetStmt.setString(1, name);
@@ -1127,23 +1124,8 @@ public final class DrawableDB {
      */
     @Nonnull
     public Set<String> getHashSetsForFileFromAutopsy(long fileID) {
-        try {
-            Set<String> hashNames = new HashSet<>();
-            List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+        return HashHitUtils.getHashSetNamesForFile(tskCase, fileID);
 
-            for (BlackboardArtifact a : arts) {
-                List<BlackboardAttribute> attrs = a.getAttributes();
-                for (BlackboardAttribute attr : attrs) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        hashNames.add(attr.getValueString());
-                    }
-                }
-            }
-            return hashNames;
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "failed to get hash sets for file", ex);
-        }
-        return Collections.emptySet();
     }
 
     /**
@@ -1212,6 +1194,7 @@ public final class DrawableDB {
     public boolean isVideoFile(AbstractFile f) {
         return isNull(f) ? false
                 : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
+        
     }
 
     /**
