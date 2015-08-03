@@ -125,7 +125,7 @@ public class ZoomParams {
         hash = 97 * hash + Objects.hashCode(this.timeRange.getStartMillis());
         hash = 97 * hash + Objects.hashCode(this.timeRange.getEndMillis());
         hash = 97 * hash + Objects.hashCode(this.typeZoomLevel);
-        hash = 97 * hash + Objects.hashCode(this.filter.isActive());
+        hash = 97 * hash + Objects.hashCode(this.filter.isSelected());
         hash = 97 * hash + Objects.hashCode(this.descrLOD);
 
         return hash;

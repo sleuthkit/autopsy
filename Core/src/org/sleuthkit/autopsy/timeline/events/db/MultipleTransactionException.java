@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.filters;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+package org.sleuthkit.autopsy.timeline.events.db;
 
 /**
- * Union(or) filter
+ *
  */
-abstract public class UnionFilter<SubFilterType extends Filter> extends CompoundFilter<SubFilterType> {
+public class MultipleTransactionException extends IllegalStateException {
 
-    public UnionFilter(ObservableList<SubFilterType> subFilters) {
-        super(subFilters);
+    private static final long serialVersionUID = 1L;
+    private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "Cannot have more than one open transaction."; // NON-NLS
+
+    public MultipleTransactionException() {
+        super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
     }
-
-    public UnionFilter() {
-        super(FXCollections.<SubFilterType>observableArrayList());
-    }
-
 }

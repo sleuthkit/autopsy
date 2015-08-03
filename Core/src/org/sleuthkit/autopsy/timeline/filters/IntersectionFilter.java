@@ -1,48 +1,64 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2014-15 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.List;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import org.openide.util.NbBundle;
 
 /** Intersection(And) filter */
-public class IntersectionFilter extends CompoundFilter {
+public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
 
-    public IntersectionFilter(ObservableList<Filter> subFilters) {
+    public IntersectionFilter(List<S> subFilters) {
         super(subFilters);
     }
 
     public IntersectionFilter() {
-        super(FXCollections.<Filter>observableArrayList());
+        super(FXCollections.<S>observableArrayList());
     }
 
     @Override
-    public IntersectionFilter copyOf() {
-        IntersectionFilter filter = new IntersectionFilter(FXCollections.observableArrayList(
-                this.getSubFilters().stream()
+    public IntersectionFilter<S> copyOf() {
+        @SuppressWarnings("unchecked")
+        IntersectionFilter<S> filter = new IntersectionFilter<>(
+                (List<S>) this.getSubFilters().stream()
                 .map(Filter::copyOf)
-                .collect(Collectors.toList())));
-        filter.setActive(isActive());
+                .collect(Collectors.toList()));
+        filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
     }
 
     @Override
+    @NbBundle.Messages({"# {0} - sub filter displaynames",
+        "IntersectionFilter.displayName.text=Intersection{0}"})
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(),
-                                   "IntersectionFilter.displayName.text",
-                                   getSubFilters().stream()
-                                                  .map(Filter::getDisplayName)
-                                                  .collect(Collectors.joining(",", "[", "]")));
+        String collect = getSubFilters().stream()
+                .map(Filter::getDisplayName)
+                .collect(Collectors.joining(",", "[", "]"));
+        return Bundle.IntersectionFilter_displayName_text(collect);
     }
 
     @Override
     public String getHTMLReportString() {
-        return getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+        return getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
     }
 
     @Override
@@ -53,9 +69,10 @@ public class IntersectionFilter extends CompoundFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IntersectionFilter other = (IntersectionFilter) obj;
+        @SuppressWarnings("unchecked")
+        final IntersectionFilter<S> other = (IntersectionFilter<S>) obj;
 
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
 
