@@ -45,7 +45,9 @@ import javax.swing.JOptionPane;
 import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -73,7 +75,8 @@ public class SingleUserCaseImporter implements Runnable {
     private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
     private static final int MAX_DB_NAME_LENGTH = 63;
-    final String SEP = System.getProperty("line.separator");
+    private final String SEP = System.getProperty("line.separator");
+    private final Object threadWaitNotifyLock = new Object();
 
     private final Path caseInputFolder;
     private final String caseOutputFolder;
@@ -88,6 +91,7 @@ public class SingleUserCaseImporter implements Runnable {
     private XMLCaseManagement oldXmlCaseManagement;
     private XMLCaseManagement newXmlCaseManagement;
     private boolean addTimestamp;
+    private int userAnswer = 0;
 
     /**
      * SingleUserCaseImporter constructor
@@ -117,6 +121,45 @@ public class SingleUserCaseImporter implements Runnable {
         this.db = database;
         this.notifyOnComplete = callback;
         this.addTimestamp = addTimestamp;
+    }
+
+    /**
+     * Tests if the input path has a corresponding image input folder and no
+     * repeated case names in the path. If both of these conditions are true, we
+     * can process this case, otherwise we can not.
+     *
+     * @param icd the import case data for the current case
+     * @return true if we can process it, false if not
+     */
+    private boolean canProcess(ImportCaseData icd) {
+        try {
+            String relativeCaseName = TimeStampUtils.removeTimeStamp(icd.getRelativeCaseName());
+            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName());
+
+            // check for image folder
+            Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
+            if (!testImageInputsFromOldCase.toFile().isDirectory()) {
+                log(testImageInputsFromOldCase.toString() + " has no corresponding images folder.  Not able to process.");
+                return false;
+            } else {
+                icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
+            }
+
+            Path imagePath = Paths.get(imageInputFolder);
+            // see if case name is in the image path. This causes bad things to happen with the parsing.
+            for (int x = 0; x < imagePath.getNameCount(); ++x) {
+                if (caseName.toLowerCase().equals(imagePath.getName(x).toString().toLowerCase())) {
+                    log(imagePath.toString() + " has case name \"" + caseName + "\" within path. Not able to process.");
+                    return false;
+                }
+            }
+
+        } catch (Exception ex) {
+            log(ex.getMessage());
+            return false; // anything goes wrong, bail.
+        }
+
+        return true;
     }
 
     /**
@@ -1192,49 +1235,6 @@ public class SingleUserCaseImporter implements Runnable {
         }
     }
 
-    /**
-     * Tests if the input path has a corresponding image input folder and no
-     * repeated case names in the path. If both of these conditions are true, we
-     * can process this case, otherwise we can not.
-     *
-     * @param icd the import case data for the current case
-     * @return true if we can process it, false if not
-     */
-    private boolean canProcess(ImportCaseData icd) {
-        try {
-            String relativeCaseName = TimeStampUtils.removeTimeStamp(icd.getRelativeCaseName());
-            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName());
-
-            // check for image folder
-            Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
-            if (!testImageInputsFromOldCase.toFile().isDirectory()) {
-                log(testImageInputsFromOldCase.toString() + " has no corresponding images folder.  Not able to process.");
-                return false;
-            } else {
-                icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
-            }
-
-            // see if case name is repeated in the path. This causes bad things to happen with the parsing.
-            int hits = 0;
-            for (int x = 0; x < testImageInputsFromOldCase.getNameCount(); ++x) {
-                if (caseName.toLowerCase().equals(testImageInputsFromOldCase.getName(x).toString().toLowerCase())) {
-                    ++hits;
-                }
-            }
-            if (hits > 1) {
-                log(testImageInputsFromOldCase.toString() + " has case name \"" + caseName + "\" repeated within path. Not able to process.");
-                return false;
-            }
-
-        } catch (Exception ex) {
-            log(ex.getMessage());
-            return false; // anything goes wrong, bail.
-        }
-
-        return true;
-
-    }
-
     private class ImportCaseData {
 
         private Path specificCaseInputFolder;
@@ -1372,11 +1372,25 @@ public class SingleUserCaseImporter implements Runnable {
             }
         };
 
-        int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                jsp,
-                NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ContinueWithImport"), // NON-NLS
-                OK_CANCEL_OPTION);
-        if (answer == JOptionPane.OK_OPTION) {
+        SwingUtilities.invokeLater(() -> {
+            userAnswer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                    jsp,
+                    NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ContinueWithImport"), // NON-NLS
+                    OK_CANCEL_OPTION);
+            synchronized (threadWaitNotifyLock) {
+                threadWaitNotifyLock.notify();
+            }
+        });
+
+        synchronized (threadWaitNotifyLock) {
+            try {
+                threadWaitNotifyLock.wait();
+            } catch (InterruptedException ex) {
+                log("Unable to wait for user input");
+            }
+        }
+
+        if (userAnswer == JOptionPane.OK_OPTION) {
             // feed .aut files in one by one for processing
             for (ImportCaseData icd : ableToProcess) {
                 if (false == processCase(icd)) {
