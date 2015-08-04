@@ -27,7 +27,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
-import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -47,11 +46,7 @@ public final class CaseOpenAction implements ActionListener {
      * Constructs an action that opens an existing case.
      */
     public CaseOpenAction() {
-        caseMetadataFileFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(CaseOpenAction.class,
-                        "CaseOpenAction.autFilter.title", Version.getName(),
-                        Case.CASE_DOT_EXTENSION),
-                Case.CASE_EXTENSION);
+        caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), Case.CASE_DOT_EXTENSION), Case.CASE_EXTENSION);
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
@@ -96,12 +91,10 @@ public final class CaseOpenAction implements ActionListener {
                     Case.open(path);
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
-                                ex.getMessage(),
-                                NbBundle.getMessage(this.getClass(),
-                                        "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                JOptionPane.ERROR_MESSAGE);
-                        StartupWindowProvider.getInstance().open();
+                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        if (!Case.isCaseOpen()) {
+                            StartupWindowProvider.getInstance().open();
+                        }
                     });
                 }
             }).start();

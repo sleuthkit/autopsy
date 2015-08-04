@@ -509,7 +509,7 @@ public class Case {
      * TODO: Deprecate this and throw a more general exception.
      */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
-        
+
         if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
         }
@@ -576,7 +576,17 @@ public class Case {
             changeCase(openedCase);
 
         } catch (CaseMetadataException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error opening the case: ", ex); //NON-NLS
+            /**
+             * Clean-up the case if it was actually opened. TODO: Do this
+             * better.
+             */
+            try {
+                Case badCase = Case.getCurrentCase();
+                badCase.closeCase();
+            } catch (CaseActionException | IllegalStateException unused) {
+                // Already logged.
+            }
+
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
         }
     }
