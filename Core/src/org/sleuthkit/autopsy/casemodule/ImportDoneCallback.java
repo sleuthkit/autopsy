@@ -2,5 +2,5 @@ package org.sleuthkit.autopsy.casemodule;
 
 public interface ImportDoneCallback {
 
-    void importDoneCallback(boolean result);
+    void importDoneCallback(boolean result, String resultString);
 }
