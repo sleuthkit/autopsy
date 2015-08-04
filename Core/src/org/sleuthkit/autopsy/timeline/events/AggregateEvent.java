@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.events;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
+import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -31,6 +32,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
  * the sub events should have the same type and matching descriptions at the
  * designated 'zoom level'.
  */
+@Immutable
 public class AggregateEvent {
 
     /** the smallest time interval containing all the aggregated events */
@@ -137,7 +139,7 @@ public class AggregateEvent {
     public AggregateEvent withTagsRemoved(Set<Long> unTaggedIDs) {
         Sets.SetView<Long> difference = Sets.difference(tagged, unTaggedIDs);
         if (difference.size() < tagged.size()) {
-            return new AggregateEvent(span, type, unTaggedIDs, hashHits, difference.immutableCopy(), description, lod);
+            return new AggregateEvent(span, type, eventIDs, hashHits, difference.immutableCopy(), description, lod);
         }
         return this; //no change
     }

@@ -25,7 +25,6 @@ import com.google.common.cache.RemovalNotification;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,13 +129,13 @@ public class EventsRepository {
         this.eventDB = EventDB.getEventDB(autoCase);
         populateFilterMaps(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
-            //LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
+//            LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getEventById));
         eventCountsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, Map<EventType, Long>> rn) -> {
             //LOGGER.log(Level.INFO, "evicting counts: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::countEventsByType));
         aggregateEventsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, List<AggregateEvent>> rn) -> {
-            //LOGGER.log(Level.INFO, "evicting aggregated events: {0}", rn.toString());
+//            LOGGER.log(Level.INFO, "evicting aggregated events: {0}", rn.toString());
         }).build(CacheLoader.from(eventDB::getAggregatedEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
@@ -183,19 +182,18 @@ public class EventsRepository {
         return idToEventCache.getUnchecked(eventID);
     }
 
-    public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
+    synchronized public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());
 
     }
 
-    public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
-
+    synchronized public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
         return aggregateEventsCache.getUnchecked(params);
     }
 
-    public Map<EventType, Long> countEvents(ZoomParams params) {
+    synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
         return eventCountsCache.getUnchecked(params);
     }
 
@@ -204,6 +202,7 @@ public class EventsRepository {
         maxCache.invalidateAll();
         eventCountsCache.invalidateAll();
         aggregateEventsCache.invalidateAll();
+        idToEventCache.invalidateAll();
     }
 
     public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
@@ -286,8 +285,8 @@ public class EventsRepository {
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
-                            boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
-                            Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
+                            
+                            Set<String> hashSets =  HashHitUtils.getHashSetNamesForFile(skCase, f.getId());
                             boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
@@ -397,8 +396,7 @@ public class EventsRepository {
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
 
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
-                        boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
-                        Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
+                        Set<String> hashSets =  HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) ;
 
                         boolean tagged = tagsManager.getContentTagsByContent(f).isEmpty() == false;
                         tagged |= tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
@@ -441,10 +439,10 @@ public class EventsRepository {
     }
 
   synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, true);
+        Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
-            idToEventCache.invalidateAll();
+            idToEventCache.invalidateAll(updatedEventIDs);
         }
         return updatedEventIDs;
     }

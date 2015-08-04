@@ -623,7 +623,7 @@ public class EventDB {
         return hasDBColumn("hash_hit");
     }
 
-    void insertEvent(long time, EventType type, long datasourceID, Long objID,
+    void insertEvent(long time, EventType type, long datasourceID, long objID,
             Long artifactID, String fullDescription, String medDescription,
             String shortDescription, TskData.FileKnown known, Set<String> hashSets, boolean tagged) {
 
@@ -638,7 +638,7 @@ public class EventDB {
      * @param f
      * @param transaction
      */
-    void insertEvent(long time, EventType type, long datasourceID, Long objID,
+    void insertEvent(long time, EventType type, long datasourceID, long objID,
             Long artifactID, String fullDescription, String medDescription,
             String shortDescription, TskData.FileKnown known, Set<String> hashSetNames,
             boolean tagged,
@@ -659,15 +659,11 @@ public class EventDB {
             //"INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hashHit, tagged) " 
             insertRowStmt.clearParameters();
             insertRowStmt.setLong(1, datasourceID);
-            if (objID != null) {
-                insertRowStmt.setLong(2, objID);
-            } else {
-                insertRowStmt.setNull(2, Types.INTEGER);
-            }
+            insertRowStmt.setLong(2, objID);
             if (artifactID != null) {
                 insertRowStmt.setLong(3, artifactID);
             } else {
-                insertRowStmt.setNull(3, Types.INTEGER);
+                insertRowStmt.setNull(3, Types.NULL);
             }
             insertRowStmt.setLong(4, time);
 
@@ -723,21 +719,22 @@ public class EventDB {
         }
     }
 
-  Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+    Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
         HashSet<Long> eventIDs = new HashSet<>();
 
         DBLock.lock();
+
         try {
             selectEventsFromOBjectAndArtifactStmt.clearParameters();
             selectEventsFromOBjectAndArtifactStmt.setLong(1, objectID);
             if (Objects.isNull(artifactID)) {
-                selectEventsFromOBjectAndArtifactStmt.setNull(2, Types.INTEGER);
+                selectEventsFromOBjectAndArtifactStmt.setNull(2, Types.NULL);
             } else {
                 selectEventsFromOBjectAndArtifactStmt.setLong(2, artifactID);
             }
-            try (ResultSet eventsToUpdateRS = selectEventsFromOBjectAndArtifactStmt.executeQuery();) {
-                while (eventsToUpdateRS.next()) {
-                    eventIDs.add(eventsToUpdateRS.getLong("event_id"));
+            try (ResultSet executeQuery = selectEventsFromOBjectAndArtifactStmt.executeQuery();) {
+                while (executeQuery.next()) {
+                    eventIDs.add(executeQuery.getLong("event_id"));
                 }
                 try (Statement updateStatement = con.createStatement();) {
                     updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
@@ -951,40 +948,34 @@ public class EventDB {
         System.out.println(query);
         // scoop up requested events in groups organized by interval, type, and desription
         try (ResultSet rs = con.createStatement().executeQuery(query);) {
-
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.start();
-
-            stopwatch.stop();
-            System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
             while (rs.next()) {
+                Interval interval = new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone());
                 String eventIDS = rs.getString("event_ids");
-                HashSet<Long> hashHits = new HashSet<>();
-                try (Statement st2 = con.createStatement();) {
-
-                    ResultSet executeQuery = st2.executeQuery("select event_id from events where event_id in (" + eventIDS + ") and hash_hit = 1");
-                    while (executeQuery.next()) {
-                        hashHits.add(executeQuery.getLong("event_id"));
-                    }
-                }
-                HashSet<Long> tagged = new HashSet<>();
-                try (Statement st3 = con.createStatement();) {
-
-                    ResultSet executeQuery = st3.executeQuery("select event_id from events where event_id in (" + eventIDS + ") and tagged = 1");
-                    while (executeQuery.next()) {
-                        tagged.add(executeQuery.getLong("event_id"));
-                    }
-                }
-
                 EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];
 
+                HashSet<Long> hashHits = new HashSet<>();
+                HashSet<Long> tagged = new HashSet<>();
+                try (Statement st2 = con.createStatement();
+                        ResultSet hashQueryResults = st2.executeQuery("select event_id , tagged, hash_hit from events where event_id in (" + eventIDS + ")");) {
+                    while (hashQueryResults.next()) {
+                        long eventID = hashQueryResults.getLong("event_id");
+                        if (hashQueryResults.getInt("tagged") != 0) {
+                            tagged.add(eventID);
+                        }
+                        if (hashQueryResults.getInt("hash_hit") != 0) {
+                            hashHits.add(eventID);
+                        }
+                    }
+                }
+
                 AggregateEvent aggregateEvent = new AggregateEvent(
-                        new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()), // NON-NLS
+                        interval, // NON-NLS
                         type,
                         Stream.of(eventIDS.split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
                         hashHits,
                         tagged,
-                        rs.getString(descriptionColumn), lod);
+                        rs.getString(descriptionColumn),
+                        lod);
 
                 //put events in map from type/descrition -> event
                 SetMultimap<String, AggregateEvent> descrMap = typeMap.get(type);

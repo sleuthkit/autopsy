@@ -59,7 +59,6 @@ import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
@@ -87,7 +86,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
 public class AggregateEventNode extends StackPane {
 
-    private static final Image HASH_PIN = new Image(AggregateEventNode.class.getResourceAsStream("/org/sleuthkit/autopsy/images/hashset_hits.png"));
+    private static final Logger LOGGER = Logger.getLogger(AggregateEventNode.class.getName());
+
+    private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");
     private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
     private final static Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
     private final static Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
@@ -282,7 +283,7 @@ public class AggregateEventNode extends StackPane {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
+                    LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
                 }
             }
 
@@ -307,7 +308,7 @@ public class AggregateEventNode extends StackPane {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting tag info for event.", ex);
+                    LOGGER.log(Level.SEVERE, "Error getting tag info for event.", ex);
                 }
             }
 
@@ -447,16 +448,15 @@ public class AggregateEventNode extends StackPane {
     /**
      * loads sub-clusters at the given Description LOD
      *
-     * @param newLOD
+     * @param newDescriptionLOD
      */
-    synchronized private void loadSubClusters(DescriptionLOD newLOD) {
+    synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
         getSubNodePane().getChildren().clear();
-        if (newLOD == event.getLOD()) {
-            getSubNodePane().getChildren().clear();
+        if (newDescriptionLOD == event.getLOD()) {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
-            RootFilter combinedFilter = chart.getFilteredEvents().filter().get().copyOf();
+            RootFilter combinedFilter = eventsModel.filter().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
             combinedFilter.getSubFilters().addAll(new TextFilter(event.getDescription()),
                     new TypeFilter(event.getType()));
@@ -471,14 +471,14 @@ public class AggregateEventNode extends StackPane {
                         @Override
                         protected List<AggregateEventNode> call() throws Exception {
                             //query for the sub-clusters
-                            List<AggregateEvent> aggregatedEvents = chart.getFilteredEvents().getAggregatedEvents(new ZoomParams(span,
-                                            chart.getFilteredEvents().eventTypeZoom().get(),
+                            List<AggregateEvent> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
+                                            eventsModel.eventTypeZoom().get(),
                                             combinedFilter,
-                                            newLOD));
+                                            newDescriptionLOD));
                             //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
-                            return aggregatedEvents.stream().map((AggregateEvent t) -> {
-                                AggregateEventNode subNode = new AggregateEventNode(t, AggregateEventNode.this, chart);
-                                subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(t.getSpan().getStartMillis())) - getLayoutXCompensation());
+                            return aggregatedEvents.stream().map(aggEvent -> {
+                                AggregateEventNode subNode = new AggregateEventNode(aggEvent, AggregateEventNode.this, chart);
+                                subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(aggEvent.getSpan().getStartMillis())) - getLayoutXCompensation());
                                 return subNode;
                             }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
                         }
@@ -494,7 +494,7 @@ public class AggregateEventNode extends StackPane {
                                 chart.requestChartLayout();
                                 chart.setCursor(null);
                             } catch (InterruptedException | ExecutionException ex) {
-                                Exceptions.printStackTrace(ex);
+                                LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                             }
                         }
                     };
