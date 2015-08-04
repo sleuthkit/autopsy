@@ -36,7 +36,8 @@ import org.openide.util.actions.SystemAction;
 
     /** the constructor */
     UpdateRecentCases(){
-        length = RecentCases.LENGTH;
+        // display last 5 cases.
+        length = RecentCases.LENGTH - 1;
     }
 
     /**
