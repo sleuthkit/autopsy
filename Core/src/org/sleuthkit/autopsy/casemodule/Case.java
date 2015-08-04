@@ -509,6 +509,11 @@ public class Case {
      * TODO: Deprecate this and throw a more general exception.
      */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
+        
+        if (!caseMetadataFilePath.endsWith(CASE_DOT_EXTENSION)) {
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CASE_DOT_EXTENSION));
+        }
+
         logger.log(Level.INFO, "Opening case, case metadata file path: {0}", caseMetadataFilePath); //NON-NLS
         try {
             /**
