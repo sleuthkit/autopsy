@@ -16,14 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -37,7 +33,7 @@ import org.openide.util.actions.Presenter;
  * The action to close the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
- final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar{
+final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     JButton toolbarButton = new JButton();
 
@@ -49,13 +45,7 @@ import org.openide.util.actions.Presenter;
         putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
 
         // set action of the toolbar button
-        toolbarButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                CaseCloseAction.this.actionPerformed(e);
-            }
-        });
+        toolbarButton.addActionListener(CaseCloseAction.this::actionPerformed);
 
         this.setEnabled(false);
     }
@@ -63,7 +53,7 @@ import org.openide.util.actions.Presenter;
     /**
      * Closes the current opened case.
      *
-     * @param e  the action event for this method
+     * @param e the action event for this method
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -75,11 +65,11 @@ import org.openide.util.actions.Presenter;
 
             @Override
             protected Void doInBackground() throws Exception {
-                try{
+                try {
                     Case result = Case.getCurrentCase();
                     result.closeCase();
-                } catch (CaseActionException | IllegalStateException ex){
-                    Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex); //NON-NLS
+                } catch (CaseActionException | IllegalStateException unused) {
+                    // Already logged.
                 }
                 return null;
             }
@@ -92,7 +82,8 @@ import org.openide.util.actions.Presenter;
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)" instead of this method.
+     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
+     * instead of this method.
      */
     @Override
     public void performAction() {
@@ -110,18 +101,18 @@ import org.openide.util.actions.Presenter;
 
     /**
      * Gets the HelpCtx associated with implementing object
-     * 
+     *
      * @return HelpCtx or HelpCtx.DEFAULT_HELP
      */
     @Override
     public HelpCtx getHelpCtx() {
-        return HelpCtx.DEFAULT_HELP; 
+        return HelpCtx.DEFAULT_HELP;
     }
 
     /**
      * Returns the toolbar component of this action
      *
-     * @return component  the toolbar button
+     * @return component the toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -134,10 +125,10 @@ import org.openide.util.actions.Presenter;
     /**
      * Set this action to be enabled/disabled
      *
-     * @param value  whether to enable this action or not
+     * @param value whether to enable this action or not
      */
     @Override
-    public void setEnabled(boolean value){
+    public void setEnabled(boolean value) {
         super.setEnabled(value);
         toolbarButton.setEnabled(value);
     }

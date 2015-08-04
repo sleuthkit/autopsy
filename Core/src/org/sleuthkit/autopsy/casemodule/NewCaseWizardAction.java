@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -24,7 +23,6 @@ import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
-import java.util.concurrent.ExecutionException;
 import javax.swing.JComponent;
 import javax.swing.SwingWorker;
 import javax.swing.SwingUtilities;
@@ -40,17 +38,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * Action to open the New Case wizard.
  */
- final class NewCaseWizardAction extends CallableSystemAction {
+final class NewCaseWizardAction extends CallableSystemAction {
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
-    
+
     private static final Logger logger = Logger.getLogger(NewCaseWizardAction.class.getName());
 
     @Override
@@ -61,9 +58,9 @@ import org.sleuthkit.datamodel.TskData.DbType;
             String closeCurrentCase = NbBundle
                     .getMessage(this.getClass(), "NewCaseWizardAction.closeCurCase.confMsg.msg");
             NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                                                                   NbBundle.getMessage(this.getClass(),
-                                                                                       "NewCaseWizardAction.closeCurCase.confMsg.title"),
-                                                                   NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "NewCaseWizardAction.closeCurCase.confMsg.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             d.setValue(NotifyDescriptor.NO_OPTION);
 
             Object res = DialogDisplayer.getDefault().notify(d);
@@ -92,18 +89,18 @@ import org.sleuthkit.datamodel.TskData.DbType;
         dialog.setVisible(true);
         dialog.toFront();
 
-        if(wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION){
+        if (wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION) {
             new SwingWorker<Void, Void>() {
 
                 @Override
                 protected Void doInBackground() throws Exception {
                     // Create case.
-                    
+
                     String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
                     String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-                    CaseType caseType = CaseType.values()[(int)wizardDescriptor.getProperty("caseType")]; //NON-NLS
+                    CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
 
                     Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
@@ -113,9 +110,9 @@ import org.sleuthkit.datamodel.TskData.DbType;
                 protected void done() {
                     try {
                         get();
-                        CaseType currentCaseType = CaseType.values()[(int)wizardDescriptor.getProperty("caseType")]; //NON-NLS
+                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
                         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-                        if ((currentCaseType==CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.canConnect())) {
+                        if ((currentCaseType == CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.canConnect())) {
                             AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                             addImageAction.actionPerformed(null);
                         } else {
@@ -125,50 +122,48 @@ import org.sleuthkit.datamodel.TskData.DbType;
                                     JOptionPane.ERROR_MESSAGE);
                             doFailedCaseCleanup(wizardDescriptor);
                         }
-                    
-                    
+
                     } catch (Exception ex) {
                         final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                "CaseCreateAction.msgDlg.cantCreateCase.msg")+" "+caseName, 
-                                NbBundle.getMessage(this.getClass(),
-                                "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                JOptionPane.ERROR_MESSAGE);
+                                    "CaseCreateAction.msgDlg.cantCreateCase.msg") + " " + caseName,
+                                    NbBundle.getMessage(this.getClass(),
+                                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                    JOptionPane.ERROR_MESSAGE);
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }
                 }
-            }.execute();            
-            
-            
+            }.execute();
+
         } else {
             new Thread(() -> {
                 doFailedCaseCleanup(wizardDescriptor);
             }).start();
         }
-     }
-    
-    private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor){
+    }
+
+    private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {
         String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
 
         if (createdDirectory != null) {
-            logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: " + createdDirectory); //NON-NLS
-            Case.deleteCaseDirectory(new File(createdDirectory));        
+            logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: {0}", createdDirectory); //NON-NLS
+            Case.deleteCaseDirectory(new File(createdDirectory));
         }
     }
 
     /**
-     * Initialize panels representing individual wizard's steps and sets
-     * various properties for them influencing wizard appearance.
+     * Initialize panels representing individual wizard's steps and sets various
+     * properties for them influencing wizard appearance.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
-                        new NewCaseWizardPanel1(),
-                        new NewCaseWizardPanel2()
-                    };
+                new NewCaseWizardPanel1(),
+                new NewCaseWizardPanel2()
+            };
             String[] steps = new String[panels.length];
             for (int i = 0; i < panels.length; i++) {
                 Component c = panels[i].getComponent();
@@ -179,7 +174,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
                 if (c instanceof JComponent) { // assume Swing components
                     JComponent jc = (JComponent) c;
                     // Sets step number of a component
-                    jc.putClientProperty("WizardPanel_contentSelectedIndex", new Integer(i));
+                    jc.putClientProperty("WizardPanel_contentSelectedIndex", i);
                     // Sets steps names for a panel
                     jc.putClientProperty("WizardPanel_contentData", steps);
                     // Turn on subtitle creation on each step
