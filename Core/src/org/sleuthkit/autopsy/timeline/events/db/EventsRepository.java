@@ -44,7 +44,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
@@ -278,7 +277,7 @@ public class EventsRepository {
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
                             boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
-                            Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
+                            Set<String> hashSets = hashHit ? f.getHashSetNames() : Collections.emptySet();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
@@ -394,7 +393,7 @@ public class EventsRepository {
 
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
                         boolean hashHit = f.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT) > 0;
-                        Set<String> hashSets = hashHit ? HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) : Collections.emptySet();
+                        Set<String> hashSets = hashHit ? f.getHashSetNames() : Collections.emptySet();
                         eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, trans);
                     }
 
