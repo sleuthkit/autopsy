@@ -133,7 +133,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         if (this.eventType != other.eventType) {
             return false;
         }
-        return hashEqualSubFilters(this, other);
+        return areSubFiltersEqual(this, other);
     }
 
     @Override

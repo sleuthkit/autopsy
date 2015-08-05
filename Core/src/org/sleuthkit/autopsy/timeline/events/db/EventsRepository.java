@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
@@ -57,6 +58,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -95,10 +97,15 @@ public class EventsRepository {
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
+    private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     private final Case autoCase;
 
     public Case getAutoCase() {
         return autoCase;
+    }
+
+    public ObservableList<TagName> getTagNames() {
+        return tagNames;
     }
 
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
@@ -125,7 +132,7 @@ public class EventsRepository {
         this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(autoCase);
-        populateFilterMaps(autoCase.getSleuthkitCase());
+        populateFilterData(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder()
                 .maximumSize(5000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
@@ -289,8 +296,8 @@ public class EventsRepository {
                             String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
                             String medD = datasourceName + parentPath;
-                            final TskData.FileKnown known = f.getKnown();                   
-                            Set<String> hashSets =  f.getHashSetNames() ;
+                            final TskData.FileKnown known = f.getKnown();
+                            Set<String> hashSets = f.getHashSetNames();
                             boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
@@ -336,7 +343,7 @@ public class EventsRepository {
                 eventDB.commitTransaction(trans, true);
             }
 
-            populateFilterMaps(skCase);
+            populateFilterData(skCase);
             invalidateCaches();
 
             return null;
@@ -400,7 +407,7 @@ public class EventsRepository {
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
 
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
-                        Set<String> hashSets =  f.getHashSetNames();
+                        Set<String> hashSets = f.getHashSetNames();
                         boolean tagged = tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
 
                         eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, tagged, trans);
@@ -425,7 +432,7 @@ public class EventsRepository {
      *
      * @param skCase
      */
-    synchronized private void populateFilterMaps(SleuthkitCase skCase) {
+    synchronized private void populateFilterData(SleuthkitCase skCase) {
 
         for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
             hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
@@ -438,13 +445,24 @@ public class EventsRepository {
                 LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
             }
         }
+
+        try {
+            tagNames.setAll(skCase.getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
     }
 
-  synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+    synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
         Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);
+            try {
+                tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+            }
         }
         return updatedEventIDs;
     }

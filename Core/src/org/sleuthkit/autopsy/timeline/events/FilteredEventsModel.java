@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
@@ -48,6 +49,8 @@ import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -55,6 +58,7 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -131,7 +135,14 @@ public final class FilteredEventsModel {
             hashSourceFilter.setSelected(Boolean.TRUE);
             hashHitsFilter.addHashSetFilter(hashSourceFilter);
         });
-        return new RootFilter(new HideKnownFilter(), hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+
+        TagsFilter tagsFilter = new TagsFilter();
+        repo.getTagNames().stream().forEach(t -> {
+            TagNameFilter tagNameFilter = new TagNameFilter(t);
+            tagNameFilter.setSelected(Boolean.TRUE);
+            tagsFilter.addTagFilter(tagNameFilter);
+        });
+        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
     }
 
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
@@ -147,6 +158,19 @@ public final class FilteredEventsModel {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
             RootFilter rootFilter = filter().get();
             rootFilter.getHashHitsFilter().addHashSetFilter(hashSetFilter);
+            requestedFilter.set(rootFilter.copyOf());
+        });
+        repo.getTagNames().addListener((ListChangeListener.Change<? extends TagName> c) -> {
+            RootFilter rootFilter = filter().get();
+            TagsFilter tagsFilter = rootFilter.getTagsFilter();
+            while (c.next()) {
+                c.getRemoved().forEach(tagsFilter::removeFilterForTag);
+                c.getAddedSubList().forEach((TagName t) -> {
+                    TagNameFilter tagFilter = new TagNameFilter(t);
+                    tagsFilter.addTagFilter(tagFilter);
+                });
+
+            }
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());

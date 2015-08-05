@@ -19,31 +19,26 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.TagName;
 
 /**
- * Filter for an individual hash set
+ * Filter for an individual TagName
  */
-public class HashSetFilter extends AbstractFilter {
+public class TagNameFilter extends AbstractFilter {
 
-    private final String hashSetName;
-    private final long hashSetID;
+    private final TagName tagName;
 
-    public long getHashSetID() {
-        return hashSetID;
+    public TagNameFilter(TagName tagName) {
+        this.tagName = tagName;
     }
 
-    public String getHashSetName() {
-        return hashSetName;
-    }
-
-    public HashSetFilter(String hashSetName, long hashSetID) {
-        this.hashSetName = hashSetName;
-        this.hashSetID = hashSetID;
+    public TagName getTagName() {
+        return tagName;
     }
 
     @Override
-    synchronized public HashSetFilter copyOf() {
-        HashSetFilter filterCopy = new HashSetFilter(getHashSetName(), getHashSetID());
+    synchronized public TagNameFilter copyOf() {
+        TagNameFilter filterCopy = new TagNameFilter(getTagName());
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         return filterCopy;
@@ -51,7 +46,7 @@ public class HashSetFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return hashSetName;
+        return tagName.getDisplayName();
     }
 
     @Override
@@ -61,9 +56,8 @@ public class HashSetFilter extends AbstractFilter {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.hashSetName);
-        hash = 37 * hash + (int) (this.hashSetID ^ (this.hashSetID >>> 32));
+        int hash = 3;
+        hash = 53 * hash + Objects.hashCode(this.tagName);
         return hash;
     }
 
@@ -75,13 +69,11 @@ public class HashSetFilter extends AbstractFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final HashSetFilter other = (HashSetFilter) obj;
-        if (!Objects.equals(this.hashSetName, other.hashSetName)) {
+        final TagNameFilter other = (TagNameFilter) obj;
+        if (!Objects.equals(this.tagName, other.tagName)) {
             return false;
         }
-        if (this.hashSetID != other.hashSetID) {
-            return false;
-        }
+
         return isSelected() == other.isSelected();
     }
 }

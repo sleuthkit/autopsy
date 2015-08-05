@@ -8,30 +8,31 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  *
  */
-public class HashHitsFilter extends UnionFilter<HashSetFilter> {
+public class TagsFilter extends UnionFilter<TagNameFilter> {
 
     @Override
-    @NbBundle.Messages("hashHitsFilter.displayName.text=Only Hash Set Hits")
+    @NbBundle.Messages("tagsFilter.displayName.text=Only Events Tagged")
     public String getDisplayName() {
-        return Bundle.hashHitsFilter_displayName_text();
+        return Bundle.tagsFilter_displayName_text();
     }
 
-    public HashHitsFilter() {
+    public TagsFilter() {
         getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 
     @Override
-    public HashHitsFilter copyOf() {
-        HashHitsFilter filterCopy = new HashHitsFilter();
+    public TagsFilter copyOf() {
+        TagsFilter filterCopy = new TagsFilter();
         filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((HashSetFilter t) -> {
-            filterCopy.addHashSetFilter(t.copyOf());
+        this.getSubFilters().forEach((TagNameFilter t) -> {
+            filterCopy.addTagFilter(t.copyOf());
         });
         return filterCopy;
     }
@@ -62,7 +63,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final HashHitsFilter other = (HashHitsFilter) obj;
+        final TagsFilter other = (TagsFilter) obj;
 
         if (isSelected() != other.isSelected()) {
             return false;
@@ -71,12 +72,16 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addHashSetFilter(HashSetFilter hashSetFilter) {
-        if (getSubFilters().stream().map(HashSetFilter.class::cast)
-                .map(HashSetFilter::getHashSetID)
-                .filter(t -> t == hashSetFilter.getHashSetID())
+    public void addTagFilter(TagNameFilter tagFilter) {
+        if (getSubFilters().stream().map(TagNameFilter.class::cast)
+                .map(TagNameFilter::getTagName)
+                .filter(t -> t == tagFilter.getTagName())
                 .findAny().isPresent() == false) {
-            getSubFilters().add(hashSetFilter);
+            getSubFilters().add(tagFilter);
         }
+    }
+
+    public void removeFilterForTag(TagName tagName) {
+        getSubFilters().removeIf((TagNameFilter t) -> t.getTagName().equals(tagName));
     }
 }

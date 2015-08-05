@@ -90,7 +90,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
             return false;
         }
 
-        return hashEqualSubFilters(this, other);
+        return areSubFiltersEqual(this, other);
 
     }
 

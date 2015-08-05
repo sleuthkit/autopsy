@@ -248,7 +248,7 @@ public class EventDB {
      */
     Map<EventType, Long> countEventsByType(ZoomParams params) {
         if (params.getTimeRange() != null) {
-            return countEvents(params.getTimeRange().getStartMillis() / 1000,
+            return countEventsByType(params.getTimeRange().getStartMillis() / 1000,
                     params.getTimeRange().getEndMillis() / 1000,
                     params.getFilter(), params.getTypeZoomLevel());
         } else {
@@ -791,6 +791,17 @@ public class EventDB {
         DBLock.lock();
         //this should match Sleuthkit db setupt
         try (Statement statement = con.createStatement()) {
+            String toString = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
+            System.out.println(toString);
+
+            ResultSet rs = statement.executeQuery("PRAGMA database_list");
+            boolean found = false;
+            while (rs.next() && !found) {
+                found |= "autopsy".equalsIgnoreCase(rs.getString("name"));
+            }
+            if (!found) {
+                statement.execute("ATTACH DATABASE 'file:" + toString + "?mode=ro' AS autopsy");
+            }
             //reduce i/o operations, we have no OS crash recovery anyway
             statement.execute("PRAGMA synchronous = OFF;"); // NON-NLS
             //we don't use this feature, so turn it off for minimal speed up on queries
@@ -846,7 +857,7 @@ public class EventDB {
      * @return a map organizing the counts in a hierarchy from date > eventtype>
      *         count
      */
-    private Map<EventType, Long> countEvents(Long startTime, Long endTime, RootFilter filter, EventTypeZoomLevel zoomLevel) {
+    private Map<EventType, Long> countEventsByType(Long startTime, Long endTime, RootFilter filter, EventTypeZoomLevel zoomLevel) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
@@ -931,7 +942,7 @@ public class EventDB {
         DBLock.lock();
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
                 + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
-                + " from events" + useHashHitTablesHelper(filter) + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)+ " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
         // scoop up requested events in groups organized by interval, type, and desription
@@ -1021,6 +1032,9 @@ public class EventDB {
 
     private String useHashHitTablesHelper(RootFilter filter) {
         return SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits" : "";
+    }
+    private String useTagTablesHelper(RootFilter filter) {
+        return SQLHelper.hasActiveTagFilter(filter) ? ", content_tags, blackboard_artifact_tags " : "";
     }
 
     private static String useSubTypeHelper(final boolean useSubTypes) {
