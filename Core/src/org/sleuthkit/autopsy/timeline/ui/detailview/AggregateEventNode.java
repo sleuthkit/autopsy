@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -68,18 +68,18 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
 public class AggregateEventNode extends StackPane {
+
+    private static final Logger LOGGER = Logger.getLogger(AggregateEventNode.class.getName());
 
     private static final Image HASH_PIN = new Image(AggregateEventNode.class.getResourceAsStream("/org/sleuthkit/autopsy/images/hashset_hits.png"));
     private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
@@ -252,7 +252,6 @@ public class AggregateEventNode extends StackPane {
     }
 
     private void installTooltip() {
-
         if (tooltip == null) {
             String collect = "";
             if (!event.getEventIDsWithHashHits().isEmpty()) {
@@ -260,17 +259,13 @@ public class AggregateEventNode extends StackPane {
                     hashSetCounts = new HashMap<>();
                     try {
                         for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithHashHits())) {
-                            ArrayList<BlackboardArtifact> blackboardArtifacts = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, tle.getFileID());
-                            for (BlackboardArtifact artf : blackboardArtifacts) {
-                                for (BlackboardAttribute attr : artf.getAttributes()) {
-                                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                                        hashSetCounts.merge(attr.getValueString(), 1L, Long::sum);
-                                    };
-                                }
+                            Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
+                            for (String hashSetName : hashSetNames) {
+                                hashSetCounts.merge(hashSetName, 1L, Long::sum);
                             }
                         }
                     } catch (TskCoreException ex) {
-                        Logger.getLogger(AggregateEventNode.class.getName()).log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
+                        LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex);
                     }
                 }
 
@@ -412,10 +407,10 @@ public class AggregateEventNode extends StackPane {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
+            RootFilter combinedFilter = chart.getFilteredEvents().filter().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-            final Filter combinedFilter = Filter.intersect(new Filter[]{new TextFilter(event.getDescription()),
-                new TypeFilter(event.getType()),
-                chart.getFilteredEvents().filter().get()});
+            combinedFilter.getSubFilters().addAll(new TextFilter(event.getDescription()),
+                    new TypeFilter(event.getType()));
 
             //make a new end inclusive span (to 'filter' with)
             final Interval span = event.getSpan().withEndMillis(event.getSpan().getEndMillis() + 1000);

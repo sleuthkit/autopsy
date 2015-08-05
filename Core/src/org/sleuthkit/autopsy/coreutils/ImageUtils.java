@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -74,26 +73,11 @@ public class ImageUtils {
 
     private static final Logger logger = LOGGER;
     private static final BufferedImage DEFAULT_THUMBNAIL;
-    private static final TreeSet<String> SUPPORTED_MIME_TYPES = new TreeSet<>();
-    private static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
+
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
-    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
-            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg",
-                    "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat",
-                    "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv",
-                    "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san",
-                    "mjpg", "smk", "vmd", "sol", "cpk", "sdp", "sbg", "rtsp",
-                    "rpl", "rl2", "r3d", "mlp", "mjpeg", "hevc", "h265", "265",
-                    "h264", "h263", "h261", "drc", "avs", "pva", "pmp", "ogg",
-                    "nut", "nuv", "nsv", "mxf", "mtv", "mvi", "mxg", "lxf",
-                    "lvf", "ivf", "mve", "cin", "hnm", "gxf", "fli", "flc",
-                    "flx", "ffm", "wve", "uv2", "dxa", "dv", "cdxl", "cdg",
-                    "bfi", "jv", "bik", "vid", "vb", "son", "avs", "paf", "mm",
-                    "flm", "tmv", "4xm");  //NON-NLS
     private static final TreeSet<String> SUPPORTED_IMAGE_MIME_TYPES;
-    private static final List<String> SUPPORTED_VIDEO_MIME_TYPES
-            = Arrays.asList("application/x-shockwave-flash", "video/x-m4v", "video/quicktime", "video/avi", "video/msvideo", "video/x-msvideo",
-                    "video/mp4", "video/x-ms-wmv", "video/mpeg", "video/asf"); //NON-NLS
+    private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("audio/x-aiff", "application/octet-stream");
+
     private static final boolean openCVLoaded;
 
     static {
@@ -128,31 +112,19 @@ public class ImageUtils {
         openCVLoaded = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
-        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_IMAGE_EXTENSIONS);
-        SUPPORTED_EXTENSIONS.addAll(SUPPORTED_VIDEO_EXTENSIONS);
-
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /* special cases and variants that we support, but don't get registered
          * with ImageIO automatically */
         SUPPORTED_IMAGE_MIME_TYPES.addAll(Arrays.asList(
                 "image/x-rgb",
                 "image/x-ms-bmp",
+                "image/x-portable-graymap",
+                "image/x-portable-bitmap",
                 "application/x-123"));
-        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_IMAGE_MIME_TYPES);
-        SUPPORTED_MIME_TYPES.addAll(SUPPORTED_VIDEO_MIME_TYPES);
-
-        //this is rarely usefull
-        SUPPORTED_MIME_TYPES.removeIf("application/octet-stream"::equals);
+        SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
-    /**
-     * Get the default Icon, which is the icon for a file.
-     *
-     * @return
-     *
-     *
-     *
-     *         /** initialized lazily */
+    /** initialized lazily */
     private static FileTypeDetector fileTypeDetector;
 
     /** thread that saves generated thumbnails to disk in the background */
@@ -167,24 +139,8 @@ public class ImageUtils {
         return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
     }
 
-    public static List<String> getSupportedVideoExtensions() {
-        return SUPPORTED_VIDEO_EXTENSIONS;
-    }
-
     public static SortedSet<String> getSupportedImageMimeTypes() {
         return Collections.unmodifiableSortedSet(SUPPORTED_IMAGE_MIME_TYPES);
-    }
-
-    public static List<String> getSupportedVideoMimeTypes() {
-        return SUPPORTED_VIDEO_MIME_TYPES;
-    }
-
-    public static List<String> getSupportedExtensions() {
-        return Collections.unmodifiableList(SUPPORTED_EXTENSIONS);
-    }
-
-    public static SortedSet<String> getSupportedMimeTypes() {
-        return Collections.unmodifiableSortedSet(SUPPORTED_MIME_TYPES);
     }
 
     /**
@@ -229,31 +185,59 @@ public class ImageUtils {
         }
         AbstractFile file = (AbstractFile) content;
 
+        return VideoUtils.isVideoThumbnailSupported(file)
+                || isImageThumbnailSupported(file);
+
+    }
+
+    public static boolean isImageThumbnailSupported(AbstractFile file) {
+
+        return isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS, CONDITIONAL_MIME_TYPES)
+                || hasImageFileHeader(file);
+    }
+
+    /**
+     * Check if a file is "supported" by checking it mimetype and extension
+     *
+     * //TODO: this should move to a better place. Should ImageUtils and
+     * VideoUtils both implement/extend some base interface/abstract class. That
+     * would be the natural place to put this.
+     *
+     * @param file
+     * @param supportedMimeTypes a set of mimetypes that the could have to be
+     *                           supported
+     * @param supportedExtension a set of extensions a file could have to be
+     *                           supported if the mime lookup fails or is
+     *                           inconclusive
+     * @param conditionalMimes   a set of mimetypes that a file could have to be
+     *                           supoprted if it also has a supported extension
+     *
+     * @return true if a thumbnail can be generated for the given file with the
+     *         given lists of supported mimetype and extensions
+     */
+    static boolean isMediaThumbnailSupported(AbstractFile file, final SortedSet<String> supportedMimeTypes, final List<String> supportedExtension, List<String> conditionalMimes) {
+        if (file.getSize() == 0) {
+            return false;
+        }
+        final String extension = file.getNameExtension();
         try {
             String mimeType = getFileTypeDetector().getFileType(file);
             if (Objects.nonNull(mimeType)) {
-                return SUPPORTED_MIME_TYPES.contains(mimeType)
-                        || (mimeType.equalsIgnoreCase("audio/x-aiff") && "iff".equalsIgnoreCase(file.getNameExtension()));
+                return supportedMimeTypes.contains(mimeType)
+                        || (conditionalMimes.contains(mimeType.toLowerCase()) && supportedExtension.contains(extension));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
 
-            AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(SUPPORTED_MIME_TYPES);
+            AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(supportedMimeTypes);
             if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
                 return true;
             } else if (mimeMatch == AbstractFile.MimeMatchEnum.FALSE) {
                 return false;
             }
         }
-
         // if we have an extension, check it
-        final String extension = file.getNameExtension();
-        if (StringUtils.isNotBlank(extension) && SUPPORTED_EXTENSIONS.contains(extension)) {
-            return true;
-        }
-
-        // if no extension or one that is not for an image, then read the content
-        return isJpegFileHeader(file) || isPngFileHeader(file);
+        return StringUtils.isNotBlank(extension) && supportedExtension.contains(extension);
     }
 
     /**
@@ -303,22 +287,27 @@ public class ImageUtils {
      *         problem making a thumbnail.
      */
     public static Image getThumbnail(Content content, int iconSize) {
-        // If a thumbnail file is already saved locally
-        File cacheFile = getCachedThumbnailLocation(content.getId());
-        if (cacheFile.exists()) {
-            try {
-                BufferedImage thumbnail = ImageIO.read(cacheFile);
-                if (isNull(thumbnail) || thumbnail.getWidth() != iconSize) {
-                    return generateAndSaveThumbnail(content, iconSize, cacheFile);
-                } else {
-                    return thumbnail;
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile) content;
+            // If a thumbnail file is already saved locally
+            File cacheFile = getCachedThumbnailLocation(content.getId());
+            if (cacheFile.exists()) {
+                try {
+                    BufferedImage thumbnail = ImageIO.read(cacheFile);
+                    if (isNull(thumbnail) || thumbnail.getWidth() != iconSize) {
+                        return generateAndSaveThumbnail(file, iconSize, cacheFile);
+                    } else {
+                        return thumbnail;
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Error while reading image: " + content.getName(), ex); //NON-NLS
+                    return generateAndSaveThumbnail(file, iconSize, cacheFile);
                 }
-            } catch (Exception ex) {
-                LOGGER.log(Level.WARNING, "Error while reading image: " + content.getName(), ex); //NON-NLS
-                return generateAndSaveThumbnail(content, iconSize, cacheFile);
+            } else {
+                return generateAndSaveThumbnail(file, iconSize, cacheFile);
             }
         } else {
-            return generateAndSaveThumbnail(content, iconSize, cacheFile);
+            return DEFAULT_THUMBNAIL;
         }
     }
 
@@ -458,25 +447,23 @@ public class ImageUtils {
     /**
      * Generate an icon and save it to specified location.
      *
-     * @param content   File to generate icon for
+     * @param file      File to generate icon for
      * @param iconSize
      * @param cacheFile Location to save thumbnail to
      *
      * @return Generated icon or null on error
      */
-    private static Image generateAndSaveThumbnail(Content content, int iconSize, File cacheFile) {
-        AbstractFile f = (AbstractFile) content;
-        final String extension = f.getNameExtension();
+    private static Image generateAndSaveThumbnail(AbstractFile file, int iconSize, File cacheFile) {
         BufferedImage thumbnail = null;
         try {
-            if (SUPPORTED_VIDEO_EXTENSIONS.contains(extension)) {
+            if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (openCVLoaded) {
-                    thumbnail = VideoUtils.generateVideoThumbnail((AbstractFile) content, iconSize);
+                    thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
                 } else {
                     return DEFAULT_THUMBNAIL;
                 }
             } else {
-                thumbnail = generateImageThumbnail(content, iconSize);
+                thumbnail = generateImageThumbnail(file, iconSize);
             }
 
             if (thumbnail == null) {
@@ -492,12 +479,12 @@ public class ImageUtils {
                         }
                         ImageIO.write(toSave, FORMAT, cacheFile);
                     } catch (IllegalArgumentException | IOException ex1) {
-                        LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex1); //NON-NLS
+                        LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + file, ex1); //NON-NLS
                     }
                 });
             }
         } catch (NullPointerException ex) {
-            logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
+            logger.log(Level.WARNING, "Could not write cache thumbnail: " + file, ex); //NON-NLS
         }
         return thumbnail;
     }

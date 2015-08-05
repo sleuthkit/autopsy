@@ -30,7 +30,7 @@ public abstract class AbstractFilter implements Filter {
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
 
     @Override
-    public SimpleBooleanProperty getActiveProperty() {
+    public SimpleBooleanProperty getSelectedProperty() {
         return selected;
     }
 

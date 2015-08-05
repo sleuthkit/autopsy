@@ -33,7 +33,7 @@ public class HideKnownFilter extends AbstractFilter {
 
     public HideKnownFilter() {
         super();
-        getActiveProperty().set(false);
+        getSelectedProperty().set(false);
     }
 
     @Override
