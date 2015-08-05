@@ -138,22 +138,25 @@ public class SingleUserCaseImporter implements Runnable {
 
             // check for image folder
             Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
-            if (!testImageInputsFromOldCase.toFile().isDirectory()) {
-                log(imageInputFolder + " has no corresponding images folder.  Not able to process.");
-                return false;
+            if (copySourceImages) {
+                if (!testImageInputsFromOldCase.toFile().isDirectory()) {
+                    log(imageInputFolder + " has no corresponding images folder.  Not able to process.");
+                    return false;
+                } else {
+                    icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
+                }
+
+                Path imagePath = Paths.get(imageInputFolder);
+                // see if case name is in the image path. This causes bad things to happen with the parsing.
+                for (int x = 0; x < imagePath.getNameCount(); ++x) {
+                    if (caseName.toLowerCase().equals(imagePath.getName(x).toString().toLowerCase())) {
+                        log(imagePath.toString() + " has case name \"" + caseName + "\" within path. Not able to process.");
+                        return false;
+                    }
+                }
             } else {
                 icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
             }
-
-            Path imagePath = Paths.get(imageInputFolder);
-            // see if case name is in the image path. This causes bad things to happen with the parsing.
-            for (int x = 0; x < imagePath.getNameCount(); ++x) {
-                if (caseName.toLowerCase().equals(imagePath.getName(x).toString().toLowerCase())) {
-                    log(imagePath.toString() + " has case name \"" + caseName + "\" within path. Not able to process.");
-                    return false;
-                }
-            }
-
         } catch (Exception ex) {
             log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + ex.getMessage());
             return false; // anything goes wrong, bail.
