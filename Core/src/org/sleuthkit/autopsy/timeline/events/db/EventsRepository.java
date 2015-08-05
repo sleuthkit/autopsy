@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.events.db;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalNotification;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -127,15 +126,18 @@ public class EventsRepository {
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(autoCase);
         populateFilterMaps(autoCase.getSleuthkitCase());
-        idToEventCache = CacheBuilder.newBuilder().maximumSize(5000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<Long, TimeLineEvent> rn) -> {
-//            LOGGER.log(Level.INFO, "evicting event: {0}", rn.toString());
-        }).build(CacheLoader.from(eventDB::getEventById));
-        eventCountsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, Map<EventType, Long>> rn) -> {
-            //LOGGER.log(Level.INFO, "evicting counts: {0}", rn.toString());
-        }).build(CacheLoader.from(eventDB::countEventsByType));
-        aggregateEventsCache = CacheBuilder.newBuilder().maximumSize(1000L).expireAfterAccess(10, TimeUnit.MINUTES).removalListener((RemovalNotification<ZoomParams, List<AggregateEvent>> rn) -> {
-//            LOGGER.log(Level.INFO, "evicting aggregated events: {0}", rn.toString());
-        }).build(CacheLoader.from(eventDB::getAggregatedEvents));
+        idToEventCache = CacheBuilder.newBuilder()
+                .maximumSize(5000L)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(CacheLoader.from(eventDB::getEventById));
+        eventCountsCache = CacheBuilder.newBuilder()
+                .maximumSize(1000L)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(CacheLoader.from(eventDB::countEventsByType));
+        aggregateEventsCache = CacheBuilder.newBuilder()
+                .maximumSize(1000L)
+                .expireAfterAccess(10, TimeUnit.MINUTES
+                ).build(CacheLoader.from(eventDB::getAggregatedEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);

@@ -862,11 +862,10 @@ public class EventDB {
                 + " from events" + useHashHitTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
 
-        ResultSet rs = null;
         DBLock.lock();
-        try (Statement stmt = con.createStatement();) {
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString);) {
             while (rs.next()) {
-
                 EventType type = useSubTypes
                         ? RootEventType.allTypes.get(rs.getInt("sub_type"))
                         : BaseTypes.values()[rs.getInt("base_type")];
@@ -875,13 +874,8 @@ public class EventDB {
             }
 
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "error getting count of events from db.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting count of events from db.", ex); // NON-NLS
         } finally {
-            try {
-                rs.close();
-            } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
             DBLock.unlock();
         }
         return typeMap;
@@ -892,13 +886,13 @@ public class EventDB {
     }
 
     /**
-     * //TODO: update javadoc, and split this into helper methods
+     * //TODO: update javadoc //TODO: split this into helper methods
      *
      * get a list of {@link AggregateEvent}s.
      *
      * General algorithm is as follows:
      *
-     * 1) get all aggregate events, via one db query. 2) sort them into a map
+     * 1)get all aggregate events, via one db query. 2) sort them into a map
      * from (type, description)-> aggevent 3) for each key in map, merge the
      * events and accumulate them in a list to return
      *
