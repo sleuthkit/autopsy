@@ -132,16 +132,37 @@ class SQLiteIngestModule(FileIngestModule):
             f.close()
 
             # connet to db
-            Class.forName("org.sqlite.JDBC").newInstance()
-            dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % db)
-            stmt = dbConn.createStatement()
+            try:
+                Class.forName("org.sqlite.JDBC").newInstance()
+                dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % db)
+                stmt = dbConn.createStatement()
+            except:
+                self.log(Level.INFO, "Could not open database file" + file.getName())
+                return IngestModule.ProcessResult.OK
 
             # get information from db (name, email and phone)
-            resultSet = stmt.executeQuery("SELECT * FROM %s ORDER BY ID" % table)
+            try:
+                resultSet = stmt.executeQuery("SELECT * FROM %s ORDER BY ID" % table)
+            except:
+                self.log(Level.INFO, "Could query database")
+                return IngestModule.ProcessResult.OK
+
             while resultSet.next():
-                name  = resultSet.getString("name")
-                email = resultSet.getString("email")
-                phone = resultSet.getString("phone")
+                name  = ""
+                try:
+                    name = resultSet.getString("name")
+                except:
+                    self.log(Level.INFO, "database does not have field 'name'")
+                email = ""
+                try:
+                    email = resultSet.getString("email")
+                except:
+                    self.log(Level.INFO, "database does not have field 'email'")
+                phone = ""
+                try:
+                    phone = resultSet.getString("phone")
+                except:
+                    self.log(Level.INFO, "database does not have field 'phone'")
 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
                 art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
@@ -175,5 +196,4 @@ class SQLiteIngestModule(FileIngestModule):
             IngestMessage.MessageType.DATA, SQLiteIngestModuleFactory.moduleName, 
                 str(self.filesFound) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
-
 
