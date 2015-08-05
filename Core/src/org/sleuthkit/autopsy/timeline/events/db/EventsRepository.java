@@ -44,7 +44,6 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
@@ -284,9 +283,8 @@ public class EventsRepository {
                             String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
                             String medD = datasourceName + parentPath;
-                            final TskData.FileKnown known = f.getKnown();
-                            
-                            Set<String> hashSets =  HashHitUtils.getHashSetNamesForFile(skCase, f.getId());
+                            final TskData.FileKnown known = f.getKnown();                   
+                            Set<String> hashSets =  f.getHashSetNames() ;
                             boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
@@ -396,10 +394,8 @@ public class EventsRepository {
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
 
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
-                        Set<String> hashSets =  HashHitUtils.getHashSetNamesForFile(skCase, f.getId()) ;
-
-                        boolean tagged = tagsManager.getContentTagsByContent(f).isEmpty() == false;
-                        tagged |= tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
+                        Set<String> hashSets =  f.getHashSetNames();
+                        boolean tagged = tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
 
                         eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, tagged, trans);
                     }

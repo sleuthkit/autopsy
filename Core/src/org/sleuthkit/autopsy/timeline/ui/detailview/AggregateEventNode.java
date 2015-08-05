@@ -19,10 +19,10 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -77,10 +77,8 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
@@ -99,7 +97,7 @@ public class AggregateEventNode extends StackPane {
     private static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
 
     /** The event this AggregateEventNode represents visually */
-    private AggregateEvent event;
+    private AggregateEvent aggEvent;
 
     private final AggregateEventNode parentEventNode;
 
@@ -158,9 +156,9 @@ public class AggregateEventNode extends StackPane {
     private final ImageView hashIV = new ImageView(HASH_PIN);
     private final ImageView tagIV = new ImageView(TAG);
 
-    public AggregateEventNode(final AggregateEvent event, AggregateEventNode parentEventNode, EventDetailChart chart) {
-        this.event = event;
-        descLOD.set(event.getLOD());
+    public AggregateEventNode(final AggregateEvent aggEvent, AggregateEventNode parentEventNode, EventDetailChart chart) {
+        this.aggEvent = aggEvent;
+        descLOD.set(aggEvent.getLOD());
         this.parentEventNode = parentEventNode;
         this.chart = chart;
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
@@ -170,11 +168,11 @@ public class AggregateEventNode extends StackPane {
         HBox.setHgrow(region, Priority.ALWAYS);
 
         final HBox hBox = new HBox(descrLabel, countLabel, region, hashIV, tagIV, minusButton, plusButton);
-        if (event.getEventIDsWithHashHits().isEmpty()) {
+        if (aggEvent.getEventIDsWithHashHits().isEmpty()) {
             hashIV.setManaged(false);
             hashIV.setVisible(false);
         }
-        if (event.getEventIDsWithTags().isEmpty()) {
+        if (aggEvent.getEventIDsWithTags().isEmpty()) {
             tagIV.setManaged(false);
             tagIV.setVisible(false);
         }
@@ -208,7 +206,7 @@ public class AggregateEventNode extends StackPane {
         subNodePane.setPickOnBounds(false);
 
         //setup description label
-        eventTypeImageView.setImage(event.getType().getFXImage());
+        eventTypeImageView.setImage(aggEvent.getType().getFXImage());
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
@@ -217,7 +215,7 @@ public class AggregateEventNode extends StackPane {
         setDescriptionVisibility(chart.getDescrVisibility().get());
 
         //setup backgrounds
-        final Color evtColor = event.getType().getColor();
+        final Color evtColor = aggEvent.getType().getColor();
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
         setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         setCursor(Cursor.HAND);
@@ -247,7 +245,7 @@ public class AggregateEventNode extends StackPane {
         setOnMouseClicked(new EventMouseHandler());
 
         plusButton.disableProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
-        minusButton.disableProperty().bind(descLOD.isEqualTo(event.getLOD()));
+        minusButton.disableProperty().bind(descLOD.isEqualTo(aggEvent.getLOD()));
 
         plusButton.setOnMouseClicked(e -> {
             final DescriptionLOD next = descLOD.get().next();
@@ -268,18 +266,14 @@ public class AggregateEventNode extends StackPane {
     synchronized private void installTooltip() {
         //TODO: all this work should probably go on a background thread...
         if (tooltip == null) {
-
             HashMap<String, Long> hashSetCounts = new HashMap<>();
-            if (!event.getEventIDsWithHashHits().isEmpty()) {
+            if (!aggEvent.getEventIDsWithHashHits().isEmpty()) {
+                hashSetCounts = new HashMap<>();
                 try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithHashHits())) {
-                        ArrayList<BlackboardArtifact> blackboardArtifacts = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, tle.getFileID());
-                        for (BlackboardArtifact artf : blackboardArtifacts) {
-                            for (BlackboardAttribute attr : artf.getAttributes()) {
-                                if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                                    hashSetCounts.merge(attr.getValueString(), 1L, Long::sum);
-                                }
-                            }
+                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithHashHits())) {
+                        Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
+                        for (String hashSetName : hashSetNames) {
+                            hashSetCounts.merge(hashSetName, 1L, Long::sum);
                         }
                     }
                 } catch (TskCoreException ex) {
@@ -287,23 +281,23 @@ public class AggregateEventNode extends StackPane {
                 }
             }
 
-            Map<Long, TagName> tags = new HashMap<>();
-            if (!event.getEventIDsWithTags().isEmpty()) {
+            Map<String, Long> tagCounts = new HashMap<>();
+            if (!aggEvent.getEventIDsWithTags().isEmpty()) {
                 try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(event.getEventIDsWithTags())) {
+                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithTags())) {
 
                         AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
-                        List<ContentTag> contentTagsByContent = sleuthkitCase.getContentTagsByContent(abstractFileById);
-                        for (ContentTag tag : contentTagsByContent) {
-                            tags.putIfAbsent(tag.getId(), tag.getName());
+                        List<ContentTag> contentTags = sleuthkitCase.getContentTagsByContent(abstractFileById);
+                        for (ContentTag tag : contentTags) {
+                            tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
                         }
 
                         Long artifactID = tle.getArtifactID();
                         if (artifactID != 0) {
                             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
-                            List<BlackboardArtifactTag> blackboardArtifactTagsByArtifact = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
-                            for (BlackboardArtifactTag tag : blackboardArtifactTagsByArtifact) {
-                                tags.putIfAbsent(tag.getId(), tag.getName());
+                            List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
+                            for (BlackboardArtifactTag tag : artifactTags) {
+                                tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
                             }
                         }
                     }
@@ -311,9 +305,6 @@ public class AggregateEventNode extends StackPane {
                     LOGGER.log(Level.SEVERE, "Error getting tag info for event.", ex);
                 }
             }
-
-            Map<String, Long> tagCounts = tags.values().stream()
-                    .collect(Collectors.toMap(TagName::getDisplayName, anything -> 1L, Long::sum));
 
             String hashSetCountsString = hashSetCounts.entrySet().stream()
                     .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
@@ -339,7 +330,7 @@ public class AggregateEventNode extends StackPane {
     }
 
     synchronized public AggregateEvent getEvent() {
-        return event;
+        return aggEvent;
     }
 
     /**
@@ -365,10 +356,9 @@ public class AggregateEventNode extends StackPane {
     /** @param descrVis the level of description that should be displayed */
     synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
-        final int size = event.getEventIDs().size();
+        final int size = aggEvent.getEventIDs().size();
 
         switch (descrVis) {
-
             case COUNT_ONLY:
                 descrLabel.setText("");
                 countLabel.setText(String.valueOf(size));
@@ -379,7 +369,7 @@ public class AggregateEventNode extends StackPane {
                 break;
             default:
             case SHOWN:
-                String description = event.getDescription();
+                String description = aggEvent.getDescription();
                 description = parentEventNode != null
                         ? "    ..." + StringUtils.substringAfter(description, parentEventNode.getEvent().getDescription())
                         : description;
@@ -411,14 +401,14 @@ public class AggregateEventNode extends StackPane {
 
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
         } else {
             descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(event.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         }
     }
 
@@ -452,17 +442,17 @@ public class AggregateEventNode extends StackPane {
      */
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
         getSubNodePane().getChildren().clear();
-        if (newDescriptionLOD == event.getLOD()) {
+        if (newDescriptionLOD == aggEvent.getLOD()) {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
             RootFilter combinedFilter = eventsModel.filter().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-            combinedFilter.getSubFilters().addAll(new TextFilter(event.getDescription()),
-                    new TypeFilter(event.getType()));
+            combinedFilter.getSubFilters().addAll(new TextFilter(aggEvent.getDescription()),
+                    new TypeFilter(aggEvent.getType()));
 
             //make a new end inclusive span (to 'filter' with)
-            final Interval span = event.getSpan().withEndMillis(event.getSpan().getEndMillis() + 1000);
+            final Interval span = aggEvent.getSpan().withEndMillis(aggEvent.getSpan().getEndMillis() + 1000);
 
             //make a task to load the subnodes
             LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>(
@@ -532,11 +522,11 @@ public class AggregateEventNode extends StackPane {
 
     @Subscribe
     synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        AggregateEvent withTagsRemoved = event.withTagsRemoved(tagEvent.getEventIDs());
-        if (withTagsRemoved != event) {
-            event = withTagsRemoved;
+        AggregateEvent withTagsRemoved = aggEvent.withTagsRemoved(tagEvent.getEventIDs());
+        if (withTagsRemoved != aggEvent) {
+            aggEvent = withTagsRemoved;
             tooltip = null;
-            boolean hasTags = event.getEventIDsWithTags().isEmpty() == false;
+            boolean hasTags = aggEvent.getEventIDsWithTags().isEmpty() == false;
             Platform.runLater(() -> {
                 tagIV.setManaged(hasTags);
                 tagIV.setVisible(hasTags);
@@ -546,9 +536,9 @@ public class AggregateEventNode extends StackPane {
 
     @Subscribe
     synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        AggregateEvent withTagsAdded = event.withTagsAdded(tagEvent.getEventIDs());
-        if (withTagsAdded != event) {
-            event = withTagsAdded;
+        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
+        if (withTagsAdded != aggEvent) {
+            aggEvent = withTagsAdded;
             tooltip = null;
             Platform.runLater(() -> {
                 tagIV.setManaged(true);

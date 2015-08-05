@@ -40,13 +40,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.HashHitUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -583,25 +581,29 @@ public final class DrawableDB {
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
 
-            for (String name : HashHitUtils.getHashSetNamesForFile(tskCase, f.getId())) {
+            try {
+                for (String name : f.getHashSetNames()) {
 
-                // "insert or ignore into hash_sets (hash_set_name)  values (?)"
-                insertHashSetStmt.setString(1, name);
-                insertHashSetStmt.executeUpdate();
+                    // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                    insertHashSetStmt.setString(1, name);
+                    insertHashSetStmt.executeUpdate();
 
-                //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                //"select hash_set_id from hash_sets where hash_set_name = ?"
-                selectHashSetStmt.setString(1, name);
-                try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                    while (rs.next()) {
-                        int hashsetID = rs.getInt("hash_set_id");
-                        //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
-                        insertHashHitStmt.setInt(1, hashsetID);
-                        insertHashHitStmt.setLong(2, f.getId());
-                        insertHashHitStmt.executeUpdate();
-                        break;
+                    //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                    //"select hash_set_id from hash_sets where hash_set_name = ?"
+                    selectHashSetStmt.setString(1, name);
+                    try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                        while (rs.next()) {
+                            int hashsetID = rs.getInt("hash_set_id");
+                            //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                            insertHashHitStmt.setInt(1, hashsetID);
+                            insertHashHitStmt.setLong(2, f.getId());
+                            insertHashHitStmt.executeUpdate();
+                            break;
+                        }
                     }
                 }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getName(), ex);
             }
 
             //and update all groups this file is in
@@ -620,6 +622,7 @@ public final class DrawableDB {
             if (Case.isCaseOpen()) {
                 LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
             }
+
         } finally {
             dbWriteUnlock();
         }
@@ -875,7 +878,7 @@ public final class DrawableDB {
 
                 query.append(orderByClause);
 
-                if (orderByClause.equals("") == false) {
+                if (orderByClause.isEmpty() == false) {
                     String sortOrderClause = "";
 
                     switch (sortOrder) {
@@ -958,7 +961,7 @@ public final class DrawableDB {
             return DrawableFile.create(f,
                     areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id);
+            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: {0}", id);
             return null;
         }
     }
@@ -1114,21 +1117,6 @@ public final class DrawableDB {
     }
 
     /**
-     * For the given fileID, get the names of all the hashsets that the file is
-     * in.
-     *
-     * @param fileID the fileID to file all the hash sets for
-     *
-     * @return a set of names, each of which is a hashset that the given file is
-     *         in.
-     */
-    @Nonnull
-    public Set<String> getHashSetsForFileFromAutopsy(long fileID) {
-        return HashHitUtils.getHashSetNamesForFile(tskCase, fileID);
-
-    }
-
-    /**
      * For performance reasons, keep a list of all file IDs currently in the
      * drawable database. Otherwise the database is queried many times to
      * retrieve the same data.
@@ -1194,7 +1182,7 @@ public final class DrawableDB {
     public boolean isVideoFile(AbstractFile f) {
         return isNull(f) ? false
                 : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
-        
+
     }
 
     /**

@@ -220,8 +220,7 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
 
     @Override
     public boolean isSupported(AbstractFile file) {
-        return DataContentViewerMedia.MediaViewPanel.super.isSupported(file)
-                || ImageUtils.hasImageFileHeader(file);
+        return ImageUtils.isImageThumbnailSupported(file);
     }
 
     /**
