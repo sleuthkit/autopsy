@@ -139,7 +139,7 @@ public class SingleUserCaseImporter implements Runnable {
             // check for image folder
             Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
             if (!testImageInputsFromOldCase.toFile().isDirectory()) {
-                log(testImageInputsFromOldCase.toString() + " has no corresponding images folder.  Not able to process.");
+                log(imageInputFolder + " has no corresponding images folder.  Not able to process.");
                 return false;
             } else {
                 icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
@@ -155,7 +155,7 @@ public class SingleUserCaseImporter implements Runnable {
             }
 
         } catch (Exception ex) {
-            log(ex.getMessage());
+            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + ex.getMessage());
             return false; // anything goes wrong, bail.
         }
 
@@ -228,7 +228,7 @@ public class SingleUserCaseImporter implements Runnable {
             log("Finished importing case " + icd.getSpecificCaseInputFolder().toString() + " to " + icd.getSpecificCaseOutputFolder().toString());
         } catch (Exception exp) {
             /// clean up here
-            log(exp.getMessage());
+            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + exp.getMessage());
             result = false;
         }
         return result;
