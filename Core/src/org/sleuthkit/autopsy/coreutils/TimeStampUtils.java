@@ -33,7 +33,7 @@ public final class TimeStampUtils {
     private static final Pattern timeStampPattern = Pattern.compile("\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}$");
     private static final int LENGTH_OF_DATE_TIME_STAMP = 20; // length of the above time stamp
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-    
+
     /**
      * Checks whether a string ends with a time stamp defined by pattern.
      *
@@ -44,7 +44,7 @@ public final class TimeStampUtils {
         Matcher m = timeStampPattern.matcher(inputString);
         return m.find();
     }
-    
+
     /**
      * Returns length of time stamp string.
      *
@@ -52,15 +52,43 @@ public final class TimeStampUtils {
      */
     public static int getTimeStampLength() {
         return LENGTH_OF_DATE_TIME_STAMP;
-    }    
-    
+    }
+
     /**
      * Create a timestamp using the current time
-     * 
+     *
      * @return the timestamp as a String
      */
-    
     public static String createTimeStamp() {
         return dateFormat.format(Calendar.getInstance().getTime());
     }
+
+    /**
+     * Remove a timestamp if it exists
+     *
+     * @param input the String to remove the trailing timestamp from
+     * @return the String without timestamp
+     */
+    public static String removeTimeStamp(String input) {
+        String result = input;
+        if (input != null && endsWithTimeStamp(input)) {
+            result = input.substring(0, input.length() - getTimeStampLength());
+        }
+        return result;
+    }
+
+    /**
+     * Return the timestamp portion of the name passed in
+     *
+     * @param input the name to check for a timestamp
+     * @return the timestamp only, or empty String if none
+     */
+    public static String getTimeStampOnly(String input) {
+        String result = "";
+        if (input != null && endsWithTimeStamp(input)) {
+            result = input.substring(input.length() - getTimeStampLength(), input.length());
+        }
+        return result;
+    }
+
 }

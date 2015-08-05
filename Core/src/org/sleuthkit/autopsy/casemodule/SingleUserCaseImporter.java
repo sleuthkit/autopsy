@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -40,8 +41,15 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -67,8 +75,10 @@ public class SingleUserCaseImporter implements Runnable {
     private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
     private static final int MAX_DB_NAME_LENGTH = 63;
+    private final String SEP = System.getProperty("line.separator");
+    private final Object threadWaitNotifyLock = new Object();
 
-    private final String caseInputFolder;
+    private final Path caseInputFolder;
     private final String caseOutputFolder;
     private final String imageInputFolder;
     private final String imageOutputFolder;
@@ -81,6 +91,7 @@ public class SingleUserCaseImporter implements Runnable {
     private XMLCaseManagement oldXmlCaseManagement;
     private XMLCaseManagement newXmlCaseManagement;
     private boolean addTimestamp;
+    private int userAnswer = 0;
 
     /**
      * SingleUserCaseImporter constructor
@@ -101,7 +112,7 @@ public class SingleUserCaseImporter implements Runnable {
      */
     public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
             boolean copySourceImages, boolean deleteCase, ImportDoneCallback callback, boolean addTimestamp) {
-        this.caseInputFolder = caseInput;
+        this.caseInputFolder = Paths.get(caseInput);
         this.caseOutputFolder = caseOutput;
         this.imageInputFolder = imageInput;
         this.imageOutputFolder = imageOutput;
@@ -113,66 +124,88 @@ public class SingleUserCaseImporter implements Runnable {
     }
 
     /**
+     * Tests if the input path has a corresponding image input folder and no
+     * repeated case names in the path. If both of these conditions are true, we
+     * can process this case, otherwise we can not.
+     *
+     * @param icd the import case data for the current case
+     * @return true if we can process it, false if not
+     */
+    private boolean canProcess(ImportCaseData icd) {
+        try {
+            String relativeCaseName = TimeStampUtils.removeTimeStamp(icd.getRelativeCaseName());
+            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName());
+
+            // check for image folder
+            Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
+            if (!testImageInputsFromOldCase.toFile().isDirectory()) {
+                log(imageInputFolder + " has no corresponding images folder.  Not able to process.");
+                return false;
+            } else {
+                icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
+            }
+
+            Path imagePath = Paths.get(imageInputFolder);
+            // see if case name is in the image path. This causes bad things to happen with the parsing.
+            for (int x = 0; x < imagePath.getNameCount(); ++x) {
+                if (caseName.toLowerCase().equals(imagePath.getName(x).toString().toLowerCase())) {
+                    log(imagePath.toString() + " has case name \"" + caseName + "\" within path. Not able to process.");
+                    return false;
+                }
+            }
+
+        } catch (Exception ex) {
+            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + ex.getMessage());
+            return false; // anything goes wrong, bail.
+        }
+
+        return true;
+    }
+
+    /**
      * Handles most of the heavy lifting for importing cases from single-user to
      * multi-user. Creates new .aut file, moves folders to the right place,
      * imports the database, and updates paths within the database.
      *
-     * @param input the full path of the folder to process.
-     * @param oldCaseFolder the case folder holding the old case. This name will
-     * change if it conflicts with an existing case in the multi-user shared
-     * output folder
+     * @param icd the Import Case Data for the current case
      * @return true if successful, false if not
      */
-    private boolean processCase(Path input, String oldCaseFolder) {
+    private boolean processCase(ImportCaseData icd) {
         boolean result = true;
-
         try {
-            log("Importing case " + input.toString() + " to " + caseOutputFolder + "\\" + oldCaseFolder); //NON-NLS
+            log("Importing case " + icd.getSpecificCaseInputFolder().toString() + " to " + caseOutputFolder + "\\" + icd.getOldCaseName()); //NON-NLS
 
-            if (copySourceImages) {
-                checkInput(input.toFile(), new File(imageInputFolder));
-            } else {
-                checkInput(input.toFile(), null);
-            }
-            String oldCaseName = oldCaseFolder;
-            if (TimeStampUtils.endsWithTimeStamp(oldCaseName)) {
-                oldCaseName = oldCaseName.substring(0, oldCaseName.length() - TimeStampUtils.getTimeStampLength());
-            }
+            checkInputDatabase(icd.getSpecificCaseInputFolder());
 
             oldXmlCaseManagement = new XMLCaseManagement();
-            newXmlCaseManagement = new XMLCaseManagement();
 
             // read old xml config
-            oldXmlCaseManagement.open(input.resolve(oldCaseName + DOTAUT).toString());
+            oldXmlCaseManagement.open(icd.getSpecificCaseInputFolder().resolve(TimeStampUtils.removeTimeStamp(icd.getOldCaseName()) + DOTAUT).toString());
             if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
                 throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.AlreadyMultiUser"));
             }
 
-            String newCaseFolder = prepareOutput(caseOutputFolder, oldCaseFolder);
-            String caseName = newCaseFolder;  // case name holds the deconflicted name of the case, and will not have a timestamp after the next 'if' clause runs
-            if (TimeStampUtils.endsWithTimeStamp(newCaseFolder)) {
-                caseName = newCaseFolder.substring(0, newCaseFolder.length() - TimeStampUtils.getTimeStampLength());
-            }
+            prepareOutput(icd);
 
+            // create sanitized names for database and solr 
+            String caseName = TimeStampUtils.removeTimeStamp(icd.getNewCaseName());  // caseName holds the deconflicted, timestampless name of the case
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
             Date date = new Date();
             String santizedDatabaseName = Case.sanitizeCaseName(caseName);
             String dbName = santizedDatabaseName + "_" + dateFormat.format(date); //NON-NLS
             String solrName = dbName;
 
-            File imageDestination = Paths.get(imageOutputFolder, caseName).toFile();
+            icd.setSpecificImageOutputFolder(Paths.get(imageOutputFolder, icd.getNewCaseName()));
+            copyResults(icd); // Copy items to new hostname folder structure
+            dbName = importDb(dbName, icd.getSpecificCaseInputFolder(), icd.getSpecificCaseOutputFolder().toString()); // Change from SQLite to PostgreSQL
 
-            copyResults(input, newCaseFolder, oldCaseName); // Copy items to new hostname folder structure
-            dbName = importDb(dbName, input, newCaseFolder); // Change from SQLite to PostgreSQL
+            fixPaths(icd, dbName); // Update paths in DB
 
-            File imageSource = findInputFolder(input, imageInputFolder, oldCaseName); // Find a folder for the input images
-            fixPaths(imageSource.toString(), imageDestination.toString(), dbName); // Update paths in DB
-            if (copySourceImages) {
-                copyImages(imageSource, imageDestination); // Copy images over
-            }
+            copyImages(icd); // Copy images over
 
             // create new XML config
-            newXmlCaseManagement.create(Paths.get(caseOutputFolder, newCaseFolder).toString(),
+            newXmlCaseManagement = new XMLCaseManagement();
+            newXmlCaseManagement.create(icd.getSpecificCaseOutputFolder().toString(),
                     caseName,
                     oldXmlCaseManagement.getCaseExaminer(),
                     oldXmlCaseManagement.getCaseNumber(),
@@ -186,115 +219,79 @@ public class SingleUserCaseImporter implements Runnable {
             // and database in the given directory so the user shouldn't be able to accidently blow away
             // their C drive.
             if (deleteCase) {
-                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.DeletingCase") + " " + input);
-                FileUtils.deleteDirectory(input.toFile());
+                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.DeletingCase") + " " + icd.getSpecificCaseInputFolder().toString());
+                FileUtils.deleteDirectory(icd.getSpecificCaseInputFolder().toFile());
             }
 
-            log("Finished importing case " + input.toString() + " to " + caseOutputFolder + File.separatorChar + newCaseFolder);
+            result = reportLostImages(db, dbName);
+
+            log("Finished importing case " + icd.getSpecificCaseInputFolder().toString() + " to " + icd.getSpecificCaseOutputFolder().toString());
         } catch (Exception exp) {
             /// clean up here
-            log(exp.getMessage());
+            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + exp.getMessage());
             result = false;
         }
         return result;
     }
 
     /**
-     * Sanitize a path to UNC. First go to UNC based on drive mappings, then try
-     * to put hostname in place of IP address.
+     * Searches for images in the filesystem. It parses the new PostgreSQL
+     * database to find images that should exist, and notifies when they do not.
      *
-     * @param rawInput the String to sanitize
-     * @return Returns best-effort results.
+     * @param db database credentials
+     * @param dbName the name of the database
+     * @return true if successfully found all images, false otherwise.
      */
-    private String sanitizeToUNC(String rawInput) {
-        String uncWithIP = uncPathUtilities.mappedDriveToUNC(rawInput);
-        if (uncWithIP != null) {
-            rawInput = uncWithIP;
+    private boolean reportLostImages(CaseDbConnectionInfo db, String dbName) {
+        boolean result = true;
+        if (copySourceImages) {
+            try {
+                Class.forName("org.postgresql.Driver"); //NON-NLS
+                Connection dbConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
+                Statement inputStatement = dbConnection.createStatement();
+                ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
+
+                while (inputResultSet.next()) {
+
+                    File theFile = new File(inputResultSet.getString(2));
+                    if (false == theFile.exists()) {
+                        log("Unable to find image " + theFile.toString() + " for case " + dbName);
+                        result = false;
+                    }
+                }
+            } catch (Exception ex) {
+                log("Error. Unable to verify images were copied.");
+                result = false;
+            }
         }
-        String uncWithHostName = uncPathUtilities.ipToHostName(rawInput);
-        if (uncWithHostName == null) {
-            uncWithHostName = rawInput;
-        }
-        return uncWithHostName;
+        return result;
     }
 
     /**
-     * Figure out what the name of the file source should be and return it. This
-     * could be one of three things: a portion of a name from the
-     * tsk_image_names table, the folder name passed in, or a child of the
-     * folder name passed in.
+     * Figure out the input folder for images and return it.
      *
-     * @param sqliteDbFolder The path to the autopsy.db file
-     * @param rawInputFolder The path to the input folder
-     * @param oldCaseName The old name of the case
-     * @return
+     * @param icd the import case data for the current case
+     * @return the name of the proper input folder
      */
-    private File findInputFolder(Path sqliteDbFolder, String rawInputFolder, String oldCaseName) {
+    private File findInputFolder(ImportCaseData icd) {
 
-        String uncInputFolder = sanitizeToUNC(rawInputFolder);
-        // By this point, uncInputFolder is as sanitized as we can get it. If we
-        // could resolve a UNC path and hostname, it's a hostname-based UNC path
-        File uncInputFile = new File(uncInputFolder);
-        String uncParent = uncInputFile.getParent();
-
-        Path fullAttempt = Paths.get(uncInputFolder, oldCaseName);
-        Path partialAttempt = Paths.get(uncParent, oldCaseName);
-
-        if (fullAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a batch import
-            return fullAttempt.toFile();
-        } else if (uncParent != null && !uncParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
-            /// we've found it, they are running a specific import
-            return partialAttempt.toFile();
+        File thePath = icd.getSpecificImageInputFolder().resolve(icd.getOldCaseName()).toFile();
+        if (thePath.isDirectory()) {
+            /// we've found it
+            return thePath;
+        } else {
+            return icd.getSpecificImageInputFolder().toFile();
         }
-
-        // We still haven't found it. It must not be named the same as the output case. Search db.
-        try {
-            Class.forName("org.sqlite.JDBC"); //NON-NLS
-            Connection sqliteConnection = DriverManager.getConnection("jdbc:sqlite:" + sqliteDbFolder.resolve(AUTOPSY_DB_FILE).toString(), "", ""); //NON-NLS
-            Statement inputStatement = sqliteConnection.createStatement();
-            ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
-            Path passedIn = Paths.get(uncInputFolder);
-            while (inputResultSet.next()) {
-                String sanitizedNameFromDatabase = sanitizeToUNC(inputResultSet.getString(2));
-                Path fromDatabase = Paths.get(sanitizedNameFromDatabase);
-                Path relative = passedIn.relativize(fromDatabase);
-                if (relative != null && relative.getNameCount() > 0) {
-                    String databaseFolderName = relative.getName(0).toString();
-                    fullAttempt = Paths.get(uncInputFolder, databaseFolderName);
-                    partialAttempt = Paths.get(uncParent, databaseFolderName);
-                    if (fullAttempt.toFile().isDirectory()) {
-                        return fullAttempt.toFile();
-                    } else if (uncParent != null && !uncParent.isEmpty() && partialAttempt.toFile().isDirectory()) {
-                        return partialAttempt.toFile();
-                    }
-                }
-            }
-            sqliteConnection.close();
-        } catch (ClassNotFoundException | SQLException ex) {
-            log(ex.getMessage());
-        }
-
-        // If we get here without finding an appropriate folder, return the UNC 
-        // resolved uncInputFolder as best effort.
-        return new File(uncInputFolder);
     }
 
     /**
      * Ensure the input source has an autopsy.db and exists.
      *
      * @param caseInput The folder containing a case to import.
-     * @param imageInput The folder containing the images to copy or null if
-     * images are not being copied.
      * @throws Exception
      */
-    private void checkInput(File caseInput, File imageInput) throws Exception {
-        if (false == caseInput.exists()) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadCaseSourceFolder"));
-        } else if ((imageInput != null) && (false == imageInput.exists())) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadImageSourceFolder"));
-        }
-        Path path = Paths.get(caseInput.toString(), AUTOPSY_DB_FILE);
+    private void checkInputDatabase(Path caseInput) throws Exception {
+        Path path = caseInput.resolve(AUTOPSY_DB_FILE);
         if (false == path.toFile().exists()) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadDatabaseFileName"));
         }
@@ -302,30 +299,27 @@ public class SingleUserCaseImporter implements Runnable {
 
     /**
      * Handles case folder, PosgreSql database, and Solr core name deconfliction
+     * Sets the appropriate portions of the ImportCaseData object.
      *
-     * @param caseOutputFolder the case output folder
-     * @param caseFolder the case folder name, including timestamp deconflicted
-     * folder name
-     * @return the deconflicted caseFolder name to use. Includes timestamp.
+     * @param icd the case data folder name
      * @throws Exception
      */
-    private String prepareOutput(String caseOutputFolder, String caseFolder) throws Exception {
+    private void prepareOutput(ImportCaseData icd) throws Exception {
         // test for uniqueness
-        File specificOutputFolder = Paths.get(caseOutputFolder, caseFolder).toFile();
-        String sanitizedCaseName = caseFolder;
+        String caseName = icd.getOldCaseName();
+        File specificOutputFolder = Paths.get(caseOutputFolder, caseName).toFile();
+        String sanitizedCaseName = caseName;
         if (specificOutputFolder.exists()) {
             // not unique. add numbers before timestamp to specific case name
-            String timeStamp = ""; //NON-NLS
-            if (TimeStampUtils.endsWithTimeStamp(caseFolder)) {
-                sanitizedCaseName = caseFolder.substring(0, caseFolder.length() - TimeStampUtils.getTimeStampLength());
-                timeStamp = caseFolder.substring(caseFolder.length() - TimeStampUtils.getTimeStampLength(), caseFolder.length());
-            }
+            String timeStamp = TimeStampUtils.getTimeStampOnly(caseName); //NON-NLS
+            sanitizedCaseName = TimeStampUtils.removeTimeStamp(caseName);
+
             int number = 1;
             String temp = ""; //NON-NLS
             while (specificOutputFolder.exists()) {
                 if (number == Integer.MAX_VALUE) {
                     // oops. it never became unique. give up.
-                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueOutputFolder") + caseFolder);
+                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueOutputFolder") + sanitizedCaseName);
                 }
                 temp = sanitizedCaseName + "_" + Integer.toString(number) + timeStamp; //NON-NLS
                 specificOutputFolder = Paths.get(caseOutputFolder, temp).toFile();
@@ -337,40 +331,43 @@ public class SingleUserCaseImporter implements Runnable {
         if (addTimestamp && !TimeStampUtils.endsWithTimeStamp(sanitizedCaseName)) {
             sanitizedCaseName += "_" + TimeStampUtils.createTimeStamp();
         }
-        // create output folders just in case
-        Paths.get(caseOutputFolder, sanitizedCaseName).toFile().mkdirs();
-        return sanitizedCaseName;
+
+        Path caseOutputPath = Paths.get(caseOutputFolder, sanitizedCaseName);
+        icd.setNewCaseName(sanitizedCaseName);
+        icd.setSpecificCaseOutputFolder(caseOutputPath);
+        caseOutputPath.toFile().mkdirs(); // create output folders just in case
     }
 
     /**
      * Copy all the folders at the base level to the new scheme involving
      * hostname. Also take care of a few files such as logs, timeline db, etc.
      *
-     * @param input the base path to the case folder to copy from
-     * @param newCaseFolder deconflicted case name for the new multi-user case
+     * @param icd the case data
      * @throws IOException
      */
-    private void copyResults(Path input, String newCaseFolder, String caseName) throws IOException {
+    private void copyResults(ImportCaseData icd) throws IOException {
         /// get hostname
         String hostName = NetworkUtils.getLocalHostName();
         Path destination;
         Path source;
 
-        if (input.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName);
-            FileUtils.copyDirectory(input.toFile(), destination.toFile());
+        source = icd.getSpecificCaseInputFolder();
+        if (source.toFile().exists()) {
+            destination = icd.getSpecificCaseOutputFolder().resolve(hostName);
+            FileUtils.copyDirectory(source.toFile(), destination.toFile());
         }
 
-        source = input.resolve(TIMELINE_FILE);
+        source = icd.getSpecificCaseInputFolder().resolve(TIMELINE_FILE);
         if (source.toFile().exists()) {
-            destination = Paths.get(caseOutputFolder, newCaseFolder, hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
+            destination = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
             FileUtils.copyFile(source.toFile(), destination.toFile());
         }
 
-        source = input.resolve(AIM_LOG_FILE_NAME);
-        destination = Paths.get(caseOutputFolder, newCaseFolder, AIM_LOG_FILE_NAME);
+        source = icd.getSpecificCaseInputFolder().resolve(AIM_LOG_FILE_NAME);
+        destination = icd.getSpecificCaseOutputFolder().resolve(AIM_LOG_FILE_NAME);
         if (source.toFile().exists()) {
             FileUtils.copyFile(source.toFile(), destination.toFile());
+
         }
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
             out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportedAsMultiUser") + new Date());
@@ -379,22 +376,22 @@ public class SingleUserCaseImporter implements Runnable {
         }
 
         // Remove the single-user .aut file, database, Timeline database and log
-        File oldAutopsyFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, caseName + DOTAUT).toFile();
+        File oldAutopsyFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, TimeStampUtils.removeTimeStamp(icd.getOldCaseName()) + DOTAUT).toFile();
         if (oldAutopsyFile.exists()) {
             oldAutopsyFile.delete();
         }
 
-        File oldDatabaseFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, AUTOPSY_DB_FILE).toFile();
+        File oldDatabaseFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, AUTOPSY_DB_FILE).toFile();
         if (oldDatabaseFile.exists()) {
             oldDatabaseFile.delete();
         }
 
-        File oldTimelineFile = Paths.get(caseOutputFolder, newCaseFolder, hostName, TIMELINE_FILE).toFile();
+        File oldTimelineFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, TIMELINE_FILE).toFile();
         if (oldTimelineFile.exists()) {
             oldTimelineFile.delete();
         }
 
-        File oldIngestLog = Paths.get(caseOutputFolder, newCaseFolder, hostName, AIM_LOG_FILE_NAME).toFile();
+        File oldIngestLog = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, AIM_LOG_FILE_NAME).toFile();
         if (oldIngestLog.exists()) {
             oldIngestLog.delete();
         }
@@ -1073,28 +1070,40 @@ public class SingleUserCaseImporter implements Runnable {
     }
 
     /**
-     * Get the images from the other case and place them in the central
-     * repository if the user chose to.
+     * Get the images from the old case and place them in the central
+     * repository, if the user chose to.
      *
-     * @param imageSource the folder that the original images are in
-     * @param imageDestination the place to copy the images to
+     * @param icd the Import Case Data
      * @throws IOException
      */
-    private void copyImages(File imageSource, File imageDestination) throws IOException {
-        // If we can find the input images, copy if needed.
-        if (imageSource != null && imageSource.exists() && imageDestination != null) {
-            FileUtils.copyDirectory(imageSource, imageDestination);
-        } else {
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.UnableToCopySourceImages"));
+    private void copyImages(ImportCaseData icd) throws IOException {
+        if (copySourceImages) {
+            File imageSource = findInputFolder(icd); // Find the folder for the input images
+            File imageDestination = new File(icd.getSpecificImageOutputFolder().toString());
+
+            // If we can find the input images, copy if needed.
+            if (imageSource.exists()) {
+                FileUtils.copyDirectory(imageSource, imageDestination);
+
+            } else {
+                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.UnableToCopySourceImages"));
+            }
         }
     }
 
     /**
      * Fix up any paths in the database that refer to items that have moved.
      * Candidates include events.db, input images, reports, file paths, etc.
+     *
+     * @param icd the import case data for the current case
+     * @param dbName the name of the database
      */
-    private void fixPaths(String input, String output, String dbName) throws SQLException {
+    private void fixPaths(ImportCaseData icd, String dbName) throws SQLException {
         /// Fix paths in reports, tsk_files_path, and tsk_image_names tables
+
+        String input = icd.getSpecificImageInputFolder().toString();
+        String output = icd.getSpecificImageOutputFolder().toString();
+
         Connection postgresqlConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
         if (postgresqlConnection != null) {
             String hostName = NetworkUtils.getLocalHostName();
@@ -1107,20 +1116,23 @@ public class SingleUserCaseImporter implements Runnable {
             updateStatement = postgresqlConnection.createStatement();
             updateStatement.executeUpdate("UPDATE tsk_files_path SET path=CONCAT('" + hostName + "\\', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
 
-            // update path for images
-            Statement inputStatement = postgresqlConnection.createStatement();
-            ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
-            Path lastPart = Paths.get(input).getFileName();
+            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName()).toLowerCase();
 
-            while (inputResultSet.next()) {
-                Path oldPath = Paths.get(inputResultSet.getString(2));
+            if (copySourceImages) {
+                // update path for images
+                Statement inputStatement = postgresqlConnection.createStatement();
+                ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
 
-                for (int x = 0; x < oldPath.getNameCount(); ++x) {
-                    if (oldPath.getName(x).equals(lastPart)) {
-                        Path newPath = Paths.get(output, oldPath.subpath(x + 1, oldPath.getNameCount()).toString());
-                        updateStatement = postgresqlConnection.createStatement();
-                        updateStatement.executeUpdate("UPDATE tsk_image_names SET name='" + newPath.toString() + "' WHERE obj_id = " + inputResultSet.getInt(1)); //NON-NLS
-                        break;
+                while (inputResultSet.next()) {
+                    Path oldPath = Paths.get(inputResultSet.getString(2));
+
+                    for (int x = 0; x < oldPath.getNameCount(); ++x) {
+                        if (oldPath.getName(x).toString().toLowerCase().equals(caseName)) {
+                            Path newPath = Paths.get(output, oldPath.subpath(x + 1, oldPath.getNameCount()).toString());
+                            updateStatement = postgresqlConnection.createStatement();
+                            updateStatement.executeUpdate("UPDATE tsk_image_names SET name='" + newPath.toString() + "' WHERE obj_id = " + inputResultSet.getInt(1)); //NON-NLS
+                            break;
+                        }
                     }
                 }
             }
@@ -1223,6 +1235,83 @@ public class SingleUserCaseImporter implements Runnable {
         }
     }
 
+    private class ImportCaseData {
+
+        private Path specificCaseInputFolder;
+        private Path specificCaseOutputFolder;
+        private Path specificImageInputFolder;
+        private Path specificImageOutputFolder;
+        private String relativeCaseName;
+        private String newCaseName;
+        private String oldCaseName;
+
+        public Path getSpecificCaseInputFolder() {
+            return specificCaseInputFolder;
+        }
+
+        public Path getSpecificCaseOutputFolder() {
+            return specificCaseOutputFolder;
+        }
+
+        public Path getSpecificImageInputFolder() {
+            return specificImageInputFolder;
+        }
+
+        public Path getSpecificImageOutputFolder() {
+            return specificImageOutputFolder;
+        }
+
+        public String getRelativeCaseName() {
+            return relativeCaseName;
+        }
+
+        public String getOldCaseName() {
+            return oldCaseName;
+        }
+
+        public String getNewCaseName() {
+            return newCaseName;
+        }
+
+        public void setSpecificCaseInputFolder(Path caseInputFolder) {
+            this.specificCaseInputFolder = caseInputFolder;
+        }
+
+        public void setSpecificCaseOutputFolder(Path caseOutputFolder) {
+            this.specificCaseOutputFolder = caseOutputFolder;
+        }
+
+        public void setSpecificImageInputFolder(Path imageInputFolder) {
+            this.specificImageInputFolder = imageInputFolder;
+        }
+
+        public void setSpecificImageOutputFolder(Path imageOutputFolder) {
+            this.specificImageOutputFolder = imageOutputFolder;
+        }
+
+        public void setRelativeCaseName(Path input, Path aut) {
+            this.relativeCaseName = input.relativize(aut).toString();
+        }
+
+        public void setOldCaseName(String oldCaseName) {
+            this.oldCaseName = oldCaseName;
+        }
+
+        public void setNewCaseName(String newCaseName) {
+            this.newCaseName = newCaseName;
+        }
+
+        public ImportCaseData(Path p) {
+            this.specificCaseInputFolder = p;
+            this.oldCaseName = p.getFileName().toString();
+            this.specificCaseOutputFolder = null;
+            this.specificImageInputFolder = null;
+            this.specificImageOutputFolder = null;
+            this.relativeCaseName = null;
+            this.newCaseName = null;
+        }
+    }
+
     /**
      * This is the runnable's run method. It causes the iteration on all .aut
      * files in the path, calling processCase for each one.
@@ -1233,25 +1322,90 @@ public class SingleUserCaseImporter implements Runnable {
         boolean result = true;
 
         // iterate for .aut files
-        Path startingPoint = Paths.get(caseInputFolder);
         FindDotAutFolders dotAutFolders = new FindDotAutFolders();
         try {
-            Path walked = Files.walkFileTree(startingPoint, dotAutFolders);
+            Path walked = Files.walkFileTree(caseInputFolder, dotAutFolders);
         } catch (IOException ex) {
             log(ex.getMessage());
             result = false;
         }
 
-        // feed .aut files in one by one
+        ArrayList<ImportCaseData> ableToProcess = new ArrayList<>();
+        ArrayList<ImportCaseData> unableToProcess = new ArrayList<>();
+
+        // validate we can convert this .aut file, one by one
         for (Path p : dotAutFolders.getTheList()) {
-            if (false == processCase(p, p.getFileName().toString())) {
-                result = false;
+            ImportCaseData icd = new ImportCaseData(p);
+            icd.setRelativeCaseName(caseInputFolder, p);
+            if (canProcess(icd)) {
+                ableToProcess.add(icd);
+            } else {
+                unableToProcess.add(icd);
             }
         }
 
-        closeLog(result);
-        if (notifyOnComplete != null) {
-            notifyOnComplete.importDoneCallback(result);
+        StringBuilder casesThatWillBeProcessed = new StringBuilder();
+        StringBuilder casesThatWillNotBeProcessed = new StringBuilder();
+
+        casesThatWillBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.WillImport")).append(SEP); // NON-NLS
+        if (ableToProcess.isEmpty()) {
+            casesThatWillBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.None")).append(SEP); // NON-NLS
+        } else {
+            for (ImportCaseData icd : ableToProcess) {
+                casesThatWillBeProcessed.append(icd.getSpecificCaseInputFolder().toString()).append(SEP);
+            }
+        }
+
+        if (!unableToProcess.isEmpty()) {
+            casesThatWillNotBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.WillNotImport")).append(SEP); // NON-NLS
+            for (ImportCaseData icd : unableToProcess) {
+                casesThatWillNotBeProcessed.append(icd.getSpecificCaseInputFolder().toString()).append(SEP);
+            }
+        }
+
+        JTextArea jta = new JTextArea(casesThatWillBeProcessed.toString() + SEP + casesThatWillNotBeProcessed.toString());
+        jta.setEditable(false);
+        JScrollPane jsp = new JScrollPane(jta) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(700, 480);
+            }
+        };
+
+        SwingUtilities.invokeLater(() -> {
+            userAnswer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                    jsp,
+                    NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ContinueWithImport"), // NON-NLS
+                    OK_CANCEL_OPTION);
+            synchronized (threadWaitNotifyLock) {
+                threadWaitNotifyLock.notify();
+            }
+        });
+
+        synchronized (threadWaitNotifyLock) {
+            try {
+                threadWaitNotifyLock.wait();
+            } catch (InterruptedException ex) {
+                log("Unable to wait for user input");
+            }
+        }
+
+        if (userAnswer == JOptionPane.OK_OPTION) {
+            // feed .aut files in one by one for processing
+            for (ImportCaseData icd : ableToProcess) {
+                if (false == processCase(icd)) {
+                    result = false;
+                }
+            }
+            closeLog(result);
+            if (notifyOnComplete != null) {
+                notifyOnComplete.importDoneCallback(result, ""); // NON-NLS
+            }
+        } else {
+            closeLog(result);
+            if (notifyOnComplete != null) {
+                notifyOnComplete.importDoneCallback(false, NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.Cancelled")); // NON-NLS
+            }
         }
     }
 
@@ -1269,7 +1423,7 @@ public class SingleUserCaseImporter implements Runnable {
             writer = null;
             Logger.getLogger(SingleUserCaseImporter.class.getName()).log(Level.WARNING, "Error opening log file " + logFile.toString(), ex);
         }
-        log("Starting batch processing of " + caseInputFolder + " to " + caseOutputFolder);
+        log("Starting batch processing of " + caseInputFolder.toString() + " to " + caseOutputFolder);
     }
 
     /**
@@ -1291,7 +1445,7 @@ public class SingleUserCaseImporter implements Runnable {
      * not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
-        log("Completed batch processing of " + caseInputFolder + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success" : "Failure"));
+        log("Completed batch processing of " + caseInputFolder.toString() + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success" : "Failure"));
         if (writer != null) {
             writer.close();
         }
