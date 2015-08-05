@@ -195,8 +195,6 @@ public class EventDB {
     public Interval getSpanningInterval(Collection<Long> eventIDs) {
         DBLock.lock();
         try (Statement stmt = con.createStatement();
-                //You can't inject multiple values into one ? paramater in prepared statement,
-                //so we make new statement each time...
                 ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
                 return new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS

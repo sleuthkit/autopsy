@@ -211,8 +211,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (AggregateEventNode n : chart.getNodes((
-                        AggregateEventNode t) -> t.getEvent().getDescription().equals(tn.getEvent().getDescription()))) {
+                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
+                        -> t.getEvent().getDescription().equals(tn.getEvent().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -230,8 +230,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (AggregateEventNode n : chart.getNodes((
-                        AggregateEventNode t)
+                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
                         -> t.getEvent().getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -264,13 +263,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         return dateAxis.getTickMarkLabel(value);
     }
 
-    /** NOTE: Because this method modifies data directly used by the chart,
-     * this method should only be called from JavaFX thread!
+    /**
+     * NOTE: Because this method modifies data directly used by the chart, this
+     * method should only be called from JavaFX thread!
      *
      * @param et the EventType to get the series for
      *
      * @return a Series object to contain all the events with the given
-     *         EventType */
+     *         EventType
+     */
     private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
         XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
         if (series == null) {

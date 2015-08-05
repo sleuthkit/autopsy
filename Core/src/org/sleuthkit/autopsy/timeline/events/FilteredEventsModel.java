@@ -112,7 +112,9 @@ public final class FilteredEventsModel {
     private final EventsRepository repo;
     private final Case autoCase;
 
-    /** @return the default filter used at startup */
+    /**
+     * @return the default filter used at startup
+     */
     public RootFilter getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
 
@@ -252,8 +254,8 @@ public final class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely first
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public Long getMinTime() {
         return repo.getMinTime();
@@ -261,8 +263,8 @@ public final class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely last
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public Long getMaxTime() {
         return repo.getMaxTime();
@@ -272,8 +274,8 @@ public final class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents() {
         final Interval range;
@@ -293,8 +295,8 @@ public final class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
         return repo.getAggregatedEvents(params);
@@ -354,11 +356,11 @@ public final class FilteredEventsModel {
         }
     }
 
-    public void register(Object o) {
+    synchronized public void registerForEvents(Object o) {
         eventbus.register(o);
     }
 
-    public void unRegister(Object o) {
+    synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
     }
 }

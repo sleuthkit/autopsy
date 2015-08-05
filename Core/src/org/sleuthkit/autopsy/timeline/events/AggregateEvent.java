@@ -28,26 +28,36 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
- * Represents a set of other (TimeLineEvent) events aggregated together. All
- * the sub events should have the same type and matching descriptions at the
+ * Represents a set of other (TimeLineEvent) events aggregated together. All the
+ * sub events should have the same type and matching descriptions at the
  * designated 'zoom level'.
  */
 @Immutable
 public class AggregateEvent {
 
-    /** the smallest time interval containing all the aggregated events */
+    /**
+     * the smallest time interval containing all the aggregated events
+     */
     final private Interval span;
 
-    /** the type of all the aggregted events */
+    /**
+     * the type of all the aggregted events
+     */
     final private EventType type;
 
-    /** the common description of all the aggregated events */
+    /**
+     * the common description of all the aggregated events
+     */
     final private String description;
 
-    /** the description level of detail that the events were aggregated at. */
+    /**
+     * the description level of detail that the events were aggregated at.
+     */
     private final DescriptionLOD lod;
 
-    /** the set of ids of the aggregated events */
+    /**
+     * the set of ids of the aggregated events
+     */
     final private Set<Long> eventIDs;
 
     /**
@@ -137,9 +147,9 @@ public class AggregateEvent {
      *         AggregateEvent if no event ids would be removed
      */
     public AggregateEvent withTagsRemoved(Set<Long> unTaggedIDs) {
-        Sets.SetView<Long> difference = Sets.difference(tagged, unTaggedIDs);
-        if (difference.size() < tagged.size()) {
-            return new AggregateEvent(span, type, eventIDs, hashHits, difference.immutableCopy(), description, lod);
+        Sets.SetView<Long> stillTagged = Sets.difference(tagged, unTaggedIDs);
+        if (stillTagged.size() < tagged.size()) {
+            return new AggregateEvent(span, type, eventIDs, hashHits, stillTagged.immutableCopy(), description, lod);
         }
         return this; //no change
     }
@@ -155,9 +165,9 @@ public class AggregateEvent {
      *         AggregateEvent if no event ids would be added
      */
     public AggregateEvent withTagsAdded(Set<Long> taggedIDs) {
-        Sets.SetView<Long> taggedIdsInAgg = Sets.intersection(eventIDs, taggedIDs);//events that are in this aggregate and marked as tagged
+        Sets.SetView<Long> taggedIdsInAgg = Sets.intersection(eventIDs, taggedIDs);//events that are in this aggregate and (newly) marked as tagged
         if (taggedIdsInAgg.size() > 0) {
-            Sets.SetView<Long> notYetIncludedTagged = Sets.difference(taggedIdsInAgg,tagged); // events that are tagged, but not already marked as tagged in this Agg
+            Sets.SetView<Long> notYetIncludedTagged = Sets.difference(taggedIdsInAgg, tagged); // events that are tagged, but not already marked as tagged in this Agg
             if (notYetIncludedTagged.size() > 0) {
                 return new AggregateEvent(span, type, eventIDs, hashHits, Sets.union(tagged, taggedIdsInAgg).immutableCopy(), description, lod);
             }
