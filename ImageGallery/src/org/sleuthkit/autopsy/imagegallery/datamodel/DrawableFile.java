@@ -31,12 +31,12 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -56,6 +56,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * original {@link AbstractFile} to use when reading the image. -jm
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
+
+    private static final Logger LOGGER = Logger.getLogger(DrawableFile.class.getName());
 
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
         return create(abstractFileById, analyzed, FileTypeUtils.isVideoFile(abstractFileById));
@@ -100,10 +102,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     }
 
     public abstract boolean isVideo();
-
-    public Collection<String> getHashHitSetNames() {
-        return ImageGalleryController.getDefault().getHashSetManager().getHashSetsForFile(getId());
-    }
 
     @Override
     public boolean isRoot() {
@@ -226,13 +224,12 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .orElse(Category.ZERO)
             );
         } catch (TskCoreException ex) {
-            Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
+            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
     }
 
-   
     public Image getThumbnail() {
         return ThumbnailCache.getDefault().get(this);
     }
@@ -263,7 +260,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
                 return drawablePath;
             } catch (TskCoreException ex) {
-                Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "failed to get drawablePath from {0}", getName());
+                LOGGER.log(Level.WARNING, "failed to get drawablePath from {0}", getName());
                 return "";
             }
         }
@@ -272,5 +269,15 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     public boolean isDisplayableAsImage() {
         Image thumbnail = getThumbnail();
         return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
+    }
+
+    @Nonnull
+    public Set<String> getHashSetNamesUnchecked() {
+        try {
+            return getHashSetNames();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get hash set names", ex);
+            return Collections.emptySet();
+        }
     }
 }

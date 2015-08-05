@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_none;
 import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_only;
@@ -87,7 +88,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
-            controller.pushFilters(filterTreeTable.getRoot().getValue().copyOf());
+            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue().copyOf());
         });
         applyButton.setText(Bundle.FilterSetPanel_applyButton_text());
         defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
