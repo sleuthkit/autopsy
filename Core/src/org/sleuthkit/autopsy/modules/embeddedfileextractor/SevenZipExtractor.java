@@ -96,7 +96,8 @@ class SevenZipExtractor {
         GZIP("application/gzip"),
         XGZIP("application/x-gzip"),
         XBZIP2("application/x-bzip2"),
-        XTAR("application/x-tar");
+        XTAR("application/x-tar"),
+        XGTAR("application/x-gtar");
 
         private final String mimeType;
 
