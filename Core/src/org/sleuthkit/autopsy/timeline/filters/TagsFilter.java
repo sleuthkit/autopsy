@@ -73,15 +73,16 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
     }
 
     public void addTagFilter(TagNameFilter tagFilter) {
+        TagName newFilterTagName = tagFilter.getTagName();
         if (getSubFilters().stream().map(TagNameFilter.class::cast)
                 .map(TagNameFilter::getTagName)
-                .filter(t -> t == tagFilter.getTagName())
+                .filter(newFilterTagName::equals)
                 .findAny().isPresent() == false) {
             getSubFilters().add(tagFilter);
         }
     }
 
     public void removeFilterForTag(TagName tagName) {
-        getSubFilters().removeIf((TagNameFilter t) -> t.getTagName().equals(tagName));
+        getSubFilters().removeIf(subfilter -> subfilter.getTagName().equals(tagName));
     }
 }

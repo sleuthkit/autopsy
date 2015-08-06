@@ -108,11 +108,12 @@ public class SQLHelper {
         if (filter.isSelected()
                 && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
-            String collect = filter.getSubFilters().stream()
+            String tagNameIDs = filter.getSubFilters().stream()
                     .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
                     .map((TagNameFilter t) -> String.valueOf(t.getTagName().getId()))
                     .collect(Collectors.joining(", ", "(", ")"));
-            return "((blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + collect + ") OR ( content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + collect + "))";
+            return "((blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + tagNameIDs + ") "
+                    + "OR ( content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + tagNameIDs + "))";
 
         } else {
             return "1";
@@ -123,10 +124,11 @@ public class SQLHelper {
         if (filter.isSelected()
                 && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
-            return "(hash_set_hits.hash_set_id IN " + filter.getSubFilters().stream()
+            String hashSetIDs = filter.getSubFilters().stream()
                     .filter((HashSetFilter t) -> t.isSelected() && !t.isDisabled())
                     .map((HashSetFilter t) -> String.valueOf(t.getHashSetID()))
-                    .collect(Collectors.joining(", ", "(", ")")) + " AND hash_set_hits.event_id == events.event_id)";
+                    .collect(Collectors.joining(", ", "(", ")"));
+            return "(hash_set_hits.hash_set_id IN " + hashSetIDs + " AND hash_set_hits.event_id == events.event_id)";
         } else {
             return "1";
         }
