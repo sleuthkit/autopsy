@@ -633,7 +633,7 @@ class SevenZipExtractor {
                     // If the content size is unknown, cautiously write to disk.
                     // Write only if byte array is less than 80% of the current
                     // free disk space.
-                    if (bytes.length < 0.8 * freeDiskSpace) {
+                    if (freeDiskSpace == IngestMonitor.DISK_FREE_SPACE_UNKNOWN || bytes.length < 0.8 * freeDiskSpace) {
                         output.write(bytes);
                         // NOTE: this method is called multiple times for a
                         // single extractSlow() call. Update bytesWritten and
