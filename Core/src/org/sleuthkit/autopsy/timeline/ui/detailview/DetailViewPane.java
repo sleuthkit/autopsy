@@ -302,7 +302,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
 
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRange().get());
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
 

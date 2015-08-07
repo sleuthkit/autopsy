@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
@@ -38,7 +39,7 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
         filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
         this.getSubFilters().forEach((DataSourceFilter t) -> {
-            filterCopy.addDataSourceFilter(t.copyOf());
+            filterCopy.addSubFilter(t.copyOf());
         });
 
         return filterCopy;
@@ -63,13 +64,14 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
         return string;
     }
 
-    public void addDataSourceFilter(DataSourceFilter dataSourceFilter) {
+    public void addSubFilter(DataSourceFilter dataSourceFilter) {
         if (getSubFilters().stream().map(DataSourceFilter.class::cast)
                 .map(DataSourceFilter::getDataSourceID)
                 .filter(t -> t == dataSourceFilter.getDataSourceID())
                 .findAny().isPresent() == false) {
             dataSourceFilter.getDisabledProperty().bind(getDisabledProperty());
             getSubFilters().add(dataSourceFilter);
+            getSubFilters().sort(Comparator.comparing(DataSourceFilter::getDisplayName));
         }
         if (getSubFilters().size() > 1) {
             setSelected(Boolean.TRUE);

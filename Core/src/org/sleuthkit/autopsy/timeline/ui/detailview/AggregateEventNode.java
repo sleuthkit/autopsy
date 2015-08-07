@@ -469,7 +469,7 @@ public class AggregateEventNode extends StackPane {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
-            RootFilter combinedFilter = eventsModel.filter().get().copyOf();
+            RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
             combinedFilter.getSubFilters().addAll(new TextFilter(aggEvent.getDescription()),
                     new TypeFilter(aggEvent.getType()));
@@ -485,7 +485,7 @@ public class AggregateEventNode extends StackPane {
                         protected List<AggregateEventNode> call() throws Exception {
                             //query for the sub-clusters
                             List<AggregateEvent> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
-                                            eventsModel.eventTypeZoom().get(),
+                                            eventsModel.eventTypeZoomProperty().get(),
                                             combinedFilter,
                                             newDescriptionLOD));
                             //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position

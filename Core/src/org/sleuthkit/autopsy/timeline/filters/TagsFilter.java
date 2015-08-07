@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
@@ -32,7 +33,7 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
         this.getSubFilters().forEach((TagNameFilter t) -> {
-            filterCopy.addTagFilter(t.copyOf());
+            filterCopy.addSubFilter(t.copyOf());
         });
         return filterCopy;
     }
@@ -72,17 +73,19 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addTagFilter(TagNameFilter tagFilter) {
+    public void addSubFilter(TagNameFilter tagFilter) {
         TagName newFilterTagName = tagFilter.getTagName();
-        if (getSubFilters().stream().map(TagNameFilter.class::cast)
+        if (getSubFilters().stream()
                 .map(TagNameFilter::getTagName)
                 .filter(newFilterTagName::equals)
                 .findAny().isPresent() == false) {
             getSubFilters().add(tagFilter);
         }
+        getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
     }
 
     public void removeFilterForTag(TagName tagName) {
         getSubFilters().removeIf(subfilter -> subfilter.getTagName().equals(tagName));
+        getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
     }
 }

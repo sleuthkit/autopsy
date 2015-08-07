@@ -203,7 +203,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         if (updateTask != null) {
             updateTask.cancel(true);
         }
-        this.filteredEvents.getRequestedZoomParamters().removeListener(invalidationListener);
+        this.filteredEvents.zoomParamtersProperty().removeListener(invalidationListener);
         invalidationListener = null;
     }
 
@@ -239,7 +239,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     synchronized public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
 
-        this.filteredEvents.getRequestedZoomParamters().addListener(invalidationListener);
+        this.filteredEvents.zoomParamtersProperty().addListener(invalidationListener);
         update();
     }
 

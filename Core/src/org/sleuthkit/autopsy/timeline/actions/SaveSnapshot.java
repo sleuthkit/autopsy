@@ -82,7 +82,7 @@ public class SaveSnapshot extends Action {
 
                 reportMetaData.add(new Pair<>("Case", Case.getCurrentCase().getName())); // NON-NLS
 
-                ZoomParams get = controller.getEventsModel().getRequestedZoomParamters().get();
+                ZoomParams get = controller.getEventsModel().zoomParamtersProperty().get();
                 reportMetaData.add(new Pair<>("Time Range", get.getTimeRange().toString())); // NON-NLS
                 reportMetaData.add(new Pair<>("Description Level of Detail", get.getDescrLOD().getDisplayName())); // NON-NLS
                 reportMetaData.add(new Pair<>("Event Type Zoom Level", get.getTypeZoomLevel().getDisplayName())); // NON-NLS

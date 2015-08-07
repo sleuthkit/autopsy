@@ -54,6 +54,8 @@ import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -458,12 +460,26 @@ public class EventsRepository {
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);
-            try {
-                tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
-            }
+            updateTagFilters();
         }
         return updatedEventIDs;
+    }
+
+    public void updateTagFilters() {
+        try {
+            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
+    }
+
+    public void syncTagFilter(TagsFilter tagsFilter) {
+        for (TagName t : tagNames) {
+            tagsFilter.addSubFilter(new TagNameFilter(t));
+        }
+        tagsFilter.getSubFilters().removeIf((TagNameFilter t) -> {
+            return tagNames.contains(t.getTagName()) == false;
+        });
     }
 }

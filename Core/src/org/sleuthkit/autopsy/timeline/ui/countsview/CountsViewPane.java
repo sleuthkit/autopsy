@@ -141,7 +141,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                     setCursor(Cursor.WAIT);
                 });
 
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRange().get());
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
                 chart.setRangeInfo(rangeInfo);
                 //extend range to block bounderies (ie day, month, year)
                 final long lowerBound = rangeInfo.getLowerBound();

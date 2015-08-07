@@ -174,14 +174,14 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
         refresh();
-        this.filteredEvents.filter().addListener((Observable o) -> {
+        this.filteredEvents.filterProperty().addListener((Observable o) -> {
             refresh();
         });
     }
 
     private void refresh() {
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filter().get().copyOf(), expansionMap));
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap));
         });
     }
 }

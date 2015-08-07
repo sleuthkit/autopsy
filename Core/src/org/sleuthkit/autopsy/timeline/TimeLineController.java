@@ -237,7 +237,7 @@ public class TimeLineController {
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
-                filteredEvents.filter().get(),
+                filteredEvents.filterProperty().get(),
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
@@ -256,7 +256,7 @@ public class TimeLineController {
 
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
-        advance(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
+        advance(filteredEvents.zoomParamtersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
     /**
@@ -303,7 +303,7 @@ public class TimeLineController {
                     Platform.runLater(() -> {
                         //TODO: should this be an event?
                         newEventsFlag.set(false);
-                        historyManager.reset(filteredEvents.getRequestedZoomParamters().get());
+                        historyManager.reset(filteredEvents.zoomParamtersProperty().get());
                         TimeLineController.this.showFullRange();
                     });
                 });
@@ -419,13 +419,13 @@ public class TimeLineController {
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
-            final DateTime middleOf = IntervalUtils.middleOf(filteredEvents.timeRange().get());
+            final DateTime middleOf = IntervalUtils.middleOf(filteredEvents.timeRangeProperty().get());
             pushTimeRange(IntervalUtils.getIntervalAround(middleOf, period));
         }
     }
 
     synchronized public void pushZoomOutTime() {
-        final Interval timeRange = filteredEvents.timeRange().get();
+        final Interval timeRange = filteredEvents.timeRangeProperty().get();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().minus(toDurationMillis);
         DateTime end = timeRange.getEnd().plus(toDurationMillis);
@@ -433,7 +433,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushZoomInTime() {
-        final Interval timeRange = filteredEvents.timeRange().get();
+        final Interval timeRange = filteredEvents.timeRangeProperty().get();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
@@ -495,7 +495,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
-        ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
         } else if (currentZoom.hasTypeZoomLevel(typeZoomeLevel) == false) {
@@ -505,7 +505,7 @@ public class TimeLineController {
 
     synchronized public void pushTimeRange(Interval timeRange) {
 //        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
-        ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
@@ -514,7 +514,7 @@ public class TimeLineController {
     }
 
     synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
-        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.getRequestedZoomParamters().get().getTimeRange());
+        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParamtersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
@@ -532,7 +532,7 @@ public class TimeLineController {
         }
 
         if (shouldContinue) {
-            ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+            ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
             if (currentZoom == null) {
                 advance(InitialZoomState.withDescrLOD(newLOD));
             } else if (currentZoom.hasDescrLOD(newLOD) == false) {
@@ -544,7 +544,7 @@ public class TimeLineController {
 
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
 //        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
-        ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
@@ -557,7 +557,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushFilters(RootFilter filter) {
-        ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
+        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));
         } else if (currentZoom.hasFilter(filter) == false) {
@@ -566,12 +566,16 @@ public class TimeLineController {
     }
 
     synchronized public ZoomParams advance() {
-        return historyManager.advance();
+        ZoomParams advance = historyManager.advance();
+        eventsRepository.syncTagFilter(advance.getFilter().getTagsFilter());
+        return advance;
 
     }
 
     synchronized public ZoomParams retreat() {
-        return historyManager.retreat();
+        ZoomParams retreat = historyManager.retreat();
+        eventsRepository.syncTagFilter(retreat.getFilter().getTagsFilter());
+        return retreat;
     }
 
     synchronized private void advance(ZoomParams newState) {
@@ -816,7 +820,7 @@ public class TimeLineController {
                     });
                     break;
                 case CURRENT_CASE:
-                   OpenTimelineAction.invalidateController();
+                    OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }

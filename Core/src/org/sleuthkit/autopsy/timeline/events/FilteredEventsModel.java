@@ -126,21 +126,21 @@ public final class FilteredEventsModel {
         repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
             dataSourceFilter.setSelected(Boolean.TRUE);
-            dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
+            dataSourcesFilter.addSubFilter(dataSourceFilter);
         });
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
         repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
-            HashSetFilter hashSourceFilter = new HashSetFilter(t.getValue(), t.getKey());
-            hashSourceFilter.setSelected(Boolean.TRUE);
-            hashHitsFilter.addHashSetFilter(hashSourceFilter);
+            HashSetFilter hashSetFilter = new HashSetFilter(t.getValue(), t.getKey());
+            hashSetFilter.setSelected(Boolean.TRUE);
+            hashHitsFilter.addSubFilter(hashSetFilter);
         });
 
         TagsFilter tagsFilter = new TagsFilter();
         repo.getTagNames().stream().forEach(t -> {
             TagNameFilter tagNameFilter = new TagNameFilter(t);
             tagNameFilter.setSelected(Boolean.TRUE);
-            tagsFilter.addTagFilter(tagNameFilter);
+            tagsFilter.addSubFilter(tagNameFilter);
         });
         return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
     }
@@ -150,24 +150,24 @@ public final class FilteredEventsModel {
         this.autoCase = repo.getAutoCase();
         repo.getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = filter().get();
-            rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
+            RootFilter rootFilter = filterProperty().get();
+            rootFilter.getDataSourcesFilter().addSubFilter(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         repo.getHashSetMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = filter().get();
-            rootFilter.getHashHitsFilter().addHashSetFilter(hashSetFilter);
+            RootFilter rootFilter = filterProperty().get();
+            rootFilter.getHashHitsFilter().addSubFilter(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         repo.getTagNames().addListener((ListChangeListener.Change<? extends TagName> c) -> {
-            RootFilter rootFilter = filter().get();
+            RootFilter rootFilter = filterProperty().get();
             TagsFilter tagsFilter = rootFilter.getTagsFilter();
             while (c.next()) {
                 c.getRemoved().forEach(tagsFilter::removeFilterForTag);
                 c.getAddedSubList().forEach((TagName t) -> {
                     TagNameFilter tagFilter = new TagNameFilter(t);
-                    tagsFilter.addTagFilter(tagFilter);
+                    tagsFilter.addSubFilter(tagFilter);
                 });
 
             }
@@ -196,10 +196,10 @@ public final class FilteredEventsModel {
     }
 
     public Interval getBoundingEventsInterval() {
-        return repo.getBoundingEventsInterval(getRequestedZoomParamters().get().getTimeRange(), getRequestedZoomParamters().get().getFilter());
+        return repo.getBoundingEventsInterval(zoomParamtersProperty().get().getTimeRange(), zoomParamtersProperty().get().getFilter());
     }
 
-    synchronized public ReadOnlyObjectProperty<ZoomParams> getRequestedZoomParamters() {
+    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParamtersProperty() {
         return requestedZoomParamters.getReadOnlyProperty();
     }
 
@@ -247,18 +247,18 @@ public final class FilteredEventsModel {
      * @return a read only view of the time range requested via
      *         {@link #requestTimeRange(org.joda.time.Interval)}
      */
-    synchronized public ReadOnlyObjectProperty<Interval> timeRange() {
+    synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
             requestedTimeRange.set(getSpanningInterval());
         }
         return requestedTimeRange.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLOD() {
+    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLODProperty() {
         return requestedLOD.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<RootFilter> filter() {
+    synchronized public ReadOnlyObjectProperty<RootFilter> filterProperty() {
         return requestedFilter.getReadOnlyProperty();
     }
 
@@ -327,7 +327,7 @@ public final class FilteredEventsModel {
         return repo.getAggregatedEvents(params);
     }
 
-    synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoom() {
+    synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 

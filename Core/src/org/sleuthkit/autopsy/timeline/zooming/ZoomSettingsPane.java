@@ -141,12 +141,12 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
                     if (requestedUnit == TimeUnits.FOREVER) {
                         controller.showFullRange();
                     } else {
-                        controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRange().get()), requestedUnit.getPeriod()));
+                        controller.pushTimeRange(IntervalUtils.getIntervalAround(IntervalUtils.middleOf(ZoomSettingsPane.this.filteredEvents.timeRangeProperty().get()), requestedUnit.getPeriod()));
                     }
                 },
-                this.filteredEvents.timeRange(),
+                this.filteredEvents.timeRangeProperty(),
                 () -> {
-                    RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRange().get());
+                    RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
                     ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
 
                     timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
@@ -158,9 +158,9 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
                     if (controller.pushDescrLOD(newLOD) == false) {
                         descrLODSlider.setValue(new DescrLODConverter().fromString(filteredEvents.getDescriptionLOD().toString()));
                     }
-                }, this.filteredEvents.descriptionLOD(),
+                }, this.filteredEvents.descriptionLODProperty(),
                 () -> {
-                    descrLODSlider.setValue(this.filteredEvents.descriptionLOD().get().ordinal());
+                    descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
                 });
 
         initializeSlider(typeZoomSlider,
@@ -168,9 +168,9 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
                     EventTypeZoomLevel newZoomLevel = EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())];
                     controller.pushEventTypeZoom(newZoomLevel);
                 },
-                this.filteredEvents.eventTypeZoom(),
+                this.filteredEvents.eventTypeZoomProperty(),
                 () -> {
-                    typeZoomSlider.setValue(this.filteredEvents.eventTypeZoom().get().ordinal());
+                    typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal());
                 });
     }
 

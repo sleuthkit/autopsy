@@ -349,7 +349,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         }
         if (this.filteredEvents != filteredEvents) {
             filteredEvents.registerForEvents(this);
-            filteredEvents.getRequestedZoomParamters().addListener(o -> {
+            filteredEvents.zoomParamtersProperty().addListener(o -> {
                 clearGuideLine();
                 clearIntervalSelector();
 

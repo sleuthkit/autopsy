@@ -40,12 +40,12 @@ public class ZoomOut extends Action {
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {
-                bind(eventsModel.getRequestedZoomParamters());
+                bind(eventsModel.zoomParamtersProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.getRequestedZoomParamters().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
+                return eventsModel.zoomParamtersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
             }
         });
         setEventHandler((ActionEvent t) -> {

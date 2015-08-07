@@ -186,14 +186,14 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final InvalidationListener endListener = (Observable observable) -> {
         if (endPicker.getLocalDateTime() != null) {
-            controller.pushTimeRange(VisualizationPanel.this.filteredEvents.timeRange().get().withEndMillis(
+            controller.pushTimeRange(VisualizationPanel.this.filteredEvents.timeRangeProperty().get().withEndMillis(
                     ZonedDateTime.of(endPicker.getLocalDateTime(), TimeLineController.getTimeZoneID()).toInstant().toEpochMilli()));
         }
     };
 
     private final InvalidationListener startListener = (Observable observable) -> {
         if (startPicker.getLocalDateTime() != null) {
-            controller.pushTimeRange(VisualizationPanel.this.filteredEvents.timeRange().get().withStartMillis(
+            controller.pushTimeRange(VisualizationPanel.this.filteredEvents.timeRangeProperty().get().withStartMillis(
                     ZonedDateTime.of(startPicker.getLocalDateTime(), TimeLineController.getTimeZoneID()).toInstant().toEpochMilli()));
         }
     };
@@ -518,12 +518,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
 
-        refreshTimeUI(filteredEvents.timeRange().get());
-        this.filteredEvents.timeRange().addListener((Observable observable) -> {
-            refreshTimeUI(filteredEvents.timeRange().get());
+        refreshTimeUI(filteredEvents.timeRangeProperty().get());
+        this.filteredEvents.timeRangeProperty().addListener((Observable observable) -> {
+            refreshTimeUI(filteredEvents.timeRangeProperty().get());
         });
         TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            refreshTimeUI(filteredEvents.timeRange().get());
+            refreshTimeUI(filteredEvents.timeRangeProperty().get());
         });
     }
 

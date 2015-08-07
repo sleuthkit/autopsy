@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
@@ -31,7 +32,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
         this.getSubFilters().forEach((HashSetFilter t) -> {
-            filterCopy.addHashSetFilter(t.copyOf());
+            filterCopy.addSubFilter(t.copyOf());
         });
         return filterCopy;
     }
@@ -71,12 +72,13 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addHashSetFilter(HashSetFilter hashSetFilter) {
-        if (getSubFilters().stream().map(HashSetFilter.class::cast)
+    public void addSubFilter(HashSetFilter hashSetFilter) {
+        if (getSubFilters().stream()
                 .map(HashSetFilter::getHashSetID)
                 .filter(t -> t == hashSetFilter.getHashSetID())
                 .findAny().isPresent() == false) {
             getSubFilters().add(hashSetFilter);
+            getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
         }
     }
 }

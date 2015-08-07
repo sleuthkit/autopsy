@@ -30,6 +30,7 @@ public class TagNameFilter extends AbstractFilter {
 
     public TagNameFilter(TagName tagName) {
         this.tagName = tagName;
+        setSelected(Boolean.TRUE);
     }
 
     public TagName getTagName() {
