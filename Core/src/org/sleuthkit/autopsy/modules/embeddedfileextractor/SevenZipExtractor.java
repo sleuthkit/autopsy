@@ -24,6 +24,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -603,6 +605,7 @@ class SevenZipExtractor {
         private String localAbsPath;
         private long freeDiskSpace;
         private boolean sizeUnknown = false;
+        private boolean outOfSpace = false;
         private long bytesWritten = 0;
 
         UnpackStream(String localAbsPath, long freeDiskSpace, boolean sizeUnknown) {
@@ -632,12 +635,13 @@ class SevenZipExtractor {
                     // free disk space.
                     if (bytes.length < 0.8 * freeDiskSpace) {
                         output.write(bytes);
-                        // NOTE: this method is called multiple times for a single
-                        // extractSlow() call. Update bytesWritten and freeDiskSpace
-                        // after every write operation.
+                        // NOTE: this method is called multiple times for a
+                        // single extractSlow() call. Update bytesWritten and
+                        // freeDiskSpace after every write operation.
                         this.bytesWritten += bytes.length;
                         this.freeDiskSpace -= bytes.length;
                     } else {
+                        this.outOfSpace = true;
                         logger.log(Level.INFO, NbBundle.getMessage(
                                 SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.noSpace.msg"));
@@ -658,6 +662,9 @@ class SevenZipExtractor {
                 try {
                     output.flush();
                     output.close();
+                    if (this.outOfSpace) {
+                        Files.delete(Paths.get(this.localAbsPath));
+                    }
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
                 }
