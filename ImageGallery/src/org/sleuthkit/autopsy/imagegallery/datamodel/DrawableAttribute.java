@@ -78,7 +78,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
             = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
 
     public final static DrawableAttribute<String> HASHSET
-            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashHitSetNames);
+            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashSetNamesUnchecked);
 
     public final static DrawableAttribute<Long> OBJ_ID
             = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));

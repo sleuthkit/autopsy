@@ -21,12 +21,16 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.List;
+import static java.util.Objects.nonNull;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Video viewer part of the Media View layered pane.
@@ -132,9 +136,21 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
         String extension = file.getNameExtension();
         //TODO: is this what we want, to require both extension and mimetype support?
         if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
-            return DataContentViewerMedia.MediaViewPanel.super.isSupported(file); //To change body of generated methods, choose Tools | Templates.
+            SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
+            try {
+                String mimeType = new FileTypeDetector().getFileType(file);
+                if (nonNull(mimeType)) {
+                    return mimeTypes.contains(mimeType);
+                }
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
+                    return true;
+                }
+            }
+
+            return getExtensionsList().contains("." + extension);
         }
         return false;
     }
-
 }

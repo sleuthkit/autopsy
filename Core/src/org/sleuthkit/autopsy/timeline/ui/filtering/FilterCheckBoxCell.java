@@ -46,7 +46,7 @@ class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
                 setGraphic(null);
             } else {
                 setText(item.getDisplayName());
-                activeProperty = item.getActiveProperty();
+                activeProperty = item.getSelectedProperty();
                 checkBox.selectedProperty().bindBidirectional(activeProperty);
                 checkBox.disableProperty().bind(item.getDisabledProperty());
                 setGraphic(checkBox);
