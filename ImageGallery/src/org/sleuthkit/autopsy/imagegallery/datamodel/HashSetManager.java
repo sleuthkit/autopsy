@@ -3,8 +3,11 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.util.Collections;
 import java.util.Set;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages a cache of hashset hits as a map from fileID to hashset names.
@@ -36,7 +39,12 @@ public class HashSetManager {
      * @return the names of the hashsets the given fileID is in
      */
     private Set<String> getHashSetsForFileHelper(long fileID) {
-        return db.getHashSetsForFileFromAutopsy(fileID);
+        try {
+            return db.getFileFromID(fileID).getHashSetNames();
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file", ex);
+            return Collections.emptySet();
+        }
     }
 
     /**

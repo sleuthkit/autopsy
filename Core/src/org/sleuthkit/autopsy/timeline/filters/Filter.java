@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,39 +21,38 @@ package org.sleuthkit.autopsy.timeline.filters;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 
 /** Interface for Filters */
 public interface Filter {
 
-    /** @return the default filter used at startup */
-    static Filter getDefaultFilter() {
-        return Filter.intersect(new Filter[]{new HideKnownFilter(), new TextFilter(), new TypeFilter(RootEventType.getInstance())});
-    }
+    
 
-    /** @param <S>     the type of the given filters
+    /**
      * @param filters a set of filters to intersect
      *
      * @return a filter that is the intersection of the given filters */
-    public static IntersectionFilter intersect(ObservableList<Filter> filters) {
-        return new IntersectionFilter(filters);
+    public static IntersectionFilter<Filter> intersect(ObservableList<Filter> filters) {
+        return new IntersectionFilter<>(filters);
     }
 
-    /** @param <S>     the type of the given filters
+    /**
      * @param filters a set of filters to intersect
      *
-     * @return a filter that is the intersection of the given filters */
-    public static IntersectionFilter intersect(Filter[] filters) {
-        return new IntersectionFilter(FXCollections.observableArrayList(filters));
+     * @return a filter that is the intersection of the given filters
+     */
+    public static IntersectionFilter<Filter> intersect(Filter[] filters) {
+        return new IntersectionFilter<>(FXCollections.observableArrayList(filters));
     }
 
-    /** since filters have mutable state (active) and are observed in various
+    /**
+     * since filters have mutable state (active) and are observed in various
      * places, we need a mechanism to copy the current state to keep in history.
      *
      * Concrete subtasks should implement this in a way that preserves the
      * active state and any subfilters.
      *
-     * @return a copy of this filter. */
+     * @return a copy of this filter.
+     */
     Filter copyOf();
 
     String getDisplayName();
@@ -62,16 +61,18 @@ public interface Filter {
 
     String getStringCheckBox();
 
-    boolean isActive();
+    boolean isSelected();
 
-    void setActive(Boolean act);
+    void setSelected(Boolean act);
 
-    SimpleBooleanProperty getActiveProperty();
+    SimpleBooleanProperty getSelectedProperty();
 
-    /* TODO: disabled state only affects the state of the checkboxes in the ui
+    /*
+     * TODO: disabled state only affects the state of the checkboxes in the ui
      * and not the actual filters and shouldn't be implemented here, but it
      * was too hard to figure out how it should be implemented without intruding
-     * on the ui-ignorant filters */
+     * on the ui-ignorant filters
+     */
     void setDisabled(Boolean act);
 
     SimpleBooleanProperty getDisabledProperty();

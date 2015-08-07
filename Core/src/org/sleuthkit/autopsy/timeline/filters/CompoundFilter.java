@@ -1,12 +1,25 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2014-15 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.List;
 import javafx.beans.Observable;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -27,12 +40,12 @@ import javafx.collections.ObservableList;
  * of its sub-filters are active.</le>
  * </ol>
  */
-public abstract class CompoundFilter extends AbstractFilter {
+public abstract class CompoundFilter<SubFilterType extends Filter> extends AbstractFilter {
 
     /** the list of sub-filters that make up this filter */
-    private final ObservableList<Filter> subFilters;
+    private final ObservableList<SubFilterType> subFilters = FXCollections.observableArrayList();
 
-    public final ObservableList<Filter> getSubFilters() {
+    public final ObservableList<SubFilterType> getSubFilters() {
         return subFilters;
     }
 
@@ -40,67 +53,37 @@ public abstract class CompoundFilter extends AbstractFilter {
      *
      * @param subFilters
      */
-    public CompoundFilter(ObservableList<Filter> subFilters) {
+    public CompoundFilter(List<SubFilterType> subFilters) {
         super();
-        this.subFilters = FXCollections.<Filter>synchronizedObservableList(subFilters);
 
         //listen to changes in list of subfilters and add active state listener to newly added filters
-        this.subFilters.addListener((ListChangeListener.Change<? extends Filter> c) -> {
+        this.subFilters.addListener((ListChangeListener.Change<? extends SubFilterType> c) -> {
             while (c.next()) {
-                addListeners(c.getAddedSubList());
-                //TODO: remove listeners from removed subfilters
+                addSubFilterListeners(c.getAddedSubList());
             }
         });
-
-        //add listeners to subfilters
-        addListeners(subFilters);
-
-        //disable subfilters if this filter is disabled
-        getDisabledProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-            if (newValue) {
-                getSubFilters().forEach((Filter t) -> {
-                    t.setDisabled(true);
-                });
-            } else {
-                final boolean isActive = !isActive();
-                getSubFilters().forEach((Filter t) -> {
-                    t.setDisabled(isActive);
-                });
-            }
-        });
-
-        //listen to active property and adjust subfilters active property
-        getActiveProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-            if (newValue) {
-                // if this filter become active, and all its subfilters were inactive, make them all active
-                if (getSubFilters().stream().noneMatch(Filter::isActive)) {
-                    getSubFilters().forEach((Filter filter) -> {
-                        filter.setActive(true);
-                    });
-                }
-            } else {
-                //if this filter beceoms inactive and all its subfilters where active, make them inactive
-                if (getSubFilters().stream().allMatch(Filter::isActive)) {
-                    getSubFilters().forEach((Filter filter) -> {
-                        filter.setActive(false);
-                    });
-                }
-            }
-
-            //disabled subfilters if this filter is not active
-            getSubFilters().forEach((Filter t) -> {
-                t.setDisabled(!newValue);
-            });
-        });
+        this.subFilters.setAll(subFilters);
     }
 
-    private void addListeners(List<? extends Filter> newSubfilters) {
-        for (Filter sf : newSubfilters) {
+    private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {
+        for (SubFilterType sf : newSubfilters) {
             //if a subfilter changes active state
-            sf.getActiveProperty().addListener((Observable observable) -> {
+            sf.getSelectedProperty().addListener((Observable observable) -> {
                 //set this filter acttive af any of the subfilters are active.
-                setActive(getSubFilters().parallelStream().anyMatch(Filter::isActive));
+                setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
             });
         }
+    }
+
+    static <SubFilterType extends Filter> boolean hashEqualSubFilters(final CompoundFilter<SubFilterType> oneFilter, final CompoundFilter<SubFilterType> otherFilter) {
+        if (oneFilter.getSubFilters().size() != otherFilter.getSubFilters().size()) {
+            return false;
+        }
+        for (int i = 0; i < oneFilter.getSubFilters().size(); i++) {
+            if (oneFilter.getSubFilters().get(i).equals(otherFilter.getSubFilters().get(i)) == false) {
+                return false;
+            }
+        }
+        return true;
     }
 }

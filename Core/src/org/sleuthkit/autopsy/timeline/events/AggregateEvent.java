@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-import com.google.common.collect.Collections2;
+import com.google.common.collect.Sets;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -47,23 +44,16 @@ public class AggregateEvent {
 
     private final DescriptionLOD lod;
 
-    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, String description, DescriptionLOD lod) {
+    private final Set<Long> hashHits;
+
+    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, String description, DescriptionLOD lod) {
 
         this.span = spanningInterval;
         this.type = type;
+        this.hashHits = hashHits;
         this.description = description;
 
         this.eventIDs = eventIDs;
-        this.lod = lod;
-    }
-
-    public AggregateEvent(Interval spanningInterval, EventType type, List<String> events, String description, DescriptionLOD lod) {
-
-        this.span = spanningInterval;
-        this.type = type;
-        this.description = description;
-
-        this.eventIDs = new HashSet<>(Collections2.transform(events, Long::valueOf));
         this.lod = lod;
     }
 
@@ -74,6 +64,10 @@ public class AggregateEvent {
 
     public Set<Long> getEventIDs() {
         return Collections.unmodifiableSet(eventIDs);
+    }
+
+    public Set<Long> getEventIDsWithHashHits() {
+        return Collections.unmodifiableSet(hashHits);
     }
 
     public String getDescription() {
@@ -101,11 +95,10 @@ public class AggregateEvent {
         if (!ag1.getDescription().equals(ag2.getDescription())) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
         }
-        HashSet<Long> ids = new HashSet<>(ag1.getEventIDs());
-        ids.addAll(ag2.getEventIDs());
+        Sets.SetView<Long> idsUnion = Sets.union(ag1.getEventIDs(), ag2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(ag1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
 
-        //TODO: check that types/descriptions are actually the same -jm
-        return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), ids, ag1.getDescription(), ag1.lod);
+        return new AggregateEvent(IntervalUtils.span(ag1.span, ag2.span), ag1.getType(), idsUnion, hashHitsUnion, ag1.getDescription(), ag1.lod);
     }
 
     public DescriptionLOD getLOD() {
