@@ -54,7 +54,7 @@ public class IngestJobSettings {
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
     private String moduleSettingsFolderPath;
-    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1);
+    private static final CharSequence pythonModulePrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1);
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
@@ -292,7 +292,7 @@ public class IngestJobSettings {
      * @return True or false
      */
     private boolean isPythonModuleSettingsFile(String moduleSettingsFilePath) {
-        return moduleSettingsFilePath.contains(pythonModuleSettingsPrefixCS);
+        return moduleSettingsFilePath.contains(pythonModulePrefixCS);
     }
 
     /**
@@ -341,7 +341,11 @@ public class IngestJobSettings {
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        String className = factory.getClass().getCanonicalName();
+        if (className.contains(pythonModulePrefixCS)) {
+            className = className.replaceAll("\\$[\\d]$", "\\$");
+        }
+        String fileName = className + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }

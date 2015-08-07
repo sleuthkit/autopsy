@@ -23,8 +23,10 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
@@ -35,6 +37,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.python.util.PythonInterpreter;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -46,6 +49,9 @@ import org.sleuthkit.autopsy.report.GeneralReportModule;
 public final class JythonModuleLoader {
 
     private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName());
+    // maintain a private list of loaded modules and their loading time. Refer
+    // this list before reloading the modules.
+    private static final Map<String, Long> listOfModules = new HashMap<>();
 
     /**
      * Get ingest module factories implemented using Jython.
@@ -124,7 +130,12 @@ public final class JythonModuleLoader {
 
         // reload the module so that the changes made to it can be loaded.
         interpreter.exec("import " + moduleName); //NON-NLS
-        interpreter.exec("reload(" + moduleName + ")"); //NON-NLS
+        // reload module only if it modified.
+        if (listOfModules.containsKey(script.getAbsolutePath()) && script.lastModified() > listOfModules.get(script.getAbsolutePath())) {
+            interpreter.exec("reload(" + moduleName + ")"); //NON-NLS
+            MessageNotifyUtil.Notify.info(NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.title"),
+                    NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.msg", script)); // NON-NLS
+        }
 
         // Importing the appropriate class from the Py Script which contains multiple classes.
         interpreter.exec("from " + moduleName + " import " + className);
@@ -136,6 +147,8 @@ public final class JythonModuleLoader {
         // module search path.
         interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
 
+        // record the module.
+        listOfModules.put(script.getAbsolutePath(), System.currentTimeMillis());
         return obj;
     }
 
