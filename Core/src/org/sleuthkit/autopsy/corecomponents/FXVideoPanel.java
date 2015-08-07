@@ -201,13 +201,19 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         private final MediaView mediaView;
 
-        /** The Duration of the media. * */
+        /**
+         * The Duration of the media. *
+         */
         private Duration duration;
 
-        /** The container for the media controls. * */
+        /**
+         * The container for the media controls. *
+         */
         private final HBox mediaTools;
 
-        /** The container for the media video output. * */
+        /**
+         * The container for the media video output. *
+         */
         private final HBox mediaViewPane;
 
         private final VBox controlPanel;
@@ -629,9 +635,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     /**
      * @param file      a video file from which to capture frames
      * @param numFrames the number of frames to capture. These frames will be
-     *                  captured at successive intervals given by durationOfVideo/numFrames. If
-     *                  this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
-     *                  frame will be captured and returned.
+     *                  captured at successive intervals given by
+     *                  durationOfVideo/numFrames. If this frame interval is
+     *                  less than MIN_FRAME_INTERVAL_MILLIS, then only one frame
+     *                  will be captured and returned.
      *
      * @return a List of VideoFrames representing the captured frames.
      */

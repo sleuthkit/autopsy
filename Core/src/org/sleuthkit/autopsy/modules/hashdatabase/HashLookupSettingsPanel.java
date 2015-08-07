@@ -76,7 +76,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         public void run() {
                             updateComponents();
                         }
-                    });                                
+                    });
                 }
             }
         });
@@ -159,7 +159,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
         }
-        
+
         try {
             addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
         } catch (TskCoreException ex) {
@@ -278,15 +278,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     public void cancel() {
-        /* Revert back to last settings only if the user could have
-         * made changes.  Doing this while ingest is running causes
-         * hash dbs to be closed while they are still being used. 
+        /*
+         * Revert back to last settings only if the user could have made
+         * changes. Doing this while ingest is running causes hash dbs to be
+         * closed while they are still being used.
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
-    
+
     void removeThese(List<HashDb> toRemove) {
         for (HashDb hashDb : toRemove) {
             hashSetManager.removeHashDatabaseInternal(hashDb);
@@ -299,7 +300,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * unindexed, along with solutions. This method is related to
      * ModalNoButtons, to be removed at a later date.
      *
-     * @param plural Whether or not there are multiple unindexed databases
+     * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     private void showInvalidIndex(boolean plural, List<HashDb> unindexed) {
@@ -315,7 +316,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
         int res = JOptionPane.showConfirmDialog(this, message,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.unindexedDbsMsg"),
+                        "HashDbConfigPanel.unindexedDbsMsg"),
                 JOptionPane.YES_NO_OPTION);
         if (res == JOptionPane.YES_OPTION) {
             ModalNoButtons indexingDialog = new ModalNoButtons(this, new Frame(), unindexed);
@@ -777,7 +778,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
-                "HashDbConfigPanel.deleteDbActionConfirmMsg"),
+                        "HashDbConfigPanel.deleteDbActionConfirmMsg"),
                 NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
@@ -823,7 +824,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
 
     private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
-        
+
         HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         new AddHashValuesToDatabaseDialog(hashDb);
     }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed

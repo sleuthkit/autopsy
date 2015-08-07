@@ -27,7 +27,6 @@
  *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *  OTHER DEALINGS IN THE SOFTWARE. 
  */
-
 package org.sleuthkit.autopsy.examples;
 
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -36,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * Ingest job options for sample ingest module instances.
  */
 public class SampleModuleIngestJobSettings implements IngestModuleIngestJobSettings {
-    
+
     private static final long serialVersionUID = 1L;
     private boolean skipKnownFiles = true;
 
@@ -50,8 +49,8 @@ public class SampleModuleIngestJobSettings implements IngestModuleIngestJobSetti
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
-    }    
-    
+    }
+
     void setSkipKnownFiles(boolean enabled) {
         skipKnownFiles = enabled;
     }

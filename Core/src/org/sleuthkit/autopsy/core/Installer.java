@@ -45,18 +45,19 @@ public class Installer extends ModuleInstall {
     static {
         loadDynLibraries();
     }
-    
+
     private static void loadDynLibraries() {
-        /* On Windows, we distribute dlls that libtsk_jni depend on.
-         * If libtsk_jni tries to load them, they will not be found by
-         * Windows because they are in special NetBeans folders. So, we
-         * manually load them from within Autopsy so that they are found 
-         * via the NetBeans loading setup.  These are copied by the build
-         * script when making the ZIP file.  In a development environment
-         * they will need to be loaded from standard places in your system.
-         * 
+        /*
+         * On Windows, we distribute dlls that libtsk_jni depend on. If
+         * libtsk_jni tries to load them, they will not be found by Windows
+         * because they are in special NetBeans folders. So, we manually load
+         * them from within Autopsy so that they are found via the NetBeans
+         * loading setup. These are copied by the build script when making the
+         * ZIP file. In a development environment they will need to be loaded
+         * from standard places in your system.
+         *
          * On non-Windows platforms, we assume the dependncies are all installed
-         * and loadable (i.e. a 'make install' was done). 
+         * and loadable (i.e. a 'make install' was done).
          */
         if (PlatformUtil.isWindowsOS()) {
             try {
@@ -71,21 +72,21 @@ public class Installer extends ModuleInstall {
             }
 
             try {
-               System.loadLibrary("zlib"); //NON-NLS
-               logger.log(Level.INFO, "ZLIB library loaded loaded"); //NON-NLS
+                System.loadLibrary("zlib"); //NON-NLS
+                logger.log(Level.INFO, "ZLIB library loaded loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading ZLIB library, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading ZLIB library, ", e); //NON-NLS
             }
 
             try {
-               System.loadLibrary("libewf"); //NON-NLS
-               logger.log(Level.INFO, "EWF library loaded"); //NON-NLS
+                System.loadLibrary("libewf"); //NON-NLS
+                logger.log(Level.INFO, "EWF library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-               logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
             }
-         }
-     }
-    
+        }
+    }
+
     public Installer() {
         logger.log(Level.INFO, "core installer created"); //NON-NLS
         javaFxInit = false;
@@ -98,12 +99,14 @@ public class Installer extends ModuleInstall {
 
     /**
      * Check if JavaFx initialized
-     * @return false if java fx not initialized (classes coult not load), true if initialized
+     *
+     * @return false if java fx not initialized (classes coult not load), true
+     *         if initialized
      */
     public static boolean isJavaFxInited() {
         return javaFxInit;
     }
-    
+
     private static void initJavaFx() {
         //initialize java fx if exists
         System.setProperty("javafx.macosx.embedded", "true");
@@ -117,7 +120,7 @@ public class Installer extends ModuleInstall {
             final String msg = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.msg");
             final String details = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.details");
             logger.log(Level.SEVERE, msg
-		       + details, e);
+                    + details, e);
 
             WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
                 @Override
@@ -132,11 +135,11 @@ public class Installer extends ModuleInstall {
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         pythonModulesDir.mkdir();
     }
-    
+
     @Override
     public void restored() {
-        super.restored();        
-        ensurePythonModulesFolderExists();        
+        super.restored();
+        ensurePythonModulesFolderExists();
         initJavaFx();
         for (ModuleInstall mi : packageInstallers) {
             try {

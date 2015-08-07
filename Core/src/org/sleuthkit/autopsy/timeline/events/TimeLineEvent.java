@@ -29,7 +29,7 @@ public class TimeLineEvent {
     private final Long eventID;
 
     private final Long fileID;
-    
+
     private final Long time;
 
     private final Long artifactID;
@@ -72,7 +72,9 @@ public class TimeLineEvent {
         return fileID;
     }
 
-    /** @return the time in seconds from unix epoch */
+    /**
+     * @return the time in seconds from unix epoch
+     */
     public Long getTime() {
         return time;
     }

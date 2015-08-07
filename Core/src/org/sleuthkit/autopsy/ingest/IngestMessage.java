@@ -25,20 +25,20 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Message that ingestmodule wants to send to IngetInbox to notify
- * user about something. 
- * Submitted to user via IngestServices. 
- * Create using factory methods.
+ * Message that ingestmodule wants to send to IngetInbox to notify user about
+ * something. Submitted to user via IngestServices. Create using factory
+ * methods.
  */
 public class IngestMessage {
 
     /**
-     * Level of message. 
+     * Level of message.
      */
     public enum MessageType {
+
         DATA, INFO, WARNING, ERROR
     };
-    
+
     private long ID;
     private MessageType messageType;
     private String source;
@@ -50,7 +50,7 @@ public class IngestMessage {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static int managerMessageId = 0;
     private static AtomicLong nextMessageID = new AtomicLong(0);
-    
+
     /**
      * Private constructor used by factory methods
      */
@@ -60,9 +60,11 @@ public class IngestMessage {
         this.messageType = messageType;
         this.subject = subject;
         this.detailsHtml = detailsHtml;
-        if (uniqueKey == null)
+        if (uniqueKey == null) {
             this.uniqueKey = "";
-        else this.uniqueKey = uniqueKey;
+        } else {
+            this.uniqueKey = uniqueKey;
+        }
         datePosted = new Date();
     }
 
@@ -167,15 +169,19 @@ public class IngestMessage {
     }
 
     //factory methods
-    
     /**
      * Create a message of specified type
-     * @param ID ID of the message, unique in the context of module that generated it
+     *
+     * @param ID          ID of the message, unique in the context of module
+     *                    that generated it
      * @param messageType message type
-     * @param source originating module
-     * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
-     * @return 
+     * @param source      originating module
+     * @param subject     message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and
+     *                    closing &lt;html&gt; tags), for instance, a
+     *                    human-readable representation of the data. Or null.
+     *
+     * @return
      */
     public static IngestMessage createMessage(MessageType messageType, String source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
@@ -188,68 +194,88 @@ public class IngestMessage {
 
     /**
      * Create a simple message with a subject only
-     * @param ID ID of the message, unique in the context of module that generated it
+     *
+     * @param ID          ID of the message, unique in the context of module
+     *                    that generated it
      * @param messageType message type
-     * @param source originating module
-     * @param subject message subject to be displayed
-     * @return 
+     * @param source      originating module
+     * @param subject     message subject to be displayed
+     *
+     * @return
      */
     public static IngestMessage createMessage(MessageType messageType, String source, String subject) {
         return createMessage(messageType, source, subject, null);
     }
 
-    
-     /**
+    /**
      * Create error message
-     * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating module
-     * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null
-     * @return 
+     *
+     * @param ID          ID of the message, unique in the context of module
+     *                    that generated it
+     * @param source      originating module
+     * @param subject     message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and
+     *                    closing &lt;html&gt; tags), for instance, a
+     *                    human-readable representation of the data. Or null
+     *
+     * @return
      */
     public static IngestMessage createErrorMessage(String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
-        long ID = nextMessageID.getAndIncrement();        
+        long ID = nextMessageID.getAndIncrement();
         return new IngestMessage(ID, MessageType.ERROR, source, subject, detailsHtml, null);
     }
-    
+
     /**
      * Create warning message
-     * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating module
-     * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null 
-     * @return 
+     *
+     * @param ID          ID of the message, unique in the context of module
+     *                    that generated it
+     * @param source      originating module
+     * @param subject     message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and
+     *                    closing &lt;html&gt; tags), for instance, a
+     *                    human-readable representation of the data. Or null
+     *
+     * @return
      */
     public static IngestMessage createWarningMessage(String source, String subject, String detailsHtml) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjNotNull.msg"));
         }
-        long ID = nextMessageID.getAndIncrement();        
+        long ID = nextMessageID.getAndIncrement();
         return new IngestMessage(ID, MessageType.WARNING, source, subject, detailsHtml, null);
     }
 
     /**
-     * 
-     * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating module
-     * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. Or null.
-     * @param uniqueKey Key used to group similar messages together. Shoudl be unique to the analysis. For example, hits for the same keyword in a keyword search would use the keyword as this unique value so that they can be grouped.
-     * @param data  blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
-     * @return 
+     *
+     * @param ID          ID of the message, unique in the context of module
+     *                    that generated it
+     * @param source      originating module
+     * @param subject     message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and
+     *                    closing &lt;html&gt; tags), for instance, a
+     *                    human-readable representation of the data. Or null.
+     * @param uniqueKey   Key used to group similar messages together. Shoudl be
+     *                    unique to the analysis. For example, hits for the same
+     *                    keyword in a keyword search would use the keyword as
+     *                    this unique value so that they can be grouped.
+     * @param data        blackboard artifact associated with the message, the
+     *                    same as fired in ModuleDataEvent by the module
+     *
+     * @return
      */
     public static IngestMessage createDataMessage(String source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         if (source == null || subject == null || detailsHtml == null || data == null) {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(IngestMessage.class, "IngestMessage.exception.srcSubjDetailsDataNotNull.msg"));
         }
-        
-        long ID = nextMessageID.getAndIncrement();        
+
+        long ID = nextMessageID.getAndIncrement();
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml, uniqueKey);
         im.data = data;
         return im;
@@ -257,9 +283,12 @@ public class IngestMessage {
 
     /**
      * Used by IngestMager to post status messages.
-     * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data.  Or null.
-
+     *
+     * @param subject     message subject to be displayed
+     * @param detailsHtml html formatted detailed message (without leading and
+     *                    closing &lt;html&gt; tags), for instance, a
+     *                    human-readable representation of the data. Or null.
+     *
      */
     static IngestMessage createManagerMessage(String subject, String detailsHtml) {
         return new IngestMessage(++managerMessageId, MessageType.INFO, null, subject, detailsHtml, null);

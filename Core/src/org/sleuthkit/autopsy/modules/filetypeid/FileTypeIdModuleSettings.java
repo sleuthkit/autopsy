@@ -52,5 +52,5 @@ public class FileTypeIdModuleSettings implements IngestModuleIngestJobSettings {
     boolean skipKnownFiles() {
         return skipKnownFiles;
     }
-    
+
 }

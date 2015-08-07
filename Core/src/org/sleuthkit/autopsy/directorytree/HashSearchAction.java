@@ -25,9 +25,9 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbSearchAction;
 
 /**
- * Action to lookup the interface and call the real action in HashDatabase.
- * The real action, HashDbSearchAction, implements HashSearchProvider, and
- * should be the only instance of it.
+ * Action to lookup the interface and call the real action in HashDatabase. The
+ * real action, HashDbSearchAction, implements HashSearchProvider, and should be
+ * the only instance of it.
  *
  * //TODO: HashDBSearchAction needs a public constructor and a service
  * registration annotation for the lookup technique to work

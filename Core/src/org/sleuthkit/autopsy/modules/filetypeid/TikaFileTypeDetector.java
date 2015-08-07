@@ -45,7 +45,9 @@ public class TikaFileTypeDetector {
      * @deprecated Use FileTypeDetector.detectAndPostToBlackboard(AbstractFile
      * file) instead.
      * @param abstractFile
+     *
      * @return mime type or null
+     *
      * @throws TskCoreException
      */
     @Deprecated
@@ -67,6 +69,7 @@ public class TikaFileTypeDetector {
      *
      * @deprecated Use FileTypeDetector.detect(AbstractFile file) instead.
      * @param abstractFile
+     *
      * @return mime type of detected format or null
      */
     @Deprecated
@@ -97,6 +100,7 @@ public class TikaFileTypeDetector {
      *
      * @deprecated Use FileTypeDetector.isDetectable(String mimeType) instead.
      * @param mimeType Full string of mime type, e.g. "text/html"
+     *
      * @return true if detectable
      */
     @Deprecated

@@ -25,8 +25,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * result of writing keyword search result to blackboard (cached artifact and attributes)
- * This is mainly to cache the attributes, so that we don't query the DB to get them back again.
+ * result of writing keyword search result to blackboard (cached artifact and
+ * attributes) This is mainly to cache the attributes, so that we don't query
+ * the DB to get them back again.
  */
 class KeywordCachedArtifact {
 

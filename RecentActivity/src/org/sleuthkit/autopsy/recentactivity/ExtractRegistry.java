@@ -231,9 +231,9 @@ class ExtractRegistry extends Extract {
     /**
      * Execute regripper on the given registry.
      *
-     * @param regFilePath Path to local copy of registry
+     * @param regFilePath     Path to local copy of registry
      * @param outFilePathBase Path to location to save output file to. Base
-     * mtimeItem that will be extended on
+     *                        mtimeItem that will be extended on
      */
     private RegOutputFiles ripRegistryFile(String regFilePath, String outFilePathBase) {
         String autopsyType = "";    // Type argument for rr for autopsy-specific modules
@@ -304,8 +304,9 @@ class ExtractRegistry extends Extract {
     /**
      *
      * @param regFilePath Path to the output file produced by RegRipper.
-     * @param regFile File object for registry that we are parsing (to make
-     * blackboard artifacts with)
+     * @param regFile     File object for registry that we are parsing (to make
+     *                    blackboard artifacts with)
+     *
      * @return
      */
     private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {

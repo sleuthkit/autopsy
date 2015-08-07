@@ -95,7 +95,7 @@ class Chrome extends Extract {
             this.addErrorMessage(this.getName() + ": " + msg);
             return;
         }
-        
+
         // get only the allocated ones, for now
         List<AbstractFile> allocatedHistoryFiles = new ArrayList<>();
         for (AbstractFile historyFile : historyFiles) {
@@ -103,7 +103,7 @@ class Chrome extends Extract {
                 allocatedHistoryFiles.add(historyFile);
             }
         }
-        
+
         // log a message if we don't have any allocated history files
         if (allocatedHistoryFiles.isEmpty()) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.couldntFindAnyFiles");
@@ -124,7 +124,7 @@ class Chrome extends Extract {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
-                                                         this.getName(), historyFile.getName()));
+                        this.getName(), historyFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -138,36 +138,36 @@ class Chrome extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         (Long.valueOf(result.get("last_visit_time").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
             }
             dbFile.delete();
         }
 
         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     /**
      * Search for bookmark files and make artifacts.
      */
-    private void getBookmark() {     
+    private void getBookmark() {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles = null;
         try {
@@ -183,12 +183,12 @@ class Chrome extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome bookmark files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
-            
+
         while (j < bookmarkFiles.size()) {
-            AbstractFile bookmarkFile =  bookmarkFiles.get(j++);
+            AbstractFile bookmarkFile = bookmarkFiles.get(j++);
             if (bookmarkFile.getSize() == 0) {
                 continue;
             }
@@ -198,33 +198,33 @@ class Chrome extends Extract {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
-                                                         this.getName(), bookmarkFile.getName()));
+                        this.getName(), bookmarkFile.getName()));
                 continue;
             }
-            
+
             logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps}); //NON-NLS
             File dbFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
-            
+
             FileReader tempReader;
             try {
-                 tempReader = new FileReader(temps);
+                tempReader = new FileReader(temps);
             } catch (FileNotFoundException ex) {
                 logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzeFile", this.getName(),
-                                            bookmarkFile.getName()));
+                                bookmarkFile.getName()));
                 continue;
             }
-            
+
             final JsonParser parser = new JsonParser();
             JsonElement jsonElement;
             JsonObject jElement, jRoot, jBookmark;
             JsonArray jBookmarkArray;
-            
+
             try {
                 jsonElement = parser.parse(tempReader);
                 jElement = jsonElement.getAsJsonObject();
@@ -234,10 +234,10 @@ class Chrome extends Extract {
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json from Chrome Bookmark.", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile3",
-                                                         this.getName(), bookmarkFile.getName()));
+                        this.getName(), bookmarkFile.getName()));
                 continue;
             }
-            
+
             for (JsonElement result : jBookmarkArray) {
                 JsonObject address = result.getAsJsonObject();
                 if (address == null) {
@@ -247,24 +247,21 @@ class Chrome extends Extract {
                 String url;
                 if (urlEl != null) {
                     url = urlEl.getAsString();
-                }
-                else {
+                } else {
                     url = "";
                 }
                 String name;
                 JsonElement nameEl = address.get("name"); //NON-NLS
                 if (nameEl != null) {
                     name = nameEl.getAsString();
-                }
-                else {
+                } else {
                     name = "";
                 }
                 Long date;
                 JsonElement dateEl = address.get("date_added"); //NON-NLS
                 if (dateEl != null) {
                     date = dateEl.getAsLong();
-                }
-                else {
+                } else {
                     date = Long.valueOf(0);
                 }
                 String domain = Util.extractDomain(url);
@@ -273,27 +270,27 @@ class Chrome extends Extract {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), url));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"), url));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), name));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"), name));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), (date/1000000) - Long.valueOf("11644473600")));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"), (date / 1000000) - Long.valueOf("11644473600")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"),
-                                                             NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"),
+                            NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), domain));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"), domain));
                     bbart.addAttributes(bbattributes);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile4",
-                                                this.getName(), bookmarkFile.getName()));
+                                    this.getName(), bookmarkFile.getName()));
                 }
             }
             dbFile.delete();
@@ -306,7 +303,7 @@ class Chrome extends Extract {
      * Queries for cookie files and adds artifacts
      */
     private void getCookie() {
-        
+
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
@@ -322,7 +319,7 @@ class Chrome extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome cookies files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         while (j < cookiesFiles.size()) {
@@ -337,7 +334,7 @@ class Chrome extends Extract {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile", this.getName(),
-                                            cookiesFile.getName()));
+                                cookiesFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -351,25 +348,25 @@ class Chrome extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         (Long.valueOf(result.get("last_access_utc").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
-                                                         
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Long.valueOf(result.get("last_access_utc").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
+
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
                 String domain = result.get("host_key").toString(); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), domain));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             }
 
@@ -398,7 +395,7 @@ class Chrome extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome download files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         while (j < downloadFiles.size()) {
@@ -412,7 +409,7 @@ class Chrome extends Extract {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
-                                                         this.getName(), downloadFile.getName()));
+                        this.getName(), downloadFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -422,40 +419,40 @@ class Chrome extends Extract {
             }
 
             List<HashMap<String, Object>> tempList;
-            
+
             if (isChromePreVersion30(temps)) {
                 tempList = this.dbConnect(temps, downloadQuery);
             } else {
                 tempList = this.dbConnect(temps, downloadQueryVersion30);
             }
-            
+
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), (result.get("full_path").toString()))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), (result.get("full_path").toString()))); //NON-NLS
                 long pathID = Util.findID(dataSource, (result.get("full_path").toString())); //NON-NLS
                 if (pathID != -1) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "Chrome.parentModuleName"), pathID));
+                            NbBundle.getMessage(this.getClass(),
+                                    "Chrome.parentModuleName"), pathID));
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
-                Long time = (Long.valueOf(result.get("start_time").toString()) / 1000000)- Long.valueOf("11644473600"); //NON-NLS
-                
+                Long time = (Long.valueOf(result.get("start_time").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
+
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", time));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), time));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), time));
                 String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), domain));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
             }
 
@@ -463,13 +460,13 @@ class Chrome extends Extract {
         }
 
         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 
     /**
      * Queries for login files and adds artifacts
      */
-    private void getLogin() {  
+    private void getLogin() {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> signonFiles;
         try {
@@ -485,7 +482,7 @@ class Chrome extends Extract {
             logger.log(Level.INFO, "Didn't find any Chrome signon files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         int j = 0;
         while (j < signonFiles.size()) {
@@ -500,7 +497,7 @@ class Chrome extends Extract {
                 logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles", this.getName(),
-                                            signonFile.getName()));
+                                signonFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -513,38 +510,38 @@ class Chrome extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("origin_url").toString() != null) ? EscapeUtil.decodeURL(result.get("origin_url").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 1000000)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         (Long.valueOf(result.get("last_visit_time").toString()) / 1000000)- Long.valueOf("11644473600"))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         result.get("signon_realm").toString())); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        result.get("signon_realm").toString())); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);
-                
+
                 Collection<BlackboardAttribute> osAcctAttributes = new ArrayList<>();
                 osAcctAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
-                                                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                                                         ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
                 this.addArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT, signonFile, osAcctAttributes);
             }
 
@@ -562,7 +559,7 @@ class Chrome extends Extract {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

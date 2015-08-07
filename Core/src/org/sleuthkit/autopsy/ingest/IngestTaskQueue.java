@@ -19,5 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 interface IngestTaskQueue {
+
     IngestTask getNextTask() throws InterruptedException;
 }

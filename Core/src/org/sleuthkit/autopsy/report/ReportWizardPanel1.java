@@ -30,17 +30,18 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 
- class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+
     private WizardDescriptor wiz;
     private ReportVisualPanel1 component;
     private JButton nextButton;
     private JButton finishButton;
-    
+
     ReportWizardPanel1() {
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.finishButton.text"));
         finishButton.setEnabled(false);
-        
+
         // Initialize our custom next and finish buttons
         nextButton.addActionListener(new ActionListener() {
             @Override
@@ -48,7 +49,7 @@ import org.openide.util.NbPreferences;
                 wiz.doNextClick();
             }
         });
-        
+
         finishButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -81,11 +82,11 @@ import org.openide.util.NbPreferences;
     public boolean isFinishPanel() {
         return true;
     }
-    
+
     public void setNext(boolean enabled) {
         nextButton.setEnabled(enabled);
     }
-    
+
     public void setFinish(boolean enabled) {
         finishButton.setEnabled(enabled);
     }
@@ -102,7 +103,7 @@ import org.openide.util.NbPreferences;
     public void readSettings(WizardDescriptor wiz) {
         // Add out custom buttons in place of the regular ones
         this.wiz = wiz;
-        wiz.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
+        wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
     }
 
     @Override
@@ -112,18 +113,20 @@ import org.openide.util.NbPreferences;
         wiz.putProperty("tableModuleStates", tables); //NON-NLS
         wiz.putProperty("generalModuleStates", generals); //NON-NLS
         wiz.putProperty("fileModuleStates", getComponent().getFileModuleStates()); //NON-NLS
-        
+
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
         prefs.putBoolean("tableModule", any(tables.values())); //NON-NLS
         prefs.putBoolean("generalModule", any(generals.values())); //NON-NLS
     }
-    
+
     /**
      * Are any of the given booleans true?
+     *
      * @param bools
-     * @return 
+     *
+     * @return
      */
     private boolean any(Collection<Boolean> bools) {
         for (Boolean b : bools) {

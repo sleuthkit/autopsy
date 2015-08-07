@@ -90,9 +90,12 @@ public class RegressionTest extends TestCase {
     }
 
     /**
-     * This method is used to escape file/directory path. Example: \\NetworkLocation\foo\bar
-     * get escaped to \\\\NetworkLocation\foo\bar so that it can be used as intended.
+     * This method is used to escape file/directory path. Example:
+     * \\NetworkLocation\foo\bar get escaped to \\\\NetworkLocation\foo\bar so
+     * that it can be used as intended.
+     *
      * @param path
+     *
      * @return escaped path the the file/directory location.
      */
     private static String getEscapedPath(String path) {
@@ -141,7 +144,6 @@ public class RegressionTest extends TestCase {
         }
 
         return NbModuleSuite.create(conf);
-
 
     }
 

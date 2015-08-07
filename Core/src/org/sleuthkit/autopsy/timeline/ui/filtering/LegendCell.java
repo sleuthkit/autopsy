@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
- * A TreeTableCell that shows an icon and color corresponding to the
- * represented filter
+ * A TreeTableCell that shows an icon and color corresponding to the represented
+ * filter
  */
 class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implements TimeLineView {
 

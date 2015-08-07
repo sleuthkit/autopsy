@@ -16,26 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.HashMap;
 
 /**
- * A utility class that modules can use to keep track of whether they are the 
+ * A utility class that modules can use to keep track of whether they are the
  * first/last instance for a particular job.
- * 
+ *
  * An instance of this should be static in your module class.
  */
 public class IngestModuleReferenceCounter {
+
     // Maps a JobId to the count of instances
-    private HashMap<Long, Long> moduleRefCount = new HashMap<>(); 
+
+    private HashMap<Long, Long> moduleRefCount = new HashMap<>();
 
     public synchronized long get(long jobId) {
         return moduleRefCount.get(jobId);
     }
-    
+
     public synchronized long incrementAndGet(long jobId) {
         long count = moduleRefCount.containsKey(jobId) ? moduleRefCount.get(jobId) : 0;
         long nextCount = count + 1;
@@ -55,5 +55,5 @@ public class IngestModuleReferenceCounter {
         } else {
             return -1;
         }
-    }    
+    }
 }

@@ -43,7 +43,7 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
     /**
      * Constructs a process terminator for a data source ingest module.
      *
-     * @param context The ingest job context for the ingest module.
+     * @param context             The ingest job context for the ingest module.
      * @param maxRunTimeInSeconds Maximum allowable run time of process.
      */
     public DataSourceIngestModuleProcessTerminator(IngestJobContext context, long maxRunTimeInSeconds) {

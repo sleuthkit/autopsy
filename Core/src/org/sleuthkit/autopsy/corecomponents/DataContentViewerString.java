@@ -288,12 +288,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         }
         if (pageNumber > maxPage || pageNumber < 1) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataContentViewerString.goToPageTextField.msgDlg",
-                                                              maxPage),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataContentViewerString.goToPageTextField.err"),
-                                          JOptionPane.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "DataContentViewerString.goToPageTextField.msgDlg",
+                            maxPage),
+                    NbBundle.getMessage(this.getClass(),
+                            "DataContentViewerString.goToPageTextField.err"),
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         currentOffset = (pageNumber - 1) * pageLength;
@@ -328,18 +328,17 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
-    
     /**
      * Sets the DataView (The tabbed panel)
      *
      * @param dataSource the content that want to be shown
-     * @param offset the starting offset
+     * @param offset     the starting offset
      */
     private void setDataView(Content dataSource, long offset) {
         if (dataSource == null) {
             return;
         }
-        
+
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -353,8 +352,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 bytesRead = dataSource.read(data, offset, pageLength); // read the data
             } catch (TskException ex) {
                 text = NbBundle.getMessage(this.getClass(),
-                                           "DataContentViewerString.setDataView.errorText", currentOffset,
-                                           currentOffset + pageLength);
+                        "DataContentViewerString.setDataView.errorText", currentOffset,
+                        currentOffset + pageLength);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
             }
         }
@@ -367,12 +366,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             text = res.getText();
             if (text.trim().isEmpty()) {
                 text = NbBundle.getMessage(this.getClass(),
-                                           "DataContentViewerString.setDataView.errorNoText", currentOffset,
-                                           currentOffset + pageLength);
+                        "DataContentViewerString.setDataView.errorNoText", currentOffset,
+                        currentOffset + pageLength);
             }
         } else {
             text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
-                                       currentOffset + pageLength);
+                    currentOffset + pageLength);
         }
 
         // disable or enable the next button
@@ -389,7 +388,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             prevPageButton.setEnabled(true);
         }
 
-        
         int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
         totalPageLabel.setText(Integer.toString(totalPage));
         currentPageLabel.setText(Integer.toString(currentPage));
@@ -399,7 +397,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
         this.setCursor(null);
     }
-    
+
     private void setDataView(StringContent dataSource) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -518,7 +516,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
 
-    /* Show the right click menu only if evt is the correct mouse event */
+    /*
+     * Show the right click menu only if evt is the correct mouse event
+     */
     private void maybeShowPopup(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
             rightClickMenu.setLocation(evt.getLocationOnScreen());

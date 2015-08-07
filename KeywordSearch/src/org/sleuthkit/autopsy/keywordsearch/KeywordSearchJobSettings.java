@@ -44,7 +44,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     /**
      * Constructs ingest job settings for the keywords search module.
      *
-     * @param namesOfEnabledKeywordLists A list of enabled keywords lists.
+     * @param namesOfEnabledKeywordLists  A list of enabled keywords lists.
      * @param namesOfDisabledKeywordLists A list of disabled keywords lists.
      */
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists) {
@@ -66,6 +66,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      * for the requested list, it is deemed to be enabled.
      *
      * @param keywordListName The name of the keywords list to check.
+     *
      * @return True if the keywords list is enabled, false otherwise.
      */
     boolean keywordListIsEnabled(String keywordListName) {

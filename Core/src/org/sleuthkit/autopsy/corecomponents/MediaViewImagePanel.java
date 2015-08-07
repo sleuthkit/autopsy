@@ -151,8 +151,10 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             @Override
             public void run() {
                 if (!Case.isCaseOpen()) {
-                    /* handle in-between condition when case is being closed
-                     * and an image was previously selected */
+                    /*
+                     * handle in-between condition when case is being closed and
+                     * an image was previously selected
+                     */
                     return;
                 }
                 try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {

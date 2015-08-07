@@ -23,12 +23,15 @@ import java.awt.ComponentOrientation;
 /**
  * Text utilities
  */
- public class TextUtil {
+public class TextUtil {
 
     /**
      * Determine and return text orientation
+     *
      * @param text text to determine the text orientation in
-     * @return detected text orientation that should be used for this type of text
+     *
+     * @return detected text orientation that should be used for this type of
+     *         text
      */
     public static ComponentOrientation getTextDirection(String text) {
         int rtl_cnt = 0;
@@ -55,4 +58,3 @@ import java.awt.ComponentOrientation;
         return orientation;
     }
 }
-

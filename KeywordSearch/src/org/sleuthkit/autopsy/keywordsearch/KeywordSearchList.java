@@ -41,7 +41,7 @@ abstract class KeywordSearchList {
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data 
     protected static final Logger logger = Logger.getLogger(KeywordSearchList.class.getName());
-    PropertyChangeSupport changeSupport; 
+    PropertyChangeSupport changeSupport;
     protected List<String> lockedLists;
 
     KeywordSearchList(String filePath) {
@@ -62,25 +62,26 @@ abstract class KeywordSearchList {
     };
 
     enum LanguagesEvent {
+
         LANGUAGES_CHANGED, ENCODINGS_CHANGED
     }
-    
+
     void fireLanguagesEvent(LanguagesEvent event) {
         try {
             changeSupport.firePropertyChange(event.toString(), null, null);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "KeywordSearchListsAbstract listener threw exception", e); //NON-NLS
-        }        
+        }
     }
-    
+
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.addPropertyChangeListener(listener);
     }
-    
+
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.removePropertyChangeListener(listener);
     }
-    
+
     private void prepopulateLists() {
         if (!theLists.isEmpty()) {
             return;
@@ -104,7 +105,6 @@ abstract class KeywordSearchList {
         urls.add(new Keyword("((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)); //NON-NLS
 
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
-
         //disable messages for harcoded/locked lists
         String name;
 
@@ -191,6 +191,7 @@ abstract class KeywordSearchList {
      * Get list names of all locked or unlocked loaded keyword list names
      *
      * @param locked true if look for locked lists, false otherwise
+     *
      * @return List of keyword list names
      */
     public List<String> getListNames(boolean locked) {
@@ -209,6 +210,7 @@ abstract class KeywordSearchList {
      * return first list that contains the keyword
      *
      * @param keyword
+     *
      * @return found list or null
      */
     public KeywordList getListWithKeyword(String keyword) {
@@ -235,6 +237,7 @@ abstract class KeywordSearchList {
      * get number of unlocked or locked lists currently stored
      *
      * @param locked true if look for locked lists, false otherwise
+     *
      * @return number of unlocked lists currently stored
      */
     public int getNumberLists(boolean locked) {
@@ -252,6 +255,7 @@ abstract class KeywordSearchList {
      * get list by name or null
      *
      * @param name id of the list
+     *
      * @return keyword list representation
      */
     public KeywordList getList(String name) {
@@ -262,6 +266,7 @@ abstract class KeywordSearchList {
      * check if list with given name id exists
      *
      * @param name id to check
+     *
      * @return true if list already exists or false otherwise
      */
     boolean listExists(String name) {
@@ -272,9 +277,10 @@ abstract class KeywordSearchList {
      * adds the new word list using name id replacing old one if exists with the
      * same name
      *
-     * @param name the name of the new list or list to replace
-     * @param newList list of keywords
+     * @param name         the name of the new list or list to replace
+     * @param newList      list of keywords
      * @param useForIngest should this list be used for ingest
+     *
      * @return true if old list was replaced
      */
     boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages, boolean locked) {
@@ -329,6 +335,7 @@ abstract class KeywordSearchList {
      * save multiple lists
      *
      * @param lists
+     *
      * @return
      */
     boolean saveLists(List<KeywordList> lists) {
@@ -352,7 +359,7 @@ abstract class KeywordSearchList {
                     MessageNotifyUtil.Notify.show(
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.moduleErr"),
                             NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.saveList.errMsg1.msg"),
-                                                  MessageNotifyUtil.MessageType.ERROR);
+                            MessageNotifyUtil.MessageType.ERROR);
                 }
             }
             for (KeywordList over : overwritten) {
@@ -375,6 +382,7 @@ abstract class KeywordSearchList {
      * write out multiple lists
      *
      * @param lists
+     *
      * @return
      */
     boolean writeLists(List<KeywordList> lists) {
@@ -419,9 +427,10 @@ abstract class KeywordSearchList {
     }
 
     /**
-     * delete list if exists and save new list 
+     * delete list if exists and save new list
      *
      * @param name of list to delete
+     *
      * @return true if deleted
      */
     boolean deleteList(String name) {
@@ -439,7 +448,7 @@ abstract class KeywordSearchList {
                     NbBundle.getMessage(this.getClass(), "KeywordSearchListsAbstract.deleteList.errMsg1.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
-        
+
         return true;
     }
 
@@ -452,7 +461,7 @@ abstract class KeywordSearchList {
      * writes out current list replacing the last lists file
      *
      * @param isExport true is this save operation is an export and not a 'Save
-     * As'
+     *                 As'
      */
     public abstract boolean save(boolean isExport);
 

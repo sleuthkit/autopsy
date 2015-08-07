@@ -80,7 +80,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Controller in the MVC design along with model = {@link FilteredEventsModel}
+/**
+ * Controller in the MVC design along with model = {@link FilteredEventsModel}
  * and views = {@link TimeLineView}. Forwards interpreted user gestures form
  * views to model. Provides model to view. Is entry point for timeline module.
  *
@@ -242,7 +243,9 @@ public class TimeLineController {
         caseListener = new AutopsyCaseListener();
     }
 
-    /** @return a shared events model */
+    /**
+     * @return a shared events model
+     */
     public FilteredEventsModel getEventsModel() {
         return filteredEvents;
     }
@@ -260,8 +263,8 @@ public class TimeLineController {
      * rebuld the repo.
      *
      * @return False if the repo was not rebuilt because of an error or because
-     *         the user aborted after prompt about ingest running.
-     *         True if the repo was rebuilt.
+     *         the user aborted after prompt about ingest running. True if the
+     *         repo was rebuilt.
      */
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
@@ -330,8 +333,9 @@ public class TimeLineController {
         }
     }
 
-    /** show the timeline window and prompt for rebuilding database if
-     * necessary. */
+    /**
+     * show the timeline window and prompt for rebuilding database if necessary.
+     */
     synchronized void openTimeLine() {
 
         // listen for case changes (specifically images being added, and case changes).
@@ -376,8 +380,10 @@ public class TimeLineController {
                 }
             }
 
-            /* if the repo was not rebuilt show the UI. If the repo was rebuild
-             * it will be displayed as part of that process */
+            /*
+             * if the repo was not rebuilt show the UI. If the repo was rebuild
+             * it will be displayed as part of that process
+             */
             if (repoRebuilt == false) {
                 showWindow();
                 showFullRange();

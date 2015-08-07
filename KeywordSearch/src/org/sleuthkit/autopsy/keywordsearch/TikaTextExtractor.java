@@ -66,9 +66,9 @@ class TikaTextExtractor implements TextExtractor {
     private static final int EXTRA_CHARS = 128; //for whitespace
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestModule module;    
+    private KeywordSearchIngestModule module;
     private AbstractFile sourceFile; //currently processed file
-    private int numChunks = 0;    
+    private int numChunks = 0;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
@@ -131,15 +131,15 @@ class TikaTextExtractor implements TextExtractor {
                 future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
             } catch (TimeoutException te) {
                 final String msg = NbBundle.getMessage(this.getClass(),
-                                                       "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
-                                                       sourceFile.getId(), sourceFile.getName());
+                        "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
+                        sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
                 final String msg = NbBundle.getMessage(this.getClass(),
-                                                       "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
-                                                       sourceFile.getId(), sourceFile.getName());
+                        "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
+                        sourceFile.getId(), sourceFile.getName());
                 KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
@@ -153,7 +153,6 @@ class TikaTextExtractor implements TextExtractor {
                 return false;
             }
 
-
             // break the results into chunks and index
             success = true;
             long readSize;
@@ -164,8 +163,7 @@ class TikaTextExtractor implements TextExtractor {
                 readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS);
                 if (readSize == -1) {
                     eof = true;
-                }
-                else {
+                } else {
                     totalRead += readSize;
                 }
                 //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
@@ -220,7 +218,6 @@ class TikaTextExtractor implements TextExtractor {
 
                 extracted = sb.toString();
 
-                
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
@@ -290,9 +287,7 @@ class TikaTextExtractor implements TextExtractor {
             return false;
         }
 
-
         //TODO might need to add more mime-types to ignore
-
         //then accept all formats supported by Tika
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
 

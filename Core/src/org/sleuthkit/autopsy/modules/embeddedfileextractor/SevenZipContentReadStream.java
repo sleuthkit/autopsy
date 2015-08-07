@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Adapter from ReadContentInputStream to 
- * net.sf.sevenzipjbinding.IInStream stream interface
+ * Adapter from ReadContentInputStream to net.sf.sevenzipjbinding.IInStream
+ * stream interface
  */
 class SevenZipContentReadStream implements IInStream {
 
@@ -60,7 +60,7 @@ class SevenZipContentReadStream implements IInStream {
             default:
                 throw new IllegalArgumentException(
                         NbBundle.getMessage(this.getClass(), "SevenZipContentReadStream.seek.exception.invalidOrigin",
-                                            origin));
+                                origin));
         }
 
         return newPosition;
@@ -70,15 +70,15 @@ class SevenZipContentReadStream implements IInStream {
     @Override
     public int read(byte[] bytes) throws SevenZipException {
     //Reads at least 1 and maximum data.length from the in-stream. 
-    //If data.length == 0 0 should be returned. 
-    //If data.length != 0, then return value 0 indicates end-of-stream (EOF). This means no more bytes can be read from the stream.
-    //This function is allowed to read less than number of remaining bytes in stream and less then data.length. 
+        //If data.length == 0 0 should be returned. 
+        //If data.length != 0, then return value 0 indicates end-of-stream (EOF). This means no more bytes can be read from the stream.
+        //This function is allowed to read less than number of remaining bytes in stream and less then data.length. 
         if (bytes.length == 0) {
             return 0;
         }
 
         try {
-            int readBytes =  wrapped.read(bytes);
+            int readBytes = wrapped.read(bytes);
             if (readBytes < 1) {
                 return 0;
             }
@@ -93,7 +93,8 @@ class SevenZipContentReadStream implements IInStream {
 
     /**
      * Close the stream
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     public void close() throws IOException {
         wrapped.close();

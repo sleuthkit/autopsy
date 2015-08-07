@@ -19,17 +19,18 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- * AutopsyVisitableItems are the nodes in the directory tree that 
- * are for structure only.  They are not associated with content 
- * objects.
+ * AutopsyVisitableItems are the nodes in the directory tree that are for
+ * structure only. They are not associated with content objects.
  */
- interface AutopsyVisitableItem {
+interface AutopsyVisitableItem {
 
     /**
      * visitor pattern support
+     *
      * @param v visitor
+     *
      * @return visitor return value
      */
     public <T> T accept(AutopsyItemVisitor<T> v);
-    
+
 }

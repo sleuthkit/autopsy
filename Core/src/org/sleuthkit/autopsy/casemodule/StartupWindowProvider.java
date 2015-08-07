@@ -27,10 +27,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Provides the start up window to rest of the application. It may return the
  * main / default startup window, or a custom one if it has been discovered.
- * 
- * All that is required to create a custom startup window in a module and active it, 
- * is to implement StartupWindowInterface and register it with lookup as a ServiceProvider.
- * The custom startup window is automatically chosen over the default one, given it is the only external module custom startup window.
+ *
+ * All that is required to create a custom startup window in a module and active
+ * it, is to implement StartupWindowInterface and register it with lookup as a
+ * ServiceProvider. The custom startup window is automatically chosen over the
+ * default one, given it is the only external module custom startup window.
  */
 public class StartupWindowProvider implements StartupWindowInterface {
 
@@ -54,8 +55,8 @@ public class StartupWindowProvider implements StartupWindowInterface {
     private void init() {
         if (startupWindowToUse == null) {
             //discover the registered windows
-            Collection<? extends StartupWindowInterface> startupWindows =
-                    Lookup.getDefault().lookupAll(StartupWindowInterface.class);
+            Collection<? extends StartupWindowInterface> startupWindows
+                    = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
 
             int windowsCount = startupWindows.size();
             if (windowsCount > 2) {
@@ -75,14 +76,13 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
                     }
                 }
-                
+
                 if (startupWindowToUse == null) {
                     logger.log(Level.SEVERE, "Unexpected error, no custom startup window found, using the default"); //NON-NLS
                     startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
                 }
-                
-            }
 
+            }
 
         }
     }
@@ -96,8 +96,8 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     @Override
     public void close() {
-       if (startupWindowToUse != null) {
-           startupWindowToUse.close();
-       }
+        if (startupWindowToUse != null) {
+            startupWindowToUse.close();
+        }
     }
 }

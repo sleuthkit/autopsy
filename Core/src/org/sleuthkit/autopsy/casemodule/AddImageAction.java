@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -44,8 +43,9 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * The action to add an image to the current Case. This action should be disabled
- * on creation and it will be enabled on new case creation or case opened.
+ * The action to add an image to the current Case. This action should be
+ * disabled on creation and it will be enabled on new case creation or case
+ * opened.
  *
  * @author jantonius
  */
@@ -73,7 +73,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // boolean: whether or not to skip processing orphan files on FAT filesystems
     static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
-    
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
 
     private WizardDescriptor wizardDescriptor;
@@ -101,7 +100,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
     /**
      * Pop-up the "Add Image" wizard panel.
-     * 
+     *
      * @param e
      */
     @Override
@@ -109,9 +108,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         if (IngestManager.getInstance().isIngestRunning()) {
             final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
             if (JOptionPane.showConfirmDialog(null, msg,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "AddImageAction.ingestConfig.ongoingIngest.title"),
-                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
+                    NbBundle.getMessage(this.getClass(),
+                            "AddImageAction.ingestConfig.ongoingIngest.title"),
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
                 return;
             }
         }
@@ -127,12 +126,12 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
-        
+
         // Do any cleanup that needs to happen (potentially: stopping the
         //add-image process, reverting an image)
         runCleanupTasks();
-    }    
-    
+    }
+
     /**
      * Closes the current dialog and wizard, and opens a new one. Used in the
      * "Add another image" action on the last panel
@@ -144,22 +143,24 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
         // let the previous call to AddImageAction.actionPerformed() finish up
         // after the wizard, this will run when its it's done
-        final Runnable r = new Runnable()  {
+        final Runnable r = new Runnable() {
             @Override
             public void run() {
                 actionPerformed(null);
             }
         };
-        
+
         SwingUtilities.invokeLater(r);
     }
-    
+
     public interface IndexImageTask {
+
         void runTask(Image newImage);
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)" instead of this method.
+     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
+     * instead of this method.
      */
     @Override
     public void performAction() {
@@ -187,8 +188,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
     /**
      * Returns the toolbar component of this action
-     * 
-     * @return component  the toolbar button
+     *
+     * @return component the toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -201,7 +202,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     /**
      * Set this action to be enabled/disabled
      *
-     * @param value  whether to enable this action or not
+     * @param value whether to enable this action or not
      */
     @Override
     public void setEnabled(boolean value) {
@@ -216,7 +217,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      * "Cancel", and "Finish". If you change the name of any of those buttons,
      * use the latest name instead.
      *
-     * @param buttonText  the text of the button
+     * @param buttonText the text of the button
      */
     public void requestFocusButton(String buttonText) {
         // get all buttons on this wizard panel
@@ -229,7 +230,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             }
         }
     }
-    
+
     /**
      * Run and clear any cleanup tasks for wizard closing that might be
      * registered. This should be run even when the wizard exits cleanly, so
@@ -238,16 +239,16 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     private void runCleanupTasks() {
         cleanupSupport.fireChange();
     }
-    
+
     ChangeSupport cleanupSupport = new ChangeSupport(this);
 
     /**
      * Instances of this class implement the cleanup() method to run cleanup
      * code when the wizard exits.
-     * 
+     *
      * After enable() has been called on an instance it will run once after the
      * wizard closes (on both a cancel and a normal finish).
-     * 
+     *
      * If disable() is called before the wizard exits, the task will not run.
      */
     abstract class CleanupTask implements ChangeListener {
@@ -274,7 +275,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
         /**
          * Performs cleanup action when called
-         * @throws Exception 
+         *
+         * @throws Exception
          */
         abstract void cleanup() throws Exception;
 

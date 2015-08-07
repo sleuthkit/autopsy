@@ -83,7 +83,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
             throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                                                                   "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
+                    "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel((HashLookupModuleSettings) settings);

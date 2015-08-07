@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.event.ActionEvent;
@@ -28,13 +27,14 @@ import java.util.logging.Level;
 /*
  * Toolbar button for testing logging. Not a normal part of application.
  */
- final class TestLogger implements ActionListener {
+final class TestLogger implements ActionListener {
 
     static final Logger logger = Logger.getLogger(TestLogger.class.getName());
     Formatter fmt;
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+
         logger.log(Level.WARNING, "Testing log!", new Exception(new Exception(new Exception(new Exception("original reason with asdfasdfasdfasdfasd fasdfasdfasdf sdfasdfasdfa asdfasdf asdfa sdfas ", new Exception("more original reason")))))); //NON-NLS
         //throw new RuntimeException("othe");
 

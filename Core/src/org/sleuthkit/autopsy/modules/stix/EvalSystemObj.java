@@ -68,9 +68,9 @@ class EvalSystemObj extends EvaluatableObject {
             haveHostname = true;
             searchString = "Hostname \"" + obj.getHostname().getValue().toString() + "\""; //NON-NLS
         }
-        if(obj.getProcessorArchitecture() != null){
+        if (obj.getProcessorArchitecture() != null) {
             haveProcArch = true;
-            if(! searchString.isEmpty()){
+            if (!searchString.isEmpty()) {
                 searchString += " and "; //NON-NLS
             }
             searchString += "Processor architecture \"" + obj.getProcessorArchitecture().getValue().toString() + "\""; //NON-NLS
@@ -159,7 +159,7 @@ class EvalSystemObj extends EvaluatableObject {
                     }
                     if (haveProcArch) {
                         foundProcArchMatch = compareStringObject(obj.getProcessorArchitecture().getValue().toString(),
-                                obj.getProcessorArchitecture().getCondition(), 
+                                obj.getProcessorArchitecture().getCondition(),
                                 obj.getProcessorArchitecture().getApplyCondition(),
                                 info.getAttributeValue(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE));
                     }
@@ -247,7 +247,7 @@ class EvalSystemObj extends EvaluatableObject {
         if (obj.getOS() != null) {
             fieldNames.add("OS"); //NON-NLS
         }
-        if(obj.getProcessor() != null){
+        if (obj.getProcessor() != null) {
             fieldNames.add("Processor"); //NON-NLS
         }
         if (obj.getSystemTime() != null) {

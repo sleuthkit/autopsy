@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
- class HtmlTextExtractor implements TextExtractor {
+class HtmlTextExtractor implements TextExtractor {
 
     private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private static Ingester ingester;
@@ -48,10 +48,10 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
     private static final int MAX_SIZE = 50000000;
     //private static final String UTF16BOM = "\uFEFF"; disabled prepending of BOM
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestModule module;    
+    private KeywordSearchIngestModule module;
     private AbstractFile sourceFile;
     private int numChunks = 0;
-    
+
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
             "application/xhtml+xml", //NON-NLS
@@ -59,9 +59,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             "text/css", //NON-NLS
             "text/html", //NON-NLS NON-NLS
             "text/javascript" //NON-NLS
-            //"application/xml",
-            //"application/xml-dtd",
-            );
+    //"application/xml",
+    //"application/xml-dtd",
+    );
 
     HtmlTextExtractor(KeywordSearchIngestModule module) {
         this.module = module;

@@ -50,8 +50,10 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        /** we disabled the check to hasData() because if it is executed while a
-         * data source is being added, it blocks the edt */
+        /**
+         * we disabled the check to hasData() because if it is executed while a
+         * data source is being added, it blocks the edt
+         */
         return Case.isCaseOpen() && fxInited;// && Case.getCurrentCase().hasData();
     }
 

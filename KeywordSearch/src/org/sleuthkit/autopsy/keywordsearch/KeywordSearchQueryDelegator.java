@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -33,26 +32,26 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 
 /**
- * Responsible for running a keyword search query and displaying
- * the results. Delegates the actual work to the various implementations
- * of KeywordSearchQuery. 
+ * Responsible for running a keyword search query and displaying the results.
+ * Delegates the actual work to the various implementations of
+ * KeywordSearchQuery.
  */
 class KeywordSearchQueryDelegator {
+
     private List<KeywordList> keywordLists;
     private List<KeywordSearchQuery> queryDelegates;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
     private static Logger logger = Logger.getLogger(KeywordSearchQueryDelegator.class.getName());
 
-    
     public KeywordSearchQueryDelegator(List<KeywordList> keywordLists) {
         this.keywordLists = keywordLists;
         init();
     }
-    
+
     private void init() {
         // make a query for each keyword
         queryDelegates = new ArrayList<>();
-        
+
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
                 KeywordSearchQuery query;
@@ -61,19 +60,17 @@ class KeywordSearchQueryDelegator {
                     if (keyword.isWholeword()) {
                         query = new LuceneQuery(keywordList, keyword);
                         query.escape();
-                    }
-                    // literal, substring match
+                    } // literal, substring match
                     else {
                         query = new TermComponentQuery(keywordList, keyword);
                         query.escape();
                         query.setSubstringQuery();
                     }
-                }
-                // regexp
-                else {            
+                } // regexp
+                else {
                     query = new TermComponentQuery(keywordList, keyword);
                 }
-                queryDelegates.add(query);            
+                queryDelegates.add(query);
             }
         }
     }
@@ -82,7 +79,7 @@ class KeywordSearchQueryDelegator {
      * Execute the keyword search based on keywords passed into constructor.
      * Post results into a new DataResultViewer.
      */
-    public void execute() {        
+    public void execute() {
         Collection<QueryRequest> queryRequests = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
@@ -92,17 +89,17 @@ class KeywordSearchQueryDelegator {
             queryConcat.append(queryStr).append(" ");
             queryRequests.add(new QueryRequest(kvs, ++queryID, q));
         }
-        
+
         String queryConcatStr = queryConcat.toString();
         final int queryConcatStrLen = queryConcatStr.length();
         final String queryStrShort = queryConcatStrLen > 15 ? queryConcatStr.substring(0, 14) + "..." : queryConcatStr;
         final String windowTitle = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.execute.exeWinTitle", ++resultWindowCount, queryStrShort);
         DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(windowTitle);
-        
+
         Node rootNode;
         if (queryRequests.size() > 0) {
-            Children childNodes =
-                    Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
+            Children childNodes
+                    = Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {
@@ -115,9 +112,10 @@ class KeywordSearchQueryDelegator {
 
         searchResultWin.requestActive();
     }
-    
+
     /**
      * validate the queries before they are run
+     *
      * @return false if any are invalid
      */
     public boolean validate() {

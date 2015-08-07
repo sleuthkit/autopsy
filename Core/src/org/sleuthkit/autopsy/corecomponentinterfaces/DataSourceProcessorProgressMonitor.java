@@ -19,15 +19,15 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 /**
- * An GUI agnostic DataSourceProcessorProgressMonitor interface for DataSourceProcesssors to 
- * indicate progress.
- * It models after a JProgressbar though it could use any underlying implementation (or NoOps)
+ * An GUI agnostic DataSourceProcessorProgressMonitor interface for
+ * DataSourceProcesssors to indicate progress. It models after a JProgressbar
+ * though it could use any underlying implementation (or NoOps)
  */
 public interface DataSourceProcessorProgressMonitor {
- 
+
     void setIndeterminate(boolean indeterminate);
-    
+
     void setProgress(int progress);
-    
-    void setProgressText(String text);   
+
+    void setProgressText(String text);
 }

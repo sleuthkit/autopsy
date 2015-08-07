@@ -81,10 +81,9 @@ import org.sqlite.SQLiteJDBCLoader;
 /**
  * Provides access to the Timeline SQLite database.
  *
- * This class borrows a lot of ideas and techniques from
- * {@link  SleuthkitCase}. Creating an abstract base class for SQLite
- * databases, or using a higherlevel persistence api may make sense in the
- * future.
+ * This class borrows a lot of ideas and techniques from {@link  SleuthkitCase}.
+ * Creating an abstract base class for SQLite databases, or using a higherlevel
+ * persistence api may make sense in the future.
  */
 public class EventDB {
 
@@ -92,7 +91,9 @@ public class EventDB {
     private PreparedStatement insertHashHitStmt;
     private PreparedStatement selectHashSetStmt;
 
-    /** enum to represent columns in the events table */
+    /**
+     * enum to represent columns in the events table
+     */
     enum EventTableColumn {
 
         EVENT_ID("event_id"), // NON-NLS
@@ -121,7 +122,9 @@ public class EventDB {
 
     }
 
-    /** enum to represent keys stored in db_info table */
+    /**
+     * enum to represent keys stored in db_info table
+     */
     private enum DBInfoKey {
 
         LAST_ARTIFACT_ID("last_artifact_id"), // NON-NLS
@@ -376,8 +379,10 @@ public class EventDB {
     }
 
     boolean hasNewColumns() {
-        /* this relies on the fact that no tskObj has ID 0 but 0 is the default
-         * value for the datasource_id column in the events table. */
+        /*
+         * this relies on the fact that no tskObj has ID 0 but 0 is the default
+         * value for the datasource_id column in the events table.
+         */
         return hasHashHitColumn() && hasDataSourceIDColumn()
                 && (getDataSourceIDs().isEmpty() == false);
     }
@@ -418,7 +423,9 @@ public class EventDB {
         return Collections.unmodifiableMap(hashSets);
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMaxTime() {
         DBLock.lock();
         try (ResultSet rs = getMaxTimeStmt.executeQuery()) {
@@ -433,7 +440,9 @@ public class EventDB {
         return -1l;
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMinTime() {
         DBLock.lock();
         try (ResultSet rs = getMinTimeStmt.executeQuery()) {
@@ -813,8 +822,8 @@ public class EventDB {
      *                  from unix epoch)
      * @param filter    only events that pass this filter will be counted
      * @param zoomLevel only events of this type or a subtype will be counted
-     *                  and the counts will be organized into bins for each of the subtypes of
-     *                  the given event type
+     *                  and the counts will be organized into bins for each of
+     *                  the subtypes of the given event type
      *
      * @return a map organizing the counts in a hierarchy from date > eventtype>
      *         count
@@ -873,10 +882,9 @@ public class EventDB {
      *
      * General algorithm is as follows:
      *
-     * - get all aggregate events, via one db query.
-     * - sort them into a map from (type, description)-> aggevent
-     * - for each key in map, merge the events and accumulate them in a list
-     * to return
+     * - get all aggregate events, via one db query. - sort them into a map from
+     * (type, description)-> aggevent - for each key in map, merge the events
+     * and accumulate them in a list to return
      *
      *
      * @param timeRange the Interval within in which all returned aggregate
@@ -888,8 +896,8 @@ public class EventDB {
      *
      *
      * @return a list of aggregate events within the given timerange, that pass
-     *         the supplied filter, aggregated according to the given event type and
-     *         description zoom levels
+     *         the supplied filter, aggregated according to the given event type
+     *         and description zoom levels
      */
     private List<AggregateEvent> getAggregatedEvents(Interval timeRange, RootFilter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
         String descriptionColumn = getDescriptionColumn(lod);

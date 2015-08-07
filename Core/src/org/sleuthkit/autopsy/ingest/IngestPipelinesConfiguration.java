@@ -75,8 +75,8 @@ final class IngestPipelinesConfiguration {
     }
 
     /**
-     * Gets the ordered list of ingest module factory class names for the
-     * file ingest pipeline.
+     * Gets the ordered list of ingest module factory class names for the file
+     * ingest pipeline.
      *
      * @return An ordered list of ingest module factory class names.
      */
@@ -85,8 +85,8 @@ final class IngestPipelinesConfiguration {
     }
 
     /**
-     * Gets the ordered list of ingest module factory class names for the
-     * first stage data source ingest pipeline.
+     * Gets the ordered list of ingest module factory class names for the first
+     * stage data source ingest pipeline.
      *
      * @return An ordered list of ingest module factory class names.
      */
@@ -95,8 +95,8 @@ final class IngestPipelinesConfiguration {
     }
 
     /**
-     * Gets the ordered list of ingest module factory class names for the
-     * second stage data source ingest pipeline.
+     * Gets the ordered list of ingest module factory class names for the second
+     * stage data source ingest pipeline.
      *
      * @return An ordered list of ingest module factory class names.
      */

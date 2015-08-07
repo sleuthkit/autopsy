@@ -27,25 +27,26 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 
- class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+
     private ReportVisualPanel2 component;
     private JButton finishButton;
     private JButton nextButton;
     private WizardDescriptor wiz;
-    
+
     ReportWizardPanel2() {
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
-        
+
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.nextButton.text"));
         nextButton.setEnabled(true);
-        
+
         nextButton.addActionListener(new ActionListener() {
-           @Override
-           public void actionPerformed(ActionEvent e) {
-               wiz.doNextClick();
-           }
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                wiz.doNextClick();
+            }
         });
-        
+
         finishButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -53,7 +54,7 @@ import org.openide.util.NbPreferences;
             }
         });
     }
-    
+
     @Override
     public ReportVisualPanel2 getComponent() {
         if (component == null) {
@@ -79,7 +80,7 @@ import org.openide.util.NbPreferences;
     @Override
     public void removeChangeListener(ChangeListener l) {
     }
-    
+
     public void setFinish(boolean enabled) {
         nextButton.setEnabled(false);
         finishButton.setEnabled(enabled);
@@ -90,7 +91,7 @@ import org.openide.util.NbPreferences;
         // Re-enable the normal wizard buttons
         setFinish(true);
         this.wiz = wiz;
-        wiz.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
+        wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
     }
 
     @Override

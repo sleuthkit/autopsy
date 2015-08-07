@@ -23,7 +23,9 @@ import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import org.openide.util.NbBundle;
 
-/** Intersection(And) filter */
+/**
+ * Intersection(And) filter
+ */
 public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
 
     public IntersectionFilter(List<S> subFilters) {

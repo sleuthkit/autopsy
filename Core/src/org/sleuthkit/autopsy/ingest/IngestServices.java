@@ -72,6 +72,7 @@ public final class IngestServices {
      * messages written to the Autopsy log files.
      *
      * @param moduleClassName The display name of the ingest module.
+     *
      * @return The custom logger for the ingest module.
      */
     public Logger getLogger(String moduleDisplayName) {
@@ -86,13 +87,13 @@ public final class IngestServices {
     public void postMessage(final IngestMessage message) {
         manager.postIngestMessage(message);
     }
-    
+
     /**
      * Fire module data event to notify registered module data event listeners
      * that there is new data of a given type from a module.
      *
      * @param moduleDataEvent module data event, encapsulating blackboard
-     * artifact data
+     *                        artifact data
      */
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.getInstance().fireIngestModuleDataEvent(moduleDataEvent);
@@ -104,7 +105,7 @@ public final class IngestServices {
      * etc.)
      *
      * @param moduleContentEvent module content event, encapsulating content
-     * changed
+     *                           changed
      */
     public void fireModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         IngestManager.getInstance().fireIngestModuleContentEvent(moduleContentEvent);
@@ -123,8 +124,9 @@ public final class IngestServices {
     /**
      * Gets a specific name/value configuration setting for a module
      *
-     * @param moduleName moduleName identifier unique to that module
+     * @param moduleName  moduleName identifier unique to that module
      * @param settingName setting name to retrieve
+     *
      * @return setting value for the module / setting name, or null if not found
      */
     public String getConfigSetting(String moduleName, String settingName) {
@@ -134,9 +136,9 @@ public final class IngestServices {
     /**
      * Sets a specific name/value configuration setting for a module
      *
-     * @param moduleName moduleName identifier unique to that module
+     * @param moduleName  moduleName identifier unique to that module
      * @param settingName setting name to set
-     * @param settingVal setting value to set
+     * @param settingVal  setting value to set
      */
     public void setConfigSetting(String moduleName, String settingName, String settingVal) {
         ModuleSettings.setConfigSetting(moduleName, settingName, settingVal);
@@ -146,6 +148,7 @@ public final class IngestServices {
      * Gets all name/value configuration settings for a module
      *
      * @param moduleName moduleName identifier unique to that module
+     *
      * @return settings for the module / setting name
      */
     public Map<String, String> getConfigSettings(String moduleName) {
@@ -157,8 +160,8 @@ public final class IngestServices {
      * list will have settings preserved.
      *
      * @param moduleName moduleName identifier unique to that module
-     * @param settings settings to set and replace old settings, keeping
-     * settings not specified in the map.
+     * @param settings   settings to set and replace old settings, keeping
+     *                   settings not specified in the map.
      *
      */
     public void setConfigSettings(String moduleName, Map<String, String> settings) {

@@ -30,8 +30,8 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 /**
  * System action to open the KeywordSearch Options panel.
  */
-class KeywordSearchConfigurationAction extends CallableSystemAction{
-    
+class KeywordSearchConfigurationAction extends CallableSystemAction {
+
     private static final String ACTION_NAME = org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig");
     private KeywordSearchGlobalSettingsPanel panel;
 
@@ -59,9 +59,9 @@ class KeywordSearchConfigurationAction extends CallableSystemAction{
         dialog.addWindowListener(exitListener);
         dialog.display(panel);
     }
-    
+
     private KeywordSearchGlobalSettingsPanel getPanel() {
-        if(panel==null) {
+        if (panel == null) {
             panel = new KeywordSearchGlobalSettingsPanel();
         }
         return panel;
@@ -76,7 +76,7 @@ class KeywordSearchConfigurationAction extends CallableSystemAction{
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
     protected boolean asynchronous() {
         return false;

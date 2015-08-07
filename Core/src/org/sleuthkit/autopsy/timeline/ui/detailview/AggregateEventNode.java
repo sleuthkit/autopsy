@@ -76,7 +76,9 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Represents an {@link AggregateEvent} in a {@link EventDetailChart}. */
+/**
+ * Represents an {@link AggregateEvent} in a {@link EventDetailChart}.
+ */
 public class AggregateEventNode extends StackPane {
 
     private static final Logger LOGGER = Logger.getLogger(AggregateEventNode.class.getName());
@@ -87,42 +89,59 @@ public class AggregateEventNode extends StackPane {
 
     private static final CornerRadii CORNER_RADII = new CornerRadii(3);
 
-    /** the border to apply when this node is 'selected' */
+    /**
+     * the border to apply when this node is 'selected'
+     */
     private static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
 
-    /** The event this AggregateEventNode represents visually */
+    /**
+     * The event this AggregateEventNode represents visually
+     */
     private final AggregateEvent event;
 
     private final AggregateEventNode parentEventNode;
 
-    /** the region that represents the time span of this node's event */
+    /**
+     * the region that represents the time span of this node's event
+     */
     private final Region spanRegion = new Region();
 
-    /** The label used to display this node's event's description */
+    /**
+     * The label used to display this node's event's description
+     */
     private final Label descrLabel = new Label();
 
-    /** The label used to display this node's event count */
+    /**
+     * The label used to display this node's event count
+     */
     private final Label countLabel = new Label();
 
-    /** The IamgeView used to show the icon for this node's event's type */
+    /**
+     * The IamgeView used to show the icon for this node's event's type
+     */
     private final ImageView eventTypeImageView = new ImageView();
 
-    /** Pane that contains AggregateEventNodes of any 'subevents' if they are
+    /**
+     * Pane that contains AggregateEventNodes of any 'subevents' if they are
      * displayed
      *
      * //TODO: move more of the control of subnodes/events here and out of
-     * EventDetail Chart */
+     * EventDetail Chart
+     */
     private final Pane subNodePane = new Pane();
 
-    /** the context menu that with the slider that controls subnode/event
-     * display
+    /**
+     * the context menu that with the slider that controls subnode/event display
      *
-     * //TODO: move more of the control of subnodes/events here and out
-     * of EventDetail Chart */
+     * //TODO: move more of the control of subnodes/events here and out of
+     * EventDetail Chart
+     */
     private final SimpleObjectProperty<ContextMenu> contextMenu = new SimpleObjectProperty<>();
 
-    /** the Background used to fill the spanRegion, this varies epending on the
-     * selected/highlighted state of this node in its parent EventDetailChart */
+    /**
+     * the Background used to fill the spanRegion, this varies epending on the
+     * selected/highlighted state of this node in its parent EventDetailChart
+     */
     private Background spanFill;
 
     private final Button plusButton = new Button(null, new ImageView(PLUS)) {
@@ -312,7 +331,9 @@ public class AggregateEventNode extends StackPane {
         descrLabel.setMaxWidth(w);
     }
 
-    /** @param descrVis the level of description that should be displayed */
+    /**
+     * @param descrVis the level of description that should be displayed
+     */
     final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = event.getEventIDs().size();
@@ -339,7 +360,8 @@ public class AggregateEventNode extends StackPane {
         }
     }
 
-    /** apply the 'effect' to visually indicate selection
+    /**
+     * apply the 'effect' to visually indicate selection
      *
      * @param applied true to apply the selection 'effect', false to remove it
      */
@@ -353,7 +375,8 @@ public class AggregateEventNode extends StackPane {
         });
     }
 
-    /** apply the 'effect' to visually indicate highlighted nodes
+    /**
+     * apply the 'effect' to visually indicate highlighted nodes
      *
      * @param applied true to apply the highlight 'effect', false to remove it
      */
@@ -455,7 +478,9 @@ public class AggregateEventNode extends StackPane {
         }
     }
 
-    /** event handler used for mouse events on {@link AggregateEventNode}s */
+    /**
+     * event handler used for mouse events on {@link AggregateEventNode}s
+     */
     private class EventMouseHandler implements EventHandler<MouseEvent> {
 
         @Override

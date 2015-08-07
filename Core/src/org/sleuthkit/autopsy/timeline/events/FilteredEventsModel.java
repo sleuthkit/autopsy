@@ -70,9 +70,11 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  */
 public final class FilteredEventsModel {
 
-    /* requested time range, filter, event_type zoom, and description level of
+    /*
+     * requested time range, filter, event_type zoom, and description level of
      * detail. if specifics are not passed to methods, the values of these
-     * members are used to query repository. */
+     * members are used to query repository.
+     */
     /**
      * time range that spans the filtered events
      */
@@ -99,7 +101,9 @@ public final class FilteredEventsModel {
     @GuardedBy("this")
     private final EventsRepository repo;
 
-    /** @return the default filter used at startup */
+    /**
+     * @return the default filter used at startup
+     */
     public RootFilter getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
@@ -238,8 +242,8 @@ public final class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely first
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public Long getMinTime() {
         return repo.getMinTime();
@@ -247,8 +251,8 @@ public final class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely last
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public Long getMaxTime() {
         return repo.getMaxTime();
@@ -258,8 +262,8 @@ public final class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents() {
         final Interval range;
@@ -279,8 +283,8 @@ public final class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
         return repo.getAggregatedEvents(params);

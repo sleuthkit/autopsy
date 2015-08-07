@@ -36,7 +36,7 @@ final class IngestModuleTemplate {
     IngestModuleFactory getModuleFactory() {
         return moduleFactory;
     }
-        
+
     String getModuleName() {
         return moduleFactory.getModuleDisplayName();
     }
@@ -52,7 +52,7 @@ final class IngestModuleTemplate {
     void setModuleSettings(IngestModuleIngestJobSettings settings) {
         this.settings = settings;
     }
-        
+
     boolean hasModuleSettingsPanel() {
         return moduleFactory.hasIngestJobSettingsPanel();
     }

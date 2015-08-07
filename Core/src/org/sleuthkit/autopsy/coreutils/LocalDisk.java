@@ -22,41 +22,42 @@ package org.sleuthkit.autopsy.coreutils;
  * Representation of a PhysicalDisk or partition.
  */
 public class LocalDisk {
+
     private String name;
     private String path;
     private long size;
-    
+
     public LocalDisk(String name, String path, long size) {
         this.name = name;
         this.path = path;
         this.size = size;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public String getPath() {
         return path;
     }
-    
+
     public long getSize() {
         return size;
     }
-    
+
     public String getReadableSize() {
         int unit = 1024;
         if (size < unit) {
             return size + " B"; //NON-NLS
         }
         int exp = (int) (Math.log(size) / Math.log(unit));
-        String pre = "KMGTPE".charAt(exp-1) + ""; //NON-NLS
+        String pre = "KMGTPE".charAt(exp - 1) + ""; //NON-NLS
         return String.format("%.1f %sB", size / Math.pow(unit, exp), pre); //NON-NLS
     }
-    
+
     @Override
     public String toString() {
         return name + ": " + getReadableSize();
     }
-    
+
 }

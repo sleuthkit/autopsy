@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
  *
  * @author dick
  */
- public class JLNK {
+public class JLNK {
+
     private int header;
     private byte[] linkClassIdentifier;
     private List<LinkFlags> linkFlags;
@@ -45,25 +46,25 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
     private int iconIndex;
     private int showCommand;
     private short hotKey;
-    
+
     private List<String> linkTargetIdList;
-    
+
     private boolean hasUnicodeLocalBaseAndCommonSuffixOffset;
     private String localBasePath;
     private String commonPathSuffix;
     private String localBasePathUnicode;
     private String commonPathSuffixUnicode;
-    
+
     private String name;
     private String relativePath;
     private String workingDir;
     private String arguments;
     private String iconLocation;
-    
+
     private int driveSerialNumber;
     private DriveType driveType;
     private String volumeLabel;
-    
+
     private List<CommonNetworkRelativeLinkFlags> commonNetworkRelativeListFlags;
     private NetworkProviderType networkProviderType;
     private boolean unicodeNetAndDeviceName;
@@ -88,14 +89,14 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         this.header = header;
         this.linkClassIdentifier = linkClassIdentifier;
         this.linkFlags = new ArrayList<LinkFlags>();
-        for(LnkEnums.LinkFlags enumVal : LnkEnums.LinkFlags.values()) {
-            if((linkFlags & enumVal.getFlag()) == enumVal.getFlag()) {
+        for (LnkEnums.LinkFlags enumVal : LnkEnums.LinkFlags.values()) {
+            if ((linkFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.linkFlags.add(enumVal);
             }
         }
         this.fileAttributesFlags = new ArrayList<FileAttributesFlags>();
-        for(LnkEnums.FileAttributesFlags enumVal : LnkEnums.FileAttributesFlags.values()) {
-            if((fileAttributesFlags & enumVal.getFlag()) == enumVal.getFlag()) {
+        for (LnkEnums.FileAttributesFlags enumVal : LnkEnums.FileAttributesFlags.values()) {
+            if ((fileAttributesFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.fileAttributesFlags.add(enumVal);
             }
         }
@@ -121,8 +122,8 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         this.driveType = driveType;
         this.volumeLabel = volumeLabel;
         this.commonNetworkRelativeListFlags = new ArrayList<CommonNetworkRelativeLinkFlags>();
-        for(LnkEnums.CommonNetworkRelativeLinkFlags enumVal : LnkEnums.CommonNetworkRelativeLinkFlags.values()) {
-            if((commonNetworkRelativeListFlags & enumVal.getFlag()) == enumVal.getFlag()) {
+        for (LnkEnums.CommonNetworkRelativeLinkFlags enumVal : LnkEnums.CommonNetworkRelativeLinkFlags.values()) {
+            if ((commonNetworkRelativeListFlags & enumVal.getFlag()) == enumVal.getFlag()) {
                 this.commonNetworkRelativeListFlags.add(enumVal);
             }
         }
@@ -193,7 +194,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
     public short getHotKey() {
         return hotKey;
     }
-    
+
     public List<String> getLinkTargetIdList() {
         return linkTargetIdList;
     }
@@ -261,46 +262,44 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
     public String getWorkingDir() {
         return workingDir;
     }
-    
-    
-    
+
     public String getBestPath() {
-        if(localBasePathUnicode != null && !localBasePathUnicode.isEmpty()) {
-            if(commonPathSuffixUnicode != null) {
+        if (localBasePathUnicode != null && !localBasePathUnicode.isEmpty()) {
+            if (commonPathSuffixUnicode != null) {
                 return localBasePathUnicode + commonPathSuffixUnicode;
-            } else if(commonPathSuffix != null) {
+            } else if (commonPathSuffix != null) {
                 return localBasePathUnicode + commonPathSuffix;
             }
-        } else if(localBasePath != null && !localBasePath.isEmpty()) {
-            if(commonPathSuffixUnicode != null) {
+        } else if (localBasePath != null && !localBasePath.isEmpty()) {
+            if (commonPathSuffixUnicode != null) {
                 return localBasePath + commonPathSuffixUnicode;
-            } else if(commonPathSuffix != null) {
+            } else if (commonPathSuffix != null) {
                 return localBasePath + commonPathSuffix;
             }
-        } else if(netNameUnicode != null && !netNameUnicode.isEmpty()) {
-            if(commonPathSuffixUnicode != null && !commonPathSuffixUnicode.isEmpty()) {
+        } else if (netNameUnicode != null && !netNameUnicode.isEmpty()) {
+            if (commonPathSuffixUnicode != null && !commonPathSuffixUnicode.isEmpty()) {
                 return netNameUnicode + "\\" + commonPathSuffixUnicode;
-            } else if(commonPathSuffix != null && !commonPathSuffix.isEmpty()) {
+            } else if (commonPathSuffix != null && !commonPathSuffix.isEmpty()) {
                 return netNameUnicode + "\\" + commonPathSuffix;
             }
-        } else if(netName != null && !netName.isEmpty()) {
-            if(commonPathSuffixUnicode != null && !commonPathSuffixUnicode.isEmpty()) {
+        } else if (netName != null && !netName.isEmpty()) {
+            if (commonPathSuffixUnicode != null && !commonPathSuffixUnicode.isEmpty()) {
                 return netName + "\\" + commonPathSuffixUnicode;
-            } else if(commonPathSuffix != null && !commonPathSuffix.isEmpty()) {
+            } else if (commonPathSuffix != null && !commonPathSuffix.isEmpty()) {
                 return netName + "\\" + commonPathSuffix;
             }
-        } else if(linkTargetIdList != null && !linkTargetIdList.isEmpty()) {
+        } else if (linkTargetIdList != null && !linkTargetIdList.isEmpty()) {
             String ret = "";
-            for(String s : linkTargetIdList) {
+            for (String s : linkTargetIdList) {
                 ret += s;
             }
             return ret;
         }
         return NbBundle.getMessage(this.getClass(), "JLNK.noPrefPath.text");
     }
-   
+
     public String getBestName() {
         return new File(getBestPath()).getName(); // not very cross platform :(
     }
-    
+
 }

@@ -22,7 +22,8 @@ import javax.swing.event.ChangeEvent;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Event data that are fired off by ingest modules when they changed or added new content.
+ * Event data that are fired off by ingest modules when they changed or added
+ * new content.
  */
 public class ModuleContentEvent extends ChangeEvent {
 
@@ -30,15 +31,17 @@ public class ModuleContentEvent extends ChangeEvent {
 
     /**
      * Create a new event passing content that has changed
-     * @param content 
+     *
+     * @param content
      */
     public ModuleContentEvent(Content content) {
-        super(content);    
+        super(content);
     }
-    
+
     /**
      * get module name that changed the content and fired the event
-     * @return 
+     *
+     * @return
      */
     public String getModuleName() {
         return moduleName;

@@ -46,7 +46,7 @@ import org.xml.sax.SAXException;
  *
  * @author jantonius
  */
- class XMLCaseManagement implements CaseConfigFileInterface {
+class XMLCaseManagement implements CaseConfigFileInterface {
 
     final static String XSDFILE = "CaseSchema.xsd"; //NON-NLS
     final static String TOP_ROOT_NAME = "AutopsyCase"; //NON-NLS
@@ -323,7 +323,7 @@ import org.xml.sax.SAXException;
      * Gets the Autopsy Saved Version from the document handler
      *
      * @return savedVersion the latest version of autopsy when this case is
-     * saved
+     *         saved
      */
     protected String getSavedVersion() {
         if (doc != null) {
@@ -437,10 +437,10 @@ import org.xml.sax.SAXException;
      * Initialize the basic values for a new case management file. Note: this is
      * the schema version 1.0
      *
-     * @param dirPath case directory path
-     * @param caseName the name of the config file to be located in the case
-     * directory
-     * @param examiner examiner for the case (optional, can be empty string
+     * @param dirPath    case directory path
+     * @param caseName   the name of the config file to be located in the case
+     *                   directory
+     * @param examiner   examiner for the case (optional, can be empty string
      * @param caseNumber case number (optional), can be empty
      */
     protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws CaseActionException {
@@ -596,7 +596,6 @@ import org.xml.sax.SAXException;
         clear();
         File file = new File(conFilePath);
 
-
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = null;
         try {
@@ -605,17 +604,16 @@ import org.xml.sax.SAXException;
         } catch (ParserConfigurationException ex) {
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                                        conFilePath), ex);
+                            conFilePath), ex);
         } catch (SAXException ex) {
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                                        conFilePath), ex);
+                            conFilePath), ex);
         } catch (IOException ex) {
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                                        conFilePath), ex);
+                            conFilePath), ex);
         }
-
 
         doc.getDocumentElement().normalize();
         doc.getDocumentElement().normalize();
@@ -632,14 +630,16 @@ import org.xml.sax.SAXException;
             // throw an error ...
             clear();
             JOptionPane.showMessageDialog(caller,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "XMLCaseManagement.open.msgDlg.notAutCase.msg",
-                                                              file.getName(), className),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "XMLCaseManagement.open.msgDlg.notAutCase.title"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "XMLCaseManagement.open.msgDlg.notAutCase.msg",
+                            file.getName(), className),
+                    NbBundle.getMessage(this.getClass(),
+                            "XMLCaseManagement.open.msgDlg.notAutCase.title"),
+                    JOptionPane.ERROR_MESSAGE);
         } else {
-            /* Autopsy Created Version */
+            /*
+             * Autopsy Created Version
+             */
             String createdVersion = getCreatedVersion(); // get the created version
 
             // check if it has the same autopsy version as the current one
@@ -648,7 +648,9 @@ import org.xml.sax.SAXException;
                 getRootElement().getElementsByTagName(AUTOPSY_MVERSION_NAME).item(0).setTextContent(autopsySavedVersion);
             }
 
-            /* Schema Version */
+            /*
+             * Schema Version
+             */
             String schemaVer = getSchemaVersion();
             // check if it has the same schema version as the current one
             if (!schemaVer.equals(schemaVersion)) {
@@ -664,24 +666,21 @@ import org.xml.sax.SAXException;
         }
     }
 
+    /**
+     * When user wants to close the case. This method writes any changes to the
+     * XML case configuration file, closes it and the document handler, and
+     * clears all the local variables / fields.
+     *
+     */
+    @Override
+    public void close() throws CaseActionException {
+        writeFile(); // write any changes to xml
+        clear();
+    }
 
-        /**
-         * When user wants to close the case. This method writes any changes to
-         * the XML case configuration file, closes it and the document handler,
-         * and clears all the local variables / fields.
-         *
-         */
-        @Override
-        public void close() throws CaseActionException {
-            writeFile(); // write any changes to xml
-            clear();
-        }
-
-        /**
-         * Clear the internal structures / variables
-         */
-    
-
+    /**
+     * Clear the internal structures / variables
+     */
     private void clear() {
         doc = null;
         caseDirPath = "";
