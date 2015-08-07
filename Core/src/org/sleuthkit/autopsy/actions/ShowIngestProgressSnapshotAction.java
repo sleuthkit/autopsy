@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 )
 @ActionRegistration(
         displayName = "#CTL_ShowIngestProgressSnapshotAction",
-        lazy=false
+        lazy = false
 )
 @ActionReference(path = "Menu/Help", position = 1125)
 @Messages("CTL_ShowIngestProgressSnapshotAction=Ingest Status Details")

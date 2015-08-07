@@ -36,20 +36,22 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Top component which displays results (top-right editor mode by default).
- * 
+ *
  * There is a main tc instance that responds to directory tree selections.
- * Others can also create an additional result viewer tc using one of the factory methods, that can be:
- * 
- * - added to top-right corner as an additional, closeable viewer
- * - added to a different, custom mode,
- * - linked to a custom content viewer that responds to selections from this top component.
- * 
- * For embedding custom data result in other top components window, use DataResultPanel component instead,
- * since we cannot nest top components.
- * 
+ * Others can also create an additional result viewer tc using one of the
+ * factory methods, that can be:
+ *
+ * - added to top-right corner as an additional, closeable viewer - added to a
+ * different, custom mode, - linked to a custom content viewer that responds to
+ * selections from this top component.
+ *
+ * For embedding custom data result in other top components window, use
+ * DataResultPanel component instead, since we cannot nest top components.
+ *
  * Encapsulates the internal DataResultPanel and delegates to it.
- * 
- * Implements DataResult interface by delegating to the encapsulated DataResultPanel.
+ *
+ * Implements DataResult interface by delegating to the encapsulated
+ * DataResultPanel.
  */
 public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
@@ -58,7 +60,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     private DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
-    
+
     //keep track of tcs opened for menu presenters
     private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
 
@@ -66,8 +68,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * Create a new data result top component
      *
      * @param isMain whether it is the main, application default result viewer,
-     * there can be only 1 main result viewer
-     * @param title title of the data result window
+     *               there can be only 1 main result viewer
+     * @param title  title of the data result window
      */
     public DataResultTopComponent(boolean isMain, String title) {
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
@@ -80,19 +82,20 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * Create a new, custom data result top component, in addition to the
      * application main one
      *
-     * @param name unique name of the data result window, also used as title
-     * @param customModeName custom mode to dock into
+     * @param name                unique name of the data result window, also
+     *                            used as title
+     * @param customModeName      custom mode to dock into
      * @param customContentViewer custom content viewer to send selection events
-     * to
+     *                            to
      */
     DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         this.customModeName = mode;
         dataResultPanel = new DataResultPanel(name, customContentViewer);
         initComponents();
-        customizeComponent(isMain, name);  
+        customizeComponent(isMain, name);
     }
-        
+
     private void customizeComponent(boolean isMain, String title) {
         this.isMain = isMain;
         this.customModeName = null;
@@ -111,10 +114,12 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     /**
      * Initialize previously created tc instance with additional data
+     *
      * @param pathText
      * @param givenNode
      * @param totalMatches
-     * @param newDataResult previously created with createInstance() uninitialized instance
+     * @param newDataResult previously created with createInstance()
+     *                      uninitialized instance
      */
     public static void initInstance(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
         newDataResult.setNumMatches(totalMatches);
@@ -124,17 +129,19 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         // set the tree table view
         newDataResult.setNode(givenNode);
         newDataResult.setPath(pathText);
-        
+
         newDataResult.requestActive();
     }
 
     /**
      * Creates a new non-default DataResult component and initializes it
      *
-     * @param title Title of the component window
-     * @param pathText Descriptive text about the source of the nodes displayed
-     * @param givenNode The new root node
+     * @param title        Title of the component window
+     * @param pathText     Descriptive text about the source of the nodes
+     *                     displayed
+     * @param givenNode    The new root node
      * @param totalMatches Cardinality of root node's children
+     *
      * @return a new, not default, initialized DataResultTopComponent instance
      */
     public static DataResultTopComponent createInstance(String title, String pathText, Node givenNode, int totalMatches) {
@@ -146,16 +153,19 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     }
 
     /**
-     * Creates a new non-default DataResult component linked with a custom data content, and initializes it.
-     * 
+     * Creates a new non-default DataResult component linked with a custom data
+     * content, and initializes it.
      *
-     * @param title Title of the component window
-     * @param mode custom mode to dock this custom TopComponent to
-     * @param pathText Descriptive text about the source of the nodes displayed
-     * @param givenNode The new root node
-     * @param totalMatches Cardinality of root node's children
+     *
+     * @param title             Title of the component window
+     * @param mode              custom mode to dock this custom TopComponent to
+     * @param pathText          Descriptive text about the source of the nodes
+     *                          displayed
+     * @param givenNode         The new root node
+     * @param totalMatches      Cardinality of root node's children
      * @param dataContentWindow a handle to data content top component window to
-     * @return a new, not default, initialized DataResultTopComponent instance 
+     *
+     * @return a new, not default, initialized DataResultTopComponent instance
      */
     public static DataResultTopComponent createInstance(String title, final String mode, String pathText, Node givenNode, int totalMatches, DataContentTopComponent dataContentWindow) {
         DataResultTopComponent newDataResult = new DataResultTopComponent(title, mode, dataContentWindow);
@@ -163,13 +173,15 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         initInstance(pathText, givenNode, totalMatches, newDataResult);
         return newDataResult;
     }
-    
+
     /**
-     * Creates a new non-default DataResult component.
-     * You probably want to use initInstance after it
-     * 
+     * Creates a new non-default DataResult component. You probably want to use
+     * initInstance after it
+     *
      * @param title
-     * @return a new, not default, not fully initialized DataResultTopComponent instance 
+     *
+     * @return a new, not default, not fully initialized DataResultTopComponent
+     *         instance
      */
     public static DataResultTopComponent createInstance(String title) {
         final DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
@@ -181,15 +193,16 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     public ExplorerManager getExplorerManager() {
         return explorerManager;
     }
-    
+
     /**
      * Get a list with names of active windows ids, e.g. for the menus
-     * @return 
+     *
+     * @return
      */
     public static List<String> getActiveComponentIds() {
         return new ArrayList<>(activeComponentIds);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -233,7 +246,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     public List<DataResultViewer> getViewers() {
         return dataResultPanel.getViewers();
     }
-    
+
     private void setCustomMode() {
         if (customModeName != null) {
             //putClientProperty("TopComponentAllowDockAnywhere", Boolean.TRUE);
@@ -256,14 +269,14 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     @Override
     public void componentOpened() {
         super.componentOpened();
-        this.dataResultPanel.open();        
+        this.dataResultPanel.open();
     }
-    
+
     @Override
     public void componentClosed() {
         super.componentClosed();
         activeComponentIds.remove(this.getName());
-        dataResultPanel.close();        
+        dataResultPanel.close();
     }
 
     @Override

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import java.awt.event.ActionEvent;
@@ -27,27 +26,25 @@ import org.openide.windows.WindowManager;
 /**
  * This action opens the TopComponent passed to the constructor
  */
- class OpenTopComponentAction extends AbstractAction{
+class OpenTopComponentAction extends AbstractAction {
 
     private TopComponent tc;
-    
 
-    OpenTopComponentAction(TopComponent top){
+    OpenTopComponentAction(TopComponent top) {
         this.tc = top;
     }
-    
-    OpenTopComponentAction(String tcId){
+
+    OpenTopComponentAction(String tcId) {
         this.tc = WindowManager.getDefault().findTopComponent(tcId);
     }
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (tc == null) {
             return;
         }
-        
-        if(!this.tc.isOpened()){
+
+        if (!this.tc.isOpened()) {
             this.tc.open();
         }
         this.tc.requestActive();

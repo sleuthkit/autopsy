@@ -32,6 +32,7 @@ public interface KeywordSearchService extends Closeable {
      * search index.
      *
      * @param artifact
+     *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;

@@ -51,9 +51,9 @@ public final class RunIngestModulesDialog extends JDialog {
      * Construct a dialog box that allows a user to configure and run an ingest
      * job on one or more data sources.
      *
-     * @param frame The dialog parent window.
-     * @param title The title for the dialog.
-     * @param modal True if the dialog should be modal, false otherwise.
+     * @param frame       The dialog parent window.
+     * @param title       The title for the dialog.
+     * @param modal       True if the dialog should be modal, false otherwise.
      * @param dataSources The data sources to be processed.
      */
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
@@ -78,6 +78,7 @@ public final class RunIngestModulesDialog extends JDialog {
      * @param frame The dialog parent window.
      * @param title The title for the dialog.
      * @param modal True if the dialog should be modal, false otherwise.
+     *
      * @deprecated
      */
     @Deprecated
@@ -100,6 +101,7 @@ public final class RunIngestModulesDialog extends JDialog {
      * Set the data sources to be processed.
      *
      * @param dataSources The data sources.
+     *
      * @deprecated
      */
     @Deprecated
@@ -192,7 +194,7 @@ public final class RunIngestModulesDialog extends JDialog {
      * data source, then closes the dialog
      *
      * @param startIngestJob True if ingest job(s) should be started, false
-     * otherwise.
+     *                       otherwise.
      */
     private void doButtonAction(boolean startIngestJob) {
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();

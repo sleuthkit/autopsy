@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * An adapter that provides a no-op implementation of the startUp() method for 
+ * An adapter that provides a no-op implementation of the startUp() method for
  * data source ingest modules.
  */
 public abstract class DataSourceIngestModuleAdapter implements DataSourceIngestModule {

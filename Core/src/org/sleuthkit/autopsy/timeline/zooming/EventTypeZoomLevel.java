@@ -28,7 +28,7 @@ public enum EventTypeZoomLevel {
 
     ROOT_TYPE(NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.rootType")), BASE_TYPE(
             NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.baseType")), SUB_TYPE(
-            NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.subType"));
+                    NbBundle.getMessage(EventTypeZoomLevel.class, "EventTypeZoomLevel.subType"));
 
     public String getDisplayName() {
         return displayName;

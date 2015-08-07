@@ -147,6 +147,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Gets regular Bean property set properties from first child of Node.
      *
      * @param parent Node with at least one child to get properties from
+     *
      * @return Properties,
      */
     private Node.Property<?>[] getChildPropertyHeaders(Node parent) {
@@ -173,6 +174,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * load - you need to set all children props for the parent by hand
      *
      * @param parent Node with at least one child to get properties from
+     *
      * @return Properties,
      */
     @SuppressWarnings("rawtypes")
@@ -213,8 +215,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * load - you need to set all children props for the parent by hand
      *
      * @param parent Node with at least one child to get properties from
-     * @param rows max number of rows to retrieve properties for (can be used
-     * for memory optimization)
+     * @param rows   max number of rows to retrieve properties for (can be used
+     *               for memory optimization)
      */
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         Children children = parent.getChildren();
@@ -296,7 +298,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         em.setRootContext(root);
 
-
         final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
 
         if (ov == null) {
@@ -307,20 +308,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-        
-        /* OutlineView makes the first column be the result of node.getDisplayName with the icon.  This
-         * duplicates our first column, which is the file name, etc. So, pop that property off the list, but
-         * use its display name as the header for the column so that the header can change depending on the
-         * type of data being displayed.
+
+        /*
+         * OutlineView makes the first column be the result of
+         * node.getDisplayName with the icon. This duplicates our first column,
+         * which is the file name, etc. So, pop that property off the list, but
+         * use its display name as the header for the column so that the header
+         * can change depending on the type of data being displayed.
          *
-         * NOTE: This assumes that the first property is always the one tha duplicates getDisplayName().  This
-         * seems like a big assumption and could be made more robust. 
+         * NOTE: This assumes that the first property is always the one tha
+         * duplicates getDisplayName(). This seems like a big assumption and
+         * could be made more robust.
          */
         if (props.size() > 0) {
             Node.Property<?> prop = props.remove(0);
             ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
-
 
         // Get the columns setup with respect to names and sortability
         String[] propStrings = new String[props.size() * 2];
@@ -344,10 +347,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         //            try {
         //                this.getExplorerManager().setSelectedNodes(new Node[]{firstEntryNode});
         //            } catch (PropertyVetoException ex) {}
-
-
         // show the horizontal scroll panel and show all the content & header
-
         int totalColumns = props.size();
 
         //int scrollWidth = ttv.getWidth();
@@ -358,12 +358,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // Just let the table resize itself.
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-
-
         // get first 100 rows values for the table
         Object[][] content = null;
         content = getRowValues(root, 100);
-
 
         if (content != null) {
             // get the fontmetrics
@@ -438,12 +435,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Gets the max width of the column from the given index, header, and table.
      *
-     * @param index the index of the column on the table / header
+     * @param index   the index of the column on the table / header
      * @param metrics the font metrics that this component use
-     * @param margin the left/right margin of the column
+     * @param margin  the left/right margin of the column
      * @param padding the left/right padding of the column
-     * @param header the property headers of the table
-     * @param table the object table
+     * @param header  the property headers of the table
+     * @param table   the object table
+     *
      * @return max the maximum width of the column
      */
     @SuppressWarnings("rawtypes")
@@ -457,12 +455,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Gets the max width of the column from the given index, header, and table.
      *
-     * @param index the index of the column on the table / header
+     * @param index   the index of the column on the table / header
      * @param metrics the font metrics that this component use
-     * @param margin the left/right margin of the column
+     * @param margin  the left/right margin of the column
      * @param padding the left/right padding of the column
-     * @param header the column header for the comparison
-     * @param table the object table
+     * @param header  the column header for the comparison
+     * @param table   the object table
+     *
      * @return max the maximum width of the column
      */
     private synchronized int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, String header, Object[][] table) {

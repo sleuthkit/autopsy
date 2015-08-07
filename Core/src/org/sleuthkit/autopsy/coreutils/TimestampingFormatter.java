@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.coreutils;
 
 import java.text.DateFormat;
@@ -27,10 +25,10 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 /*
- * Formatter to wrap another formatter and prepend a timestampe to each formatted string
- * Not currently used.
+ * Formatter to wrap another formatter and prepend a timestampe to each
+ * formatted string Not currently used.
  */
- class TimestampingFormatter extends Formatter {
+class TimestampingFormatter extends Formatter {
 
     Formatter original;
     DateFormat timestampFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.US);

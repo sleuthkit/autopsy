@@ -39,9 +39,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Loads a file that maps USB IDs to names of makes and models. Uses Linux USB info. 
+ * Loads a file that maps USB IDs to names of makes and models. Uses Linux USB
+ * info.
  */
 class UsbDeviceIdMapper {
+
     private static final Logger logger = Logger.getLogger(UsbDeviceIdMapper.class.getName());
     private HashMap<String, USBInfo> devices;
     private static final String DataFile = "USB_DATA.txt"; //NON-NLS
@@ -56,12 +58,14 @@ class UsbDeviceIdMapper {
             logger.log(Level.SEVERE, "Unknown IO error occurred in method devices.", ex); //NON-NLS
         }
     }
-    
+
     /**
-     * Parses the passed in device ID and returns info that includes make and model. 
-     * 
+     * Parses the passed in device ID and returns info that includes make and
+     * model.
+     *
      * @param dev String to parse (i.e.: Vid_XXXX&Pid_XXXX)
-     * @return 
+     *
+     * @return
      */
     public USBInfo parseAndLookup(String dev) {
         String[] dtokens = dev.split("[_&]");
@@ -73,61 +77,61 @@ class UsbDeviceIdMapper {
             pID = dtokens[3];
         }
         pID = pID.toUpperCase();
-        
+
         // first try the full key
         String key = vID + pID;
         if (devices.containsKey(key)) {
             return devices.get(key);
         }
-        
+
         // try just the vendor ID -> In case database doesn't know about this specific product
         key = vID + "0000";
         if (devices.containsKey(key)) {
             USBInfo info = devices.get(key);
             return new USBInfo(info.getVendor(),
-                               NbBundle.getMessage(this.getClass(), "UsbDeviceIdMapper.parseAndLookup.text", pID));
+                    NbBundle.getMessage(this.getClass(), "UsbDeviceIdMapper.parseAndLookup.text", pID));
         }
-        
+
         return new USBInfo(null, null);
     }
 
     /**
      * Reads the local USB txt file and stores in map.
-     * 
+     *
      * @throws FileNotFoundException
-     * @throws IOException 
+     * @throws IOException
      */
     private void loadDeviceMap() throws FileNotFoundException, IOException {
         devices = new HashMap<>();
         PlatformUtil.extractResourceToUserConfigDir(this.getClass(), DataFile, false);
         try (Scanner dat = new Scanner(new FileInputStream(new java.io.File(PlatformUtil.getUserConfigDirectory() + File.separator + "USB_DATA.txt")))) {
-            /* Syntax of file: 
+            /*
+             * Syntax of file:
              *
-             * # vendor  vendor_name
-             * #	device  device_name				<-- single tab
-             * #		interface  interface_name		<-- two tabs
+             * # vendor vendor_name #	device device_name	<-- single tab #
+             * interface interface_name	<-- two tabs
              */
             String line = dat.nextLine();
             while (dat.hasNext()) {
-                
+
                 // comments
                 if ((line.startsWith("#")) || (line.equals(""))) {
                     line = dat.nextLine();
                     continue;
                 }
-                
+
                 // stop once we've hitten the part of the file that starts to talk about class types
                 if (line.startsWith("C 00")) { //NON-NLS
                     return;
                 }
-                
+
                 String dvc = "";
                 String[] tokens = line.split("[\\t\\s]+"); //NON-NLS
                 String vID = tokens[0];
                 for (int n = 1; n < tokens.length; n++) {
                     dvc += tokens[n] + " ";
                 }
-                
+
                 // make an entry with just the vendor ID
                 String pID = vID + "0000";
                 pID = pID.toUpperCase();
@@ -161,9 +165,10 @@ class UsbDeviceIdMapper {
     }
 
     /**
-     * Stores the vendor information about a USB device 
+     * Stores the vendor information about a USB device
      */
     public class USBInfo {
+
         private final String vendor;
         private final String product;
 
@@ -174,7 +179,8 @@ class UsbDeviceIdMapper {
 
         /**
          * Get Vendor (make) information
-         * @return 
+         *
+         * @return
          */
         public String getVendor() {
             return vendor;
@@ -182,7 +188,8 @@ class UsbDeviceIdMapper {
 
         /**
          * Get product (model) information
-         * @return 
+         *
+         * @return
          */
         public String getProduct() {
             return product;

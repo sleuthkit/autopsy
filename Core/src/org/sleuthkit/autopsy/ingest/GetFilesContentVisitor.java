@@ -65,10 +65,11 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
     }
 
     /**
-     * Aggregate all the matches from visiting the children Content objects of
-     * a parent Content object.
+     * Aggregate all the matches from visiting the children Content objects of a
+     * parent Content object.
      *
      * @param parent A content object.
+     *
      * @return The child files of the content.
      */
     protected Collection<AbstractFile> getAllFromChildren(Content parent) {

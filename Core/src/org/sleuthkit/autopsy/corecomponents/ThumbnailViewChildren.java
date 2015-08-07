@@ -59,7 +59,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         this.iconSize = iconSize;
     }
 
-
     @Override
     protected void addNotify() {
         super.addNotify();

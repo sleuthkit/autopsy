@@ -51,7 +51,7 @@ public final class JythonModuleLoader {
      * Get ingest module factories implemented using Jython.
      *
      * @return A list of objects that implement the IngestModuleFactory
-     * interface.
+     *         interface.
      */
     public static List<IngestModuleFactory> getIngestModuleFactories() {
         return getInterfaceImplementations(new IngestModuleFactoryDefFilter(), IngestModuleFactory.class);
@@ -61,7 +61,7 @@ public final class JythonModuleLoader {
      * Get general report modules implemented using Jython.
      *
      * @return A list of objects that implement the GeneralReportModule
-     * interface.
+     *         interface.
      */
     public static List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
@@ -91,7 +91,7 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    objects.add( createObjectFromScript(interpreter, script, className, interfaceClass));
+                                    objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
@@ -112,7 +112,7 @@ public final class JythonModuleLoader {
         }
         return objects;
     }
-        
+
     private static <T> T createObjectFromScript(PythonInterpreter interpreter, File script, String className, Class<T> interfaceClass) {
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
@@ -146,24 +146,25 @@ public final class JythonModuleLoader {
             return name.endsWith(".py"); //NON-NLS
         } //NON-NLS
     }
-    
+
     private static interface LineFilter {
-        
+
         boolean accept(String line);
     }
-    
+
     private static class IngestModuleFactoryDefFilter implements LineFilter {
 
         @Override
         public boolean accept(String line) {
             return (line.contains("IngestModuleFactoryAdapter") || line.contains("IngestModuleFactory")); //NON-NLS
-        }        
+        }
     }
-    
+
     private static class GeneralReportModuleDefFilter implements LineFilter {
+
         @Override
         public boolean accept(String line) {
             return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule")); //NON-NLS
-        }                
+        }
     }
 }

@@ -654,8 +654,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (signatureTypeComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM) {
             hexPrefixLabel.setVisible(true);
             signatureTextField.setText("0000");
-        }
-        else {
+        } else {
             hexPrefixLabel.setVisible(false);
             signatureTextField.setText("");
         }

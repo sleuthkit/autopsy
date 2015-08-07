@@ -33,7 +33,6 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-
 /**
  * Action in menu to open the folder containing the log files
  */
@@ -49,13 +48,12 @@ public final class OpenLogFolderAction implements ActionListener {
             File logDir;
             if (Case.isCaseOpen()) {
                 logDir = new File(Case.getCurrentCase().getLogDirectoryPath());
-            }
-            else {
+            } else {
                 logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
             }
             if (logDir.exists() == false) {
-                NotifyDescriptor d =
-                        new NotifyDescriptor.Message(
+                NotifyDescriptor d
+                        = new NotifyDescriptor.Message(
                                 NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
                                 NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(d);

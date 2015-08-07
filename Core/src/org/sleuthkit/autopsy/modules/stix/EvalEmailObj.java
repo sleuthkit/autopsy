@@ -182,7 +182,7 @@ class EvalEmailObj extends EvaluatableObject {
      * aren't found in the new set. The final list is the artifacts found in all
      * sets.
      *
-     * @param newHits The new hits to add to the list
+     * @param newHits          The new hits to add to the list
      * @param finalHitsStarted Whether we've started the list or not
      */
     private void combineHits(List<BlackboardArtifact> newHits, boolean finalHitsStarted) {

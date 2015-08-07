@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Wrapper over InputStream that implements ContentStream to feed to Solr.
  */
- class AbstractFileStringContentStream implements ContentStream {
+class AbstractFileStringContentStream implements ContentStream {
     //input
 
     private AbstractFile content;
@@ -88,7 +88,7 @@ import org.sleuthkit.datamodel.AbstractFile;
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        
+
         stream.close();
     }
 }

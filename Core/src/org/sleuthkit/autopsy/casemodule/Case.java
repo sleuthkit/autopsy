@@ -144,9 +144,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
          */
         REPORT_ADDED,
         /**
-         * Name for the property change event when a report is deleted
-         * from the case. Both the old value and the new value supplied by the
-         * event object are null.
+         * Name for the property change event when a report is deleted from the
+         * case. Both the old value and the new value supplied by the event
+         * object are null.
          */
         REPORT_DELETED,
         /**
@@ -310,9 +310,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Creates a new case (create the XML config file and database)
      *
      * @param caseDir    The directory to store case data in. Will be created if
-     *                   it
-     *                   doesn't already exist. If it exists, it should have all of the needed sub
-     *                   dirs that createCaseDirectory() will create.
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
      * @param caseName   the name of case
      * @param caseNumber the case number
      * @param examiner   the examiner for this case
@@ -1244,8 +1244,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param localPath        The path of the report file, must be in the case
      *                         directory or one of its subdirectories.
-     * @param sourceModuleName The name of the module that created the
-     *                         report.
+     * @param sourceModuleName The name of the module that created the report.
      * @param reportName       The report name, may be empty.
      *
      * @return A Report data transfer object (DTO) for the new row.
@@ -1277,9 +1276,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Deletes reports from the case - deletes it from the disk as well as the
      * database.
      *
-     * @param reports Collection of Report to be deleted from the case.
+     * @param reports        Collection of Report to be deleted from the case.
      * @param deleteFromDisk Set true to perform reports file deletion from
-     * disk.
+     *                       disk.
+     *
      * @throws TskCoreException
      */
     public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {

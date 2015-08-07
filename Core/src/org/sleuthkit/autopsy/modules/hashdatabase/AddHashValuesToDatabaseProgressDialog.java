@@ -139,12 +139,12 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
         if (success) {
             // a hack to set progressbar color.
             addingHashesToDatabaseProgressBar.setStringPainted(true);
-            addingHashesToDatabaseProgressBar.setForeground(new Color(50,205,50));
+            addingHashesToDatabaseProgressBar.setForeground(new Color(50, 205, 50));
             addingHashesToDatabaseProgressBar.setString("");
         } else {
             // a hack to set progressbar color.
             addingHashesToDatabaseProgressBar.setStringPainted(true);
-            addingHashesToDatabaseProgressBar.setForeground(new Color(178,34,34));
+            addingHashesToDatabaseProgressBar.setForeground(new Color(178, 34, 34));
             addingHashesToDatabaseProgressBar.setString("");
         }
 
@@ -262,7 +262,6 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
         Object[] jOptionPaneComponents = {textLabel, scrollPane};
         JOptionPane.showMessageDialog(this, jOptionPaneComponents, "Error:\n", JOptionPane.OK_OPTION); // NON-NLS
     }//GEN-LAST:event_showErrorsButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JProgressBar addingHashesToDatabaseProgressBar;

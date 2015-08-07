@@ -56,7 +56,6 @@ abstract class Extract {
     void complete() {
     }
 
-    
     /**
      * Returns a List of string error messages from the inheriting class
      *
@@ -78,12 +77,13 @@ abstract class Extract {
     /**
      * Generic method for adding a blackboard artifact to the blackboard
      *
-     * @param type is a blackboard.artifact_type enum to determine which type
-     * the artifact should be
-     * @param content is the AbstractFile object that needs to have the artifact
-     * added for it
+     * @param type         is a blackboard.artifact_type enum to determine which
+     *                     type the artifact should be
+     * @param content      is the AbstractFile object that needs to have the
+     *                     artifact added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     * to be added to the artifact after the artifact has been created
+     *                     to be added to the artifact after the artifact has
+     *                     been created
      */
     protected void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
         try {
@@ -99,10 +99,11 @@ abstract class Extract {
      * query sqlite databases storing user recent activity data, such as in
      * firefox sqlite db
      *
-     * @param path is the string path to the sqlite db file
+     * @param path  is the string path to the sqlite db file
      * @param query is a sql string query that is to be run
+     *
      * @return list is the ArrayList that contains the resultset information in
-     * it that the query obtained
+     *         it that the query obtained
      */
     protected List<HashMap<String, Object>> dbConnect(String path, String query) {
         ResultSet temprs;
@@ -116,7 +117,7 @@ abstract class Extract {
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
             errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
-            return Collections.<HashMap<String,Object>>emptyList();
+            return Collections.<HashMap<String, Object>>emptyList();
         }
         return list;
     }
@@ -125,6 +126,7 @@ abstract class Extract {
      * Returns a List of AbstractFile objects from TSK based on sql query.
      *
      * @param rs is the resultset that needs to be converted to an arraylist
+     *
      * @return list returns the arraylist built from the converted resultset
      */
     private List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {

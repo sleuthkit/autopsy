@@ -64,7 +64,9 @@ public class ImageUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
 
-    /** save thumbnails to disk as this format */
+    /**
+     * save thumbnails to disk as this format
+     */
     private static final String FORMAT = "png"; //NON-NLS
 
     public static final int ICON_SIZE_SMALL = 50;
@@ -113,8 +115,10 @@ public class ImageUtils {
         SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
 
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
-        /* special cases and variants that we support, but don't get registered
-         * with ImageIO automatically */
+        /*
+         * special cases and variants that we support, but don't get registered
+         * with ImageIO automatically
+         */
         SUPPORTED_IMAGE_MIME_TYPES.addAll(Arrays.asList(
                 "image/x-rgb",
                 "image/x-ms-bmp",
@@ -124,10 +128,14 @@ public class ImageUtils {
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
-    /** initialized lazily */
+    /**
+     * initialized lazily
+     */
     private static FileTypeDetector fileTypeDetector;
 
-    /** thread that saves generated thumbnails to disk in the background */
+    /**
+     * thread that saves generated thumbnails to disk in the background
+     */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
@@ -145,8 +153,7 @@ public class ImageUtils {
 
     /**
      * Get the default thumbnail, which is the icon for a file. Used when we can
-     * not
-     * generate content based thumbnail.
+     * not generate content based thumbnail.
      *
      * @return
      *
@@ -256,8 +263,8 @@ public class ImageUtils {
     }
 
     /**
-     * Get a thumbnail of a specified size. Generates the image if it is
-     * not already cached.
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
      *
      * @param content
      * @param iconSize
@@ -277,8 +284,8 @@ public class ImageUtils {
     }
 
     /**
-     * Get a thumbnail of a specified size. Generates the image if it is
-     * not already cached.
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
      *
      * @param content
      * @param iconSize
@@ -312,8 +319,8 @@ public class ImageUtils {
     }
 
     /**
-     * Get a thumbnail of a specified size. Generates the image if it is
-     * not already cached.
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
      *
      * @param content
      * @param iconSize
@@ -334,8 +341,8 @@ public class ImageUtils {
 
     /**
      *
-     * Get a thumbnail of a specified size. Generates the image if it is
-     * not already cached.
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
      *
      * @param content
      * @param iconSize
@@ -397,8 +404,10 @@ public class ImageUtils {
 
         try {
             byte[] fileHeaderBuffer = readHeader(file, 2);
-            /* Check for the JPEG header. Since Java bytes are signed, we cast
-             * them to an int first. */
+            /*
+             * Check for the JPEG header. Since Java bytes are signed, we cast
+             * them to an int first.
+             */
             return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
         } catch (TskCoreException ex) {
             //ignore if can't read the first few bytes, not a JPEG
@@ -420,8 +429,10 @@ public class ImageUtils {
 
         try {
             byte[] fileHeaderBuffer = readHeader(file, 8);
-            /* Check for the png header. Since Java bytes are signed, we cast
-             * them to an int first. */
+            /*
+             * Check for the png header. Since Java bytes are signed, we cast
+             * them to an int first.
+             */
             return (((fileHeaderBuffer[1] & 0xff) == 0x50) && ((fileHeaderBuffer[2] & 0xff) == 0x4E)
                     && ((fileHeaderBuffer[3] & 0xff) == 0x47) && ((fileHeaderBuffer[4] & 0xff) == 0x0D)
                     && ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A)

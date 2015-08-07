@@ -74,7 +74,7 @@ public class PlatformUtil {
      * Get root path where the application modules are installed
      *
      * @return absolute path string to the install modules root dir, or null if
-     * not found
+     *         not found
      */
     public static String getInstallModulesPath() {
         File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
@@ -101,7 +101,7 @@ public class PlatformUtil {
      * Get root path where the user modules are installed
      *
      * @return absolute path string to the install modules root dir, or null if
-     * not found
+     *         not found
      */
     public static String getUserModulesPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + "modules";
@@ -211,13 +211,15 @@ public class PlatformUtil {
      * Utility to extract a resource file to a user configuration directory, if
      * it does not exist - useful for setting up default configurations.
      *
-     * @param resourceClass class in the same package as the resourceFile to
-     * extract
+     * @param resourceClass    class in the same package as the resourceFile to
+     *                         extract
      * @param resourceFileName Name of the resource file to extract
-     * @param overWrite true to overwrite an existing resource
+     * @param overWrite        true to overwrite an existing resource
+     *
      * @return true if extracted, false otherwise (if file already exists)
+     *
      * @throws IOException exception thrown if extract the file failed for IO
-     * reasons
+     *                     reasons
      */
     public static <T> boolean extractResourceToUserConfigDir(final Class<T> resourceClass, final String resourceFileName, boolean overWrite) throws IOException {
         Path resourceFilePath = Paths.get(getUserConfigDirectory(), resourceFileName);
@@ -225,7 +227,7 @@ public class PlatformUtil {
         if (resourceFile.exists() && !overWrite) {
             return false;
         }
-        
+
         InputStream inputStream = resourceClass.getResourceAsStream(resourceFileName);
         if (null == inputStream) {
             return false;
@@ -283,6 +285,7 @@ public class PlatformUtil {
      * Convert file path (quote) for OS specific
      *
      * @param origFilePath
+     *
      * @return converted file path
      */
     public static String getOSFilePath(String origFilePath) {
@@ -298,7 +301,7 @@ public class PlatformUtil {
      * system. May not be completely reliable for non-Windows operating systems.
      *
      * @return True if the operating system is definitely a 64-bit operating
-     * system, false otherwise.
+     *         system, false otherwise.
      */
     public static boolean is64BitOS() {
         if (System.getProperty("os.name").contains("Windows")) { //NON-NLS
@@ -407,7 +410,9 @@ public class PlatformUtil {
      * assuming the results are almost exactly the same.
      *
      * @param diskPath path to the disk we want to read
+     *
      * @return true if we successfully read the first byte
+     *
      * @throws IOException if we fail to read
      */
     private static boolean canReadDrive(String diskPath) {
@@ -460,9 +465,9 @@ public class PlatformUtil {
      * Query and get PID of another java process
      *
      * @param sigarSubQuery a sigar subquery to identify a unique java process
-     * among other java processes, for example, by class name, use:
-     * Args.*.eq=org.jboss.Main more examples here:
-     * http://support.hyperic.com/display/SIGAR/PTQL
+     *                      among other java processes, for example, by class
+     *                      name, use: Args.*.eq=org.jboss.Main more examples
+     *                      here: http://support.hyperic.com/display/SIGAR/PTQL
      *
      * @return PID of a java process or -1 if it couldn't be determined
      */
@@ -491,12 +496,12 @@ public class PlatformUtil {
      * Query and get PIDs of another java processes matching a query
      *
      * @param sigarSubQuery a sigar subquery to identify a java processes among
-     * other java processes, for example, by class name, use:
-     * Args.*.eq=org.jboss.Main more examples here:
-     * http://support.hyperic.com/display/SIGAR/PTQL
+     *                      other java processes, for example, by class name,
+     *                      use: Args.*.eq=org.jboss.Main more examples here:
+     *                      http://support.hyperic.com/display/SIGAR/PTQL
      *
      * @return array of PIDs of a java processes matching the query or null if
-     * it couldn't be determined
+     *         it couldn't be determined
      */
     public static synchronized long[] getJavaPIDs(String sigarSubQuery) {
         long[] jpids = null;

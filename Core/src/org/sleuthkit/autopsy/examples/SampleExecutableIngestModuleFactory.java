@@ -66,7 +66,7 @@ public class SampleExecutableIngestModuleFactory extends IngestModuleFactoryAdap
     public String getModuleVersionNumber() {
         return VERSION_NUMBER;
     }
-    
+
     @Override
     public boolean isDataSourceIngestModuleFactory() {
         return true;
@@ -75,5 +75,5 @@ public class SampleExecutableIngestModuleFactory extends IngestModuleFactoryAdap
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new SampleExecutableDataSourceIngestModule();
-    }    
+    }
 }

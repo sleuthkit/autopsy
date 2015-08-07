@@ -32,7 +32,7 @@ import java.util.Observable;
 // motivated by a desire to not expose XmlKeywordSearchList to public clients.
 // It should be futher developed as time constraints and needs dictate.
 public class KeywordListsManager extends Observable {
-    
+
     private static KeywordListsManager instance;
     private final PropertyChangeListener listsChangeListener;
 
@@ -72,5 +72,5 @@ public class KeywordListsManager extends Observable {
         }
         return names;
     }
-    
+
 }

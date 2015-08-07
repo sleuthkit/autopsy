@@ -89,7 +89,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      * button will be enabled.
      *
      * @return boolean true if all the fields are correctly filled, false
-     * otherwise
+     *         otherwise
      */
     @Override
     public boolean isValid() {
@@ -226,11 +226,11 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         // get confirmation to create directory
                         String confMsg = NbBundle
                                 .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.confMsg.createDir.msg",
-                                            caseParentDir);
+                                        caseParentDir);
                         NotifyDescriptor d2 = new NotifyDescriptor.Confirmation(confMsg,
-                                                                                NbBundle.getMessage(this.getClass(),
-                                                                                                    "NewCaseWizardPanel1.validate.confMsg.createDir.title"),
-                                                                                NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                                NbBundle.getMessage(this.getClass(),
+                                        "NewCaseWizardPanel1.validate.confMsg.createDir.title"),
+                                NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
                         d2.setValue(NotifyDescriptor.NO_OPTION);
 
                         Object res2 = DialogDisplayer.getDefault().notify(d2);
@@ -240,8 +240,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                                 createDirectory(caseDirPath);
                             } catch (Exception ex) {
                                 String errorMsg = NbBundle.getMessage(this.getClass(),
-                                                                      "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
-                                                                      caseParentDir);
+                                        "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
+                                        caseParentDir);
                                 logger.log(Level.WARNING, errorMsg, ex);
                                 validationError(errorMsg);
                             }
@@ -249,8 +249,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         if (res2 != null && res2 == DialogDescriptor.NO_OPTION) {
                             // if user say no
                             validationError(NbBundle.getMessage(this.getClass(),
-                                                                "NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg",
-                                                                caseDirPath) );
+                                    "NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg",
+                                    caseDirPath));
                         }
                     } else {
                         try {
@@ -298,10 +298,10 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             }
 
             String errorMsg = NbBundle.getMessage(this.getClass(),
-                                                  "NewCaseWizardPanel1.createDir.errMsg.cantCreateDir.msg");
-            
+                    "NewCaseWizardPanel1.createDir.errMsg.cantCreateDir.msg");
+
             validationError(errorMsg);
-            
+
         } // the new case directory is successfully created
         else {
             createdDirectory = caseDirPath;

@@ -28,25 +28,29 @@ interface FileSearchFilter {
 
     /**
      * Gets the panel to put in the File Search pane.
+     *
      * @return component that provides input to filter
      */
     JComponent getComponent();
 
     /**
      * Checks if this filter is currently enabled.
+     *
      * @return true if it should be included in the search
      */
     boolean isEnabled();
 
     /**
      * Gets predicate expression to include in the SQL filter expression
-     * @return SQL expression that evaluates to a boolean true if the
-     * filter matches the file, otherwise false
+     *
+     * @return SQL expression that evaluates to a boolean true if the filter
+     *         matches the file, otherwise false
+     *
      * @throws FilterValidationException with a message if the filter is in an
-     * invalid state
+     *                                   invalid state
      */
     String getPredicate() throws FilterValidationException;
-    
+
     /**
      * Add an action listener to the fields of this panel
      */

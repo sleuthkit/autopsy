@@ -113,7 +113,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                 boolean haveRealExecutable = false;
                 if (haveRealExecutable) {
                     if (dataSource instanceof Image) {
-                        Image image = (Image)dataSource;
+                        Image image = (Image) dataSource;
                         String dataSourcePath = image.getPaths()[0];
                         List<String> commandLine = new ArrayList<>();
                         commandLine.add("some.exe");
@@ -121,8 +121,7 @@ public class SampleExecutableDataSourceIngestModule implements DataSourceIngestM
                         commandLine.add(resultsFilePath);
                         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
                         ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
-                    }
-                    // not a disk image
+                    } // not a disk image
                     else {
                         return ProcessResult.OK;
                     }

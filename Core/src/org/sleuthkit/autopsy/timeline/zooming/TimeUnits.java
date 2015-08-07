@@ -27,7 +27,9 @@ import org.joda.time.Period;
 import org.joda.time.Seconds;
 import org.joda.time.Years;
 
-/** predefined units of time for use in choosing axis labels and sub intervals. */
+/**
+ * predefined units of time for use in choosing axis labels and sub intervals.
+ */
 public enum TimeUnits {
 
     FOREVER(null, ChronoUnit.FOREVER),

@@ -64,39 +64,39 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String MAIL_PATH_SEPARATOR = "/";
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
-    
 
     public EmailExtracted(SleuthkitCase skCase) {
         this.skCase = skCase;
         emailResults = new EmailResults();
     }
-    
+
     private final class EmailResults extends Observable {
-        
+
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
-        
+
         EmailResults() {
             update();
         }
-        
+
         public Set<String> getAccounts() {
             return accounts.keySet();
         }
-        
+
         public Set<String> getFolders(String account) {
             return accounts.get(account).keySet();
         }
-        
+
         public List<Long> getArtifactIds(String account, String folder) {
             return accounts.get(account).get(folder);
         }
+
         @SuppressWarnings("deprecation")
         public void update() {
             accounts.clear();
             if (skCase == null) {
-                return;   
+                return;
             }
-            
+
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
             String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
@@ -130,8 +130,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
         }
-    
-        private  Map<String, String> parsePath(String path) {
+
+        private Map<String, String> parsePath(String path) {
             Map<String, String> parsed = new HashMap<>();
             String[] split = path.split(MAIL_PATH_SEPARATOR);
             if (split.length < 4) {
@@ -197,24 +197,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
      */
     private class AccountFactory extends ChildFactory.Detachable<String> implements Observer {
 
-        /* The pcl is in the class because it has the easiest mechanisms to add and remove itself
-         * during its life cycles.
+        /*
+         * The pcl is in the class because it has the easiest mechanisms to add
+         * and remove itself during its life cycles.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                
+
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                     if (((ModuleDataEvent) evt.getOldValue()).getArtifactType() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG) {
                         emailResults.update();
                     }
-                }
-                else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     emailResults.update();
-                }
-                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     if (evt.getNewValue() == null) {
                         removeNotify();
@@ -223,7 +222,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
@@ -240,7 +239,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             Case.removePropertyChangeListener(pcl);
             emailResults.deleteObserver(this);
         }
-        
+
         @Override
         protected boolean createKeys(List<String> list) {
             list.addAll(emailResults.getAccounts());
@@ -262,9 +261,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Account node representation
      */
     public class AccountNode extends DisplayableItemNode implements Observer {
-        
+
         private final String accountName;
-        
+
         public AccountNode(String accountName) {
             super(Children.create(new FolderFactory(accountName), true), Lookups.singleton(accountName));
             super.setName(accountName);
@@ -273,7 +272,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             updateDisplayName();
             emailResults.addObserver(this);
         }
-        
+
         private void updateDisplayName() {
             super.setDisplayName(accountName + " (" + emailResults.getFolders(accountName) + ")");
         }
@@ -345,10 +344,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Node representing mail folder
      */
     public class FolderNode extends DisplayableItemNode implements Observer {
-        
+
         private final String accountName;
         private final String folderName;
-        
+
         public FolderNode(String accountName, String folderName) {
             super(Children.create(new MessageFactory(accountName, folderName), true), Lookups.singleton(accountName));
             super.setName(folderName);
@@ -358,10 +357,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
             updateDisplayName();
             emailResults.addObserver(this);
         }
-        
+
         private void updateDisplayName() {
             super.setDisplayName(folderName + " (" + emailResults.getArtifactIds(accountName, folderName).size() + ")");
-            
+
         }
 
         @Override
@@ -413,7 +412,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {   
+        protected boolean createKeys(List<Long> list) {
             list.addAll(emailResults.getArtifactIds(accountName, folderName));
             return true;
         }
@@ -421,7 +420,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(Long artifactId) {
             if (skCase == null) {
-                return null;            
+                return null;
             }
             try {
                 BlackboardArtifact artifact = skCase.getBlackboardArtifact(artifactId);

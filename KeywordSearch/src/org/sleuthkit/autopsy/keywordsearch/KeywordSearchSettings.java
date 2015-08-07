@@ -165,6 +165,7 @@ class KeywordSearchSettings {
      * get string extract option for the key
      *
      * @param key option name
+     *
      * @return option string value, or empty string if the option is not set
      */
     static String getStringExtractOption(String key) {

@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Top component which displays something.
  */
- final class IngestMessageTopComponent extends TopComponent {
+final class IngestMessageTopComponent extends TopComponent {
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
@@ -219,8 +219,8 @@ import org.sleuthkit.datamodel.Content;
     public void displayReport(String ingestReport) {
 
         Object[] options = {NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.displayReport.option.OK"),
-                            NbBundle.getMessage(this.getClass(),
-                                                "IngestMessageTopComponent.displayReport.option.GenRpt")};
+            NbBundle.getMessage(this.getClass(),
+            "IngestMessageTopComponent.displayReport.option.GenRpt")};
         final int choice = JOptionPane.showOptionDialog(null,
                 ingestReport,
                 NbBundle.getMessage(this.getClass(), "IngestMessageTopComponent.msgDlg.ingestRpt.text"),
@@ -262,15 +262,14 @@ import org.sleuthkit.datamodel.Content;
     public void displayMessage(IngestMessage ingestMessage) {
         messagePanel.addMessage(ingestMessage);
 
-
         //post special messages to notification area
         MessageType ingestMessageType = ingestMessage.getMessageType();
         if (ingestMessageType.equals(MessageType.ERROR)
                 || ingestMessageType.equals(MessageType.WARNING)) {
-            MessageNotifyUtil.MessageType notifyMessageType =
-                    ingestMessageType.equals(MessageType.ERROR)
-                    ? MessageNotifyUtil.MessageType.ERROR
-                    : MessageNotifyUtil.MessageType.WARNING;
+            MessageNotifyUtil.MessageType notifyMessageType
+                    = ingestMessageType.equals(MessageType.ERROR)
+                            ? MessageNotifyUtil.MessageType.ERROR
+                            : MessageNotifyUtil.MessageType.WARNING;
 
             String subject = ingestMessage.getSubject();
             String details = ingestMessage.getDetails();
@@ -278,7 +277,7 @@ import org.sleuthkit.datamodel.Content;
                 details = "";
             }
             //strip html tags in case they are present in ingest message
-            details  = stripHtmlTags(details);
+            details = stripHtmlTags(details);
 
             MessageNotifyUtil.Notify.show(subject, details,
                     notifyMessageType, showIngestInboxAction);
@@ -295,9 +294,8 @@ import org.sleuthkit.datamodel.Content;
 
     public void displayIngestDialog(final Content ingestDataSource) {
         /*
-         final IngestDialog ingestDialog = new IngestDialog();
-         ingestDialog.setImage(image);
-         ingestDialog.display();    
+         * final IngestDialog ingestDialog = new IngestDialog();
+         * ingestDialog.setImage(image); ingestDialog.display();
          */
     }
 

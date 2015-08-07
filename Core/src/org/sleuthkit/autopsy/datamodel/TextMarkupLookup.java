@@ -21,22 +21,28 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * BC debugging notes: This seems to represent a combination of the content, query, isRegexp and origialQuery that can
- * be passed around. It is used by BlackboardArtifactNode.getHighlightLookup and getLookups to add the markup concept to the node. 
- * 
- * I find this very confusing.  It doesn't seem to need lookup in its current form, but (I think) exists because BlackboardArtifactNode is in Autopsy
- * core and the SOLR highlighter is in KeywordSearch module. 
+ * BC debugging notes: This seems to represent a combination of the content,
+ * query, isRegexp and origialQuery that can be passed around. It is used by
+ * BlackboardArtifactNode.getHighlightLookup and getLookups to add the markup
+ * concept to the node.
+ *
+ * I find this very confusing. It doesn't seem to need lookup in its current
+ * form, but (I think) exists because BlackboardArtifactNode is in Autopsy core
+ * and the SOLR highlighter is in KeywordSearch module.
  */
- public interface TextMarkupLookup {
+public interface TextMarkupLookup {
+
     /**
-     * Create an instance of the given TextMarkupLookup object. 
+     * Create an instance of the given TextMarkupLookup object.
      *
-     * @param objectId Id of the object (file or artifact) for which to get highlights
+     * @param objectId        Id of the object (file or artifact) for which to
+     *                        get highlights
      * @param keywordHitQuery keyword hit that needs to be highlighted
-     * @param isRegex whether the original query was a regex query
-     * @param originalQuery (regex or literal) that may need to be performed
-     * again to get all ContentHit results
-     * @return 
+     * @param isRegex         whether the original query was a regex query
+     * @param originalQuery   (regex or literal) that may need to be performed
+     *                        again to get all ContentHit results
+     *
+     * @return
      */
     public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

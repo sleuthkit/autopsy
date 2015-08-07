@@ -24,7 +24,9 @@ import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 
-/** Filter for text matching */
+/**
+ * Filter for text matching
+ */
 public class TextFilter extends AbstractFilter {
 
     public TextFilter() {

@@ -37,15 +37,15 @@ abstract class IngestTask {
 
     Content getDataSource() {
         return getIngestJob().getDataSource();
-    }    
-        
+    }
+
     long getThreadId() {
         return threadId;
     }
-    
+
     void setThreadId(long threadId) {
         this.threadId = threadId;
-    }    
-    
-    abstract void execute(long threadId) throws InterruptedException;    
+    }
+
+    abstract void execute(long threadId) throws InterruptedException;
 }

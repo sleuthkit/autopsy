@@ -48,10 +48,10 @@ public final class IngestJob {
      * Constructs an ingest job that runs a collection of data sources through a
      * set of ingest modules specified via ingest job settings.
      *
-     * @param dataSources The data sources to be ingested.
-     * @param settings The ingest job settings.
+     * @param dataSources      The data sources to be ingested.
+     * @param settings         The ingest job settings.
      * @param runInteractively Whether or not this job should use progress bars,
-     * message boxes for errors, etc.
+     *                         message boxes for errors, etc.
      */
     IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean runInteractively) {
         this.id = IngestJob.nextId.getAndIncrement();
@@ -94,13 +94,13 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     synchronized List<IngestModuleError> start() {
-        List<IngestModuleError> errors = new ArrayList<>();        
+        List<IngestModuleError> errors = new ArrayList<>();
         if (started) {
             errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
             return errors;
         }
         started = true;
-                
+
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
             if (!errors.isEmpty()) {
@@ -124,7 +124,7 @@ public final class IngestJob {
 
         return errors;
     }
-    
+
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
@@ -142,7 +142,7 @@ public final class IngestJob {
     public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
         return new ProgressSnapshot(getIngestTasksSnapshot);
     }
-    
+
     /**
      * Gets snapshots of the progress of each of this ingest job's child data
      * source ingest jobs.
@@ -240,7 +240,7 @@ public final class IngestJob {
              * level ingest modules.
              *
              * @return A list of canceled data source level ingest module
-             * display names, possibly empty.
+             *         display names, possibly empty.
              */
             public List<String> getCancelledDataSourceIngestModules() {
                 return snapshot.getCancelledDataSourceIngestModules();
@@ -343,8 +343,8 @@ public final class IngestJob {
          * cancellation of the module.
          *
          * @param DataSourceIngestJob The data source ingest job that owns the
-         * data source level ingest module.
-         * @param module The data source level ingest module.
+         *                            data source level ingest module.
+         * @param module              The data source level ingest module.
          */
         private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;

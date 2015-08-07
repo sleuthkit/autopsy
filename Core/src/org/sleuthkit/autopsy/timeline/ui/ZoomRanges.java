@@ -37,7 +37,6 @@ public enum ZoomRanges {
         this.period = period;
     }
 
-    
     private String displayName;
     private ReadablePeriod period;
 

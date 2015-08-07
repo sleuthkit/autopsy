@@ -41,12 +41,21 @@ public class SQLiteDBConnect {
     public Statement statement = null;
     private static final Logger logger = Logger.getLogger(SQLiteDBConnect.class.getName());
 
-    /* Stub constructor for quick instantiation o/t fly for using some of the ancillary stuff */
+    /*
+     * Stub constructor for quick instantiation o/t fly for using some of the
+     * ancillary stuff
+     */
     public SQLiteDBConnect() {
     }
 
-    /* quick and dirty constructor to test the database passing the DriverManager name and the fully loaded url to handle */
-    /* NB this will typically be available if you make this class concrete and not abstract */
+    /*
+     * quick and dirty constructor to test the database passing the
+     * DriverManager name and the fully loaded url to handle
+     */
+    /*
+     * NB this will typically be available if you make this class concrete and
+     * not abstract
+     */
     public SQLiteDBConnect(String sDriverToLoad, String sUrlToLoad) throws SQLException {
         init(sDriverToLoad, sUrlToLoad);
     }
@@ -69,9 +78,8 @@ public class SQLiteDBConnect {
     public void setConnection() throws SQLException {
         try {
             Class.forName(sDriver);
-        }
-        catch (ClassNotFoundException e) {
-            
+        } catch (ClassNotFoundException e) {
+
         }
         conn = DriverManager.getConnection(sUrl);
     }

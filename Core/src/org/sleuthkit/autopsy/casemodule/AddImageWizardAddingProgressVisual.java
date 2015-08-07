@@ -29,7 +29,7 @@ import org.openide.util.NbBundle;
  * visual component to display progress bar and status updates while adding an
  * image in the wizard
  */
- class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
+class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     private static final String ADDING_DATA_SOURCE_COMPLETE = NbBundle
             .getMessage(AddImageWizardAddingProgressVisual.class, "AddImageWizardAddingProgressVisual.addingDsComplete.text");

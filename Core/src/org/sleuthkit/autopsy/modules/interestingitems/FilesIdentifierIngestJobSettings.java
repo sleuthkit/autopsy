@@ -38,7 +38,7 @@ final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSet
      * ingest module.
      *
      * @param enabledFilesSetNames The names of the interesting files sets that
-     * are enabled for the ingest job.
+     *                             are enabled for the ingest job.
      */
     FilesIdentifierIngestJobSettings(List<String> enabledFilesSetNames) {
         this(enabledFilesSetNames, new ArrayList<>());
@@ -48,10 +48,10 @@ final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSet
      * Construct the ingest job settings for an interesting files identifier
      * ingest module.
      *
-     * @param enabledFilesSetNames The names of the interesting files sets that
-     * are enabled for the ingest job.
+     * @param enabledFilesSetNames  The names of the interesting files sets that
+     *                              are enabled for the ingest job.
      * @param disabledFilesSetNames The names of the interesting files sets that
-     * are disabled for the ingest job.
+     *                              are disabled for the ingest job.
      */
     FilesIdentifierIngestJobSettings(List<String> enabledFilesSetNames, List<String> disabledFilesSetNames) {
         this.enabledFilesSetNames = new HashSet<>(enabledFilesSetNames);
@@ -72,6 +72,7 @@ final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSet
      * is deemed to be enabled.
      *
      * @param filesSetName The name of the files set definition to check.
+     *
      * @return True if the file set is enabled, false otherwise.
      */
     boolean interestingFilesSetIsEnabled(String filesSetName) {
@@ -79,21 +80,23 @@ final class FilesIdentifierIngestJobSettings implements IngestModuleIngestJobSet
     }
 
     /**
-     * Get the names of all explicitly enabled interesting files set definitions.
+     * Get the names of all explicitly enabled interesting files set
+     * definitions.
      *
      * @return The list of names.
      */
     List<String> getNamesOfEnabledInterestingFilesSets() {
         return new ArrayList<>(this.enabledFilesSetNames);
     }
-    
+
     /**
-     * Get the names of all explicitly disabled interesting files set definitions.
+     * Get the names of all explicitly disabled interesting files set
+     * definitions.
      *
      * @return The list of names.
      */
     List<String> getNamesOfDisabledInterestingFilesSets() {
         return new ArrayList<>(disabledFilesSetNames);
     }
-    
+
 }
