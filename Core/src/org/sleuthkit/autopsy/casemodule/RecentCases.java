@@ -402,7 +402,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         String[] casePaths = new String[LENGTH];
         String currentCasePath = null;
         try {
-            currentCasePath = Case.getCurrentCase().getName();
+            currentCasePath = Case.getCurrentCase().getConfigFilePath();
         } catch (IllegalStateException ex) {
             // in case there is no current case.
         }
@@ -442,7 +442,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     @Override
     public String getName() {
         //return NbBundle.getMessage(RecentCases.class, "CTL_RecentCases");
-        return NbBundle.getMessage(this.getClass(), "RecentCases.getName.text");
+        return NbBundle.getMessage(RecentCases.class, "RecentCases.getName.text");
     }
 
     /**
