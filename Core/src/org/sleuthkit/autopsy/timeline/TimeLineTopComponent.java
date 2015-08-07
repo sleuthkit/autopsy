@@ -158,17 +158,17 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         tlrv.setController(controller);
         Platform.runLater(() -> {
             jFXVizPanel.getScene().addEventFilter(KeyEvent.KEY_PRESSED, (
-                                                  KeyEvent event) -> {
-                                                      if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                                                          new Back(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
-                                                          new Back(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
-                                                          new Forward(controller).handle(new ActionEvent());
-                                                      } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
-                                                          new Forward(controller).handle(new ActionEvent());
-                                                      }
-                                                  });
+                    KeyEvent event) -> {
+                        if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                            new Back(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(event)) {
+                            new Back(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(event)) {
+                            new Forward(controller).handle(new ActionEvent());
+                        } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(event)) {
+                            new Forward(controller).handle(new ActionEvent());
+                        }
+                    });
             controller.getViewMode().addListener((Observable observable) -> {
                 if (controller.getViewMode().get().equals(VisualizationMode.COUNTS)) {
                     tabPane.getSelectionModel().select(filterTab);

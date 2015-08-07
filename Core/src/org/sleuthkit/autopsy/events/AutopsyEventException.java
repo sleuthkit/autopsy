@@ -46,7 +46,7 @@ public final class AutopsyEventException extends Exception {
      * Constructs a new exception with the specified message and cause.
      *
      * @param message The message.
-     * @param cause The cause.
+     * @param cause   The cause.
      */
     AutopsyEventException(String message, Throwable cause) {
         super(message, cause);

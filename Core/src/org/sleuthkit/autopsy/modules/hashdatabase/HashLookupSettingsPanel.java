@@ -277,9 +277,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     public void cancel() {
-        /* Revert back to last settings only if the user could have
-         * made changes.  Doing this while ingest is running causes
-         * hash dbs to be closed while they are still being used. 
+        /*
+         * Revert back to last settings only if the user could have made
+         * changes. Doing this while ingest is running causes hash dbs to be
+         * closed while they are still being used.
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             HashDbManager.getInstance().loadLastSavedConfiguration();
@@ -298,7 +299,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * unindexed, along with solutions. This method is related to
      * ModalNoButtons, to be removed at a later date.
      *
-     * @param plural Whether or not there are multiple unindexed databases
+     * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     private void showInvalidIndex(boolean plural, List<HashDb> unindexed) {

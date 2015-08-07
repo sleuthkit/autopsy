@@ -160,6 +160,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      * multi-user.
      *
      * @param createdDate the date the case was originally created
+     *
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
     public void setCreatedDate(String createdDate) throws CaseActionException {
@@ -268,7 +269,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      * Sets the text index name internally (on local variable in this class)
      *
      * @param textIndexName the new name for the index where extracted text is
-     * stored for the case.
+     *                      stored for the case.
      */
     private void setTextIndexName(String textIndexName) {
         this.textIndexName = textIndexName; // change this to change the xml file if needed
@@ -428,7 +429,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      * Gets the Autopsy Saved Version from the document handler
      *
      * @return savedVersion the latest version of autopsy when this case is
-     * saved
+     *         saved
      */
     protected String getSavedVersion() {
         if (doc != null) {
@@ -542,15 +543,15 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      * Initialize the basic values for a new case management file. Note: this is
      * the schema version 1.0
      *
-     * @param dirPath case directory path
-     * @param caseName the name of the config file to be located in the case
-     * directory
-     * @param examiner examiner for the case (optional, can be empty string
-     * @param caseNumber case number (optional), can be empty
-     * @param dbName the name of the database. Could be a local path, could be a
-     * Postgre db name.
+     * @param dirPath       case directory path
+     * @param caseName      the name of the config file to be located in the
+     *                      case directory
+     * @param examiner      examiner for the case (optional, can be empty string
+     * @param caseNumber    case number (optional), can be empty
+     * @param dbName        the name of the database. Could be a local path,
+     *                      could be a Postgre db name.
      * @param textIndexName The name of the index where extracted text is
-     * stored.
+     *                      stored.
      */
     public void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {
         clear(); // clear the previous data

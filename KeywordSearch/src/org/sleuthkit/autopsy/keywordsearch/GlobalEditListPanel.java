@@ -129,7 +129,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 Object source = evt.getSource();
-                if (source instanceof String && ((String)source).equals("LOCAL")) {
+                if (source instanceof String && ((String) source).equals("LOCAL")) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {

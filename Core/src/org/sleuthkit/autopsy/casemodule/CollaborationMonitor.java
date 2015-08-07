@@ -215,7 +215,8 @@ final class CollaborationMonitor {
          * and publishes the updated collection to any collaborating nodes.
          *
          * @param dataSourceId A data source id to pair a data source added or
-         * adding data source failed event with an adding data source event.
+         *                     adding data source failed event with an adding
+         *                     data source event.
          */
         synchronized void removeDataSourceAddTask(UUID dataSourceId) {
             uuidsToAddDataSourceTasks.remove(dataSourceId.hashCode());
@@ -381,7 +382,7 @@ final class CollaborationMonitor {
              * Updates this remote tasks collection.
              *
              * @param event A collaboration event from the collaborating node
-             * associated with these tasks.
+             *              associated with these tasks.
              */
             void update(CollaborationEvent event) {
                 /**
@@ -497,7 +498,7 @@ final class CollaborationMonitor {
          * Constructs an Autopsy event to be sent in event messages to the
          * collaboration monitors on other Autopsy nodes.
          *
-         * @param hostName The name of the host sending the event.
+         * @param hostName     The name of the host sending the event.
          * @param currentTasks The tasks in progress for this Autopsy node.
          */
         CollaborationEvent(String hostName, Map<Long, Task> currentTasks) {
@@ -552,7 +553,7 @@ final class CollaborationMonitor {
          * Gets ID of this task.
          *
          * @return A task id, unique to this task for this case and this Autopsy
-         * node.
+         *         node.
          */
         long getId() {
             return id;
@@ -587,7 +588,7 @@ final class CollaborationMonitor {
          * Constructs and instance of the custom exception class for the
          * collaboration monitor.
          *
-         * @param message Exception message.
+         * @param message   Exception message.
          * @param throwable Exception cause.
          */
         CollaborationMonitorException(String message, Throwable throwable) {

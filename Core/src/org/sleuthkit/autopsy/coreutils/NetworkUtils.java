@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.net.UnknownHostException;
 
 public class NetworkUtils {
+
     /**
      * Set the host name variable. Sometimes the network can be finicky, so the
      * answer returned by getHostName() could throw an exception or be null.

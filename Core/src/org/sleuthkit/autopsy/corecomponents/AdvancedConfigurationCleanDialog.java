@@ -11,38 +11,43 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 /**
- * Displays a panel in a new clean dialog. A clean dialog contains nothing
- * but the panel given to it. No additional buttons or features, except
- * the default close operation, which is set to dispose.
+ * Displays a panel in a new clean dialog. A clean dialog contains nothing but
+ * the panel given to it. No additional buttons or features, except the default
+ * close operation, which is set to dispose.
  */
- public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
+public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
 
-    /** Creates new form AdvancedConfigurationDialog */
+    /**
+     * Creates new form AdvancedConfigurationDialog
+     */
     public AdvancedConfigurationCleanDialog() {
         this(false);
     }
-    
-    /** Creates new form AdvancedConfigurationDialog */
+
+    /**
+     * Creates new form AdvancedConfigurationDialog
+     */
     public AdvancedConfigurationCleanDialog(boolean resizable) {
         super(new JFrame(), true);
         setResizable(resizable);
-        if(resizable) {
+        if (resizable) {
             this.setIconImage(null);
         }
         initComponents();
     }
-    
+
     /**
      * Display the given panel on a clean dialog.
+     *
      * @param panel the panel to display
      */
     public void display(JPanel panel) {
         this.setTitle(panel.getName());
-        
+
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.add(panel, 0);
         this.pack();
-        
+
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
         int w = this.getSize().width;
@@ -50,10 +55,10 @@ import javax.swing.JPanel;
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        
+
         this.setVisible(true);
     }
-    
+
     /**
      * Close the dialog.
      */

@@ -92,11 +92,11 @@ final class LocalDiskPanel extends JPanel {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
-        
+
         errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-    }     
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -218,13 +218,13 @@ final class LocalDiskPanel extends JPanel {
     }
 
     /**
-     * Should we enable the wizard's next button?
-     * Always return true because we control the possible selections.
+     * Should we enable the wizard's next button? Always return true because we
+     * control the possible selections.
      *
      * @return true
      */
     //@Override
-    public boolean validatePanel() {        
+    public boolean validatePanel() {
         return enableNext;
     }
 
@@ -313,7 +313,7 @@ final class LocalDiskPanel extends JPanel {
         //private String SELECT = "Select a local disk:";
         private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
         private String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.nodrives.msg");
-        
+
         LocalDiskThread worker = null;
 
         private void loadDisks() {
@@ -349,8 +349,8 @@ final class LocalDiskPanel extends JPanel {
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
-                                                  NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
-                                                  MessageNotifyUtil.MessageType.ERROR);
+                            NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+                            MessageNotifyUtil.MessageType.ERROR);
                 }
             }
         }
@@ -362,8 +362,7 @@ final class LocalDiskPanel extends JPanel {
                     return NO_DRIVES;
                 }
                 return selected;
-            }
-            else {
+            } else {
                 return LOADING;
             }
         }
@@ -375,8 +374,7 @@ final class LocalDiskPanel extends JPanel {
                     return 1;
                 }
                 return disks.size();
-            }
-            else {
+            } else {
                 return 1;
             }
         }
@@ -388,8 +386,7 @@ final class LocalDiskPanel extends JPanel {
                     return NO_DRIVES;
                 }
                 return disks.get(index);
-            }
-            else {
+            } else {
                 return LOADING;
             }
         }
@@ -453,19 +450,19 @@ final class LocalDiskPanel extends JPanel {
                         errorLabel.setText(
                                 NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.disksNotDetected.text"));
                         errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                                                                      "LocalDiskPanel.errLabel.disksNotDetected.toolTipText"));
+                                "LocalDiskPanel.errLabel.disksNotDetected.toolTipText"));
                     } else {
                         errorLabel.setText(
                                 NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.drivesNotDetected.text"));
                         errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                                                                      "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText"));
+                                "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText"));
                     }
                     diskComboBox.setEnabled(false);
                 } else if (physicalDrives.isEmpty()) {
                     errorLabel.setText(
                             NbBundle.getMessage(this.getClass(), "LocalDiskPanel.errLabel.someDisksNotDetected.text"));
                     errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                                                                  "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText"));
+                            "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText"));
                 }
             }
 
@@ -483,7 +480,7 @@ final class LocalDiskPanel extends JPanel {
                     if (!this.isCancelled()) {
                         enableNext = false;
                         displayErrors();
-                        
+
                         worker = null;
                         loadingDisks = false;
 

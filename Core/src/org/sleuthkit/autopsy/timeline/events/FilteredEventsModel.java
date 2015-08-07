@@ -189,8 +189,8 @@ public class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely first
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public final Long getMinTime() {
         return repo.getMinTime();
@@ -198,8 +198,8 @@ public class FilteredEventsModel {
 
     /**
      * @return the time (in seconds from unix epoch) of the absolutely last
-     *         event available from the repository, ignoring any filters or requested
-     *         ranges
+     *         event available from the repository, ignoring any filters or
+     *         requested ranges
      */
     public final Long getMaxTime() {
         return repo.getMaxTime();
@@ -209,8 +209,8 @@ public class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents() {
         final Interval range;
@@ -230,8 +230,8 @@ public class FilteredEventsModel {
      * @param aggregation
      *
      * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation to
-     *         control the grouping of events
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
      */
     public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
         return repo.getAggregatedEvents(params);

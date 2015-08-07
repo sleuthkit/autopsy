@@ -48,17 +48,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * The component is a generic JPanel and it can be reused in other swing
  * components or in a TopComponent.
- * 
+ *
  * Use the static factory methods to instantiate and customize the component.
  * One option is to link a custom data content viewer to link to this viewer.
- * 
+ *
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private ExplorerManager explorerManager;
     private Node rootNode;
     private PropertyChangeSupport pcs;
-    
+
     // Different DataResultsViewers
     private final List<UpdateWrapper> viewers = new ArrayList<>();
     //custom content viewer to send selections to, or null if the main one
@@ -66,21 +66,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private boolean isMain;
     private String title;
     private final RootNodeListener rootNodeListener = new RootNodeListener();
-    
-    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName() );
+
+    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
     private boolean listeningToTabbedPane = false;
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class,
-                                                                              "DataResultPanel.dummyNodeDisplayName");
+            "DataResultPanel.dummyNodeDisplayName");
+
     /**
-     * Creates new DataResultPanel
-     * Default constructor, needed mostly  for the palette/UI builder
-     * Use overrides or factory methods for more customization.
+     * Creates new DataResultPanel Default constructor, needed mostly for the
+     * palette/UI builder Use overrides or factory methods for more
+     * customization.
      */
     private DataResultPanel() {
         this.isMain = true;
         pcs = new PropertyChangeSupport(this);
         initComponents();
-        
+
         setName(title);
 
         this.title = "";
@@ -88,14 +89,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Creates data result panel
-     * 
-     * @param isMain whether it is the main panel associated with the main window, 
-     * clients will almost always use false
-     * @param title title string to be displayed
+     *
+     * @param isMain whether it is the main panel associated with the main
+     *               window, clients will almost always use false
+     * @param title  title string to be displayed
      */
     DataResultPanel(boolean isMain, String title) {
         this();
-        
+
         setName(title);
 
         this.isMain = isMain;
@@ -106,26 +107,31 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Create a new, custom data result panel, in addition to the application
      * main one and links with a custom data content panel.
      *
-     * @param name unique name of the data result window, also used as title
+     * @param name                unique name of the data result window, also
+     *                            used as title
      * @param customContentViewer custom content viewer to send selection events
-     * to
+     *                            to
      */
     DataResultPanel(String title, DataContent customContentViewer) {
         this(false, title);
         setName(title);
 
         //custom content viewer tc to setup for every result viewer
-        this.customContentViewer = customContentViewer; 
+        this.customContentViewer = customContentViewer;
     }
-    
+
     /**
-     * Factory method to create, customize and open a new custom data result panel.
+     * Factory method to create, customize and open a new custom data result
+     * panel.
      *
-     * @param title Title of the result panel
-     * @param pathText Descriptive text about the source of the nodes displayed
-     * @param givenNode The new root node
+     * @param title        Title of the result panel
+     * @param pathText     Descriptive text about the source of the nodes
+     *                     displayed
+     * @param givenNode    The new root node
      * @param totalMatches Cardinality of root node's children
-     * @return a new DataResultPanel instance representing a custom data result viewer
+     *
+     * @return a new DataResultPanel instance representing a custom data result
+     *         viewer
      */
     public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches) {
         DataResultPanel newDataResult = new DataResultPanel(false, title);
@@ -136,14 +142,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Factory method to create, customize and open a new custom data result panel.
+     * Factory method to create, customize and open a new custom data result
+     * panel.
      *
-     * @param title Title of the component window
-     * @param pathText Descriptive text about the source of the nodes displayed
-     * @param givenNode The new root node
+     * @param title        Title of the component window
+     * @param pathText     Descriptive text about the source of the nodes
+     *                     displayed
+     * @param givenNode    The new root node
      * @param totalMatches Cardinality of root node's children
-     * @param dataContent a handle to data content to send selection events to
-     * @return a new DataResultPanel instance representing a custom data result viewer
+     * @param dataContent  a handle to data content to send selection events to
+     *
+     * @return a new DataResultPanel instance representing a custom data result
+     *         viewer
      */
     public static DataResultPanel createInstance(String title, String pathText, Node givenNode, int totalMatches, DataContent dataContent) {
         DataResultPanel newDataResult = new DataResultPanel(title, dataContent);
@@ -153,17 +163,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return newDataResult;
     }
 
-    
     /**
-     * Factory method to create, customize and open a new custom data result panel.
-     * Does NOT call open(). Client must manually initialize by calling open().
+     * Factory method to create, customize and open a new custom data result
+     * panel. Does NOT call open(). Client must manually initialize by calling
+     * open().
      *
-     * @param title Title of the component window
-     * @param pathText Descriptive text about the source of the nodes displayed
-     * @param givenNode The new root node
+     * @param title        Title of the component window
+     * @param pathText     Descriptive text about the source of the nodes
+     *                     displayed
+     * @param givenNode    The new root node
      * @param totalMatches Cardinality of root node's children
-     * @param dataContent a handle to data content to send selection events to
-     * @return a new DataResultPanel instance representing a custom data result viewer
+     * @param dataContent  a handle to data content to send selection events to
+     *
+     * @return a new DataResultPanel instance representing a custom data result
+     *         viewer
      */
     public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node givenNode, int totalMatches, DataContent dataContent) {
         DataResultPanel newDataResult = new DataResultPanel(title, dataContent);
@@ -171,14 +184,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         createInstanceCommon(pathText, givenNode, totalMatches, newDataResult);
         return newDataResult;
     }
-    
-    
+
     /**
      * Common code for factory helper methods
+     *
      * @param pathText
      * @param givenNode
      * @param totalMatches
-     * @param newDataResult 
+     * @param newDataResult
      */
     private static void createInstanceCommon(String pathText, Node givenNode, int totalMatches, DataResultPanel newDataResult) {
         newDataResult.numberMatchLabel.setText(Integer.toString(totalMatches));
@@ -189,18 +202,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Sets content viewer to the custom one.
-     * Needs to be done before the first call to open()
-     * @param customContentViewer 
+     * Sets content viewer to the custom one. Needs to be done before the first
+     * call to open()
+     *
+     * @param customContentViewer
      */
     public void setContentViewer(DataContent customContentViewer) {
         this.customContentViewer = customContentViewer;
     }
-    
+
     /**
-     * Initializes the panel internals and activates it.
-     * Call it within your top component when it is opened.
-     * Do not use if used one of the factory methods to create and open the component.
+     * Initializes the panel internals and activates it. Call it within your top
+     * component when it is opened. Do not use if used one of the factory
+     * methods to create and open the component.
      */
     public void open() {
         if (null == explorerManager) {
@@ -220,7 +234,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // and is the parent of a DataContentPanel that hosts a set of DataContentViewers. 
             explorerManager.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         }
-        
+
         // Add all the DataContentViewer to the tabbed pannel.
         // (Only when the it's opened at the first time: tabCount = 0)
         int totalTabs = this.dataResultTabbedPanel.getTabCount();
@@ -229,9 +243,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // as DataResultViewer service providers when DataResultViewers are updated
             // to better handle the ExplorerManager sharing implemented to support actions that operate on 
             // multiple selected nodes.
-            addDataResultViewer(new DataResultViewerTable(this.explorerManager));            
+            addDataResultViewer(new DataResultViewerTable(this.explorerManager));
             addDataResultViewer(new DataResultViewerThumbnail(this.explorerManager));
-                                    
+
             // Find all DataResultViewer service providers and add them to the tabbed pane.
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                 // @@@ Revist this isMain condition, it may be obsolete. If not, 
@@ -240,9 +254,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 DataResultViewer drv;
                 if (isMain) {
                     //for main window, use the instance in the lookup
-                    drv = factory; 
-                }
-                else {
+                    drv = factory;
+                } else {
                     //create a new instance of the viewer for non-main window
                     drv = factory.createInstance();
                 }
@@ -259,8 +272,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
-        
+
     private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (!Case.isCaseOpen()) {
@@ -271,7 +285,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    
+
                 // If a custom DataContent object has not been specified, get the default instance.
                 DataContent contentViewer = customContentViewer;
                 if (contentViewer == null) {
@@ -279,19 +293,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 }
 
                 try {
-                    if (contentViewer != null) {                       
+                    if (contentViewer != null) {
                         Node[] selectedNodes = explorerManager.getSelectedNodes();
                         for (UpdateWrapper drv : viewers) {
                             drv.setSelectedNodes(selectedNodes);
-                        }                                
+                        }
 
                         // Passing null signals that either multiple nodes are selected, or no nodes are selected. 
                         // This is important to the DataContent object, since the content mode (area) of the app is designed 
                         // to show only the content underlying a single Node.                                
                         if (selectedNodes.length == 1) {
                             contentViewer.setNode(selectedNodes[0]);
-                        } 
-                        else {                                    
+                        } else {
                             contentViewer.setNode(null);
                         }
                     }
@@ -301,20 +314,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
     }
-    
+
     private void addDataResultViewer(DataResultViewer dataResultViewer) {
         UpdateWrapper viewerWrapper = new UpdateWrapper(dataResultViewer);
         if (null != this.customContentViewer) {
             viewerWrapper.setContentViewer(this.customContentViewer);
         }
         this.viewers.add(viewerWrapper);
-        this.dataResultTabbedPanel.addTab(dataResultViewer.getTitle(), dataResultViewer.getComponent());        
+        this.dataResultTabbedPanel.addTab(dataResultViewer.getTitle(), dataResultViewer.getComponent());
     }
-    
+
     /**
-     * Tears down the component.
-     * Use within your outer container (such as a top component) when it goes away to tear
-     * down this component and detach its listeners.
+     * Tears down the component. Use within your outer container (such as a top
+     * component) when it goes away to tear down this component and detach its
+     * listeners.
      */
     void close() {
         // try to remove any references to this class
@@ -349,9 +362,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
         if (pcs == null) {
             logger.log(Level.WARNING, "Could not add listener to DataResultPanel, " //NON-NLS
-                    + "listener support not fully initialized yet, listener: " + listener.toString() ); //NON-NLS
-        }
-        else {
+                    + "listener support not fully initialized yet, listener: " + listener.toString()); //NON-NLS
+        } else {
             this.pcs.addPropertyChangeListener(listener);
         }
     }
@@ -374,26 +386,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
-            dataResultTabbedPanel.addChangeListener(this);        
+            dataResultTabbedPanel.addChangeListener(this);
             listeningToTabbedPane = true;
         }
-                
+
         this.rootNode = selectedNode;
         if (this.rootNode != null) {
             rootNodeListener.reset();
             this.rootNode.addNodeListener(rootNodeListener);
         }
-        
+
         resetTabs(selectedNode);
         setupTabs(selectedNode);
-        
+
         if (selectedNode != null) {
             int childrenCount = selectedNode.getChildren().getNodesCount();
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
         this.numberMatchLabel.setVisible(true);
     }
-    
+
     private void setupTabs(Node selectedNode) {
         //update/disable tabs based on if supported for this node
         int drvC = 0;
@@ -433,7 +445,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @Override
     public void setTitle(String title) {
         setName(title);
-        
+
     }
 
     @Override
@@ -452,10 +464,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         for (UpdateWrapper w : viewers) {
             ret.add(w.getViewer());
         }
-        
+
         return ret;
     }
-    
+
     public boolean canClose() {
         return (!this.isMain) || !Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
     }
@@ -472,22 +484,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // to better handle the ExplorerManager sharing implemented to support actions that operate on 
             // multiple selected nodes.
             //if (drv.isOutdated()) {
-                // change the cursor to "waiting cursor" for this operation
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    drv.setNode(rootNode);
-                } finally {
-                    this.setCursor(null);
-                }
+            // change the cursor to "waiting cursor" for this operation
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            try {
+                drv.setNode(rootNode);
+            } finally {
+                this.setCursor(null);
+            }
             //}
         }
     }
 
     /**
      * why does this take a Node as parameter and then ignore it?
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * Resets the tabs based on the selected Node. If the selected node is null
      * or not supported, disable that tab as well.
      *
@@ -573,7 +585,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.wrapped = wrapped;
             this.outdated = true;
         }
-        
+
         DataResultViewer getViewer() {
             return wrapped;
         }
@@ -612,6 +624,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Set number of matches to be displayed in the top right
+     *
      * @param numMatches
      */
     public void setNumMatches(Integer numMatches) {
@@ -619,7 +632,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.numberMatchLabel.setText(Integer.toString(numMatches));
         }
     }
-    
+
     private class RootNodeListener implements NodeListener {
 
         private volatile boolean waitingForData = true;
@@ -632,12 +645,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         public void childrenAdded(final NodeMemberEvent nme) {
             Node[] delta = nme.getDelta();
             updateMatches();
-            
-            /* There is a known issue in this code whereby we will only
-             call setupTabs() once even though childrenAdded could be
-             called multiple times.  That means that each panel may not
-             have access to all of the children when they decide if they
-             support the content */
+
+            /*
+             * There is a known issue in this code whereby we will only call
+             * setupTabs() once even though childrenAdded could be called
+             * multiple times. That means that each panel may not have access to
+             * all of the children when they decide if they support the content
+             */
             if (waitingForData && containsReal(delta)) {
                 waitingForData = false;
                 if (SwingUtilities.isEventDispatchThread()) {
@@ -652,7 +666,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 }
             }
         }
-        
+
         private boolean containsReal(Node[] delta) {
             for (Node n : delta) {
                 if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
@@ -661,13 +675,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
             return false;
         }
-        
+
         /**
          * Updates the Number of Matches label on the DataResultPanel.
-         * 
+         *
          */
         private void updateMatches() {
-       	    if (rootNode != null && rootNode.getChildren() != null) {
+            if (rootNode != null && rootNode.getChildren() != null) {
                 setNumMatches(rootNode.getChildren().getNodesCount());
             }
         }

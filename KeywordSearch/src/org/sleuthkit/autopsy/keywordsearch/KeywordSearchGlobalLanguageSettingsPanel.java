@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.GridLayout;
@@ -81,7 +80,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         sb.append(")");
         return sb.toString();
     }
-    
+
     private void initScriptsCheckBoxes() {
         final List<StringExtract.StringExtractUnicodeTable.SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
         checkPanel.setLayout(new GridLayout(0, 1));
@@ -95,41 +94,41 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         }
     }
 
-    private void reloadScriptsCheckBoxes() {       
-        boolean utf16 = 
-                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
-       
+    private void reloadScriptsCheckBoxes() {
+        boolean utf16
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+
         enableUTF16Checkbox.setSelected(utf16);
-        
-        boolean utf8 = 
-                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+
+        boolean utf8
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
-        
+
         final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
-        
+
         for (int i = 0; i < components; ++i) {
             JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
-            
+
             StringExtract.StringExtractUnicodeTable.SCRIPT script = scripts.get(ch.getText());
-            
+
             ch.setSelected(serviceScripts.contains(script));
         }
     }
 
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
-        
-         boolean utf16 = 
-                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
-       
+
+        boolean utf16
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+
         enableUTF16Checkbox.setSelected(utf16);
-        
-        boolean utf8 = 
-                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+
+        boolean utf8
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
-        
+
         boolean ingestNotRunning = !IngestManager.getInstance().isIngestRunning() && !IngestManager.getInstance().isIngestRunning();
         //enable / disable checboxes
         activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
@@ -224,17 +223,17 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }// </editor-fold>//GEN-END:initComponents
 
     private void enableUTF8CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF8CheckboxActionPerformed
-      
+
         boolean selected = this.enableUTF8Checkbox.isSelected();
-       
+
         activateScriptsCheckboxes(selected || this.enableUTF16Checkbox.isSelected());
-        
+
     }//GEN-LAST:event_enableUTF8CheckboxActionPerformed
 
     private void enableUTF16CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF16CheckboxActionPerformed
-        
+
         boolean selected = this.enableUTF16Checkbox.isSelected();
-        
+
         activateScriptsCheckboxes(selected || this.enableUTF8Checkbox.isSelected());
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
@@ -253,11 +252,11 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
         KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
-        
-        if(toUpdate!=null) {
-           KeywordSearchSettings.setStringExtractScripts(toUpdate);
+
+        if (toUpdate != null) {
+            KeywordSearchSettings.setStringExtractScripts(toUpdate);
         }
-        
+
         // This is a stop-gap way of notifying the job settings panel of potential changes.
         XmlKeywordSearchList.getCurrent().fireLanguagesEvent(KeywordSearchList.LanguagesEvent.LANGUAGES_CHANGED);
     }

@@ -46,7 +46,7 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
      * there is a change a recorded attribute of existing content.
      *
      * @param contentEvent A ModuleContentEvent object containing the data
-     * associated with the content addition or change.
+     *                     associated with the content addition or change.
      */
     public ContentChangedEvent(ModuleContentEvent eventData) {
         /**
@@ -72,13 +72,13 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
     @Override
     public Object getOldValue() {
         /**
-         * The eventData field is set in the constructor, but it is transient so it
-         * will become null when the event is serialized for publication over a
-         * network. Doing a lazy load of the ModuleContentEvent object bypasses the
-         * issues related to the serialization and de-serialization of
-         * Content objects and may also save database round trips from
-         * other nodes since subscribers to this event are often not interested
-         * in the event data.
+         * The eventData field is set in the constructor, but it is transient so
+         * it will become null when the event is serialized for publication over
+         * a network. Doing a lazy load of the ModuleContentEvent object
+         * bypasses the issues related to the serialization and de-serialization
+         * of Content objects and may also save database round trips from other
+         * nodes since subscribers to this event are often not interested in the
+         * event data.
          */
         if (null != eventData) {
             return eventData;

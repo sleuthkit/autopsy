@@ -26,23 +26,26 @@ import org.openide.filesystems.FileObject;
 /**
  * File and dir utilities
  */
- public class FileUtil {
+public class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
 
     /**
      * Recursively delete all of the files and sub-directories in a directory.
-     * Use deleteFileDir() if you are not sure if the path is a file or directory.
+     * Use deleteFileDir() if you are not sure if the path is a file or
+     * directory.
      *
      * @param dirPath Path of the directory to delete
-     * @return true if the dir was deleted with no errors.  False otherwise (including if the passed in path was for a file).
+     *
+     * @return true if the dir was deleted with no errors. False otherwise
+     *         (including if the passed in path was for a file).
      */
     public static boolean deleteDir(File dirPath) {
         if (dirPath.isDirectory() == false || dirPath.exists() == false) {
             logger.log(Level.WARNING, "deleteDir passed in a non-directory: {0}", dirPath.getPath()); //NON-NLS
             return false;
         }
-        
+
         File[] files = dirPath.listFiles();
         boolean hadErrors = false;
         if (files != null) {
@@ -64,16 +67,18 @@ import org.openide.filesystems.FileObject;
             logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", dirPath.getPath()); //NON-NLS
             hadErrors = true;
         }
-        
+
         return hadErrors;
     }
 
     /**
-     * Delete the file or dir at the given path.  If the path is for a directory,
+     * Delete the file or dir at the given path. If the path is for a directory,
      * recursively delete its contents.
      *
      * @param path the path to the file or directory to delete
-     * @return true if the file or directory were deleted with no errors.  False otherwise. 
+     *
+     * @return true if the file or directory were deleted with no errors. False
+     *         otherwise.
      */
     public static boolean deleteFileDir(File path) {
         boolean sucess = true;
@@ -89,20 +94,23 @@ import org.openide.filesystems.FileObject;
     }
 
     /**
-     * Copy a file to a new directory, potentially new file name, and overwrite old one if requested
-     * 
-     * @param source source file path
+     * Copy a file to a new directory, potentially new file name, and overwrite
+     * old one if requested
+     *
+     * @param source     source file path
      * @param destFolder destination folder path
-     * @param newName file name of the copied file, which can be different from original
-     * @param ext file extension, e.g. ".java"
-     * @param overwrite if new file, already exists, overwrite it (delete it first)
+     * @param newName    file name of the copied file, which can be different
+     *                   from original
+     * @param ext        file extension, e.g. ".java"
+     * @param overwrite  if new file, already exists, overwrite it (delete it
+     *                   first)
      *
      * @return path to the created file, or null if file was not created
+     *
      * @throws IOException exception thrown if file copying failed
      */
     public static String copyFile(String source, String destFolder, String newName, String ext, boolean overwrite)
             throws IOException {
-
 
         final String destFileName = destFolder + File.separator + newName + ext;
         final File destFile = new File(destFileName);
@@ -114,7 +122,6 @@ import org.openide.filesystems.FileObject;
             }
         }
 
-
         final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
         final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
 
@@ -124,37 +131,40 @@ import org.openide.filesystems.FileObject;
         return created.getPath();
 
     }
-    
+
     /**
      * Copy a folder into a new directory.
-     * 
-     * @param source path to the source folder
-     * @param path destination path of the new folder
+     *
+     * @param source     path to the source folder
+     * @param path       destination path of the new folder
      * @param folderName name of the new folder
-     * 
+     *
      * @return path to the new folder if created, null if it was not created
+     *
      * @throws IOException exception thrown if file copying failed
      */
     public static String copyFolder(String source, String path, String folderName) throws IOException {
         String destFolder = path + File.separator + folderName;
         org.openide.filesystems.FileUtil.createFolder(new File(destFolder));
-        
+
         final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
         final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
 
         FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, sourceFileObj.getName(), sourceFileObj.getExt());
-        
+
         return created.getPath();
     }
-    
+
     /**
      * Escape special characters in a file name or a file name component
+     *
      * @param fileName to escape
+     *
      * @return escaped string
      */
-    public static String escapeFileName(String fileName) {        
+    public static String escapeFileName(String fileName) {
         //for now escaping / (not valid in file name, at least on Windows)
         //with underscores.  Windows/Java seem to ignore \\/ and \\\\/ escapings 
-        return fileName.replaceAll("/", "_"); 
+        return fileName.replaceAll("/", "_");
     }
 }

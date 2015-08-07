@@ -178,7 +178,7 @@ class LuceneQuery implements KeywordSearchQuery {
         if (hit.isArtifactHit()) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
-        
+
         try {
             bba.addAttributes(attributes); //write out to bb
             writeResult.add(attributes);
@@ -193,8 +193,10 @@ class LuceneQuery implements KeywordSearchQuery {
      * Perform the query and return results of unique files.
      *
      * @param snippets True if results should have a snippet
+     *
      * @return list of ContentHit objects. One per file with hit (ignores
-     * multiple hits of the word in the same doc)
+     *         multiple hits of the word in the same doc)
+     *
      * @throws NoOpenCoreException
      */
     private List<KeywordHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
@@ -205,9 +207,9 @@ class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = createAndConfigureSolrQuery(snippets);
         QueryResponse response;
         SolrDocumentList resultList;
-        Map<String, Map<String, List<String>>> highlightResponse;        
+        Map<String, Map<String, List<String>>> highlightResponse;
         Set<SolrDocument> uniqueSolrDocumentsWithHits;
-        
+
         try {
             response = solrServer.query(q, METHOD.POST);
 
@@ -218,8 +220,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
             // get the unique set of files with hits
             uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
-        }
-        catch (KeywordSearchModuleException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS            
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             return matches;
@@ -256,6 +257,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Create the query object for the stored keyword
      *
      * @param snippets True if query should request snippets
+     *
      * @return
      */
     private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
@@ -308,6 +310,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * file in results.
      *
      * @param resultList
+     *
      * @return
      */
     private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
@@ -323,11 +326,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return leftID.compareTo(rightID);
             }
         });
-               
+
         // NOTE: We could probably just iterate through the list and compare each ID with the
         // previous ID to get the unique documents faster than using this set now that the list
         // is sorted.
-        
         Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
         solrDocumentsWithMatches.addAll(resultList);
         return solrDocumentsWithMatches;
@@ -353,13 +355,15 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * return snippet preview context
      *
-     * @param query the keyword query for text to highlight. Lucene special
-     * cahrs should already be escaped.
-     * @param solrObjectId The Solr object id associated with the file or artifact
-     * @param isRegex whether the query is a regular expression (different Solr
-     * fields are then used to generate the preview)
-     * @param group whether the query should look for all terms grouped together
-     * in the query order, or not
+     * @param query        the keyword query for text to highlight. Lucene
+     *                     special cahrs should already be escaped.
+     * @param solrObjectId The Solr object id associated with the file or
+     *                     artifact
+     * @param isRegex      whether the query is a regular expression (different
+     *                     Solr fields are then used to generate the preview)
+     * @param group        whether the query should look for all terms grouped
+     *                     together in the query order, or not
+     *
      * @return
      */
     public static String querySnippet(String query, long solrObjectId, boolean isRegex, boolean group) throws NoOpenCoreException {
@@ -369,15 +373,16 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * return snippet preview context
      *
-     * @param query the keyword query for text to highlight. Lucene special
-     * cahrs should already be escaped.
+     * @param query        the keyword query for text to highlight. Lucene
+     *                     special cahrs should already be escaped.
      * @param solrObjectId Solr object id associated with the hit
-     * @param chunkID chunk id associated with the content hit, or 0 if no
-     * chunks
-     * @param isRegex whether the query is a regular expression (different Solr
-     * fields are then used to generate the preview)
-     * @param group whether the query should look for all terms grouped together
-     * in the query order, or not
+     * @param chunkID      chunk id associated with the content hit, or 0 if no
+     *                     chunks
+     * @param isRegex      whether the query is a regular expression (different
+     *                     Solr fields are then used to generate the preview)
+     * @param group        whether the query should look for all terms grouped
+     *                     together in the query order, or not
+     *
      * @return
      */
     public static String querySnippet(String query, long solrObjectId, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
@@ -483,7 +488,7 @@ class LuceneQuery implements KeywordSearchQuery {
             // ID is in the form of ObjectId_Chunk
 
             final String idName = Server.Schema.ID.toString();
-            
+
             // get object id of left doc
             String leftID = left.getFieldValue(idName).toString();
             int index = leftID.indexOf(Server.ID_CHUNK_SEP);
@@ -497,11 +502,11 @@ class LuceneQuery implements KeywordSearchQuery {
             if (index != -1) {
                 rightID = rightID.substring(0, index);
             }
-            
+
             Long leftLong = new Long(leftID);
             Long rightLong = new Long(rightID);
             return leftLong.compareTo(rightLong);
         }
     }
-    
+
 }

@@ -55,7 +55,7 @@ class ThumbnailViewNode extends FilterNode {
     @Override
     public Image getIcon(int type) {
         Image icon = null;
-                  
+
         if (iconCache != null) {
             icon = iconCache.get();
         }
@@ -71,10 +71,10 @@ class ThumbnailViewNode extends FilterNode {
 
             iconCache = new SoftReference<>(icon);
         }
-        
+
         return icon;
     }
-    
+
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
         iconCache = null;

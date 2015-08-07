@@ -38,8 +38,9 @@ public final class AddingDataSourceEvent extends AutopsyEvent implements Seriali
      * case.
      *
      * @param dataSourceId A unique identifier associated with the data source.
-     * Used to pair this AddingDataSourceEvent with a DataSourceAddedEvent or a
-     * AddingDataSourceFailedEvent.
+     *                     Used to pair this AddingDataSourceEvent with a
+     *                     DataSourceAddedEvent or a
+     *                     AddingDataSourceFailedEvent.
      */
     public AddingDataSourceEvent(UUID dataSourceId) {
         super(Case.Events.ADDING_DATA_SOURCE.toString(), null, null);

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
@@ -28,8 +27,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * list of root Content objects for the tree.
  */
 public class RootContentChildren extends AbstractContentChildren<Object> {
+
     private Collection<? extends Object> contentKeys;
-    
+
     /**
      * @param contentKeys root Content objects for the Node tree
      */
@@ -37,21 +37,20 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
         super();
         this.contentKeys = contentKeys;
     }
-    
+
     @Override
     protected void addNotify() {
         setKeys(contentKeys);
     }
-    
+
     @Override
     protected void removeNotify() {
         setKeys(Collections.<Object>emptySet());
     }
-    
+
     /**
-     * Refresh all content keys
-     * This creates new nodes of keys have changed.
-     * 
+     * Refresh all content keys This creates new nodes of keys have changed.
+     *
      * TODO ideally, nodes would respond to event from wrapped content object
      * but we are not ready for this.
      */

@@ -65,7 +65,7 @@ public final class OpenOutputFolderAction implements ActionListener {
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(),"OpenOutputFolder.CouldNotOpenOutputFolder") , ex); //NON-NLS
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder"), ex); //NON-NLS
         }
     }
 }

@@ -45,7 +45,8 @@ public class FileTypeDetector {
      * its contents.
      *
      * @throws FileTypeDetector.FileTypeDetectorInitException if an
-     * initialization error occurs.
+     *                                                        initialization
+     *                                                        error occurs.
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
@@ -60,6 +61,7 @@ public class FileTypeDetector {
      * detector.
      *
      * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     *
      * @return True if MIME type is detectable.
      */
     public boolean isDetectable(String mimeType) {
@@ -71,6 +73,7 @@ public class FileTypeDetector {
      * user-defined file type.
      *
      * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     *
      * @return True if MIME type is detectable.
      */
     private boolean isDetectableAsUserDefinedType(String mimeType) {
@@ -81,6 +84,7 @@ public class FileTypeDetector {
      * Determines whether or not a given MIME type is detectable by Tika.
      *
      * @param mimeType The MIME type name, e.g. "text/html", to look up.
+     *
      * @return True if MIME type is detectable.
      */
     private boolean isDetectableByTika(String mimeType) {
@@ -96,12 +100,14 @@ public class FileTypeDetector {
     }
 
     /**
-     * Look up the MIME type of a file using the blackboard. If it is not already
-     * posted, detect the type of the file, posting it to the blackboard if
-     * detection succeeds.
+     * Look up the MIME type of a file using the blackboard. If it is not
+     * already posted, detect the type of the file, posting it to the blackboard
+     * if detection succeeds.
      *
      * @param file The file to test.
+     *
      * @return The MIME type name if detection was successful, null otherwise.
+     *
      * @throws TskCoreException
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
@@ -125,7 +131,9 @@ public class FileTypeDetector {
      * per file.
      *
      * @param file The file to test.
+     *
      * @return The MIME type name id detection was successful, null otherwise.
+     *
      * @throws TskCoreException
      */
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
@@ -148,7 +156,9 @@ public class FileTypeDetector {
      * Detect the MIME type of a file.
      *
      * @param file The file to test.
+     *
      * @return The MIME type name if detection was successful, null otherwise.
+     *
      * @throws TskCoreException
      */
     public String detect(AbstractFile file) throws TskCoreException {
@@ -199,7 +209,9 @@ public class FileTypeDetector {
      * to the blackboard.
      *
      * @param file The file to test.
+     *
      * @return The file type name string or null, if no match is detected.
+     *
      * @throws TskCoreException
      */
     private String detectUserDefinedType(AbstractFile file) throws TskCoreException {

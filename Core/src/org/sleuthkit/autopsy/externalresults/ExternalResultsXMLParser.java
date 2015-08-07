@@ -142,8 +142,8 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
                     parseReports(rootElem);
                 } else {
                     String errorMessage = NbBundle.getMessage(this.getClass(),
-                                                              "ExternalResultsXMLParser.parse.errMsg1.text",
-                                                              TagNames.ROOT_ELEM.toString(), this.resultsFilePath);
+                            "ExternalResultsXMLParser.parse.errMsg1.text",
+                            TagNames.ROOT_ELEM.toString(), this.resultsFilePath);
                     recordError(errorMessage);
                 }
             }
@@ -197,7 +197,7 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
                 if (!type.isEmpty()) {
                     // Get the source file of the artifact and the attributes,
                     // if any.
-                    final String sourceFilePath = this.getChildElementContent( artifactElem, TagNames.SOURCE_FILE_ELEM.toString(), true);
+                    final String sourceFilePath = this.getChildElementContent(artifactElem, TagNames.SOURCE_FILE_ELEM.toString(), true);
                     if (!sourceFilePath.isEmpty()) {
                         ExternalResults.Artifact artifact = this.resultsData.addArtifact(type, sourceFilePath);
                         parseArtifactAttributes(artifactElem, artifact);
@@ -224,8 +224,8 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
             final String value = valueElem.getTextContent();
             if (value.isEmpty()) {
                 String errorMessage = NbBundle.getMessage(this.getClass(),
-                                                          "ExternalResultsXMLParser.parseArtifactAttributes.errMsg1.text",
-                                                          TagNames.VALUE_ELEM.toString(), this.resultsFilePath);
+                        "ExternalResultsXMLParser.parseArtifactAttributes.errMsg1.text",
+                        TagNames.VALUE_ELEM.toString(), this.resultsFilePath);
                 recordError(errorMessage);
                 continue;
             }
@@ -246,15 +246,15 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
         if (valueType.isEmpty()) {
             // Default to text.
             valueType = AttributeValues.VALUE_TYPE_TEXT.toString();
-        } else if (!valueType.equals(AttributeValues.VALUE_TYPE_TEXT.toString()) 
+        } else if (!valueType.equals(AttributeValues.VALUE_TYPE_TEXT.toString())
                 && !valueType.equals(AttributeValues.VALUE_TYPE_DOUBLE.toString())
-                && !valueType.equals(AttributeValues.VALUE_TYPE_INT32.toString()) 
+                && !valueType.equals(AttributeValues.VALUE_TYPE_INT32.toString())
                 && !valueType.equals(AttributeValues.VALUE_TYPE_INT64.toString())) {
             String errorMessage = NbBundle.getMessage(this.getClass(),
-                                                      "ExternalResultsXMLParser.parseAttributeValueType.errMsg1.text",
-                                                      valueType,
-                                                      AttributeNames.TYPE_ATTR.toString(),
-                                                      TagNames.VALUE_ELEM.toString());
+                    "ExternalResultsXMLParser.parseAttributeValueType.errMsg1.text",
+                    valueType,
+                    AttributeNames.TYPE_ATTR.toString(),
+                    TagNames.VALUE_ELEM.toString());
             this.recordError(errorMessage);
             valueType = "";
         }
@@ -305,17 +305,17 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
             content = childElement.getTextContent();
             if (content.isEmpty()) {
                 String errorMessage = NbBundle.getMessage(this.getClass(),
-                                                          "ExternalResultsXMLParser.getChildElementContent.errMsg1.text",
-                                                          parentElement.getTagName(),
-                                                          childElementTagName,
-                                                          this.resultsFilePath);
+                        "ExternalResultsXMLParser.getChildElementContent.errMsg1.text",
+                        parentElement.getTagName(),
+                        childElementTagName,
+                        this.resultsFilePath);
                 this.recordError(errorMessage);
             }
         } else if (required) {
             String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsXMLParser.getChildElementContent.errMsg2.text",
-                                                      parentElement.getTagName(),
-                                                      childElementTagName,
-                                                      this.resultsFilePath);
+                    parentElement.getTagName(),
+                    childElementTagName,
+                    this.resultsFilePath);
             this.recordError(errorMessage);
         }
         return content;
@@ -328,9 +328,9 @@ public final class ExternalResultsXMLParser implements ExternalResultsParser {
             childElem = (Element) childNodes.item(0);
             if (childNodes.getLength() > 1) {
                 String errorMessage = NbBundle.getMessage(this.getClass(), "ExternalResultsXMLParser.getChildElement.errMsg1.text",
-                                                          childElementTagName,
-                                                          parentElement.getTagName(),
-                                                          this.resultsFilePath);
+                        childElementTagName,
+                        parentElement.getTagName(),
+                        this.resultsFilePath);
                 this.recordError(errorMessage);
             }
         }

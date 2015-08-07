@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.report;
 /**
  * Interface to implement by reports to add on custom branding, logos, etc
  */
- interface ReportBrandingProviderI {
+interface ReportBrandingProviderI {
 
     /**
-     * Get the generator logo path on the local disk (previously set or default),
-     * or NULL if unused (Note, this is optional)
+     * Get the generator logo path on the local disk (previously set or
+     * default), or NULL if unused (Note, this is optional)
      *
-     * @return the generator logo path, or null if not provided or error occurred
-     * and path is not valid
+     * @return the generator logo path, or null if not provided or error
+     *         occurred and path is not valid
      */
     public String getGeneratorLogoPath();
 
@@ -44,7 +44,7 @@ package org.sleuthkit.autopsy.report;
      * or NULL if unused (Note, this is optional)
      *
      * @return the agency logo path, or null if not provided or error occurred
-     * and path is not valid
+     *         and path is not valid
      */
     public String getAgencyLogoPath();
 

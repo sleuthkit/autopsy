@@ -41,11 +41,11 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     public static enum LayoutContentPropertyType {
 
         PARTS {
-            @Override
-            public String toString() {
-                return NbBundle.getMessage(this.getClass(), "LayoutFileNode.propertyType.parts");
-            }
-        }
+                    @Override
+                    public String toString() {
+                        return NbBundle.getMessage(this.getClass(), "LayoutFileNode.propertyType.parts");
+                    }
+                }
     }
 
     public static String nameForLayoutFile(LayoutFile lf) {

@@ -74,8 +74,9 @@ class PstParser {
      * Parse and extract email messages from the pst/ost file.
      *
      * @param file A pst or ost file.
+     *
      * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
-     * because the file is encrypted.
+     *         because the file is encrypted.
      */
     ParseResult parse(File file) {
         PSTFile pstFile;
@@ -117,8 +118,9 @@ class PstParser {
      * structure.
      *
      * @param folder The folder to navigate and process
-     * @param path The path to the folder within the pst/ost file's directory
-     * structure
+     * @param path   The path to the folder within the pst/ost file's directory
+     *               structure
+     *
      * @throws PSTException
      * @throws IOException
      */
@@ -160,6 +162,7 @@ class PstParser {
      *
      * @param msg
      * @param localPath
+     *
      * @return
      */
     private EmailMessage extractEmailMessage(PSTMessage msg, String localPath) {
@@ -230,7 +233,7 @@ class PstParser {
             } catch (PSTException | IOException ex) {
                 addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
-                        filename));
+                                filename));
                 logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex); //NON-NLS
             }
         }
@@ -241,7 +244,9 @@ class PstParser {
      *
      * @param attach
      * @param outPath
+     *
      * @return
+     *
      * @throws IOException
      * @throws PSTException
      */
@@ -266,6 +271,7 @@ class PstParser {
      *
      * @param name Sender's Name
      * @param addr Sender's Email address
+     *
      * @return
      */
     private String getSender(String name, String addr) {
@@ -284,6 +290,7 @@ class PstParser {
      * Identify a file as a pst/ost file by it's header.
      *
      * @param file
+     *
      * @return
      */
     public static boolean isPstFile(AbstractFile file) {

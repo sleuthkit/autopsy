@@ -51,8 +51,10 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
      * both this Autopsy node and other Autopsy nodes.
      *
      * @param eventName The event name.
-     * @param oldValue The "old" value to associate with the event. May be null.
-     * @param newValue The "new" value to associate with the event. May be null.
+     * @param oldValue  The "old" value to associate with the event. May be
+     *                  null.
+     * @param newValue  The "new" value to associate with the event. May be
+     *                  null.
      */
     public AutopsyEvent(String eventName, Object oldValue, Object newValue) {
         super(SourceType.LOCAL.toString(), eventName, oldValue, newValue);

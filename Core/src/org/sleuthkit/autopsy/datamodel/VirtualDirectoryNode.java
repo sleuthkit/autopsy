@@ -69,6 +69,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
      * Right click action for this node
      *
      * @param popup
+     *
      * @return
      */
     @Override
@@ -97,7 +98,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
-                "VirtualDirectoryNode.createSheet.name.displayName"),
+                        "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
 
@@ -128,6 +129,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
      * Convert meta flag long to user-readable string / label
      *
      * @param metaFlag to convert
+     *
      * @return string formatted meta flag representation
      */
     public static String metaFlagToString(short metaFlag) {

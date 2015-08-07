@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.filesearch;
 
 import java.util.List;
@@ -34,7 +33,7 @@ class SearchNode extends AbstractNode {
 
     SearchNode(List<AbstractFile> keys) {
         super(new SearchChildren(true, keys));
-        this.children = (SearchChildren)this.getChildren();
+        this.children = (SearchChildren) this.getChildren();
     }
 
     @Override

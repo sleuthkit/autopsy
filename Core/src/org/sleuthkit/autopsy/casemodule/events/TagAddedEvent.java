@@ -71,12 +71,12 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
     @Override
     public T getNewValue() {
         /**
-         * The tag field is set in the constructor, but it is transient
-         * so it will become null when the event is serialized for publication
-         * over a network. Doing a lazy load of the Tag object bypasses the
-         * issues related to the serialization and de-serialization of Tag
-         * objects and may also save database round trips from other nodes since
-         * subscribers to this event are often not interested in the event data.
+         * The tag field is set in the constructor, but it is transient so it
+         * will become null when the event is serialized for publication over a
+         * network. Doing a lazy load of the Tag object bypasses the issues
+         * related to the serialization and de-serialization of Tag objects and
+         * may also save database round trips from other nodes since subscribers
+         * to this event are often not interested in the event data.
          */
         if (null != tag) {
             return tag;

@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.filesearch;
-
 
 import java.util.List;
 import org.openide.nodes.Children;
@@ -31,7 +29,6 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 
-
 /**
  * Makes nodes for search results.
  */
@@ -42,22 +39,19 @@ class SearchChildren extends Children.Keys<AbstractFile> {
         this.setKeys(fileList);
     }
 
-
     @Override
     protected Node[] createNodes(AbstractFile t) {
         Node[] node = new Node[1];
-            if(t.isDir()){
-                node[0] = new DataResultFilterNode(new DirectoryNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+        if (t.isDir()) {
+            node[0] = new DataResultFilterNode(new DirectoryNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
 
-                //node[0] = new DirectoryNode((Directory)t);
-                return node;
-            }
-            else{
-                node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
-                //node[0] = new FileNode((File)t);
-                return node;
-            }
+            //node[0] = new DirectoryNode((Directory)t);
+            return node;
+        } else {
+            node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+            //node[0] = new FileNode((File)t);
+            return node;
+        }
     }
 
-    
 }

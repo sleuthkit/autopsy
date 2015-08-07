@@ -37,62 +37,63 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
- * Instances of this class allow a user to select an existing  hash database and 
- * add it to the set of hash databases used to classify files as unknown, known, 
+ * Instances of this class allow a user to select an existing hash database and
+ * add it to the set of hash databases used to classify files as unknown, known,
  * or known bad.
  */
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
-    
+
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
-    
+
     /**
-     * Displays a dialog that allows a user to select an existing  hash database
-     * and add it to the set of hash databases used to classify files as unknown, 
-     * known, or known bad.
-     */    
+     * Displays a dialog that allows a user to select an existing hash database
+     * and add it to the set of hash databases used to classify files as
+     * unknown, known, or known bad.
+     */
     HashDbImportDatabaseDialog() {
         super(new JFrame(),
-              NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
-              true);
+                NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
+                true);
         initFileChooser();
         initComponents();
         display();
     }
-        
+
     /**
      * Get the hash database imported by the user, if any.
+     *
      * @return A HashDb object or null.
      */
     HashDb getHashDatabase() {
         return selectedHashDb;
     }
-        
+
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[] { "txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
         fileChooser.setFileFilter(filter);
-        fileChooser.setMultiSelectionEnabled(false);        
+        fileChooser.setMultiSelectionEnabled(false);
     }
 
     private void display() {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
-        setVisible(true);                        
+        setVisible(true);
     }
-        
+
     private static String shortenPath(String path) {
         String shortenedPath = path;
-        if (shortenedPath.length() > 50){
+        if (shortenedPath.length() > 50) {
             shortenedPath = shortenedPath.substring(0, 10 + shortenedPath.substring(10).indexOf(File.separator) + 1) + "..." + shortenedPath.substring((shortenedPath.length() - 20) + shortenedPath.substring(shortenedPath.length() - 20).indexOf(File.separator));
         }
         return shortenedPath;
-    }    
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -257,14 +258,13 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 if (hashSetNameTextField.getText().toLowerCase().contains("nsrl")) { //NON-NLS
                     knownRadioButton.setSelected(true);
                     knownRadioButtonActionPerformed(null);
-                }                
-            } 
-            catch (IOException ex) {
+                }
+            } catch (IOException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                        "HashDbImportDatabaseDialog.failedToGetDbPathMsg"));
-            } 
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.failedToGetDbPathMsg"));
+            }
         }
     }//GEN-LAST:event_openButtonActionPerformed
 
@@ -285,70 +285,67 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
-        
-        if(hashSetNameTextField.getText().isEmpty()) {
+
+        if (hashSetNameTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.importHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        if(selectedFilePath.isEmpty()) {
+
+        if (selectedFilePath.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.mustSelectHashDbFilePathMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.importHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.mustSelectHashDbFilePathMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
-        }        
+        }
         File file = new File(selectedFilePath);
         if (!file.exists()) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.hashDbDoesNotExistMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.importHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.hashDbDoesNotExistMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
-                        
+
         KnownFilesType type;
         if (knownRadioButton.isSelected()) {
             type = KnownFilesType.KNOWN;
-        } 
-        else {
+        } else {
             type = KnownFilesType.KNOWN_BAD;
         }
-        
+
         String errorMessage = NbBundle.getMessage(this.getClass(),
-                                                  "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
-                                                  selectedFilePath);
+                "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
+                selectedFilePath);
         try {
             selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseInternal(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
-        } 
-        catch (HashDbManagerException ex) {
+        } catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
-                                          ex.getMessage(),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.importHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    ex.getMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
-        }    
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
-                                          errorMessage,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbImportDatabaseDialog.importHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    errorMessage,
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
-        }             
-        
+        }
+
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 

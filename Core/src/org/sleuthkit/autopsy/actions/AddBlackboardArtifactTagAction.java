@@ -32,12 +32,14 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to apply tags to blackboard artifacts.  
+ * Instances of this Action allow users to apply tags to blackboard artifacts.
  */
 public class AddBlackboardArtifactTagAction extends AddTagAction {
+
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
+
     private static AddBlackboardArtifactTagAction instance;
 
     public static synchronized AddBlackboardArtifactTagAction getInstance() {
@@ -50,13 +52,13 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
     private AddBlackboardArtifactTagAction() {
         super("");
     }
-                
+
     @Override
     protected String getActionDisplayName() {
         String singularTagResult = NbBundle.getMessage(this.getClass(),
-                                                       "AddBlackboardArtifactTagAction.singularTagResult");
+                "AddBlackboardArtifactTagAction.singularTagResult");
         String pluralTagResult = NbBundle.getMessage(this.getClass(),
-                                                     "AddBlackboardArtifactTagAction.pluralTagResult");
+                "AddBlackboardArtifactTagAction.pluralTagResult");
         return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size() > 1 ? pluralTagResult : singularTagResult;
     }
 
@@ -68,20 +70,19 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
             for (BlackboardArtifact artifact : selectedArtifacts) {
                 try {
                     Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
-                }
-                catch (TskCoreException ex) {                        
+                } catch (TskCoreException ex) {
                     Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "AddBlackboardArtifactTagAction.unableToTag.msg",
-                                                                      artifact.getDisplayName()),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "AddBlackboardArtifactTagAction.taggingErr"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                                NbBundle.getMessage(this.getClass(),
+                                        "AddBlackboardArtifactTagAction.unableToTag.msg",
+                                        artifact.getDisplayName()),
+                                NbBundle.getMessage(this.getClass(),
+                                        "AddBlackboardArtifactTagAction.taggingErr"),
+                                JOptionPane.ERROR_MESSAGE);
                     });
-                }                    
-            }      
+                }
+            }
         }).start();
-    }        
+    }
 }

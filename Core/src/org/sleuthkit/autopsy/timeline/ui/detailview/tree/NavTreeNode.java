@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 
-/** The data item for the nav tree. Represents a combination of type and
- * description, as well as the corresponding number of events */
+/**
+ * The data item for the nav tree. Represents a combination of type and
+ * description, as well as the corresponding number of events
+ */
 @Immutable
 public class NavTreeNode {
 

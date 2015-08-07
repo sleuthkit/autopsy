@@ -60,25 +60,26 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 /**
  * A parser that extracts information about email messages and attachments from
  * a mbox file.
- * 
+ *
  * @author jwallace
  */
- class MboxParser {
+class MboxParser {
+
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private DefaultMessageBuilder messageBuilder;
     private IngestServices services;
     private StringBuilder errors;
-    
+
     /**
      * The mime type string for html text.
      */
     private static final String HTML_TYPE = "text/html"; //NON-NLS
-    
+
     /**
      * The local path of the mbox file.
      */
     private String localPath;
-    
+
     MboxParser(IngestServices services, String localPath) {
         this.services = services;
         this.localPath = localPath;
@@ -88,20 +89,22 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         messageBuilder.setMimeEntityConfig(config);
         errors = new StringBuilder();
     }
-    
+
     static boolean isValidMimeTypeMbox(byte[] buffer) {
         return (new String(buffer)).startsWith("From "); //NON-NLS
     }
-    
+
     /**
      * Parse the mbox file and get the email messages.
+     *
      * @param mboxFile
+     *
      * @return a list of the email messages in the mbox file.
      */
     List<EmailMessage> parse(File mboxFile) {
         // Detect possible charsets
         List<CharsetEncoder> encoders = getPossibleEncoders(mboxFile);
-        
+
         CharsetEncoder theEncoder = null;
         Iterable<CharBufferWrapper> mboxIterator = null;
         // Loop through the possible encoders and find the first one that works.
@@ -121,16 +124,16 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 return new ArrayList<>();
             }
         }
-        
+
         // If no encoders work, post an error message and return.
         if (mboxIterator == null || theEncoder == null) {
             addErrorMessage(NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.couldntFindCharset"));
             return new ArrayList<>();
         }
-        
+
         List<EmailMessage> emails = new ArrayList<>();
         long failCount = 0;
-        
+
         // Parse each message and extract an EmailMessage structure
         for (CharBufferWrapper message : mboxIterator) {
             try {
@@ -141,24 +144,25 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 failCount++;
             }
         }
-        
+
         if (failCount > 0) {
             addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "MboxParser.parse.errMsg.failedToParseNMsgs", failCount));
         }
         return emails;
     }
-    
+
     String getErrors() {
         return errors.toString();
     }
-    
+
     /**
      * Use the information stored in the given mime4j message to populate an
      * EmailMessage.
-     * 
+     *
      * @param msg
-     * @return 
+     *
+     * @return
      */
     private EmailMessage extractEmail(Message msg) {
         EmailMessage email = new EmailMessage();
@@ -170,50 +174,50 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
         email.setLocalPath(localPath);
-        
+
         // Body
         if (msg.isMultipart()) {
             handleMultipart(email, (Multipart) msg.getBody());
         } else {
             handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType());
         }
-        
+
         return email;
     }
-    
+
     /**
-     * Handle a multipart mime message. 
-     * Recursively calls handleMultipart if one of the body parts is another
-     * multipart. Otherwise, calls the correct method to extract information out
-     * of each part of the body.
-     * 
+     * Handle a multipart mime message. Recursively calls handleMultipart if one
+     * of the body parts is another multipart. Otherwise, calls the correct
+     * method to extract information out of each part of the body.
+     *
      * @param email
-     * @param multi 
+     * @param multi
      */
     private void handleMultipart(EmailMessage email, Multipart multi) {
         for (Entity e : multi.getBodyParts()) {
             if (e.isMultipart()) {
                 handleMultipart(email, (Multipart) e.getBody());
-            } else if (e.getDispositionType() != null 
+            } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
                 handleAttachment(email, e);
-            } else if (e.getMimeType().equals(HTML_TYPE) ||
-                    e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
+            } else if (e.getMimeType().equals(HTML_TYPE)
+                    || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
                 handleTextBody(email, (TextBody) e.getBody(), e.getMimeType());
             } else {
                 // Ignore other types.
             }
         }
     }
-    
+
     /**
      * Extract text out of a body part of the message.
-     * 
-     * Handles text and html mime types. Throws away all other types. (only other
-     * example I've seen is text/calendar)
+     *
+     * Handles text and html mime types. Throws away all other types. (only
+     * other example I've seen is text/calendar)
+     *
      * @param email
      * @param tb
-     * @param type The Mime type of the body.
+     * @param type  The Mime type of the body.
      */
     private void handleTextBody(EmailMessage email, TextBody tb, String type) {
         BufferedReader r;
@@ -240,17 +244,18 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             logger.log(Level.WARNING, "Error getting text body of mbox message", ex); //NON-NLS
         }
     }
-    
+
     /**
-     * Extract the attachment out of the given entity. 
-     * Should only be called if e.getDispositionType() == "attachment"
+     * Extract the attachment out of the given entity. Should only be called if
+     * e.getDispositionType() == "attachment"
+     *
      * @param email
-     * @param e 
+     * @param e
      */
     private void handleAttachment(EmailMessage email, Entity e) {
         String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         String filename = e.getFilename();
-        
+
         // sanitize name.  Had an attachment with a Japanese encoded path that 
         // invalid characters and attachment could not be saved.
         filename = filename.replaceAll("\\?", "_");
@@ -262,13 +267,13 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         filename = filename.replaceAll("\\\\", "_");
         filename = filename.replaceAll("|", "_");
         filename = filename.replaceAll("\\*", "_");
-        
+
         // also had some crazy long names, so make random one if we get those.
         // also from Japanese image that had encoded name
         if (filename.length() > 64) {
             filename = UUID.randomUUID().toString();
         }
-        
+
         String uniqueFilename = filename + "-" + email.getSentDate();
         String outPath = outputDirPath + uniqueFilename;
         FileOutputStream fos;
@@ -278,11 +283,11 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         } catch (FileNotFoundException ex) {
             addErrorMessage(
                     NbBundle.getMessage(this.getClass(),
-                                        "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", outPath));
+                            "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", outPath));
             logger.log(Level.INFO, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
             return;
         }
-        
+
         try {
             Body b = e.getBody();
             if (b instanceof BinaryBody) {
@@ -302,10 +307,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
                 logger.log(Level.INFO, "Failed to close file output stream", ex); //NON-NLS
             }
         }
-        
+
         EmailMessage.Attachment attach = new EmailMessage.Attachment();
         attach.setName(filename);
-        attach.setLocalPath(ThunderbirdMboxFileIngestModule.getRelModuleOutputPath() 
+        attach.setLocalPath(ThunderbirdMboxFileIngestModule.getRelModuleOutputPath()
                 + File.separator + uniqueFilename);
         attach.setSize(new File(outPath).length());
         email.addAttachment(attach);
@@ -314,8 +319,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
     /**
      * Get a String representation of the MailboxList (which is a list of email
      * addresses).
+     *
      * @param mailboxList
-     * @return 
+     *
+     * @return
      */
     private String getAddresses(MailboxList mailboxList) {
         if (mailboxList == null) {
@@ -327,12 +334,14 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
         }
         return addresses.toString();
     }
-    
+
     /**
      * Get a String representation of the AddressList (which is a list of email
      * addresses).
+     *
      * @param addressList
-     * @return 
+     *
+     * @return
      */
     private String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
@@ -341,27 +350,29 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
     /**
      * Get a list of the possible encoders for the given mboxFile using Tika's
      * CharsetDetector. At a minimum, returns the standard built in charsets.
+     *
      * @param mboxFile
-     * @return 
+     *
+     * @return
      */
     private List<CharsetEncoder> getPossibleEncoders(File mboxFile) {
         InputStream is;
         List<CharsetEncoder> possibleEncoders = new ArrayList<>();
-        
+
         possibleEncoders.add(StandardCharsets.ISO_8859_1.newEncoder());
         possibleEncoders.add(StandardCharsets.US_ASCII.newEncoder());
         possibleEncoders.add(StandardCharsets.UTF_16.newEncoder());
         possibleEncoders.add(StandardCharsets.UTF_16BE.newEncoder());
         possibleEncoders.add(StandardCharsets.UTF_16LE.newEncoder());
         possibleEncoders.add(StandardCharsets.UTF_8.newEncoder());
-        
+
         try {
             is = new BufferedInputStream(new FileInputStream(mboxFile));
         } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, "Failed to find mbox file while detecting charset"); //NON-NLS
             return possibleEncoders;
         }
-        
+
         try {
             CharsetDetector detector = new CharsetDetector();
             detector.setText(is);
@@ -385,7 +396,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
             }
         }
     }
-    
+
     private void addErrorMessage(String msg) {
         errors.append("<li>").append(msg).append("</li>"); //NON-NLS
     }

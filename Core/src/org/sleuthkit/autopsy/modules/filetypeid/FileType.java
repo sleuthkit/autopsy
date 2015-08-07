@@ -40,12 +40,12 @@ class FileType {
      * Creates a representation of a file type characterized by a file
      * signature.
      *
-     * @param mimeType The mime type to associate with this file type.
-     * @param signature The signature that characterizes this file type.
+     * @param mimeType     The mime type to associate with this file type.
+     * @param signature    The signature that characterizes this file type.
      * @param filesSetName The name of an interesting files set that includes
-     * files of this type, may be the empty string.
-     * @param alert Whether the user wishes to be alerted when a file matching
-     * this type is encountered.
+     *                     files of this type, may be the empty string.
+     * @param alert        Whether the user wishes to be alerted when a file
+     *                     matching this type is encountered.
      */
     FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
@@ -76,6 +76,7 @@ class FileType {
      * Determines whether or not a file is an instance of this file type.
      *
      * @param file The file to test.
+     *
      * @return True or false.
      */
     boolean matches(final AbstractFile file) {
@@ -129,9 +130,9 @@ class FileType {
          * specific offset within a file.
          *
          * @param signatureBytes The signature bytes.
-         * @param offset The offset of the signature bytes.
-         * @param type The interpretation of the signature bytes (e.g., raw
-         * bytes, an ASCII string).
+         * @param offset         The offset of the signature bytes.
+         * @param type           The interpretation of the signature bytes
+         *                       (e.g., raw bytes, an ASCII string).
          */
         Signature(final byte[] signatureBytes, long offset, Type type) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -171,10 +172,11 @@ class FileType {
          * file.
          *
          * @param file The file to test
+         *
          * @return True or false.
          */
         boolean containedIn(final AbstractFile file) {
-            if(file.getSize() < (offset+signatureBytes.length)) {
+            if (file.getSize() < (offset + signatureBytes.length)) {
                 return false; /// too small, can't contain this signature
             }
             try {

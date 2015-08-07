@@ -48,12 +48,13 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Container for the image viewer part of media view, on a layered pane. To be
  * used with JavaFx image viewer only.
  */
- public class MediaViewImagePanel extends javax.swing.JPanel {
+public class MediaViewImagePanel extends javax.swing.JPanel {
+
     private JFXPanel fxPanel;
     private ImageView fxImageView;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
     private boolean fxInited = false;
-    
+
     private final List<String> supportedExtensions;
     static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/x-ms-bmp"); //NON-NLS
 
@@ -66,7 +67,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
         if (fxInited) {
             setupFx();
         }
-        
+
         supportedExtensions = new ArrayList<>();
         //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
         for (String suffix : ImageIO.getReaderFileSuffixes()) {
@@ -74,7 +75,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             supportedExtensions.add("." + suffix);
         }
     }
-    
+
     public boolean isInited() {
         return fxInited;
     }
@@ -117,7 +118,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             }
         });
     }
-    
+
     /**
      * Show image
      *
@@ -189,7 +190,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
                 fxImageView.setFitHeight(dims.getHeight());
 
                 //Group fxRoot = new Group();
-
                 //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
                 Scene fxScene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
                 // borderpane.getChildren().add(fxImageView);
@@ -208,18 +208,20 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
         });
 
     }
-    
+
     /**
      * returns supported mime types
-     * @return 
+     *
+     * @return
      */
     public List<String> getMimeTypes() {
         return supportedMimes;
     }
-    
+
     /**
      * returns supported extensions (each starting with .)
-     * @return 
+     *
+     * @return
      */
     public List<String> getExtensions() {
         return supportedExtensions;

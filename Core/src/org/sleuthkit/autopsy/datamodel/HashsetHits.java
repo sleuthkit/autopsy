@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Hash set hits node support.  Inner classes have all of the nodes in the tree.
+ * Hash set hits node support. Inner classes have all of the nodes in the tree.
  */
 public class HashsetHits implements AutopsyVisitableItem {
 
@@ -60,47 +60,49 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     private SleuthkitCase skCase;
     private final HashsetResults hashsetResults;
-   
+
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
         hashsetResults = new HashsetResults();
     }
-    
 
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     /**
-     * Stores all of the hashset results in a single class that is observable for the 
-     * child nodes
+     * Stores all of the hashset results in a single class that is observable
+     * for the child nodes
      */
     private class HashsetResults extends Observable {
+
         // maps hashset name to list of artifacts for that set
+
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
-        
+
         HashsetResults() {
             update();
         }
-        
+
         List<String> getSetNames() {
             List<String> names = new ArrayList<>(hashSetHitsMap.keySet());
             Collections.sort(names);
             return names;
         }
-        
+
         Set<Long> getArtifactIds(String hashSetName) {
             return hashSetHitsMap.get(hashSetName);
         }
+
         @SuppressWarnings("deprecation")
         final void update() {
             hashSetHitsMap.clear();
-            
+
             if (skCase == null) {
-                return;   
+                return;
             }
-            
+
             int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
             String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
@@ -121,8 +123,8 @@ public class HashsetHits implements AutopsyVisitableItem {
                 }
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
-            } 
-            
+            }
+
             setChanged();
             notifyObservers();
         }
@@ -173,9 +175,10 @@ public class HashsetHits implements AutopsyVisitableItem {
      */
     private class HashsetNameFactory extends ChildFactory.Detachable<String> implements Observer {
 
-        /* This should probably be in the HashsetHits class, but the factory has nice methods
-         * for its startup and shutdown, so it seemed like a cleaner place to register the
-         * property change listener.
+        /*
+         * This should probably be in the HashsetHits class, but the factory has
+         * nice methods for its startup and shutdown, so it seemed like a
+         * cleaner place to register the property change listener.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -246,9 +249,9 @@ public class HashsetHits implements AutopsyVisitableItem {
             Case.removePropertyChangeListener(pcl);
             hashsetResults.deleteObserver(this);
         }
-        
+
         @Override
-        protected boolean createKeys(List<String> list) {   
+        protected boolean createKeys(List<String> list) {
             list.addAll(hashsetResults.getSetNames());
             return true;
         }
@@ -268,7 +271,9 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Node for a hash set name
      */
     public class HashsetNameNode extends DisplayableItemNode implements Observer {
+
         private final String hashSetName;
+
         public HashsetNameNode(String hashSetName) {
             super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
             super.setName(hashSetName);
@@ -277,12 +282,12 @@ public class HashsetHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
             hashsetResults.addObserver(this);
         }
-        
+
         /**
          * Update the count in the display name
          */
         private void updateDisplayName() {
-            super.setDisplayName(hashSetName + " (" + hashsetResults.getArtifactIds(hashSetName).size() + ")");  
+            super.setDisplayName(hashSetName + " (" + hashsetResults.getArtifactIds(hashSetName).size() + ")");
         }
 
         @Override
@@ -322,13 +327,14 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Creates the nodes for the hits in a given set.
      */
     private class HitFactory extends ChildFactory.Detachable<Long> implements Observer {
+
         private String hashsetName;
-        
+
         private HitFactory(String hashsetName) {
             super();
             this.hashsetName = hashsetName;
         }
-                
+
         @Override
         protected void addNotify() {
             hashsetResults.addObserver(this);
@@ -348,9 +354,9 @@ public class HashsetHits implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(Long id) {
             if (skCase == null) {
-                return null;            
+                return null;
             }
-            
+
             try {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                 return new BlackboardArtifactNode(art);
@@ -359,7 +365,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             }
             return null;
         }
-        
+
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);

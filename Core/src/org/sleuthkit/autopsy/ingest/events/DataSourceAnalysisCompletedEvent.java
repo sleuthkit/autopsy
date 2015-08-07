@@ -44,12 +44,12 @@ public class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent im
      * Constructs an event published when analysis (ingest) of a data source
      * included in an ingest job is completed.
      *
-     * @param ingestJobId The identifier of the ingest job, specific to this
-     * node.
+     * @param ingestJobId           The identifier of the ingest job, specific
+     *                              to this node.
      * @param dataSourceIngestJobId The identifier of the data source ingest
-     * job,specific to this node.
-     * @param dataSource The data source.
-     * @param reason The reason analysis completed.
+     *                              job,specific to this node.
+     * @param dataSource            The data source.
+     * @param reason                The reason analysis completed.
      */
     public DataSourceAnalysisCompletedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource, Reason reason) {
         super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED, ingestJobId, dataSourceIngestJobId, dataSource);

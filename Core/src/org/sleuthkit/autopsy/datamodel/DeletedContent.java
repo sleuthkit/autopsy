@@ -112,7 +112,6 @@ public class DeletedContent implements AutopsyVisitableItem {
         private static final String NAME = NbBundle.getMessage(DeletedContent.class,
                 "DeletedContent.deletedContentsNode.name");
         private SleuthkitCase skCase;
-        
 
         DeletedContentsNode(SleuthkitCase skCase) {
             super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
@@ -154,7 +153,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         private SleuthkitCase skCase;
         private Observable notifier;
         // true if we have already told user that not all files will be shown
-        private static boolean maxFilesDialogShown = false; 
+        private static boolean maxFilesDialogShown = false;
 
         public DeletedContentsChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
@@ -364,7 +363,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
-                    queryList.remove(queryList.size() - 1);                    
+                    queryList.remove(queryList.size() - 1);
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;

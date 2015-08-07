@@ -49,7 +49,7 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
      * or there is a change a recorded attribute of existing content.
      *
      * @param contentEvent A ModuleDataEvent object containing the data
-     * associated with the blackboard post.
+     *                     associated with the blackboard post.
      */
     public BlackboardPostEvent(ModuleDataEvent eventData) {
         /**
@@ -61,11 +61,11 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          */
         super(
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(), eventData.getArtifacts() != null ?
-                        eventData.getArtifacts()
-                        .stream()
-                        .map(BlackboardArtifact::getArtifactID)
-                        .collect(Collectors.toList()) : Collections.emptyList()),
+                new SerializableEventData(eventData.getModuleName(), eventData.getArtifactType(), eventData.getArtifacts() != null
+                                ? eventData.getArtifacts()
+                                .stream()
+                                .map(BlackboardArtifact::getArtifactID)
+                                .collect(Collectors.toList()) : Collections.emptyList()),
                 null
         );
         this.eventData = eventData;

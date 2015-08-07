@@ -50,6 +50,4 @@ public abstract class AbstractFilter implements Filter {
         return "[" + (isActive() ? "x" : " ") + "]"; // NON-NLS
     }
 
-  
-
 }

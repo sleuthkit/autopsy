@@ -96,7 +96,7 @@ public class EventsRepository {
 
     //If TIMELINE changes, also update TIMELINE_FOLDER in SingleUserCaseImporter 
     private static final String TIMELINE = "Timeline";
-    
+
     public Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
@@ -131,15 +131,17 @@ public class EventsRepository {
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
     }
 
-  
-
-    /** @return min time (in seconds from unix epoch) */
+    /**
+     * @return min time (in seconds from unix epoch)
+     */
     public Long getMaxTime() {
         return maxCache.getUnchecked("max"); // NON-NLS
 //        return eventDB.getMaxTime();
     }
 
-    /** @return max tie (in seconds from unix epoch) */
+    /**
+     * @return max tie (in seconds from unix epoch)
+     */
     public Long getMinTime() {
         return minCache.getUnchecked("min"); // NON-NLS
 //        return eventDB.getMinTime();
@@ -164,9 +166,11 @@ public class EventsRepository {
     public Long getLastObjID() {
         return eventDB.getLastObjID();
     }
+
     public long getLastArtfactID() {
         return eventDB.getLastArtfactID();
     }
+
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
@@ -228,7 +232,7 @@ public class EventsRepository {
         @Override
         protected Void doInBackground() throws Exception {
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
-                                                                                               "EventsRepository.progressWindow.msg.reinit_db"), "")));
+                    "EventsRepository.progressWindow.msg.reinit_db"), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
             eventDB.dropTable();
@@ -240,7 +244,7 @@ public class EventsRepository {
 
             final int numFiles = files.size();
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, NbBundle.getMessage(this.getClass(),
-                                                                                                     "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
+                    "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
 
             //insert file events into db
             int i = 1;
@@ -251,8 +255,8 @@ public class EventsRepository {
                 } else {
                     try {
                         AbstractFile f = skCase.getAbstractFileById(fID);
-                        
-                        if(f != null){
+
+                        if (f != null) {
                             //TODO: This is broken for logical files? fix -jm
                             //TODO: logical files don't necessarily have valid timestamps, so ... -jm
                             final String uniquePath = f.getUniquePath();
@@ -260,7 +264,7 @@ public class EventsRepository {
                             String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
                             String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
-                            String medD = datasourceName  + parentPath;
+                            String medD = datasourceName + parentPath;
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
@@ -277,8 +281,8 @@ public class EventsRepository {
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                                                                                NbBundle.getMessage(this.getClass(),
-                                                                                                        "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
+                                    NbBundle.getMessage(this.getClass(),
+                                            "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
                         } else {
                             LOGGER.log(Level.WARNING, "failed to look up data for file : " + fID); // NON-NLS
                         }
@@ -302,7 +306,7 @@ public class EventsRepository {
             }
 
             process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
-                                                                                               "EventsRepository.progressWindow.msg.commitingDb"), "")));
+                    "EventsRepository.progressWindow.msg.commitingDb"), "")));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -338,11 +342,11 @@ public class EventsRepository {
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                        "EventsRepository.msgdlg.problem.text"));
+                        "EventsRepository.msgdlg.problem.text"));
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                        "EventsRepository.msgdlg.problem.text"));
+                        "EventsRepository.msgdlg.problem.text"));
             }
             r.run();  //execute post db population operation
         }
@@ -361,9 +365,9 @@ public class EventsRepository {
                 final int numArtifacts = blackboardArtifacts.size();
 
                 process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                                                                        NbBundle.getMessage(this.getClass(),
-                                                                                            "EventsRepository.progressWindow.populatingXevents",
-                                                                                            type.toString()), "")));
+                        NbBundle.getMessage(this.getClass(),
+                                "EventsRepository.progressWindow.populatingXevents",
+                                type.toString()), "")));
 
                 int i = 0;
                 for (final BlackboardArtifact bbart : blackboardArtifacts) {
@@ -376,9 +380,9 @@ public class EventsRepository {
 
                     i++;
                     process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                                                                            NbBundle.getMessage(this.getClass(),
-                                                                                                "EventsRepository.progressWindow.populatingXevents",
-                                                                                                type.toString()), "")));
+                            NbBundle.getMessage(this.getClass(),
+                                    "EventsRepository.progressWindow.populatingXevents",
+                                    type.toString()), "")));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS

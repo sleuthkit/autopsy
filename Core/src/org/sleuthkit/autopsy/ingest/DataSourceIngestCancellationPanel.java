@@ -39,7 +39,7 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
      * currently executing data source ingest module.
      *
      * @return True if the ingest job is to be canceled, false if only the
-     * current module is to be canceled.
+     *         current module is to be canceled.
      */
     boolean cancelAllDataSourceIngestModules() {
         return this.cancelAllIngestModules;
@@ -103,7 +103,6 @@ final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
     private void cancelAllModulesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelAllModulesRadioButtonActionPerformed
         this.cancelAllIngestModules = this.cancelAllModulesRadioButton.isEnabled();
     }//GEN-LAST:event_cancelAllModulesRadioButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton cancelAllModulesRadioButton;

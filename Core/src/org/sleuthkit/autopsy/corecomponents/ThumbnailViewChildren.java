@@ -123,7 +123,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
         setKeys(pageNums);
 
-
     }
 
     @Override

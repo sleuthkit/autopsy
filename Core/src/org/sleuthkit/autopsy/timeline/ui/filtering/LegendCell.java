@@ -38,8 +38,8 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
- * A TreeTableCell that shows an icon and color corresponding to the
- * represented filter
+ * A TreeTableCell that shows an icon and color corresponding to the represented
+ * filter
  */
 class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implements TimeLineView {
 
@@ -82,7 +82,7 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
                         });
 
                 HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
-                                     new ImageView(((TypeFilter) item).getFXImage()), rect
+                        new ImageView(((TypeFilter) item).getFXImage()), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {

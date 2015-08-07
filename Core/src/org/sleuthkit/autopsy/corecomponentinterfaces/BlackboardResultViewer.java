@@ -16,39 +16,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.beans.PropertyChangeListener;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Additional functionality of viewers
- * supporting black board results
- * such as the directory tree
+ * Additional functionality of viewers supporting black board results such as
+ * the directory tree
  */
 public interface BlackboardResultViewer {
-    
+
     public static final String FINISHED_DISPLAY_EVT = "FINISHED_DISPLAY_EVT"; //NON-NLS
-    
-    
+
     /**
      * View artifact in a viewer
+     *
      * @param art artifact to view
      */
-   void viewArtifact(BlackboardArtifact art);
-   
-   /**
+    void viewArtifact(BlackboardArtifact art);
+
+    /**
      * View content associated with the artifact
+     *
      * @param art artifact content to view
      */
-   void viewArtifactContent(BlackboardArtifact art);
-   
-   /**
-    * Add listener to fire an action when viewer is done displaying 
-    * @param l 
-    */
-   void addOnFinishedListener(PropertyChangeListener l);
-    
+    void viewArtifactContent(BlackboardArtifact art);
+
+    /**
+     * Add listener to fire an action when viewer is done displaying
+     *
+     * @param l
+     */
+    void addOnFinishedListener(PropertyChangeListener l);
+
 }

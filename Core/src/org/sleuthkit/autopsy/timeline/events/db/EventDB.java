@@ -72,10 +72,10 @@ import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class provides access to the  Timeline SQLite database. This
- * class borrows a lot of ideas and techniques from {@link  SleuthkitCase},
- * Creating an abstract base class for sqlite databases, or using a higherlevel
- * persistence api may make sense in the future.
+ * This class provides access to the Timeline SQLite database. This class
+ * borrows a lot of ideas and techniques from {@link  SleuthkitCase}, Creating an
+ * abstract base class for sqlite databases, or using a higherlevel persistence
+ * api may make sense in the future.
  */
 public class EventDB {
 
@@ -110,7 +110,7 @@ public class EventDB {
 
     //If EVENTS_DATABASE changes, also update TIMELINE_FILE in SingleUserCaseImporter 
     private static final String TIMELINE_FILE = "events.db"; // NON-NLS
-    
+
     static {
         //make sure sqlite driver is loaded // possibly redundant
         try {
@@ -195,8 +195,8 @@ public class EventDB {
 
     private static String getSQLWhere(HideKnownFilter filter) {
         return (filter.isActive())
-               ? "(known_state is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
-               : "1";
+                ? "(known_state is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
+                : "1";
     }
 
     private static String getSQLWhere(TextFilter filter) {
@@ -275,9 +275,9 @@ public class EventDB {
         Interval span = null;
         dbReadLock();
         try (Statement stmt = con.createStatement();
-             //You can't inject multiple values into one ? paramater in prepared statement,
-             //so we make new statement each time...
-             ResultSet rs = stmt.executeQuery("SELECT MIN(time), MAX(time) FROM events WHERE event_id IN (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
+                //You can't inject multiple values into one ? paramater in prepared statement,
+                //so we make new statement each time...
+                ResultSet rs = stmt.executeQuery("SELECT MIN(time), MAX(time) FROM events WHERE event_id IN (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
                 span = new Interval(rs.getLong("MIN(time)"), rs.getLong("MAX(time)") + 1, DateTimeZone.UTC); // NON-NLS
 
@@ -396,7 +396,7 @@ public class EventDB {
 
         dbReadLock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-             ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
+                ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
             while (rs.next()) {
 
                 long start2 = rs.getLong("start"); // NON-NLS
@@ -450,7 +450,7 @@ public class EventDB {
         final String query = "SELECT event_id FROM events WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + getSQLWhere(filter); // NON-NLS
         //System.out.println(query);
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+                ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
                 resultIDs.add(rs.getLong(EVENT_ID_COLUMN));
@@ -473,7 +473,9 @@ public class EventDB {
         return getDBInfo(LAST_OBJECT_ID_KEY, -1);
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMaxTime() {
         dbReadLock();
         try (ResultSet rs = getMaxTimeStmt.executeQuery()) {
@@ -488,7 +490,9 @@ public class EventDB {
         return -1l;
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMinTime() {
         dbReadLock();
         try (ResultSet rs = getMinTimeStmt.executeQuery()) {
@@ -712,7 +716,7 @@ public class EventDB {
     boolean tableExists() {
         //TODO: use prepared statement - jm
         try (Statement createStatement = con.createStatement();
-             ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
+                ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
             if (executeQuery.getString("name").equals("events") == false) { // NON-NLS
                 return false;
             }
@@ -751,8 +755,8 @@ public class EventDB {
 
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", // NON-NLS
-                                                 SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                                                                                ? "native" : "pure-java")); // NON-NLS
+                    SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
+                            ? "native" : "pure-java")); // NON-NLS
         } catch (Exception exception) {
         }
     }
@@ -760,14 +764,14 @@ public class EventDB {
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
         EventType type = RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN));
         return new TimeLineEvent(rs.getLong(EVENT_ID_COLUMN),
-                                 rs.getLong(FILE_ID_COLUMN),
-                                 rs.getLong(ARTIFACT_ID_COLUMN),
-                                 rs.getLong(TIME_COLUMN),
-                                 type,
-                                 rs.getString(FULL_DESCRIPTION_COLUMN),
-                                 rs.getString(MED_DESCRIPTION_COLUMN),
-                                 rs.getString(SHORT_DESCRIPTION_COLUMN),
-                                 TskData.FileKnown.valueOf(rs.getByte(KNOWN_COLUMN)));
+                rs.getLong(FILE_ID_COLUMN),
+                rs.getLong(ARTIFACT_ID_COLUMN),
+                rs.getLong(TIME_COLUMN),
+                type,
+                rs.getString(FULL_DESCRIPTION_COLUMN),
+                rs.getString(MED_DESCRIPTION_COLUMN),
+                rs.getString(SHORT_DESCRIPTION_COLUMN),
+                TskData.FileKnown.valueOf(rs.getByte(KNOWN_COLUMN)));
     }
 
     /**
@@ -781,8 +785,8 @@ public class EventDB {
      *                  from unix epoch)
      * @param filter    only events that pass this filter will be counted
      * @param zoomLevel only events of this type or a subtype will be counted
-     *                  and the counts will be organized into bins for each of the subtypes of
-     *                  the given event type
+     *                  and the counts will be organized into bins for each of
+     *                  the subtypes of the given event type
      *
      * @return a map organizing the counts in a hierarchy from date > eventtype>
      *         count
@@ -814,8 +818,8 @@ public class EventDB {
             while (rs.next()) {
 
                 EventType type = useSubTypes
-                                 ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN))
-                                 : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
+                        ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN))
+                        : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
 
                 typeMap.put(type, rs.getLong("count(*)")); // NON-NLS
             }
@@ -840,10 +844,9 @@ public class EventDB {
      *
      * General algorithm is as follows:
      *
-     * - get all aggregate events, via one db query.
-     * - sort them into a map from (type, description)-> aggevent
-     * - for each key in map, merge the events and accumulate them in a list
-     * to return
+     * - get all aggregate events, via one db query. - sort them into a map from
+     * (type, description)-> aggevent - for each key in map, merge the events
+     * and accumulate them in a list to return
      *
      *
      * @param timeRange the Interval within in which all returned aggregate
@@ -855,8 +858,8 @@ public class EventDB {
      *
      *
      * @return a list of aggregate events within the given timerange, that pass
-     *         the supplied filter, aggregated according to the given event type and
-     *         description zoom levels
+     *         the supplied filter, aggregated according to the given event type
+     *         and description zoom levels
      */
     private List<AggregateEvent> getAggregatedEvents(Interval timeRange, Filter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
         String descriptionColumn = getDescriptionColumn(lod);

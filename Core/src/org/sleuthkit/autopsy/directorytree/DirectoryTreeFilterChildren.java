@@ -69,12 +69,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         return new DirectoryTreeFilterNode(arg0, createChildren);
     }
 
-
-
-    /* This method takes in a node as an argument and will create
-     * a new one if it should be displayed in the tree.  If it is
-     * to be displayed, it also figures out if it is a leaf or not
-     * (i.e. should it have a + sign in the tree).
+    /*
+     * This method takes in a node as an argument and will create a new one if
+     * it should be displayed in the tree. If it is to be displayed, it also
+     * figures out if it is a leaf or not (i.e. should it have a + sign in the
+     * tree).
      *
      * It does NOT create children nodes
      */
@@ -104,6 +103,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      * (directory named "." or "..")
      *
      * @param node
+     *
      * @return whether node is a leaf
      */
     private static boolean isLeafDirectory(DirectoryNode node) {
@@ -136,10 +136,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         try {
             for (Content c : vol.getChildren()) {
                 if (!(c instanceof LayoutFile
-                        || c instanceof VirtualDirectory
-                        )
-                        
-                        ) {
+                        || c instanceof VirtualDirectory)) {
                     ret = false;
                     break;
                 }
@@ -167,6 +164,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      * leaf.
      *
      * @param arg the node
+     *
      * @return children the children
      */
     public static Children createInstance(Node arg, boolean createChildren) {
@@ -200,8 +198,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             for (Content childContent : derivedChildren) {
                 if (((AbstractFile) childContent).isDir()) {
                     return false;
-                }
-                else {
+                } else {
                     try {
                         if (childContent.hasChildren()) {
                             return false;
@@ -213,32 +210,30 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             }
             return true;
         }
-        
+
         @Override
         public Boolean visit(FileNode fn) {
             return visitDeep(fn);
         }
-        
-        
+
         @Override
         public Boolean visit(LocalFileNode lfn) {
             return visitDeep(lfn);
         }
-        
+
         @Override
         public Boolean visit(LayoutFileNode fn) {
             return visitDeep(fn);
         }
 
-
         @Override
         public Boolean visit(VolumeNode vn) {
             return isLeafVolume(vn);
         }
-        
+
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
-            return visitDeep(vdn); 
+            return visitDeep(vdn);
             //return ! vdn.hasContentChildren();
         }
     }
@@ -272,7 +267,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(LayoutFileNode ln) {
             return ln.hasContentChildren();
         }
-        
+
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
             return true;

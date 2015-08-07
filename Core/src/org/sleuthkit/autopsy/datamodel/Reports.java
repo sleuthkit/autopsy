@@ -205,32 +205,33 @@ public final class Reports implements AutopsyVisitableItem {
         }
 
         private final class OpenReportAction extends AbstractAction {
-            
+
             private OpenReportAction() {
                 super(NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionDisplayName"));
             }
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 File file = new File(ReportNode.this.report.getPath());
                 try {
                     Desktop.getDesktop().open(file);
                 } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(null, 
+                    JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoAssociatedEditorMessage"),
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
                             JOptionPane.ERROR_MESSAGE);
                 } catch (UnsupportedOperationException ex) {
-                    JOptionPane.showMessageDialog(null, 
+                    JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoOpenInEditorSupportMessage"),
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
                             JOptionPane.ERROR_MESSAGE);
                 } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null, 
+                    JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MissingReportFileMessage"),
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
                             JOptionPane.ERROR_MESSAGE);
-                } catch (SecurityException ex) {                    
-                    JOptionPane.showMessageDialog(null, 
+                } catch (SecurityException ex) {
+                    JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.ReportFileOpenPermissionDeniedMessage"),
                             NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
                             JOptionPane.ERROR_MESSAGE);

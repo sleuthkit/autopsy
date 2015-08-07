@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.coreutils;
 
 import java.util.regex.Matcher;
@@ -24,11 +23,13 @@ import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Validates absolute path (e.g. to a data source or case output folder) depending on case type.
+ * Validates absolute path (e.g. to a data source or case output folder)
+ * depending on case type.
  */
 public final class PathValidator {
-    
-    private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");    
+
+    private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
+
     public static boolean isValid(String path, Case.CaseType caseType) {
 
         if (caseType == Case.CaseType.MULTI_USER_CASE) {
@@ -39,19 +40,19 @@ public final class PathValidator {
         } else {
             // single user case - no validation needed
         }
-        
+
         return true;
     }
-    
-    
+
     /**
      * Checks whether a file path contains drive letter defined by pattern.
      *
      * @param filePath Input file absolute path
+     *
      * @return true if path matches the pattern, false otherwise.
      */
     private static boolean pathOnCDrive(String filePath) {
         Matcher m = driveLetterPattern.matcher(filePath);
         return m.find();
-    }        
+    }
 }

@@ -63,7 +63,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
     /**
      * Populate the list of artifacts with all important artifacts.
      */
-    @SuppressWarnings("deprecation")    
+    @SuppressWarnings("deprecation")
     private void populateList() {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();

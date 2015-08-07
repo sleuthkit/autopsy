@@ -27,24 +27,24 @@ import javax.swing.JPanel;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Video viewer part of the Media View layered pane.
- * Uses different engines depending on platform.
+ * Video viewer part of the Media View layered pane. Uses different engines
+ * depending on platform.
  */
 public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
-    
+
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
-    
+
     // 64 bit architectures
     private static final String[] ARCH64 = new String[]{"amd64", "x86_64"}; //NON-NLS NON-NLS
-    
+
     // 32 bit architectures
     private static final String[] ARCH32 = new String[]{"x86"}; //NON-NLS
-    
+
     /**
-     * Factory Method to create a MediaViewVideoPanel. 
-     * 
+     * Factory Method to create a MediaViewVideoPanel.
+     *
      * Implementation is dependent on the architecture of the JVM.
-     * 
+     *
      * @return a MediaViewVideoPanel instance.
      */
     public static MediaViewVideoPanel createVideoPanel() {
@@ -56,10 +56,10 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
             return getGstImpl();
         }
     }
-    
+
     /**
      * Is the JVM architecture 64 bit?
-     * 
+     *
      * @return
      */
     private static boolean is64BitJVM() {
@@ -69,34 +69,34 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
 
     /**
      * Get a GStreamer video player implementation.
-     * 
+     *
      * @return a GstVideoPanel
      */
     private static MediaViewVideoPanel getGstImpl() {
         return new GstVideoPanel();
     }
 
-     /**
+    /**
      * Get a JavaFX video player implementation.
-     * 
+     *
      * @return a FXVideoPanel
      */
     private static MediaViewVideoPanel getFXImpl() {
         return new FXVideoPanel();
     }
-    
+
     /**
      * Has this MediaViewVideoPanel been initialized correctly?
-     * 
-     * @return 
+     *
+     * @return
      */
     public abstract boolean isInited();
-    
+
     /**
      * Prepare this MediaViewVideoPanel to accept a different media file.
      */
     abstract void reset();
-    
+
     /**
      * Initialize all the necessary vars to play a video/audio file.
      *
@@ -104,11 +104,12 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @param dims dimension of the parent window
      */
     abstract void setupVideo(final AbstractFile file, final Dimension dims);
-    
+
     /**
      * Return the extensions supported by this video panel.
      */
     abstract public String[] getExtensions();
+
     /**
      * Return the MimeTypes supported by this video panel.
      */

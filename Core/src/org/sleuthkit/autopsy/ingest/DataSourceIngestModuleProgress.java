@@ -37,7 +37,7 @@ public class DataSourceIngestModuleProgress {
      * required to process the data source is known.
      *
      * @param workUnits Total number of work units for the processing of the
-     * data source.
+     *                  data source.
      */
     public void switchToDeterminate(int workUnits) {
         this.job.switchDataSourceIngestProgressBarToDeterminate(workUnits);
@@ -75,7 +75,7 @@ public class DataSourceIngestModuleProgress {
      * units performed, if in the determinate mode.
      *
      * @param currentTask The task name.
-     * @param workUnits Number of work units performed so far by the module.
+     * @param workUnits   Number of work units performed so far by the module.
      */
     public void progress(String currentTask, int workUnits) {
         this.job.advanceDataSourceIngestProgressBar(currentTask, workUnits);

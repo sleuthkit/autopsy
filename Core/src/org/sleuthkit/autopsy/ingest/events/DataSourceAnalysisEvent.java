@@ -43,12 +43,12 @@ public abstract class DataSourceAnalysisEvent extends AutopsyEvent implements Se
      * Constructs an instance of the base class for events published in
      * connection with the analysis (ingest) of a data source.
      *
-     * @param eventType The event string for the subtype.
-     * @param ingestJobId The identifier of the ingest job, specific to this
-     * node.
+     * @param eventType             The event string for the subtype.
+     * @param ingestJobId           The identifier of the ingest job, specific
+     *                              to this node.
      * @param dataSourceIngestJobId The identifier of the data source ingest
-     * job,specific to this node.
-     * @param dataSource The data source.
+     *                              job,specific to this node.
+     * @param dataSource            The data source.
      */
     public DataSourceAnalysisEvent(IngestManager.IngestJobEvent eventType, long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         super(eventType.toString(), null, null);

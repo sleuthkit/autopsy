@@ -46,6 +46,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      * are determined the same way.
      *
      * @param vol Volume to get the name of
+     *
      * @return short name for the Volume
      */
     static String nameForVolume(Volume vol) {
@@ -69,7 +70,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
         // Listen for ingest events so that we can detect new added files (e.g. carved)
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
-        
+
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -85,7 +86,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 return;
             }
             Content newContent = (Content) moduleContentEvent.getSource();
-            
+
             try {
                 Content parent = newContent.getParent();
                 if (parent != null) {
@@ -95,23 +96,23 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                         if (parent.getParent().getId() == getContent().getId()) {
                             Children children = getChildren();
                             if (children != null) {
-                                ((ContentChildren)children).refreshChildren();
+                                ((ContentChildren) children).refreshChildren();
                                 children.getNodesCount();
-                            }                        
+                            }
                         }
                     }
                 }
-            }
-            catch (TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 // Do nothing.
             }
         }
     };
-    
+
     /**
      * Right click action for volume node
      *
      * @param popup
+     *
      * @return
      */
     @Override

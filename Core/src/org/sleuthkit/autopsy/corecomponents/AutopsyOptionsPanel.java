@@ -69,7 +69,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             recommendedFileIngestThreadCount = 1;
         }
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(fileIngestThreadCountChoices));
-        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));                
+        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));
         // TODO listen to changes in form fields and call controller.changed()
     }
 
@@ -82,7 +82,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
-        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());      
+        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
 
         if (UserPreferences.getIsTimeOutEnabled()) {
             // user specified time out
@@ -105,12 +105,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
-        
-        UserPreferences.setIsTimeOutEnabled(jCheckBoxEnableProcTimeout.isSelected()); 
-        if (jCheckBoxEnableProcTimeout.isSelected()){
+
+        UserPreferences.setIsTimeOutEnabled(jCheckBoxEnableProcTimeout.isSelected());
+        if (jCheckBoxEnableProcTimeout.isSelected()) {
             // only store time out if it is enabled
             long timeOutHrs = (long) jFormattedTextFieldProcTimeOutHrs.getValue();
-            UserPreferences.setProcessTimeOutHrs((int)timeOutHrs);            
+            UserPreferences.setProcessTimeOutHrs((int) timeOutHrs);
         }
     }
 

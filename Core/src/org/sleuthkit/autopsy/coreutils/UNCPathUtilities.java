@@ -69,8 +69,9 @@ public class UNCPathUtilities {
      * drive while your dialog was up, for example.
      *
      * @param inputPath a String of the path to convert
+     *
      * @return returns a successfully converted inputPath or null if unable to
-     * find a matching drive and convert it to UNC
+     *         find a matching drive and convert it to UNC
      */
     synchronized public String mappedDriveToUNC(String inputPath) {
         if (inputPath != null) {
@@ -111,8 +112,9 @@ public class UNCPathUtilities {
      * drive while your dialog was up, for example.
      *
      * @param inputPath the path to convert
+     *
      * @return returns a successfully converted inputPath or null if unable to
-     * find a matching drive and convert it to UNC
+     *         find a matching drive and convert it to UNC
      */
     synchronized public Path mappedDriveToUNC(Path inputPath) {
         if (inputPath != null) {
@@ -131,6 +133,7 @@ public class UNCPathUtilities {
      * Tests if the drive in the passed in path is a mapped drive.
      *
      * @param inputPath the Path to test.
+     *
      * @return true if the passed in drive is mapped, false otherwise
      */
     synchronized public boolean isDriveMapped(Path inputPath) {
@@ -145,6 +148,7 @@ public class UNCPathUtilities {
      * Tests if the drive in the passed in path is a mapped drive.
      *
      * @param inputPath the Path to test.
+     *
      * @return true if the passed in drive is mapped, false otherwise
      */
     synchronized public boolean isDriveMapped(String inputPath) {
@@ -167,6 +171,7 @@ public class UNCPathUtilities {
      * TEDS_COMPUTER and the local machine is able to resolve the hostname.
      *
      * @param inputPath the path to convert to a hostname UNC path
+     *
      * @return the successfully converted path or null if unable to resolve
      */
     synchronized public Path ipToHostName(Path inputPath) {
@@ -185,6 +190,7 @@ public class UNCPathUtilities {
      * TEDS_COMPUTER and the local machine is able to resolve the hostname.
      *
      * @param inputPath a String of the path to convert to a hostname UNC path
+     *
      * @return the successfully converted path or null if unable to resolve
      */
     synchronized public String ipToHostName(String inputPath) {
@@ -209,6 +215,7 @@ public class UNCPathUtilities {
      * Test if a Path is UNC. It is considered UNC if it begins with \\
      *
      * @param inputPath the path to check
+     *
      * @return true if the passed in Path is UNC, false otherwise
      */
     synchronized public static boolean isUNC(Path inputPath) {
@@ -223,6 +230,7 @@ public class UNCPathUtilities {
      * Test if a String path is UNC. It is considered UNC if it begins with \\
      *
      * @param inputPath the String of the path to check
+     *
      * @return true if the passed in Path is UNC, false otherwise
      */
     synchronized public static boolean isUNC(String inputPath) {

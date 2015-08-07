@@ -38,24 +38,24 @@ class HashDbPanelSearchAction extends CallableSystemAction {
 
     static final String ACTION_NAME = NbBundle.getMessage(HashDbPanelSearchAction.class, "HashDbPanelSearchAction.actionName");
     private static HashDbPanelSearchAction instance = null;
-    
+
     HashDbPanelSearchAction() {
         super();
         setEnabled(Case.isCaseOpen()); //no guarantee listener executed, so check here
-        
+
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     setEnabled(evt.getNewValue() != null);
                 }
-            }            
+            }
         });
     }
-    
+
     public static HashDbPanelSearchAction getDefault() {
-        if(instance == null){
+        if (instance == null) {
             instance = new HashDbPanelSearchAction();
         }
         return instance;
@@ -77,7 +77,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
         panel.addSearchActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(panel.search()) {
+                if (panel.search()) {
                     panel.clear();
                     dialog.close();
                 }
@@ -104,7 +104,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
     protected boolean asynchronous() {
         return false;

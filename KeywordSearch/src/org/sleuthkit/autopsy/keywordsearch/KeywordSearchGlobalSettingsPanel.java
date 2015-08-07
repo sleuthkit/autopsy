@@ -87,7 +87,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     public void saveSettings() {
         listsPanel.store();
         languagesPanel.store();
-        generalPanel.store();        
+        generalPanel.store();
     }
 
     @Override

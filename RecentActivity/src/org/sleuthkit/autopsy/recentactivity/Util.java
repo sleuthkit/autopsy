@@ -87,21 +87,20 @@ class Util {
         String host = null;
         //strip protocol
         String cleanUrl = url.replaceFirst("/.*:\\/\\//", "");
-        
+
         //strip after slashes
         String dirToks[] = cleanUrl.split("/\\//");
         if (dirToks.length > 0) {
             host = dirToks[0];
-        }
-        else {
+        } else {
             host = cleanUrl;
         }
-        
+
         //get the domain part from host (last 2)
         StringTokenizer tok = new StringTokenizer(host, ".");
         StringBuilder hostB = new StringBuilder();
         int toks = tok.countTokens();
-        
+
         for (int count = 0; count < toks; ++count) {
             String part = tok.nextToken();
             int diff = toks - count;
@@ -113,15 +112,13 @@ class Util {
             }
         }
 
-    
         return hostB.toString();
-}
-    
-    
+    }
+
     public static String extractDomain(String value) {
         if (value == null) {
             return "";
-                    
+
         }
         String result = "";
         // String domainPattern = "(\\w+)\\.(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CW|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SX|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|XXX|YE|YT|ZA|ZM|ZW(co\\.[a-z].))";
@@ -130,8 +127,7 @@ class Util {
         //  while (m.find()) {
         //  result = value.substring(m.start(0),m.end(0));
         //  }
-       
-          
+
         try {
             URL url = new URL(value);
             result = url.getHost();
@@ -139,8 +135,7 @@ class Util {
             //do not log if not a valid URL, and handle later
             //Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
         }
-             
-        
+
         //was not a valid URL, try a less picky method
         if (result == null || result.trim().isEmpty()) {
             return getBaseDomain(value);
@@ -186,7 +181,7 @@ class Util {
         }
         return path;
     }
-    
+
     public static long findID(Content dataSource, String path) {
         String parent_path = path.replace('\\', '/'); // fix Chrome paths
         if (parent_path.length() > 2 && parent_path.charAt(1) == ':') {
@@ -196,7 +191,7 @@ class Util {
         String name = parent_path.substring(++index);
         parent_path = parent_path.substring(0, index);
         //String query = "SELECT * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
-        
+
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<AbstractFile> files = null;
         try {
@@ -204,7 +199,7 @@ class Util {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
         }
-        
+
         if (files == null || files.isEmpty()) {
             return -1;
         }

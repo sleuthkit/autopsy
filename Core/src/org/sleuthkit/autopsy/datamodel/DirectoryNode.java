@@ -66,6 +66,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
      * Right click action for this node
      *
      * @param popup
+     *
      * @return
      */
     @Override
@@ -81,7 +82,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
-        actions.addAll(ContextMenuExtensionPoint.getActions());        
+        actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
 
@@ -94,9 +95,9 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     public boolean isLeafTypeNode() {
         return false;
-    }    
+    }
 }

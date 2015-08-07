@@ -45,7 +45,8 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 
-/** The FXML controller for the filter ui.
+/**
+ * The FXML controller for the filter ui.
  *
  * This also implements {@link TimeLineView} since it dynamically updates its
  * filters based on the contents of a {@link FilteredEventsModel}

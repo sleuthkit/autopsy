@@ -22,7 +22,9 @@ import javax.swing.JComponent;
 
 /**
  * Implements common functionality of file search filters
+ *
  * @param <T> Type of component to display in file search panel
+ *
  * @author pmartel
  */
 abstract class AbstractFileSearchFilter<T extends JComponent> implements FileSearchFilter {

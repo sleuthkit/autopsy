@@ -71,7 +71,9 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
 
     /**
      * Make the predicate fragment for a file known status
+     *
      * @param knownStatus status for the file to match
+     *
      * @return un-padded SQL boolean expression
      */
     private String predicateHelper(FileKnown knownStatus) {

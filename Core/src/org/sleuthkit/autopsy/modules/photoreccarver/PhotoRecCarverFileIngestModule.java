@@ -290,6 +290,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * does not already exist.
      *
      * @return The absolute path of the output directory.
+     *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
@@ -315,6 +316,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * Finds the root Volume or Image of the AbstractFile passed in.
      *
      * @param file The file we want to find the root parent for
+     *
      * @return The ID of the root parent Volume or Image
      */
     private static long getRootId(AbstractFile file) {
@@ -339,7 +341,9 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * Finds and returns the path to the executable, if able.
      *
      * @param executableToFindName The name of the executable to find
+     *
      * @return A File reference or throws an exception
+     *
      * @throws IngestModuleException
      */
     public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {

@@ -40,60 +40,60 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
- public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
-    
+public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
+
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
-    private final List<UpdateWrapper> viewers = new ArrayList<>();;
+    private final List<UpdateWrapper> viewers = new ArrayList<>();
+    ;
     private Node currentNode;
     private final boolean isMain;
-    private boolean listeningToTabbedPane = false;    
-     
+    private boolean listeningToTabbedPane = false;
+
     /**
-     * Creates new DataContentPanel panel
-     * The main data content panel can only be created by the data content top component, 
-     * thus this constructor is not public.
-     * 
-     * Use the createInstance factory method to create an external viewer data content panel.
-     * 
+     * Creates new DataContentPanel panel The main data content panel can only
+     * be created by the data content top component, thus this constructor is
+     * not public.
+     *
+     * Use the createInstance factory method to create an external viewer data
+     * content panel.
+     *
      */
     DataContentPanel(boolean isMain) {
         this.isMain = isMain;
         initComponents();
-        
+
         // add all implementors of DataContentViewer and put them in the tabbed pane
         Collection<? extends DataContentViewer> dcvs = Lookup.getDefault().lookupAll(DataContentViewer.class);
         for (DataContentViewer factory : dcvs) {
             DataContentViewer dcv;
             if (isMain) {
                 //use the instance from Lookup for the main viewer
-                dcv = factory; 
-            }
-            else {
-                dcv = factory.createInstance(); 
+                dcv = factory;
+            } else {
+                dcv = factory.createInstance();
             }
             viewers.add(new UpdateWrapper(dcv));
             jTabbedPane1.addTab(dcv.getTitle(), null,
                     dcv.getComponent(), dcv.getToolTip());
         }
-        
+
         // disable the tabs
         int numTabs = jTabbedPane1.getTabCount();
         for (int tab = 0; tab < numTabs; ++tab) {
             jTabbedPane1.setEnabledAt(tab, false);
         }
     }
-    
-    
+
     /**
      * Factory method to create an external (not main window) data content panel
      * to be used in an external window
-     * 
+     *
      * @return a new instance of a data content panel
      */
     public static DataContentPanel createInstance() {
         return new DataContentPanel(false);
     }
-    
+
     public JTabbedPane getTabPanels() {
         return jTabbedPane1;
     }
@@ -131,8 +131,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            
-            
+
             String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
             // set the file path
             if (selectedNode == null) {
@@ -160,21 +159,21 @@ import org.sleuthkit.datamodel.TskCoreException;
             this.setCursor(null);
         }
     }
-    
+
     /**
      * Resets the tabs based on the selected Node. If the selected node is null
      * or not supported, disable that tab as well.
      *
-     * @param selectedNode  the selected content Node
+     * @param selectedNode the selected content Node
      */
     public void setupTabs(Node selectedNode) {
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
-            jTabbedPane1.addChangeListener(this);        
+            jTabbedPane1.addChangeListener(this);
             listeningToTabbedPane = true;
         }
-                
+
         int currTabIndex = jTabbedPane1.getSelectedIndex();
         int totalTabs = jTabbedPane1.getTabCount();
         int maxPreferred = 0;
@@ -188,7 +187,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                 jTabbedPane1.setEnabledAt(i, false);
             } else {
                 jTabbedPane1.setEnabledAt(i, true);
-                
+
                 // remember the viewer with the highest preference value
                 int currentPreferred = dcv.isPreferred(selectedNode);
                 if (currentPreferred > maxPreferred) {
@@ -197,19 +196,18 @@ import org.sleuthkit.datamodel.TskCoreException;
                 }
             }
         }
-        
+
         // let the user decide if we should stay with the current viewer
         int tabIndex = UserPreferences.keepPreferredContentViewer() ? currTabIndex : preferredViewerIndex;
-        
+
         UpdateWrapper dcv = viewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 
         if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
             dcv.resetComponent();
-        }
-        else {
+        } else {
             dcv.setNode(selectedNode);
         }
-        
+
         // set the tab to the one the user wants, then set that viewer's node.
         jTabbedPane1.setSelectedIndex(tabIndex);
     }
@@ -265,10 +263,10 @@ import org.sleuthkit.datamodel.TskCoreException;
         boolean isSupported(Node node) {
             return this.wrapped.isSupported(node);
         }
-        
+
         int isPreferred(Node node) {
             return this.wrapped.isPreferred(node);
         }
     }
-    
+
 }

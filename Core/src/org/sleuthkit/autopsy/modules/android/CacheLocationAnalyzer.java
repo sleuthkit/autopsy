@@ -39,7 +39,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Parses cache files that Android maintains for Wifi and cell towers.  Adds GPS points to blackboard.
+ * Parses cache files that Android maintains for Wifi and cell towers. Adds GPS
+ * points to blackboard.
  */
 class CacheLocationAnalyzer {
 
@@ -47,7 +48,8 @@ class CacheLocationAnalyzer {
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
 
     /**
-     * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS and MAC info from Wifi points. 
+     * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS
+     * and MAC info from Wifi points.
      */
     public static void findGeoLocations(Content dataSource, FileManager fileManager) {
 
@@ -128,11 +130,11 @@ class CacheLocationAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(CacheLocationAnalyzer.class,
-                                                                             "CacheLocationAnalyzer.bbAttribute.fileLocationHistory",
-                                                                             file.getName())));
+                        NbBundle.getMessage(CacheLocationAnalyzer.class,
+                                "CacheLocationAnalyzer.bbAttribute.fileLocationHistory",
+                                file.getName())));
 
-             //Not storing these for now.
+                //Not storing these for now.
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy));       
                 //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),moduleName, confidence));
             }

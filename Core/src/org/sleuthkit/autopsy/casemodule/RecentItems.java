@@ -79,7 +79,7 @@ class RecentItems implements ActionListener {
                         JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
-                        }                        
+                        }
                     });
                 }
             }).start();

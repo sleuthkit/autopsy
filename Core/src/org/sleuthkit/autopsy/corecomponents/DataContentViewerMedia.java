@@ -51,7 +51,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     //UI
     private final MediaViewVideoPanel videoPanel;
     private final SortedSet<String> videoExtensions; // get them from the panel
-    private final SortedSet<String> imageExtensions; 
+    private final SortedSet<String> imageExtensions;
     private final SortedSet<String> videoMimes;
     private final SortedSet<String> imageMimes;
     private final MediaViewImagePanel imagePanel;
@@ -77,7 +77,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         imagePanelInited = imagePanel.isInited();
         imageMimes = new TreeSet<>(imagePanel.getMimeTypes());
         imageExtensions = new TreeSet<>(imagePanel.getExtensions());
-        
+
         customizeComponents();
         logger.log(Level.INFO, "Created MediaView instance: " + this); //NON-NLS
     }
@@ -180,56 +180,55 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * 
+     *
      * @param file
-     * @return True if a video file that can be displayed 
+     *
+     * @return True if a video file that can be displayed
      */
     private boolean isVideoSupported(AbstractFile file) {
         String name = file.getName().toLowerCase();
-        
-        if ((containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions)) && 
-                (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE)) {
+
+        if ((containsExt(name, AUDIO_EXTENSIONS) || containsExt(name, videoExtensions))
+                && (!videoMimes.isEmpty() && file.isMimeType(videoMimes) == MimeMatchEnum.TRUE)) {
             return true;
         }
         return false;
     }
-    
+
     /**
-     * 
+     *
      * @param file
-     * @return  True if an image file that can be displayed
+     *
+     * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
         String name = file.getName().toLowerCase();
-        
+
         // blackboard
         if (!imageMimes.isEmpty()) {
             MimeMatchEnum mimeMatch = file.isMimeType(imageMimes);
             if (mimeMatch == MimeMatchEnum.TRUE) {
                 return true;
-            }
-            else if (mimeMatch == MimeMatchEnum.FALSE) {
+            } else if (mimeMatch == MimeMatchEnum.FALSE) {
                 return false;
             }
         }
-        
+
         // extension
         if (containsExt(name, imageExtensions)) {
             return true;
-        }
-        // our own signature checks for important types
+        } // our own signature checks for important types
         else if (ImageUtils.isJpegFileHeader(file)) {
             return true;
-        }
-        else if (ImageUtils.isPngFileHeader(file)) {
+        } else if (ImageUtils.isPngFileHeader(file)) {
             return true;
         }
-        
+
         //for gstreamer formats, check if initialized first, then
         //support audio formats, and video formats
         return false;
     }
-    
+
     @Override
     public boolean isSupported(Node node) {
         if (node == null) {
@@ -244,15 +243,17 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if (file.getSize() == 0) {
             return false;
         }
-        
+
         if (imagePanelInited) {
-            if (isImageSupported(file))
+            if (isImageSupported(file)) {
                 return true;
-        } 
-        
+            }
+        }
+
         if (videoPanelInited && videoPanel.isInited()) {
-            if (isVideoSupported(file))
+            if (isVideoSupported(file)) {
                 return true;
+            }
         }
 
         return false;
@@ -270,11 +271,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         if (containsExt(name, videoExtensions) && deleted) {
             return 0;
-        } 
-        else {
+        } else {
             return 7;
         }
-        
+
     }
 
     private static boolean containsExt(String name, Set<String> exts) {

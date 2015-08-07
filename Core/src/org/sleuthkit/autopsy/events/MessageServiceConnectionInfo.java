@@ -44,9 +44,9 @@ public final class MessageServiceConnectionInfo {
      *
      * @param userName The user name to use for a message service connection.
      * @param password The password to use for a message service connection.
-     * @param host The host to use for a message service connection. May be a
-     * host name or an IP address.
-     * @param port The port number to use for a message service connection.
+     * @param host     The host to use for a message service connection. May be
+     *                 a host name or an IP address.
+     * @param port     The port number to use for a message service connection.
      */
     public MessageServiceConnectionInfo(String userName, String password, String host, String port) {
         this.userName = userName;
@@ -96,8 +96,9 @@ public final class MessageServiceConnectionInfo {
      * Gets the TCP URI to use for a message service connection.
      *
      * @return The URI.
+     *
      * @throws URISyntaxException if the connection info is not for a valid TCP
-     * URI.
+     *                            URI.
      */
     public URI getURI() throws URISyntaxException {
         return new URI(String.format(MESSAGE_SERVICE_URI, host, port));

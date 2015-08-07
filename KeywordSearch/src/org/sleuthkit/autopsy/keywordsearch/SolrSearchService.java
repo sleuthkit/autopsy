@@ -36,23 +36,26 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * An implementation of the KeywordSearchService interface that uses
- * Solr for text indexing and search.
+ * An implementation of the KeywordSearchService interface that uses Solr for
+ * text indexing and search.
  */
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
+
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        if (artifact == null)
+        if (artifact == null) {
             return;
-        
+        }
+
         // We only support artifact indexing for Autopsy versions that use
         // the negative range for artifact ids.
         long artifactId = artifact.getArtifactID();
-        
-        if (artifactId > 0)
+
+        if (artifactId > 0) {
             return;
-        
+        }
+
         Case currentCase;
         try {
             currentCase = Case.getCurrentCase();
@@ -60,25 +63,28 @@ public class SolrSearchService implements KeywordSearchService {
             // thorown by Case.getCurrentCase() if currentCase is null
             return;
         }
-        
+
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
-        if (sleuthkitCase == null)
+        if (sleuthkitCase == null) {
             return;
-        
+        }
+
         Content dataSource;
         AbstractFile abstractFile = sleuthkitCase.getAbstractFileById(artifact.getObjectID());
-        if (abstractFile != null)
+        if (abstractFile != null) {
             dataSource = abstractFile.getDataSource();
-        else
+        } else {
             dataSource = sleuthkitCase.getContentById(artifact.getObjectID());
-        
-        if (dataSource == null)
+        }
+
+        if (dataSource == null) {
             return;
-        
+        }
+
         // Concatenate the string values of all attributes into a single 
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
-        
+
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
             artifactContents.append(attribute.getAttributeTypeDisplayName());
             artifactContents.append(" : ");
@@ -105,34 +111,33 @@ public class SolrSearchService implements KeywordSearchService {
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
 
                 artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
-            }
-            else
+            } else {
                 artifactContents.append(attribute.getDisplayString());
+            }
             artifactContents.append(System.lineSeparator());
         }
-        
-        if (artifactContents.length() == 0)
+
+        if (artifactContents.length() == 0) {
             return;
-        
+        }
+
         // To play by the rules of the existing text markup implementations,
         // we need to (a) index the artifact contents in a "chunk" and 
         // (b) create a separate index entry for the base artifact.
         // We distinguish artifact content from file content by applying a 
         // mask to the artifact id to make its value > 0x8000000000000000 (i.e. negative).
-
         // First, create an index entry for the base artifact.
         HashMap<String, String> solrFields = new HashMap<>();
         String documentId = Long.toString(artifactId);
 
         solrFields.put(Server.Schema.ID.toString(), documentId);
-        
+
         // Set the IMAGE_ID field.
         solrFields.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
 
         try {
             Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
-        }
-        catch (Ingester.IngesterException ex) {
+        } catch (Ingester.IngesterException ex) {
         }
 
         // Next create the index entry for the document content.
@@ -142,13 +147,12 @@ public class SolrSearchService implements KeywordSearchService {
 
         documentId += "_" + Long.toString(chunkId);
         solrFields.replace(Server.Schema.ID.toString(), documentId);
-        
+
         StringStream contentStream = new StringStream(artifactContents.toString());
-        
+
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
-        }
-        catch (Ingester.IngesterException ex) {
+        } catch (Ingester.IngesterException ex) {
         }
     }
 
@@ -157,19 +161,18 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             String host = UserPreferences.getIndexingServerHost();
             String port = UserPreferences.getIndexingServerPort();
-            if (host.isEmpty() || port.isEmpty()){
+            if (host.isEmpty() || port.isEmpty()) {
                 return false;
             }
             HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
             KeywordSearch.getServer().connectToSolrServer(solrServer);
-        }
-        catch (SolrServerException | IOException ex) {
+        } catch (SolrServerException | IOException ex) {
             return false;
         }
-        
+
         return true;
     }
-    
+
     @Override
     public void close() throws IOException {
     }

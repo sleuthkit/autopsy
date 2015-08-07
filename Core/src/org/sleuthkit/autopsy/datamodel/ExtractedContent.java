@@ -126,6 +126,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * more specific form elsewhere in the tree.
      */
     private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.ARTIFACT_TYPE> {
+
         private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow = new ArrayList<>();
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
@@ -141,22 +142,21 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
         }
-        
+
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 /**
-                 * This is a stop gap measure until a different way of
-                 * handling the closing of cases is worked out. Currently,
-                 * remote events may be received for a case that is already
-                 * closed.
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
                  */
                 try {
                     Case.getCurrentCase();
                     /**
-                     * Due to some unresolved issues with how cases are
-                     * closed, it is possible for the event to have a null
-                     * oldValue if the event is a remote event.
+                     * Due to some unresolved issues with how cases are closed,
+                     * it is possible for the event to have a null oldValue if
+                     * the event is a remote event.
                      */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                     if (null != event && doNotShow.contains(event.getArtifactType()) == false) {
@@ -170,10 +170,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
             } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                 /**
-                 * This is a stop gap measure until a different way of
-                 * handling the closing of cases is worked out. Currently,
-                 * remote events may be received for a case that is already
-                 * closed.
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
                  */
                 try {
                     Case.getCurrentCase();
@@ -183,8 +182,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * Case is closed, do nothing.
                      */
                 }
-            }
-            else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                 // case was closed. Remove listeners so that we don't get called with a stale case handle
                 if (evt.getNewValue() == null) {
                     removeNotify();
@@ -217,11 +215,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     inUse.removeAll(doNotShow);
                     Collections.sort(inUse,
                             new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
-                        @Override
-                        public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
-                            return a.getDisplayName().compareTo(b.getDisplayName());
-                        }
-                    });
+                                @Override
+                                public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
+                                    return a.getDisplayName().compareTo(b.getDisplayName());
+                                }
+                            });
                     list.addAll(inUse);
 
                     // the create node method will get called only for new types
@@ -270,7 +268,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase == null) {
                 return;
             }
-            
+
             // NOTE: This completely destroys our lazy-loading ideal
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
@@ -381,7 +379,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super();
             this.type = type;
         }
-        
+
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -444,7 +442,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            
+
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());

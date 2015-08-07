@@ -70,7 +70,7 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
         public AbstractFile visit(org.sleuthkit.datamodel.File f) {
             return f;
         }
-        
+
         @Override
         public AbstractFile visit(org.sleuthkit.datamodel.LocalFile lf) {
             return lf;
@@ -104,10 +104,10 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
             doSearch();
         } else {
             JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbSearchAction.dlgMsg.noFilesHaveMD5Calculated"),
-                                          NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbSearchAction.dlgMsg.noFilesHaveMD5Calculated"),
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.openide.util.NbBundle;
@@ -26,14 +25,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * Representation of single keyword to search for
  */
 class Keyword {
+
     private String keywordString;   // keyword to search for
     private boolean isLiteral;  // false if reg exp
     private boolean isWholeword; // false if match a substring
     private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
 
     /**
-     * 
-     * @param query Keyword to search for
+     *
+     * @param query     Keyword to search for
      * @param isLiteral false if reg exp
      */
     Keyword(String query, boolean isLiteral) {
@@ -41,40 +41,41 @@ class Keyword {
         this.isLiteral = isLiteral;
         this.isWholeword = true;
     }
-    
+
     /**
-     * 
-     * @param query Keyword to search for
-     * @param isLiteral false if reg exp
-     * @param isWholeword false to match substring (undefined behavior if regexp is true)
+     *
+     * @param query       Keyword to search for
+     * @param isLiteral   false if reg exp
+     * @param isWholeword false to match substring (undefined behavior if regexp
+     *                    is true)
      */
     Keyword(String query, boolean isLiteral, boolean isWholeword) {
         this.keywordString = query;
         this.isLiteral = isLiteral;
         this.isWholeword = isWholeword;
     }
-    
+
     /**
-     * 
-     * @param query Keyword to search for
-     * @param isLiteral false if reg exp
-     * @param keywordType 
+     *
+     * @param query       Keyword to search for
+     * @param isLiteral   false if reg exp
+     * @param keywordType
      */
     Keyword(String query, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
         this(query, isLiteral);
         this.keywordType = keywordType;
     }
-    
+
     void setType(BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
         this.keywordType = keywordType;
     }
-    
+
     BlackboardAttribute.ATTRIBUTE_TYPE getType() {
         return this.keywordType;
     }
 
     /**
-     * 
+     *
      * @return Keyword to search for
      */
     String getQuery() {
@@ -84,7 +85,7 @@ class Keyword {
     boolean isLiteral() {
         return isLiteral;
     }
-    
+
     boolean isWholeword() {
         return isWholeword;
     }
@@ -93,7 +94,7 @@ class Keyword {
     public String toString() {
         return NbBundle.getMessage(this.getClass(), "Keyword.toString.text", keywordString, isLiteral, keywordType);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

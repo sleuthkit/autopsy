@@ -573,7 +573,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     if (currentCase.getDataSources().size() == 1) {
                         SwingUtilities.invokeLater(() -> {
                             CoreComponentControl.openCoreWindows();
-                        });                        
+                        });
                     }
                 } catch (IllegalStateException | TskCoreException notUsed) {
                     /**
@@ -777,12 +777,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
 
     }
-    
+
     /**
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName Name of the root node to match, may be null.
+     * @param rootNodeName               Name of the root node to match, may be
+     *                                   null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {

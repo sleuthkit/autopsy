@@ -50,8 +50,8 @@ abstract class TagDeletedEvent<T extends Tag> extends AutopsyEvent implements Se
     /**
      * Base Class for info about a deleted tag. This is sent as the old value in
      * the event, since we are not serializing the Tag it self, and we can't
-     * look it up by id, like we do for added tags, because it doesn't exist
-     * in the db any more.
+     * look it up by id, like we do for added tags, because it doesn't exist in
+     * the db any more.
      *
      * @param <T> the subtype of Tag, BlackBoardArtifactTag or ContentTag
      */

@@ -24,35 +24,37 @@ import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 
-/** Filter for text matching */
+/**
+ * Filter for text matching
+ */
 public class TextFilter extends AbstractFilter {
-    
+
     public TextFilter() {
     }
-    
+
     public TextFilter(String text) {
         this.text.set(text);
     }
-    
+
     private final SimpleStringProperty text = new SimpleStringProperty();
-    
+
     synchronized public void setText(String text) {
         this.text.set(text);
     }
-    
+
     @Override
     public String getDisplayName() {
         return NbBundle.getMessage(this.getClass(), "TextFilter.displayName.text");
     }
-    
+
     synchronized public String getText() {
         return text.getValue();
     }
-    
+
     public Property<String> textProperty() {
         return text;
     }
-    
+
     @Override
     synchronized public TextFilter copyOf() {
         TextFilter textFilter = new TextFilter(getText());
@@ -60,12 +62,12 @@ public class TextFilter extends AbstractFilter {
         textFilter.setDisabled(isDisabled());
         return textFilter;
     }
-    
+
     @Override
     public String getHTMLReportString() {
         return "LOWER(text) LIKE LOWER(\'" + StringUtils.defaultIfBlank(text.getValue(), "") + "\')" + getStringCheckBox(); // NON-NLS
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -75,18 +77,18 @@ public class TextFilter extends AbstractFilter {
             return false;
         }
         final TextFilter other = (TextFilter) obj;
-        
+
         if (isActive() != other.isActive()) {
             return false;
         }
         return Objects.equals(text.get(), other.text.get());
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 5;
         hash = 29 * hash + Objects.hashCode(this.text.get());
         return hash;
     }
-    
+
 }

@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.BlackboardResultWriter;
 
 /**
- * Wrapper over KeywordSearch Solr server singleton.
- * The class also provides some global types and property change support on the server events.
+ * Wrapper over KeywordSearch Solr server singleton. The class also provides
+ * some global types and property change support on the server events.
  */
 public class KeywordSearch {
 
@@ -44,7 +44,9 @@ public class KeywordSearch {
     //a separate logger from framework logs
     private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
     private static final org.sleuthkit.autopsy.coreutils.Logger logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(Case.class.getName());
+
     public enum QueryType {
+
         LITERAL, REGEX
     };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT"; //NON-NLS
@@ -88,27 +90,25 @@ public class KeywordSearch {
     static Logger getTikaLogger() {
         return TIKA_LOGGER;
     }
-    
 
     public static void addNumIndexedFilesChangeListener(PropertyChangeListener l) {
         changeSupport.addPropertyChangeListener(NUM_FILES_CHANGE_EVT, l);
     }
-    
+
     public static void removeNumIndexedFilesChangeListener(PropertyChangeListener l) {
         changeSupport.removePropertyChangeListener(l);
     }
-    
+
     public static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
-        
+
         try {
             changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "KeywordSearch listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.moduleErr"),
-                                          NbBundle.getMessage(KeywordSearch.class,
-                                                              "KeywordSearch.fireNumIdxFileChg.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(KeywordSearch.class,
+                            "KeywordSearch.fireNumIdxFileChg.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
@@ -126,9 +126,11 @@ public class KeywordSearch {
 
             final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                /* don't call getOld/NewValue() unless they are needed, since
+                /*
+                 * don't call getOld/NewValue() unless they are needed, since
                  * they might do expensive db operations to load transient
-                 * values lost in serialization */
+                 * values lost in serialization
+                 */
                 Object oldValue = evt.getOldValue();
                 Object newValue = evt.getNewValue();
                 if (newValue != null) {

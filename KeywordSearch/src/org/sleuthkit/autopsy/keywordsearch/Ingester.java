@@ -70,12 +70,11 @@ class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     private static Ingester instance;
-   
+
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
-    private static final int MAX_DOC_CHUNK_SIZE = 1024*1024;
+    private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
     private static final String docContentEncoding = "UTF-8"; //NON-NLS
-
 
     private Ingester() {
     }
@@ -103,8 +102,9 @@ class Ingester {
      * index. commit() should be called once you're done ingesting files.
      *
      * @param afscs File AbstractFileStringContentStream to ingest
+     *
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFileStringContentStream afscs) throws IngesterException {
         Map<String, String> params = getContentFields(afscs.getSourceContent());
@@ -112,15 +112,16 @@ class Ingester {
     }
 
     /**
-     * Sends a TextExtractor to Solr to have its content extracted and
-     * added to the index. commit() should be called once you're done ingesting
-     * files. FileExtract represents a parent of extracted file with actual
-     * content. The parent itself has no content, only meta data and is used to
-     * associate the extracted AbstractFileChunk
+     * Sends a TextExtractor to Solr to have its content extracted and added to
+     * the index. commit() should be called once you're done ingesting files.
+     * FileExtract represents a parent of extracted file with actual content.
+     * The parent itself has no content, only meta data and is used to associate
+     * the extracted AbstractFileChunk
      *
      * @param fe TextExtractor to ingest
+     *
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(TextExtractor fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
@@ -135,11 +136,12 @@ class Ingester {
      * added to the index. commit() should be called once you're done ingesting
      * files. AbstractFileChunk represents a file chunk and its chunk content.
      *
-     * @param fec AbstractFileChunk to ingest
+     * @param fec  AbstractFileChunk to ingest
      * @param size approx. size of the stream in bytes, used for timeout
-     * estimation
+     *             estimation
+     *
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
@@ -158,11 +160,12 @@ class Ingester {
      * file is a directory or ingestContent is set to false, the file name is
      * indexed only.
      *
-     * @param file File to ingest
+     * @param file          File to ingest
      * @param ingestContent if true, index the file and the content, otherwise
-     * indesx metadata only
+     *                      indesx metadata only
+     *
      * @throws IngesterException if there was an error processing a specific
-     * file, but the Solr server is probably fine.
+     *                           file, but the Solr server is probably fine.
      */
     void ingest(AbstractFile file, boolean ingestContent) throws IngesterException {
         if (ingestContent == false || file.isDir()) {
@@ -176,6 +179,7 @@ class Ingester {
      * Creates a field map from FsContent, that is later sent to Solr
      *
      * @param fsc FsContent to get fields from
+     *
      * @return the map
      */
     private Map<String, String> getContentFields(AbstractContent fsc) {
@@ -186,7 +190,7 @@ class Ingester {
      * Visitor used to create param list to send to SOLR index.
      */
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
-        
+
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
             return new HashMap<String, String>();
@@ -198,7 +202,7 @@ class Ingester {
             getCommonFileContentFields(params, f);
             return params;
         }
-        
+
         @Override
         public Map<String, String> visit(DerivedFile df) {
             Map<String, String> params = getCommonFields(df);
@@ -218,7 +222,7 @@ class Ingester {
             // layout files do not have times
             return getCommonFields(lf);
         }
-        
+
         @Override
         public Map<String, String> visit(LocalFile lf) {
             Map<String, String> params = getCommonFields(lf);
@@ -233,7 +237,6 @@ class Ingester {
             params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
             return params;
         }
-        
 
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
@@ -252,32 +255,32 @@ class Ingester {
         }
     }
 
-    
     /**
-     * Indexing method that bypasses Tika, assumes pure text
-     * It reads and converts the entire content stream to string, assuming UTF8
-     * since we can't use streaming approach for Solr /update handler.
-     * This should be safe, since all content is now in max 1MB chunks.
-     * 
-     * TODO see if can use a byte or string streaming way to add content to /update handler
-     * e.g. with XMLUpdateRequestHandler (deprecated in SOlr 4.0.0), see if possible 
-     * to stream with UpdateRequestHandler
-     * 
+     * Indexing method that bypasses Tika, assumes pure text It reads and
+     * converts the entire content stream to string, assuming UTF8 since we
+     * can't use streaming approach for Solr /update handler. This should be
+     * safe, since all content is now in max 1MB chunks.
+     *
+     * TODO see if can use a byte or string streaming way to add content to
+     * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
+     * 4.0.0), see if possible to stream with UpdateRequestHandler
+     *
      * @param cs
      * @param fields
      * @param size
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-     void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
-        
+    void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),
-                                             "Ingester.ingest.exception.unknownImgId.msg", cs.getName());
+                    "Ingester.ingest.exception.unknownImgId.msg", cs.getName());
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
-        
+
         final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
         SolrInputDocument updateDoc = new SolrInputDocument();
 
@@ -287,9 +290,8 @@ class Ingester {
 
         //using size here, but we are no longer ingesting entire files
         //size is normally a chunk size, up to 1MB
-    
         if (size > 0) {
- 
+
             InputStream is = null;
             int read = 0;
             try {
@@ -298,7 +300,7 @@ class Ingester {
             } catch (IOException ex) {
                 throw new IngesterException(
                         NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.cantReadStream.msg",
-                                            cs.getName()));
+                                cs.getName()));
             } finally {
                 try {
                     is.close();
@@ -318,12 +320,10 @@ class Ingester {
             } else {
                 updateDoc.addField(Server.Schema.CONTENT.toString(), "");
             }
-        }
-        else {
+        } else {
             //no content, such as case when 0th chunk indexed
             updateDoc.addField(Server.Schema.CONTENT.toString(), "");
         }
-        
 
         try {
             //TODO consider timeout thread, or vary socket timeout based on size of indexed content
@@ -334,20 +334,19 @@ class Ingester {
                     NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.err.msg", cs.getName()), ex);
         }
 
-
     }
 
     /**
      * Delegate method actually performing the indexing work for objects
      * implementing ContentStream
      *
-     * @param cs ContentStream to ingest
+     * @param cs     ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content - used to determine the Solr timeout, not
-     * used to populate meta-data
+     * @param size   size of the content - used to determine the Solr timeout,
+     *               not used to populate meta-data
      *
      * @throws IngesterException if there was an error processing a specific
-     * content, but the Solr server is probably fine.
+     *                           content, but the Solr server is probably fine.
      */
     private void ingestExtract(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract"); //NON-NLS
@@ -373,11 +372,11 @@ class Ingester {
             hardSolrRestart();
             throw new IngesterException(
                     NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.solrTimeout.msg",
-                                        fields.get("id"), fields.get("file_name"))); //NON-NLS
+                            fields.get("id"), fields.get("file_name"))); //NON-NLS
         } catch (Exception e) {
             throw new IngesterException(
                     NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.probPostToSolr.msg",
-                                        fields.get("id"), fields.get("file_name")), e); //NON-NLS
+                            fields.get("id"), fields.get("file_name")), e); //NON-NLS
         }
         uncommitedIngests = true;
     }
@@ -413,6 +412,7 @@ class Ingester {
      * return timeout that should be used to index the content
      *
      * @param size size of the content
+     *
      * @return time in seconds to use a timeout
      */
     static int getTimeout(long size) {
@@ -464,9 +464,9 @@ class Ingester {
                 // but it's okay to continue with other documents
                 if (ec.equals(ErrorCode.SERVER_ERROR)) {
                     throw new RuntimeException(NbBundle.getMessage(this.getClass(),
-                                                                   "Ingester.UpRequestTask.run.exception.probPostToSolr.msg",
-                                                                   ec),
-                                               ex);
+                            "Ingester.UpRequestTask.run.exception.probPostToSolr.msg",
+                            ec),
+                            ex);
                 } else {
                     // shouldn't get any other error codes
                     throw ex;
@@ -494,7 +494,7 @@ class Ingester {
     /**
      * Helper to set document fields
      *
-     * @param up request with document
+     * @param up     request with document
      * @param fields map of field-names->values
      */
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
