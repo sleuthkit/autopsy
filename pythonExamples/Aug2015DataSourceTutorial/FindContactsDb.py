@@ -132,28 +132,40 @@ class ContactsDbIngestModule(DataSourceIngestModule):
             ContentUtils.writeToFile(file, File(lclDbPath))
                         
             # Open the DB using JDBC
-            Class.forName("org.sqlite.JDBC").newInstance()
-            dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % lclDbPath)
+            try: 
+                Class.forName("org.sqlite.JDBC").newInstance()
+                dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % lclDbPath)
+            except:
+                self.log(Level.INFO, "Could not open database file (not SQLite) " + file.getName())
+                return IngestModule.ProcessResult.OK
             
             # Query the contacts table in the database and get all columns. 
-            stmt = dbConn.createStatement()
-            resultSet = stmt.executeQuery("SELECT * FROM contacts")
-            
+            try: 
+                stmt = dbConn.createStatement()
+                resultSet = stmt.executeQuery("SELECT * FROM contacts")
+            except:
+                self.log(Level.INFO, "Error querying database for contacts table")
+                return IngestModule.ProcessResult.OK
+
             # Cycle through each row and create artifacts
             while resultSet.next():
+                try: 
+                    name  = resultSet.getString("name")
+                    email = resultSet.getString("email")
+                    phone = resultSet.getString("phone")
+                except:
+                    self.log(Level.INFO, "Error getting values from contacts table")
+                
                 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
                 art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-
-                name  = resultSet.getString("name")
+                
                 art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, name))
                 
-                email = resultSet.getString("email")
                 art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, email))
 
-                phone = resultSet.getString("phone")
                 art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, phone))
                 
