@@ -87,10 +87,12 @@ class SevenZipExtractor {
     private String getLocalRootAbsPath(String uniqueArchiveFileName) {
         return moduleDirAbsolute + File.separator + uniqueArchiveFileName;
     }
+
     /**
      * Enum of mimetypes which support archive extraction
      */
     private enum SupportedArchiveExtractionFormats {
+
         ZIP("application/zip"),
         SEVENZ("application/x-7z-compressed"),
         GZIP("application/gzip"),
@@ -140,8 +142,9 @@ class SevenZipExtractor {
      * based detection fails.
      *
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
+     *
      * @return This method returns true if the file format is currently
-     * supported. Else it returns false.
+     *         supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -175,8 +178,9 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName the parent archive
+     * @param archiveName     the parent archive
      * @param archiveFileItem the archive item
+     *
      * @return true if potential zip bomb, false otherwise
      */
     private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISimpleInArchiveItem archiveFileItem) {
@@ -194,7 +198,7 @@ class SevenZipExtractor {
                 logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveFile.getName(), archiveFileItem.getPath()}); //NON-NLS
                 return false;
             }
-            
+
             int cRatio = (int) (archiveItemSize / archiveItemPackedSize);
 
             if (cRatio >= MAX_COMPRESSION_RATIO) {
@@ -228,6 +232,7 @@ class SevenZipExtractor {
      * SevenZip.openInArchive()
      *
      * @param archiveFile file to check file extension
+     *
      * @return input parameter for SevenZip.openInArchive()
      */
     private ArchiveFormat get7ZipOptions(AbstractFile archiveFile) {
@@ -272,7 +277,8 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile file to unpack
+     * @param archiveFile     file to unpack
+     *
      * @return list of unpacked derived files
      */
     void unpack(AbstractFile archiveFile) {
@@ -282,7 +288,7 @@ class SevenZipExtractor {
         } catch (TskCoreException ex) {
             archiveFilePath = archiveFile.getParentPath() + archiveFile.getName();
         }
-        
+
         //check if already has derived files, skip
         try {
             if (archiveFile.hasChildren()) {
@@ -296,8 +302,7 @@ class SevenZipExtractor {
             logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFilePath); //NON-NLS
             return;
         }
-        
-    
+
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
 
         //recursion depth check for zip bomb
@@ -541,7 +546,7 @@ class SevenZipExtractor {
         } catch (SevenZipException ex) {
             logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
-           
+
             // print a message if the file is allocated
             if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
                 String msg = NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.msg",
@@ -593,7 +598,7 @@ class SevenZipExtractor {
         }
 
         // adding unpacked extracted derived files to the job after closing relevant resources.
-         if (!unpackedFiles.isEmpty()) {
+        if (!unpackedFiles.isEmpty()) {
             //currently sending a single event for all new files
             services.fireModuleContentEvent(new ModuleContentEvent(archiveFile));
             context.addFilesToJob(unpackedFiles);
@@ -655,8 +660,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         * saved to
-         * @param archiveFile Archive file being extracted
+         *                      saved to
+         * @param archiveFile   Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -672,6 +677,7 @@ class SevenZipExtractor {
          * returned.
          *
          * @param filePath file path with 1 or more tokens separated by /
+         *
          * @return child node for the last file token in the filePath
          */
         UnpackedNode addNode(String filePath) {
@@ -689,6 +695,7 @@ class SevenZipExtractor {
          * recursive method that traverses the path
          *
          * @param tokenPath
+         *
          * @return
          */
         private UnpackedNode addNode(UnpackedNode parent, List<String> tokenPath) {
@@ -849,6 +856,7 @@ class SevenZipExtractor {
              * get child by name or null if it doesn't exist
              *
              * @param childFileName
+             *
              * @return
              */
             UnpackedNode getChild(String childFileName) {
@@ -896,6 +904,7 @@ class SevenZipExtractor {
          * Search for previously added parent archive by id
          *
          * @param objectId parent archive object id
+         *
          * @return the archive node or null if not found
          */
         Archive findArchive(long objectId) {
@@ -911,8 +920,9 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent parent archive or null
+         * @param parent   parent archive or null
          * @param objectId object id of the new archive
+         *
          * @return the archive added
          */
         Archive addArchive(Archive parent, long objectId) {

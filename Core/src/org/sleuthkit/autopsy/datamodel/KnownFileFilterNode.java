@@ -28,19 +28,19 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * A Filter Node responsible for conditionally filtering out Nodes that 
- * represent known files. 
- * 
+ * A Filter Node responsible for conditionally filtering out Nodes that
+ * represent known files.
+ *
  * Filters known files IF the option to Filter Known files for the given
  * SelectionContext is set. Otherwise, does nothing.
- * 
+ *
  * @author jwallace
  */
 public class KnownFileFilterNode extends FilterNode {
-    
+
     private static boolean filterFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
     private static boolean filterFromViews = UserPreferences.hideKnownFilesInViewsTree();
-            
+
     static {
         UserPreferences.addChangeListener(new PreferenceChangeListener() {
             @Override
@@ -56,18 +56,19 @@ public class KnownFileFilterNode extends FilterNode {
             }
         });
     }
-    
+
     public enum SelectionContext {
+
         DATA_SOURCES(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.dataSources")),
         VIEWS(NbBundle.getMessage(KnownFileFilterNode.class, "KnownFileFilterNode.selectionContext.views")),
         OTHER("");                      // Subnode of another node.
-        
+
         private final String displayName;
-        
+
         SelectionContext(String displayName) {
             this.displayName = displayName;
         }
-        
+
         public static SelectionContext getContextFromName(String name) {
             if (name.equals(DATA_SOURCES.getName())) {
                 return DATA_SOURCES;
@@ -77,32 +78,33 @@ public class KnownFileFilterNode extends FilterNode {
                 return OTHER;
             }
         }
-        
+
         private String getName() {
             return displayName;
         }
     }
-    
+
     /**
      * Create a KnownFileFilterNode from the given Node. Note that the Node
      * should be from the directory tree.
-     * 
+     *
      * @param arg
-     * @param context 
+     * @param context
      */
     public KnownFileFilterNode(Node arg, SelectionContext context) {
-        super(arg, new KnownFileFilterChildren(arg, context));        
+        super(arg, new KnownFileFilterChildren(arg, context));
     }
-    
+
     private KnownFileFilterNode(Node arg, boolean filter) {
         super(arg, new KnownFileFilterChildren(arg, filter));
     }
-    
+
     /**
-     * Get the selection context of a Node in the DirectoryTree. 
-     * 
+     * Get the selection context of a Node in the DirectoryTree.
+     *
      * @param n
-     * @return 
+     *
+     * @return
      */
     public static SelectionContext getSelectionContext(Node n) {
         if (n == null || n.getParentNode() == null) {
@@ -115,25 +117,27 @@ public class KnownFileFilterNode extends FilterNode {
             return getSelectionContext(n.getParentNode());
         }
     }
-    
+
     /**
-    * Complementary class to KnownFileFilterNode. 
-    * 
-    * Filters out children Nodes that represent known files. Otherwise, returns 
-    * the original node wrapped in another instance of the KnownFileFilterNode.
-    * 
-    * @author jwallace
-    */
+     * Complementary class to KnownFileFilterNode.
+     *
+     * Filters out children Nodes that represent known files. Otherwise, returns
+     * the original node wrapped in another instance of the KnownFileFilterNode.
+     *
+     * @author jwallace
+     */
     private static class KnownFileFilterChildren extends FilterNode.Children {
-        
-        /** True if this KnownFileFilterChildren should filter out known files. */
+
+        /**
+         * True if this KnownFileFilterChildren should filter out known files.
+         */
         private boolean filter;
 
-        /** 
+        /**
          * Constructor used when the context has already been determined.
-         * 
+         *
          * @param arg
-         * @param filter 
+         * @param filter
          */
         private KnownFileFilterChildren(Node arg, boolean filter) {
             super(arg);
@@ -142,8 +146,9 @@ public class KnownFileFilterNode extends FilterNode {
 
         /**
          * Constructor used when the context has not been determined.
+         *
          * @param arg
-         * @param context 
+         * @param context
          */
         private KnownFileFilterChildren(Node arg, KnownFileFilterNode.SelectionContext context) {
             super(arg);
@@ -170,7 +175,7 @@ public class KnownFileFilterNode extends FilterNode {
                     return new Node[]{};
                 }
             }
-            return new Node[] { new KnownFileFilterNode(arg, filter) };
+            return new Node[]{new KnownFileFilterNode(arg, filter)};
         }
     }
 }

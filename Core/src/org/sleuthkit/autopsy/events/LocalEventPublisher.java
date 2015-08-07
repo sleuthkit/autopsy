@@ -60,7 +60,7 @@ final class LocalEventPublisher {
     /**
      * Adds an event subscriber to this publisher.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     void addSubscriber(String eventName, PropertyChangeListener subscriber) {

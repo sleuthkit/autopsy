@@ -58,20 +58,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
- class FileSearchPanel extends javax.swing.JPanel {
+class FileSearchPanel extends javax.swing.JPanel {
 
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
-    
+
     /**
      * Creates new form FileSearchPanel
      */
     public FileSearchPanel() {
         initComponents();
         customizeComponents();
-      
+
     }
 
     /**
@@ -158,7 +158,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                     Logger logger = Logger.getLogger(this.getClass().getName());
                     logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex); //NON-NLS
                 }
-                
+
                 if (contentList == null) {
                     contentList = Collections.<AbstractFile>emptyList();
                 }
@@ -192,40 +192,46 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
     }
 
-
-
     /**
      * Gets the SQL query to get the data from the database based on the
      * criteria that user chooses on the FileSearch.
      *
      * @return query the SQL query
+     *
      * @throws
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
-     * if an enabled filter is in an invalid state
+     *                                                                           if
+     *                                                                           an
+     *                                                                           enabled
+     *                                                                           filter
+     *                                                                           is
+     *                                                                           in
+     *                                                                           an
+     *                                                                           invalid
+     *                                                                           state
      */
-     private String getQuery() throws FilterValidationException {
+    private String getQuery() throws FilterValidationException {
 
-         //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
-         String query = "";
-         int i=0;
-         for (FileSearchFilter f : this.getEnabledFilters()) {
-             String result = f.getPredicate();
-             if (!result.isEmpty()) {
-                 if(i>0) {
+        //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
+        String query = "";
+        int i = 0;
+        for (FileSearchFilter f : this.getEnabledFilters()) {
+            String result = f.getPredicate();
+            if (!result.isEmpty()) {
+                if (i > 0) {
                     query += " AND (" + result + ")"; //NON-NLS
-                 }
-                 else {
+                } else {
                     query += " (" + result + ")"; //NON-NLS
-                 }
-                 ++i;
-             }
-         }
+                }
+                ++i;
+            }
+        }
 
-         if (query.isEmpty()) {
-             throw new FilterValidationException(EMPTY_WHERE_CLAUSE);
-         }
-         return query;
-     }
+        if (query.isEmpty()) {
+            throw new FilterValidationException(EMPTY_WHERE_CLAUSE);
+        }
+        return query;
+    }
 
     private Collection<FileSearchFilter> getFilters() {
         Collection<FileSearchFilter> filters = new ArrayList<FileSearchFilter>();

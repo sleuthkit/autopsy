@@ -260,13 +260,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         return dateAxis.getTickMarkLabel(value);
     }
 
-    /** NOTE: Because this method modifies data directly used by the chart,
-     * this method should only be called from JavaFX thread!
+    /**
+     * NOTE: Because this method modifies data directly used by the chart, this
+     * method should only be called from JavaFX thread!
      *
      * @param et the EventType to get the series for
      *
      * @return a Series object to contain all the events with the given
-     *         EventType */
+     *         EventType
+     */
     private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
         XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
         if (series == null) {

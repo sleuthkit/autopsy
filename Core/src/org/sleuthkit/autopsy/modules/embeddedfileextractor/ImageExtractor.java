@@ -62,6 +62,7 @@ class ImageExtractor {
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
+
     /**
      * Enum of mimetypes which support image extraction
      */
@@ -97,14 +98,15 @@ class ImageExtractor {
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
     }
-    
+
     /**
      * This method returns true if the file format is currently supported. Else
      * it returns false. Performs only Apache Tika based detection.
      *
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
+     *
      * @return This method returns true if the file format is currently
-     * supported. Else it returns false.
+     *         supported. Else it returns false.
      */
     boolean isImageExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -199,8 +201,9 @@ class ImageExtractor {
      * Extract images from doc format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromDoc(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -238,8 +241,9 @@ class ImageExtractor {
      * Extract images from docx format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromDocx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -278,8 +282,9 @@ class ImageExtractor {
      * Extract images from ppt format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromPpt(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -349,8 +354,9 @@ class ImageExtractor {
      * Extract images from pptx format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromPptx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -396,8 +402,9 @@ class ImageExtractor {
      * Extract images from xls format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromXls(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -441,8 +448,9 @@ class ImageExtractor {
      * Extract images from xlsx format files.
      *
      * @param af the file from which images are to be extracted.
+     *
      * @return list of extracted images. Returns null in case no images were
-     * extracted.
+     *         extracted.
      */
     private List<ExtractedImage> extractImagesFromXlsx(AbstractFile af) {
         List<ExtractedImage> listOfExtractedImages;
@@ -485,8 +493,8 @@ class ImageExtractor {
      * Writes image to the module output location.
      *
      * @param outputPath Path where images is written
-     * @param data byte representation of the data to be written to the
-     * specified location.
+     * @param data       byte representation of the data to be written to the
+     *                   specified location.
      */
     private void writeExtractedImage(String outputPath, byte[] data) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
@@ -501,7 +509,8 @@ class ImageExtractor {
      * exist, it is created.
      *
      * @param parentFileName name of the abstract file being processed for image
-     * extraction.
+     *                       extraction.
+     *
      * @return path to the image extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
@@ -523,7 +532,8 @@ class ImageExtractor {
      * folder.
      *
      * @param fileName name of the the file for which the path is to be
-     * generated.
+     *                 generated.
+     *
      * @return
      */
     private String getFileRelativePath(String fileName) {

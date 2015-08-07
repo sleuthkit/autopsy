@@ -40,7 +40,7 @@ public final class IngestProgressSnapshotDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestProgressSnapshotDialog.title.text");
     private static final Dimension DIMENSIONS = new Dimension(500, 300);
-    
+
     /**
      * Constructs a non-modal instance of the dialog with its own frame.
      */
@@ -52,7 +52,8 @@ public final class IngestProgressSnapshotDialog extends JDialog {
     /**
      * Constructs an instance of the dialog with its own frame. Could be modal.
      *
-     * @param owner - the owner of this dialog. If this dialog should be modal, the owner gets set to non modal.
+     * @param owner         - the owner of this dialog. If this dialog should be
+     *                      modal, the owner gets set to non modal.
      * @param shouldBeModal - true if this should be modal, false otherwise.
      */
     public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal) {

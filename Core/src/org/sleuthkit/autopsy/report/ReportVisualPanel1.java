@@ -40,7 +40,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 import org.sleuthkit.autopsy.report.ReportHTML;
 
- final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
+final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
+
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private ReportWizardPanel1 wizPanel;
     private List<ReportModule> modules = new ArrayList<>();
@@ -59,29 +60,29 @@ import org.sleuthkit.autopsy.report.ReportHTML;
         descriptionTextPane.setEditable(false);
         initModules();
     }
-    
+
     // Initialize the list of ReportModules
     private void initModules() {
         for (TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
             tableModules.add(module);
             modules.add(module);
         }
-        
+
         for (GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
             generalModules.add(module);
             modules.add(module);
         }
-        
+
         for (GeneralReportModule module : JythonModuleLoader.getGeneralReportModules()) {
             generalModules.add(module);
             modules.add(module);
         }
-                
+
         for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
             fileModules.add(module);
             modules.add(module);
         }
-        
+
         Collections.sort(modules, new Comparator<ReportModule>() {
             @Override
             public int compare(ReportModule rm1, ReportModule rm2) {
@@ -94,16 +95,17 @@ import org.sleuthkit.autopsy.report.ReportHTML;
                 if (!rm1isTable && rm2isTable) {
                     return 1;
                 }
-                
+
                 return rm1.getName().compareTo(rm2.getName());
             }
         });
-        
+
         // Results-HTML should always be first in the list of Report Modules.
         int indexOfHTMLReportModule = 0;
-        for(ReportModule module : modules) {
-            if(module instanceof ReportHTML)
+        for (ReportModule module : modules) {
+            if (module instanceof ReportHTML) {
                 break;
+            }
             indexOfHTMLReportModule++;
         }
         swap(modules, indexOfHTMLReportModule, 0);
@@ -119,15 +121,15 @@ import org.sleuthkit.autopsy.report.ReportHTML;
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "ReportVisualPanel1.getName.text");
     }
-    
+
     public ReportModule getSelectedModule() {
         return modules.get(selectedIndex);
     }
-    
+
     /**
      * Get the Selection status of the TableModules.
-     * 
-     * @return 
+     *
+     * @return
      */
     Map<TableReportModule, Boolean> getTableModuleStates() {
         Map<TableReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
@@ -137,11 +139,11 @@ import org.sleuthkit.autopsy.report.ReportHTML;
         }
         return reportModuleStates;
     }
-    
+
     /**
      * Get the selection status of the GeneralReportModules.
-     * 
-     * @return 
+     *
+     * @return
      */
     Map<GeneralReportModule, Boolean> getGeneralModuleStates() {
         Map<GeneralReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
@@ -151,11 +153,11 @@ import org.sleuthkit.autopsy.report.ReportHTML;
         }
         return reportModuleStates;
     }
-    
+
     /**
      * Get the selection status of the FileReportModules.
-     * 
-     * @return 
+     *
+     * @return
      */
     Map<FileReportModule, Boolean> getFileModuleStates() {
         Map<FileReportModule, Boolean> reportModuleStates = new LinkedHashMap<>();
@@ -165,7 +167,7 @@ import org.sleuthkit.autopsy.report.ReportHTML;
         }
         return reportModuleStates;
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -250,7 +252,7 @@ import org.sleuthkit.autopsy.report.ReportHTML;
     private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JLabel reportModulesLabel;
     // End of variables declaration//GEN-END:variables
-   
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
@@ -287,6 +289,6 @@ import org.sleuthkit.autopsy.report.ReportHTML;
             this.setSelected(isSelected);
             return this;
         }
-        
+
     }
 }

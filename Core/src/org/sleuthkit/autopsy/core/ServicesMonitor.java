@@ -146,11 +146,18 @@ public class ServicesMonitor {
      * changes.
      *
      * @param service Name of the service.
-     * @param status Updated status for the service.
+     * @param status  Updated status for the service.
      * @param details Details of the event.
+     *
      * @throws
-     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException
-     * Thrown if either of input parameters is null.
+     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException Thrown
+     *                                                                   if
+     *                                                                   either
+     *                                                                   of
+     *                                                                   input
+     *                                                                   parameters
+     *                                                                   is
+     *                                                                   null.
      */
     public void setServiceStatus(String service, String status, String details) throws ServicesMonitorException {
 
@@ -177,7 +184,7 @@ public class ServicesMonitor {
             // custom service that is not listed in ServicesMonitor.Service enum. Use service name as display name.
             serviceDisplayName = service;
         }
-        
+
         if (status.equals(ServiceStatus.UP.toString())) {
             logger.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
@@ -201,20 +208,28 @@ public class ServicesMonitor {
      * Get last status update for a service.
      *
      * @param service Name of the service.
+     *
      * @return ServiceStatus Status for the service.
+     *
      * @throws
-     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException
-     * Thrown if service name is null or service doesn't exist.
+     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException Thrown
+     *                                                                   if
+     *                                                                   service
+     *                                                                   name is
+     *                                                                   null or
+     *                                                                   service
+     *                                                                   doesn't
+     *                                                                   exist.
      */
     public String getServiceStatus(String service) throws ServicesMonitorException {
 
         if (service == null) {
             throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
         }
-        
+
         // if request is for one of our "core" services - perform an on demand check
         // to make sure we have the latest status.
-        if (servicesList.contains(service)){
+        if (servicesList.contains(service)) {
             checkServiceStatus(service);
         }
 
@@ -310,7 +325,7 @@ public class ServicesMonitor {
     /**
      * Adds an event subscriber to this publisher.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -330,7 +345,7 @@ public class ServicesMonitor {
     /**
      * Removes an event subscriber from this publisher.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -350,11 +365,11 @@ public class ServicesMonitor {
     /**
      * Verifies connectivity to all services.
      */
-    private void checkAllServices() {      
-        if (!UserPreferences.getIsMultiUserModeEnabled()){
+    private void checkAllServices() {
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
             return;
         }
-        
+
         for (String service : servicesList) {
             checkServiceStatus(service);
         }

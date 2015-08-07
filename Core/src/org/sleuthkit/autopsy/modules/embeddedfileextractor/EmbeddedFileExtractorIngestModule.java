@@ -139,6 +139,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
      * Get local relative path to the unpacked archive root
      *
      * @param archiveFile
+     *
      * @return
      */
     static String getUniqueName(AbstractFile archiveFile) {

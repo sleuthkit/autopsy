@@ -64,7 +64,7 @@ class MissingImageDialog extends javax.swing.JDialog {
         fc.addChoosableFileFilter(rawFilter);
         fc.addChoosableFileFilter(encaseFilter);
         fc.setFileFilter(allFilter);
-     
+
         customInit();
     }
 
@@ -264,7 +264,7 @@ class MissingImageDialog extends javax.swing.JDialog {
             String newPath = pathNameTextField.getText();
             //TODO handle local files
             db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
-            this.dispose();            
+            this.dispose();
         } catch (TskCoreException ex) {
             lbWarning.setText(NbBundle.getMessage(this.getClass(), "MissingImageDialog.ErrorSettingImage"));
             logger.log(Level.WARNING, "Error setting image paths", ex); //NON-NLS
@@ -318,9 +318,9 @@ class MissingImageDialog extends javax.swing.JDialog {
     void cancel() {
         int ret = JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(),
-                "MissingImageDialog.confDlg.noFileSel.msg"),
+                        "MissingImageDialog.confDlg.noFileSel.msg"),
                 NbBundle.getMessage(this.getClass(),
-                "MissingImageDialog.confDlg.noFileSel.title"),
+                        "MissingImageDialog.confDlg.noFileSel.title"),
                 JOptionPane.YES_NO_OPTION);
         if (ret == JOptionPane.YES_OPTION) {
             this.dispose();

@@ -105,8 +105,8 @@ class TangoMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, direction));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, decodeMessage(conv_id, payload)));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(TangoMessageAnalyzer.class,
-                                                                             "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
+                        NbBundle.getMessage(TangoMessageAnalyzer.class,
+                                "TangoMessageAnalyzer.bbAttribute.tangoMessage")));
             }
 
         } catch (Exception e) {

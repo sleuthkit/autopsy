@@ -236,8 +236,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(AddContentTagAction.getInstance());
                 actions.add(AddBlackboardArtifactTagAction.getInstance());
                 actions.addAll(ContextMenuExtensionPoint.getActions());
-            }
-            else{
+            } else {
                 // There's no specific file associated with the artifact, but
                 // we can still tag the artifact itself
                 actions.add(null);
@@ -245,8 +244,6 @@ public class DataResultFilterNode extends FilterNode {
             }
             return actions;
         }
-
-      
 
         @Override
         public List<Action> visit(Reports.ReportsListNode ditem) {
@@ -500,12 +497,12 @@ public class DataResultFilterNode extends FilterNode {
                         // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
                         Node newSelection = children.findChild(dataModelNode.getName());
 
-                        /* We got null here when we were viewing a ZIP file in
-                         * the Views -> Archives area and double clicking on
-                         * it got to this code. It tried to find the child in
-                         * the tree and didn't find it. An exception was
-                         * then thrown from setting the selected node to be
-                         * null.
+                        /*
+                         * We got null here when we were viewing a ZIP file in
+                         * the Views -> Archives area and double clicking on it
+                         * got to this code. It tried to find the child in the
+                         * tree and didn't find it. An exception was then thrown
+                         * from setting the selected node to be null.
                          */
                         if (newSelection != null) {
                             try {

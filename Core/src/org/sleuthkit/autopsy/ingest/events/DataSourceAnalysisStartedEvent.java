@@ -34,11 +34,11 @@ public class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEvent impl
      * Constructs an event published when analysis (ingest) of a data source
      * included in an ingest job is started.
      *
-     * @param ingestJobId The identifier of the ingest job, specific to this
-     * node.
+     * @param ingestJobId           The identifier of the ingest job, specific
+     *                              to this node.
      * @param dataSourceIngestJobId The identifier of the data source ingest
-     * job,specific to this node.
-     * @param dataSource The data source.
+     *                              job,specific to this node.
+     * @param dataSource            The data source.
      */
     public DataSourceAnalysisStartedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, ingestJobId, dataSourceIngestJobId, dataSource);

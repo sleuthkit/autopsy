@@ -40,9 +40,10 @@ public final class DataSourceAddedEvent extends AutopsyEvent implements Serializ
     /**
      * Constructs an event published when a data source is added to a case.
      *
-     * @param dataSource The data source that was added.
+     * @param dataSource   The data source that was added.
      * @param dataSourceId A unique identifier associated with the data source.
-     * Used to pair this DataSourceAddedEvent with a AddindDataSourceEvent.
+     *                     Used to pair this DataSourceAddedEvent with a
+     *                     AddindDataSourceEvent.
      */
     public DataSourceAddedEvent(Content dataSource, UUID dataSourceId) {
         /**
@@ -60,7 +61,7 @@ public final class DataSourceAddedEvent extends AutopsyEvent implements Serializ
      * Gets the data source that was added.
      *
      * @return The data source or null if there is an error retrieving the data
-     * source.
+     *         source.
      */
     @Override
     public Object getNewValue() {

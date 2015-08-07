@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * Node factory that performs the keyword search and creates children nodes for
- each content.
+ * each content.
  *
  * Responsible for assembling nodes and columns in the right way and performing
  * lazy queries as needed.
@@ -142,6 +142,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      *
      * @param queryRequest
      * @param toPopulate
+     *
      * @return
      */
     private boolean createFlatKeys(QueryRequest queryRequest, List<KeyValueQueryContent> toPopulate) {
@@ -174,12 +175,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             Map<String, Object> properties = new LinkedHashMap<>();
             Content content = hit.getContent();
             if (content instanceof AbstractFile) {
-                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile)content);
-            }
-            else {
+                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
+            } else {
                 properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), content.getName());
             }
-            
+
             /**
              * Add a snippet property, if available.
              */
@@ -194,9 +194,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, content);
 
             String name = content.getName();
-            if (hit.isArtifactHit())
+            if (hit.isArtifactHit()) {
                 name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
-
+            }
             tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
@@ -215,9 +215,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
     /**
      * This method returns a collection of KeywordHits with lowest SolrObjectID-
-     * Chunk-ID combination. The output generated is consistent across multiple 
+     * Chunk-ID combination. The output generated is consistent across multiple
      * runs.
+     *
      * @param queryResults QueryResult object
+     *
      * @return A consistent collection of keyword hits
      */
     Collection<KeywordHit> getOneHitPerObject(QueryResults queryResults) {
@@ -244,6 +246,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param literal_query
      * @param queryResults
      * @param file
+     *
      * @return
      */
     private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
@@ -327,13 +330,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * NOTE Parameters are defined based on how they are currently used in
          * practice
          *
-         * @param name File name that has hit.
-         * @param map Contains content metadata, snippets, etc. (property map)
-         * @param id User incremented ID
-         * @param content File that had the hit.
+         * @param name     File name that has hit.
+         * @param map      Contains content metadata, snippets, etc. (property
+         *                 map)
+         * @param id       User incremented ID
+         * @param content  File that had the hit.
          * @param queryStr Query used in search
-         * @param query Query used in search
-         * @param hits Full set of search results (for all files!
+         * @param query    Query used in search
+         * @param hits     Full set of search results (for all files!
+         *
          * @@@)
          */
         public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {

@@ -42,8 +42,10 @@ public final class ExecUtil {
     /**
      * The execute() methods do a wait() with a timeout on the executing process
      * and query a process terminator each time the timeout expires to determine
-     * whether or not to kill the process. See DataSourceIngestModuleProcessTerminator 
-     * and FileIngestModuleProcessTerminator as examples of ProcessTerminator implementations.
+     * whether or not to kill the process. See
+     * DataSourceIngestModuleProcessTerminator and
+     * FileIngestModuleProcessTerminator as examples of ProcessTerminator
+     * implementations.
      */
     public interface ProcessTerminator {
 
@@ -63,24 +65,25 @@ public final class ExecUtil {
     public static class TimedProcessTerminator implements ProcessTerminator {
 
         private final long startTimeInSeconds;
-        private final long maxRunTimeInSeconds; 
+        private final long maxRunTimeInSeconds;
 
         /**
          * Creates a process terminator that can be used to kill a process after
          * it has run for a given period of time.
-         * 
+         *
          * @param maxRunTimeInSeconds The maximum allowable run time in seconds.
          */
         public TimedProcessTerminator(long maxRunTimeInSeconds) {
             this.maxRunTimeInSeconds = maxRunTimeInSeconds;
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }
-        
+
         /**
          * Creates a process terminator that can be used to kill a process after
-         * it has run for a given period of time. Maximum allowable run time is set 
-         * via Autopsy Options panel. If the process termination functionality is 
-         * disabled then the maximum allowable time is set to MAX_INT seconds.
+         * it has run for a given period of time. Maximum allowable run time is
+         * set via Autopsy Options panel. If the process termination
+         * functionality is disabled then the maximum allowable time is set to
+         * MAX_INT seconds.
          */
         public TimedProcessTerminator() {
             if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
@@ -91,7 +94,7 @@ public final class ExecUtil {
                 this.maxRunTimeInSeconds = Long.MAX_VALUE;
             }
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
-        }        
+        }
 
         /**
          * @inheritDoc
@@ -107,11 +110,13 @@ public final class ExecUtil {
      * Runs a process without a timeout and terminator.
      *
      * @param processBuilder A process builder used to configure and construct
-     * the process to be run.
+     *                       the process to be run.
+     *
      * @return the exit value of the process
+     *
      * @throws SecurityException if a security manager exists and vetoes any
-     * aspect of running the process.
-     * @throws IOException if an I/O error occurs.
+     *                           aspect of running the process.
+     * @throws IOException       if an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
@@ -129,12 +134,14 @@ public final class ExecUtil {
      * Runs a process using the default timeout and a custom terminator.
      *
      * @param processBuilder A process builder used to configure and construct
-     * the process to be run.
-     * @param terminator The terminator.
+     *                       the process to be run.
+     * @param terminator     The terminator.
+     *
      * @return the exit value of the process
+     *
      * @throws SecurityException if a security manager exists and vetoes any
-     * aspect of running the process.
-     * @throws IOException if an I/O error occurs.
+     *                           aspect of running the process.
+     * @throws IOException       if an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
@@ -144,14 +151,16 @@ public final class ExecUtil {
      * Runs a process using a custom terminator.
      *
      * @param processBuilder A process builder used to configure and construct
-     * the process to be run.
-     * @param timeOut The duration of the timeout.
-     * @param units The units for the timeout.
-     * @param terminator The terminator.
+     *                       the process to be run.
+     * @param timeOut        The duration of the timeout.
+     * @param units          The units for the timeout.
+     * @param terminator     The terminator.
+     *
      * @return the exit value of the process
+     *
      * @throws SecurityException if a security manager exists and vetoes any
-     * aspect of running the process.
-     * @throws IOException if an I/o error occurs.
+     *                           aspect of running the process.
+     * @throws IOException       if an I/o error occurs.
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         Process process = processBuilder.start();
@@ -215,7 +224,8 @@ public final class ExecUtil {
      * variant with Writer.
      *
      * @param aCommand command to be executed
-     * @param params parameters of the command
+     * @param params   parameters of the command
+     *
      * @return string buffer with captured stdout
      */
     @Deprecated
@@ -260,8 +270,9 @@ public final class ExecUtil {
      * and stderr to nowhere.
      *
      * @param stdoutWriter file writer to write stdout to
-     * @param aCommand command to be executed
-     * @param params parameters of the command
+     * @param aCommand     command to be executed
+     * @param params       parameters of the command
+     *
      * @return string buffer with captured stdout
      */
     @Deprecated
@@ -335,7 +346,7 @@ public final class ExecUtil {
      * Gets the exit value returned by the subprocess used to execute a command.
      *
      * @return The exit value or the distinguished value -100 if this method is
-     * called before the exit value is set.
+     *         called before the exit value is set.
      */
     @Deprecated
     synchronized public int getExitValue() {

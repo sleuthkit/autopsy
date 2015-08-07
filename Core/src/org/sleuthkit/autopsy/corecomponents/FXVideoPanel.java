@@ -78,7 +78,7 @@ import org.sleuthkit.datamodel.TskData;
     @ServiceProvider(service = FrameCapture.class)
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
-    
+
     // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
     // for Javafx supported formats 
     private static final String[] EXTENSIONS = new String[]{".m4v", ".fxm", ".flv", ".m3u8", ".mp4", ".aif", ".aiff", ".mp3", "m4a", ".wav"}; //NON-NLS
@@ -213,8 +213,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     }
 
     /**
-     * Thread that extracts Media from a Sleuthkit file representation to a
-     * Java file representation that the Media Player can take as input.
+     * Thread that extracts Media from a Sleuthkit file representation to a Java
+     * file representation that the Media Player can take as input.
      */
     private class ExtractMedia extends SwingWorker<Object, Void> {
 
@@ -270,7 +270,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             return null;
         }
 
-        /* clean up or start the worker threads */
+        /*
+         * clean up or start the worker threads
+         */
         @Override
         protected void done() {
             mediaPane.setProgressLabelText("");
@@ -320,13 +322,19 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         private MediaView mediaView;
 
-        /** The Duration of the media. * */
+        /**
+         * The Duration of the media. *
+         */
         private Duration duration;
 
-        /** The container for the media controls. * */
+        /**
+         * The container for the media controls. *
+         */
         private HBox mediaTools;
 
-        /** The container for the media video output. * */
+        /**
+         * The container for the media video output. *
+         */
         private HBox mediaViewPane;
 
         private VBox controlPanel;
@@ -349,19 +357,29 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
 
-        /** The EventHandler for MediaPlayer.onReady(). * */
+        /**
+         * The EventHandler for MediaPlayer.onReady(). *
+         */
         private final ReadyListener READY_LISTENER = new ReadyListener();
 
-        /** The EventHandler for MediaPlayer.onEndOfMedia(). * */
+        /**
+         * The EventHandler for MediaPlayer.onEndOfMedia(). *
+         */
         private final EndOfMediaListener END_LISTENER = new EndOfMediaListener();
 
-        /** The EventHandler for the CurrentTime property of the MediaPlayer. * */
+        /**
+         * The EventHandler for the CurrentTime property of the MediaPlayer. *
+         */
         private final TimeListener TIME_LISTENER = new TimeListener();
 
-        /** The EventHandler for MediaPlayer.onPause and MediaPlayer.onStop. * */
+        /**
+         * The EventHandler for MediaPlayer.onPause and MediaPlayer.onStop. *
+         */
         private final NotPlayListener NOT_PLAY_LISTENER = new NotPlayListener();
 
-        /** The EventHandler for MediaPlayer.onPlay. * */
+        /**
+         * The EventHandler for MediaPlayer.onPlay. *
+         */
         private final PlayListener PLAY_LISTENER = new PlayListener();
 
         private static final String PLAY_TEXT = "►";
@@ -614,8 +632,8 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             elapsedSeconds = (int) secondsElapsed;
 
             String durationStr = String.format(durationFormat,
-                                               elapsedHours, elapsedMinutes, elapsedSeconds,
-                                               totalHours, totalMinutes, totalSeconds);
+                    elapsedHours, elapsedMinutes, elapsedSeconds,
+                    totalHours, totalMinutes, totalSeconds);
             setProgressLabelText(durationStr);
         }
 
@@ -654,7 +672,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                 if (mediaPlayer == null) {
                     return;
                 }
-                
+
                 duration = mediaPlayer.getMedia().getDuration();
                 long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
 
@@ -731,9 +749,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     /**
      * @param file      a video file from which to capture frames
      * @param numFrames the number of frames to capture. These frames will be
-     *                  captured at successive intervals given by durationOfVideo/numFrames. If
-     *                  this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
-     *                  frame will be captured and returned.
+     *                  captured at successive intervals given by
+     *                  durationOfVideo/numFrames. If this frame interval is
+     *                  less than MIN_FRAME_INTERVAL_MILLIS, then only one frame
+     *                  will be captured and returned.
      *
      * @return a List of VideoFrames representing the captured frames.
      */

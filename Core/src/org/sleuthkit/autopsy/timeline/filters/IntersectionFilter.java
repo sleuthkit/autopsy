@@ -9,7 +9,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.openide.util.NbBundle;
 
-/** Intersection(And) filter */
+/**
+ * Intersection(And) filter
+ */
 public class IntersectionFilter extends CompoundFilter {
 
     public IntersectionFilter(ObservableList<Filter> subFilters) {
@@ -34,10 +36,10 @@ public class IntersectionFilter extends CompoundFilter {
     @Override
     public String getDisplayName() {
         return NbBundle.getMessage(this.getClass(),
-                                   "IntersectionFilter.displayName.text",
-                                   getSubFilters().stream()
-                                                  .map(Filter::getDisplayName)
-                                                  .collect(Collectors.joining(",", "[", "]")));
+                "IntersectionFilter.displayName.text",
+                getSubFilters().stream()
+                .map(Filter::getDisplayName)
+                .collect(Collectors.joining(",", "[", "]")));
     }
 
     @Override

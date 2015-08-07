@@ -96,19 +96,22 @@ public class SingleUserCaseImporter implements Runnable {
     /**
      * SingleUserCaseImporter constructor
      *
-     * @param caseInput the folder to start our case search from. Will find
-     * valid cases from this folder down, and process them.
-     * @param caseOutput the folder to place processed cases into
-     * @param imageInput the folder that holds the images to copy over
-     * @param imageOutput the destination folder for the images
-     * @param database the connection information to talk to the PostgreSQL db
+     * @param caseInput        the folder to start our case search from. Will
+     *                         find valid cases from this folder down, and
+     *                         process them.
+     * @param caseOutput       the folder to place processed cases into
+     * @param imageInput       the folder that holds the images to copy over
+     * @param imageOutput      the destination folder for the images
+     * @param database         the connection information to talk to the
+     *                         PostgreSQL db
      * @param copySourceImages true if images should be copied
-     * @param deleteCase true if the old version of the case should be deleted
-     * after import
-     * @param addTimestamp true if the output case name should end in a
-     * timestamp, false otherwise
-     * @param callback a callback from the calling panel for notification when
-     * the import has completed. This is a Runnable on a different thread.
+     * @param deleteCase       true if the old version of the case should be
+     *                         deleted after import
+     * @param addTimestamp     true if the output case name should end in a
+     *                         timestamp, false otherwise
+     * @param callback         a callback from the calling panel for
+     *                         notification when the import has completed. This
+     *                         is a Runnable on a different thread.
      */
     public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
             boolean copySourceImages, boolean deleteCase, ImportDoneCallback callback, boolean addTimestamp) {
@@ -129,6 +132,7 @@ public class SingleUserCaseImporter implements Runnable {
      * can process this case, otherwise we can not.
      *
      * @param icd the import case data for the current case
+     *
      * @return true if we can process it, false if not
      */
     private boolean canProcess(ImportCaseData icd) {
@@ -171,6 +175,7 @@ public class SingleUserCaseImporter implements Runnable {
      * imports the database, and updates paths within the database.
      *
      * @param icd the Import Case Data for the current case
+     *
      * @return true if successful, false if not
      */
     private boolean processCase(ImportCaseData icd) {
@@ -241,8 +246,9 @@ public class SingleUserCaseImporter implements Runnable {
      * Searches for images in the filesystem. It parses the new PostgreSQL
      * database to find images that should exist, and notifies when they do not.
      *
-     * @param db database credentials
+     * @param db     database credentials
      * @param dbName the name of the database
+     *
      * @return true if successfully found all images, false otherwise.
      */
     private boolean reportLostImages(CaseDbConnectionInfo db, String dbName) {
@@ -274,6 +280,7 @@ public class SingleUserCaseImporter implements Runnable {
      * Figure out the input folder for images and return it.
      *
      * @param icd the import case data for the current case
+     *
      * @return the name of the proper input folder
      */
     private File findInputFolder(ImportCaseData icd) {
@@ -291,6 +298,7 @@ public class SingleUserCaseImporter implements Runnable {
      * Ensure the input source has an autopsy.db and exists.
      *
      * @param caseInput The folder containing a case to import.
+     *
      * @throws Exception
      */
     private void checkInputDatabase(Path caseInput) throws Exception {
@@ -305,6 +313,7 @@ public class SingleUserCaseImporter implements Runnable {
      * Sets the appropriate portions of the ImportCaseData object.
      *
      * @param icd the case data folder name
+     *
      * @throws Exception
      */
     private void prepareOutput(ImportCaseData icd) throws Exception {
@@ -346,6 +355,7 @@ public class SingleUserCaseImporter implements Runnable {
      * hostname. Also take care of a few files such as logs, timeline db, etc.
      *
      * @param icd the case data
+     *
      * @throws IOException
      */
     private void copyResults(ImportCaseData icd) throws IOException {
@@ -405,11 +415,13 @@ public class SingleUserCaseImporter implements Runnable {
      * data while loading it over. Fixing paths is done once the database is
      * completely imported.
      *
-     * @param dbName the name of the database, could have name collision
-     * @param inputPath the path to the input case
+     * @param dbName         the name of the database, could have name collision
+     * @param inputPath      the path to the input case
      * @param outputCaseName the name of the output case, could have extra
-     * digits to avoid name collisions
+     *                       digits to avoid name collisions
+     *
      * @return the deconflicted name of the PostgreSQL database that was created
+     *
      * @throws SQLException
      * @throws ClassNotFoundException
      */
@@ -1021,9 +1033,11 @@ public class SingleUserCaseImporter implements Runnable {
      * numbers to it until it is unique. Gives up if it goes through all
      * positive integers without finding a unique name.
      *
-     * @param db Database credentials
+     * @param db         Database credentials
      * @param baseDbName proposed name of the database to check for collisions
+     *
      * @return name to use for the new database. Could be the name passed in.
+     *
      * @throws ClassNotFoundException
      * @throws SQLException
      * @throws Exception
@@ -1077,6 +1091,7 @@ public class SingleUserCaseImporter implements Runnable {
      * repository, if the user chose to.
      *
      * @param icd the Import Case Data
+     *
      * @throws IOException
      */
     private void copyImages(ImportCaseData icd) throws IOException {
@@ -1098,7 +1113,7 @@ public class SingleUserCaseImporter implements Runnable {
      * Fix up any paths in the database that refer to items that have moved.
      * Candidates include events.db, input images, reports, file paths, etc.
      *
-     * @param icd the import case data for the current case
+     * @param icd    the import case data for the current case
      * @param dbName the name of the database
      */
     private void fixPaths(ImportCaseData icd, String dbName) throws SQLException {
@@ -1149,9 +1164,11 @@ public class SingleUserCaseImporter implements Runnable {
      * Return an integer from the ResultSet converted to String or NULL, by
      * checking ResultSet.wasNull()
      *
-     * @param rs the ResultSet to work with
+     * @param rs    the ResultSet to work with
      * @param index the index into the ResultSet to work with
+     *
      * @return the proper value, the integer, or NULL
+     *
      * @throws SQLException
      */
     private String getNullableInt(ResultSet rs, int index) throws SQLException {
@@ -1167,9 +1184,11 @@ public class SingleUserCaseImporter implements Runnable {
      * Return a long from the ResultSet converted to String or NULL, by checking
      * ResultSet.wasNull()
      *
-     * @param rs the ResultSet to work with
+     * @param rs    the ResultSet to work with
      * @param index the index into the ResultSet to work with
+     *
      * @return the proper value, the long, or NULL
+     *
      * @throws SQLException
      */
     private String getNullableLong(ResultSet rs, int index) throws SQLException {
@@ -1185,10 +1204,11 @@ public class SingleUserCaseImporter implements Runnable {
      * Place a NULL inside a prepared statement if needed, otherwise, place the
      * String that was in the ResultSet.
      *
-     * @param pst the prepared statement
-     * @param rs the ResultSet to work with
+     * @param pst     the prepared statement
+     * @param rs      the ResultSet to work with
      * @param rsIndex index for the result set
      * @param psIndex index for the prepared statement
+     *
      * @throws SQLException
      */
     private void populateNullableString(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
@@ -1204,10 +1224,11 @@ public class SingleUserCaseImporter implements Runnable {
      * Place a NULL inside a prepared statement if needed, otherwise, place the
      * byte array that was in the ResultSet.
      *
-     * @param pst the prepared statement
-     * @param rs the ResultSet to work with
+     * @param pst     the prepared statement
+     * @param rs      the ResultSet to work with
      * @param rsIndex index for the result set
      * @param psIndex index for the prepared statement
+     *
      * @throws SQLException
      */
     private void populateNullableByteArray(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
@@ -1223,10 +1244,11 @@ public class SingleUserCaseImporter implements Runnable {
      * Place a NULL inside a prepared statement if needed, otherwise, place the
      * double that was in the ResultSet.
      *
-     * @param pst the prepared statement
-     * @param rs the ResultSet to work with
+     * @param pst     the prepared statement
+     * @param rs      the ResultSet to work with
      * @param rsIndex index for the result set
      * @param psIndex index for the prepared statement
+     *
      * @throws SQLException
      */
     private void populateNullableNumeric(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
@@ -1445,7 +1467,7 @@ public class SingleUserCaseImporter implements Runnable {
      * Close the case import log in the base output folder.
      *
      * @param result this informs the log if the end result was successful or
-     * not. True if all was successful, false otherwise.
+     *               not. True if all was successful, false otherwise.
      */
     private void closeLog(boolean result) {
         log("Completed batch processing of " + caseInputFolder.toString() + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success" : "Failure"));
@@ -1471,10 +1493,12 @@ public class SingleUserCaseImporter implements Runnable {
          * timestamps on either one. It strips them off if they exist.
          *
          * @param directory the directory we are currently visiting.
-         * @param attrs file attributes.
+         * @param attrs     file attributes.
          *
          * @return Continue if we want to carry one, SKIP_SUBTREE if we've found
-         * a .aut file, precluding searching any deeper into this folder.
+         *         a .aut file, precluding searching any deeper into this
+         *         folder.
+         *
          * @throws IOException
          */
         @Override

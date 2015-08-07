@@ -30,7 +30,8 @@ import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
-/** An event that represent a set of other events aggregated together. All the
+/**
+ * An event that represent a set of other events aggregated together. All the
  * sub events should have the same type and matching descriptions at the
  * designated 'zoom level'.
  */
@@ -67,7 +68,9 @@ public class AggregateEvent {
         this.lod = lod;
     }
 
-    /** @return the actual interval from the first event to the last event */
+    /**
+     * @return the actual interval from the first event to the last event
+     */
     public Interval getSpan() {
         return span;
     }

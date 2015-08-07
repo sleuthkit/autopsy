@@ -91,7 +91,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * Adds a change listener to a collection of text fields.
      *
      * @param textFields The text fields.
-     * @param listener The change listener.
+     * @param listener   The change listener.
      */
     private static void addDocumentListeners(Collection<JTextField> textFields, TextBoxChangedListener listener) {
         for (JTextField textField : textFields) {
@@ -369,7 +369,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (portNumberIsValid(indexingServerPort)) {
             tbIndexingServerPort.setText(indexingServerPort);
         }
-        
+
         cbEnableMultiUser.setSelected(UserPreferences.getIsMultiUserModeEnabled());
     }
 
@@ -393,7 +393,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (cbEnableMultiUser.isSelected()) {
             dbType = DbType.POSTGRESQL;
         }
-        
+
         UserPreferences.setIsMultiUserModeEnabled(cbEnableMultiUser.isSelected());
 
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
@@ -414,7 +414,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         UserPreferences.setIndexingServerHost(tbIndexingServerHost.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbIndexingServerPort.getText().trim()));
-        
+
     }
 
     /**
@@ -497,6 +497,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * numbers.
      *
      * @param portNumber The port number as a string.
+     *
      * @return True or false.
      */
     private static boolean portNumberIsValid(String portNumber) {
@@ -553,6 +554,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         public void removeUpdate(DocumentEvent e) {
             controller.changed();
-        }        
+        }
     }
 }

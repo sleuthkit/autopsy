@@ -42,10 +42,11 @@ public interface ArtifactEventType extends EventType {
 
     public BlackboardAttribute.ATTRIBUTE_TYPE getDateTimeAttrubuteType();
 
-    /** given an artifact, and a map from attribute types to attributes, pull
-     * out the time stamp, and compose the descriptions. Each implementation
-     * of {@link ArtifactEventType} needs to implement parseAttributesHelper()
-     * as hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
+    /**
+     * given an artifact, and a map from attribute types to attributes, pull out
+     * the time stamp, and compose the descriptions. Each implementation of
+     * {@link ArtifactEventType} needs to implement parseAttributesHelper() as
+     * hook for {@link buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact)
      * to invoke. Most subtypes can use this default implementation.
      *
      * @param artf
@@ -66,22 +67,27 @@ public interface ArtifactEventType extends EventType {
         return new AttributeEventDescription(time, shortDescription, medDescription, fullDescription);
     }
 
-    /** @return a function from an artifact and a map of its attributes, to a
-     *          String to use as part of the full event description */
+    /**
+     * @return a function from an artifact and a map of its attributes, to a
+     *         String to use as part of the full event description
+     */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getFullExtractor();
 
-    /** @return a function from an artifact and a map of its attributes, to a
-     *          String to use as part of the medium event description */
+    /**
+     * @return a function from an artifact and a map of its attributes, to a
+     *         String to use as part of the medium event description
+     */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getMedExtractor();
 
-    /** @return a function from an artifact and a map of its attributes, to a
-     *          String to use as part of the short event description */
+    /**
+     * @return a function from an artifact and a map of its attributes, to a
+     *         String to use as part of the short event description
+     */
     BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getShortExtractor();
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
-     * one object. Primarily used to have a single return value for
-     * {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
+     * one object. Primarily used to have a single return value for      {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
      */
     static class AttributeEventDescription {
 
@@ -110,8 +116,8 @@ public interface ArtifactEventType extends EventType {
         final private String fullDescription;
 
         public AttributeEventDescription(long time, String shortDescription,
-                                         String medDescription,
-                                         String fullDescription) {
+                String medDescription,
+                String fullDescription) {
             this.time = time;
             this.shortDescription = shortDescription;
             this.medDescription = medDescription;
@@ -143,11 +149,13 @@ public interface ArtifactEventType extends EventType {
                 throw new IllegalArgumentException();
             }
 
-            /* build a map from attribute type to attribute, this makes
+            /*
+             * build a map from attribute type to attribute, this makes
              * implementing the parseAttributeHelper easier but could be
              * ineffecient if we don't need most of the attributes. This would
              * be unnessecary if there was an api on Blackboard artifacts to get
-             * specific attributes by type */
+             * specific attributes by type
+             */
             List<BlackboardAttribute> attributes = artf.getAttributes();
             Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap = new HashMap<>();
             for (BlackboardAttribute attr : attributes) {

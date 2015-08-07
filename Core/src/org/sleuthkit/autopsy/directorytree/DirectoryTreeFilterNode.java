@@ -58,8 +58,8 @@ class DirectoryTreeFilterNode extends FilterNode {
      */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
-              new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
-                              arg.getLookup()));
+                new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
+                        arg.getLookup()));
     }
 
     @Override

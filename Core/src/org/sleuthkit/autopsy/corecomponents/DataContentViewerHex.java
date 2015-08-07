@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 @ServiceProvider(service = DataContentViewer.class, position = 1)
 public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
+
     private static final long pageLength = 16384;
     private final byte[] data = new byte[(int) pageLength];
     private static int currentPage = 1;
@@ -275,7 +276,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
         int pageNumber = 0;
-        
+
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -283,22 +284,26 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         }
         if (pageNumber > totalPages || pageNumber < 1) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataContentViewerHex.goToPageTextField.msgDlg",
-                                                              totalPages),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataContentViewerHex.goToPageTextField.err"),
-                                          JOptionPane.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "DataContentViewerHex.goToPageTextField.msgDlg",
+                            totalPages),
+                    NbBundle.getMessage(this.getClass(),
+                            "DataContentViewerHex.goToPageTextField.err"),
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         setDataViewByPageNumber(pageNumber);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
-    /***
+    /**
+     * *
      * Calculates the offset relative to the current caret position.
+     *
      * @param userInput the user provided signed offset value.
+     *
      * @return returns the resultant offset value relative to the current caret
-     * position. -1L is returned if the resultant offset cannot be calculated.
+     *         position. -1L is returned if the resultant offset cannot be
+     *         calculated.
      */
     private long getOffsetRelativeToCaretPosition(Long userInput) {
         String userSelectedLine;
@@ -359,7 +364,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
-    
     /**
      * Sets the DataView (The tabbed panel) by page number
      *
@@ -377,6 +381,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         setDataView(offset);
         goToOffsetTextField.setText(Long.toString(offset));
     }
+
     /**
      * Sets the DataView (The tabbed panel) by offset
      *
@@ -448,20 +453,20 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             resetComponent();
             return;
         }
-        
+
         Content content = (selectedNode).getLookup().lookup(Content.class);
         if (content == null) {
             resetComponent();
             return;
         }
-        
+
         dataSource = content;
         totalPages = 0;
         if (dataSource.getSize() > 0) {
             totalPages = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
         }
         totalPageLabel.setText(Integer.toString(totalPages));
-            
+
         this.setDataViewByPageNumber(1);
     }
 
@@ -519,7 +524,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (content != null && content.getSize() > 0) {
             return true;
         }
-  
+
         return false;
     }
 
@@ -533,7 +538,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         return this;
     }
 
-    /* Show the right click menu only if evt is the correct mouse event */
+    /*
+     * Show the right click menu only if evt is the correct mouse event
+     */
     private void maybeShowPopup(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
             rightClickMenu.setLocation(evt.getLocationOnScreen());

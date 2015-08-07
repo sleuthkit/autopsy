@@ -44,7 +44,7 @@ public class FileTypesNode extends DisplayableItemNode {
      *
      * @param skCase
      * @param filter null to display root node of file type tree, pass in
-     * something to provide a sub-node.
+     *               something to provide a sub-node.
      */
     FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
         super(Children.create(new FileTypesChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
@@ -55,8 +55,8 @@ public class FileTypesNode extends DisplayableItemNode {
      *
      * @param skCase
      * @param filter
-     * @param o Observable that was created by a higher-level node that provides
-     * updates on events
+     * @param o      Observable that was created by a higher-level node that
+     *               provides updates on events
      */
     private FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
         super(Children.create(new FileTypesChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
@@ -115,8 +115,8 @@ public class FileTypesNode extends DisplayableItemNode {
          *
          * @param skCase
          * @param filter Is null for root node
-         * @param o Observable that provides updates based on events being fired
-         * (or null if one needs to be created)
+         * @param o      Observable that provides updates based on events being
+         *               fired (or null if one needs to be created)
          */
         public FileTypesChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
             super();

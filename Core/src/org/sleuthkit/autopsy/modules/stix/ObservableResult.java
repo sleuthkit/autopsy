@@ -73,7 +73,7 @@ class ObservableResult {
      * indeterminate.
      *
      * @return true if the ObservableResult is true, false if it is false or
-     * indeterminate
+     *         indeterminate
      */
     public boolean isTrue() {
         return (state == ObservableState.TRUE);
@@ -85,7 +85,7 @@ class ObservableResult {
      * indeterminate.
      *
      * @return true if the ObservableResult is false, false if it is true or
-     * indeterminate
+     *         indeterminate
      */
     public boolean isFalse() {
         return (state == ObservableState.FALSE);
@@ -102,7 +102,7 @@ class ObservableResult {
     /**
      * Add a new result to the current state
      *
-     * @param a_result The new result to add
+     * @param a_result   The new result to add
      * @param a_operator AND or OR
      */
     public void addResult(ObservableResult a_result, OperatorTypeEnum a_operator) {
@@ -114,8 +114,9 @@ class ObservableResult {
      * Add a new result to the current state.
      *
      * @param a_description Description of the observable and testing done
-     * @param a_state State of what we're adding (true, false, or indeterminate)
-     * @param a_operator AND or OR
+     * @param a_state       State of what we're adding (true, false, or
+     *                      indeterminate)
+     * @param a_operator    AND or OR
      */
     private void addResult(String a_description, ObservableState a_state,
             List<StixArtifactData> a_artifacts, OperatorTypeEnum a_operator) {

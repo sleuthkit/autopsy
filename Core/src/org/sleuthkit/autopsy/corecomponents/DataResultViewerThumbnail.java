@@ -63,18 +63,18 @@ import org.sleuthkit.datamodel.TskCoreException;
 // service provider when DataResultViewers can be made compatible with node 
 // multi-selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
- final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;    
+    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
-     * Creates a DataResultViewerThumbnail object that is compatible with node 
+     * Creates a DataResultViewerThumbnail object that is compatible with node
      * multiple selection actions.
      */
     public DataResultViewerThumbnail(ExplorerManager explorerManager) {
@@ -83,13 +83,13 @@ import org.sleuthkit.datamodel.TskCoreException;
     }
 
     /**
-     * Creates a DataResultViewerThumbnail object that is NOT compatible with 
+     * Creates a DataResultViewerThumbnail object that is NOT compatible with
      * node multiple selection actions.
      */
     public DataResultViewerThumbnail() {
         initialize();
-    }    
-    
+    }
+
     private void initialize() {
         initComponents();
 
@@ -99,8 +99,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         curPage = -1;
         totalPages = 0;
         curPageImages = 0;
-    }    
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -248,28 +248,28 @@ import org.sleuthkit.datamodel.TskCoreException;
     }//GEN-LAST:event_goToPageFieldActionPerformed
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
-        
+
         iconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
-        switch(thumbnailSizeComboBox.getSelectedIndex()) {
+        switch (thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
                 iconSize = ImageUtils.ICON_SIZE_SMALL;
                 break;
             case 2:
                 iconSize = ImageUtils.ICON_SIZE_LARGE;
                 break;
-        }                    
+        }
 
         Node root = em.getRootContext();
-        for (Children c : Arrays.asList(root.getChildren()) ) {
-            ((ThumbnailViewChildren)c).setIconSize(iconSize);
+        for (Children c : Arrays.asList(root.getChildren())) {
+            ((ThumbnailViewChildren) c).setIconSize(iconSize);
         }
-        
+
         for (Node page : root.getChildren().getNodes()) {
             for (Node node : page.getChildren().getNodes()) {
-                ((ThumbnailViewNode)node).setIconSize(iconSize);
+                ((ThumbnailViewNode) node).setIconSize(iconSize);
             }
-        }            
-        
+        }
+
         // Temporarily set the explored context to the root, instead of a child node.
         // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
         // update even though the new and old Node values are identical. This in turn
@@ -299,7 +299,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         if (selectedNode == null) {
             return false;
         }
-        return true;        
+        return true;
     }
 
     @Override
@@ -309,7 +309,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         try {
             if (givenNode != null) {
                 ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
-                
+
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
@@ -325,7 +325,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             this.setCursor(null);
         }
     }
-    
+
     @Override
     public String getTitle() {
         return NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.title");
@@ -369,28 +369,27 @@ import org.sleuthkit.datamodel.TskCoreException;
             switchPage();
         }
     }
-    
+
     private void goToPage(String pageNumText) {
         int newPage;
         try {
             newPage = Integer.parseInt(pageNumText);
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             //ignore input
             return;
         }
-        
+
         if (newPage > totalPages || newPage < 1) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataResultViewerThumbnail.goToPageTextField.msgDlg",
-                                                              totalPages),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "DataResultViewerThumbnail.goToPageTextField.err"),
-                                          JOptionPane.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "DataResultViewerThumbnail.goToPageTextField.msgDlg",
+                            totalPages),
+                    NbBundle.getMessage(this.getClass(),
+                            "DataResultViewerThumbnail.goToPageTextField.err"),
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         curPage = newPage;
         switchPage();
     }
@@ -418,7 +417,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                 progress.start();
                 progress.switchToIndeterminate();
                 Node root = em.getRootContext();
-                Node pageNode = root.getChildren().getNodeAt(curPage - 1);    
+                Node pageNode = root.getChildren().getNodeAt(curPage - 1);
                 em.setExploredContext(pageNode);
                 curPageImages = pageNode.getChildren().getNodesCount();
                 return null;
@@ -428,16 +427,16 @@ import org.sleuthkit.datamodel.TskCoreException;
             protected void done() {
                 progress.finish();
                 setCursor(null);
-                updateControls();  
+                updateControls();
                 // see if any exceptions were thrown
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d =
-                        new NotifyDescriptor.Message(
-                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
-                                                    ex.getMessage()),
-                            NotifyDescriptor.ERROR_MESSAGE);
+                    NotifyDescriptor d
+                            = new NotifyDescriptor.Message(
+                                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                            ex.getMessage()),
+                                    NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: " + ex.getMessage()); //NON-NLS
                 } // catch and ignore if we were cancelled
@@ -458,14 +457,14 @@ import org.sleuthkit.datamodel.TskCoreException;
         } else {
             pageNumLabel.setText(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
-                                        Integer.toString(curPage), Integer.toString(totalPages)));
+                            Integer.toString(curPage), Integer.toString(totalPages)));
             final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
 
             pageNextButton.setEnabled(!(curPage == totalPages));
             pagePrevButton.setEnabled(!(curPage == 1));
-            goToPageField.setEnabled(totalPages>1);
+            goToPageField.setEnabled(totalPages > 1);
 
         }
 
@@ -534,7 +533,6 @@ import org.sleuthkit.datamodel.TskCoreException;
                 em.setExploredContext(pageNode);
             }
 
-
             updateControls();
 
         }
@@ -554,8 +552,9 @@ import org.sleuthkit.datamodel.TskCoreException;
         public void nodeDestroyed(NodeEvent ne) {
         }
     }
-    
+
     private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -566,26 +565,22 @@ import org.sleuthkit.datamodel.TskCoreException;
                         AbstractFile af = selectedNodes[0].getLookup().lookup(AbstractFile.class);
                         if (af == null) {
                             filePathLabel.setText("");
-                        }
-                        else {
+                        } else {
                             try {
                                 String uPath = af.getUniquePath();
                                 filePathLabel.setText(uPath);
                                 filePathLabel.setToolTipText(uPath);
-                            }
-                            catch (TskCoreException e){
+                            } catch (TskCoreException e) {
                                 logger.log(Level.WARNING, "Could not get unique path for content: {0}", af.getName()); //NON-NLS
                             }
-                        }                        
+                        }
+                    } else {
+                        filePathLabel.setText("");
                     }
-                    else {
-                        filePathLabel.setText("");            
-                    }
-                } 
-                finally {
+                } finally {
                     setCursor(null);
                 }
-            }            
+            }
         }
-    }    
+    }
 }

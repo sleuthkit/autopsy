@@ -35,10 +35,11 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
- class LocalFilesPanel extends JPanel {
+class LocalFilesPanel extends JPanel {
 
     private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
@@ -46,7 +47,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = ",";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
-    
+
     /**
      * Creates new form LocalFilesPanel
      */
@@ -66,18 +67,18 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
         localFileChooser.setMultiSelectionEnabled(true);
         errorLabel.setVisible(false);
         selectedPaths.setText("");
-    }       
-    
+    }
+
     //@Override
     public String getContentPaths() {
         //TODO consider interface change to return list of paths instead
-        
+
         if (currentFiles == null) {
             return "";
         }
         StringBuilder b = new StringBuilder();
         for (File f : currentFiles) {
-            b.append(f.getAbsolutePath() );
+            b.append(f.getAbsolutePath());
             b.append(FILES_SEP);
         }
         return b.toString();
@@ -88,7 +89,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
         //for the local file panel we don't need to restore the last paths used
         //when the wizard restarts
     }
-    
+
     //@Override
     public String getContentType() {
         return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
@@ -96,66 +97,67 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 
     //@Override
     public boolean validatePanel() {
-        
+
         // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(getContentPaths());        
-        
+        warnIfPathIsInvalid(getContentPaths());
+
         return enableNext;
     }
-    
+
     /**
-     * Validates path to selected data source and displays warning if it is invalid. 
+     * Validates path to selected data source and displays warning if it is
+     * invalid.
+     *
      * @param path Absolute path to the selected data source
      */
-     private void warnIfPathIsInvalid(String path) {
-         errorLabel.setVisible(false);
+    private void warnIfPathIsInvalid(String path) {
+        errorLabel.setVisible(false);
 
-         // Path variable for "Local files" module is a coma separated string containg multiple paths
-         List<String> pathsList = Arrays.asList(path.split(","));
-         CaseType currentCaseType = Case.getCurrentCase().getCaseType();
+        // Path variable for "Local files" module is a coma separated string containg multiple paths
+        List<String> pathsList = Arrays.asList(path.split(","));
+        CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
-         for (String currentPath : pathsList) {
-             if (!PathValidator.isValid(currentPath, currentCaseType)) {
-                 errorLabel.setVisible(true);
-                 errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-                 return;
-             }
-         }
-     } 
+        for (String currentPath : pathsList) {
+            if (!PathValidator.isValid(currentPath, currentCaseType)) {
+                errorLabel.setVisible(true);
+                errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+                return;
+            }
+        }
+    }
 
     //@Override
     public void select() {
         reset();
     }
-    
+
     //@Override
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
         errorLabel.setVisible(false);
-        
+
         //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {	
-	super.addPropertyChangeListener(pcl);
+    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
+        super.addPropertyChangeListener(pcl);
 
-	if (pcs == null) {
-	    pcs = new PropertyChangeSupport(this);
-	}
+        if (pcs == null) {
+            pcs = new PropertyChangeSupport(this);
+        }
 
         pcs.addPropertyChangeListener(pcl);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-	super.removePropertyChangeListener(pcl);
+        super.removePropertyChangeListener(pcl);
 
         pcs.removePropertyChangeListener(pcl);
     }
-
 
     @Override
     public String toString() {
@@ -255,11 +257,11 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
         int returnVal = localFileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File [] files = localFileChooser.getSelectedFiles();
+            File[] files = localFileChooser.getSelectedFiles();
             for (File f : files) {
                 currentFiles.add(f);
             }
-            
+
             //update label
             StringBuilder allPaths = new StringBuilder();
             for (File f : currentFiles) {
@@ -267,31 +269,28 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
             }
             this.selectedPaths.setText(allPaths.toString());
             this.selectedPaths.setToolTipText(allPaths.toString());
-            
+
         }
-        
+
         if (!currentFiles.isEmpty()) {
             enableNext = true;
-        }
-        else {
+        } else {
             enableNext = false;
         }
-        
+
         try {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }//GEN-LAST:event_selectButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
         reset();
-     
-        
+
     }//GEN-LAST:event_clearButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

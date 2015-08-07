@@ -27,37 +27,38 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Filters database results by file extension.
  */
- class FileTypeExtensionFilters implements AutopsyVisitableItem {
+class FileTypeExtensionFilters implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 
     // root node filters
-    public enum RootFilter implements AutopsyVisitableItem,SearchFilterInterface {
+    public enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
+
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
-                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskImgFilter.text"),
-                         FileTypeExtensions.getImageExtensions()),
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskImgFilter.text"),
+                FileTypeExtensions.getImageExtensions()),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", //NON-NLS
-                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskVideoFilter.text"),
-                         FileTypeExtensions.getVideoExtensions()),
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskVideoFilter.text"),
+                FileTypeExtensions.getVideoExtensions()),
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", //NON-NLS
-                         NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskAudioFilter.text"),
-                         FileTypeExtensions.getAudioExtensions()),
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskAudioFilter.text"),
+                FileTypeExtensions.getAudioExtensions()),
         TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", //NON-NLS
-                           NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
-                           FileTypeExtensions.getArchiveExtensions()),
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
+                FileTypeExtensions.getArchiveExtensions()),
         TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", //NON-NLS
-                            NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
-                            Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")), //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
+                Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")), //NON-NLS
         TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER", //NON-NLS
-                              NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskExecFilter.text"),
-                              Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com")); //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskExecFilter.text"),
+                Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com")); //NON-NLS
 
         private int id;
         private String name;
         private String displayName;
         private List<String> filter;
 
-        private RootFilter(int id, String name, String displayName, List<String> filter){
+        private RootFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -70,50 +71,51 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         }
 
         @Override
-        public String getName(){
+        public String getName() {
             return this.name;
         }
 
         @Override
-        public int getId(){
+        public int getId() {
             return this.id;
         }
 
         @Override
-        public String getDisplayName(){
+        public String getDisplayName() {
             return this.displayName;
         }
 
         @Override
-        public List<String> getFilter(){
+        public List<String> getFilter() {
             return this.filter;
         }
     }
-    
+
     // document sub-node filters
-    public enum DocumentFilter implements AutopsyVisitableItem,SearchFilterInterface {
+    public enum DocumentFilter implements AutopsyVisitableItem, SearchFilterInterface {
+
         AUT_DOC_HTML(0, "AUT_DOC_HTML", //NON-NLS
-                     NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
-                     Arrays.asList(".htm", ".html")), //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
+                Arrays.asList(".htm", ".html")), //NON-NLS
         AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", //NON-NLS
-                       NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
-                       Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
+                Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
         AUT_DOC_PDF(2, "AUT_DOC_PDF", //NON-NLS
-                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"),
-                    Arrays.asList(".pdf")), //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"),
+                Arrays.asList(".pdf")), //NON-NLS
         AUT_DOC_TXT(3, "AUT_DOC_TXT", //NON-NLS
-                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocTxtFilter.text"),
-                    Arrays.asList(".txt")), //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocTxtFilter.text"),
+                Arrays.asList(".txt")), //NON-NLS
         AUT_DOC_RTF(4, "AUT_DOC_RTF", //NON-NLS
-                    NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
-                    Arrays.asList(".rtf")); //NON-NLS
+                NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
+                Arrays.asList(".rtf")); //NON-NLS
 
         private int id;
         private String name;
         private String displayName;
         private List<String> filter;
 
-        private DocumentFilter(int id, String name, String displayName, List<String> filter){
+        private DocumentFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -126,41 +128,41 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         }
 
         @Override
-        public String getName(){
+        public String getName() {
             return this.name;
         }
 
         @Override
-        public int getId(){
+        public int getId() {
             return this.id;
         }
 
         @Override
-        public String getDisplayName(){
+        public String getDisplayName() {
             return this.displayName;
         }
 
         @Override
-        public List<String> getFilter(){
+        public List<String> getFilter() {
             return this.filter;
         }
     }
-    
-    
+
     // executable sub-node filters
-    public enum ExecutableFilter implements AutopsyVisitableItem,SearchFilterInterface {
+    public enum ExecutableFilter implements AutopsyVisitableItem, SearchFilterInterface {
+
         ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")), //NON-NLS
         ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")), //NON-NLS
         ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")), //NON-NLS
         ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")), //NON-NLS
         ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com")); //NON-NLS
-        
+
         private int id;
         private String name;
         private String displayName;
         private List<String> filter;
 
-        private ExecutableFilter(int id, String name, String displayName, List<String> filter){
+        private ExecutableFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -173,27 +175,27 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         }
 
         @Override
-        public String getName(){
+        public String getName() {
             return this.name;
         }
 
         @Override
-        public int getId(){
+        public int getId() {
             return this.id;
         }
 
         @Override
-        public String getDisplayName(){
+        public String getDisplayName() {
             return this.displayName;
         }
 
         @Override
-        public List<String> getFilter(){
+        public List<String> getFilter() {
             return this.filter;
         }
     }
 
-    public FileTypeExtensionFilters(SleuthkitCase skCase){
+    public FileTypeExtensionFilters(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 
@@ -202,11 +204,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         return v.visit(this);
     }
 
-    public SleuthkitCase getSleuthkitCase(){
+    public SleuthkitCase getSleuthkitCase() {
         return this.skCase;
     }
-    
+
     interface SearchFilterInterface {
+
         public String getName();
 
         public int getId();

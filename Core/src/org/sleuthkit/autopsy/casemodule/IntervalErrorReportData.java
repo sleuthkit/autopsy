@@ -42,8 +42,9 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
      * Create a new IntervalErrorReprotData instance.
      *
      * @param secondsBetweenReports Minimum number of seconds between reports.
-     * It will not warn more frequently than this.
-     * @param message The message that will be shown when warning the user
+     *                              It will not warn more frequently than this.
+     * @param message               The message that will be shown when warning
+     *                              the user
      */
     private IntervalErrorReportData(int secondsBetweenReports, String message) {
         this.newProblems = 0;
@@ -77,7 +78,7 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
      * the user.
      *
      * @param newProblems the newProblems to set
-     * @param ex the exception for this error
+     * @param ex          the exception for this error
      */
     private void addProblems(long newProblems, Exception ex) {
         this.newProblems += newProblems;

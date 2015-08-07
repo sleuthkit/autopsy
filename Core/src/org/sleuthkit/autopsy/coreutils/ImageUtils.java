@@ -44,9 +44,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utilities for creating and manipulating thumbnail and icon images.
+ *
  * @author jwallace
  */
 public class ImageUtils {
+
     public static final int ICON_SIZE_SMALL = 50;
     public static final int ICON_SIZE_MEDIUM = 100;
     public static final int ICON_SIZE_LARGE = 200;
@@ -54,29 +56,32 @@ public class ImageUtils {
     private static final Image DEFAULT_ICON = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage(); //NON-NLS
     private static final List<String> SUPP_EXTENSIONS = Arrays.asList(ImageIO.getReaderFileSuffixes());
     private static final List<String> SUPP_MIME_TYPES = new ArrayList<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+
     static {
         SUPP_MIME_TYPES.add("image/x-ms-bmp");
     }
-    
+
     /**
      * Get the default Icon, which is the icon for a file.
-     * @return 
+     *
+     * @return
      */
     public static Image getDefaultIcon() {
         return DEFAULT_ICON;
     }
-    
+
     /**
      * Can a thumbnail be generated for the content?
-     * 
+     *
      * @param content
-     * @return 
+     *
+     * @return
      */
     public static boolean thumbnailSupported(Content content) {
         if (content instanceof AbstractFile == false) {
             return false;
         }
-        
+
         AbstractFile f = (AbstractFile) content;
         if (f.getSize() == 0) {
             return false;
@@ -84,8 +89,8 @@ public class ImageUtils {
 
         // check the blackboard for a file type attribute
         try {
-            ArrayList <BlackboardAttribute> attributes = f.getGenInfoAttributes(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-            for (BlackboardAttribute attribute : attributes) { 
+            ArrayList<BlackboardAttribute> attributes = f.getGenInfoAttributes(ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
+            for (BlackboardAttribute attribute : attributes) {
                 if (SUPP_MIME_TYPES.contains(attribute.getValueString())) {
                     return true;
                 }
@@ -94,11 +99,10 @@ public class ImageUtils {
             if (attributes.size() > 0) {
                 return false;
             }
-        } 
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error while getting file signature from blackboard.", ex); //NON-NLS
         }
-        
+
         // if we have an extension, check it
         final String extension = f.getNameExtension();
         if (extension.equals("") == false) {
@@ -107,19 +111,19 @@ public class ImageUtils {
                 return true;
             }
         }
-        
+
         // if no extension or one that is not for an image, then read the content
-        return isJpegFileHeader(f);    
+        return isJpegFileHeader(f);
     }
 
-   
     /**
-     * Get a thumbnail of a specified size. Generates the image if it is 
-     * not already cached. 
-     * 
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
+     *
      * @param content
      * @param iconSize
-     * @return 
+     *
+     * @return
      */
     public static Image getIcon(Content content, int iconSize) {
         Image icon;
@@ -132,9 +136,9 @@ public class ImageUtils {
                 if (bicon == null) {
                     icon = DEFAULT_ICON;
                 } else if (bicon.getWidth() != iconSize) {
-                    icon = generateAndSaveIcon(content, iconSize, file);    
+                    icon = generateAndSaveIcon(content, iconSize, file);
                 } else {
-                    icon = bicon;    
+                    icon = bicon;
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error while reading image.", ex); //NON-NLS
@@ -145,13 +149,15 @@ public class ImageUtils {
         }
         return icon;
     }
-    
+
     /**
-     * Get a thumbnail of a specified size. Generates the image if it is 
-     * not already cached. 
+     * Get a thumbnail of a specified size. Generates the image if it is not
+     * already cached.
+     *
      * @param content
      * @param iconSize
-     * @return File object for cached image. Is guaranteed to exist. 
+     *
+     * @return File object for cached image. Is guaranteed to exist.
      */
     public static File getIconFile(Content content, int iconSize) {
         if (getIcon(content, iconSize) != null) {
@@ -159,18 +165,20 @@ public class ImageUtils {
         }
         return null;
     }
-    
+
     /**
-     * Get a file object for where the cached icon should exist.  The returned file may not exist.
-     * 
+     * Get a file object for where the cached icon should exist. The returned
+     * file may not exist.
+     *
      * @param id
-     * @return 
+     *
+     * @return
      */
     // TODO: This should be private and be renamed to something like  getCachedThumbnailLocation().
     public static File getFile(long id) {
         return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".png");
     }
-    
+
     /**
      * Check if is jpeg file based on header
      *
@@ -200,7 +208,7 @@ public class ImageUtils {
          */
         return (((fileHeaderBuffer[0] & 0xff) == 0xff) && ((fileHeaderBuffer[1] & 0xff) == 0xd8));
     }
-    
+
     public static boolean isPngFileHeader(AbstractFile file) {
         if (file.getSize() < 10) {
             return false;
@@ -218,24 +226,25 @@ public class ImageUtils {
             return false;
         }
         /*
-         * Check for the header. Since Java bytes are signed, we cast them
-         * to an int first.
+         * Check for the header. Since Java bytes are signed, we cast them to an
+         * int first.
          */
-        return (((fileHeaderBuffer[1] & 0xff) == 0x50) && ((fileHeaderBuffer[2] & 0xff) == 0x4E) &&
-                ((fileHeaderBuffer[3] & 0xff) == 0x47) && ((fileHeaderBuffer[4] & 0xff) == 0x0D) &&
-                ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A) &&
-                ((fileHeaderBuffer[7] & 0xff) == 0x0A));
+        return (((fileHeaderBuffer[1] & 0xff) == 0x50) && ((fileHeaderBuffer[2] & 0xff) == 0x4E)
+                && ((fileHeaderBuffer[3] & 0xff) == 0x47) && ((fileHeaderBuffer[4] & 0xff) == 0x0D)
+                && ((fileHeaderBuffer[5] & 0xff) == 0x0A) && ((fileHeaderBuffer[6] & 0xff) == 0x1A)
+                && ((fileHeaderBuffer[7] & 0xff) == 0x0A));
     }
-    
-    
+
     /**
-     * Generate an icon and save it to specified location. 
-     * @param content File to generate icon for
+     * Generate an icon and save it to specified location.
+     *
+     * @param content  File to generate icon for
      * @param iconSize
      * @param saveFile Location to save thumbnail to
+     *
      * @return Generated icon or null on error
      */
-    private static Image generateAndSaveIcon(Content content, int iconSize, File saveFile) { 
+    private static Image generateAndSaveIcon(Content content, int iconSize, File saveFile) {
         Image icon = null;
         try {
             icon = generateIcon(content, iconSize);
@@ -246,13 +255,13 @@ public class ImageUtils {
                     saveFile.delete();
                 }
                 ImageIO.write((BufferedImage) icon, "png", saveFile); //NON-NLS
-            }         
+            }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write cache thumbnail: " + content, ex); //NON-NLS
-        }   
-        return icon;        
+        }
+        return icon;
     }
-    
+
     /*
      * Generate and return a scaled image
      */
@@ -275,8 +284,7 @@ public class ImageUtils {
             // crop the image instead.
             BufferedImage biCropped = ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
             return biCropped;
-        }
-        catch (OutOfMemoryError e) {
+        } catch (OutOfMemoryError e) {
             logger.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
             return null;
         } catch (Exception e) {

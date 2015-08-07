@@ -51,15 +51,15 @@ class Installer extends ModuleInstall {
             server.start();
         } catch (SolrServerNoPortException ex) {
             logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
-            if (ex.getPortNumber() == server.getCurrentSolrServerPort())
+            if (ex.getPortNumber() == server.getCurrentSolrServerPort()) {
                 reportPortError(ex.getPortNumber());
-            else
+            } else {
                 reportStopPortError(ex.getPortNumber());
-        }
-        catch (KeywordSearchModuleException ex) {
+            }
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
-            reportInitError(ex.getMessage());            
-        }            
+            reportInitError(ex.getMessage());
+        }
     }
 
     @Override

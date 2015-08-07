@@ -147,8 +147,9 @@ final class IngestTasksScheduler {
      * job.
      *
      * @param job The job for which the tasks are to be scheduled.
+     *
      * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
+     *                              full tasks queue and is interrupted.
      */
     synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
@@ -208,7 +209,7 @@ final class IngestTasksScheduler {
     /**
      * Schedules a file ingest task for an ingest job.
      *
-     * @param job The job for which the tasks are to be scheduled.
+     * @param job  The job for which the tasks are to be scheduled.
      * @param file The file to be associated with the task.
      */
     synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
@@ -236,6 +237,7 @@ final class IngestTasksScheduler {
      * tasks for an ingest job are completed.
      *
      * @param job The job for which the query is to be performed.
+     *
      * @return True or false.
      */
     synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
@@ -278,6 +280,7 @@ final class IngestTasksScheduler {
      * tasks to put into the root directories queue.
      *
      * @param dataSource The data source.
+     *
      * @return A list of top level files.
      */
     private static List<AbstractFile> getTopLevelFiles(Content dataSource) {
@@ -388,6 +391,7 @@ final class IngestTasksScheduler {
      * should be enqueued.
      *
      * @param task The task to be scrutinized.
+     *
      * @return True or false.
      */
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
@@ -475,7 +479,7 @@ final class IngestTasksScheduler {
      * well.
      *
      * @param taskQueue The queue from which to remove the tasks.
-     * @param jobId The id of the job for which the tasks are to be removed.
+     * @param jobId     The id of the job for which the tasks are to be removed.
      */
     synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();
@@ -493,6 +497,7 @@ final class IngestTasksScheduler {
      *
      * @param queue The queue for which to count tasks.
      * @param jobId The id of the job for which the tasks are to be counted.
+     *
      * @return The count.
      */
     private static int countTasksForJob(Collection<? extends IngestTask> queue, long jobId) {
@@ -512,6 +517,7 @@ final class IngestTasksScheduler {
      * job.
      *
      * @param jobId The identifier assigned to the job.
+     *
      * @return
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {

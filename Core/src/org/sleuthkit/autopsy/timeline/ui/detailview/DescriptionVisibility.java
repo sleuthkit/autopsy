@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-/** Level of description shown in UI
- * NOTE: this is a separate concept form {@link DescriptionLOD} */
+/**
+ * Level of description shown in UI NOTE: this is a separate concept form
+ * {@link DescriptionLOD}
+ */
 enum DescriptionVisibility {
 
     HIDDEN, COUNT_ONLY, SHOWN;

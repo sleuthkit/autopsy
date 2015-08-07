@@ -134,7 +134,7 @@ public final class TextPrompt extends JLabel
      * prompt will not be shown again.
      *
      * @param showPromptOnce when true the prompt will only be shown once,
-     * otherwise it will be shown repeatedly.
+     *                       otherwise it will be shown repeatedly.
      */
     public void setShowPromptOnce(boolean showPromptOnce) {
         this.showPromptOnce = showPromptOnce;
@@ -152,13 +152,13 @@ public final class TextPrompt extends JLabel
             return;
         }
 
-		//  Prompt has already been shown once, remove it
+        //  Prompt has already been shown once, remove it
         if (showPromptOnce && focusLost > 0) {
             setVisible(false);
             return;
         }
 
-		//  Check the Show property and component focus to determine if the
+        //  Check the Show property and component focus to determine if the
         //  prompt should be displayed.
         if (component.hasFocus()) {
             if (show == Show.ALWAYS

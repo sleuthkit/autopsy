@@ -26,15 +26,16 @@ import org.openide.util.Lookup;
  *
  * @author dfickling
  */
-public class FileSearchAction extends AbstractAction{
-    
+public class FileSearchAction extends AbstractAction {
+
     public FileSearchAction(String title) {
         super(title);
     }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         FileSearchProvider searcher = Lookup.getDefault().lookup(FileSearchProvider.class);
         searcher.showDialog();
     }
-    
+
 }

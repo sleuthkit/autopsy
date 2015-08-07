@@ -28,7 +28,8 @@ import org.openide.util.actions.Presenter;
  *
  * @author dfickling
  */
- class SpacerPanel extends javax.swing.JPanel{
+class SpacerPanel extends javax.swing.JPanel {
+
     SpacerPanel() {
         this.setPreferredSize(new Dimension(2000, 20));
     }

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
@@ -38,6 +37,7 @@ public final class CaseNewAction extends CallableSystemAction implements CaseNew
 
     /**
      * Calls the "New Case" wizard panel action.
+     *
      * @param e
      */
     @Override
@@ -57,5 +57,5 @@ public final class CaseNewAction extends CallableSystemAction implements CaseNew
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
-    }   
+    }
 }

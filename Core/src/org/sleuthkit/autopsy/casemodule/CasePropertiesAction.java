@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
@@ -40,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * @author jantonius
  */
- final class CasePropertiesAction extends CallableSystemAction {
+final class CasePropertiesAction extends CallableSystemAction {
 
     private static JDialog popUpWindow;
 
@@ -64,12 +63,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             final JFrame frame = new JFrame(title);
             popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
 
-
             // get the information that needed
             Case currentCase = Case.getCurrentCase();
             String crDate = currentCase.getCreatedDate();
             String caseDir = currentCase.getCaseDirectory();
-            
+
             // put the image paths information into hashmap
             Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
 
@@ -104,6 +102,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     /**
      * Gets the name of this action. This may be presented as an item in a menu.
+     *
      * @return actionName
      */
     @Override
@@ -113,6 +112,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     /**
      * Gets the HelpCtx associated with implementing object
+     *
      * @return HelpCtx or HelpCtx.DEFAULT_HELP
      */
     @Override

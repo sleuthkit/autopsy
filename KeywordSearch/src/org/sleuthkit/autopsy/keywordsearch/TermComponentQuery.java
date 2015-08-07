@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Performs a regular expression query to the SOLR/Lucene instance. 
+ * Performs a regular expression query to the SOLR/Lucene instance.
  */
 class TermComponentQuery implements KeywordSearchQuery {
 
@@ -58,7 +58,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field;
     private static final int MAX_TERMS_RESULTS = 20000;
-    
+
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     public TermComponentQuery(KeywordList keywordList, Keyword keyword) {
@@ -84,7 +84,7 @@ class TermComponentQuery implements KeywordSearchQuery {
     public void setSubstringQuery() {
         queryEscaped = ".*" + queryEscaped + ".*";
     }
-    
+
     @Override
     public void escape() {
         queryEscaped = Pattern.quote(keyword.getQuery());
@@ -163,8 +163,6 @@ class TermComponentQuery implements KeywordSearchQuery {
         return keyword.getQuery();
     }
 
-    
-
     @Override
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
@@ -183,11 +181,11 @@ class TermComponentQuery implements KeywordSearchQuery {
 
         //regex match
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
-        
+
         if ((listName != null) && (listName.equals("") == false)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         }
-        
+
         //preview
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
@@ -198,7 +196,7 @@ class TermComponentQuery implements KeywordSearchQuery {
         if (hit.isArtifactHit()) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
-                
+
         try {
             bba.addAttributes(attributes);
             writeResult.add(attributes);
@@ -212,21 +210,21 @@ class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
-        
+
         final SolrQuery q = createQuery();
         q.setShowDebugInfo(DEBUG);
-        q.setTermsLimit(MAX_TERMS_RESULTS); 
+        q.setTermsLimit(MAX_TERMS_RESULTS);
         logger.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
         terms = executeQuery(q);
 
         QueryResults results = new QueryResults(this, keywordList);
         int resultSize = 0;
-        
+
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
-            
+
             LuceneQuery filesQuery = new LuceneQuery(keywordList, new Keyword(termStr, true));
-            
+
             //filesQuery.setField(TERMS_SEARCH_FIELD);
             for (KeywordQueryFilter filter : filters) {
                 //set filter
@@ -251,13 +249,13 @@ class TermComponentQuery implements KeywordSearchQuery {
             }
 
         }
-        
+
         //TODO limit how many results we store, not to hit memory limits
         logger.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
 
         return results;
     }
-    
+
     @Override
     public KeywordList getKeywordList() {
         return keywordList;

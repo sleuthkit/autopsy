@@ -47,12 +47,12 @@ class KeywordHit {
 
         /**
          * Parse the Solr document id to get the Solr object id and chunk id.
-         * The Solr object id will either be a file id or an artifact id from 
+         * The Solr object id will either be a file id or an artifact id from
          * the case database.
-         * 
-         * For every object (file or artifact) there will at least
-         * two Solr documents. One contains object metadata (chunk #1) and the
-         * second and subsequent documents contain chunks of the text.
+         *
+         * For every object (file or artifact) there will at least two Solr
+         * documents. One contains object metadata (chunk #1) and the second and
+         * subsequent documents contain chunks of the text.
          */
         final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
         if (-1 != separatorIndex) {

@@ -22,11 +22,11 @@ package org.sleuthkit.autopsy.coreutils;
  *
  * @author jwallace
  */
- public class JLnkParserException extends Exception {
+public class JLnkParserException extends Exception {
 
     /**
-     * Constructs an instance of
-     * <code>JLnkParserException</code> caused by the given exception.
+     * Constructs an instance of <code>JLnkParserException</code> caused by the
+     * given exception.
      *
      * @param msg the detail message.
      */

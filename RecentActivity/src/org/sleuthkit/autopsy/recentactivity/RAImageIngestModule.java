@@ -56,7 +56,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        
+
         Extract registry = new ExtractRegistry();
         Extract iexplore = new ExtractIE();
         Extract recentDocuments = new RecentDocumentsByLnk();
@@ -74,21 +74,21 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtracters.add(chrome);
         browserExtracters.add(firefox);
         browserExtracters.add(iexplore);
-        
-       for (Extract extracter : extracters) {
+
+        for (Extract extracter : extracters) {
             extracter.init();
-        }        
+        }
     }
-    
+
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "RAImageIngestModule.process.started",
-                                                                             dataSource.getName())));
+                NbBundle.getMessage(this.getClass(),
+                        "RAImageIngestModule.process.started",
+                        dataSource.getName())));
 
         progressBar.switchToDeterminate(extracters.size());
-        
+
         ArrayList<String> errors = new ArrayList<>();
 
         for (int i = 0; i < extracters.size(); i++) {
@@ -97,7 +97,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
-            
+
             progressBar.progress(extracter.getName(), i);
 
             try {
@@ -105,7 +105,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
-                                                        extracter.getName()));
+                        extracter.getName()));
                 errors.add(
                         NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
@@ -130,17 +130,17 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                 errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.oneErr");
             } else {
                 errorMsgSubject = NbBundle.getMessage(this.getClass(),
-                                                      "RAImageIngestModule.process.errMsgSub.nErrs", errors.size());
+                        "RAImageIngestModule.process.errMsgSub.nErrs", errors.size());
             }
         } else {
             errorMessage.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.noErrs"));
             errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.noErrs");
         }
         final IngestMessage msg = IngestMessage.createMessage(msgLevel, RecentActivityExtracterModuleFactory.getModuleName(),
-                                                              NbBundle.getMessage(this.getClass(),
-                                                                                  "RAImageIngestModule.process.ingestMsg.finished",
-                                                                                  dataSource.getName(), errorMsgSubject),
-                                                              errorMessage.toString());
+                NbBundle.getMessage(this.getClass(),
+                        "RAImageIngestModule.process.ingestMsg.finished",
+                        dataSource.getName(), errorMsgSubject),
+                errorMessage.toString());
         services.postMessage(msg);
 
         StringBuilder historyMsg = new StringBuilder();
@@ -155,16 +155,16 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         }
         historyMsg.append("</ul>"); //NON-NLS
         final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
-                                                                   NbBundle.getMessage(this.getClass(),
-                                                                                       "RAImageIngestModule.process.ingestMsg.results",
-                                                                                       dataSource.getName()),
-                                                                   historyMsg.toString());
+                NbBundle.getMessage(this.getClass(),
+                        "RAImageIngestModule.process.ingestMsg.results",
+                        dataSource.getName()),
+                historyMsg.toString());
         services.postMessage(inboxMsg);
 
         if (context.dataSourceIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        
+
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
             try {
@@ -172,22 +172,21 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
-                                                        extracter.getName()));
+                        extracter.getName()));
             }
         }
-                
+
         return ProcessResult.OK;
     }
-
-
 
     /**
      * Get the temp path for a specific sub-module in recent activity. Will
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp
-     * folder to prevent name collisions
+     * @param mod    Module name that will be used for a sub folder in the temp
+     *               folder to prevent name collisions
+     *
      * @return Path to directory
      */
     protected static String getRATempPath(Case a_case, String mod) {
@@ -204,8 +203,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp
-     * folder to prevent name collisions
+     * @param mod    Module name that will be used for a sub folder in the temp
+     *               folder to prevent name collisions
+     *
      * @return Path to directory
      */
     protected static String getRAOutputPath(Case a_case, String mod) {

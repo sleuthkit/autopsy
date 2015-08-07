@@ -152,10 +152,10 @@ public class IngestManager {
      * is the default.
      */
     private volatile boolean runInteractively;
-    
+
     /**
-     * Ingest manager subscribes to service outage notifications. If key services are down, 
-     * ingest manager cancels all ingest jobs in progress.
+     * Ingest manager subscribes to service outage notifications. If key
+     * services are down, ingest manager cancels all ingest jobs in progress.
      */
     private final ServicesMonitor servicesMonitor;
 
@@ -272,7 +272,7 @@ public class IngestManager {
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
-        
+
         this.servicesMonitor = ServicesMonitor.getInstance();
         subscribeToServiceMonitorEvents();
 
@@ -324,17 +324,17 @@ public class IngestManager {
             }
         });
     }
-    
+
     /**
-     * Subscribe ingest manager to service monitor events. Cancels ingest
-     * if one of services it's subscribed to goes down.
+     * Subscribe ingest manager to service monitor events. Cancels ingest if one
+     * of services it's subscribed to goes down.
      */
     private void subscribeToServiceMonitorEvents() {
         PropertyChangeListener propChangeListener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
-                    
+
                     // check whether a milti-user case is currently being processed
                     try {
                         if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
@@ -344,7 +344,7 @@ public class IngestManager {
                         // thorown by Case.getCurrentCase() when no case is open
                         return;
                     }
-                    
+
                     // one of the services we subscribed to went down                    
                     String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
@@ -412,7 +412,7 @@ public class IngestManager {
      * is the default.
      *
      * @param runInteractively whether or not to this ingest manager should run
-     * ingest interactively.
+     *                         ingest interactively.
      */
     public void setRunInteractively(boolean runInteractively) {
         this.runInteractively = runInteractively;
@@ -422,6 +422,7 @@ public class IngestManager {
      * The ingest manager can be directed to forgo use of message boxes, the
      * ingest message box, NetBeans progress handles, etc. Running interactively
      * is the default.
+     *
      * @return true if running interactively, false otherwise.
      */
     public boolean isRunningInteractively() {
@@ -483,7 +484,7 @@ public class IngestManager {
      * job will be started on a worker thread.
      *
      * @param dataSources The data sources to process.
-     * @param settings The settings for the ingest job.
+     * @param settings    The settings for the ingest job.
      */
     public synchronized void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
@@ -500,7 +501,8 @@ public class IngestManager {
      * Starts an ingest job that will process a collection of data sources.
      *
      * @param dataSources The data sources to process.
-     * @param settings The settings for the ingest job.
+     * @param settings    The settings for the ingest job.
+     *
      * @return The ingest job that was started on success or null on failure.
      */
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
@@ -519,6 +521,7 @@ public class IngestManager {
      * Starts an ingest job for a collection of data sources.
      *
      * @param job The ingest job to start.
+     *
      * @return True if the job was started, false otherwise.
      */
     private boolean startIngestJob(IngestJob job) {
@@ -530,7 +533,7 @@ public class IngestManager {
             if (runInteractively && jobsById.size() == 1) {
                 clearIngestMessageBox();
             }
-            
+
             // multi-user cases must have multi-user database service running            
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 try {
@@ -689,6 +692,7 @@ public class IngestManager {
      * Adds an ingest job and ingest module event property change listener.
      *
      * @param listener The PropertyChangeListener to register.
+     *
      * @deprecated Use addIngestJobEventListener() and/or
      * addIngestModuleEventListener().
      */
@@ -702,6 +706,7 @@ public class IngestManager {
      * Removes an ingest job and ingest module event property change listener.
      *
      * @param listener The PropertyChangeListener to unregister.
+     *
      * @deprecated Use removeIngestJobEventListener() and/or
      * removeIngestModuleEventListener().
      */
@@ -744,9 +749,9 @@ public class IngestManager {
     /**
      * Fire an ingest event signifying analysis of a data source started.
      *
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource The data source.
+     * @param dataSource            The data source.
      */
     void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
@@ -756,9 +761,9 @@ public class IngestManager {
     /**
      * Fire an ingest event signifying analysis of a data source finished.
      *
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource The data source.
+     * @param dataSource            The data source.
      */
     void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
@@ -768,9 +773,9 @@ public class IngestManager {
     /**
      * Fire an ingest event signifying analysis of a data source was canceled.
      *
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource The data source.
+     * @param dataSource            The data source.
      */
     void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
@@ -802,7 +807,7 @@ public class IngestManager {
      * module.
      *
      * @param moduleDataEvent A ModuleContentEvent with the details of the new
-     * content.
+     *                        content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         AutopsyEvent event = new ContentChangedEvent(moduleContentEvent);
@@ -1016,7 +1021,7 @@ public class IngestManager {
          * Constructs an object that publishes ingest events to both local and
          * remote subscribers.
          *
-         * @param event The event to publish.
+         * @param event     The event to publish.
          * @param publisher The event publisher.
          */
         PublishEventTask(AutopsyEvent event, AutopsyEventPublisher publisher) {

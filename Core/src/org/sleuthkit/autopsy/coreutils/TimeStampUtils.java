@@ -38,6 +38,7 @@ public final class TimeStampUtils {
      * Checks whether a string ends with a time stamp defined by pattern.
      *
      * @param inputString Input string
+     *
      * @return true if string ends with a time stamp, false otherwise.
      */
     public static boolean endsWithTimeStamp(String inputString) {
@@ -67,6 +68,7 @@ public final class TimeStampUtils {
      * Remove a timestamp if it exists
      *
      * @param input the String to remove the trailing timestamp from
+     *
      * @return the String without timestamp
      */
     public static String removeTimeStamp(String input) {
@@ -81,6 +83,7 @@ public final class TimeStampUtils {
      * Return the timestamp portion of the name passed in
      *
      * @param input the name to check for a timestamp
+     *
      * @return the timestamp only, or empty String if none
      */
     public static String getTimeStampOnly(String input) {

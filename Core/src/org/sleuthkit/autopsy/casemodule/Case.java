@@ -364,12 +364,13 @@ public class Case {
      * Creates a new case (create the XML config file and database). Overload
      * for API consistency, defaults to a single-user case.
      *
-     * @param caseDir The directory to store case data in. Will be created if it
-     * doesn't already exist. If it exists, it should have all of the needed sub
-     * dirs that createCaseDirectory() will create.
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
+     * @param examiner   the examiner for this case
      *
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
@@ -380,13 +381,14 @@ public class Case {
     /**
      * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir The directory to store case data in. Will be created if it
-     * doesn't already exist. If it exists, it should have all of the needed sub
-     * dirs that createCaseDirectory() will create.
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
-     * @param caseType the type of case, single-user or multi-user
+     * @param examiner   the examiner for this case
+     * @param caseType   the type of case, single-user or multi-user
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
@@ -502,7 +504,8 @@ public class Case {
      * Opens an existing case.
      *
      * @param caseMetadataFilePath The path of the case metadata file for the
-     * case to be opened.
+     *                             case to be opened.
+     *
      * @throws CaseActionException
      */
     /**
@@ -641,7 +644,7 @@ public class Case {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId the ID of the image that being added
+     * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      *
      * @deprecated Use notifyNewDataSource() instead.
@@ -677,8 +680,8 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSourceId A unique identifier for the data source. This UUID
-     * should be used to call notifyNewDataSource() after the data source is
-     * added.
+     *                     should be used to call notifyNewDataSource() after
+     *                     the data source is added.
      */
     public void notifyAddingNewDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
@@ -703,9 +706,10 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param newDataSource New data source added.
-     * @param dataSourceId A unique identifier for the data source. Should be
-     * the same UUID used to call notifyAddingNewDataSource() when the process
-     * of adding the data source began.
+     * @param dataSourceId  A unique identifier for the data source. Should be
+     *                      the same UUID used to call
+     *                      notifyAddingNewDataSource() when the process of
+     *                      adding the data source began.
      */
     public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
@@ -820,9 +824,9 @@ public class Case {
      * This should not be called from the EDT.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath the old path that wants to be updated
+     * @param oldPath     the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath the new path
+     * @param newPath     the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -1243,7 +1247,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1254,7 +1258,7 @@ public class Case {
      * Adds a subscriber to events from this Autopsy node and other Autopsy
      * nodes.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to add.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -1364,7 +1368,7 @@ public class Case {
     /**
      * to create the case directory
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1378,7 +1382,7 @@ public class Case {
     /**
      * Create the case directory and its needed subfolders.
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseType The type of case, single-user or multi-user
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1599,10 +1603,10 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
-     * @param reportName The report name, may be empty.
+     * @param reportName    The report name, may be empty.
      *
      * @throws TskCoreException
      */

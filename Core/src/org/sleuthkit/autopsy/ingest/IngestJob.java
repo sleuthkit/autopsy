@@ -49,9 +49,9 @@ public final class IngestJob {
      * set of ingest modules specified via ingest job settings.
      *
      * @param dataSources The data sources to be ingested.
-     * @param settings The ingest job settings.
-     * @param doUI Whether or not this job should use progress bars, message
-     * boxes for errors, etc.
+     * @param settings    The ingest job settings.
+     * @param doUI        Whether or not this job should use progress bars,
+     *                    message boxes for errors, etc.
      */
     IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         this.id = IngestJob.nextId.getAndIncrement();
@@ -247,7 +247,7 @@ public final class IngestJob {
              * level ingest modules.
              *
              * @return A list of canceled data source level ingest module
-             * display names, possibly empty.
+             *         display names, possibly empty.
              */
             public List<String> getCancelledDataSourceIngestModules() {
                 return snapshot.getCancelledDataSourceIngestModules();
@@ -350,8 +350,8 @@ public final class IngestJob {
          * cancellation of the module.
          *
          * @param DataSourceIngestJob The data source ingest job that owns the
-         * data source level ingest module.
-         * @param module The data source level ingest module.
+         *                            data source level ingest module.
+         * @param module              The data source level ingest module.
          */
         private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;

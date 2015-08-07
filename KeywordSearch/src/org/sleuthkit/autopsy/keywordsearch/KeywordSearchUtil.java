@@ -35,12 +35,11 @@ class KeywordSearchUtil {
     };
     private static final Logger logger = Logger.getLogger(KeywordSearchUtil.class.getName());
 
-
-
     /**
      * Return a quoted version of the query if the original query is not quoted
      *
      * @param query the query to check if it is quoted
+     *
      * @return quoted query
      */
     public static String quoteQuery(String query) {
@@ -62,6 +61,7 @@ class KeywordSearchUtil {
      * quotes, if present
      *
      * @param query to be encoded
+     *
      * @return encoded query
      */
     public static String escapeLuceneQuery(String query) {
@@ -94,7 +94,6 @@ class KeywordSearchUtil {
             sb.append(c);
         }
         queryEscaped = inputString = sb.toString();
-
 
         return queryEscaped;
     }
@@ -137,6 +136,7 @@ class KeywordSearchUtil {
      * Is the Keyword Search list at absPath an XML list?
      *
      * @param absPath
+     *
      * @return yes or no
      */
     static boolean isXMLList(String absPath) {

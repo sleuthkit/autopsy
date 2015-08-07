@@ -32,12 +32,14 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to delete tags applied to blackboard artifacts.  
+ * Instances of this Action allow users to delete tags applied to blackboard
+ * artifacts.
  */
 public class DeleteBlackboardArtifactTagAction extends AbstractAction {
+
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteBlackboardArtifactTagAction.class,
-                                                                "DeleteBlackboardArtifactTagAction.deleteTags");
-    
+            "DeleteBlackboardArtifactTagAction.deleteTags");
+
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -52,30 +54,28 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
 
     private DeleteBlackboardArtifactTagAction() {
         super(MENU_TEXT);
-    }    
-    
+    }
+
     @Override
     public void actionPerformed(ActionEvent event) {
         final Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
-        new Thread(() -> {    
+        new Thread(() -> {
             for (BlackboardArtifactTag tag : selectedTags) {
                 try {
                     Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
-                }
-                catch (TskCoreException ex) {                        
+                } catch (TskCoreException ex) {
                     Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
-                                                                          tag.getName()),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "DeleteBlackboardArtifactTagAction.tagDelErr"),
-                                                      JOptionPane.ERROR_MESSAGE);
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
+                                        tag.getName()),
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteBlackboardArtifactTagAction.tagDelErr"),
+                                JOptionPane.ERROR_MESSAGE);
                     });
-                }                    
-            }    
+                }
+            }
         }).start();
-    }    
-}    
-
+    }
+}

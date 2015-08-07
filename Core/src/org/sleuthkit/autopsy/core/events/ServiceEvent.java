@@ -37,7 +37,7 @@ public final class ServiceEvent extends AutopsyEvent implements Serializable {
         super(serviceName, null, status);
         this.details = details;
     }
-    
+
     /**
      * Gets details string passed as input to ServiceEvent constructor.
      *

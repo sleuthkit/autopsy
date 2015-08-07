@@ -50,8 +50,8 @@ class AndroidIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "AndroidIngestModule.processing.startedAnalysis")));
+                NbBundle.getMessage(this.getClass(),
+                        "AndroidIngestModule.processing.startedAnalysis")));
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
@@ -157,9 +157,9 @@ class AndroidIngestModule implements DataSourceIngestModule {
         }
 
         services.postMessage(IngestMessage.createMessage(msgLevel, AndroidModuleFactory.getModuleName(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "AndroidIngestModule.processing.finishedAnalysis",
-                                                                             errorMsgSubject), errorMessage.toString()));
+                NbBundle.getMessage(this.getClass(),
+                        "AndroidIngestModule.processing.finishedAnalysis",
+                        errorMsgSubject), errorMessage.toString()));
 
         return IngestModule.ProcessResult.OK;
     }

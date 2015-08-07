@@ -36,7 +36,8 @@ import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 
 /**
- * Highlights hits for a given document. Knows about pages and such for the content viewer. 
+ * Highlights hits for a given document. Knows about pages and such for the
+ * content viewer.
  */
 class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
 
@@ -95,8 +96,9 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
         this.group = group;
     }
 
-    /** 
-     * The main goal of this method is to figure out which pages / chunks have hits.
+    /**
+     * The main goal of this method is to figure out which pages / chunks have
+     * hits.
      */
     private void loadPageInfo() {
         if (isPageInfoLoaded) {
@@ -122,8 +124,9 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
         if (hasChunks) {
             //extract pages of interest, sorted
 
-            /* If this is being called from the artifacts / dir tree, then we
-             * need to perform the search to get the highlights. 
+            /*
+             * If this is being called from the artifacts / dir tree, then we
+             * need to perform the search to get the highlights.
              */
             if (hits == null) {
                 String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
@@ -131,12 +134,12 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
                     //use white-space sep. field to get exact matches only of regex query result
                     queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
                 }
-                
+
                 Keyword keywordQuery = new Keyword(queryStr, !isRegex);
                 List<Keyword> keywords = new ArrayList<>();
                 keywords.add(keywordQuery);
                 KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
-                
+
                 chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
                     hits = chunksQuery.performQuery();
@@ -188,7 +191,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     long getObjectId() {
         return this.objectId;
     }
-    
+
     @Override
     public int getNumberPages() {
         return this.numberPages;
@@ -340,7 +343,6 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
             contentIdStr += "_" + Integer.toString(this.currentPage);
         }
 
-
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
@@ -374,7 +376,6 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
                 // extracted content (minus highlight tags) is HTML-escaped
                 String highlightedContent = contentHighlights.get(0).trim();
                 highlightedContent = insertAnchors(highlightedContent);
-
 
                 return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
             }

@@ -60,14 +60,15 @@ final class RemoteEventPublisher {
      * other Autopsy nodes and for publishing events from other Autopsy nodes.
      *
      * @param eventChannelName The name of the event channel to be used for
-     * communication with other Autopsy nodes.
-     * @param localPublisher An event publisher that will be used to publish
-     * events from other Autopsy nodes on this node.
-     * @param info Connection info for the message service.
+     *                         communication with other Autopsy nodes.
+     * @param localPublisher   An event publisher that will be used to publish
+     *                         events from other Autopsy nodes on this node.
+     * @param info             Connection info for the message service.
+     *
      * @throws URISyntaxException if the URI in the connection info is
-     * malformed.
-     * @throws JMSException if the connection to the message service cannot be
-     * made.
+     *                            malformed.
+     * @throws JMSException       if the connection to the message service
+     *                            cannot be made.
      */
     RemoteEventPublisher(String eventChannelName, LocalEventPublisher localPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
         try {
@@ -100,7 +101,7 @@ final class RemoteEventPublisher {
      * Stops this publisher, causing it to disconnect from the message service.
      *
      * @throws JMSException if there is a problem closing the session or the
-     * connection.
+     *                      connection.
      */
     synchronized void stop() throws JMSException {
         if (null != producer) {

@@ -61,7 +61,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
- class ReportHTML implements TableReportModule {
+class ReportHTML implements TableReportModule {
+
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
     private static ReportHTML instance;
@@ -69,17 +70,16 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     private Case currentCase;
     private SleuthkitCase skCase;
     static Integer THUMBNAIL_COLUMNS = 5;
-    
+
     private Map<String, Integer> dataTypes;
     private String path;
     private String thumbsPath;
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
-    
 
     private final ReportBranding reportBranding;
-    
+
     // Get the default instance of this report
     public static synchronized ReportHTML getDefault() {
         if (instance == null) {
@@ -87,24 +87,24 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         }
         return instance;
     }
-    
+
     // Hidden constructor
     private ReportHTML() {
         reportBranding = new ReportBranding();
     }
-    
+
     // Refesh the member variables
     private void refresh() {
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
-        
+
         dataTypes = new TreeMap<>();
-        
+
         path = "";
         thumbsPath = "";
         currentDataType = "";
         rowCount = 0;
-        
+
         if (out != null) {
             try {
                 out.close();
@@ -113,35 +113,34 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         }
         out = null;
     }
-    
+
     /**
-     * Generate a file name for the given datatype, by replacing any 
-     * undesirable chars, like /, or spaces
+     * Generate a file name for the given datatype, by replacing any undesirable
+     * chars, like /, or spaces
+     *
      * @param dataType data type for which to generate a file name
      */
     private String dataTypeToFileName(String dataType) {
-        
+
         String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dataType);
         // replace all ' ' with '_'
         fileName = fileName.replaceAll(" ", "_");
-            
-        return fileName; 
+
+        return fileName;
     }
 
-    
     /**
-     * Copies a suitable icon for the given data type in the output directory and 
-     * returns the icon file name to use for the given data type.
+     * Copies a suitable icon for the given data type in the output directory
+     * and returns the icon file name to use for the given data type.
      */
-    private String useDataTypeIcon(String dataType)
-    {
+    private String useDataTypeIcon(String dataType) {
         String iconFilePath;
         String iconFileName;
         InputStream in;
         OutputStream output = null;
-        
+
         logger.log(Level.INFO, "useDataTypeIcon: dataType = {0}", dataType); //NON-NLS
-        
+
         // find the artifact with matching display name
         BlackboardArtifact.ARTIFACT_TYPE artifactType = null;
         for (ARTIFACT_TYPE v : ARTIFACT_TYPE.values()) {
@@ -149,38 +148,37 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 artifactType = v;
             }
         }
-        
-        if (null != artifactType)
-        {        
+
+        if (null != artifactType) {
             // set the icon file name
             iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
 
             // determine the source image to use
-             switch (artifactType) {
+            switch (artifactType) {
                 case TSK_WEB_BOOKMARK:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bookmarks.png"); //NON-NLS
-                    break;   
+                    break;
                 case TSK_WEB_COOKIE:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/cookies.png"); //NON-NLS
+                    break;
                 case TSK_WEB_HISTORY:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/history.png"); //NON-NLS
                     break;
                 case TSK_WEB_DOWNLOAD:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png"); //NON-NLS
-                    break;     
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/downloads.png"); //NON-NLS
+                    break;
                 case TSK_RECENT_OBJECT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/recent.png"); //NON-NLS
                     break;
                 case TSK_INSTALLED_PROG:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
                     break;
                 case TSK_KEYWORD_HIT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/keywords.png"); //NON-NLS
                     break;
                 case TSK_HASHSET_HIT:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/hash.png"); //NON-NLS
                     break;
                 case TSK_DEVICE_ATTACHED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/devices.png"); //NON-NLS
@@ -196,7 +194,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     break;
                 case TSK_TAG_ARTIFACT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/userbookmarks.png"); //NON-NLS
-                    break;        
+                    break;
                 case TSK_SERVICE_ACCOUNT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/account-icon-16.png"); //NON-NLS
                     break;
@@ -207,29 +205,29 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/message.png"); //NON-NLS
                     break;
                 case TSK_CALLLOG:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calllog.png"); //NON-NLS
                     break;
                 case TSK_CALENDAR_ENTRY:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/calendar.png"); //NON-NLS
                     break;
                 case TSK_SPEED_DIAL_ENTRY:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/speeddialentry.png"); //NON-NLS
                     break;
                 case TSK_BLUETOOTH_PAIRING:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/bluetooth.png"); //NON-NLS
+                    break;
                 case TSK_GPS_BOOKMARK:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gpsfav.png"); //NON-NLS
+                    break;
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-lastlocation.png"); //NON-NLS
+                    break;
                 case TSK_GPS_SEARCH:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps-search.png"); //NON-NLS
+                    break;
                 case TSK_OS_INFO:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/computer.png"); //NON-NLS
-                     break;
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/computer.png"); //NON-NLS
+                    break;
                 case TSK_GPS_TRACKPOINT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/gps_trackpoint.png"); //NON-NLS
                     break;
@@ -252,53 +250,55 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
                     break;
                 case TSK_PROG_RUN:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/installed.png"); //NON-NLS
                     break;
                 case TSK_REMOTE_DRIVE:
-                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
-                    break;    
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
                     iconFileName = "star.png"; //NON-NLS
-                    iconFilePath = path + File.separator +  iconFileName;
+                    iconFilePath = path + File.separator + iconFileName;
                     break;
-             }
-        } 
-        else {  // no defined artifact found for this dataType 
+            }
+        } else {  // no defined artifact found for this dataType 
             logger.log(Level.WARNING, "useDataTypeIcon: no artifact found for data type = " + dataType); //NON-NLS
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
-            iconFilePath = path + File.separator +  iconFileName;   
+            iconFilePath = path + File.separator + iconFileName;
         }
-        
+
         try {
-             output = new FileOutputStream(iconFilePath);
-             FileUtil.copy(in, output);
-             in.close();
-             output.close();
-          } catch (IOException ex) {
-             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
+            output = new FileOutputStream(iconFilePath);
+            FileUtil.copy(in, output);
+            in.close();
+            output.close();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
         } finally {
-             if (output != null) {
-                 try {
-                     output.flush();
-                     output.close();
-                 } catch (IOException ex) {
-                 }
-             } if (in != null) {
-                 try {
-                     in.close();
-                 } catch (IOException ex) {
-                 }
-             }
-         }
-        
-        return iconFileName; 
+            if (output != null) {
+                try {
+                    output.flush();
+                    output.close();
+                } catch (IOException ex) {
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ex) {
+                }
+            }
+        }
+
+        return iconFileName;
     }
+
     /**
-     * Start this report by setting the path, refreshing member variables,
-     * and writing the skeleton for the HTML report.
+     * Start this report by setting the path, refreshing member variables, and
+     * writing the skeleton for the HTML report.
+     *
      * @param baseReportDir path to save the report
      */
     @Override
@@ -335,13 +335,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
         }
     }
-    
+
     /**
-     * Start a new HTML page for the given data type. Update the output stream to this page,
-     * and setup the web page header.
-     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.     
-     * 
-     * @param name Name of the data type
+     * Start a new HTML page for the given data type. Update the output stream
+     * to this page, and setup the web page header. Note: This method is a
+     * temporary workaround to avoid modifying the TableReportModule interface.
+     *
+     * @param name    Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
     @Override
@@ -354,7 +354,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, "Unrecognized encoding"); //NON-NLS
         }
-        
+
         try {
             StringBuilder page = new StringBuilder();
             page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
@@ -371,7 +371,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, "Failed to write page head: {0}", ex); //NON-NLS
         }
     }
-              
+
     /**
      * End the current data type. Write the end of the web page and close the
      * output stream.
@@ -384,7 +384,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
-            if(out != null) {
+            if (out != null) {
                 try {
                     out.flush();
                     out.close();
@@ -398,21 +398,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     /**
      * Start a new set under the current data type.
+     *
      * @param setName name of the new set
      */
     @Override
-    public void startSet(String setName) {   
+    public void startSet(String setName) {
         StringBuilder set = new StringBuilder();
         set.append("<h1><a name=\"").append(setName).append("\">").append(setName).append("</a></h1>\n"); //NON-NLS
         set.append("<div class=\"keyword_list\">\n"); //NON-NLS
-        
+
         try {
             out.write(set.toString());
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write set: {0}", ex); //NON-NLS
         }
     }
-    
+
     /**
      * End the current set.
      */
@@ -427,6 +428,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     /**
      * Add an index to the current page for all the sets about to be added.
+     *
      * @param sets list of set names to be added
      */
     @Override
@@ -446,6 +448,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     /**
      * Add a new element to the current set.
+     *
      * @param elementName name of the element
      */
     @Override
@@ -459,17 +462,18 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     /**
      * Start a new table with the given column titles.
+     *
      * @param titles column titles
      */
     @Override
     public void startTable(List<String> titles) {
-        StringBuilder ele = new StringBuilder();        
+        StringBuilder ele = new StringBuilder();
         ele.append("<table>\n<thead>\n\t<tr>\n"); //NON-NLS
-        for(String title : titles) {
+        for (String title : titles) {
             ele.append("\t\t<th>").append(title).append("</th>\n"); //NON-NLS
         }
         ele.append("\t</tr>\n</thead>\n"); //NON-NLS
-        
+
         try {
             out.write(ele.toString());
         } catch (IOException ex) {
@@ -478,33 +482,33 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
     }
 
     /**
-     * Start a new table with the given column headers.
-     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.
-     * 
-     * @param columnHeaders column headers
-     * @param sourceArtifact source blackboard artifact for the table data 
+     * Start a new table with the given column headers. Note: This method is a
+     * temporary workaround to avoid modifying the TableReportModule interface.
+     *
+     * @param columnHeaders  column headers
+     * @param sourceArtifact source blackboard artifact for the table data
      */
     public void startContentTagsTable(List<String> columnHeaders) {
-        StringBuilder htmlOutput = new StringBuilder();        
+        StringBuilder htmlOutput = new StringBuilder();
         htmlOutput.append("<table>\n<thead>\n\t<tr>\n"); //NON-NLS
-       
+
         // Add the specified columns.
-        for(String columnHeader : columnHeaders) {
+        for (String columnHeader : columnHeaders) {
             htmlOutput.append("\t\t<th>").append(columnHeader).append("</th>\n"); //NON-NLS
         }
-        
+
         // Add a column for a hyperlink to a local copy of the tagged content.
         htmlOutput.append("\t\t<th></th>\n"); //NON-NLS
-        
+
         htmlOutput.append("\t</tr>\n</thead>\n"); //NON-NLS
-        
+
         try {
             out.write(htmlOutput.toString());
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write table start: {0}", ex); //NON-NLS
         }
     }
-    
+
     /**
      * End the current table.
      */
@@ -519,6 +523,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
     /**
      * Add a row to the current table.
+     *
      * @param row values for each cell in the row
      */
     @Override
@@ -530,7 +535,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         }
         builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
-        
+
         try {
             out.write(builder.toString());
         } catch (IOException ex) {
@@ -539,14 +544,15 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
-    
+
     /**
-     * Saves a local copy of a tagged file and adds a row with a hyper link to 
+     * Saves a local copy of a tagged file and adds a row with a hyper link to
      * the file. The content of the hyperlink is provided in linkHTMLContent.
-     * 
-     * @param row Values for each data cell in the row
-     * @param file The file to link to in the report.
-     * @param tagName the name of the tag that the content was flagged by
+     *
+     * @param row             Values for each data cell in the row
+     * @param file            The file to link to in the report.
+     * @param tagName         the name of the tag that the content was flagged
+     *                        by
      * @param linkHTMLContent the html that will be the body of the link
      */
     public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
@@ -557,13 +563,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         }
         AbstractFile file = (AbstractFile) content;
         // Don't make a local copy of the file if it is a directory or unallocated space.
-        if (file.isDir() ||
-            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+        if (file.isDir()
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
             row.add("");
             return;
         }
-        
+
         // Add metadata about the file to HTML output
         row.add(file.getMtimeAsDate());
         row.add(file.getCtimeAsDate());
@@ -571,49 +577,46 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         row.add(file.getCrtimeAsDate());
         row.add(Long.toString(file.getSize()));
         row.add(file.getMd5Hash());
-        
+
         // save it in a folder based on the tag name
         String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
-        
+
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
         localFileLink.append("<a href=\""); //NON-NLS
         localFileLink.append(localFilePath);
         localFileLink.append("\">");
-        
+
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n"); //NON-NLS
-        int positionCounter=0;
+        int positionCounter = 0;
         for (String cell : row) {
             // position-dependent code used to format this report. Not great, but understandable for formatting.
-            if(positionCounter==1) { // Convert the file name to a hyperlink and left-align it
+            if (positionCounter == 1) { // Convert the file name to a hyperlink and left-align it
                 builder.append("\t\t<td class=\"left_align_cell\">").append(localFileLink.toString()).append(cell).append("</a></td>\n"); //NON-NLS
-            }
-            else if (positionCounter==7) { // Right-align the bytes column.
+            } else if (positionCounter == 7) { // Right-align the bytes column.
                 builder.append("\t\t<td class=\"right_align_cell\">").append(cell).append("</td>\n"); //NON-NLS
-            }
-            else { // Regular case, not a file name nor a byte count
+            } else { // Regular case, not a file name nor a byte count
                 builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
             }
             ++positionCounter;
         }
         builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
-        
+
         try {
             out.write(builder.toString());
-        } 
-        catch (IOException ex) {
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write row to out.", ex); //NON-NLS
-        }
-        catch (NullPointerException ex) {
+        } catch (NullPointerException ex) {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
-    
+
     /**
      * Add the body of the thumbnails table.
-     * @param images 
+     *
+     * @param images
      */
     public void addThumbnailRows(List<Content> images) {
         List<String> currentRow = new ArrayList<>();
@@ -624,7 +627,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 addRow(currentRow);
                 currentRow.clear();
             }
-            
+
             if (totalCount == MAX_THUMBS_PER_PAGE) {
                 // manually set the row count so the count of items shown in the 
                 // navigation page reflects the number of thumbnails instead of
@@ -635,19 +638,19 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 endTable();
                 endDataType();
                 startDataType(NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.title", pages),
-                              NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.msg"));
+                        NbBundle.getMessage(this.getClass(), "ReportHTML.addThumbRows.dataType.msg"));
                 List<String> emptyHeaders = new ArrayList<>();
                 for (int i = 0; i < THUMBNAIL_COLUMNS; i++) {
                     emptyHeaders.add("");
                 }
                 startTable(emptyHeaders);
             }
-            
+
             if (failsContentCheck(content)) {
                 continue;
             }
-            
-            AbstractFile file = (AbstractFile) content; 
+
+            AbstractFile file = (AbstractFile) content;
 
             // save copies of the orginal image and thumbnail image
             String thumbnailPath = prepareThumbnail(file);
@@ -661,7 +664,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             } catch (TskCoreException ex) {
                 nameInImage = file.getName();
             }
-            
+
             StringBuilder linkToThumbnail = new StringBuilder();
             linkToThumbnail.append("<a href=\""); //NON-NLS
             linkToThumbnail.append(contentPath);
@@ -669,13 +672,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>"); //NON-NLS
             linkToThumbnail.append("</a><br>"); //NON-NLS
             linkToThumbnail.append(file.getName()).append("<br>"); //NON-NLS
-            
+
             Services services = currentCase.getServices();
             TagsManager tagsManager = services.getTagsManager();
             try {
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
                 if (tags.size() > 0) {
-                    linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags") );
+                    linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags"));
                 }
                 for (int i = 0; i < tags.size(); i++) {
                     ContentTag tag = tags.get(i);
@@ -689,10 +692,10 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
 
             currentRow.add(linkToThumbnail.toString());
-            
+
             totalCount++;
         }
-        
+
         if (currentRow.isEmpty() == false) {
             int extraCells = THUMBNAIL_COLUMNS - currentRow.size();
             for (int i = 0; i < extraCells; i++) {
@@ -701,42 +704,45 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
             addRow(currentRow);
         }
-        
+
         // manually set rowCount to be the total number of images.
         rowCount = totalCount;
     }
-    
+
     private boolean failsContentCheck(Content c) {
         if (c instanceof AbstractFile == false) {
             return true;
         }
         AbstractFile file = (AbstractFile) c;
-        if (file.isDir() ||
-            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
-            file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
+        if (file.isDir()
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
             return true;
         }
         return false;
     }
-    
+
     /**
      * Save a local copy of the given file in the reports folder.
-     * @param file File to save
-     * @param dirName Custom top-level folder to use to store the files in (tag name, etc.)
+     *
+     * @param file    File to save
+     * @param dirName Custom top-level folder to use to store the files in (tag
+     *                name, etc.)
+     *
      * @return Path to where file was stored (relative to root of HTML folder)
      */
     public String saveContent(AbstractFile file, String dirName) {
         // clean up the dir name passed in
         String dirName2 = dirName.replace("/", "_");
         dirName2 = dirName2.replace("\\", "_");
-        
+
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();  // full path
-        
+
         localFilePath.append(path);
         localFilePath.append(dirName2);
         File localFileFolder = new File(localFilePath.toString());
-        if (!localFileFolder.exists()) { 
+        if (!localFileFolder.exists()) {
             localFileFolder.mkdirs();
         }
 
@@ -747,12 +753,11 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         if (lastDotIndex != -1 && lastDotIndex != 0) {
             // The file tagName has a conventional extension. Insert the object id before the '.' of the extension.
             fileName = fileName.substring(0, lastDotIndex) + objectIdSuffix + fileName.substring(lastDotIndex, fileName.length());
-        }
-        else {
+        } else {
             // The file has no extension or the only '.' in the file is an initial '.', as in a hidden file.
             // Add the object id to the end of the file tagName.
             fileName += objectIdSuffix;
-        }                                
+        }
         localFilePath.append(File.separator);
         localFilePath.append(fileName);
 
@@ -762,14 +767,16 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         if (!localFile.exists()) {
             ExtractFscContentVisitor.extract(file, localFile, null, null);
         }
-        
+
         // get the relative path
         return localFilePath.toString().substring(path.length());
     }
-         
+
     /**
      * Return a String date for the long date given.
+     *
      * @param date date as a long
+     *
      * @return String date as a String
      */
     @Override
@@ -778,23 +785,21 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         return sdf.format(new java.util.Date(date * 1000));
     }
 
-    
     @Override
     public String getRelativeFilePath() {
         return "HTML Report" + File.separator + "index.html"; //NON-NLS
     }
 
-    
     @Override
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "ReportHTML.getName.text");
     }
-    
+
     @Override
     public String getDescription() {
         return NbBundle.getMessage(this.getClass(), "ReportHTML.getDesc.text");
     }
-    
+
     /**
      * Write the stylesheet for this report.
      */
@@ -803,23 +808,23 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         try {
             cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.css"), "UTF-8")); //NON-NLS NON-NLS
             String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n" + //NON-NLS
-                         "#content {padding: 30px;}\n" + //NON-NLS
-                         "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" + //NON-NLS
-                         "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n" + //NON-NLS
-                         "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" + //NON-NLS
-                         "h3 {font-size: 16px; color: #07A;}\n" + //NON-NLS
-                         "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n" +  //NON-NLS
-                         "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" + //NON-NLS
-                         "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" + //NON-NLS
-                         "ul li a:hover {text-decoration: underline;}\n" + //NON-NLS
-                         "p {margin: 0 0 20px 0;}\n" + //NON-NLS
-                         "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                         ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
-                         "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                         "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
-                         "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
-                         "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n" + //NON-NLS
-                         "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
+                    "#content {padding: 30px;}\n" + //NON-NLS
+                    "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" + //NON-NLS
+                    "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n" + //NON-NLS
+                    "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" + //NON-NLS
+                    "h3 {font-size: 16px; color: #07A;}\n" + //NON-NLS
+                    "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n" + //NON-NLS
+                    "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" + //NON-NLS
+                    "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" + //NON-NLS
+                    "ul li a:hover {text-decoration: underline;}\n" + //NON-NLS
+                    "p {margin: 0 0 20px 0;}\n" + //NON-NLS
+                    "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                    ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
+                    "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
+                    "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
+                    "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
+                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n" + //NON-NLS
+                    "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex); //NON-NLS
@@ -829,7 +834,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, "Error creating Writer for index.css.", ex); //NON-NLS
         } finally {
             try {
-                if(cssOut != null) {
+                if (cssOut != null) {
                     cssOut.flush();
                     cssOut.close();
                 }
@@ -837,7 +842,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
         }
     }
-    
+
     /**
      * Write the index page for this report.
      */
@@ -849,7 +854,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             StringBuilder index = new StringBuilder();
             index.append("<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
-                    "</title>\n"); //NON-NLS
+                            "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"favicon.ico\" />\n"); //NON-NLS
             index.append("</head>\n"); //NON-NLS
             index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS
@@ -862,7 +867,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
             Case.getCurrentCase().addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
-                                                                               "ReportHTML.writeIndex.srcModuleName.text"), "");
+                    "ReportHTML.writeIndex.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
         } catch (TskCoreException ex) {
@@ -870,7 +875,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, errorMessage, ex);
         } finally {
             try {
-                if(indexOut != null) {
+                if (indexOut != null) {
                     indexOut.flush();
                     indexOut.close();
                 }
@@ -878,7 +883,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
         }
     }
-    
+
     /**
      * Write the navigation menu for this report.
      */
@@ -889,13 +894,13 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             StringBuilder nav = new StringBuilder();
             nav.append("<html>\n<head>\n\t<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
-               .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n"); //NON-NLS
+                    .append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n</head>\n<body>\n"); //NON-NLS
             nav.append("<div id=\"content\">\n<h1>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.h1")).append("</h1>\n"); //NON-NLS
             nav.append("<ul class=\"nav\">\n"); //NON-NLS
             nav.append("<li style=\"background: url(summary.png) left center no-repeat;\"><a href=\"summary.html\" target=\"content\">") //NON-NLS
-               .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n"); //NON-NLS
-            
+                    .append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.summary")).append("</a></li>\n"); //NON-NLS
+
             for (String dataType : dataTypes.keySet()) {
                 String dataTypeEsc = dataTypeToFileName(dataType);
                 String iconFileName = useDataTypeIcon(dataType);
@@ -920,39 +925,38 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 }
             }
         }
-        
+
         InputStream in = null;
         OutputStream output = null;
         try {
-            
+
             //pull generator and agency logo from branding, and the remaining resources from the core jar
             String generatorLogoPath = reportBranding.getGeneratorLogoPath();
-            if (generatorLogoPath != null && ! generatorLogoPath.isEmpty()) {
+            if (generatorLogoPath != null && !generatorLogoPath.isEmpty()) {
                 File from = new File(generatorLogoPath);
                 File to = new File(path);
                 FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo"); //NON-NLS
             }
-            
+
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
-            if (agencyLogoPath != null && ! agencyLogoPath.isEmpty() ) {
+            if (agencyLogoPath != null && !agencyLogoPath.isEmpty()) {
                 File from = new File(agencyLogoPath);
                 File to = new File(path);
                 FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo"); //NON-NLS
             }
-            
+
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico"); //NON-NLS
             output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
-            
+
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png"); //NON-NLS
             output = new FileOutputStream(new File(path + File.separator + "summary.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
-            
-           
+
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to extract images for HTML report.", ex); //NON-NLS
         } finally {
@@ -962,7 +966,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     output.close();
                 } catch (IOException ex) {
                 }
-            } if (in != null) {
+            }
+            if (in != null) {
                 try {
                     in.close();
                 } catch (IOException ex) {
@@ -970,7 +975,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             }
         }
     }
-    
+
     /**
      * Write the summary of the current case for this report.
      */
@@ -999,11 +1004,11 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             head.append("</style>\n"); //NON-NLS
             head.append("</head>\n<body>\n"); //NON-NLS
             out.write(head.toString());
-            
+
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
             Date date = new Date();
             String datetime = datetimeFormat.format(date);
-            
+
             String caseName = currentCase.getName();
             String caseNumber = currentCase.getNumber();
             String examiner = currentCase.getExaminer();
@@ -1013,22 +1018,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             } catch (TskCoreException ex) {
                 imagecount = 0;
             }
-            
+
             StringBuilder summary = new StringBuilder();
             boolean running = false;
             if (IngestManager.getInstance().isIngestRunning()) {
                 running = true;
             }
-            
+
             final String reportTitle = reportBranding.getReportTitle();
             final String reportFooter = reportBranding.getReportFooter();
             final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
-            
+
             summary.append("<div id=\"wrapper\">\n"); //NON-NLS
             summary.append("<h1>").append(reportTitle) //NON-NLS
-                   .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
-                   .append("</h1>\n"); //NON-NLS
+                    .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
+                    .append("</h1>\n"); //NON-NLS
             summary.append("<p class=\"subheadding\">").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.reportGenOn.text", datetime)).append("</p>\n"); //NON-NLS
             summary.append("<div class=\"title\">\n"); //NON-NLS
@@ -1037,20 +1042,20 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                 summary.append("<img src=\"agency_logo.png\" />\n"); //NON-NLS
                 summary.append("</div>\n"); //NON-NLS
             }
-            final String align = agencyLogoSet?"right":"left"; //NON-NLS NON-NLS
+            final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
             summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
             summary.append("<table>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
-                   .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
+                    .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
-                   .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
+                    .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
+                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
-                   .append(!examiner.isEmpty() ? examiner : NbBundle
-                           .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
-                   .append("</td></tr>\n"); //NON-NLS
+                    .append(!examiner.isEmpty() ? examiner : NbBundle
+                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                    .append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
-                   .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+                    .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
             summary.append("</table>\n"); //NON-NLS
             summary.append("</div>\n"); //NON-NLS
             summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
@@ -1062,15 +1067,15 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
                     summary.append("<p>").append(c.getName()).append("</p>\n"); //NON-NLS
                     if (c instanceof Image) {
                         Image img = (Image) c;
-                    
+
                         summary.append("<table>\n"); //NON-NLS
                         summary.append("<tr><td>").append( //NON-NLS
                                 NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.timezone"))
-                               .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n"); //NON-NLS
-                        for(String imgPath : img.getPaths()) {
+                                .append("</td><td>").append(img.getTimeZone()).append("</td></tr>\n"); //NON-NLS
+                        for (String imgPath : img.getPaths()) {
                             summary.append("<tr><td>").append( //NON-NLS
                                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.path"))
-                                   .append("</td><td>").append(imgPath).append("</td></tr>\n"); //NON-NLS
+                                    .append("</td><td>").append(imgPath).append("</td></tr>\n"); //NON-NLS
                         }
                         summary.append("</table>\n"); //NON-NLS
                     }
@@ -1099,7 +1104,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
             logger.log(Level.SEVERE, "Error creating Writer for summary.html."); //NON-NLS
         } finally {
             try {
-                if(out != null) {
+                if (out != null) {
                     out.flush();
                     out.close();
                 }
@@ -1121,7 +1126,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
         }
-        
+
         return THUMBS_REL_PATH + thumbFile.getName();
     }
 

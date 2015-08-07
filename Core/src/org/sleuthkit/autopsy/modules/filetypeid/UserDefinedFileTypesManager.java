@@ -118,6 +118,7 @@ final class UserDefinedFileTypesManager {
      * Gets both the predefined and the user-defined file types.
      *
      * @return A mapping of file type names to file types, possibly empty.
+     *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
@@ -137,6 +138,7 @@ final class UserDefinedFileTypesManager {
      * Gets the user-defined file types.
      *
      * @return A mapping of file type names to file types, possibly empty.
+     *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
@@ -233,7 +235,7 @@ final class UserDefinedFileTypesManager {
      * Sets the user-defined file types.
      *
      * @param newFileTypes A mapping of file type names to user-defined file
-     * types.
+     *                     types.
      */
     synchronized void setUserDefinedFileTypes(Map<String, FileType> newFileTypes) throws UserDefinedFileTypesException {
         try {
@@ -250,6 +252,7 @@ final class UserDefinedFileTypesManager {
      * Gets the absolute path of a file type definitions file.
      *
      * @param fileName The name of the file.
+     *
      * @return The absolute path to the file.
      */
     private static String getFileTypeDefinitionsFilePath(String fileName) {
@@ -267,7 +270,8 @@ final class UserDefinedFileTypesManager {
          * Writes a set of file type definitions to an XML file.
          *
          * @param fileTypes A collection of file types.
-         * @param filePath The path to the destination file.
+         * @param filePath  The path to the destination file.
+         *
          * @throws ParserConfigurationException
          * @throws IOException
          * @throws FileNotFoundException
@@ -289,7 +293,8 @@ final class UserDefinedFileTypesManager {
          * Creates an XML representation of a file type.
          *
          * @param fileType The file type object.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc      The WC3 DOM object to use to create the XML.
+         *
          * @return An XML element.
          */
         private static Element createFileTypeElement(FileType fileType, Document doc) {
@@ -304,9 +309,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a MIME type child element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
             Element typeNameElem = doc.createElement(MIME_TYPE_TAG_NAME);
@@ -317,9 +322,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a signature child element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
             Signature signature = fileType.getSignature();
@@ -340,9 +345,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an interesting files set element to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc The WC3 DOM object to use to create the XML.
+         * @param doc          The WC3 DOM object to use to create the XML.
          */
         private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
             if (!fileType.getFilesSetName().isEmpty()) {
@@ -355,7 +360,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an alert attribute to a file type XML element.
          *
-         * @param fileType The file type to use as a content source.
+         * @param fileType     The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
          */
         private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
@@ -374,6 +379,7 @@ final class UserDefinedFileTypesManager {
          * Reads a set of file type definitions from an XML file.
          *
          * @param filePath The path to the XML file.
+         *
          * @return A collection of file types read from the XML file.
          */
         private static List<FileType> readFileTypes(String filePath) throws IOException, ParserConfigurationException, SAXException {
@@ -397,7 +403,9 @@ final class UserDefinedFileTypesManager {
          * Gets a file type definition from a file type XML element.
          *
          * @param fileTypeElem The XML element.
+         *
          * @return A file type object.
+         *
          * @throws IllegalArgumentException
          * @throws NumberFormatException
          */
@@ -413,6 +421,7 @@ final class UserDefinedFileTypesManager {
          * Gets the MIME type from a file type XML element.
          *
          * @param fileTypeElem The element
+         *
          * @return A MIME type string.
          */
         private static String parseMimeType(Element fileTypeElem) {
@@ -423,6 +432,7 @@ final class UserDefinedFileTypesManager {
          * Gets the signature from a file type XML element.
          *
          * @param fileTypeElem The XML element.
+         *
          * @return The signature.
          */
         private static Signature parseSignature(Element fileTypeElem) throws IllegalArgumentException, NumberFormatException {
@@ -445,6 +455,7 @@ final class UserDefinedFileTypesManager {
          * Gets the interesting files set name from a file type XML element.
          *
          * @param fileTypeElem The XML element.
+         *
          * @return The files set name, possibly empty.
          */
         private static String parseInterestingFilesSet(Element fileTypeElem) {
@@ -461,6 +472,7 @@ final class UserDefinedFileTypesManager {
          * Gets the alert attribute from a file type XML element.
          *
          * @param fileTypeElem The XML element.
+         *
          * @return True or false;
          */
         private static boolean parseAlert(Element fileTypeElem) {
@@ -471,8 +483,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Gets the text content of a single child element.
          *
-         * @param elem The parent element.
+         * @param elem    The parent element.
          * @param tagName The tag name of the child element.
+         *
          * @return The text content.
          */
         private static String getChildElementTextContent(Element elem, String tagName) {
@@ -487,9 +500,10 @@ final class UserDefinedFileTypesManager {
      * Logs an exception, bundles the exception with a simple message in a
      * uniform exception type, and throws the wrapper exception.
      *
-     * @param ex The exception to wrap.
+     * @param ex         The exception to wrap.
      * @param messageKey A key into the bundle file that maps to the desired
-     * message.
+     *                   message.
+     *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */

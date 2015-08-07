@@ -94,7 +94,6 @@ class ReportKML implements GeneralReportModule {
         progressPanel.setMaximumProgress(5);
         progressPanel.increment();
 
-
         // @@@ BC: I don't get why we do this in two passes.  
         // Why not just print the coordinates as we find them and make some utility methods to do the printing?
         // Should pull out time values for all of these points and store in TimeSpan element
@@ -109,7 +108,6 @@ class ReportKML implements GeneralReportModule {
                 AbstractFile aFile;
                 String geoPath = ""; // will hold values of images to put in kml
                 String imageName = "";
-
 
                 File f;
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
@@ -131,7 +129,7 @@ class ReportKML implements GeneralReportModule {
                     if (lon != 0 && lat != 0) {
                         aFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
 
-                        if(aFile != null){
+                        if (aFile != null) {
                             extractedToPath = reportPath + aFile.getName();
                             geoPath = extractedToPath;
                             f = new File(extractedToPath);
@@ -150,7 +148,7 @@ class ReportKML implements GeneralReportModule {
                         // lat lon path name
                     }
                 }
-                
+
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
                     lat = 0;
                     lon = 0;
@@ -168,7 +166,7 @@ class ReportKML implements GeneralReportModule {
                         out.write(lat + ";" + lon + "\n");
                     }
                 }
-                
+
                 for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
                     lat = 0;
                     lon = 0;
@@ -197,24 +195,25 @@ class ReportKML implements GeneralReportModule {
                             location = attribute.getValueString();
                         }
                     }
-                    
+
                     // @@@ Should do something more fancy with these in KML and store them as a single point.
                     String display = name;
-                    if (display.isEmpty()) 
+                    if (display.isEmpty()) {
                         display = location;
-                    
+                    }
+
                     if (lon != 0 && lat != 0) {
                         out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongStartPoint", lat, lon, display));
                     }
                     if (destlat != 0 && destlon != 0) {
                         out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongEndPoint", destlat, destlon,
-                                                      display));
+                                display));
                     }
                 }
-                
+
                 out.flush();
                 out.close();
-                
+
                 progressPanel.increment();
                 /*
                  * Step 1: generate XML stub
@@ -236,7 +235,6 @@ class ReportKML implements GeneralReportModule {
                 /*
                  * Step 2: add in Style elements
                  */
-
                 // Style
                 Element style = new Element("Style", ns); //NON-NLS
                 style.setAttribute("id", "redIcon"); //NON-NLS
@@ -261,8 +259,8 @@ class ReportKML implements GeneralReportModule {
                 icon.addContent(href);
                 progressPanel.increment();
                 /*
-                 * Step 3: read data from source location and
-                 * add in a Placemark for each data element
+                 * Step 3: read data from source location and add in a Placemark
+                 * for each data element
                  */
 
                 File file = new File(reportPath2);
@@ -317,7 +315,7 @@ class ReportKML implements GeneralReportModule {
                         pmPoint.addContent(pmCoordinates);
 
                     }
-                    
+
                     // read the next line
                     line = reader.readLine();
                 }
@@ -331,7 +329,7 @@ class ReportKML implements GeneralReportModule {
                     outputter.output(kmlDocument, writer);
                     writer.close();
                     Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
-                                                                                    "ReportKML.genReport.srcModuleName.text"), "");
+                            "ReportKML.genReport.srcModuleName.text"), "");
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not write the KML file.", ex); //NON-NLS
                 } catch (TskCoreException ex) {

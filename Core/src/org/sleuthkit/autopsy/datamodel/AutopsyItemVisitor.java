@@ -18,40 +18,53 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-
 /**
- * This visitor goes over the AutopsyVisitableItems, which are currently
- * the nodes in the tree that are structural and not nodes that are from
- * Sleuthkit-based data model objects. 
+ * This visitor goes over the AutopsyVisitableItems, which are currently the
+ * nodes in the tree that are structural and not nodes that are from
+ * Sleuthkit-based data model objects.
  */
 interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
-    
+
     T visit(Views v);
+
     T visit(FileTypeExtensionFilters sf);
+
     T visit(FileTypeExtensionFilters.RootFilter fsf);
+
     T visit(FileTypeExtensionFilters.DocumentFilter df);
+
     T visit(FileTypeExtensionFilters.ExecutableFilter ef);
+
     T visit(RecentFiles rf);
+
     T visit(RecentFiles.RecentFilesFilter rff);
+
     T visit(DeletedContent dc);
+
     T visit(DeletedContent.DeletedContentFilter dcf);
+
     T visit(FileSize fs);
+
     T visit(FileSize.FileSizeFilter fsf);
 
-    
     T visit(ExtractedContent ec);
+
     T visit(KeywordHits kh);
+
     T visit(HashsetHits hh);
+
     T visit(EmailExtracted ee);
+
     T visit(InterestingHits ih);
+
     T visit(Results r);
 
     T visit(Tags tagsNodeKey);
-    
+
     T visit(Reports reportsItem);
-        
+
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -120,11 +133,12 @@ interface AutopsyItemVisitor<T> {
         public T visit(HashsetHits hh) {
             return defaultVisit(hh);
         }
-        
+
         @Override
         public T visit(InterestingHits ih) {
             return defaultVisit(ih);
         }
+
         @Override
         public T visit(EmailExtracted ee) {
             return defaultVisit(ee);

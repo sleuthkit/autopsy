@@ -45,12 +45,12 @@ final class FilesSet {
     /**
      * Constructs an interesting files set.
      *
-     * @param name The name of the set.
-     * @param description A description of the set, may be null.
+     * @param name             The name of the set.
+     * @param description      A description of the set, may be null.
      * @param ignoreKnownFiles Whether or not to exclude known files from the
-     * set.
-     * @param rules The rules that define the set. May be null, but a set with
-     * no rules is the empty set.
+     *                         set.
+     * @param rules            The rules that define the set. May be null, but a
+     *                         set with no rules is the empty set.
      */
     FilesSet(String name, String description, boolean ignoreKnownFiles, Map<String, Rule> rules) {
         if ((name == null) || (name.isEmpty())) {
@@ -108,8 +108,9 @@ final class FilesSet {
      * Determines whether a file is a member of this interesting files set.
      *
      * @param file A file to test for set membership.
+     *
      * @return The name of the first set membership rule satisfied by the file,
-     * will be null if the file does not belong to the set.
+     *         will be null if the file does not belong to the set.
      */
     String fileIsMemberOf(AbstractFile file) {
         if ((this.ignoreKnownFiles) && (file.getKnown() == TskData.FileKnown.KNOWN)) {
@@ -146,10 +147,10 @@ final class FilesSet {
         /**
          * Construct an interesting files set membership rule.
          *
-         * @param ruleName The name of the rule.
+         * @param ruleName       The name of the rule.
          * @param fileNameFilter A file name filter.
          * @param metaTypeFilter A file meta-type filter.
-         * @param pathFilter A file path filter, may be null.
+         * @param pathFilter     A file path filter, may be null.
          */
         Rule(String ruleName, FileNameFilter fileNameFilter, MetaTypeFilter metaTypeFilter, ParentPathFilter pathFilter) {
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
@@ -165,14 +166,17 @@ final class FilesSet {
                 throw new IllegalArgumentException("Interesting files set rule meta-type filter cannot be null");
             }
             this.ruleName = ruleName;
-            
-            /* The rules are evaluated in the order added.  MetaType check is fastest, so do it first */
+
+            /*
+             * The rules are evaluated in the order added. MetaType check is
+             * fastest, so do it first
+             */
             this.metaTypeFilter = metaTypeFilter;
             this.filters.add(this.metaTypeFilter);
-            
+
             this.fileNameFilter = fileNameFilter;
             this.filters.add(fileNameFilter);
-            
+
             this.pathFilter = pathFilter;
             if (this.pathFilter != null) {
                 this.filters.add(this.pathFilter);
@@ -219,6 +223,7 @@ final class FilesSet {
          * Determines whether or not a file satisfies the rule.
          *
          * @param file The file to test.
+         *
          * @return True if the rule is satisfied, false otherwise.
          */
         boolean isSatisfied(AbstractFile file) {
@@ -257,6 +262,7 @@ final class FilesSet {
              * Tests whether or not a file satisfies the conditions of a filter.
              *
              * @param file The file to test.
+             *
              * @return True if the file passes the test, false otherwise.
              */
             boolean passes(AbstractFile file);
@@ -330,7 +336,7 @@ final class FilesSet {
              * expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 
@@ -338,6 +344,7 @@ final class FilesSet {
              * Determines whether a string of text matches the filter.
              *
              * @param textToMatch The text string.
+             *
              * @return True if the text matches, false otherwise.
              */
             boolean textMatches(String textToMatch);
@@ -358,10 +365,11 @@ final class FilesSet {
              * @param text The text to be matched.
              */
             AbstractTextFilter(String text, Boolean partialMatch) {
-                if(partialMatch)
+                if (partialMatch) {
                     this.textMatcher = new FilesSet.Rule.CaseInsensitivePartialStringComparisionMatcher(text);
-                else
+                } else {
                     this.textMatcher = new FilesSet.Rule.CaseInsensitiveStringComparisionMatcher(text);
+                }
             }
 
             /**
@@ -388,7 +396,7 @@ final class FilesSet {
              * expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             @Override
             public boolean isRegex() {
@@ -399,6 +407,7 @@ final class FilesSet {
              * Determines whether a string of text matches the filter.
              *
              * @param textToMatch The text string.
+             *
              * @return True if the text matches, false otherwise.
              */
             @Override
@@ -514,7 +523,7 @@ final class FilesSet {
              * Construct a file name extension regular expression filter.
              *
              * @param extension The file name extension regular expression to be
-             * matched.
+             *                  matched.
              */
             ExtensionFilter(Pattern extension) {
                 super(extension.pattern(), false);
@@ -548,7 +557,7 @@ final class FilesSet {
              * expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 
@@ -556,6 +565,7 @@ final class FilesSet {
              * Determines whether a string of text is matched.
              *
              * @param textToMatch The text string.
+             *
              * @return True if the text matches, false otherwise.
              */
             boolean textMatches(String subject);

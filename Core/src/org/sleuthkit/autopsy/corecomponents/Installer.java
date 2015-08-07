@@ -76,7 +76,7 @@ public class Installer extends ModuleInstall {
                     OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                     final String caseFile = argsProcessor.getDefaultArg();
                     if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
-                        
+
                         new Thread(() -> {
                             // Create case.
                             try {

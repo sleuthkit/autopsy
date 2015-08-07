@@ -180,11 +180,11 @@ public class ProgressWindow extends JFrame {
         SwingUtilities.invokeLater(() -> {
             if (isVisible()) {
                 int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this,
-                                                                      NbBundle.getMessage(TimeLineTopComponent.class,
-                                                                                          "Timeline.ProgressWindow.cancel.confdlg.msg"),
-                                                                      NbBundle.getMessage(TimeLineTopComponent.class,
-                                                                                          "Timeline.ProgressWindow.cancel.confdlg.detail"),
-                                                                      JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        NbBundle.getMessage(TimeLineTopComponent.class,
+                                "Timeline.ProgressWindow.cancel.confdlg.msg"),
+                        NbBundle.getMessage(TimeLineTopComponent.class,
+                                "Timeline.ProgressWindow.cancel.confdlg.detail"),
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (showConfirmDialog == JOptionPane.YES_OPTION) {
                     close();
                 }
@@ -215,7 +215,9 @@ public class ProgressWindow extends JFrame {
         }
     }
 
-    /** bundles up progress information to be shown in the progress dialog */
+    /**
+     * bundles up progress information to be shown in the progress dialog
+     */
     @Immutable
     public static class ProgressUpdate {
 

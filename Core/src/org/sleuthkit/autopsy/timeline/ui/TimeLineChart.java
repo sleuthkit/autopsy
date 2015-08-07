@@ -34,16 +34,19 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 
-/** Interface for TimeLineViews that are 'charts'.
+/**
+ * Interface for TimeLineViews that are 'charts'.
  *
- * @param <X> the type of values along the horizontal axis */
+ * @param <X> the type of values along the horizontal axis
+ */
 public interface TimeLineChart<X> extends TimeLineView {
 
     IntervalSelector<? extends X> getIntervalSelector();
 
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
 
-    /** derived classes should implement this so as to supply an appropriate
+    /**
+     * derived classes should implement this so as to supply an appropriate
      * subclass of {@link IntervalSelector}
      *
      * @param x    the initial x position of the new interval selector
@@ -53,8 +56,10 @@ public interface TimeLineChart<X> extends TimeLineView {
      */
     IntervalSelector<X> newIntervalSelector(double x, Axis<X> axis);
 
-    /** clear any references to previous interval selectors , including removing
-     * the interval selector from the ui / scene-graph */
+    /**
+     * clear any references to previous interval selectors , including removing
+     * the interval selector from the ui / scene-graph
+     */
     void clearIntervalSelector();
 
     /**
@@ -115,21 +120,24 @@ public interface TimeLineChart<X> extends TimeLineView {
         }
     }
 
-    /** Visually represents a 'selected' time range, and allows mouse
+    /**
+     * Visually represents a 'selected' time range, and allows mouse
      * interactions with it.
      *
      * @param <X> the type of values along the x axis this is a selector for
      *
-     * This abstract class requires concrete implementations to implement
-     * hook methods to handle formating and date 'lookup' of the
-     * generic x-axis type */
+     * This abstract class requires concrete implementations to implement hook
+     * methods to handle formating and date 'lookup' of the generic x-axis type
+     */
     static abstract class IntervalSelector<X> extends Rectangle {
 
         private static final double STROKE_WIDTH = 3;
 
         private static final double HALF_STROKE = STROKE_WIDTH / 2;
 
-        /** the Axis this is a selector over */
+        /**
+         * the Axis this is a selector over
+         */
         private final Axis<X> dateAxis;
 
         protected Tooltip tooltip;
@@ -231,19 +239,23 @@ public interface TimeLineChart<X> extends TimeLineView {
          */
         protected abstract Interval adjustInterval(Interval i);
 
-        /** format a string representation of the given x-axis value to use in
+        /**
+         * format a string representation of the given x-axis value to use in
          * the tooltip
          *
          * @param date a x-axis value of type X
          *
-         * @return a string representation of the given x-axis value */
+         * @return a string representation of the given x-axis value
+         */
         protected abstract String formatSpan(final X date);
 
-        /** parse an x-axis value to a {@link DateTime}
+        /**
+         * parse an x-axis value to a {@link DateTime}
          *
          * @param date a x-axis value of type X
          *
-         * @return a {@link DateTime} corresponding to the given x-axis value */
+         * @return a {@link DateTime} corresponding to the given x-axis value
+         */
         protected abstract DateTime parseDateTime(X date);
 
         private void setTooltip() {
@@ -252,24 +264,30 @@ public interface TimeLineChart<X> extends TimeLineView {
             Tooltip.uninstall(this, tooltip);
             tooltip = new Tooltip(
                     NbBundle.getMessage(this.getClass(), "Timeline.ui.TimeLineChart.tooltip.text", formatSpan(start),
-                                        formatSpan(end)));
+                            formatSpan(end)));
             Tooltip.install(this, tooltip);
         }
 
-        /** @return the value along the x-axis corresponding to the left edge of
-         *          the selector */
+        /**
+         * @return the value along the x-axis corresponding to the left edge of
+         *         the selector
+         */
         public X getSpanEnd() {
             return dateAxis.getValueForDisplay(dateAxis.parentToLocal(getBoundsInParent().getMaxX(), 0).getX());
         }
 
-        /** @return the value along the x-axis corresponding to the right edge
-         *          of the selector */
+        /**
+         * @return the value along the x-axis corresponding to the right edge of
+         *         the selector
+         */
         public X getSpanStart() {
             return dateAxis.getValueForDisplay(dateAxis.parentToLocal(getBoundsInParent().getMinX(), 0).getX());
         }
 
-        /** enum to represent whether the drag is a left/right-edge modification
-         * or a horizontal slide triggered by dragging the center */
+        /**
+         * enum to represent whether the drag is a left/right-edge modification
+         * or a horizontal slide triggered by dragging the center
+         */
         private enum DragPosition {
 
             LEFT, CENTER, RIGHT

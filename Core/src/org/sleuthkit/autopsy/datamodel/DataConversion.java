@@ -28,35 +28,40 @@ import java.util.Formatter;
 public class DataConversion {
 
     final private static char[] hexArray = "0123456789ABCDEF".toCharArray(); //NON-NLS
-    
+
     /**
-     * Return the hex-dump layout of the passed in byte array.
-     * Deprecated because we don't need font
-     * @param array Data to display
-     * @param length Amount of data in array to display
-     * @param arrayOffset Offset of where data in array begins as part of a bigger file (used for arrayOffset column)
-     * @param font Font that will be used to display the text
-     * @return  
+     * Return the hex-dump layout of the passed in byte array. Deprecated
+     * because we don't need font
+     *
+     * @param array       Data to display
+     * @param length      Amount of data in array to display
+     * @param arrayOffset Offset of where data in array begins as part of a
+     *                    bigger file (used for arrayOffset column)
+     * @param font        Font that will be used to display the text
+     *
+     * @return
      */
     @Deprecated
     public static String byteArrayToHex(byte[] array, int length, long arrayOffset, Font font) {
         return byteArrayToHex(array, length, arrayOffset);
     }
-    
+
     /**
      * Return the hex-dump layout of the passed in byte array.
-     * @param array Data to display
-     * @param length Amount of data in array to display
-     * @param arrayOffset Offset of where data in array begins as part of a bigger file (used for arrayOffset column)
-     * @return  
+     *
+     * @param array       Data to display
+     * @param length      Amount of data in array to display
+     * @param arrayOffset Offset of where data in array begins as part of a
+     *                    bigger file (used for arrayOffset column)
+     *
+     * @return
      */
     public static String byteArrayToHex(byte[] array, int length, long arrayOffset) {
         if (array == null) {
             return "";
-        } 
-        else {
+        } else {
             StringBuilder outputStringBuilder = new StringBuilder();
-            
+
             // loop through the file in 16-byte increments 
             for (int curOffset = 0; curOffset < length; curOffset += 16) {
                 // how many bytes are we displaying on this line
@@ -64,7 +69,7 @@ public class DataConversion {
                 if (length - curOffset < 16) {
                     lineLen = length - curOffset;
                 }
-                
+
                 // print the offset column
                 //outputStringBuilder.append("0x");
                 outputStringBuilder.append(String.format("0x%08x: ", arrayOffset + curOffset)); //NON-NLS
@@ -72,15 +77,14 @@ public class DataConversion {
 
                 // print the hex columns                
                 for (int i = 0; i < 16; i++) {
-                    if (i < lineLen) {        
+                    if (i < lineLen) {
                         int v = array[curOffset + i] & 0xFF;
                         outputStringBuilder.append(hexArray[v >>> 4]);
                         outputStringBuilder.append(hexArray[v & 0x0F]);
-                    }
-                    else {
+                    } else {
                         outputStringBuilder.append("  ");
                     }
-                    
+
                     // someday we'll offer the option of these two styles...
                     if (true) {
                         outputStringBuilder.append(" ");
@@ -90,35 +94,34 @@ public class DataConversion {
                         if (i == 7) {
                             outputStringBuilder.append(" ");
                         }
-                    }
-                    // xxd style
+                    } // xxd style
                     else {
                         if (i % 2 == 1) {
                             outputStringBuilder.append(" ");
                         }
                     }
                 }
-                
+
                 outputStringBuilder.append("  ");
 
                 // print the ascii columns
-                String ascii = new String(array, curOffset, lineLen, java.nio.charset.StandardCharsets.US_ASCII);                
+                String ascii = new String(array, curOffset, lineLen, java.nio.charset.StandardCharsets.US_ASCII);
                 for (int i = 0; i < 16; i++) {
                     char c = ' ';
                     if (i < ascii.length()) {
                         c = ascii.charAt(i);
                         int dec = (int) c;
-                        
+
                         if (dec < 32 || dec > 126) {
                             c = '.';
                         }
                     }
-                    outputStringBuilder.append(c);    
+                    outputStringBuilder.append(c);
                 }
-                
+
                 outputStringBuilder.append("\n");
             }
-           
+
             return outputStringBuilder.toString();
         }
     }

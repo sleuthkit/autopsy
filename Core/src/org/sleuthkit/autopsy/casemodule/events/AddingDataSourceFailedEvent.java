@@ -38,7 +38,8 @@ public final class AddingDataSourceFailedEvent extends AutopsyEvent implements S
      * case fails.
      *
      * @param dataSourceId A unique identifier associated with the data source.
-     * Used to pair this AddingDataSourceFailedEvent with a AddingDataSourceEvent.
+     *                     Used to pair this AddingDataSourceFailedEvent with a
+     *                     AddingDataSourceEvent.
      */
     public AddingDataSourceFailedEvent(UUID dataSourceId) {
         super(Case.Events.ADDING_DATA_SOURCE_FAILED.toString(), null, null);

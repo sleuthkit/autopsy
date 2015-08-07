@@ -32,20 +32,22 @@ import org.sleuthkit.datamodel.Content;
 public abstract class DataSourceProcessorCallback {
 
     public enum DataSourceProcessorResult {
-        NO_ERRORS,  ///< No errors were encountered while ading the data source
+
+        NO_ERRORS, ///< No errors were encountered while ading the data source
         CRITICAL_ERRORS, ///< No data was added to the database. There were fundamental errors processing the data (such as no data or system failure).  
         NONCRITICAL_ERRORS, ///< There was data added to the database, but there were errors from data corruption or a small number of minor issues. 
     };
 
-    
     /**
-     * Called by a DSP implementation when it is done adding a data source
-     * to the database. Users of the DSP can override this method if they do
-     * not want to be notified on the EDT.  Otherwise, this method will call 
-     * doneEDT() with the same arguments. 
-     * @param result Code for status
-     * @param errList List of error strings
-     * @param newContents List of root Content objects that were added to database. Typically only one is given.
+     * Called by a DSP implementation when it is done adding a data source to
+     * the database. Users of the DSP can override this method if they do not
+     * want to be notified on the EDT. Otherwise, this method will call
+     * doneEDT() with the same arguments.
+     *
+     * @param result      Code for status
+     * @param errList     List of error strings
+     * @param newContents List of root Content objects that were added to
+     *                    database. Typically only one is given.
      */
     public void done(DataSourceProcessorResult result, List<String> errList, List<Content> newContents) {
 
@@ -63,13 +65,14 @@ public abstract class DataSourceProcessorCallback {
     }
 
     /**
-     * Called by done() if the default implementation is used.  Users of DSPs
+     * Called by done() if the default implementation is used. Users of DSPs
      * that have UI updates to do after the DSP is finished adding the DS can
      * implement this method to receive the updates on the EDT.
      *
-     * @param result Code for status
-     * @param errList List of error strings
-     * @param newContents List of root Content objects that were added to database. Typically only one is given.
-     */ 
+     * @param result      Code for status
+     * @param errList     List of error strings
+     * @param newContents List of root Content objects that were added to
+     *                    database. Typically only one is given.
+     */
     public abstract void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newContents);
 };

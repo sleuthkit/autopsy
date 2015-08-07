@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.beans.PropertyChangeListener;
@@ -31,12 +30,12 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
-    categoryName = "#OptionsCategory_Name_HashDatabase",
-iconBase = "org/sleuthkit/autopsy/modules/hashdatabase/options_icon.png",
-position = 4,
-keywords = "#OptionsCategory_Keywords_HashDatabase",
-keywordsCategory = "HashDatabase",
-id = "HashDatabase")
+        categoryName = "#OptionsCategory_Name_HashDatabase",
+        iconBase = "org/sleuthkit/autopsy/modules/hashdatabase/options_icon.png",
+        position = 4,
+        keywords = "#OptionsCategory_Keywords_HashDatabase",
+        keywordsCategory = "HashDatabase",
+        id = "HashDatabase")
 // moved messages to Bundle.properties
 //@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
@@ -44,7 +43,8 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     private HashLookupSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-     private static final Logger logger = Logger.getLogger(HashDatabaseOptionsPanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(HashDatabaseOptionsPanelController.class.getName());
+
     @Override
     public void update() {
         getPanel().load();
@@ -102,11 +102,10 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
     void changed() {
         if (!changed) {
             changed = true;
-            
+
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
                         NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
@@ -114,16 +113,15 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
-        
-            try {
-                pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-            }
-            catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+
+        try {
+            pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "HashDatabaseOptionsPanelController listener threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "HashDatabaseOptionsPanelController.moduleErrMsg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
     }
 }

@@ -64,7 +64,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             logger.log(Level.SEVERE, "Failed to create file type detector", ex); //NON-NLS
             fileTypeDetector = null;
         }
-        
+
         initComponents();
         customizeComponents();
     }
@@ -409,7 +409,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         extErrorLabel.setForeground(Color.blue);
         extErrorLabel.setText(
                 NbBundle.getMessage(this.getClass(), "FileExtMismatchConfigPanel.addExtButton.errLabel.extAdded",
-                newExt));
+                        newExt));
         extRemoveErrLabel.setText(" ");
         userExtTextField.setText("");
         setIsModified();
@@ -559,9 +559,9 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
             //error
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                    "FileExtMismatchConfigPanel.store.msgDlg.msg"),
+                            "FileExtMismatchConfigPanel.store.msgDlg.msg"),
                     NbBundle.getMessage(this.getClass(),
-                    "FileExtMismatchConfigPanel.save.msgDlg.title"),
+                            "FileExtMismatchConfigPanel.save.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -572,7 +572,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         // to save it back to the file after making changes.
         editableMap = FileExtMismatchXML.getDefault().load();
         updateMimeList();
-        updateExtList();        
+        updateExtList();
     }
 
     @Override
@@ -595,9 +595,9 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         if (saveButton.isEnabled()) {
             int choice = JOptionPane.showConfirmDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                    "FileExtMismatchConfigPanel.ok.confDlg.msg"),
+                            "FileExtMismatchConfigPanel.ok.confDlg.msg"),
                     NbBundle.getMessage(this.getClass(),
-                    "FileExtMismatchConfigPanel.confDlg.title"),
+                            "FileExtMismatchConfigPanel.confDlg.title"),
                     JOptionPane.YES_NO_OPTION);
             if (choice == JOptionPane.YES_OPTION) {
                 store();

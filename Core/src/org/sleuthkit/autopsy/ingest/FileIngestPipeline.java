@@ -44,9 +44,9 @@ final class FileIngestPipeline {
      * modules. It starts the modules, runs files through them, and shuts them
      * down when file level ingest is complete.
      *
-     * @param job The data source ingest job that owns the pipeline.
+     * @param job             The data source ingest job that owns the pipeline.
      * @param moduleTemplates The ingest module templates that define the
-     * pipeline.
+     *                        pipeline.
      */
     FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
@@ -80,7 +80,7 @@ final class FileIngestPipeline {
      * Returns the start up time of this pipeline.
      *
      * @return The file processing start time, may be null if this pipeline has
-     * not been started yet.
+     *         not been started yet.
      */
     Date getStartTime() {
         return this.startTime;
@@ -109,6 +109,7 @@ final class FileIngestPipeline {
      * Runs a file through the ingest modules in sequential order.
      *
      * @param task A file level ingest task containing a file to be processed.
+     *
      * @return A list of processing errors, possible empty.
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
@@ -179,7 +180,7 @@ final class FileIngestPipeline {
          * Constructs an object that decorates a file level ingest module with a
          * display name.
          *
-         * @param module The file level ingest module to be decorated.
+         * @param module      The file level ingest module to be decorated.
          * @param displayName The display name.
          */
         PipelineModule(FileIngestModule module, String displayName) {

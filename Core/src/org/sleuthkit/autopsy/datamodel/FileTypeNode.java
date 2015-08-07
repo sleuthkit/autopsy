@@ -65,8 +65,8 @@ public class FileTypeNode extends DisplayableItemNode {
      *
      * @param filter Extensions that will be shown for this node
      * @param skCase
-     * @param o Observable that sends updates when the child factories should
-     * refresh
+     * @param o      Observable that sends updates when the child factories
+     *               should refresh
      */
     FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
         super(Children.create(new FileTypeChildFactory(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
@@ -155,8 +155,8 @@ public class FileTypeNode extends DisplayableItemNode {
          *
          * @param filter Extensions to display
          * @param skCase
-         * @param o Observable that will notify when there could be new data to
-         * display
+         * @param o      Observable that will notify when there could be new
+         *               data to display
          */
         FileTypeChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
             super();

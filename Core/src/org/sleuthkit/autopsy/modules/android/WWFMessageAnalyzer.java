@@ -40,7 +40,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Finds database for words with friends, parses it, and adds info to blackboard. 
+ * Finds database for words with friends, parses it, and adds info to
+ * blackboard.
  */
 class WWFMessageAnalyzer {
 
@@ -104,8 +105,8 @@ class WWFMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), moduleName, game_id));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, message));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(WWFMessageAnalyzer.class,
-                                                                             "WWFMessageAnalyzer.bbAttribute.wordsWithFriendsMsg")));
+                        NbBundle.getMessage(WWFMessageAnalyzer.class,
+                                "WWFMessageAnalyzer.bbAttribute.wordsWithFriendsMsg")));
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e); //NON-NLS

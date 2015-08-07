@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
@@ -31,13 +30,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
- * Shows file metadata as a list to make it easy to copy and paste.
- * Typically shows the same data that can also be found in the ResultViewer table,
- * just a different order and allows the full path to be visible in the bottom area.
+ * Shows file metadata as a list to make it easy to copy and paste. Typically
+ * shows the same data that can also be found in the ResultViewer table, just a
+ * different order and allows the full path to be visible in the bottom area.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
-public class Metadata extends javax.swing.JPanel implements DataContentViewer 
-{
+public class Metadata extends javax.swing.JPanel implements DataContentViewer {
+
     /**
      * Creates new form Metadata
      */
@@ -79,38 +78,32 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
     private javax.swing.JTextPane jTextPane1;
     // End of variables declaration//GEN-END:variables
 
-    private void customizeComponents(){
+    private void customizeComponents() {
         /*
-        jTextPane1.setComponentPopupMenu(rightClickMenu);
-        ActionListener actList = new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e){
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if(jmi.equals(copyMenuItem))
-                    outputViewPane.copy();
-                else if(jmi.equals(selectAllMenuItem))
-                    outputViewPane.selectAll();
-            }
-        };
-        copyMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);
-        */
-            
+         * jTextPane1.setComponentPopupMenu(rightClickMenu); ActionListener
+         * actList = new ActionListener(){ @Override public void
+         * actionPerformed(ActionEvent e){ JMenuItem jmi = (JMenuItem)
+         * e.getSource(); if(jmi.equals(copyMenuItem)) outputViewPane.copy();
+         * else if(jmi.equals(selectAllMenuItem)) outputViewPane.selectAll(); }
+         * }; copyMenuItem.addActionListener(actList);
+         * selectAllMenuItem.addActionListener(actList);
+         */
+
         Utilities.configureTextPaneAsHtml(jTextPane1);
     }
-    
+
     private void setText(String str) {
         jTextPane1.setText("<html><body>" + str + "</body></html>"); //NON-NLS
     }
-    
+
     private void startTable(StringBuilder sb) {
         sb.append("<table>"); //NON-NLS
     }
-    
+
     private void endTable(StringBuilder sb) {
         sb.append("</table>"); //NON-NLS
     }
-    
+
     private void addRow(StringBuilder sb, String key, String value) {
         sb.append("<tr><td>"); //NON-NLS
         sb.append(key);
@@ -118,7 +111,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         sb.append(value);
         sb.append("</td></tr>"); //NON-NLS
     }
-    
+
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -126,40 +119,43 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
             setText(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn"));
             return;
         }
-        
+
         StringBuilder sb = new StringBuilder();
         startTable(sb);
-        
+
         try {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
         } catch (TskCoreException ex) {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
         }
-                
+
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), new Long(file.getSize()).toString() );
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), new Long(file.getSize()).toString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"),  ContentUtils.getStringTime(file.getCrtime(), file));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"),  ContentUtils.getStringTime(file.getCtime(), file));
-       
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
+        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
+
         String md5 = file.getMd5Hash();
         if (md5 == null) {
             md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
         }
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
-        
+
         addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), new Long(file.getId()).toString());
         if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
         }
-        
+
         endTable(sb);
-        
-        /* If we have a file system file, grab the more detailed metadata text too */
+
+        /*
+         * If we have a file system file, grab the more detailed metadata text
+         * too
+         */
         try {
             if (file instanceof FsContent) {
                 FsContent fsFile = (FsContent) file;
@@ -175,10 +171,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer
         } catch (TskCoreException ex) {
             sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
         }
-        
+
         setText(sb.toString());
         jTextPane1.setCaretPosition(0);
-        this.setCursor(null);        
+        this.setCursor(null);
     }
 
     @Override

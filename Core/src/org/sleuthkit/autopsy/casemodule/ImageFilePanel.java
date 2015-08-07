@@ -43,55 +43,57 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
-    
+
     private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
     private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
-    
+
     // Externally supplied name is used to store settings 
     private String contextName;
 
     /**
      * Creates new form ImageFilePanel
-     * @param context a string context name used to read/store last used settings
-     * @param fileChooserFilters a list of filters to be used with the FileChooser
+     *
+     * @param context            a string context name used to read/store last
+     *                           used settings
+     * @param fileChooserFilters a list of filters to be used with the
+     *                           FileChooser
      */
     private ImageFilePanel(String context, List<FileFilter> fileChooserFilters) {
         initComponents();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        
+
         errorLabel.setVisible(false);
-        
+
         boolean firstFilter = true;
-        for (FileFilter filter: fileChooserFilters ) {
+        for (FileFilter filter : fileChooserFilters) {
             if (firstFilter) {  // set the first on the list as the default selection
                 fc.setFileFilter(filter);
                 firstFilter = false;
-            } 
-            else {
+            } else {
                 fc.addChoosableFileFilter(filter);
             }
         }
-        
+
         this.contextName = context;
         pcs = new PropertyChangeSupport(this);
-        
-        createTimeZoneList();       
+
+        createTimeZoneList();
     }
-    
+
     /**
      * Creates and returns an instance of a ImageFilePanel.
      */
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
-        
-       ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters );
-       
-       instance.postInit();
-        
-       return instance;
+
+        ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
+
+        instance.postInit();
+
+        return instance;
     }
 
     //post-constructor initialization to properly initialize listener support
@@ -99,7 +101,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private void postInit() {
         pathTextField.getDocument().addDocumentListener(this);
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -203,17 +204,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             String path = fc.getSelectedFile().getPath();
             pathTextField.setText(path);
         }
-        
-      
-            
+
         try {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
@@ -227,9 +225,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
-        
+
     /**
      * Get the path of the user selected image.
+     *
      * @return the image path
      */
     public String getContentPaths() {
@@ -246,22 +245,21 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public String getTimeZone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
         return tz.substring(tz.indexOf(")") + 2).trim();
-        
+
     }
-    
+
     public boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
     }
-     
-    
 
     public void reset() {
         //reset the UI elements to default 
-        pathTextField.setText(null);  
+        pathTextField.setText(null);
     }
-    
+
     /**
      * Should we enable the next button of the wizard?
+     *
      * @return true if a proper image has been selected, false otherwise
      */
     public boolean validatePanel() {
@@ -270,48 +268,52 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         if (path == null || path.isEmpty()) {
             return false;
         }
-        
+
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(path);
-        
+
         boolean isExist = Case.pathExists(path);
         boolean isPhysicalDrive = Case.isPhysicalDrive(path);
         boolean isPartition = Case.isPartition(path);
-        
+
         return (isExist || isPhysicalDrive || isPartition);
     }
-    
+
     /**
-     * Validates path to selected data source and displays warning if it is invalid.
+     * Validates path to selected data source and displays warning if it is
+     * invalid.
+     *
      * @param path Absolute path to the selected data source
      */
-    private void warnIfPathIsInvalid(String path){                      
+    private void warnIfPathIsInvalid(String path) {
         if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
         }
     }
-    
+
     public void storeSettings() {
         String imagePathName = getContentPaths();
-        if (null != imagePathName ) {
+        if (null != imagePathName) {
             String imagePath = imagePathName.substring(0, imagePathName.lastIndexOf(File.separator) + 1);
             ModuleSettings.setConfigSetting(contextName, PROP_LASTIMAGE_PATH, imagePath);
         }
     }
-    
+
     public void readSettings() {
         String lastImagePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTIMAGE_PATH);
         if (null != lastImagePath) {
-            if (!lastImagePath.isEmpty())
-                 pathTextField.setText(lastImagePath);  
-        }  
+            if (!lastImagePath.isEmpty()) {
+                pathTextField.setText(lastImagePath);
+            }
+        }
     }
+
     /**
      * Creates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
      */
-     public void createTimeZoneList() {
+    public void createTimeZoneList() {
         // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
         for (String id : ids) {
@@ -342,75 +344,73 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
     }
+
     /**
-     * Update functions are called by the pathTextField which has this set
-     * as it's DocumentEventListener. Each update function fires a property change
+     * Update functions are called by the pathTextField which has this set as
+     * it's DocumentEventListener. Each update function fires a property change
      * to be caught by the parent panel.
+     *
      * @param e the event, which is ignored
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        
+
         try {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        }
-        catch (Exception ee) {
+        } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
     @Override
-    public void removeUpdate(DocumentEvent e) { 
+    public void removeUpdate(DocumentEvent e) {
         try {
-             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        }
-        catch (Exception ee) {
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        
+
         try {
             pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        }
-        catch (Exception ee) {
+        } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                                          NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                                          MessageNotifyUtil.MessageType.ERROR);
+                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
         }
     }
-    
+
     /**
      * Set the focus to the pathTextField.
      */
     public void select() {
         pathTextField.requestFocusInWindow();
     }
-    
-    
+
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
-	super.addPropertyChangeListener(pcl);
+        super.addPropertyChangeListener(pcl);
 
-	if (pcs == null) {
-	    pcs = new PropertyChangeSupport(this);
-	}
+        if (pcs == null) {
+            pcs = new PropertyChangeSupport(this);
+        }
 
         pcs.addPropertyChangeListener(pcl);
     }
-    
+
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-	super.removePropertyChangeListener(pcl);
+        super.removePropertyChangeListener(pcl);
 
         pcs.removePropertyChangeListener(pcl);
     }

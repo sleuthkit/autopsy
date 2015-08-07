@@ -85,11 +85,11 @@ class CallLogAnalyzer {
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
-            if(f == null){
+            if (f == null) {
                 logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
                 return;
             }
-            
+
             try {
                 resultSet = statement.executeQuery(
                         "SELECT number,date,duration,type, name FROM calls ORDER BY date DESC;"); //NON-NLS
@@ -107,12 +107,11 @@ class CallLogAnalyzer {
                     duration = resultSet.getString("duration"); //NON-NLS
                     date = resultSet.getString("date"); //NON-NLS
                     type = resultSet.getString("type"); //NON-NLS
-                      
+
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                    if(type.equalsIgnoreCase("outgoing")) { //NON-NLS
+                    if (type.equalsIgnoreCase("outgoing")) { //NON-NLS
                         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
-                    }
-                    else { /// Covers INCOMING and MISSED
+                    } else { /// Covers INCOMING and MISSED
                         bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
                     }
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));

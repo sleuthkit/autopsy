@@ -57,6 +57,7 @@ public final class AutopsyEventPublisher {
      * events from other Autopsy nodes. Only one channel may be open at a time.
      *
      * @param channelName The name of the event channel.
+     *
      * @throws AutopsyEventException if the channel was not opened.
      */
     public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
@@ -100,7 +101,7 @@ public final class AutopsyEventPublisher {
     /**
      * Adds an event subscriber to this publisher.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -120,7 +121,7 @@ public final class AutopsyEventPublisher {
     /**
      * Removes an event subscriber from this publisher.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -158,7 +159,7 @@ public final class AutopsyEventPublisher {
             } catch (JMSException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
             }
-        }        
+        }
     }
-    
+
 }

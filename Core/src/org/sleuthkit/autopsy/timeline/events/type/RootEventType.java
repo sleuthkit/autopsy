@@ -26,8 +26,9 @@ import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
-/** A singleton {@link } EventType to represent the root type of all event
- * types. */
+/**
+ * A singleton {@link } EventType to represent the root type of all event types.
+ */
 public class RootEventType implements EventType {
 
     @Override

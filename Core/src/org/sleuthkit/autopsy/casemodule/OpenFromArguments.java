@@ -28,12 +28,15 @@ import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
- * Allows Autopsy to get path to .aut file passed in via associating the file type in Windows. 
+ * Allows Autopsy to get path to .aut file passed in via associating the file
+ * type in Windows.
  */
 @ServiceProvider(service = OptionProcessor.class)
 public class OpenFromArguments extends OptionProcessor {
 
-    /* Stores the .aut file if it was passed in as argument */
+    /*
+     * Stores the .aut file if it was passed in as argument
+     */
     private String autPath = "";
     private final Option option1 = Option.defaultArguments();
 

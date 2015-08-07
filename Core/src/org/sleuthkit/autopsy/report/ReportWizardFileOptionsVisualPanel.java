@@ -35,49 +35,49 @@ import org.openide.util.NbBundle;
 
 /**
  * Visual component of the File Report Configuration panel of the Report Wizard.
- * 
+ *
  * @author jwallace
  */
 class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
+
     private List<FileReportDataTypes> options;
     private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel<FileReportDataTypes> model;
     private ReportWizardFileOptionsPanel wizPanel;
-    
-    
+
     public ReportWizardFileOptionsVisualPanel(ReportWizardFileOptionsPanel wizPanel) {
         this.wizPanel = wizPanel;
         initComponents();
         initOptionsList();
     }
-    
+
     @Override
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsVisualPanel.getName.text");
     }
-    
+
     /**
      * Populate the list of File Report Information that can be selected.
      */
     private void initOptionsList() {
         options = Arrays.asList(FileReportDataTypes.values());
-        for(FileReportDataTypes col : options) {
+        for (FileReportDataTypes col : options) {
             optionStates.put(col, Boolean.FALSE);
         }
-      
+
         model = new OptionsListModel();
         optionsList.setModel(model);
         optionsList.setCellRenderer(new OptionsListRenderer());
         optionsList.setVisibleRowCount(-1);
-        
+
         selectAllButton.setEnabled(true);
         deselectAllButton.setEnabled(false);
-        
+
         // Add the ability to enable and disable Tag checkboxes to the list
         optionsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-               
+
                 int index = optionsList.locationToIndex(evt.getPoint());
                 FileReportDataTypes value = model.getElementAt(index);
                 optionStates.put(value, !optionStates.get(value));
@@ -89,10 +89,11 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
      * Are any options selected?
-     * @return 
+     *
+     * @return
      */
     private boolean anySelected() {
         for (Boolean b : optionStates.values()) {
@@ -102,10 +103,11 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         }
         return false;
     }
-    
+
     /**
      * Are no options selected?
-     * @return 
+     *
+     * @return
      */
     private boolean notAllSelected() {
         for (Boolean b : optionStates.values()) {
@@ -118,11 +120,13 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
 
     /**
      * Get the user-selected settings.
-     * @return 
+     *
+     * @return
      */
     Map<FileReportDataTypes, Boolean> getFileReportOptions() {
         return optionStates;
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -242,7 +246,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         public void removeListDataListener(ListDataListener l) {
         }
     }
-    
+
     /**
      * Render each item in the list to be a selectable check box.
      */
@@ -262,7 +266,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
             }
             return new JLabel();
         }
-        
+
     }
 
 }

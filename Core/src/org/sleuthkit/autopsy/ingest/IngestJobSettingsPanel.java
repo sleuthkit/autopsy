@@ -60,7 +60,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Gets the ingest settings made using this panel. 
+     * Gets the ingest settings made using this panel.
      *
      * @return The settings.
      */
@@ -317,9 +317,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         for (IngestModuleModel module : modules) {
             module.setEnabled(set);
         }
-        modulesTable.repaint();        
+        modulesTable.repaint();
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JLabel descriptionLabel;

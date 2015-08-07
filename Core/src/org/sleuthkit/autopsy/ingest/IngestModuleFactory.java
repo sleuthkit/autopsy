@@ -154,6 +154,7 @@ public interface IngestModuleFactory {
      * UnsupportedOperationException.
      *
      * @param setting Per ingest job settings to initialize the panel.
+     *
      * @return An ingest job settings panel.
      */
     IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings);
@@ -194,6 +195,7 @@ public interface IngestModuleFactory {
      * this method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
+     *
      * @return A data source ingest module instance.
      */
     DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings);
@@ -234,6 +236,7 @@ public interface IngestModuleFactory {
      * method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
+     *
      * @return A file ingest module instance.
      */
     FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings);

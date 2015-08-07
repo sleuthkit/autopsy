@@ -59,20 +59,20 @@ public final class CaseMetadata {
             // case metadata may be moved into the case database.
             XMLCaseManagement metadata = new XMLCaseManagement();
             metadata.open(metadataFilePath.toString());
-            caseType = metadata.getCaseType();                        
+            caseType = metadata.getCaseType();
             caseName = metadata.getCaseName();
             if (caseName.isEmpty()) {
-                throw new CaseMetadataException("Case name missing");               
+                throw new CaseMetadataException("Case name missing");
             }
             caseNumber = metadata.getCaseNumber();
             examiner = metadata.getCaseExaminer();
             caseDirectory = metadata.getCaseDirectory();
             if (caseDirectory.isEmpty()) {
-                throw new CaseMetadataException("Case directory missing");                               
-            } 
+                throw new CaseMetadataException("Case directory missing");
+            }
             caseDatabaseName = metadata.getDatabaseName();
             if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
-                throw new CaseMetadataException("Case database name missing");                                               
+                throw new CaseMetadataException("Case database name missing");
             }
         } catch (CaseActionException ex) {
             throw new CaseMetadataException(ex.getLocalizedMessage(), ex);
@@ -105,7 +105,7 @@ public final class CaseMetadata {
     public String getCaseNumber() {
         return caseNumber;
     }
-    
+
     /**
      * Gets the examiner.
      *
@@ -114,7 +114,7 @@ public final class CaseMetadata {
     public String getExaminer() {
         return examiner;
     }
-    
+
     /**
      * Gets the case directory.
      *
@@ -132,5 +132,5 @@ public final class CaseMetadata {
     public String getCaseDatabaseName() {
         return caseDatabaseName;
     }
-        
+
 }

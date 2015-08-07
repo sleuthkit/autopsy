@@ -70,9 +70,11 @@ public class EventRootNode extends DisplayableItemNode {
         return childCount;
     }
 
-    /** The node factories used to make lists of files to send to the result
+    /**
+     * The node factories used to make lists of files to send to the result
      * viewer using the lazy loading (rather than background) loading option to
-     * facilitate */
+     * facilitate
+     */
     private static class EventNodeChildFactory extends ChildFactory<Long> {
 
         private static final Logger LOGGER = Logger.getLogger(EventNodeChildFactory.class.getName());
@@ -102,7 +104,7 @@ public class EventRootNode extends DisplayableItemNode {
                 final TimeLineEvent eventById = filteredEvents.getEventById(eventID);
                 try {
                     AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
-                    if(file != null){
+                    if (file != null) {
                         if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
                             return new EventNode(eventById, file);
                         } else {
@@ -112,7 +114,7 @@ public class EventRootNode extends DisplayableItemNode {
                         }
                     } else {
                         LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
-                        return null; 
+                        return null;
                     }
 
                 } catch (TskCoreException tskCoreException) {
@@ -132,9 +134,9 @@ public class EventRootNode extends DisplayableItemNode {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/info-icon-16.png"); // NON-NLS
             setDisplayName(
                     NbBundle.getMessage(this.getClass(),
-                                        "EventRoodNode.tooManyNode.displayName",
-                                        MAX_EVENTS_TO_DISPLAY,
-                                        size));
+                            "EventRoodNode.tooManyNode.displayName",
+                            MAX_EVENTS_TO_DISPLAY,
+                            size));
         }
     }
 }

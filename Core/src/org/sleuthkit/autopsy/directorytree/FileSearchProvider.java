@@ -22,5 +22,6 @@ package org.sleuthkit.autopsy.directorytree;
  * Lookup interface for File Search (to deal with circular deps)
  */
 public interface FileSearchProvider {
+
     public void showDialog();
 }

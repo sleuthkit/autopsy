@@ -23,7 +23,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.openide.util.actions.Presenter;
 
- final class IngestMessagesAction extends AbstractAction implements Presenter.Toolbar {
+final class IngestMessagesAction extends AbstractAction implements Presenter.Toolbar {
 
     @Override
     public void actionPerformed(ActionEvent e) {

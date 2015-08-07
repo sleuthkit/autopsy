@@ -64,7 +64,7 @@ public final class ContentUtils {
             }
         });
     }
-        
+
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
@@ -75,6 +75,7 @@ public final class ContentUtils {
      *
      * @param epochSeconds
      * @param tzone
+     *
      * @return
      */
     public static String getStringTime(long epochSeconds, TimeZone tzone) {
@@ -105,6 +106,7 @@ public final class ContentUtils {
      *
      * @param epochSeconds
      * @param c
+     *
      * @return
      */
     public static String getStringTime(long epochSeconds, Content c) {
@@ -117,22 +119,22 @@ public final class ContentUtils {
      *
      * @param epochSeconds
      * @param c
+     *
      * @return
      */
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
-     
+
     public static TimeZone getTimeZone(Content c) {
-        
+
         try {
             if (!shouldDisplayTimesInLocalTime()) {
                 return TimeZone.getTimeZone("GMT");
-            }
-            else {
+            } else {
                 final Content dataSource = c.getDataSource();
                 if ((dataSource != null) && (dataSource instanceof Image)) {
-                    Image image = (Image)dataSource;
+                    Image image = (Image) dataSource;
                     return TimeZone.getTimeZone(image.getTimeZone());
                 } else {
                     //case such as top level VirtualDirectory
@@ -165,19 +167,22 @@ public final class ContentUtils {
      * Reads all the data from any content object and writes (extracts) it to a
      * file.
      *
-     * @param content Any content object.
+     * @param content    Any content object.
      * @param outputFile Will be created if it doesn't exist, and overwritten if
-     * it does
-     * @param progress progress bar handle to update, if available. null
-     * otherwise
-     * @param worker the swing worker background thread the process runs within,
-     * or null, if in the main thread, used to handle task cancellation
-     * @param source true if source file
+     *                   it does
+     * @param progress   progress bar handle to update, if available. null
+     *                   otherwise
+     * @param worker     the swing worker background thread the process runs
+     *                   within, or null, if in the main thread, used to handle
+     *                   task cancellation
+     * @param source     true if source file
+     *
      * @return number of bytes extracted
+     *
      * @throws IOException if file could not be written
      */
-    public static <T,V> long writeToFile(Content content, java.io.File outputFile,
-            ProgressHandle progress, SwingWorker<T,V> worker, boolean source) throws IOException {
+    public static <T, V> long writeToFile(Content content, java.io.File outputFile,
+            ProgressHandle progress, SwingWorker<T, V> worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
 
@@ -232,26 +237,27 @@ public final class ContentUtils {
      * Assumes there will be no collisions with existing directories/files, and
      * that the directory to contain the destination file already exists.
      */
-    public static class ExtractFscContentVisitor<T,V> extends ContentVisitor.Default<Void> {
+    public static class ExtractFscContentVisitor<T, V> extends ContentVisitor.Default<Void> {
 
         java.io.File dest;
         ProgressHandle progress;
-        SwingWorker<T,V> worker;
+        SwingWorker<T, V> worker;
         boolean source = false;
 
         /**
          * Make new extractor for a specific destination
          *
-         * @param dest The file/folder visited will be extracted as this file
+         * @param dest     The file/folder visited will be extracted as this
+         *                 file
          * @param progress progress bar handle to update, if available. null
-         * otherwise
-         * @param worker the swing worker background thread the process runs
-         * within, or null, if in the main thread, used to handle task
-         * cancellation
-         * @param source true if source file
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @param source   true if source file
          */
         public ExtractFscContentVisitor(java.io.File dest,
-                ProgressHandle progress, SwingWorker<T,V> worker, boolean source) {
+                ProgressHandle progress, SwingWorker<T, V> worker, boolean source) {
             this.dest = dest;
             this.progress = progress;
             this.worker = worker;
@@ -266,7 +272,7 @@ public final class ContentUtils {
          * Convenience method to make a new instance for given destination and
          * extract given content
          */
-        public static <T,V> void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker<T,V> worker) {
+        public static <T, V> void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker<T, V> worker) {
             cntnt.accept(new ExtractFscContentVisitor<>(dest, progress, worker, true));
         }
 
@@ -343,15 +349,13 @@ public final class ContentUtils {
 
             dest.mkdir();
 
-
-
             try {
                 int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
                     java.io.File childFile = getFsContentDest(child);
-                    ExtractFscContentVisitor<T,V> childVisitor =
-                            new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+                    ExtractFscContentVisitor<T, V> childVisitor
+                            = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
                     // If this is the source directory of an extract it
                     // will have a progress and worker, and will keep track
                     // of the progress bar's progress
@@ -375,17 +379,17 @@ public final class ContentUtils {
         @Override
         protected Void defaultVisit(Content cntnt) {
             throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
-                                                                        "ContentUtils.exception.msg",
-                                                                        cntnt.getClass().getSimpleName()));
+                    "ContentUtils.exception.msg",
+                    cntnt.getClass().getSimpleName()));
         }
     }
 
     /**
      * Indicates whether or not times should be displayed using local time.
-     * 
+     *
      * @return True or false.
      */
-    public static boolean shouldDisplayTimesInLocalTime(){
+    public static boolean shouldDisplayTimesInLocalTime() {
         return displayTimesInLocalTime;
     }
 }

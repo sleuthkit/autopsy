@@ -158,12 +158,12 @@ final class DataSourceIngestJob {
      * Constructs an object that encapsulates a data source and the ingest
      * module pipelines used to process it.
      *
-     * @param parentJob The ingest job of which this data source ingest job is a
-     * part.
-     * @param dataSource The data source to be ingested.
-     * @param settings The settings for the ingest job.
+     * @param parentJob        The ingest job of which this data source ingest
+     *                         job is a part.
+     * @param dataSource       The data source to be ingested.
+     * @param settings         The settings for the ingest job.
      * @param runInteractively Whether or not this job should use NetBeans
-     * progress handles.
+     *                         progress handles.
      */
     DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings, boolean runInteractively) {
         this.parentJob = parentJob;
@@ -250,11 +250,12 @@ final class DataSourceIngestJob {
      * collection as they are added to the output collection.
      *
      * @param ingestModuleTemplates A mapping of ingest module factory class
-     * names to ingest module templates.
-     * @param pipelineConfig An ordered list of ingest module factory class
-     * names representing an ingest pipeline.
+     *                              names to ingest module templates.
+     * @param pipelineConfig        An ordered list of ingest module factory
+     *                              class names representing an ingest pipeline.
+     *
      * @return An ordered list of ingest module templates, i.e., an
-     * uninstantiated pipeline.
+     *         uninstantiated pipeline.
      */
     private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(Map<String, IngestModuleTemplate> ingestModuleTemplates, List<String> pipelineConfig) {
         List<IngestModuleTemplate> templates = new ArrayList<>();
@@ -385,7 +386,7 @@ final class DataSourceIngestJob {
                 // errors are likely redundant.
                 while (!this.fileIngestPipelinesQueue.isEmpty()) {
                     pipeline = this.fileIngestPipelinesQueue.poll();
-                    if(pipeline.isRunning()){
+                    if (pipeline.isRunning()) {
                         List<IngestModuleError> shutDownErrors = pipeline.shutDown();
                         if (!shutDownErrors.isEmpty()) {
                             logIngestModuleErrors(shutDownErrors);
@@ -566,7 +567,7 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = new ArrayList<>();
         while (!this.fileIngestPipelinesQueue.isEmpty()) {
             FileIngestPipeline pipeline = fileIngestPipelinesQueue.poll();
-            if(pipeline.isRunning()){
+            if (pipeline.isRunning()) {
                 errors.addAll(pipeline.shutDown());
             }
         }
@@ -667,9 +668,11 @@ final class DataSourceIngestJob {
      * ingest pipeline.
      *
      * @param task A file ingest task.
+     *
      * @throws InterruptedException if the thread executing this code is
-     * interrupted while blocked on taking from or putting to the file ingest
-     * pipelines collection.
+     *                              interrupted while blocked on taking from or
+     *                              putting to the file ingest pipelines
+     *                              collection.
      */
     void process(FileIngestTask task) throws InterruptedException {
         try {
@@ -770,7 +773,7 @@ final class DataSourceIngestJob {
      * process the data source is known.
      *
      * @param workUnits Total number of work units for the processing of the
-     * data source.
+     *                  data source.
      */
     void switchDataSourceIngestProgressBarToDeterminate(int workUnits) {
         if (this.doUI && !this.cancelled) {
@@ -835,7 +838,7 @@ final class DataSourceIngestJob {
      * mode. The task name is the "subtitle" under the display name.
      *
      * @param currentTask The task name.
-     * @param workUnits Number of work units performed.
+     * @param workUnits   Number of work units performed.
      */
     void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
         if (this.doUI && !this.cancelled) {
@@ -940,7 +943,7 @@ final class DataSourceIngestJob {
                 }
             }
         }
-      
+
         this.cancelled = true;
 
         /**
@@ -1026,7 +1029,7 @@ final class DataSourceIngestJob {
 
             this.jobCancelled = cancelled;
             this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
-                        
+
             if (getIngestTasksSnapshot) {
                 synchronized (DataSourceIngestJob.this.fileIngestProgressLock) {
                     this.processedFiles = DataSourceIngestJob.this.processedFiles;
@@ -1034,7 +1037,7 @@ final class DataSourceIngestJob {
                     this.snapShotTime = new Date().getTime();
                 }
                 this.tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
-                
+
             } else {
                 this.processedFiles = 0;
                 this.estimatedFilesToProcess = 0;
@@ -1047,7 +1050,7 @@ final class DataSourceIngestJob {
          * Gets time these statistics were collected.
          *
          * @return The statistics collection time as number of milliseconds
-         * since January 1, 1970, 00:00:00 GMT.
+         *         since January 1, 1970, 00:00:00 GMT.
          */
         long getSnapshotTime() {
             return snapShotTime;
@@ -1077,7 +1080,7 @@ final class DataSourceIngestJob {
          * Gets the time the ingest job was started.
          *
          * @return The start time as number of milliseconds since January 1,
-         * 1970, 00:00:00 GMT.
+         *         1970, 00:00:00 GMT.
          */
         long getJobStartTime() {
             return jobStartTime;
@@ -1168,7 +1171,7 @@ final class DataSourceIngestJob {
          * ingest modules
          *
          * @return A list of canceled data source level ingest module display
-         * names, possibly empty.
+         *         names, possibly empty.
          */
         List<String> getCancelledDataSourceIngestModules() {
             return Collections.unmodifiableList(this.cancelledDataSourceModules);

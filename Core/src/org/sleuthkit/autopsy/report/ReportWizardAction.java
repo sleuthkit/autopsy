@@ -49,15 +49,15 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 80)})
-public final class ReportWizardAction  extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
-    
+public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
+
     private final JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
 
     /**
-     * When the Generate Report button or menu item is selected, open the reporting wizard.
-     * When the wizard is finished, create a ReportGenerator with the wizard information,
-     * and start all necessary reports.
+     * When the Generate Report button or menu item is selected, open the
+     * reporting wizard. When the wizard is finished, create a ReportGenerator
+     * with the wizard information, and start all necessary reports.
      */
     @SuppressWarnings("unchecked")
     public static void doReportWizard() {
@@ -66,14 +66,14 @@ public final class ReportWizardAction  extends CallableSystemAction implements P
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             @SuppressWarnings("unchecked")
-            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>)wiz.getProperty("tableModuleStates"),  //NON-NLS
-                    (Map<GeneralReportModule, Boolean>)wiz.getProperty("generalModuleStates"), //NON-NLS
-                    (Map<FileReportModule, Boolean>)wiz.getProperty("fileModuleStates")); //NON-NLS
-            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>)wiz.getProperty("artifactStates"), (Map<String, Boolean>)wiz.getProperty("tagStates")); //NON-NLS
-            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>)wiz.getProperty("fileReportOptions")); //NON-NLS
+            ReportGenerator generator = new ReportGenerator((Map<TableReportModule, Boolean>) wiz.getProperty("tableModuleStates"), //NON-NLS
+                    (Map<GeneralReportModule, Boolean>) wiz.getProperty("generalModuleStates"), //NON-NLS
+                    (Map<FileReportModule, Boolean>) wiz.getProperty("fileModuleStates")); //NON-NLS
+            generator.generateTableReports((Map<ARTIFACT_TYPE, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+            generator.generateFileListReports((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
             generator.generateGeneralReports();
             generator.displayProgressPanels();
-        }        
+        }
     }
 
     public ReportWizardAction() {

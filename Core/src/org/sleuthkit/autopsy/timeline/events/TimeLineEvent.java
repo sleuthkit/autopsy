@@ -50,7 +50,9 @@ public class TimeLineEvent {
         return fileID;
     }
 
-    /** @return the time in seconds from unix epoch */
+    /**
+     * @return the time in seconds from unix epoch
+     */
     public Long getTime() {
         return time;
     }
@@ -72,7 +74,7 @@ public class TimeLineEvent {
     }
 
     public TimeLineEvent(Long eventID, Long objID, Long artifactID, Long time,
-                         EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
+            EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
         this.eventID = eventID;
         this.fileID = objID;
         this.artifactID = artifactID;

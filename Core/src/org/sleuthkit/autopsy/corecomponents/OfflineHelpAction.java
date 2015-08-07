@@ -53,8 +53,8 @@ import java.util.logging.Logger;
 public final class OfflineHelpAction implements ActionListener {
 
     private URI uri;
-    private static final Logger Logger = 
-            org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
+    private static final Logger Logger
+            = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -65,8 +65,7 @@ public final class OfflineHelpAction implements ActionListener {
      * Displays the Offline Documentation in the system browser. If not
      * available, displays it in the built-in OpenIDE HTML Browser.
      *
-     * Tested and working: Chrome, Firefox, IE
-     * Not tested: Opera, Safari
+     * Tested and working: Chrome, Firefox, IE Not tested: Opera, Safari
      */
     private void viewOfflineHelp() {
         String fileForHelp = "";
