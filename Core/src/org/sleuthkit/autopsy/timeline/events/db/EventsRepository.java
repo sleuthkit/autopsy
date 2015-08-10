@@ -460,12 +460,12 @@ public class EventsRepository {
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);
-            updateTagFilters();
+            updateTagNames();
         }
         return updatedEventIDs;
     }
 
-    public void updateTagFilters() {
+    public void updateTagNames() {
         try {
             tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
 
@@ -478,8 +478,9 @@ public class EventsRepository {
         for (TagName t : tagNames) {
             tagsFilter.addSubFilter(new TagNameFilter(t));
         }
-        tagsFilter.getSubFilters().removeIf((TagNameFilter t) -> {
-            return tagNames.contains(t.getTagName()) == false;
-        });
+
+        for (TagNameFilter t : tagsFilter.getSubFilters()) {
+            t.setDisabled(tagNames.contains(t.getTagName()) == false);
+        }
     }
 }

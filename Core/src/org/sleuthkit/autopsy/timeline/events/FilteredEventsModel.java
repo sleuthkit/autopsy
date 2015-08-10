@@ -163,14 +163,7 @@ public final class FilteredEventsModel {
         repo.getTagNames().addListener((ListChangeListener.Change<? extends TagName> c) -> {
             RootFilter rootFilter = filterProperty().get();
             TagsFilter tagsFilter = rootFilter.getTagsFilter();
-            while (c.next()) {
-                c.getRemoved().forEach(tagsFilter::removeFilterForTag);
-                c.getAddedSubList().forEach((TagName t) -> {
-                    TagNameFilter tagFilter = new TagNameFilter(t);
-                    tagsFilter.addSubFilter(tagFilter);
-                });
-
-            }
+            repo.syncTagFilter(tagsFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());

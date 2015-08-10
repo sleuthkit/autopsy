@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -189,6 +190,9 @@ public class TimeLineController {
     @GuardedBy("this")
     private final History<ZoomParams> historyManager = new History<>();
 
+    @GuardedBy("this")
+    private final ReadOnlyObjectWrapper<ZoomParams> currentState = new ReadOnlyObjectWrapper<>();
+
     //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
@@ -232,7 +236,15 @@ public class TimeLineController {
 
     public TimeLineController(Case autoCase) {
         this.autoCase = autoCase;        //initalize repository and filteredEvents on creation
-        eventsRepository = new EventsRepository(autoCase, historyManager.currentState());
+        historyManager.currentState().addListener(new InvalidationListener() {
+
+            public void invalidated(Observable observable) {
+                ZoomParams currentState1 = historyManager.getCurrentState();
+                eventsRepository.syncTagFilter(currentState1.getFilter().getTagsFilter());
+                currentState.set(currentState1);
+            }
+        });
+        eventsRepository = new EventsRepository(autoCase, currentState.getReadOnlyProperty());
 
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
@@ -565,21 +577,17 @@ public class TimeLineController {
         }
     }
 
-    synchronized public ZoomParams advance() {
-        ZoomParams advance = historyManager.advance();
-        eventsRepository.syncTagFilter(advance.getFilter().getTagsFilter());
-        return advance;
-
+    synchronized public void advance() {
+        historyManager.advance();
     }
 
-    synchronized public ZoomParams retreat() {
-        ZoomParams retreat = historyManager.retreat();
-        eventsRepository.syncTagFilter(retreat.getFilter().getTagsFilter());
-        return retreat;
+    synchronized public void retreat() {
+        historyManager.retreat();
     }
 
     synchronized private void advance(ZoomParams newState) {
         historyManager.advance(newState);
+
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {
