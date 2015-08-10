@@ -27,34 +27,33 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
- final class FileSearchAction extends CallableSystemAction implements FileSearchProvider{
-    
+final class FileSearchAction extends CallableSystemAction implements FileSearchProvider {
+
     private static FileSearchAction instance = null;
 
     FileSearchAction() {
         super();
         setEnabled(Case.isCaseOpen()); //no guarantee listener executed, so check here
-        
+
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
+                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                     setEnabled(evt.getNewValue() != null);
                 }
             }
-            
+
         });
     }
-    
+
     public static FileSearchAction getDefault() {
-        if(instance == null){
+        if (instance == null) {
             instance = new FileSearchAction();
         }
         return instance;
     }
-    
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         new FileSearchDialog().setVisible(true);
@@ -74,7 +73,7 @@ import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
     protected boolean asynchronous() {
         return false;

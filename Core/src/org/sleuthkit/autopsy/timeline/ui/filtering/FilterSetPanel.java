@@ -48,7 +48,8 @@ import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_fil
 import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_only;
 import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_filtering_menuItem_select;
 
-/** The FXML controller for the filter ui.
+/**
+ * The FXML controller for the filter ui.
  *
  * This also implements {@link TimeLineView} since it dynamically updates its
  * filters based on the contents of a {@link FilteredEventsModel}

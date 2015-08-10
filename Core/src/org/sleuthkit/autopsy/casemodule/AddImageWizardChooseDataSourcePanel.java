@@ -53,12 +53,12 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
 
-    
-     AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
-      
+    AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
+
         this.progressPanel = proPanel;
-       
+
     }
+
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
@@ -95,7 +95,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      * one. If the panel is valid, the "Next" button will be enabled.
      *
      * @return boolean true if all the fields are correctly filled, false
-     * otherwise
+     *         otherwise
      */
     @Override
     public boolean isValid() {
@@ -180,7 +180,6 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
 
         //reset settings if supports it
         //getComponent().reset();
-
         // Prepopulate the image directory from the properties file
         try {
 
@@ -219,7 +218,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-  
+
         return;
     }
 

@@ -33,10 +33,11 @@ import org.sleuthkit.datamodel.TskData;
  *
  */
 class RawTextMarkup implements TextMarkup {
+
     private int numPages = 0;
     private int currentPage = 0;
     private boolean hasChunks = false;
-    
+
     private final Content content;
     private final long objectId;
     //keep last content cached
@@ -46,12 +47,13 @@ class RawTextMarkup implements TextMarkup {
 
     /**
      * Construct a new RawTextMarkup object for the given content and object id.
-     * This constructor needs both a content object and an object id because 
-     * the RawTextMarkup implementation attempts to provide useful messages in
-     * the text content viewer for (a) the case where a file has not been 
-     * indexed because known files are being skipped and (b) the case where the
-     * file content has not yet been indexed.
-     * @param content Used to get access to file names and "known" status.
+     * This constructor needs both a content object and an object id because the
+     * RawTextMarkup implementation attempts to provide useful messages in the
+     * text content viewer for (a) the case where a file has not been indexed
+     * because known files are being skipped and (b) the case where the file
+     * content has not yet been indexed.
+     *
+     * @param content  Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
      */
     RawTextMarkup(Content content, long objectId) {
@@ -59,10 +61,11 @@ class RawTextMarkup implements TextMarkup {
         this.objectId = objectId;
         initialize();
     }
-    
+
     /**
      * Return the ID that this object is associated with -- to help with caching
-     * @return 
+     *
+     * @return
      */
     public long getObjectId() {
         return this.objectId;
@@ -172,7 +175,7 @@ class RawTextMarkup implements TextMarkup {
     public int getNumberPages() {
         return numPages;
     }
-    
+
     /**
      * Set the internal values, such as pages and chunks
      */
@@ -196,16 +199,18 @@ class RawTextMarkup implements TextMarkup {
         }
     }
 
-
     /**
      * Get extracted content for a node from Solr
      *
-     * @param node a node that has extracted content in Solr (check with
-     * solrHasContent(ContentNode))
+     * @param node        a node that has extracted content in Solr (check with
+     *                    solrHasContent(ContentNode))
      * @param currentPage currently used page
-     * @param hasChunks true if the content behind the node has multiple chunks.
-     * This means we need to address the content pages specially.
+     * @param hasChunks   true if the content behind the node has multiple
+     *                    chunks. This means we need to address the content
+     *                    pages specially.
+     *
      * @return the extracted content
+     *
      * @throws SolrServerException if something goes wrong
      */
     private String getSolrContent(int currentPage, boolean hasChunks) throws SolrServerException {
@@ -232,7 +237,7 @@ class RawTextMarkup implements TextMarkup {
         }
 
         int chunkId = currentPage;
-        
+
         //check if cached
         if (cachedString != null) {
             if (cachedChunk == chunkId) {

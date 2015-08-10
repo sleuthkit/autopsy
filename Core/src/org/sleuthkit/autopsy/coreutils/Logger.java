@@ -125,7 +125,9 @@ public final class Logger extends java.util.logging.Logger {
      * factory method.
      *
      * @param name A name for the logger. This should be a dot-separated name
-     * and should normally be based on the package name or class name.
+     *             and should normally be based on the package name or class
+     *             name.
+     *
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name) {
@@ -137,11 +139,14 @@ public final class Logger extends java.util.logging.Logger {
      * instance derived from java.util.logging.Logger. Hides the base class
      * factory method.
      *
-     * @param name A name for the logger. This should be a dot-separated name
-     * and should normally be based on the package name or class name.
+     * @param name               A name for the logger. This should be a
+     *                           dot-separated name and should normally be based
+     *                           on the package name or class name.
      * @param resourceBundleName - name of ResourceBundle to be used for
-     * localizing messages for this logger. May be null if none of the messages
-     * require localization.
+     *                           localizing messages for this logger. May be
+     *                           null if none of the messages require
+     *                           localization.
+     *
      * @return org.sleuthkit.autopsy.coreutils.Logger instance
      */
     public static Logger getLogger(String name, String resourceBundleName) {

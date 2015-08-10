@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-/** Interface to be implemented by views of the data.
+/**
+ * Interface to be implemented by views of the data.
  *
  * Most implementations should install the relevant listeners in their
- * {@link #setController} and {@link #setModel} methods */
+ * {@link #setController} and {@link #setModel} methods
+ */
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 
 public interface TimeLineView extends TimeLineUI {
@@ -30,6 +32,5 @@ public interface TimeLineView extends TimeLineUI {
     void setController(TimeLineController controller);
 
     void setModel(final FilteredEventsModel filteredEvents);
-
 
 }

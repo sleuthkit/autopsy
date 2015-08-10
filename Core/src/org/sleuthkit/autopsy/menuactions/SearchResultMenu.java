@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import java.util.ArrayList;
@@ -32,9 +31,9 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 /**
  * Menu item lists DataResult tabs.
  */
- class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
+class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
-    SearchResultMenu(){
+    SearchResultMenu() {
 
     }
 
@@ -44,10 +43,8 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
         DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
         DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
 
-
-
         List<JComponent> menuItems = new ArrayList<JComponent>();
-        
+
         // add the main "DirectoryListing"
         JMenuItem dlItem = new JMenuItem(directoryListing.getName());
         dlItem.addActionListener(new OpenTopComponentAction(directoryListing));
@@ -55,11 +52,10 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
         menuItems.add(dlItem);
 
-
         // add search results if there are any
-        if(dataResultsIds.size() > 0){
+        if (dataResultsIds.size() > 0) {
             JMenu submenu = new JMenu(NbBundle.getMessage(this.getClass(), "SearchResultMenu.menu.dataRes.text"));
-            for(String resultTabId : dataResultsIds){
+            for (String resultTabId : dataResultsIds) {
                 JMenuItem item = new JMenuItem(resultTabId);
                 item.addActionListener(new OpenTopComponentAction(resultTabId));
                 submenu.add(item);

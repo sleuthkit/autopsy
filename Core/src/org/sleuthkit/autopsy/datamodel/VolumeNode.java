@@ -38,6 +38,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      * are determined the same way.
      *
      * @param vol Volume to get the name of
+     *
      * @return short name for the Volume
      */
     static String nameForVolume(Volume vol) {
@@ -65,6 +66,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      * Right click action for volume node
      *
      * @param popup
+     *
      * @return
      */
     @Override

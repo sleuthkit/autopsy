@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.EventQueue;
@@ -39,8 +38,10 @@ class RecentItems implements ActionListener {
     String casePath;
     private JPanel caller; // for error handling
 
-    /** the constructor */
-    public RecentItems(String caseName, String casePath){
+    /**
+     * the constructor
+     */
+    public RecentItems(String caseName, String casePath) {
         this.caseName = caseName;
         this.casePath = casePath;
     }
@@ -48,20 +49,20 @@ class RecentItems implements ActionListener {
     /**
      * Opens the recent case.
      *
-     * @param e  the action event
+     * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         // check if the file exists
-        if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
+        if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
             // throw an error here
             JOptionPane.showMessageDialog(caller,
-                                          NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
-                                                              caseName),
-                                          NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
+                            caseName),
+                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
+                    JOptionPane.ERROR_MESSAGE);
             RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-            
+
             //if case is not opened, open the start window
             if (Case.isCaseOpen() == false) {
                 EventQueue.invokeLater(new Runnable() {
@@ -70,12 +71,11 @@ class RecentItems implements ActionListener {
                     public void run() {
                         StartupWindowProvider.getInstance().open();
                     }
-                    
+
                 });
-                
+
             }
-        }
-        else {
+        } else {
             try {
                 Case.open(casePath); // open the case
             } catch (CaseActionException ex) {

@@ -17,7 +17,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
         keywords = "#OptionsCategory_Keywords_FileTypeId",
         keywordsCategory = "FileTypeId",
-        position = 5        
+        position = 5
 )
 // moved messages to Bundle.properties
 //@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_FileTypeId=FileTypeId", "OptionsCategory_Keywords_FileTypeId=FileTypeId"})

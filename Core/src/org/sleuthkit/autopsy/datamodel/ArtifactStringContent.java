@@ -33,10 +33,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * StringContent object for a blackboard artifact, that can be looked up and used
- * to display text for the DataContent viewers.  Displays values in artifact in HTML.
- * Note that it has no style associated with it and assumes that the pane showing the 
- * HTML has styles set (such as with HTMLEditorKit).
+ * StringContent object for a blackboard artifact, that can be looked up and
+ * used to display text for the DataContent viewers. Displays values in artifact
+ * in HTML. Note that it has no style associated with it and assumes that the
+ * pane showing the HTML has styles set (such as with HTMLEditorKit).
  */
 public class ArtifactStringContent implements StringContent {
 
@@ -79,12 +79,12 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("<td>"); //NON-NLS
                     if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID() 
+                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID() 
+                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
                             || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID() ) {
+                            || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
                         long epoch = attr.getValueLong();
                         String time = "0000-00-00 00:00:00";
                         if (epoch != 0) {
@@ -135,7 +135,6 @@ public class ArtifactStringContent implements StringContent {
                 }
 
                 //add file path
-
                 buffer.append("<tr>"); //NON-NLS
                 buffer.append("<td>"); //NON-NLS
                 buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.srcFilePath.text"));
@@ -144,8 +143,7 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append(path);
                 buffer.append("</td>"); //NON-NLS
                 buffer.append("</tr>\n"); //NON-NLS
-                
-                
+
                 // add artifact ID (useful for debugging)
                 buffer.append("<tr><td>"); //NON-NLS
                 buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"));
@@ -153,21 +151,20 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append(artifact.getArtifactID());
                 buffer.append("</td>"); //NON-NLS
                 buffer.append("</tr>\n"); //NON-NLS
-                
 
                 buffer.append("</table>"); //NON-NLS
                 buffer.append("</html>\n"); //NON-NLS
-                
+
                 stringContent = buffer.toString();
             } catch (TskException ex) {
                 stringContent = NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.err");
             }
         }
-        
+
         return stringContent;
     }
-    
-    private static Content getAssociatedContent(BlackboardArtifact artifact){
+
+    private static Content getAssociatedContent(BlackboardArtifact artifact) {
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (TskException ex) {

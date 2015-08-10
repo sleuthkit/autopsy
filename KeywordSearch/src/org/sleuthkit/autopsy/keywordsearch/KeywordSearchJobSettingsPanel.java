@@ -64,7 +64,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         displayLanguages();
         displayEncodings();
         keywordListsManager.addPropertyChangeListener(this);
-         languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N NON-NLS
+        languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N NON-NLS
     }
 
     private void customizeKeywordListsTable() {
@@ -165,7 +165,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             if (keywordListStates.get(listName)) {
                 enabledListNames.add(listName);
             } else {
-                disabledListNames.add(listName);                
+                disabledListNames.add(listName);
             }
         }
         return new KeywordSearchJobSettings(enabledListNames, disabledListNames);
@@ -175,9 +175,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         initializeKeywordListSettings(newSettings);
         displayLanguages();
         displayEncodings();
-        tableModel.fireTableDataChanged();        
+        tableModel.fireTableDataChanged();
     }
-    
+
     private class KeywordListsTableModel extends AbstractTableModel {
 
         @Override

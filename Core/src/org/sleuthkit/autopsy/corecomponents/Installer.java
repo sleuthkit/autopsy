@@ -66,7 +66,9 @@ public class Installer extends ModuleInstall {
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
 
-        /* Open the passed in case, if an aut file was double clicked. */
+        /*
+         * Open the passed in case, if an aut file was double clicked.
+         */
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
@@ -88,7 +90,6 @@ public class Installer extends ModuleInstall {
             }
         });
 
-
     }
 
     @Override
@@ -100,50 +101,48 @@ public class Installer extends ModuleInstall {
     @Override
     public void close() {
         try {
-            if (Case.isCaseOpen())
+            if (Case.isCaseOpen()) {
                 Case.getCurrentCase().closeCase();
-        }
-        catch (CaseActionException ex) {
+            }
+        } catch (CaseActionException ex) {
             logger.log(Level.WARNING, "Error closing case. ", ex); //NON-NLS            
         }
     }
-    
+
     private void setupLAF() {
 
         //TODO apply custom skinning 
         //UIManager.put("nimbusBase", new Color());
         //UIManager.put("nimbusBlueGrey", new Color());
         //UIManager.put("control", new Color());
-        
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setupMacOsXLAF();
         }
-        
+
     }
 
     /**
-     * Set the look and feel to be the Cross Platform 'Metal', but keep Aqua 
-     * dependent elements that set the Menu Bar to be in the correct place on 
+     * Set the look and feel to be the Cross Platform 'Metal', but keep Aqua
+     * dependent elements that set the Menu Bar to be in the correct place on
      * Mac OS X.
      */
     private void setupMacOsXLAF() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | InstantiationException 
-                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             logger.log(Level.WARNING, "Unable to set theme. ", ex); //NON-NLS
         }
-        
+
         final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI", //NON-NLS
-                                                        };
-                
+    };
+
         Map<Object, Object> uiEntries = new TreeMap<>();
-        
+
         // Store the keys that deal with menu items
-        for(String key : UI_MENU_ITEM_KEYS) {
+        for (String key : UI_MENU_ITEM_KEYS) {
             uiEntries.put(key, UIManager.get(key));
         }
-        
+
         //use Metal if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) { //NON-NLS
@@ -158,7 +157,7 @@ public class Installer extends ModuleInstall {
         }
 
         // Overwrite the Metal menu item keys to use the Aqua versions
-        for (Map.Entry<Object,Object> entry : uiEntries.entrySet()) {
+        for (Map.Entry<Object, Object> entry : uiEntries.entrySet()) {
             UIManager.put(entry.getKey(), entry.getValue());
         }
     }

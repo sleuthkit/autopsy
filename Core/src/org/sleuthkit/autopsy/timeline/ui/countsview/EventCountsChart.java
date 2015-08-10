@@ -40,8 +40,10 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
-/** Customized {@link StackedBarChart<String, Number>} used to display the event
- * counts in {@link CountsViewPane} */
+/**
+ * Customized {@link StackedBarChart<String, Number>} used to display the event
+ * counts in {@link CountsViewPane}
+ */
 class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
 
     private ContextMenu contextMenu;
@@ -50,10 +52,11 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
 
     private IntervalSelector<? extends String> intervalSelector;
 
-    /** * the RangeDivisionInfo for the currently displayed time range,
-     * used to correct the interval provided
-     * {@link  EventCountsChart#intervalSelector} by padding the end with one
-     * 'period' */
+    /**
+     * * the RangeDivisionInfo for the currently displayed time range, used to
+     * correct the interval provided {@link  EventCountsChart#intervalSelector}
+     * by padding the end with one 'period'
+     */
     private RangeDivisionInfo rangeInfo;
 
     EventCountsChart(CategoryAxis dateAxis, NumberAxis countAxis) {
@@ -105,9 +108,9 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         //we have defered creating context menu until control is available
         contextMenu = ActionUtils.createContextMenu(
                 Arrays.asList(new ActionGroup(
-                        NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
-                        new Back(controller),
-                        new Forward(controller))));
+                                NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
+                                new Back(controller),
+                                new Forward(controller))));
         contextMenu.setAutoHide(true);
     }
 
@@ -135,10 +138,12 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         return new CountsIntervalSelector(x, getHeight() - dateAxis.getHeight() - dateAxis.getTickLength(), dateAxis, controller);
     }
 
-    /** used by {@link CountsViewPane#BarClickHandler} to close the context menu
+    /**
+     * used by {@link CountsViewPane#BarClickHandler} to close the context menu
      * when the bar menu is requested
      *
-     * @return the context menu for this chart */
+     * @return the context menu for this chart
+     */
     ContextMenu getContextMenu() {
         return contextMenu;
     }
@@ -156,7 +161,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         public String toString(Number n) {
             //suppress non-integer values
             return n.intValue() == n.doubleValue()
-                   ? Integer.toString(n.intValue()) : "";
+                    ? Integer.toString(n.intValue()) : "";
         }
 
         @Override
@@ -166,8 +171,10 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         }
     }
 
-    /** Interval Selector for the counts chart, adjusts interval based on
-     * rangeInfo to include final period */
+    /**
+     * Interval Selector for the counts chart, adjusts interval based on
+     * rangeInfo to include final period
+     */
     private class CountsIntervalSelector extends IntervalSelector<String> {
 
         public CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {

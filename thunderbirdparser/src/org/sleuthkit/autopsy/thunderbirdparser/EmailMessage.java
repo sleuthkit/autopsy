@@ -18,24 +18,24 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
 /**
- * A Record to hold generic information about email messages, regardless of 
- * the original format or source.
+ * A Record to hold generic information about email messages, regardless of the
+ * original format or source.
+ *
  * @author jwallace
  */
 class EmailMessage {
+
     private String recipients = "";
     private String bcc = "";
     private String cc = "";
     private String sender = "";
     private String subject = "";
-    private String textBody =  "";
+    private String textBody = "";
     private String htmlBody = "";
     private String rtfBody = "";
     private String localPath = "";
@@ -43,7 +43,7 @@ class EmailMessage {
     private long sentDate = 0L;
     private List<Attachment> attachments = new ArrayList<>();
     private long id = -1L;
-    
+
     boolean hasAttachment() {
         return hasAttachment;
     }
@@ -117,7 +117,7 @@ class EmailMessage {
             this.sentDate = sentDate.getTime() / 1000;
         }
     }
-    
+
     void setSentDate(long sentDate) {
         this.sentDate = sentDate;
     }
@@ -141,12 +141,12 @@ class EmailMessage {
             this.cc = cc;
         }
     }
-    
+
     void addAttachment(Attachment a) {
         attachments.add(a);
         hasAttachment = true;
     }
-    
+
     List<Attachment> getAttachments() {
         return attachments;
     }

@@ -131,8 +131,8 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         progressSlider.addChangeListener((ChangeEvent e) -> {
             /**
              * Should always try to synchronize any call to
-             * progressSlider.setValue() to avoid a different thread
-             * changing playbin while stateChanged() is processing
+             * progressSlider.setValue() to avoid a different thread changing
+             * playbin while stateChanged() is processing
              */
             int time = progressSlider.getValue();
             synchronized (playbinLock) {
@@ -276,9 +276,10 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     /**
      * @param file      a video file from which to capture frames
      * @param numFrames the number of frames to capture. These frames will be
-     *                  captured at successive intervals given by durationOfVideo/numFrames. If
-     *                  this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
-     *                  frame will be captured and returned.
+     *                  captured at successive intervals given by
+     *                  durationOfVideo/numFrames. If this frame interval is
+     *                  less than MIN_FRAME_INTERVAL_MILLIS, then only one frame
+     *                  will be captured and returned.
      *
      * @return a List of VideoFrames representing the captured frames.
      */
@@ -590,9 +591,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
         /**
          * @return true while millisElapsed is greater than END_TIME_MARGIN_MS
-         *         from durationMillis. This is used to indicate when the video has
-         *         ended because for some videos the time elapsed never becomes equal to
-         *         the reported duration of the video.
+         *         from durationMillis. This is used to indicate when the video
+         *         has ended because for some videos the time elapsed never
+         *         becomes equal to the reported duration of the video.
          */
         private boolean hasNotEnded() {
             return (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
@@ -659,7 +660,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         }
     } //end class progress worker
 
-    /* Thread that extracts and plays a file */
+    /*
+     * Thread that extracts and plays a file
+     */
     private class ExtractMedia extends SwingWorker<Long, Void> {
 
         private ProgressHandle progress;
@@ -687,7 +690,9 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             return 0L;
         }
 
-        /* clean up or start the worker threads */
+        /*
+         * clean up or start the worker threads
+         */
         @Override
         protected void done() {
             try {

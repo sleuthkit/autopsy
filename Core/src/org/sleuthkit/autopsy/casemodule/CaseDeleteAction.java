@@ -16,12 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.logging.Level;import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -57,10 +57,12 @@ import org.openide.util.actions.CallableSystemAction;
  * The action to delete the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
- final class CaseDeleteAction extends CallableSystemAction {
+
+
+final class CaseDeleteAction extends CallableSystemAction {
 
     private JPanel caller; // for error handling
-    
+
     private static final Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
 
     /**
@@ -73,6 +75,7 @@ import org.openide.util.actions.CallableSystemAction;
 
     /**
      * Deletes the current opened case.
+     *
      * @param e
      */
     @Override
@@ -81,24 +84,23 @@ import org.openide.util.actions.CallableSystemAction;
         File configFile = new File(currentCase.getConfigFilePath());
         File caseFolder = new File(configFile.getParent());
         String caseName = currentCase.getName();
-        if(!caseFolder.exists()){
+        if (!caseFolder.exists()) {
             // throw an error
-            
+
             logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist.")); //NON-NLS
-        }
-        else{
+        } else {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CaseDeleteAction.closeConfMsg.text",                                                          caseName, caseFolder.getPath());
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CaseDeleteAction.closeConfMsg.text", caseName, caseFolder.getPath());
             NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                                                                   NbBundle.getMessage(this.getClass(),
-                                                                                       "CaseDeleteAction.closeConfMsg.title"),
-                                                                   NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "CaseDeleteAction.closeConfMsg.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             d.setValue(NotifyDescriptor.NO_OPTION);
 
             Object res = DialogDisplayer.getDefault().notify(d);
-            if(res != null && res == DialogDescriptor.YES_OPTION){
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
                 boolean success = false;
-                
+
                 try {
                     Case.getCurrentCase().deleteCase(caseFolder); // delete the current case
                     success = true;
@@ -107,26 +109,26 @@ import org.openide.util.actions.CallableSystemAction;
                 }
 
                 // show notification whether the case has been deleted or it failed to delete...
-                if(!success){
+                if (!success) {
                     JOptionPane.showMessageDialog(caller,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseDeleteAction.msgDlg.fileInUse.msg"),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseDeleteAction.msgDlg.fileInUse.title"),
-                                                  JOptionPane.ERROR_MESSAGE); // throw an error
-                }
-                else{
+                            NbBundle.getMessage(this.getClass(),
+                                    "CaseDeleteAction.msgDlg.fileInUse.msg"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "CaseDeleteAction.msgDlg.fileInUse.title"),
+                            JOptionPane.ERROR_MESSAGE); // throw an error
+                } else {
                     CasePropertiesAction.closeCasePropertiesWindow(); // because the "Delete Case" button is in the "CaseProperties" window, we have to close that window when we delete the case.
                     JOptionPane.showMessageDialog(caller, NbBundle.getMessage(this.getClass(),
-                                                                              "CaseDeleteAction.msgDlg.caseDelete.msg",
-                                                                              caseName));
+                            "CaseDeleteAction.msgDlg.caseDelete.msg",
+                            caseName));
                 }
             }
         }
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)" instead of this method.
+     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
+     * instead of this method.
      */
     @Override
     public void performAction() {
@@ -135,6 +137,7 @@ import org.openide.util.actions.CallableSystemAction;
 
     /**
      * Gets the name of this action. This may be presented as an item in a menu.
+     *
      * @return actionName
      */
     @Override
@@ -144,6 +147,7 @@ import org.openide.util.actions.CallableSystemAction;
 
     /**
      * Gets the HelpCtx associated with implementing object
+     *
      * @return HelpCtx or HelpCtx.DEFAULT_HELP
      */
     @Override

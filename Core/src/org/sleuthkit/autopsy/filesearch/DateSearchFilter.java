@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
+ *
  * @author pmartel
  */
 class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
@@ -123,7 +124,6 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
         final boolean createdChecked = panel.getAccessedCheckBox().isSelected();
-
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 

@@ -22,10 +22,12 @@ import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 
-/** A node in the nav tree. Manages inserts and resorts. Has parents
- * and children. Does not have graphical properties these are configured in
+/**
+ * A node in the nav tree. Manages inserts and resorts. Has parents and
+ * children. Does not have graphical properties these are configured in
  * {@link EventTreeCell}. Each GroupTreeItem has a NavTreeNode which has a type,
- * description , and count */
+ * description , and count
+ */
 abstract class NavTreeItem extends TreeItem<NavTreeNode> {
 
     abstract void insert(AggregateEvent g);

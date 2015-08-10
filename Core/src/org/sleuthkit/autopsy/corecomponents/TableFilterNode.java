@@ -23,8 +23,9 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 
 /**
- * This class is used to filter the nodes that we want to show on the "TreeTableView".
- * So basically we just want to show one layer of nodes from it's parent.
+ * This class is used to filter the nodes that we want to show on the
+ * "TreeTableView". So basically we just want to show one layer of nodes from
+ * it's parent.
  *
  * @author jantonius
  */
@@ -32,7 +33,9 @@ public class TableFilterNode extends FilterNode {
 
     private boolean createChild;
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     public TableFilterNode(Node arg, boolean crChild) {
         super(arg, TableFilterChildren.createInstance(arg, crChild));
         this.createChild = crChild;
@@ -42,7 +45,7 @@ public class TableFilterNode extends FilterNode {
      * Override the display name / header for the first (tree) column on the
      * "TreeTableView".
      *
-     * @return disName  the display name for the first column
+     * @return disName the display name for the first column
      */
     @Override
     public String getDisplayName() {

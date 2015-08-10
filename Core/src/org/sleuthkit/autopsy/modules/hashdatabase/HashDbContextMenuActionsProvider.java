@@ -29,13 +29,14 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class HashDbContextMenuActionsProvider implements ContextMenuActionsProvider {
+
     @Override
     public List<Action> getActions() {
         ArrayList<Action> actions = new ArrayList<>();
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
         if (!selectedFiles.isEmpty()) {
             actions.add(AddContentToHashDbAction.getInstance());
-        } 
+        }
         return actions;
     }
 }

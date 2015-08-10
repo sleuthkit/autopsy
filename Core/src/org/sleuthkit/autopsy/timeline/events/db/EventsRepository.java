@@ -143,13 +143,17 @@ public class EventsRepository {
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
     }
 
-    /** @return min time (in seconds from unix epoch) */
+    /**
+     * @return min time (in seconds from unix epoch)
+     */
     public Long getMaxTime() {
         return maxCache.getUnchecked("max"); // NON-NLS
 //        return eventDB.getMaxTime();
     }
 
-    /** @return max tie (in seconds from unix epoch) */
+    /**
+     * @return max tie (in seconds from unix epoch)
+     */
     public Long getMinTime() {
         return minCache.getUnchecked("min"); // NON-NLS
 //        return eventDB.getMinTime();

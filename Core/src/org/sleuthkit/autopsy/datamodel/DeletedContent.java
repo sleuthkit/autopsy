@@ -60,11 +60,11 @@ public class DeletedContent implements AutopsyVisitableItem {
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
         FS_DELETED_FILTER(0,
-        "FS_DELETED_FILTER", //NON-NLS
-        NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
+                "FS_DELETED_FILTER", //NON-NLS
+                NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
         ALL_DELETED_FILTER(1,
-        "ALL_DELETED_FILTER", //NON-NLS
-        NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
+                "ALL_DELETED_FILTER", //NON-NLS
+                NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
         private int id;
         private String name;
         private String displayName;
@@ -112,7 +112,6 @@ public class DeletedContent implements AutopsyVisitableItem {
         private static final String NAME = NbBundle.getMessage(DeletedContent.class,
                 "DeletedContent.deletedContentsNode.name");
         private SleuthkitCase skCase;
-        
 
         DeletedContentsNode(SleuthkitCase skCase) {
             super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
@@ -154,13 +153,13 @@ public class DeletedContent implements AutopsyVisitableItem {
         private SleuthkitCase skCase;
         private Observable notifier;
         // true if we have already told user that not all files will be shown
-        private static boolean maxFilesDialogShown = false; 
+        private static boolean maxFilesDialogShown = false;
 
         public DeletedContentsChildren(SleuthkitCase skCase) {
             this.skCase = skCase;
             this.notifier = new DeletedContentsChildrenObservable();
         }
-        
+
         /**
          * Listens for case and ingest invest. Updates observers when events are
          * fired. Other nodes are listening to this for changes.
@@ -210,7 +209,6 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
         }
 
-
         @Override
         protected boolean createKeys(List<DeletedContent.DeletedContentFilter> list) {
             list.addAll(Arrays.asList(DeletedContent.DeletedContentFilter.values()));
@@ -234,31 +232,32 @@ public class DeletedContent implements AutopsyVisitableItem {
                 this.filter = filter;
                 init();
             }
-            
+
             DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter, Observable o) {
                 super(Children.create(new DeletedContentChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
                 init();
                 o.addObserver(new DeletedContentNodeObserver());
             }
-            
+
             private void init() {
                 super.setName(filter.getName());
-                
+
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
                 updateDisplayName();
             }
-            
+
             // update the display name when new events are fired
             private class DeletedContentNodeObserver implements Observer {
+
                 @Override
                 public void update(Observable o, Object arg) {
                     updateDisplayName();
                 }
             }
-            
+
             private void updateDisplayName() {
                 //get count of children without preloading all children nodes
                 final long count = DeletedContentChildren.calculateItems(skCase, filter);
@@ -308,16 +307,19 @@ public class DeletedContent implements AutopsyVisitableItem {
                 this.filter = filter;
                 this.notifier = o;
             }
-            
+
             private final Observer observer = new DeletedContentChildrenObserver();
+
             // Cause refresh of children if there are changes
+
             private class DeletedContentChildrenObserver implements Observer {
+
                 @Override
                 public void update(Observable o, Object arg) {
                     refresh(true);
                 }
             }
-                
+
             @Override
             protected void addNotify() {
                 if (notifier != null) {
@@ -331,14 +333,13 @@ public class DeletedContent implements AutopsyVisitableItem {
                     notifier.deleteObserver(observer);
                 }
             }
-            
 
             @Override
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
                     queryList.remove(queryList.size() - 1);
-                    
+
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;

@@ -27,16 +27,18 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * AbstractFile input string stream reader/converter - given AbstractFile, 
+ * AbstractFile input string stream reader/converter - given AbstractFile,
  * extract strings from it and return encoded bytes via read()
- * 
- * Note: the utility supports extraction of only LATIN script and UTF8, UTF16LE, UTF16BE encodings
- * and uses a brute force encoding detection - it's fast but could apply multiple encodings on the same string.
- * 
- * For other script/languages support and better encoding detection use AbstractFileStringIntStream streaming class,
- * which wraps around StringExtract extractor.
+ *
+ * Note: the utility supports extraction of only LATIN script and UTF8, UTF16LE,
+ * UTF16BE encodings and uses a brute force encoding detection - it's fast but
+ * could apply multiple encodings on the same string.
+ *
+ * For other script/languages support and better encoding detection use
+ * AbstractFileStringIntStream streaming class, which wraps around StringExtract
+ * extractor.
  */
- class AbstractFileStringStream extends InputStream {
+class AbstractFileStringStream extends InputStream {
 
     //args
     private AbstractFile content;
@@ -63,12 +65,13 @@ import org.sleuthkit.datamodel.TskException;
     /**
      * Construct new string stream from FsContent
      *
-     * @param content to extract strings from
-     * @param outputCharset target encoding to index as
+     * @param content                to extract strings from
+     * @param outputCharset          target encoding to index as
      * @param preserveOnBuffBoundary whether to preserve or split string on a
-     * buffer boundary. If false, will pack into read buffer up to max.
-     * possible, potentially splitting a string. If false, the string will be
-     * preserved for next read.
+     *                               buffer boundary. If false, will pack into
+     *                               read buffer up to max. possible,
+     *                               potentially splitting a string. If false,
+     *                               the string will be preserved for next read.
      */
     public AbstractFileStringStream(AbstractFile content, Charset outputCharset, boolean preserveOnBuffBoundary) {
         this.content = content;
@@ -81,8 +84,9 @@ import org.sleuthkit.datamodel.TskException;
      * Construct new string stream from FsContent Do not attempt to fill entire
      * read buffer if that would break a string
      *
-     * @param content to extract strings from
-     * @param outCharset target charset to encode into bytes and index as, e.g. UTF-8
+     * @param content    to extract strings from
+     * @param outCharset target charset to encode into bytes and index as, e.g.
+     *                   UTF-8
      */
     public AbstractFileStringStream(AbstractFile content, Charset outCharset) {
         this(content, outCharset, false);
@@ -107,7 +111,6 @@ import org.sleuthkit.datamodel.TskException;
             return -1;
         }
 
-
         if (stringAtTempBoundary) {
             //append entire temp string residual from previous read()
             //because qualified string was broken down into 2 parts
@@ -119,7 +122,6 @@ import org.sleuthkit.datamodel.TskException;
 
         boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         int newCurLen = curStringLen + tempStringLen;
-
 
         while (newCurLen < len) {
             //need to extract more strings

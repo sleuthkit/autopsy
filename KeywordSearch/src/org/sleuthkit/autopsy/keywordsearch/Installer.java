@@ -76,7 +76,6 @@ class Installer extends ModuleInstall {
                     }
 
                     //in this case give up
-
                 } else {
                     logger.log(Level.INFO, "Old Solr server shutdown successfully."); //NON-NLS
                     //make sure there really isn't a hang Solr process, in case isRunning() reported false
@@ -87,7 +86,6 @@ class Installer extends ModuleInstall {
             logger.log(Level.SEVERE, "Starting server failed, will try to kill. ", e); //NON-NLS
             server.killSolr();
         }
-
 
         try {
             //Ensure no other process is still bound to that port, even if we think solr is not running
@@ -120,7 +118,6 @@ class Installer extends ModuleInstall {
             logger.log(Level.SEVERE, "Starting server failed. ", e); //NON-NLS
         }
 
-
         //retry if needed
         //TODO this loop may be now redundant
         while (retries-- > 0) {
@@ -151,7 +148,6 @@ class Installer extends ModuleInstall {
 
         } //end of retry while loop
 
-
         //last check if still not running to report errors
         try {
             Thread.sleep(1000);
@@ -178,7 +174,6 @@ class Installer extends ModuleInstall {
             logger.log(Level.SEVERE, "Starting server failed. ", ex); //NON-NLS
             reportInitError();
         }
-
 
     }
 

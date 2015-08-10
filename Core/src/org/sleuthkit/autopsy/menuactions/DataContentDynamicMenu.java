@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import java.util.List;
@@ -35,7 +34,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
  *
  * @author jantonius
  */
- class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
+class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
 
     @Override
     public JComponent[] getMenuPresenters() {
@@ -45,7 +44,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
         int totalItems = newWindowLists.size() > 0 ? 2 : 1;
         JComponent[] comps = new JComponent[totalItems];
         int counter = 0;
-        
+
         TopComponent contentWin = DataContentTopComponent.findInstance();
         JMenuItem defaultItem = new JMenuItem(contentWin.getName()); // set the main name
 

@@ -70,21 +70,16 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        if (context.dataSourceIngestIsCancelled()) {
-            return IngestModule.ProcessResult.OK;
-        }
 
         // There are two tasks to do.
         progressBar.switchToDeterminate(2);
 
-        Case autopsyCase = Case.getCurrentCase();
-        SleuthkitCase sleuthkitCase = autopsyCase.getSleuthkitCase();
-        Services services = new Services(sleuthkitCase);
-        FileManager fileManager = services.getFileManager();
         try {
             // Get count of files with .doc extension.
-            long fileCount = 0;
+            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%.doc");
+
+            long fileCount = 0;
             for (AbstractFile docFile : docFiles) {
                 if (!skipKnownFiles || docFile.getKnown() != TskData.FileKnown.KNOWN) {
                     ++fileCount;
@@ -92,6 +87,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             }
             progressBar.progress(1);
 
+            // check if we were cancelled
             if (context.dataSourceIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }

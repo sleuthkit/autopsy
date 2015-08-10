@@ -88,6 +88,7 @@ import org.sqlite.SQLiteJDBCLoader;
 public class EventDB {
 
     /**
+    
      * enum to represent keys stored in db_info table
      */
     private enum DBInfoKey {

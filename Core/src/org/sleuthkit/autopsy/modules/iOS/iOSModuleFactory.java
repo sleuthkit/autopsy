@@ -26,9 +26,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
-
 //@ServiceProvider(service = IngestModuleFactory.class) //  
 public class iOSModuleFactory extends IngestModuleFactoryAdapter {
+
     static String getModuleName() {
         return NbBundle.getMessage(iOSModuleFactory.class, "iOSModuleFactory.moduleName");
     }

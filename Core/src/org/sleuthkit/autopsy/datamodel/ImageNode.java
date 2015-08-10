@@ -39,6 +39,7 @@ public class ImageNode extends AbstractContentNode<Image> {
      * are determined the same way.
      *
      * @param i Image to get the name of
+     *
      * @return short name for the Image
      */
     static String nameForImage(Image i) {
@@ -61,6 +62,7 @@ public class ImageNode extends AbstractContentNode<Image> {
      * Right click action for this node
      *
      * @param context
+     *
      * @return
      */
     @Override

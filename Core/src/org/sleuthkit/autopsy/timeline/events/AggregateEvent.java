@@ -83,6 +83,9 @@ public class AggregateEvent {
         this.lod = lod;
     }
 
+    /**
+     * @return the actual interval from the first event to the last event
+     */
     public Interval getSpan() {
         return span;
     }

@@ -83,6 +83,7 @@ public final class FilteredEventsModel {
 
     private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
 
+ 
     /**
      * time range that spans the filtered events
      */

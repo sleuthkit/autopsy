@@ -22,38 +22,40 @@ package org.sleuthkit.autopsy.coreutils;
  *
  * @author dick
  */
- class LnkEnums {
-    
-    private static final byte[] CDRIVES = new byte[] { (byte)0xe0, 0x4f, (byte)0xd0, 0x20,
-        (byte)0xea, 0x3a, 0x69, 0x10, (byte)0xa2, (byte)0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
-    private static final byte[] CMYDOCS = new byte[] { (byte)0xba, (byte)0x8a, 0x0d,
-        0x45, 0x25, (byte)0xad, (byte)0xd0, 0x11, (byte)0x98, (byte)0xa8, 0x08, 0x00, 0x36, 0x1b, 0x11, 0x03 };
-    private static final byte[] IEFRAME = new byte[] { (byte)0x80, 0x53, 0x1c, (byte)0x87, (byte)0xa0,
-        0x42, 0x69, 0x10, (byte)0xa2, (byte)0xea, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte)0x9d };
+class LnkEnums {
+
+    private static final byte[] CDRIVES = new byte[]{(byte) 0xe0, 0x4f, (byte) 0xd0, 0x20,
+        (byte) 0xea, 0x3a, 0x69, 0x10, (byte) 0xa2, (byte) 0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte) 0x9d};
+    private static final byte[] CMYDOCS = new byte[]{(byte) 0xba, (byte) 0x8a, 0x0d,
+        0x45, 0x25, (byte) 0xad, (byte) 0xd0, 0x11, (byte) 0x98, (byte) 0xa8, 0x08, 0x00, 0x36, 0x1b, 0x11, 0x03};
+    private static final byte[] IEFRAME = new byte[]{(byte) 0x80, 0x53, 0x1c, (byte) 0x87, (byte) 0xa0,
+        0x42, 0x69, 0x10, (byte) 0xa2, (byte) 0xea, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte) 0x9d};
 
     public enum CommonCLSIDS {
+
         CDrivesFolder(CDRIVES),
         CMyDocsFolder(CMYDOCS),
         IEFrameDLL(IEFRAME),
         Unknown(new byte[16]);
-        
+
         private byte[] flag;
-        
+
         private CommonCLSIDS(byte[] flag) {
             this.flag = flag;
         }
-        
+
         static CommonCLSIDS valueOf(byte[] type) {
-            for(CommonCLSIDS value : CommonCLSIDS.values()) {
-                if(java.util.Arrays.equals(value.flag, type)) {
+            for (CommonCLSIDS value : CommonCLSIDS.values()) {
+                if (java.util.Arrays.equals(value.flag, type)) {
                     return value;
                 }
             }
             return Unknown;
         }
     }
-    
+
     public enum LinkFlags {
+
         HasLinkTargetIDList(0x00000001),
         HasLinkInfo(0x00000002),
         HasName(0x00000004),
@@ -81,19 +83,20 @@ package org.sleuthkit.autopsy.coreutils;
         UnaliasOnSave(0x01000000),
         PreferEnvironmentPath(0x02000000),
         KeepLocalIDListForUNCTarget(0x04000000);
-        
+
         private int flag;
-        
+
         private LinkFlags(int flag) {
             this.flag = flag;
         }
-        
+
         public int getFlag() {
             return flag;
         }
     }
-    
+
     public enum DriveType {
+
         DRIVE_UNKNOWN(0x00000000),
         DRIVE_NO_ROOT_DIR(0x00000001),
         DRIVE_REMOVABLE(0x00000002),
@@ -101,28 +104,29 @@ package org.sleuthkit.autopsy.coreutils;
         DRIVE_REMOTE(0x00000004),
         DRIVE_CDROM(0x00000005),
         DRIVE_RAMDISK(0x00000006);
-        
+
         private int flag;
-        
+
         private DriveType(int flag) {
             this.flag = flag;
         }
-        
+
         public int getFlag() {
             return flag;
         }
-        
+
         static DriveType valueOf(int type) {
-            for(DriveType value : DriveType.values()) {
-                if(value.flag == type) {
+            for (DriveType value : DriveType.values()) {
+                if (value.flag == type) {
                     return value;
                 }
             }
             return DRIVE_UNKNOWN;
         }
     }
-    
+
     public enum FileAttributesFlags {
+
         READONLY(0x00000001),
         HIDDEN(0x00000002),
         SYSTEM(0x00000004),
@@ -138,50 +142,52 @@ package org.sleuthkit.autopsy.coreutils;
         OFFLINE(0x00001000),
         NOT_CONTENT_INDEXED(0x00002000),
         ENCRYPTED(0x00004000);
-        
+
         private int flag;
-        
+
         private FileAttributesFlags(int flag) {
             this.flag = flag;
         }
-        
+
         public int getFlag() {
             return flag;
         }
     }
-    
+
     public enum LinkInfoFlags {
+
         VolumeIDAndLocalBasePath(0x00000001),
         CommonNetworkRelativeLinkAndPathSuffix(0x00000002);
-        
+
         private int flag;
-        
+
         private LinkInfoFlags(int flag) {
             this.flag = flag;
         }
-        
+
         public int getFlag() {
             return flag;
         }
     }
-    
-    
+
     public enum CommonNetworkRelativeLinkFlags {
+
         ValidDevice(0x00000001),
         ValidNetType(0x00000002);
-        
+
         private int flag;
-        
+
         private CommonNetworkRelativeLinkFlags(int flag) {
             this.flag = flag;
         }
-        
+
         public int getFlag() {
             return flag;
         }
     }
-    
+
     public enum NetworkProviderType {
+
         WNNC_NET_AVID(0x001A0000),
         WNNC_NET_DOCUSPACE(0x001B0000),
         WNNC_NET_MANGOSOFT(0x001C0000),
@@ -224,22 +230,22 @@ package org.sleuthkit.autopsy.coreutils;
         WNNC_NET_MS_NFS(0x00420000),
         WNNC_NET_GOOGLE(0x00430000),
         WNNC_NET_UNKNOWN(0x00000000);
-        
+
         private int flag;
-        
+
         private NetworkProviderType(int flag) {
             this.flag = flag;
         }
-        
+
         static NetworkProviderType valueOf(int type) {
-            for(NetworkProviderType value : NetworkProviderType.values()) {
-                if(value.flag == type) {
+            for (NetworkProviderType value : NetworkProviderType.values()) {
+                if (value.flag == type) {
                     return value;
                 }
             }
             return WNNC_NET_UNKNOWN;
         }
-        
+
         public int getFlag() {
             return flag;
         }

@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
  * definitions.
  */
 public class FilesSetPanel extends javax.swing.JPanel {
-    
+
     /**
      * Construct a files set panel in create mode.
      */
@@ -166,7 +166,6 @@ public class FilesSetPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel descPanel;

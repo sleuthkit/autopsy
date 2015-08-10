@@ -80,7 +80,9 @@ public class TimeLineEvent {
         return fileID;
     }
 
-    /** @return the time in seconds from unix epoch */
+    /**
+     * @return the time in seconds from unix epoch
+     */
     public Long getTime() {
         return time;
     }

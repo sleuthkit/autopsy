@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.awt.Dimension;
@@ -37,21 +36,21 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFile
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 
 /**
- * Instances of this class allow a user to create a new hash database and
- * add it to the set of hash databases used to classify files as unknown, known 
- * or known bad. 
+ * Instances of this class allow a user to create a new hash database and add it
+ * to the set of hash databases used to classify files as unknown, known or
+ * known bad.
  */
-final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {    
-    
+final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
+
     private static final String DEFAULT_FILE_NAME = NbBundle
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
-    private JFileChooser fileChooser = null;            
+    private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
-    
+
     /**
      * Displays a dialog that allows a user to create a new hash database and
-     * add it to the set of hash databases used to classify files as unknown, known 
-     * or known bad. 
+     * add it to the set of hash databases used to classify files as unknown,
+     * known or known bad.
      */
     HashDbCreateDatabaseDialog() {
         super(new JFrame(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
@@ -59,57 +58,58 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         initComponents();
         display();
     }
-    
+
     /**
      * Get the hash database created by the user, if any.
+     *
      * @return A HashDb object or null.
      */
     HashDb getHashDatabase() {
         return newHashDb;
     }
-    
+
     private void initFileChooser() {
         fileChooser = new JFileChooser() {
             @Override
             public void approveSelection() {
-                File selectedFile = getSelectedFile();                
+                File selectedFile = getSelectedFile();
                 if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase(HashDbManager.getHashDatabaseFileExtension())) {
                     if (JOptionPane.showConfirmDialog(this,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "HashDbCreateDatabaseDialog.hashDbMustHaveFileExtensionMsg",
-                                                                          HashDbManager.getHashDatabaseFileExtension()),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "HashDbCreateDatabaseDialog.fileNameErr"),
-                                                      JOptionPane.OK_CANCEL_OPTION) ==  JOptionPane.CANCEL_OPTION) {
-                        cancelSelection();                       
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.hashDbMustHaveFileExtensionMsg",
+                                    HashDbManager.getHashDatabaseFileExtension()),
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.fileNameErr"),
+                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();
                     }
-                    return;                    
-                }                        
+                    return;
+                }
                 if (selectedFile.exists()) {
                     if (JOptionPane.showConfirmDialog(this,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "HashDbCreateDatabaseDialog.fileNameAlreadyExistsMsg"),
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                          "HashDbCreateDatabaseDialog.fileExistsErr"),
-                                                      JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
-                        cancelSelection();                       
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.fileNameAlreadyExistsMsg"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbCreateDatabaseDialog.fileExistsErr"),
+                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                        cancelSelection();
                     }
-                    return;                    
+                    return;
                 }
                 super.approveSelection();
             }
-        };                
+        };
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setDragEnabled(false);
-        fileChooser.setMultiSelectionEnabled(false);        
+        fileChooser.setMultiSelectionEnabled(false);
     }
-    
+
     private void display() {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
-        setVisible(true);                        
+        setVisible(true);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -276,89 +276,82 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             StringBuilder path = new StringBuilder();
             if (!hashSetNameTextField.getText().isEmpty()) {
                 path.append(hashSetNameTextField.getText());
-            }
-            else {
+            } else {
                 path.append(DEFAULT_FILE_NAME);
             }
             path.append(".").append(HashDbManager.getHashDatabaseFileExtension());
-            fileChooser.setSelectedFile(new File(path.toString()));                                
+            fileChooser.setSelectedFile(new File(path.toString()));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File databaseFile = fileChooser.getSelectedFile();                
+                File databaseFile = fileChooser.getSelectedFile();
                 databasePathTextField.setText(databaseFile.getCanonicalPath());
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, "Couldn't get selected file path.", ex); //NON-NLS
-        }        
+        }
     }//GEN-LAST:event_saveAsButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
-                
+
         if (hashSetNameTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.createHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
-                        
+
         if (databasePathTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.mustEnterHashDbPathMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.mustEnterHashDbPathMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.createHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
-                        
+
         KnownFilesType type;
         if (knownRadioButton.isSelected()) {
             type = KnownFilesType.KNOWN;
-        } 
-        else {
+        } else {
             type = KnownFilesType.KNOWN_BAD;
         }
-                        
+
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
-        try
-        {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);       
-        } 
-        catch (IOException ex) {
+        try {
+            newHashDb = HashDbManager.getInstance().addNewHashDatabaseInternal(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+        } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.cannotCreateFileAtLocMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
-            return; 
-        }
-        catch (HashDbManagerException ex) {
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.cannotCreateFileAtLocMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.createHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (HashDbManagerException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
-                                          ex.getMessage(),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
-            return;            
-        }
-        catch (TskCoreException ex) {
+                    ex.getMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.createHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (TskCoreException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "HashDbCreateDatabaseDialog.createHashDbErr"),
-                                          JOptionPane.ERROR_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.failedToCreateHashDbMsg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.createHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
             return;
-        }             
+        }
 
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed

@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * 
- * 
+ *
+ *
  */
 interface TextLanguageIdentifier {
 
@@ -31,8 +31,9 @@ interface TextLanguageIdentifier {
      * black board for the given {@code AbstractFile} as a TSK_TEXT_LANGUAGE
      * attribute on a TSK_GEN_INFO artifact.
      *
-     * @param extracted the String whose language is to be identified
+     * @param extracted  the String whose language is to be identified
      * @param sourceFile the AbstractFile the string is extracted from.
+     *
      * @return
      */
     public void addLanguageToBlackBoard(String extracted, AbstractFile sourceFile);

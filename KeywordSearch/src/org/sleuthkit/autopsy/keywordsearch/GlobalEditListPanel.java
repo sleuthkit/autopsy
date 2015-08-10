@@ -93,7 +93,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         lsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if (lsm.isSelectionEmpty() || currentKeywordList.isLocked() || IngestManager.getInstance().isIngestRunning() ) {
+                if (lsm.isSelectionEmpty() || currentKeywordList.isLocked() || IngestManager.getInstance().isIngestRunning()) {
                     deleteWordButton.setEnabled(false);
                 } else {
                     deleteWordButton.setEnabled(true);
@@ -138,7 +138,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                         public void run() {
                             setButtonStates();
                         }
-                    });            
+                    });
                 }
             }
         });
@@ -147,14 +147,14 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     void setButtonStates() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         boolean isListSelected = currentKeywordList != null;
-        
+
         // items that only need a selected list
         boolean canEditList = ((isListSelected == true) && (isIngestRunning == false));
         ingestMessagesCheckbox.setEnabled(canEditList);
         ingestMessagesCheckbox.setSelected(currentKeywordList != null && currentKeywordList.getIngestMessages());
         listOptionsLabel.setEnabled(canEditList);
         listOptionsSeparator.setEnabled(canEditList);
-        
+
         // items that need an unlocked list w/out ingest running
         boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isLocked()));
         boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
@@ -164,8 +164,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         keywordOptionsLabel.setEnabled(canAddWord);
         keywordOptionsSeparator.setEnabled(canAddWord);
         deleteListButton.setEnabled(canAddWord);
-        
-        
+
         // items that need a non-empty list
         if ((currentKeywordList == null) || (currentKeywordList.getKeywords().isEmpty())) {
             saveListButton.setEnabled(false);
@@ -446,7 +445,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
         final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
-                                                        "KeywordSearchEditListPanel.exportButtonAction.featureName.text");
+                "KeywordSearchEditListPanel.exportButtonAction.featureName.text");
 
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml"; //NON-NLS
@@ -474,7 +473,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             if (selFile.exists()) {
                 shouldWrite = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME,
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileExistPrompt",
-                        selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                                selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
             if (!shouldWrite) {
                 return;

@@ -21,17 +21,18 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Interface that must be implemented by all data source ingest modules.
- * See description of IngestModule for more details on interface behavior.
+ * Interface that must be implemented by all data source ingest modules. See
+ * description of IngestModule for more details on interface behavior.
  */
 public interface DataSourceIngestModule extends IngestModule {
 
     /**
-     * Processes a data source. Called once between calls to startUp()
-     * and shutDown().
+     * Processes a data source. Called once between calls to startUp() and
+     * shutDown().
      *
-     * @param dataSource The data source to process.
+     * @param dataSource  The data source to process.
      * @param progressBar A progress bar to be used to report progress.
+     *
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar);

@@ -41,7 +41,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
-/** * Explorer Node for {@link TimeLineEvent}s. */
+/**
+ * * Explorer Node for {@link TimeLineEvent}s.
+ */
 class EventNode extends DisplayableItemNode {
 
     private final TimeLineEvent e;

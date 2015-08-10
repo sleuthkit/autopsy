@@ -104,7 +104,9 @@ public class FileSize implements AutopsyVisitableItem {
         return this.skCase;
     }
 
-    /* Root node. Children are nodes for specific sizes. */
+    /*
+     * Root node. Children are nodes for specific sizes.
+     */
     public static class FileSizeRootNode extends DisplayableItemNode {
 
         private static final String NAME = NbBundle.getMessage(FileSize.class, "FileSize.fileSizeRootNode.name");
@@ -143,7 +145,9 @@ public class FileSize implements AutopsyVisitableItem {
         }
     }
 
-    /* Makes the children for specific sizes */
+    /*
+     * Makes the children for specific sizes
+     */
     public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
@@ -153,7 +157,7 @@ public class FileSize implements AutopsyVisitableItem {
             this.skCase = skCase;
             notifier = new FileSizeRootChildrenObservable();
         }
-        
+
         /**
          * Listens for case and ingest invest. Updates observers when events are
          * fired. Size-based nodes are listening to this for changes.
@@ -202,7 +206,6 @@ public class FileSize implements AutopsyVisitableItem {
             }
         }
 
-
         @Override
         protected boolean createKeys(List<FileSizeFilter> list) {
             list.addAll(Arrays.asList(FileSizeFilter.values()));
@@ -214,10 +217,13 @@ public class FileSize implements AutopsyVisitableItem {
             return new FileSizeNode(skCase, key, notifier);
         }
 
-        /* Node for a specific size range. Children are files. */
+        /*
+         * Node for a specific size range. Children are files.
+         */
         public class FileSizeNode extends DisplayableItemNode {
+
             private FileSizeFilter filter;
-            
+
             // use version with observer instead so that it updates
             @Deprecated
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter) {
@@ -225,30 +231,31 @@ public class FileSize implements AutopsyVisitableItem {
                 this.filter = filter;
                 init();
             }
-            
+
             /**
-             * 
+             *
              * @param skCase
              * @param filter
-             * @param o Observable that provides updates when events are fired 
+             * @param o      Observable that provides updates when events are
+             *               fired
              */
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o) {
-                super(Children.create(new FileSizeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));    
+                super(Children.create(new FileSizeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
                 init();
                 o.addObserver(new FileSizeNodeObserver());
             }
-            
+
             private void init() {
                 super.setName(filter.getName());
-                
+
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
 
                 updateDisplayName();
             }
-            
+
             // update the display name when new events are fired
             private class FileSizeNodeObserver implements Observer {
 
@@ -257,7 +264,7 @@ public class FileSize implements AutopsyVisitableItem {
                     updateDisplayName();
                 }
             }
-            
+
             private void updateDisplayName() {
                 final long count = FileSizeChildren.calculateItems(skCase, filter);
                 super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
@@ -291,7 +298,9 @@ public class FileSize implements AutopsyVisitableItem {
             }
         }
 
-        /* Makes children, which are nodes for files of a given range */
+        /*
+         * Makes children, which are nodes for files of a given range
+         */
         static class FileSizeChildren extends ChildFactory.Detachable<AbstractFile> {
 
             private final SleuthkitCase skCase;
@@ -300,17 +309,18 @@ public class FileSize implements AutopsyVisitableItem {
             private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
             /**
-             * 
+             *
              * @param filter
              * @param skCase
-             * @param o Observable that provides updates when new files are added to case
+             * @param o      Observable that provides updates when new files are
+             *               added to case
              */
             FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o) {
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
             }
-            
+
             @Override
             protected void addNotify() {
                 if (notifier != null) {
@@ -324,9 +334,9 @@ public class FileSize implements AutopsyVisitableItem {
                     notifier.deleteObserver(observer);
                 }
             }
-            
+
             private final Observer observer = new FileSizeChildrenObserver();
-            
+
             // Cause refresh of children if there are changes
             private class FileSizeChildrenObserver implements Observer {
 
@@ -447,8 +457,8 @@ public class FileSize implements AutopsyVisitableItem {
                     protected AbstractNode defaultVisit(Content di) {
                         throw new UnsupportedOperationException(
                                 NbBundle.getMessage(this.getClass(),
-                                "FileSize.exception.notSupported.msg",
-                                di.toString()));
+                                        "FileSize.exception.notSupported.msg",
+                                        di.toString()));
                     }
                 });
             }

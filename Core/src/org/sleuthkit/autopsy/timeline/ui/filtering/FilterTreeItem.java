@@ -8,7 +8,9 @@ import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.filters.CompoundFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 
-/** A TreeItem for a filter. */
+/**
+ * A TreeItem for a filter.
+ */
 public class FilterTreeItem extends TreeItem<Filter> {
 
     /**

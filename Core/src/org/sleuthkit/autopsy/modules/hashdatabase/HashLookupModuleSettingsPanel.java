@@ -117,7 +117,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             if (model.isEnabled() && model.isIndexed()) {
                 enabledHashSetNames.add(model.getName());
             } else {
-                disabledHashSetNames.add(model.getName());                
+                disabledHashSetNames.add(model.getName());
             }
         }
     }

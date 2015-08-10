@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author dfickling
  */
- class RecentFilesFilterChildren extends ChildFactory<Content> {
+class RecentFilesFilterChildren extends ChildFactory<Content> {
 
     private SleuthkitCase skCase;
     private RecentFilesFilter filter;
@@ -68,7 +68,7 @@ import org.sleuthkit.datamodel.TskData;
     private String createQuery() {
         Calendar prevDayQuery = (Calendar) prevDay.clone();
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")" //NON-NLS
-        + " AND (known IS NULL OR known != 1) AND ("; //NON-NLS
+                + " AND (known IS NULL OR known != 1) AND ("; //NON-NLS
         long lowerLimit = prevDayQuery.getTimeInMillis() / 1000;
         prevDayQuery.add(Calendar.DATE, 1);
         prevDayQuery.add(Calendar.MILLISECOND, -1);
@@ -86,19 +86,20 @@ import org.sleuthkit.datamodel.TskData;
         try {
             List<AbstractFile> found = skCase.findAllFilesWhere(createQuery());
             for (AbstractFile c : found) {
-                    ret.add(c);
+                ret.add(c);
             }
 
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get search results", ex); //NON-NLS
-        } 
+        }
         return ret;
 
     }
-    
-     /**
+
+    /**
      * Get children count without actually loading all nodes
-     * @return 
+     *
+     * @return
      */
     long calculateItems() {
         try {
@@ -108,8 +109,6 @@ import org.sleuthkit.datamodel.TskData;
             return 0;
         }
     }
-    
- 
 
     @Override
     protected Node createNodeForKey(Content key) {
@@ -118,30 +117,28 @@ import org.sleuthkit.datamodel.TskData;
             public FileNode visit(File f) {
                 return new FileNode(f, false);
             }
-            
+
             @Override
             public DirectoryNode visit(Directory d) {
                 return new DirectoryNode(d);
             }
-            
+
             @Override
             public LocalFileNode visit(DerivedFile f) {
                 return new LocalFileNode(f);
             }
-            
+
             @Override
             public LocalFileNode visit(LocalFile f) {
                 return new LocalFileNode(f);
             }
-            
-          
 
             @Override
             protected AbstractNode defaultVisit(Content di) {
                 throw new UnsupportedOperationException(
                         NbBundle.getMessage(this.getClass(),
-                                            "RecentFilesFilterChildren.exception.defaultVisit.msg",
-                                            di.toString()));
+                                "RecentFilesFilterChildren.exception.defaultVisit.msg",
+                                di.toString()));
             }
         });
     }

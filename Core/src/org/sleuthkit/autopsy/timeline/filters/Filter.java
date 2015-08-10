@@ -22,15 +22,16 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-/** Interface for Filters */
+/**
+ * Interface for Filters
+ */
 public interface Filter {
-
-    
 
     /**
      * @param filters a set of filters to intersect
      *
-     * @return a filter that is the intersection of the given filters */
+     * @return a filter that is the intersection of the given filters
+     */
     public static IntersectionFilter<Filter> intersect(ObservableList<Filter> filters) {
         return new IntersectionFilter<>(filters);
     }
@@ -69,9 +70,9 @@ public interface Filter {
 
     /*
      * TODO: disabled state only affects the state of the checkboxes in the ui
-     * and not the actual filters and shouldn't be implemented here, but it
-     * was too hard to figure out how it should be implemented without intruding
-     * on the ui-ignorant filters
+     * and not the actual filters and shouldn't be implemented here, but it was
+     * too hard to figure out how it should be implemented without intruding on
+     * the ui-ignorant filters
      */
     void setDisabled(Boolean act);
 

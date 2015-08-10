@@ -9,7 +9,7 @@ public class VideoFrame {
 
     private Image frame;
     private long timeMillis;
-    
+
     public VideoFrame(Image frame, long timeMillis) {
         this.frame = frame;
         this.timeMillis = timeMillis;

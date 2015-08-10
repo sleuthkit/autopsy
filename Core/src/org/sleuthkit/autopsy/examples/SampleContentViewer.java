@@ -1,32 +1,32 @@
 /*
-* Sample module in the public domain.  Feel free to use this as a template
-* for your modules.
-* 
-*  Contact: Brian Carrier [carrier <at> sleuthkit [dot] org]
-*
-*  This is free and unencumbered software released into the public domain.
-*  
-*  Anyone is free to copy, modify, publish, use, compile, sell, or
-*  distribute this software, either in source code form or as a compiled
-*  binary, for any purpose, commercial or non-commercial, and by any
-*  means.
-*  
-*  In jurisdictions that recognize copyright laws, the author or authors
-*  of this software dedicate any and all copyright interest in the
-*  software to the public domain. We make this dedication for the benefit
-*  of the public at large and to the detriment of our heirs and
-*  successors. We intend this dedication to be an overt act of
-*  relinquishment in perpetuity of all present and future rights to this
-*  software under copyright law.
-*  
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-*  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-*  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-*  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-*  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-*  OTHER DEALINGS IN THE SOFTWARE. 
-*/
+ * Sample module in the public domain.  Feel free to use this as a template
+ * for your modules.
+ * 
+ *  Contact: Brian Carrier [carrier <at> sleuthkit [dot] org]
+ *
+ *  This is free and unencumbered software released into the public domain.
+ *  
+ *  Anyone is free to copy, modify, publish, use, compile, sell, or
+ *  distribute this software, either in source code form or as a compiled
+ *  binary, for any purpose, commercial or non-commercial, and by any
+ *  means.
+ *  
+ *  In jurisdictions that recognize copyright laws, the author or authors
+ *  of this software dedicate any and all copyright interest in the
+ *  software to the public domain. We make this dedication for the benefit
+ *  of the public at large and to the detriment of our heirs and
+ *  successors. We intend this dedication to be an overt act of
+ *  relinquishment in perpetuity of all present and future rights to this
+ *  software under copyright law.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE. 
+ */
 package org.sleuthkit.autopsy.examples;
 
 import java.awt.Component;
@@ -37,15 +37,15 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Sample module.  
- * Calculates the number of bytes with value 0x00 in the first 1024-bytes.
- * Displays the results in a label.
+ * Sample module. Calculates the number of bytes with value 0x00 in the first
+ * 1024-bytes. Displays the results in a label.
  */
-/* THis is commented out so that it is not displayed in the real UI, 
- * it is compiled each time to ensure that it is compliant with the API.
+/*
+ * THis is commented out so that it is not displayed in the real UI, it is
+ * compiled each time to ensure that it is compliant with the API.
  */
 // @ServiceProvider(service = DataContentViewer.class)
- class SampleContentViewer extends javax.swing.JPanel implements DataContentViewer  {
+class SampleContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     /**
      * Creates new form SampleContentViewer
@@ -96,14 +96,14 @@ import org.sleuthkit.datamodel.TskCoreException;
                 setText("");
                 return;
             }
-            
+
             Content content = selectedNode.getLookup().lookup(Content.class);
             if (content == null) {
                 // non-content object passed in
                 setText("");
                 return;
             }
-            
+
             setText("Doing Analysis");
             byte buffer[] = new byte[1024];
             int len = content.read(buffer, 0, 1024);
@@ -118,7 +118,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             setText("Error reading file: " + ex.getLocalizedMessage());
         }
     }
-    
+
     // set the text in the lable in the JPanel
     private void setText(String str) {
         jLabel1.setText(str);
@@ -157,7 +157,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         if (content == null) {
             return false;
         }
-        
+
         // we only want files that are 1024 bytes or larger (for no good reason)
         if (content.getSize() < 1024) {
             return false;

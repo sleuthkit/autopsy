@@ -98,7 +98,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
     def startUp(self, context):
         self.context = context
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
-		# raise IngestModuleException(IngestModule(), "Oh No!")
+		# raise IngestModuleException("Oh No!")
 
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
@@ -107,20 +107,14 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
     # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     # TODO: Add your analysis code in here.
     def process(self, dataSource, progressBar):
-        if self.context.isJobCancelled():
-            return IngestModule.ProcessResult.OK
 
         # we don't know how much work there is yet
         progressBar.switchToIndeterminate()
 
-        autopsyCase = Case.getCurrentCase()
-        sleuthkitCase = autopsyCase.getSleuthkitCase()
-        services = Services(sleuthkitCase)
-        fileManager = services.getFileManager()
-
         # For our example, we will use FileManager to get all
         # files with the word "test"
         # in the name and then count and read them
+        fileManager = Case.getCurrentCase().getServices().getFileManager()
         files = fileManager.findFiles(dataSource, "%test%")
 
         numFiles = len(files)

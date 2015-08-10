@@ -44,10 +44,11 @@ public class KeywordList {
     KeywordList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
         this(name, created, modified, useForIngest, ingestMessages, keywords, false);
     }
-    
+
     /**
-     * Create an unnamed list.  Usually used for ad-hoc searches
-     * @param keywords 
+     * Create an unnamed list. Usually used for ad-hoc searches
+     *
+     * @param keywords
      */
     KeywordList(List<Keyword> keywords) {
         this("", new Date(0), new Date(0), false, false, keywords, false);
