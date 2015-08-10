@@ -24,7 +24,7 @@ import javafx.collections.FXCollections;
 import org.openide.util.NbBundle;
 
 /**
- * Intersection(And) filter
+ * Intersection (And) filter
  */
 public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
 
@@ -60,7 +60,10 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
 
     @Override
     public String getHTMLReportString() {
-        return getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+        return getSubFilters().stream()
+                .filter(Filter::isSelected)
+                .map(Filter::getHTMLReportString)
+                .collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
     }
 
     @Override

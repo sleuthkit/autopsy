@@ -426,11 +426,8 @@ public class EventsRepository {
     }
 
     /**
-     * use the given SleuthkitCase to look up the names for the datasources in
-     * the events table.
-     *
-     * TODO: we could keep a table of id -> name in the eventdb but I am wary of
-     * having too much redundant info.
+     * use the given SleuthkitCase to update the data used to determine the
+     * available filters.
      *
      * @param skCase
      */
@@ -460,25 +457,27 @@ public class EventsRepository {
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);
-            updateTagNames();
+            try {
+                tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+            }
         }
         return updatedEventIDs;
     }
 
-    public void updateTagNames() {
-        try {
-            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
-
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
-        }
-    }
-
-    public void syncTagFilter(TagsFilter tagsFilter) {
+    /**
+     * "sync" the given tags filter with the tagnames in use: Disable filters
+     * for tags that are not in use in the case, and add new filters for tags
+     * that don't have them. New filters are selected by default.
+     *
+     * @param tagsFilter the tags filter to modify so it is consistent with the
+     *                   tags in use in the case
+     */
+    public void syncTagsFilter(TagsFilter tagsFilter) {
         for (TagName t : tagNames) {
             tagsFilter.addSubFilter(new TagNameFilter(t));
         }
-
         for (TagNameFilter t : tagsFilter.getSubFilters()) {
             t.setDisabled(tagNames.contains(t.getTagName()) == false);
         }

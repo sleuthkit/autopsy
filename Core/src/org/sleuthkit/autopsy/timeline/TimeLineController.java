@@ -240,7 +240,7 @@ public class TimeLineController {
 
             public void invalidated(Observable observable) {
                 ZoomParams currentState1 = historyManager.getCurrentState();
-                eventsRepository.syncTagFilter(currentState1.getFilter().getTagsFilter());
+                eventsRepository.syncTagsFilter(currentState1.getFilter().getTagsFilter());
                 currentState.set(currentState1);
             }
         });

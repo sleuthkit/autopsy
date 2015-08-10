@@ -942,7 +942,7 @@ public class EventDB {
         DBLock.lock();
         String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
                 + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
-                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)+ " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
         // scoop up requested events in groups organized by interval, type, and desription
@@ -955,20 +955,20 @@ public class EventDB {
                 HashSet<Long> hashHits = new HashSet<>();
                 HashSet<Long> tagged = new HashSet<>();
                 try (Statement st2 = con.createStatement();
-                        ResultSet hashQueryResults = st2.executeQuery("select event_id , tagged, hash_hit from events where event_id in (" + eventIDS + ")");) {
-                    while (hashQueryResults.next()) {
-                        long eventID = hashQueryResults.getLong("event_id");
-                        if (hashQueryResults.getInt("tagged") != 0) {
+                        ResultSet eventHashHitOrTagged = st2.executeQuery("select event_id , tagged, hash_hit from events where event_id in (" + eventIDS + ")");) {
+                    while (eventHashHitOrTagged.next()) {
+                        long eventID = eventHashHitOrTagged.getLong("event_id");
+                        if (eventHashHitOrTagged.getInt("tagged") != 0) {
                             tagged.add(eventID);
                         }
-                        if (hashQueryResults.getInt("hash_hit") != 0) {
+                        if (eventHashHitOrTagged.getInt("hash_hit") != 0) {
                             hashHits.add(eventID);
                         }
                     }
                 }
 
                 AggregateEvent aggregateEvent = new AggregateEvent(
-                        interval, // NON-NLS
+                        interval,
                         type,
                         Stream.of(eventIDS.split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
                         hashHits,
@@ -1033,6 +1033,7 @@ public class EventDB {
     private String useHashHitTablesHelper(RootFilter filter) {
         return SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits" : "";
     }
+
     private String useTagTablesHelper(RootFilter filter) {
         return SQLHelper.hasActiveTagFilter(filter) ? ", content_tags, blackboard_artifact_tags " : "";
     }

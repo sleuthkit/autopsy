@@ -12,7 +12,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TagName;
 
 /**
- *
+ * Filter to show only events tag with the tagNames of the selected subfilters.
  */
 public class TagsFilter extends UnionFilter<TagNameFilter> {
 
