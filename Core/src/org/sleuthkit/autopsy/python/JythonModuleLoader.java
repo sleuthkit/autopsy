@@ -19,8 +19,14 @@
 package org.sleuthkit.autopsy.python;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,9 +55,10 @@ import org.sleuthkit.autopsy.report.GeneralReportModule;
 public final class JythonModuleLoader {
 
     private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName());
-    // maintain a private list of loaded modules and their loading time. Refer
-    // this list before reloading the modules.
-    private static final Map<String, Long> listOfModules = new HashMap<>();
+    private static final String PYTHON_MODULE_FOLDERS_LIST = Paths.get(PlatformUtil.getUserConfigDirectory(), "IngestModuleSettings", "listOfPythonModules.settings").toAbsolutePath().toString();
+    // maintain a private list of loaded modules (folders) and their last 'loading' time.
+    // Check this list before reloading the modules.
+    private static Map<String, Long> pythonModuleFolderList;
 
     /**
      * Get ingest module factories implemented using Jython.
@@ -78,6 +85,21 @@ public final class JythonModuleLoader {
         Set<File> pythonModuleDirs = new HashSet<>();
         PythonInterpreter interpreter = new PythonInterpreter();
 
+        // deserialize the list of python modules from the disk.
+        if (new File(PYTHON_MODULE_FOLDERS_LIST).exists()) {
+            // try deserializing if PYTHON_MODULE_FOLDERS_LIST exists. Else,
+            // instantiate a new pythonModuleFolderList.
+            try (FileInputStream fis = new FileInputStream(PYTHON_MODULE_FOLDERS_LIST); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                pythonModuleFolderList = (HashMap) ois.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                logger.log(Level.INFO, "Unable to deserialize pythonModuleList from existing " + PYTHON_MODULE_FOLDERS_LIST + ". New pythonModuleList instantiated", ex); // NON-NLS
+                pythonModuleFolderList = new HashMap<>();
+            }
+        } else {
+            pythonModuleFolderList = new HashMap<>();
+            logger.log(Level.INFO, "{0} does not exist. New pythonModuleList instantiated", PYTHON_MODULE_FOLDERS_LIST); // NON-NLS
+        }
+
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
         // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
         for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) {
@@ -97,7 +119,14 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
+                                    // check if ANY file in the module folder has changed.
+                                    // Not only .py files.
+                                    boolean reloadModule = hasModuleFolderChanged(file.getAbsolutePath(), file.listFiles());
+                                    objects.add(createObjectFromScript(interpreter, script, className, interfaceClass, reloadModule));
+                                    if (reloadModule) {
+                                        MessageNotifyUtil.Notify.info(NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.title"),
+                                                NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.msg", script.getParent())); // NON-NLS
+                                    }
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
@@ -114,12 +143,21 @@ public final class JythonModuleLoader {
                                 NotifyDescriptor.ERROR_MESSAGE));
                     }
                 }
+                pythonModuleFolderList.put(file.getAbsolutePath(), System.currentTimeMillis());
             }
         }
+
+        // serialize the list of python modules to the disk.
+        try (FileOutputStream fos = new FileOutputStream(PYTHON_MODULE_FOLDERS_LIST); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(pythonModuleFolderList);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error serializing pythonModuleList to the disk.", ex); // NON-NLS
+        }
+
         return objects;
     }
 
-    private static <T> T createObjectFromScript(PythonInterpreter interpreter, File script, String className, Class<T> interfaceClass) {
+    private static <T> T createObjectFromScript(PythonInterpreter interpreter, File script, String className, Class<T> interfaceClass, boolean reloadModule) {
         // Add the directory where the Python script resides to the Python
         // module search path to allow the script to use other scripts bundled
         // with it.
@@ -130,11 +168,8 @@ public final class JythonModuleLoader {
 
         // reload the module so that the changes made to it can be loaded.
         interpreter.exec("import " + moduleName); //NON-NLS
-        // reload module only if it modified.
-        if (listOfModules.containsKey(script.getAbsolutePath()) && script.lastModified() > listOfModules.get(script.getAbsolutePath())) {
+        if (reloadModule) {
             interpreter.exec("reload(" + moduleName + ")"); //NON-NLS
-            MessageNotifyUtil.Notify.info(NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.title"),
-                    NbBundle.getMessage(JythonModuleLoader.class, "JythonModuleLoader.createObjectFromScript.reloadScript.msg", script)); // NON-NLS
         }
 
         // Importing the appropriate class from the Py Script which contains multiple classes.
@@ -147,9 +182,21 @@ public final class JythonModuleLoader {
         // module search path.
         interpreter.exec("sys.path.remove('" + path + "')"); //NON-NLS
 
-        // record the module.
-        listOfModules.put(script.getAbsolutePath(), System.currentTimeMillis());
         return obj;
+    }
+
+
+    // returns true if any file inside the Python module folder has been
+    // modified since last loading of ingest factories.
+    private static boolean hasModuleFolderChanged(String moduleFolderName, File[] files) {
+        if (pythonModuleFolderList.containsKey(moduleFolderName)) {
+            for (File file : files) {
+                if (file.lastModified() > pythonModuleFolderList.get(moduleFolderName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static class PythonScriptFileFilter implements FilenameFilter {
