@@ -327,7 +327,6 @@ public class EventDB {
         final String query = "select event_id from  from events" + useHashHitTablesHelper(filter) + " where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
-
             while (rs.next()) {
                 resultIDs.add(rs.getLong("event_id"));
             }
@@ -435,7 +434,6 @@ public class EventDB {
     /**
      * create the table and indices if they don't already exist
      *
-     *
      * @return the number of rows in the table , count > 0 indicating an
      *         existing table
      */
@@ -492,7 +490,6 @@ public class EventDB {
                     String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
-
                     LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
                 }
             }
@@ -501,7 +498,6 @@ public class EventDB {
                     String sql = "ALTER TABLE events ADD COLUMN tagged INTEGER"; // NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
-
                     LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
                 }
             }
@@ -563,7 +559,6 @@ public class EventDB {
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
-
         } finally {
             DBLock.unlock();
         }
@@ -705,7 +700,7 @@ public class EventDB {
                     }
                     break;
                 }
-            };
+            }
 
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
@@ -781,10 +776,9 @@ public class EventDB {
 
     private void configureDB() throws SQLException {
         DBLock.lock();
-        //this should match Sleuthkit db setupt
+        //this should match Sleuthkit db setup
         try (Statement statement = con.createStatement()) {
-            String toString = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
-            System.out.println(toString);
+            String autopsyDBFileName = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
 
             ResultSet rs = statement.executeQuery("PRAGMA database_list");
             boolean found = false;
@@ -792,7 +786,7 @@ public class EventDB {
                 found |= "autopsy".equalsIgnoreCase(rs.getString("name"));
             }
             if (!found) {
-                statement.execute("ATTACH DATABASE 'file:" + toString + "?mode=ro' AS autopsy");
+                statement.execute("ATTACH DATABASE 'file:" + autopsyDBFileName + "?mode=ro' AS autopsy");
             }
             //reduce i/o operations, we have no OS crash recovery anyway
             statement.execute("PRAGMA synchronous = OFF;"); // NON-NLS
@@ -924,7 +918,7 @@ public class EventDB {
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
-
+System.out.println(query);
         // perform query and map results to AggregateEvent objects
         List<AggregateEvent> events = new ArrayList<>();
         DBLock.lock();

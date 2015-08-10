@@ -70,7 +70,8 @@ public class SQLHelper {
     }
 
     static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {
-        return Stream.of(s.split(","))
+        return StringUtils.isBlank(s) ? Collections.emptySet()
+                : Stream.of(s.split(","))
                 .map(mapper::apply)
                 .collect(Collectors.toSet());
     }

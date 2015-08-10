@@ -104,9 +104,6 @@ public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
 
-    private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
-            "Timeline.do_repopulate.msg");
-
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
     public static ZoneId getTimeZoneID() {
@@ -703,7 +700,8 @@ public class TimeLineController {
      */
     synchronized boolean confirmDataSourceIDsMissingRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
+                NbBundle.getMessage(TimeLineController.class,
+                        "datasource.missing.confirmation"),
                 "Update Timeline database?",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
@@ -717,7 +715,8 @@ public class TimeLineController {
      */
     synchronized boolean confirmLastBuiltDuringIngestRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                DO_REPOPULATE_MESSAGE,
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.do_repopulate.msg"),
                 NbBundle.getMessage(TimeLineTopComponent.class,
                         "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
@@ -760,16 +759,10 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
-//                    ((ModuleContentEvent)evt.getOldValue())????
-                    //ModuleContentEvent doesn't seem to provide any usefull information...
                     break;
                 case DATA_ADDED:
-//                    Collection<BlackboardArtifact> artifacts = ((ModuleDataEvent) evt.getOldValue()).getArtifacts();
-                    //new artifacts, insert them into db
                     break;
                 case FILE_DONE:
-//                    Long fileID = (Long) evt.getOldValue();
-                    //update file (known status) for file with id
                     Platform.runLater(() -> {
                         newEventsFlag.set(true);
                     });
