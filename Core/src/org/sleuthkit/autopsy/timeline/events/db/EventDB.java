@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,7 +45,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
@@ -56,23 +56,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
+import static org.sleuthkit.autopsy.timeline.events.db.SQLHelper.useHashHitTablesHelper;
+import static org.sleuthkit.autopsy.timeline.events.db.SQLHelper.useTagTablesHelper;
 import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
-import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.FULL;
-import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.MEDIUM;
-import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.SHORT;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
-import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MONTHS;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.SECONDS;
-import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.YEARS;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
@@ -868,9 +860,9 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "select count(*), " + useSubTypeHelper(useSubTypes)
+        final String queryString = "select count(*), " + typeColumnHelper(useSubTypes)
                 + " from events" + useHashHitTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
-                + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
+                + " GROUP BY " + typeColumnHelper(useSubTypes); // NON-NLS
 
         DBLock.lock();
         try (Statement stmt = con.createStatement();
@@ -891,119 +883,140 @@ public class EventDB {
         return typeMap;
     }
 
-    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
-        return getAggregatedEvents(params.getTimeRange(), params.getFilter(), params.getTypeZoomLevel(), params.getDescrLOD());
-    }
-
     /**
-     * //TODO: update javadoc //TODO: split this into helper methods
+     * get a list of {@link AggregateEvent}s, clustered according to the given
+     * zoom paramaters.
      *
-     * get a list of {@link AggregateEvent}s.
-     *
-     * General algorithm is as follows:
-     *
-     * 1)get all aggregate events, via one db query. 2) sort them into a map
-     * from (type, description)-> aggevent 3) for each key in map, merge the
-     * events and accumulate them in a list to return
-     *
-     *
-     * @param timeRange the Interval within in which all returned aggregate
-     *                  events will be.
-     * @param filter    only events that pass the filter will be included in
-     *                  aggregates events returned
-     * @param zoomLevel only events of this level will be included
-     * @param lod       description level of detail to use when grouping events
-     *
+     * @param params the zoom params that determine the zooming, filtering and
+     *               clustering.
      *
      * @return a list of aggregate events within the given timerange, that pass
      *         the supplied filter, aggregated according to the given event type
      *         and description zoom levels
      */
-    private List<AggregateEvent> getAggregatedEvents(Interval timeRange, RootFilter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
-        String descriptionColumn = getDescriptionColumn(lod);
-        final boolean useSubTypes = (zoomLevel.equals(EventTypeZoomLevel.SUB_TYPE));
+    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
+        //unpack params
+        Interval timeRange = params.getTimeRange();
+        RootFilter filter = params.getFilter();
+        DescriptionLOD descriptionLOD = params.getDescriptionLOD();
+        EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 
-        //get some info about the time range requested
-        RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange);
-        //use 'rounded out' range
-        long start = timeRange.getStartMillis() / 1000;//.getLowerBound();
-        long end = timeRange.getEndMillis() / 1000;//Millis();//rangeInfo.getUpperBound();
-        if (Objects.equals(start, end)) {
+        //ensure length of querried interval is not 0
+        long start = timeRange.getStartMillis() / 1000;
+        long end = timeRange.getEndMillis() / 1000;
+        if (start == end) {
             end++;
         }
+        //get some info about the time range requested
+        RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange);
 
-        //get a sqlite srtftime format string
-        String strfTimeFormat = getStrfTimeFormat(rangeInfo.getPeriodSize());
+        //build dynamic parts of query
+        String strfTimeFormat = SQLHelper.getStrfTimeFormat(rangeInfo);
+        String descriptionColumn = SQLHelper.getDescriptionColumn(descriptionLOD);
+        final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
+        String timeZone = TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "";  // NON-NLS
+        String typeColumn = typeColumnHelper(useSubTypes);
 
-        //effectively map from type to (map from description to events)
-        Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
+        //compose query string 
+        String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
+                + " group_concat(events.event_id) as event_ids, min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
+                + "\n FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) // NON-NLS
+                + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
+                + "\n ORDER BY min(time)"; // NON-NLS
 
-        //get all agregate events in this time unit
+        // perform query and map results to AggregateEvent objects
+        List<AggregateEvent> events = new ArrayList<>();
         DBLock.lock();
-        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
-                + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
-                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
-                + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
-                + " order by Min(time)"; // NON-NLS
-        // scoop up requested events in groups organized by interval, type, and desription
-        try (ResultSet rs = con.createStatement().executeQuery(query);) {
+
+        try (Statement createStatement = con.createStatement();
+                ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {
-                Interval interval = new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone());
-                String eventIDS = rs.getString("event_ids");
-                EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];
-
-                HashSet<Long> hashHits = new HashSet<>();
-                HashSet<Long> tagged = new HashSet<>();
-                try (Statement st2 = con.createStatement();
-                        ResultSet eventHashHitOrTagged = st2.executeQuery("select event_id , tagged, hash_hit from events where event_id in (" + eventIDS + ")");) {
-                    while (eventHashHitOrTagged.next()) {
-                        long eventID = eventHashHitOrTagged.getLong("event_id");
-                        if (eventHashHitOrTagged.getInt("tagged") != 0) {
-                            tagged.add(eventID);
-                        }
-                        if (eventHashHitOrTagged.getInt("hash_hit") != 0) {
-                            hashHits.add(eventID);
-                        }
-                    }
-                }
-
-                AggregateEvent aggregateEvent = new AggregateEvent(
-                        interval,
-                        type,
-                        Stream.of(eventIDS.split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
-                        hashHits,
-                        tagged,
-                        rs.getString(descriptionColumn),
-                        lod);
-
-                //put events in map from type/descrition -> event
-                SetMultimap<String, AggregateEvent> descrMap = typeMap.get(type);
-                if (descrMap == null) {
-                    descrMap = HashMultimap.<String, AggregateEvent>create();
-                    typeMap.put(type, descrMap);
-                }
-                descrMap.put(aggregateEvent.getDescription(), aggregateEvent);
+                events.add(aggregateEventHelper(rs, useSubTypes, descriptionLOD));
             }
-
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Failed to get aggregate events with query: " + query, ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
 
+        return mergeAggregateEvents(rangeInfo.getPeriodSize().getPeriod(), events);
+    }
+
+    /**
+     * map a single row in a ResultSet to an AggregateEvent
+     *
+     * @param rs             the result set whose current row should be mapped
+     * @param useSubTypes    use the sub_type column if true, else use the
+     *                       base_type column
+     * @param descriptionLOD the description level of detail for this event
+     *
+     * @return an AggregateEvent corresponding to the current row in the given
+     *         result set
+     *
+     * @throws SQLException
+     */
+    private AggregateEvent aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD) throws SQLException {
+        Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
+        String eventIDsString = rs.getString("event_ids");// NON-NLS
+        Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
+        String description = rs.getString(SQLHelper.getDescriptionColumn(descriptionLOD));
+        EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];// NON-NLS
+
+        Set<Long> hashHits = new HashSet<>();
+        String hashHitQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND hash_hit = 1";// NON-NLS
+        try (Statement stmt = con.createStatement();
+                ResultSet hashHitsRS = stmt.executeQuery(hashHitQuery)) {
+            while (hashHitsRS.next()) {
+                hashHits = SQLHelper.unGroupConcat(hashHitsRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
+            }
+        }
+
+        Set<Long> tagged = new HashSet<>();
+        String taggedQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND tagged = 1";// NON-NLS
+        try (Statement stmt = con.createStatement();
+                ResultSet taggedRS = stmt.executeQuery(taggedQuery)) {
+            while (taggedRS.next()) {
+                tagged = SQLHelper.unGroupConcat(taggedRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
+            }
+        }
+
+        return new AggregateEvent(interval, type, eventIDs, hashHits, tagged,
+                description, descriptionLOD);
+    }
+
+    /**
+     * merge the events in the given list if they are within the same period
+     * General algorithm is as follows:
+     *
+     * 1) sort them into a map from (type, description)-> List<aggevent>
+     * 2) for each key in map, merge the events and accumulate them in a list to
+     * return
+     *
+     * @param timeUnitLength
+     * @param preMergedEvents
+     *
+     * @return
+     */
+    static private List<AggregateEvent> mergeAggregateEvents(Period timeUnitLength, List<AggregateEvent> preMergedEvents) {
+
+        //effectively map from type to (map from description to events)
+        Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
+
+        for (AggregateEvent aggregateEvent : preMergedEvents) {
+            typeMap.computeIfAbsent(aggregateEvent.getType(), eventType -> HashMultimap.create())
+                    .put(aggregateEvent.getDescription(), aggregateEvent);
+        }
         //result list to return
         ArrayList<AggregateEvent> aggEvents = new ArrayList<>();
 
-        //save this for use when comparing gap size
-        Period timeUnitLength = rangeInfo.getPeriodSize().getPeriod();
-
         //For each (type, description) key, merge agg events
         for (SetMultimap<String, AggregateEvent> descrMap : typeMap.values()) {
+            //for each description ...
             for (String descr : descrMap.keySet()) {
                 //run through the sorted events, merging together adjacent events
                 Iterator<AggregateEvent> iterator = descrMap.get(descr).stream()
-                        .sorted((AggregateEvent o1, AggregateEvent o2)
-                                -> Long.compare(o1.getSpan().getStartMillis(), o2.getSpan().getStartMillis()))
+                        .sorted(Comparator.comparing(event -> event.getSpan().getStartMillis()))
                         .iterator();
                 AggregateEvent current = iterator.next();
                 while (iterator.hasNext()) {
@@ -1024,21 +1037,10 @@ public class EventDB {
                 aggEvents.add(current);
             }
         }
-
-        //at this point we should have a list of aggregate events.
-        //one per type/description spanning consecutive time units as determined in rangeInfo
         return aggEvents;
     }
 
-    private String useHashHitTablesHelper(RootFilter filter) {
-        return SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits" : "";
-    }
-
-    private String useTagTablesHelper(RootFilter filter) {
-        return SQLHelper.hasActiveTagFilter(filter) ? ", content_tags, blackboard_artifact_tags " : "";
-    }
-
-    private static String useSubTypeHelper(final boolean useSubTypes) {
+    private static String typeColumnHelper(final boolean useSubTypes) {
         return useSubTypes ? "sub_type" : "base_type";
     }
 
@@ -1063,37 +1065,6 @@ public class EventDB {
         }
 
         return defaultValue;
-    }
-
-    private String getDescriptionColumn(DescriptionLOD lod) {
-        switch (lod) {
-            case FULL:
-                return "full_description";
-            case MEDIUM:
-                return "med_description";
-            case SHORT:
-            default:
-                return "short_description";
-        }
-    }
-
-    private String getStrfTimeFormat(TimeUnits info) {
-        switch (info) {
-            case DAYS:
-                return "%Y-%m-%dT00:00:00"; // NON-NLS
-            case HOURS:
-                return "%Y-%m-%dT%H:00:00"; // NON-NLS
-            case MINUTES:
-                return "%Y-%m-%dT%H:%M:00"; // NON-NLS
-            case MONTHS:
-                return "%Y-%m-01T00:00:00"; // NON-NLS
-            case SECONDS:
-                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS
-            case YEARS:
-                return "%Y-01-01T00:00:00"; // NON-NLS
-            default:
-                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS
-        }
     }
 
     private PreparedStatement prepareStatement(String queryString) throws SQLException {

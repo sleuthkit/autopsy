@@ -173,14 +173,14 @@ public final class FilteredEventsModel {
 
             if (zoomParams != null) {
                 if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                        || zoomParams.getDescrLOD().equals(requestedLOD.get()) == false
+                        || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
                         || zoomParams.getFilter().equals(requestedFilter.get()) == false
                         || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
 
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter().copyOf());
                     requestedTimeRange.set(zoomParams.getTimeRange());
-                    requestedLOD.set(zoomParams.getDescrLOD());
+                    requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
             }
         });

@@ -1,13 +1,30 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-15 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.events.db;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
@@ -24,47 +41,58 @@ import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.FULL;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.MEDIUM;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MONTHS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.SECONDS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.YEARS;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Static helper methods for converting between java data model objects and
+ * sqlite queries.
  */
 public class SQLHelper {
 
-    private static List<Integer> getActiveSubTypes(TypeFilter filter) {
-        if (filter.isSelected()) {
-            if (filter.getSubFilters().isEmpty()) {
-                return Collections.singletonList(RootEventType.allTypes.indexOf(filter.getEventType()));
-            } else {
-                return filter.getSubFilters().stream().flatMap((Filter t) -> getActiveSubTypes((TypeFilter) t).stream()).collect(Collectors.toList());
-            }
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    static boolean hasActiveHashFilter(RootFilter filter) {
+    static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
-        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled();
+        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? ", hash_set_hits" : "";
     }
 
-    static boolean hasActiveTagFilter(RootFilter filter) {
+    static String useTagTablesHelper(RootFilter filter) {
         TagsFilter tagsFilter = filter.getTagsFilter();
-        return tagsFilter.isSelected() && false == tagsFilter.isDisabled();
+        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? ", content_tags, blackboard_artifact_tags " : "";
     }
 
-    private SQLHelper() {
+    static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {
+        return Stream.of(s.split(","))
+                .map(mapper::apply)
+                .collect(Collectors.toSet());
     }
 
-    static String getSQLWhere(IntersectionFilter<?> filter) {
-        return filter.getSubFilters().stream().filter(Filter::isSelected).map(SQLHelper::getSQLWhere).collect(Collectors.joining(" and ", "( ", ")"));
+    private static String getSQLWhere(IntersectionFilter<?> filter) {
+        return filter.getSubFilters().stream()
+                .filter(Filter::isSelected)
+                .map(SQLHelper::getSQLWhere)
+                .collect(Collectors.joining(" and ", "( ", ")"));
     }
 
-    static String getSQLWhere(UnionFilter<?> filter) {
-        return filter.getSubFilters().stream().filter(Filter::isSelected).map(SQLHelper::getSQLWhere).collect(Collectors.joining(" or ", "( ", ")"));
+    private static String getSQLWhere(UnionFilter<?> filter) {
+        return filter.getSubFilters().stream()
+                .filter(Filter::isSelected).map(SQLHelper::getSQLWhere)
+                .collect(Collectors.joining(" or ", "( ", ")"));
     }
 
-    static String getSQLWhere(Filter filter) {
+    static String getSQLWhere(RootFilter filter) {
+        return getSQLWhere((IntersectionFilter) filter);
+    }
+
+    private static String getSQLWhere(Filter filter) {
         String result = "";
         if (filter == null) {
             return "1";
@@ -96,7 +124,7 @@ public class SQLHelper {
         return result;
     }
 
-    static String getSQLWhere(HideKnownFilter filter) {
+    private static String getSQLWhere(HideKnownFilter filter) {
         if (filter.isSelected()) {
             return "(known_state IS NOT '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')"; // NON-NLS
         } else {
@@ -104,7 +132,7 @@ public class SQLHelper {
         }
     }
 
-    static String getSQLWhere(TagsFilter filter) {
+    private static String getSQLWhere(TagsFilter filter) {
         if (filter.isSelected()
                 && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
@@ -114,13 +142,12 @@ public class SQLHelper {
                     .collect(Collectors.joining(", ", "(", ")"));
             return "((blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + tagNameIDs + ") "
                     + "OR ( content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + tagNameIDs + "))";
-
         } else {
             return "1";
         }
     }
 
-    static String getSQLWhere(HashHitsFilter filter) {
+    private static String getSQLWhere(HashHitsFilter filter) {
         if (filter.isSelected()
                 && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
@@ -134,11 +161,11 @@ public class SQLHelper {
         }
     }
 
-    static String getSQLWhere(DataSourceFilter filter) {
+    private static String getSQLWhere(DataSourceFilter filter) {
         return (filter.isSelected()) ? "(datasource_id = '" + filter.getDataSourceID() + "')" : "1";
     }
 
-    static String getSQLWhere(DataSourcesFilter filter) {
+    private static String getSQLWhere(DataSourcesFilter filter) {
         return (filter.isSelected()) ? "(datasource_id in ("
                 + filter.getSubFilters().stream()
                 .filter(AbstractFilter::isSelected)
@@ -146,7 +173,7 @@ public class SQLHelper {
                 .collect(Collectors.joining(", ")) + "))" : "1";
     }
 
-    static String getSQLWhere(TextFilter filter) {
+    private static String getSQLWhere(TextFilter filter) {
         if (filter.isSelected()) {
             if (StringUtils.isBlank(filter.getText())) {
                 return "1";
@@ -168,7 +195,7 @@ public class SQLHelper {
      *
      * @return
      */
-    static String getSQLWhere(TypeFilter typeFilter) {
+    private static String getSQLWhere(TypeFilter typeFilter) {
         if (typeFilter.isSelected() == false) {
             return "0";
         } else if (typeFilter.getEventType() instanceof RootEventType) {
@@ -180,4 +207,59 @@ public class SQLHelper {
         return "(sub_type IN (" + StringUtils.join(getActiveSubTypes(typeFilter), ",") + "))";
     }
 
+    private static List<Integer> getActiveSubTypes(TypeFilter filter) {
+        if (filter.isSelected()) {
+            if (filter.getSubFilters().isEmpty()) {
+                return Collections.singletonList(RootEventType.allTypes.indexOf(filter.getEventType()));
+            } else {
+                return filter.getSubFilters().stream().flatMap((Filter t) -> getActiveSubTypes((TypeFilter) t).stream()).collect(Collectors.toList());
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * get a sqlite strftime format string that will allow us to group by the
+     * requested period size. That is, with all info more granular that that
+     * requested dropped (replaced with zeros).
+     *
+     * @param info the {@link RangeDivisionInfo} with the requested period size
+     *
+     * @return a String formatted according to the sqlite strftime spec
+     *
+     * @see https://www.sqlite.org/lang_datefunc.html
+     */
+    static String getStrfTimeFormat(@Nonnull RangeDivisionInfo info) {
+        switch (info.getPeriodSize()) {
+            case YEARS:
+                return "%Y-01-01T00:00:00"; // NON-NLS
+            case MONTHS:
+                return "%Y-%m-01T00:00:00"; // NON-NLS
+            case DAYS:
+                return "%Y-%m-%dT00:00:00"; // NON-NLS
+            case HOURS:
+                return "%Y-%m-%dT%H:00:00"; // NON-NLS
+            case MINUTES:
+                return "%Y-%m-%dT%H:%M:00"; // NON-NLS
+            case SECONDS:
+            default:    //seconds - should never happen
+                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS  
+        }
+    }
+
+    static String getDescriptionColumn(DescriptionLOD lod) {
+        switch (lod) {
+            case FULL:
+                return "full_description";
+            case MEDIUM:
+                return "med_description";
+            case SHORT:
+            default:
+                return "short_description";
+        }
+    }
+
+    private SQLHelper() {
+    }
 }
