@@ -532,6 +532,7 @@ public class EventDB {
 
             createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("artifact_id"));
+            createIndex("events", Arrays.asList("time"));
             createIndex("events", Arrays.asList("sub_type", "time"));
             createIndex("events", Arrays.asList("base_type", "time"));
             createIndex("events", Arrays.asList("known_state"));
@@ -918,7 +919,7 @@ public class EventDB {
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
-System.out.println(query);
+        System.out.println(query);
         // perform query and map results to AggregateEvent objects
         List<AggregateEvent> events = new ArrayList<>();
         DBLock.lock();
