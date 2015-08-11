@@ -244,7 +244,7 @@ public class EventsRepository {
 
         @Override
         protected Void doInBackground() throws Exception {
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(EventsRepository.class,
                     "EventsRepository.progressWindow.msg.reinit_db"), "")));
             //reset database 
             //TODO: can we do more incremental updates? -jm
@@ -256,8 +256,8 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, NbBundle.getMessage(this.getClass(),
-                    "EventsRepository.progressWindow.msg.populateMacEventsFiles"), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, numFiles, NbBundle.getMessage(EventsRepository.class,
+                    "EventsRepository.progressWindow.msg.populateMacEventsFiles"), ""));
 
             //insert file events into db
             int i = 1;
@@ -298,8 +298,8 @@ public class EventsRepository {
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                    NbBundle.getMessage(this.getClass(),
-                                            "EventsRepository.progressWindow.msg.populateMacEventsFiles2"), f.getName())));
+                                    NbBundle.getMessage(EventsRepository.class,
+                                            "EventsRepository.progressWindow.msg.populateMacEventsFiles"), f.getName())));
                         } else {
                             LOGGER.log(Level.WARNING, "failed to look up data for file : {0}", fID); // NON-NLS
                         }
@@ -322,7 +322,7 @@ public class EventsRepository {
                 }
             }
 
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(this.getClass(),
+            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, NbBundle.getMessage(EventsRepository.class,
                     "EventsRepository.progressWindow.msg.commitingDb"), "")));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
@@ -359,11 +359,11 @@ public class EventsRepository {
                 LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(EventsRepository.class,
                         "EventsRepository.msgdlg.problem.text"));
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                JOptionPane.showMessageDialog(null, NbBundle.getMessage(EventsRepository.class,
                         "EventsRepository.msgdlg.problem.text"));
             }
             r.run();  //execute post db population operation
@@ -383,7 +383,7 @@ public class EventsRepository {
                 final int numArtifacts = blackboardArtifacts.size();
 
                 process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                        NbBundle.getMessage(this.getClass(),
+                        NbBundle.getMessage(EventsRepository.class,
                                 "EventsRepository.progressWindow.populatingXevents",
                                 type.toString()), "")));
 
@@ -403,7 +403,7 @@ public class EventsRepository {
 
                     i++;
                     process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            NbBundle.getMessage(this.getClass(),
+                            NbBundle.getMessage(EventsRepository.class,
                                     "EventsRepository.progressWindow.populatingXevents",
                                     type.toString()), "")));
                 }

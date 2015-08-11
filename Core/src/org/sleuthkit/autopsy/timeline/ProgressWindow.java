@@ -33,8 +33,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import static org.sleuthkit.autopsy.timeline.Bundle.Timeline_progressWindow_name;
-import static org.sleuthkit.autopsy.timeline.Bundle.Timeline_progressWindow_title;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Dialog with progress bar that pops up when timeline is being generated
@@ -61,8 +60,8 @@ public class ProgressWindow extends JFrame {
             setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         });
 
-        setName(Timeline_progressWindow_name());
-        setTitle(Timeline_progressWindow_title());
+        setName(Bundle.Timeline_progressWindow_name());
+        setTitle(Bundle.Timeline_progressWindow_title());
         // Close the dialog when Esc is pressed
         String cancelName = "cancel"; // NON-NLS
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -77,46 +76,6 @@ public class ProgressWindow extends JFrame {
             }
         });
         this.worker = worker;
-    }
-
-    public void updateProgress(final int progress) {
-        SwingUtilities.invokeLater(() -> {
-            progressBar.setValue(progress);
-        });
-    }
-
-    public void updateProgress(final int progress, final String message) {
-        SwingUtilities.invokeLater(() -> {
-            progressBar.setValue(progress);
-            progressBar.setString(message);
-        });
-    }
-
-    public void updateProgress(final String message) {
-        SwingUtilities.invokeLater(() -> {
-            progressBar.setString(message);
-        });
-    }
-
-    public void setProgressTotal(final int total) {
-        SwingUtilities.invokeLater(() -> {
-            progressBar.setIndeterminate(false);
-            progressBar.setMaximum(total);
-            progressBar.setStringPainted(true);
-        });
-    }
-
-    public void updateHeaderMessage(final String headerMessage) {
-        SwingUtilities.invokeLater(() -> {
-            progressHeader.setText(headerMessage);
-        });
-    }
-
-    public void setIndeterminate() {
-        SwingUtilities.invokeLater(() -> {
-            progressBar.setIndeterminate(true);
-            progressBar.setStringPainted(true);
-        });
     }
 
     /**
@@ -137,7 +96,8 @@ public class ProgressWindow extends JFrame {
             }
         });
 
-        progressHeader.setPreferredSize(new java.awt.Dimension(0, 14));
+        org.openide.awt.Mnemonics.setLocalizedText(progressHeader, NbBundle.getMessage(ProgressWindow.class, "ProgressWindow.progressHeader.text")); // NOI18N
+        progressHeader.setMinimumSize(new java.awt.Dimension(10, 14));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -200,14 +160,19 @@ public class ProgressWindow extends JFrame {
     private javax.swing.JLabel progressHeader;
     // End of variables declaration//GEN-END:variables
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void update(ProgressUpdate chunk) {
-        updateHeaderMessage(chunk.getHeaderMessage());
+        progressHeader.setText(chunk.getHeaderMessage());
         if (chunk.getTotal() >= 0) {
-            setProgressTotal(chunk.getTotal());
-            updateProgress(chunk.getProgress(), chunk.getDetailMessage());
+            progressBar.setIndeterminate(false);
+            progressBar.setMaximum(chunk.getTotal());
+            progressBar.setStringPainted(true);
+            progressBar.setValue(chunk.getProgress());
+            progressBar.setString(chunk.getDetailMessage());
         } else {
-            setIndeterminate();
-            updateProgress(chunk.getDetailMessage());
+            progressBar.setIndeterminate(true);
+            progressBar.setStringPainted(true);
+            progressBar.setString(chunk.getDetailMessage());
         }
     }
 
