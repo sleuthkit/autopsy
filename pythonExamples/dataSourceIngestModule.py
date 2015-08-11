@@ -114,6 +114,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         # For our example, we will use FileManager to get all
         # files with the word "test"
         # in the name and then count and read them
+        # FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
         fileManager = Case.getCurrentCase().getServices().getFileManager()
         files = fileManager.findFiles(dataSource, "%test%")
 
