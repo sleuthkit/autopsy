@@ -66,6 +66,7 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -98,9 +99,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
-
-    private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
-            "Timeline.do_repopulate.msg");
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -683,16 +681,28 @@ public class TimeLineController {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void confirmOutOfDateRebuildIfWindowOpen() throws HeadlessException, MissingResourceException {
+        if (isWindowOpen()) {
+            if (confirmOutOfDateRebuild()) {
+                rebuildRepo();
+            }
+        }
+    }
+
     /**
      * prompt the user to rebuild the db because that datasource_ids are missing
      * from the database and that the datasource filter will not work
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized boolean confirmDataSourceIDsMissingRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
-                "Update Timeline database?",
+                NbBundle.getMessage(TimeLineController.class,
+                        "datasource.missing.confirmation"),
+                NbBundle.getMessage(TimeLineController.class,
+                        "datasource.missing.confirmation.update_timeline_database"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
@@ -703,9 +713,11 @@ public class TimeLineController {
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized boolean confirmLastBuiltDuringIngestRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                DO_REPOPULATE_MESSAGE,
+                NbBundle.getMessage(TimeLineController.class,
+                        "Timeline.do_repopulate.msg"),
                 NbBundle.getMessage(TimeLineTopComponent.class,
                         "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
@@ -718,6 +730,7 @@ public class TimeLineController {
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized boolean confirmOutOfDateRebuild() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
@@ -733,6 +746,7 @@ public class TimeLineController {
      *
      * @return true if they want to continue anyways
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized boolean confirmRebuildDuringIngest() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
@@ -748,16 +762,9 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
-//                    ((ModuleContentEvent)evt.getOldValue())????
-                    //ModuleContentEvent doesn't seem to provide any usefull information...
-                    break;
                 case DATA_ADDED:
-//                    Collection<BlackboardArtifact> artifacts = ((ModuleDataEvent) evt.getOldValue()).getArtifacts();
-                    //new artifacts, insert them into db
                     break;
                 case FILE_DONE:
-//                    Long fileID = (Long) evt.getOldValue();
-                    //update file (known status) for file with id
                     Platform.runLater(() -> {
                         newEventsFlag.set(true);
                     });
@@ -774,14 +781,7 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
             }
         }
     }
@@ -793,15 +793,7 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ADDED:
-//                    Content content = (Content) evt.getNewValue();
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
