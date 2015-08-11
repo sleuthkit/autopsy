@@ -21,25 +21,20 @@ package org.sleuthkit.autopsy.timeline;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.GroupLayout;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 import javax.swing.KeyStroke;
-import javax.swing.LayoutStyle;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import org.openide.awt.Mnemonics;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import static org.sleuthkit.autopsy.timeline.Bundle.Timeline_progressWindow_name;
+import static org.sleuthkit.autopsy.timeline.Bundle.Timeline_progressWindow_title;
 
 /**
  * Dialog with progress bar that pops up when timeline is being generated
@@ -51,6 +46,8 @@ public class ProgressWindow extends JFrame {
     /**
      * Creates new form TimelineProgressDialog
      */
+    @NbBundle.Messages({"Timeline.progressWindow.name=Timeline",
+        "Timeline.progressWindow.title=Generating Timeline data"})
     public ProgressWindow(Component parent, boolean modal, SwingWorker<?, ?> worker) {
         super();
         initComponents();
@@ -64,9 +61,8 @@ public class ProgressWindow extends JFrame {
             setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         });
 
-        //progressBar.setIndeterminate(true);
-        setName(NbBundle.getMessage(TimeLineTopComponent.class, "Timeline.progressWindow.name"));
-        setTitle(NbBundle.getMessage(TimeLineTopComponent.class, "Timeline.progressWindow.title"));
+        setName(Timeline_progressWindow_name());
+        setTitle(Timeline_progressWindow_title());
         // Close the dialog when Esc is pressed
         String cancelName = "cancel"; // NON-NLS
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -132,38 +128,38 @@ public class ProgressWindow extends JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        progressBar = new JProgressBar();
-        progressHeader = new JLabel();
+        progressBar = new javax.swing.JProgressBar();
+        progressHeader = new javax.swing.JLabel();
 
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent evt) {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        Mnemonics.setLocalizedText(progressHeader, NbBundle.getMessage(ProgressWindow.class, "ProgressWindow.progressHeader.text")); // NOI18N
+        progressHeader.setPreferredSize(new java.awt.Dimension(0, 14));
 
-        GroupLayout layout = new GroupLayout(getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(progressBar, GroupLayout.DEFAULT_SIZE, 504, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 504, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(progressHeader)
+                        .addComponent(progressHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(progressHeader)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(progressHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -176,14 +172,14 @@ public class ProgressWindow extends JFrame {
         cancel();
     }//GEN-LAST:event_closeDialog
 
+    @NbBundle.Messages({"Timeline.ProgressWindow.cancel.confdlg.msg=Do you want to cancel timeline creation?",
+        "Timeline.ProgressWindow.cancel.confdlg.detail=Cancel timeline creation?"})
     public void cancel() {
         SwingUtilities.invokeLater(() -> {
             if (isVisible()) {
                 int showConfirmDialog = JOptionPane.showConfirmDialog(ProgressWindow.this,
-                        NbBundle.getMessage(TimeLineTopComponent.class,
-                                "Timeline.ProgressWindow.cancel.confdlg.msg"),
-                        NbBundle.getMessage(TimeLineTopComponent.class,
-                                "Timeline.ProgressWindow.cancel.confdlg.detail"),
+                        Bundle.Timeline_ProgressWindow_cancel_confdlg_msg(),
+                        Bundle.Timeline_ProgressWindow_cancel_confdlg_detail(),
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (showConfirmDialog == JOptionPane.YES_OPTION) {
                     close();
@@ -200,8 +196,8 @@ public class ProgressWindow extends JFrame {
         dispose();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private JProgressBar progressBar;
-    private JLabel progressHeader;
+    private javax.swing.JProgressBar progressBar;
+    private javax.swing.JLabel progressHeader;
     // End of variables declaration//GEN-END:variables
 
     public void update(ProgressUpdate chunk) {

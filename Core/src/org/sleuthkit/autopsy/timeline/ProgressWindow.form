@@ -53,8 +53,8 @@
     </Component>
     <Component class="javax.swing.JLabel" name="progressHeader">
       <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/advancedtimeline/Bundle.properties" key="ProgressWindow.progressHeader.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[0, 14]"/>
         </Property>
       </Properties>
     </Component>
