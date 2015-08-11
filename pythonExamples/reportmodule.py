@@ -39,6 +39,7 @@ from java.util.logging import Level
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.report import GeneralReportModuleAdapter
+from org.sleuthkit.autopsy.report.ReportProgressPanel import ReportStatus
 
 
 # TODO: Rename the class to something more specific
@@ -103,4 +104,6 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
         Case.getCurrentCase().addReport(fileName, self.moduleName, "File Count Report");
 
         progressBar.increment()
-        progressBar.complete()
+
+        # Call this with ERROR if report was not generated
+        progressBar.complete(ReportStatus.COMPLETE)
