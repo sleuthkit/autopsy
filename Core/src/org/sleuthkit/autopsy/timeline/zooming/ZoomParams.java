@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Set;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -40,20 +37,6 @@ public class ZoomParams {
     private final RootFilter filter;
 
     private final DescriptionLOD descrLOD;
-
-    private final Set<Field> changedFields;
-
-    public Set<Field> getChangedFields() {
-        return Collections.unmodifiableSet(changedFields);
-    }
-
-    public enum Field {
-
-        TIME,
-        EVENT_TYPE_ZOOM,
-        FILTER,
-        DESCRIPTION_LOD;
-    }
 
     public Interval getTimeRange() {
         return timeRange;
@@ -76,35 +59,27 @@ public class ZoomParams {
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
-        changedFields = EnumSet.allOf(Field.class);
-    }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilter filter, DescriptionLOD descrLOD, EnumSet<Field> changed) {
-        this.timeRange = timeRange;
-        this.typeZoomLevel = zoomLevel;
-        this.filter = filter;
-        this.descrLOD = descrLOD;
-        changedFields = changed;
     }
 
     public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD, EnumSet.of(Field.TIME, Field.EVENT_TYPE_ZOOM));
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD, EnumSet.of(Field.EVENT_TYPE_ZOOM));
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withTimeRange(Interval timeRange) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.TIME));
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withDescrLOD(DescriptionLOD descrLOD) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.DESCRIPTION_LOD));
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withFilter(RootFilter filter) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.FILTER));
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public boolean hasFilter(Filter filterSet) {
@@ -153,11 +128,7 @@ public class ZoomParams {
         if (this.filter.equals(other.filter) == false) {
             return false;
         }
-        if (this.descrLOD != other.descrLOD) {
-            return false;
-        }
-
-        return true;
+        return this.descrLOD == other.descrLOD;
     }
 
     @Override
