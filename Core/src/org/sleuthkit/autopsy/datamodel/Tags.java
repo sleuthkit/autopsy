@@ -428,13 +428,14 @@ public class Tags implements AutopsyVisitableItem {
         }
     }
 
-    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> {
+    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {
 
         private final TagName tagName;
 
         BlackboardArtifactTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
+              tagResults.addObserver(this);
         }
 
         @Override
@@ -452,6 +453,10 @@ public class Tags implements AutopsyVisitableItem {
         protected Node createNodeForKey(BlackboardArtifactTag key) {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
+        }
+            @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 }
