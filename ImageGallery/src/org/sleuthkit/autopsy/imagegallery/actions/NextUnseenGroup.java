@@ -68,7 +68,7 @@ public class NextUnseenGroup extends Action {
                     .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
 
             if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
-                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
+                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), true);
             }
             updateButton();
         });
