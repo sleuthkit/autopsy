@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
@@ -332,46 +333,50 @@ public final class FilteredEventsModel {
         return requestedLOD.get();
     }
 
-    synchronized public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
-        Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
+    synchronized public boolean handleTagEvent(TagEvent<?> evt) {
+        Content content;
+        BlackboardArtifact artifact;
+        switch (Case.Events.valueOf(evt.getPropertyName())) {
+            case CONTENT_TAG_ADDED:
+                content = ((ContentTagAddedEvent) evt).getTag().getContent();
+                return markAndPost(content.getId(), null, true);
+            case CONTENT_TAG_DELETED:
+                content = ((ContentTagDeletedEvent) evt).getTag().getContent();
+                try {
+                    boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+                    return markAndPost(content.getId(), null, tagged);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+                }
+                return false;
+            case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                artifact = ((BlackBoardArtifactTagAddedEvent) evt).getTag().getArtifact();
+                return markAndPost(artifact.getObjectID(), artifact.getArtifactID(), true);
+            case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                artifact = ((BlackBoardArtifactTagDeletedEvent) evt).getTag().getArtifact();
+                try {
+                    boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+                    return markAndPost(artifact.getObjectID(), artifact.getArtifactID(), tagged);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
+                }
+                return false;
+
+            case DATA_SOURCE_ADDED:
+            case CURRENT_CASE:
+            default:
+                LOGGER.log(Level.SEVERE, "Unknown or unexpected event:{0}", evt.getPropertyName());
+                throw new IllegalArgumentException("Unknown or unexpected event:" + evt.getPropertyName());
+        }
+    }
+
+    private boolean markAndPost(Long contentID, Long artifactID, boolean tagged) {
+        Set<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
+            eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
+            return true;
         }
-    }
-
-    synchronized public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
-        try {
-            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
-            if (!updatedEventIDs.isEmpty()) {
-                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of attribute.", ex);
-        }
-    }
-
-    synchronized public void handleTagAdded(ContentTagAddedEvent e) {
-        Content content = e.getTag().getContent();
-        Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, true);
-        if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
-        }
-    }
-
-    synchronized public void handleTagDeleted(ContentTagDeletedEvent e) {
-        Content content = e.getTag().getContent();
-        try {
-            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, tagged);
-            if (!updatedEventIDs.isEmpty()) {
-                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
-        }
+        return false;
     }
 
     synchronized public void registerForEvents(Object o) {

@@ -67,10 +67,8 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -693,6 +691,20 @@ public class TimeLineController {
     }
 
     /**
+     *
+     * @throws MissingResourceException
+     * @throws HeadlessException
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
+        if (isWindowOpen()) {
+            if (confirmOutOfDateRebuild()) {
+                rebuildRepo();
+            }
+        }
+    }
+
+    /**
      * prompt the user to rebuild the db because that datasource_ids are missing
      * from the database and that the datasource filter will not work
      *
@@ -702,7 +714,8 @@ public class TimeLineController {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
                         "datasource.missing.confirmation"),
-                "Update Timeline database?",
+                NbBundle.getMessage(TimeLineController.class,
+                        "datasource.missing.confirmation.update_timeline_database"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
@@ -759,7 +772,6 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
-                    break;
                 case DATA_ADDED:
                     break;
                 case FILE_DONE:
@@ -779,14 +791,7 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
             }
         }
     }
@@ -798,27 +803,15 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                    filteredEvents.handleTagAdded((BlackBoardArtifactTagAddedEvent) evt);
-                    break;
                 case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                    filteredEvents.handleTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
-                    break;
                 case CONTENT_TAG_ADDED:
-                    filteredEvents.handleTagAdded((ContentTagAddedEvent) evt);
-                    break;
                 case CONTENT_TAG_DELETED:
-                    filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
+                    executor.submit(() -> {
+                        filteredEvents.handleTagEvent((TagEvent<?>) evt);
+                    });
                     break;
                 case DATA_SOURCE_ADDED:
-//                    Content content = (Content) evt.getNewValue();
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
