@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 
 /**
  * Union(or) filter
@@ -34,4 +35,12 @@ abstract public class UnionFilter<SubFilterType extends Filter> extends Compound
         super(FXCollections.<SubFilterType>observableArrayList());
     }
 
+    @Override
+    public boolean test(TimeLineEvent t) {
+        boolean name = !isSelected()
+                || isDisabled()
+                || getSubFilters().stream().anyMatch((f) -> f.isSelected() && f.test(t));
+        System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
+        return name;
+    }
 }

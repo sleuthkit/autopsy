@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -139,7 +140,7 @@ public final class FilteredEventsModel {
 
         TagsFilter tagsFilter = new TagsFilter();
         repo.getTagNames().stream().forEach(t -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(t);
+            TagNameFilter tagNameFilter = new TagNameFilter(t, autoCase);
             tagNameFilter.setSelected(Boolean.TRUE);
             tagsFilter.addSubFilter(tagNameFilter);
         });
@@ -371,9 +372,9 @@ public final class FilteredEventsModel {
     }
 
     private boolean markAndPost(Long contentID, Long artifactID, boolean tagged) {
-        Set<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
+        Set<TimeLineEvent> updatedEvents = repo.markEventsTagged(contentID, artifactID, tagged);
+        if (!updatedEvents.isEmpty()) {
+            eventbus.post(tagged ? new EventsTaggedEvent(updatedEvents) : new EventsUnTaggedEvent(updatedEvents.stream().map(TimeLineEvent::getEventID).collect(Collectors.toSet())));
             return true;
         }
         return false;
@@ -385,5 +386,9 @@ public final class FilteredEventsModel {
 
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
+    }
+
+    synchronized public Set<TimeLineEvent> filter(Set<TimeLineEvent> events) {
+        return events.stream().filter(requestedFilter.get()::test).collect(Collectors.toSet());
     }
 }

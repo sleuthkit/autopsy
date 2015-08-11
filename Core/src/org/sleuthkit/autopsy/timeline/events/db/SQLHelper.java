@@ -66,7 +66,7 @@ public class SQLHelper {
 
     static String useTagTablesHelper(RootFilter filter) {
         TagsFilter tagsFilter = filter.getTagsFilter();
-        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " left join  content_tags left join blackboard_artifact_tags " : "";
+        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " left join content_tags left join blackboard_artifact_tags " : "";
     }
 
     static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {
@@ -141,8 +141,10 @@ public class SQLHelper {
                     .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
                     .map((TagNameFilter t) -> String.valueOf(t.getTagName().getId()))
                     .collect(Collectors.joining(", ", "(", ")"));
-            return "((blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + tagNameIDs + ") "
-                    + "OR ( content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + tagNameIDs + "))";
+            return "(CASE WHEN events.artifact_id IS NULL THEN "
+                    + " content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + tagNameIDs
+                    + " ELSE blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + tagNameIDs + " END) ";
+
         } else {
             return "1";
         }

@@ -70,8 +70,9 @@ public enum BaseTypes implements EventType {
 
     private final String iconBase;
 
-    private Image image;
+    private final Image image;
 
+    @Override
     public Image getFXImage() {
         return image;
     }

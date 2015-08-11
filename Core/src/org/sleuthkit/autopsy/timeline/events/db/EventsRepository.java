@@ -24,6 +24,7 @@ import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -452,8 +453,8 @@ public class EventsRepository {
         }
     }
 
-    synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
+    synchronized public Set<TimeLineEvent> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+        HashSet<TimeLineEvent> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);
@@ -476,7 +477,7 @@ public class EventsRepository {
      */
     public void syncTagsFilter(TagsFilter tagsFilter) {
         for (TagName t : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(t));
+            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
         }
         for (TagNameFilter t : tagsFilter.getSubFilters()) {
             t.setDisabled(tagNames.contains(t.getTagName()) == false);

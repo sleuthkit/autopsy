@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Filter to hide known files
@@ -66,4 +68,12 @@ public class HideKnownFilter extends AbstractFilter {
 
         return isSelected() == other.isSelected();
     }
+
+    @Override
+    public boolean test(TimeLineEvent t) {
+        boolean name = !isSelected() || isDisabled() || t.getKnown() == TskData.FileKnown.UNKNOWN;
+             System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
+        return name;
+    }
+
 }

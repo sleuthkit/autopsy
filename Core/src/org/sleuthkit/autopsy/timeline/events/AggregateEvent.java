@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
+import org.python.google.common.collect.ImmutableSet;
+import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -167,15 +168,30 @@ public class AggregateEvent {
      *         given event Ids added to the list of tagged ids, or, this
      *         AggregateEvent if no event ids would be added
      */
-    public AggregateEvent withTagsAdded(Set<Long> taggedIDs) {
-        Sets.SetView<Long> taggedIdsInAgg = Sets.intersection(eventIDs, taggedIDs);//events that are in this aggregate and (newly) marked as tagged
-        if (taggedIdsInAgg.size() > 0) {
-            Sets.SetView<Long> notYetIncludedTagged = Sets.difference(taggedIdsInAgg, tagged); // events that are tagged, but not already marked as tagged in this Agg
-            if (notYetIncludedTagged.size() > 0) {
-                return new AggregateEvent(span, type, eventIDs, hashHits, Sets.union(tagged, taggedIdsInAgg).immutableCopy(), description, lod);
-            }
+    public AggregateEvent withTagAdded(TimeLineEvent taggedEvent) {
+        long taggedEventID = taggedEvent.getEventID();
+        if (tagged.contains(taggedEventID)) {
+            return this;  //no change, already in cluster
         }
 
-        return this;    //no change
+        if (!getSpan().contains(taggedEvent.getTime() * 1000)) {
+            return this; //no change, outside time range
+        }
+        if (!getType().equals(taggedEvent.getType())
+                && (!getType().equals(getType().getBaseType()) || !getType().equals(taggedEvent.getType().getBaseType()))) {
+            return this;    //no change, wrong type
+        }
+
+        if (!getDescription().equals(taggedEvent.getDescription(lod))) {
+            return this;    //no change , wrong description
+        }
+
+        //add to aggregate event
+        return new AggregateEvent(span, type, setWith(eventIDs, taggedEventID),
+                hashHits, setWith(tagged, taggedEventID), description, lod);
+    }
+
+    public static <T> ImmutableSet<T> setWith(Set<T> old, T item) {
+        return new ImmutableSet.Builder<T>().addAll(old).add(item).build();
     }
 }

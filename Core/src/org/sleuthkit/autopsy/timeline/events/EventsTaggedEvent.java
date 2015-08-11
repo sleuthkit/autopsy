@@ -27,13 +27,13 @@ import java.util.Set;
  */
 public class EventsTaggedEvent {
 
-    private final Set<Long> eventIDs;
+    private final Set<TimeLineEvent> events;
 
-    public EventsTaggedEvent(Set<Long> eventIDs) {
-        this.eventIDs = eventIDs;
+    public EventsTaggedEvent(Set<TimeLineEvent> events) {
+        this.events = events;
     }
 
-    public Set<Long> getEventIDs() {
-        return Collections.unmodifiableSet(eventIDs);
+    public Set<TimeLineEvent> getEvents() {
+        return Collections.unmodifiableSet(events);
     }
 }

@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.eventbus.Subscribe;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -64,13 +67,18 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
@@ -220,6 +228,16 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
     }
 
+    @Override
+    public synchronized void setModel(FilteredEventsModel filteredEvents) {
+        if (this.filteredEvents != null) {
+            this.filteredEvents.unRegisterForEvents(this);
+        }
+        filteredEvents.registerForEvents(this);
+
+        super.setModel(filteredEvents);
+    }
+
     private void incrementScrollValue(int factor) {
         vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.getMaxVScroll().get()))));
     }
@@ -272,6 +290,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
      * @return a Series object to contain all the events with the given
      *         EventType
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
         XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
         if (series == null) {
@@ -347,6 +366,41 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 return aggregatedEvents.isEmpty() == false;
             }
         };
+    }
+
+    @Subscribe
+    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+        for (AggregateEventNode t : chart.getAllNodes()) {
+            t.handleEventsUnTagged(tagEvent);
+        }
+    }
+
+    @Subscribe
+    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+        Set<TimeLineEvent> events = filteredEvents.filter(tagEvent.getEvents());
+
+        for (TimeLineEvent event : events) {
+            boolean addedToExistingCluster = false;
+
+            for (AggregateEventNode t : chart.getAllNodes()) {
+                addedToExistingCluster |= t.handleEventsTagged(event);
+                if (addedToExistingCluster) {
+                    break;
+                }
+            }
+
+            if (!addedToExistingCluster) {
+                //make new cluster
+                AggregateEvent aggregateEvent = new AggregateEvent(new Interval(event.getTime(), event.getTime()),
+                        event.getType(), Collections.singleton(event.getEventID()),
+                        event.isHashHit() ? Collections.singleton(event.getEventID()) : Collections.emptySet(),
+                        event.isTagged() ? Collections.singleton(event.getEventID()) : Collections.emptySet(),
+                        event.getDescription(filteredEvents.getDescriptionLOD()), filteredEvents.getDescriptionLOD());
+                Platform.runLater(() -> {
+                    getSeries(event.getType()).getData().add(new XYChart.Data<>(new DateTime(aggregateEvent.getSpan().getStartMillis()), aggregateEvent));
+                });
+            }
+        }
     }
 
     @Override
@@ -478,4 +532,5 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         }
 
     }
+
 }

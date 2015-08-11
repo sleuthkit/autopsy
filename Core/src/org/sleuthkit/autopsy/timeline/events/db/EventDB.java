@@ -80,7 +80,7 @@ import org.sqlite.SQLiteJDBCLoader;
 public class EventDB {
 
     /**
-    
+     *
      * enum to represent keys stored in db_info table
      */
     private enum DBInfoKey {
@@ -556,7 +556,7 @@ public class EventDB {
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits");
                 dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets");
                 dropDBInfoTableStmt = prepareStatement("DROP TABLE IF EXISTS db_ino");
-                selectEventsFromOBjectAndArtifactStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS ?");
+                selectEventsFromOBjectAndArtifactStmt = prepareStatement("SELECT * FROM events WHERE file_id == ? AND artifact_id IS ?");
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
@@ -710,11 +710,11 @@ public class EventDB {
         }
     }
 
-    Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+    HashSet<TimeLineEvent> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+        HashSet<TimeLineEvent> events = new HashSet<>();
         HashSet<Long> eventIDs = new HashSet<>();
 
         DBLock.lock();
-
         try {
             selectEventsFromOBjectAndArtifactStmt.clearParameters();
             selectEventsFromOBjectAndArtifactStmt.setLong(1, objectID);
@@ -725,8 +725,11 @@ public class EventDB {
             }
             try (ResultSet executeQuery = selectEventsFromOBjectAndArtifactStmt.executeQuery();) {
                 while (executeQuery.next()) {
-                    eventIDs.add(executeQuery.getLong("event_id"));
+                    TimeLineEvent timeLineEvent = constructTimeLineEvent(executeQuery, tagged);
+                    events.add(timeLineEvent);
+                    eventIDs.add(timeLineEvent.getEventID());
                 }
+
                 try (Statement updateStatement = con.createStatement();) {
                     updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
                             + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
@@ -737,7 +740,7 @@ public class EventDB {
         } finally {
             DBLock.unlock();
         }
-        return eventIDs;
+        return events;
     }
 
     void recordLastArtifactID(long lastArtfID) {
@@ -814,8 +817,23 @@ public class EventDB {
         }
     }
 
+    private TimeLineEvent constructTimeLineEvent(ResultSet rs, Boolean taggedOverride) throws SQLException {
+        return new TimeLineEvent(rs.getLong("event_id"),
+                rs.getLong("datasource_id"),
+                rs.getLong("file_id"),
+                rs.getLong("artifact_id"),
+                rs.getLong("time"), RootEventType.allTypes.get(rs.getInt("sub_type")),
+                rs.getString("full_description"),
+                rs.getString("med_description"),
+                rs.getString("short_description"),
+                TskData.FileKnown.valueOf(rs.getByte("known_state")),
+                rs.getInt("hash_hit") != 0,
+                taggedOverride);
+    }
+
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
         return new TimeLineEvent(rs.getLong("event_id"),
+                rs.getLong("datasource_id"),
                 rs.getLong("file_id"),
                 rs.getLong("artifact_id"),
                 rs.getLong("time"), RootEventType.allTypes.get(rs.getInt("sub_type")),
@@ -856,7 +874,7 @@ public class EventDB {
 
         //get some info about the range of dates requested
         final String queryString = "select count(*), " + typeColumnHelper(useSubTypes)
-                + " from events" + useHashHitTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + typeColumnHelper(useSubTypes); // NON-NLS
 
         DBLock.lock();

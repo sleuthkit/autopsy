@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.eventbus.Subscribe;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,9 +62,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
@@ -375,6 +374,7 @@ public class AggregateEventNode extends StackPane {
     /**
      * @param descrVis the level of description that should be displayed
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = aggEvent.getEventIDs().size();
@@ -558,16 +558,18 @@ public class AggregateEventNode extends StackPane {
         }
     }
 
-    @Subscribe
-    synchronized void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
+    synchronized boolean handleEventsTagged(TimeLineEvent taggedEvent) {
+        AggregateEvent withTagsAdded = aggEvent.withTagAdded(taggedEvent);
         if (withTagsAdded != aggEvent) {
             aggEvent = withTagsAdded;
             tooltip = null;
             Platform.runLater(() -> {
+                setDescriptionVisibility(descrVis);
                 tagIV.setManaged(true);
                 tagIV.setVisible(true);
             });
+            return true;
         }
+        return false;
     }
 }

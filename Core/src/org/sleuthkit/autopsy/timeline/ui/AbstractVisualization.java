@@ -238,7 +238,6 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     @Override
     synchronized public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
-
         this.filteredEvents.zoomParamtersProperty().addListener(invalidationListener);
         update();
     }
