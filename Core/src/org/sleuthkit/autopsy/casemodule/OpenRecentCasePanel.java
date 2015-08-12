@@ -198,10 +198,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             try {
                 if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
                     JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(this.getClass(),
+                            NbBundle.getMessage(OpenRecentCasePanel.class,
                                     "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
                                     caseName),
-                            NbBundle.getMessage(this.getClass(),
+                            NbBundle.getMessage(OpenRecentCasePanel.class,
                                     "OpenRecentCasePanel.openCase.msgDlg.err"),
                             JOptionPane.ERROR_MESSAGE);
                     RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
