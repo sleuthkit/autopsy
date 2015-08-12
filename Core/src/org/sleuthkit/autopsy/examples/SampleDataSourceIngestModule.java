@@ -78,7 +78,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
             // Get count of files with .doc extension.
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%.doc");
-            
+
             long fileCount = 0;
             for (AbstractFile docFile : docFiles) {
                 if (!skipKnownFiles || docFile.getKnown() != TskData.FileKnown.KNOWN) {

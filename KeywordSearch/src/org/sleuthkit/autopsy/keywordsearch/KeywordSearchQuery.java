@@ -21,80 +21,84 @@ package org.sleuthkit.autopsy.keywordsearch;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Interface for a search query.  Implemented by various
- * engines or methods of using the same engine.   One of these
- * is created for each query. 
+ * Interface for a search query. Implemented by various engines or methods of
+ * using the same engine. One of these is created for each query.
  */
 interface KeywordSearchQuery {
-    
+
     KeywordList getKeywordList();
 
     /**
      * validate the query pre execution
+     *
      * @return true if the query passed validation
      */
     public boolean validate();
 
-    
     /**
-     * execute query and return results without publishing them
-     * return results for all matching terms
-     * @throws NoOpenCoreException if query failed due to server error, this could be a notification to stop processing
-     * @return 
+     * execute query and return results without publishing them return results
+     * for all matching terms
+     *
+     * @throws NoOpenCoreException if query failed due to server error, this
+     *                             could be a notification to stop processing
+     * @return
      */
     public QueryResults performQuery() throws NoOpenCoreException;
-    
-    
+
     /**
-     * Set an optional filter to narrow down the search
-     * Adding multiple filters ANDs them together.
-     * For OR, add multiple ids to a single filter
+     * Set an optional filter to narrow down the search Adding multiple filters
+     * ANDs them together. For OR, add multiple ids to a single filter
+     *
      * @param filter filter to set on the query
      */
     public void addFilter(KeywordQueryFilter filter);
-    
+
     /**
      * Set an optional SOLR field to narrow down the search
+     *
      * @param field field to set on the query
      */
     public void setField(String field);
-    
+
     /**
-     * Modify the query string to be searched as a substring instead of a whole word
-     * @param isSubstring 
+     * Modify the query string to be searched as a substring instead of a whole
+     * word
+     *
+     * @param isSubstring
      */
     public void setSubstringQuery();
-    
+
     /**
      * escape the query string and use the escaped string in the query
      */
     public void escape();
-    
+
     /**
-     * 
+     *
      * @return true if query was escaped
      */
     public boolean isEscaped();
-    
+
     /**
-     * 
+     *
      * @return true if query is a literal query (non regex)
      */
     public boolean isLiteral();
-    
+
     /**
      * return original keyword/query string
+     *
      * @return the query String supplied originally
      */
     public String getQueryString();
-    
+
     /**
      * return escaped keyword/query string if escaping was done
+     *
      * @return the escaped query string, or original string if no escaping done
      */
     public String getEscapedQueryString();
-        
+
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName);
 
 }
-

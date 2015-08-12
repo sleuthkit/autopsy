@@ -93,8 +93,10 @@ public interface EventType {
      */
     public List<? extends EventType> getSubTypes();
 
-    /* return the name of the icon file for this type, it will be resolved in
-     * the org/sleuthkit/autopsy/timeline/images */
+    /*
+     * return the name of the icon file for this type, it will be resolved in
+     * the org/sleuthkit/autopsy/timeline/images
+     */
     public String getIconBase();
 
     public String getDisplayName();

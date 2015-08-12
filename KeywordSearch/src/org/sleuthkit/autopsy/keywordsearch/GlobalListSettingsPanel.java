@@ -56,7 +56,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             @Override
             public void actionPerformed(ActionEvent e) {
                 final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
-                                                                "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
+                        "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
                 KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
                 List<Keyword> keywords = currentKeywordList.getKeywords();

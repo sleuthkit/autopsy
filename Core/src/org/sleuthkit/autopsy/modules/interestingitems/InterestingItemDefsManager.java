@@ -73,7 +73,8 @@ final class InterestingItemDefsManager extends Observable {
     }
 
     /**
-     * Gets the set of chars deemed to be illegal in file path (SleuthKit/Windows).
+     * Gets the set of chars deemed to be illegal in file path
+     * (SleuthKit/Windows).
      *
      * @return A list of characters.
      */
@@ -85,7 +86,7 @@ final class InterestingItemDefsManager extends Observable {
      * Gets a copy of the current interesting files set definitions.
      *
      * @return A map of interesting files set names to interesting file sets,
-     * possibly empty.
+     *         possibly empty.
      */
     synchronized Map<String, FilesSet> getInterestingFilesSets() {
         return FilesSetXML.readDefinitionsFile(DEFAULT_FILE_SET_DEFS_PATH);
@@ -96,7 +97,7 @@ final class InterestingItemDefsManager extends Observable {
      * previous definitions.
      *
      * @param filesSets A mapping of interesting files set names to files sets,
-     * used to enforce unique files set names.
+     *                  used to enforce unique files set names.
      */
     synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets) {
         FilesSetXML.writeDefinitionsFile(DEFAULT_FILE_SET_DEFS_PATH, filesSets);
@@ -154,6 +155,7 @@ final class InterestingItemDefsManager extends Observable {
          * Reads interesting file set definitions from an XML file.
          *
          * @param filePath Path of the set definitions file as a string.
+         *
          * @return The set definitions in a map of set names to sets.
          */
         // Note: This method takes a file path to support the possibility of 
@@ -200,9 +202,9 @@ final class InterestingItemDefsManager extends Observable {
         /**
          * Reads in an interesting files set.
          *
-         * @param setElem An interesting files set XML element
+         * @param setElem   An interesting files set XML element
          * @param filesSets A collection to which the set is to be added.
-         * @param filePath The source file, used for error reporting.
+         * @param filePath  The source file, used for error reporting.
          */
         private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) {
             // The file set must have a unique name.
@@ -277,10 +279,11 @@ final class InterestingItemDefsManager extends Observable {
          * XML element.
          *
          * @param filePath The path of the definitions file.
-         * @param setName The name of the files set.
-         * @param elem The file name rule XML element.
+         * @param setName  The name of the files set.
+         * @param elem     The file name rule XML element.
+         *
          * @return A file name rule, or null if there is an error (the error is
-         * logged).
+         *         logged).
          */
         private static FilesSet.Rule readFileNameRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -336,8 +339,9 @@ final class InterestingItemDefsManager extends Observable {
          * data in an XML element.
          *
          * @param elem The file name extension rule XML element.
+         *
          * @return A file name extension rule, or null if there is an error (the
-         * error is logged).
+         *         error is logged).
          */
         private static FilesSet.Rule readFileExtensionRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -398,6 +402,7 @@ final class InterestingItemDefsManager extends Observable {
          * Read a rule name attribute from a rule element.
          *
          * @param elem A rule element.
+         *
          * @return A rule name.
          */
         private static String readRuleName(Element elem) {
@@ -410,6 +415,7 @@ final class InterestingItemDefsManager extends Observable {
          * Attempts to compile a regular expression.
          *
          * @param regex The regular expression.
+         *
          * @return A pattern object, or null if the compilation fails.
          */
         private static Pattern compileRegex(String regex) {
@@ -426,6 +432,7 @@ final class InterestingItemDefsManager extends Observable {
          * rule from data in an XML element.
          *
          * @param ruleElement The XML element.
+         *
          * @return The meta-type filter, or null if there is an error (logged).
          */
         private static FilesSet.Rule.MetaTypeFilter readMetaTypeFilter(Element ruleElement) {
@@ -459,6 +466,7 @@ final class InterestingItemDefsManager extends Observable {
          * from data in an XML element.
          *
          * @param ruleElement The XML element.
+         *
          * @return The path filter, or null if there is an error (logged).
          */
         private static FilesSet.Rule.ParentPathFilter readPathFilter(Element ruleElement) {
@@ -483,6 +491,7 @@ final class InterestingItemDefsManager extends Observable {
          * logging any errors.
          *
          * @param filePath Path of the set definitions file as a string.
+         *
          * @returns True if the definitions are written to disk, false
          * otherwise.
          */
@@ -518,13 +527,12 @@ final class InterestingItemDefsManager extends Observable {
                             ruleElement = doc.createElement(FilesSetXML.EXTENSION_RULE_TAG);
                         }
 
-                        
                         // Add the rule name attribute.
                         ruleElement.setAttribute(FilesSetXML.NAME_ATTR, rule.getName());
-                        
+
                         // Add the name filter regex attribute
                         ruleElement.setAttribute(FilesSetXML.REGEX_ATTR, Boolean.toString(nameFilter.isRegex()));
-                                                
+
                         // Add the type filter attribute.
                         FilesSet.Rule.MetaTypeFilter typeFilter = rule.getMetaTypeFilter();
                         switch (typeFilter.getMetaType()) {

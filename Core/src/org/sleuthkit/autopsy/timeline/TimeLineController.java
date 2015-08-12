@@ -66,6 +66,10 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -80,7 +84,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Controller in the MVC design along with model = {@link FilteredEventsModel}
+/**
+ * Controller in the MVC design along with model = {@link FilteredEventsModel}
  * and views = {@link TimeLineView}. Forwards interpreted user gestures form
  * views to model. Provides model to view. Is entry point for timeline module.
  *
@@ -161,10 +166,8 @@ public class TimeLineController {
     @GuardedBy("this")
     private boolean listeningToAutopsy = false;
 
-    private final PropertyChangeListener caseListener;
-
+    private final PropertyChangeListener caseListener = new AutopsyCaseListener();
     private final PropertyChangeListener ingestJobListener = new AutopsyIngestJobListener();
-
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
@@ -238,11 +241,11 @@ public class TimeLineController {
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
-        //persistent listener instances
-        caseListener = new AutopsyCaseListener();
     }
 
-    /** @return a shared events model */
+    /**
+     * @return a shared events model
+     */
     public FilteredEventsModel getEventsModel() {
         return filteredEvents;
     }
@@ -260,8 +263,8 @@ public class TimeLineController {
      * rebuld the repo.
      *
      * @return False if the repo was not rebuilt because of an error or because
-     *         the user aborted after prompt about ingest running.
-     *         True if the repo was rebuilt.
+     *         the user aborted after prompt about ingest running. True if the
+     *         repo was rebuilt.
      */
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
@@ -330,8 +333,9 @@ public class TimeLineController {
         }
     }
 
-    /** show the timeline window and prompt for rebuilding database if
-     * necessary. */
+    /**
+     * show the timeline window and prompt for rebuilding database if necessary.
+     */
     synchronized void openTimeLine() {
 
         // listen for case changes (specifically images being added, and case changes).
@@ -376,8 +380,10 @@ public class TimeLineController {
                 }
             }
 
-            /* if the repo was not rebuilt show the UI. If the repo was rebuild
-             * it will be displayed as part of that process */
+            /*
+             * if the repo was not rebuilt show the UI. If the repo was rebuild
+             * it will be displayed as part of that process
+             */
             if (repoRebuilt == false) {
                 showWindow();
                 showFullRange();
@@ -786,6 +792,18 @@ public class TimeLineController {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((BlackBoardArtifactTagAddedEvent) evt);
+                    break;
+                case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
+                    break;
+                case CONTENT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((ContentTagAddedEvent) evt);
+                    break;
+                case CONTENT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
+                    break;
                 case DATA_SOURCE_ADDED:
 //                    Content content = (Content) evt.getNewValue();
                     //if we are doing incremental updates, drop this
@@ -798,7 +816,7 @@ public class TimeLineController {
                     });
                     break;
                 case CURRENT_CASE:
-                    OpenTimelineAction.invalidateController();
+                   OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }

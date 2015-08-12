@@ -63,8 +63,8 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         initComponents();
         logoLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(AboutWindowPanel.class,
-                                                                 "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
-                                                                                                 getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
+                "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
+                    getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild(), Version.getBuildType().toString()}));
         description.addHyperlinkListener(this);
         copyright.addHyperlinkListener(this);
         copyright.setBackground(getBackground());
@@ -73,7 +73,6 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         }
 
     }
-
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -228,30 +227,30 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
     private static String getOperatingSystemValue() {
         return NbBundle.getMessage(AboutWindowPanel.class, "Format_OperatingSystem_Value",
-                                   System.getProperty("os.name", //NON-NLS
-                                                      NbBundle.getMessage(AboutWindowPanel.class,
-                                                                          "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("os.version", //NON-NLS
-                                                      NbBundle.getMessage(AboutWindowPanel.class,
-                                                                          "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("os.arch", //NON-NLS
-                                                      NbBundle.getMessage(AboutWindowPanel.class,
-                                                                          "ProductInformationPanel.propertyUnknown.text")));
+                System.getProperty("os.name", //NON-NLS
+                        NbBundle.getMessage(AboutWindowPanel.class,
+                                "ProductInformationPanel.propertyUnknown.text")),
+                System.getProperty("os.version", //NON-NLS
+                        NbBundle.getMessage(AboutWindowPanel.class,
+                                "ProductInformationPanel.propertyUnknown.text")),
+                System.getProperty("os.arch", //NON-NLS
+                        NbBundle.getMessage(AboutWindowPanel.class,
+                                "ProductInformationPanel.propertyUnknown.text")));
     }
 
     private static String getJavaValue() {
         return System.getProperty("java.version", //NON-NLS
-                                  NbBundle.getMessage(AboutWindowPanel.class,
-                                                      "ProductInformationPanel.propertyUnknown.text"));
+                NbBundle.getMessage(AboutWindowPanel.class,
+                        "ProductInformationPanel.propertyUnknown.text"));
     }
 
     private static String getVMValue() {
         return NbBundle.getMessage(AboutWindowPanel.class,
-                                   "ProductInformationPanel.getVMValue.text",
-                                   System.getProperty("java.vm.name", //NON-NLS
-                                                      NbBundle.getMessage(AboutWindowPanel.class,
-                                                                          "ProductInformationPanel.propertyUnknown.text")),
-                                   System.getProperty("java.vm.version", "")); //NON-NLS
+                "ProductInformationPanel.getVMValue.text",
+                System.getProperty("java.vm.name", //NON-NLS
+                        NbBundle.getMessage(AboutWindowPanel.class,
+                                "ProductInformationPanel.propertyUnknown.text")),
+                System.getProperty("java.vm.version", "")); //NON-NLS
     }
 
     private static String getSystemLocaleValue() {
@@ -265,7 +264,7 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
     private static String getEncodingValue() {
         return System.getProperty("file.encoding", //NON-NLS
-                                  NbBundle.getMessage(AboutWindowPanel.class, "ProductInformationPanel.propertyUnknown.text"));
+                NbBundle.getMessage(AboutWindowPanel.class, "ProductInformationPanel.propertyUnknown.text"));
     }
 
     public void setCopyright(String text) {

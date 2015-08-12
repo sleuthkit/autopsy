@@ -79,7 +79,9 @@ abstract class EvaluatableObject {
      *
      * @param item
      * @param attrType
+     *
      * @return
+     *
      * @throws TskCoreException
      */
     public List<BlackboardArtifact> findArtifactsBySubstring(StringObjectPropertyType item,
@@ -152,8 +154,10 @@ abstract class EvaluatableObject {
      * Compare a CybOX String Object with a given string.
      *
      * @param stringObj The CybOX String Object
-     * @param strField The string to compare against
+     * @param strField  The string to compare against
+     *
      * @return true if strField is a match for the CybOX object
+     *
      * @throws TskCoreException
      */
     public static boolean compareStringObject(StringObjectPropertyType stringObj, String strField)
@@ -172,11 +176,13 @@ abstract class EvaluatableObject {
     /**
      * Compare a string with CybOX conditions to a given string.
      *
-     * @param valueStr The CybOX string
-     * @param condition EQUALS, CONTAINS, STARTS_WITH, etc
+     * @param valueStr       The CybOX string
+     * @param condition      EQUALS, CONTAINS, STARTS_WITH, etc
      * @param applyCondition ANY, ALL, NONE
-     * @param strField The string to compare against
+     * @param strField       The string to compare against
+     *
      * @return true if strField is a match for the CybOX valueStr and conditions
+     *
      * @throws TskCoreException
      */
     public static boolean compareStringObject(String valueStr, ConditionTypeEnum condition,

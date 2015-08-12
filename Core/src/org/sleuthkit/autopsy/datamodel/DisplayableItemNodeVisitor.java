@@ -24,64 +24,104 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 
 /**
- * Visitor pattern that goes over all nodes in the directory tree.
- * This includes extracted content, reports, and the data sources area. 
+ * Visitor pattern that goes over all nodes in the directory tree. This includes
+ * extracted content, reports, and the data sources area.
  */
 public interface DisplayableItemNodeVisitor<T> {
 
-    /* Data Sources Area */
+    /*
+     * Data Sources Area
+     */
     T visit(DataSourcesNode in);
+
     T visit(LayoutFileNode lfn);
+
     T visit(LocalFileNode dfn);
+
     T visit(VirtualDirectoryNode ldn);
+
     T visit(DirectoryNode dn);
+
     T visit(FileNode fn);
+
     T visit(ImageNode in);
+
     T visit(VolumeNode vn);
 
-    /* Views Area */
+    /*
+     * Views Area
+     */
     T visit(ViewsNode vn);
-    T visit(FileTypeNode fsfn);
-    T visit(DeletedContentNode dcn);
-    T visit(DeletedContentsNode dcn);
-    T visit(FileSizeRootNode fsrn);
-    T visit(FileSizeNode fsn);
-    T visit(FileTypesNode sfn);
-    T visit(RecentFilesNode rfn);
-    T visit(RecentFilesFilterNode rffn);
-    
-    
-    
-    /* Extracted Results Area */
-    T visit(ResultsNode rn);
-    T visit(BlackboardArtifactNode ban);
-    T visit(ExtractedContent.TypeNode atn);
-    T visit(ExtractedContent.RootNode ecn);
-    T visit(KeywordHits.RootNode khrn);
-    T visit(KeywordHits.ListNode khsn);
-    T visit(KeywordHits.TermNode khmln);
-    T visit(HashsetHits.RootNode hhrn);
-    T visit(HashsetHits.HashsetNameNode hhsn);
-    T visit(EmailExtracted.RootNode eern);
-    T visit(EmailExtracted.AccountNode eean);
-    T visit(EmailExtracted.FolderNode eefn);
-    T visit(InterestingHits.RootNode ihrn);
-    T visit(InterestingHits.SetNameNode ihsn);
-    
-    
-    /* Tags */
-    T visit(Tags.RootNode node);
-    T visit(Tags.TagNameNode node);
-    T visit(Tags.ContentTagTypeNode node);    
-    T visit(ContentTagNode node);
-    T visit(Tags.BlackboardArtifactTagTypeNode node);
-    T visit(BlackboardArtifactTagNode node);    
 
-   
-    /* Reports */
+    T visit(FileTypeNode fsfn);
+
+    T visit(DeletedContentNode dcn);
+
+    T visit(DeletedContentsNode dcn);
+
+    T visit(FileSizeRootNode fsrn);
+
+    T visit(FileSizeNode fsn);
+
+    T visit(FileTypesNode sfn);
+
+    T visit(RecentFilesNode rfn);
+
+    T visit(RecentFilesFilterNode rffn);
+
+    /*
+     * Extracted Results Area
+     */
+    T visit(ResultsNode rn);
+
+    T visit(BlackboardArtifactNode ban);
+
+    T visit(ExtractedContent.TypeNode atn);
+
+    T visit(ExtractedContent.RootNode ecn);
+
+    T visit(KeywordHits.RootNode khrn);
+
+    T visit(KeywordHits.ListNode khsn);
+
+    T visit(KeywordHits.TermNode khmln);
+
+    T visit(HashsetHits.RootNode hhrn);
+
+    T visit(HashsetHits.HashsetNameNode hhsn);
+
+    T visit(EmailExtracted.RootNode eern);
+
+    T visit(EmailExtracted.AccountNode eean);
+
+    T visit(EmailExtracted.FolderNode eefn);
+
+    T visit(InterestingHits.RootNode ihrn);
+
+    T visit(InterestingHits.SetNameNode ihsn);
+
+    /*
+     * Tags
+     */
+    T visit(Tags.RootNode node);
+
+    T visit(Tags.TagNameNode node);
+
+    T visit(Tags.ContentTagTypeNode node);
+
+    T visit(ContentTagNode node);
+
+    T visit(Tags.BlackboardArtifactTagTypeNode node);
+
+    T visit(BlackboardArtifactTagNode node);
+
+    /*
+     * Reports
+     */
     T visit(Reports.ReportsListNode reportsNode);
+
     T visit(Reports.ReportNode reportNode);
-        
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -94,6 +134,7 @@ public interface DisplayableItemNodeVisitor<T> {
          * Default visit for all types
          *
          * @param c
+         *
          * @return
          */
         protected abstract T defaultVisit(DisplayableItemNode c);
@@ -212,8 +253,8 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(HashsetHits.HashsetNameNode hhsn) {
             return defaultVisit(hhsn);
         }
-        
-         @Override
+
+        @Override
         public T visit(InterestingHits.RootNode ihrn) {
             return defaultVisit(ihrn);
         }
@@ -222,7 +263,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(InterestingHits.SetNameNode ihsn) {
             return defaultVisit(ihsn);
         }
-        
+
         @Override
         public T visit(EmailExtracted.RootNode eern) {
             return defaultVisit(eern);
@@ -272,7 +313,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ContentTagNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(Tags.BlackboardArtifactTagTypeNode node) {
             return defaultVisit(node);

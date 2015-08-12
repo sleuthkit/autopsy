@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import java.beans.PropertyChangeEvent;
@@ -32,11 +31,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 /**
  * Menu item tracks the DataResult windows
  */
- class DataResultMenu extends CallableSystemAction implements Presenter.Menu, PropertyChangeListener {
+class DataResultMenu extends CallableSystemAction implements Presenter.Menu, PropertyChangeListener {
 
     JMenu menu = new JMenu(NbBundle.getMessage(this.getClass(), "DataResultMenu.menu.dataResWin.text"));
 
-    DataResultMenu(){
+    DataResultMenu() {
     }
 
     @Override
@@ -69,7 +68,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
     @Override
     public void performAction() {
-        
+
     }
 
     @Override

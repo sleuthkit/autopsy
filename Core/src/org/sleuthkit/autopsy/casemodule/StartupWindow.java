@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
@@ -34,7 +32,7 @@ import org.openide.windows.WindowManager;
 /**
  * The default implementation of the Autopsy startup window
  */
-@ServiceProvider(service=StartupWindowInterface.class)
+@ServiceProvider(service = StartupWindowInterface.class)
 public final class StartupWindow extends JDialog implements StartupWindowInterface {
 
     private static StartupWindow instance;
@@ -46,7 +44,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         init();
     }
-
 
     /**
      * Shows the startup window.
@@ -62,7 +59,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        
+
         welcomeWindow = new CueBannerPanel();
 
         // add the command to close the window to the button on the Volume Detail Panel
@@ -79,7 +76,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         setResizable(false);
 
     }
-    
+
     @Override
     public void open() {
         welcomeWindow.refresh();

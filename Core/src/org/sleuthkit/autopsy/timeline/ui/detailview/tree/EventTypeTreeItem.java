@@ -28,7 +28,9 @@ import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 
 class EventTypeTreeItem extends NavTreeItem {
 
-    /** maps a description to the child item of this item with that description */
+    /**
+     * maps a description to the child item of this item with that description
+     */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
 
     private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
@@ -42,7 +44,8 @@ class EventTypeTreeItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    /** Recursive method to add a grouping at a given path.
+    /**
+     * Recursive method to add a grouping at a given path.
      *
      * @param path Full path (or subset not yet added) to add
      * @param g    Group to add

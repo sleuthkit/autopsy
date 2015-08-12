@@ -72,11 +72,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
      * Right click action for this node
      *
      * @param popup
+     *
      * @return
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actionsList = new ArrayList<>();        
+        List<Action> actionsList = new ArrayList<>();
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
             actionsList.add(null); // creates a menu separator
@@ -91,7 +92,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "FileNode.getActions.searchFilesSameMD5.text"), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());        
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
     }
 

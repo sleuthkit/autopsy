@@ -34,12 +34,14 @@ import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
  *
  * @author jantonius
  */
- class ChangeViewAction extends AbstractAction implements Presenter.Popup {
+class ChangeViewAction extends AbstractAction implements Presenter.Popup {
 
     private int type; // type 1 = hex view, 2 = string view
     private Node node;
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     public ChangeViewAction(String title, int viewType, Node node) {
         super(title);
         this.type = viewType;
@@ -48,11 +50,11 @@ import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
 
     /**
      * The action that this class performs. The action is divided into 2 type.
-     * First if the the type is 1, it will change the active output top component
-     * to "Hex View". Another one is if the type is 2, it will change the active
-     * top component to "String View."
+     * First if the the type is 1, it will change the active output top
+     * component to "Hex View". Another one is if the type is 2, it will change
+     * the active top component to "String View."
      *
-     * @param e  the action event
+     * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -89,7 +91,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
     /**
      * To create the sub-menu for "Hex View" and "String View".
      *
-     * @return menuItem  the menu items
+     * @return menuItem the menu items
      */
     @Override
     public JMenuItem getPopupPresenter() {

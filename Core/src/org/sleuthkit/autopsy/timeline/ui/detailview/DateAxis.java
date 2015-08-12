@@ -109,8 +109,10 @@ final class DateAxis extends Axis<DateTime> {
         }
     };
 
-    /** Default constructor. By default the lower and upper bound are calculated
-     * by the data. */
+    /**
+     * Default constructor. By default the lower and upper bound are calculated
+     * by the data.
+     */
     DateAxis() {
         setAutoRanging(false);
     }

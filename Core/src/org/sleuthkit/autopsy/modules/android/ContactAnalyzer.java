@@ -40,7 +40,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Locates a variety of different contacts databases, parses them, and populates the blackboard. 
+ * Locates a variety of different contacts databases, parses them, and populates
+ * the blackboard.
  */
 class ContactAnalyzer {
 
@@ -73,8 +74,9 @@ class ContactAnalyzer {
     /**
      *
      * @param databasePath
-     * @param fId Will create artifact from a database given by the path The
-     * fileId will be the Abstract file associated with the artifacts
+     * @param fId          Will create artifact from a database given by the
+     *                     path The fileId will be the Abstract file associated
+     *                     with the artifacts
      */
     private static void findContactsInDB(String databasePath, AbstractFile f) {
         Connection connection = null;

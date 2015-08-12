@@ -30,14 +30,16 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Searches by MD5 hash to find all files with the same hash, and
- * subsequently the same content.
+ * Searches by MD5 hash to find all files with the same hash, and subsequently
+ * the same content.
  */
- class HashDbSearcher {
-    
+class HashDbSearcher {
+
     /**
      * Given a string hash value, find all files with that hash.
-     * @param md5Hash   hash value to match files with
+     *
+     * @param md5Hash hash value to match files with
+     *
      * @return a List of all FsContent with the given hash
      */
     static List<AbstractFile> findFilesByMd5(String md5Hash) {
@@ -45,64 +47,71 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.findFilesByMd5(md5Hash);
     }
-    
+
     /**
-     * Given a list of string hash values, returns a map of md5 hashes
-     * to the list of files hit.
-     * @param md5Hash   hash values to match files with
+     * Given a list of string hash values, returns a map of md5 hashes to the
+     * list of files hit.
+     *
+     * @param md5Hash hash values to match files with
+     *
      * @return a Map of md5 hashes mapped to the list of files hit
      */
     static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash) {
         Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
-        for(String md5 : md5Hash) {
+        for (String md5 : md5Hash) {
             List<AbstractFile> files = findFilesByMd5(md5);
-            if(!files.isEmpty()) {
+            if (!files.isEmpty()) {
                 map.put(md5, files);
             }
         }
         return map;
     }
+
     // Same as above, but with a given ProgressHandle to accumulate and StringWorker to check if cancelled
-    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker<Object,Void> worker) {
+
+    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker<Object, Void> worker) {
         Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
-        if(!worker.isCancelled()) {
+        if (!worker.isCancelled()) {
             progress.switchToDeterminate(md5Hash.size());
             int size = 0;
-            for(String md5 : md5Hash) {
-                if(worker.isCancelled()) {
+            for (String md5 : md5Hash) {
+                if (worker.isCancelled()) {
                     break;
                 }
                 List<AbstractFile> files = findFilesByMd5(md5);
-                if(!files.isEmpty()) {
+                if (!files.isEmpty()) {
                     map.put(md5, files);
                 }
                 size++;
-                if(!worker.isCancelled()) {
+                if (!worker.isCancelled()) {
                     progress.progress(size);
                 }
             }
         }
         return map;
     }
-    
+
     /**
-     * Given a file, returns a list of all files with the same
-     * hash as the given file.
-     * @param file  file with which to match hash values with
+     * Given a file, returns a list of all files with the same hash as the given
+     * file.
+     *
+     * @param file file with which to match hash values with
+     *
      * @return a List of all FsContent with the same hash as file
      */
     static List<AbstractFile> findFiles(FsContent file) {
         String md5;
-        if((md5 = file.getMd5Hash()) != null) {
+        if ((md5 = file.getMd5Hash()) != null) {
             return findFilesByMd5(md5);
         } else {
             return Collections.<AbstractFile>emptyList();
         }
     }
-    
+
     /**
-     * Checks if the search feature is ready/enabled. Does so by checking
-     * if there are no Fs files in tsk_files that have and empty md5.
+     * Checks if the search feature is ready/enabled. Does so by checking if
+     * there are no Fs files in tsk_files that have and empty md5.
+     *
      * @return true if the search feature is ready.
      */
     static boolean allFilesMd5Hashed() {
@@ -110,10 +119,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
     }
-    
+
     /**
      * Counts the number of FsContent in the database that have an MD5
-     * @return the number of files with an MD5 
+     *
+     * @return the number of files with an MD5
      */
     static int countFilesMd5Hashed() {
         final Case currentCase = Case.getCurrentCase();

@@ -56,14 +56,16 @@ public class DataSourcesNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
 
-    /* Custom Keys implementation that listens for new data sources being added. */
+    /*
+     * Custom Keys implementation that listens for new data sources being added.
+     */
     // @@@ This can become private once DirectoryTree doesn't want to refresh the entire tree
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
-        
+
         public DataSourcesNodeChildren() {
             super();
             this.currentKeys = new ArrayList<>();
@@ -84,14 +86,14 @@ public class DataSourcesNode extends DisplayableItemNode {
             Case.addPropertyChangeListener(pcl);
             reloadKeys();
         }
-        
+
         @Override
         protected void removeNotify() {
             Case.removePropertyChangeListener(pcl);
             currentKeys.clear();
             setKeys(Collections.<Content>emptySet());
         }
-        
+
         private void reloadKeys() {
             try {
                 currentKeys = Case.getCurrentCase().getDataSources();
@@ -101,19 +103,18 @@ public class DataSourcesNode extends DisplayableItemNode {
                 setKeys(Collections.<Content>emptySet());
             }
         }
-        
+
         /**
-        * Refresh all content keys
-        * This creates new nodes of keys have changed.
-        */
+         * Refresh all content keys This creates new nodes of keys have changed.
+         */
        // I think this goes away once we get more listeners in place
-       // It was added as an interim stage 
-       @Deprecated
-       public void refreshContentKeys() {
-           for (Content key : currentKeys) {
-               refreshKey(key);
-           }
-       }
+        // It was added as an interim stage 
+        @Deprecated
+        public void refreshContentKeys() {
+            for (Content key : currentKeys) {
+                refreshKey(key);
+            }
+        }
     }
 
     @Override

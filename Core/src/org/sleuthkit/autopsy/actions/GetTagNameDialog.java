@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameDialog extends JDialog {
+
     private static final String TAG_ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagName tagName = null;
@@ -50,15 +51,15 @@ public class GetTagNameDialog extends JDialog {
     public static TagName doDialog() {
         GetTagNameDialog dialog = new GetTagNameDialog();
         return dialog.tagName;
-    }    
-    
+    }
+
     private GetTagNameDialog() {
-        super((JFrame)WindowManager.getDefault().getMainWindow(),
-              NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.createTag"),
-              true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
+                NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.createTag"),
+                true);
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
-        
+
         // Set up the dialog to close when Esc is pressed.
         String cancelName = NbBundle.getMessage(this.getClass(), "GetTagNameDialog.cancelName");
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -70,52 +71,51 @@ public class GetTagNameDialog extends JDialog {
                 dispose();
             }
         });
-                                
+
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();        
-        }
-        catch (TskCoreException ex) {
+            currentTagNames = tagsManager.getAllTagNames();
+        } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-        }         
+        }
         if (null != currentTagNames) {
             for (TagName name : currentTagNames) {
                 this.tagNames.put(name.getDisplayName(), name);
-            }                    
-        }
-        else {
+            }
+        } else {
             currentTagNames = new ArrayList<>();
         }
-        
+
         // Populate the tag names table.
         tagsTable.setModel(new TagsTableModel(currentTagNames));
         tagsTable.setTableHeader(null);
         tagsTable.setCellSelectionEnabled(false);
         tagsTable.setFocusable(false);
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
-                
+
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());        
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
-    
+
     private boolean containsIllegalCharacters(String content) {
-        return (content.contains("\\")|| 
-                content.contains(":") || 
-                content.contains("*") ||
-                content.contains("?") || 
-                content.contains("\"")|| 
-                content.contains("<") ||
-                content.contains(">") || 
-                content.contains("|"));
+        return (content.contains("\\")
+                || content.contains(":")
+                || content.contains("*")
+                || content.contains("?")
+                || content.contains("\"")
+                || content.contains("<")
+                || content.contains(">")
+                || content.contains("|"));
     }
 
-    private class TagsTableModel extends AbstractTableModel {        
+    private class TagsTableModel extends AbstractTableModel {
+
         private final ArrayList<TagName> tagNames = new ArrayList<>();
-        
+
         TagsTableModel(List<TagName> tagNames) {
             for (TagName tagName : tagNames) {
                 this.tagNames.add(tagName);
@@ -142,7 +142,7 @@ public class GetTagNameDialog extends JDialog {
             return tagNames.get(rowIndex).getDisplayName();
         }
     }
-            
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -280,46 +280,41 @@ public class GetTagNameDialog extends JDialog {
         String tagDisplayName = tagNameField.getText();
         if (tagDisplayName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "GetTagNameDialog.mustSupplyTtagName.msg"),
-                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
-                                          JOptionPane.ERROR_MESSAGE);
-        } 
-        else if (containsIllegalCharacters(tagDisplayName)) {
+                    NbBundle.getMessage(this.getClass(),
+                            "GetTagNameDialog.mustSupplyTtagName.msg"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
+                    JOptionPane.ERROR_MESSAGE);
+        } else if (containsIllegalCharacters(tagDisplayName)) {
             JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
-                                          NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
-                                          JOptionPane.ERROR_MESSAGE);
-        } 
-        else {
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
             tagName = tagNames.get(tagDisplayName);
             if (tagName == null) {
                 try {
                     tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
                     dispose();
-                }
-                catch (TskCoreException ex) {
+                } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "GetTagNameDialog.unableToAddTagNameToCase.msg",
-                                                                      tagDisplayName),
-                                                  NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(this.getClass(),
+                                    "GetTagNameDialog.unableToAddTagNameToCase.msg",
+                                    tagDisplayName),
+                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
+                            JOptionPane.ERROR_MESSAGE);
                     tagName = null;
-                }        
-                catch (TagsManager.TagNameAlreadyExistsException ex) {
+                } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "GetTagNameDialog.tagNameAlreadyDef.msg",
-                                                                      tagDisplayName),
-                                                  NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(this.getClass(),
+                                    "GetTagNameDialog.tagNameAlreadyDef.msg",
+                                    tagDisplayName),
+                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
+                            JOptionPane.ERROR_MESSAGE);
                     tagName = null;
                 }
-            }
-            else {
+            } else {
                 dispose();
             }
         }
@@ -349,4 +344,3 @@ public class GetTagNameDialog extends JDialog {
     // End of variables declaration//GEN-END:variables
 
 }
-

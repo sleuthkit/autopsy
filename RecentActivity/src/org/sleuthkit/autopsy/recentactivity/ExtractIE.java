@@ -357,8 +357,9 @@ class ExtractIE extends Extract {
     /**
      * Execute pasco on a single file that has been saved to disk.
      *
-     * @param indexFilePath Path to local index.dat file to analyze
+     * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
+     *
      * @return false on error
      */
     private boolean executePasco(String indexFilePath, String outputFileName) {
@@ -390,8 +391,8 @@ class ExtractIE extends Extract {
     /**
      * parse Pasco output and create artifacts
      *
-     * @param origFile Original index.dat file that was analyzed to get this
-     * output
+     * @param origFile            Original index.dat file that was analyzed to
+     *                            get this output
      * @param pascoOutputFileName name of pasco output file
      */
     private void parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
@@ -447,9 +448,9 @@ class ExtractIE extends Extract {
             String realurl = "";
             String domain = "";
 
-            /* We've seen two types of lines: 
-             * URL  http://XYZ.com ....
-             * URL  Visited: Joe@http://XYZ.com ....
+            /*
+             * We've seen two types of lines: URL http://XYZ.com .... URL
+             * Visited: Joe@http://XYZ.com ....
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);

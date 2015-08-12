@@ -96,12 +96,13 @@ class QueryResults {
      * artifact), i.e., if a keyword is found several times in the object, only
      * one artifact is created.
      *
-     * @param progress Can be null.
+     * @param progress    Can be null.
      * @param subProgress Can be null.
-     * @param worker The Swing worker that is writing the hits, needed to
-     * support cancellation.
+     * @param worker      The Swing worker that is writing the hits, needed to
+     *                    support cancellation.
      * @param notifyInbox Whether or not write a message to the ingest messages
-     * inbox.
+     *                    inbox.
+     *
      * @return The artifacts that were created.
      */
     Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
@@ -148,7 +149,7 @@ class QueryResults {
                     if (writeResult != null) {
                         newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getContent()); 
+                            writeSingleFileInboxMessage(writeResult, hit.getContent());
                         }
                     } else {
                         logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
@@ -168,19 +169,22 @@ class QueryResults {
 
     /**
      * Gets the first hit of the keyword.
+     *
      * @param keyword
-     * @return Collection<KeywordHit> containing KeywordHits with lowest SolrObjectID-ChunkID pairs.
+     *
+     * @return Collection<KeywordHit> containing KeywordHits with lowest
+     *         SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
 
         HashMap<Long, KeywordHit> hits = new HashMap<Long, KeywordHit>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
-        for(KeywordHit hit: getResults(keyword)) {
-            if(!hits.containsKey(hit.getSolrObjectId())) {
+        for (KeywordHit hit : getResults(keyword)) {
+            if (!hits.containsKey(hit.getSolrObjectId())) {
                 hits.put(hit.getSolrObjectId(), hit);
             } else {
-                if(hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
                     hits.put(hit.getSolrObjectId(), hit);
                 }
             }
@@ -232,10 +236,9 @@ class QueryResults {
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
         if (hitContent instanceof AbstractFile) {
-            AbstractFile hitFile = (AbstractFile)hitContent;
+            AbstractFile hitFile = (AbstractFile) hitContent;
             detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
-        }
-        else {
+        } else {
             detailsSb.append("<td>").append(hitContent.getName()).append("</td>"); //NON-NLS
         }
         detailsSb.append("</tr>"); //NON-NLS

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import java.util.Collection;
@@ -30,11 +29,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 
 /**
  * Populates the top-level menu with the list of DataExplorers.
- * 
+ *
  * @author jantonius
  */
- class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent{
-   DataExplorerDynamicMenu(){
+class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent {
+
+    DataExplorerDynamicMenu() {
     }
 
     @Override
@@ -43,25 +43,24 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 
         int totalItem = dataExplorers.size();
         JComponent[] comps = new JComponent[totalItem];
-        
-        
+
         int i = 0;
-        for(DataExplorer dx : dataExplorers){
-            if (! dx.hasMenuOpenAction())
+        for (DataExplorer dx : dataExplorers) {
+            if (!dx.hasMenuOpenAction()) {
                 continue;
+            }
             TopComponent explorerWin = dx.getTopComponent();
             JMenuItem item = new JMenuItem(explorerWin.getName());
             item.addActionListener(new OpenTopComponentAction(explorerWin));
 
-            if(!Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false){
+            if (!Case.existsCurrentCase() || Case.getCurrentCase().hasData() == false) {
                 item.setEnabled(false); // disable the menu when no case is opened
-            }
-            else{
+            } else {
                 item.setEnabled(true); // enable the menu if the case is opened or created
             }
 
             comps[i++] = item;
-        } 
+        }
 
         return comps;
     }

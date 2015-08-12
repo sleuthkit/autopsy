@@ -22,10 +22,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Contains Lists of commonly known and used file type extensions
- * and 'getters' to obtain them.
+ * Contains Lists of commonly known and used file type extensions and 'getters'
+ * to obtain them.
  */
 public class FileTypeExtensions {
+
     private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp"); //NON-NLS
     private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", //NON-NLS
             ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf"); //NON-NLS
@@ -37,32 +38,40 @@ public class FileTypeExtensions {
     private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx"); //NON-NLS
     private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf"); //NON-NLS
     private final static List<String> ARCHIVE_EXTENSIONS = Arrays.asList(".zip", ".rar", ".7zip", ".7z", ".arj", ".tar", ".gzip", ".bzip", ".bzip2", ".cab", ".jar", ".cpio", ".ar", ".gz", ".tgz"); //NON-NLS
-    
+
     public static List<String> getImageExtensions() {
         return IMAGE_EXTENSIONS;
     }
+
     public static List<String> getVideoExtensions() {
         return VIDEO_EXTENSIONS;
     }
+
     public static List<String> getAudioExtensions() {
         return AUDIO_EXTENSIONS;
     }
+
     public static List<String> getDocumentExtensions() {
         return DOCUMENT_EXTENSIONS;
     }
+
     public static List<String> getExecutableExtensions() {
         return EXECUTABLE_EXTENSIONS;
     }
+
     public static List<String> getTextExtensions() {
         return TEXT_EXTENSIONS;
     }
+
     public static List<String> getWebExtensions() {
         return WEB_EXTENSIONS;
     }
+
     public static List<String> getPDFExtensions() {
         return PDF_EXTENSIONS;
     }
-     public static List<String> getArchiveExtensions() {
+
+    public static List<String> getArchiveExtensions() {
         return ARCHIVE_EXTENSIONS;
     }
 }

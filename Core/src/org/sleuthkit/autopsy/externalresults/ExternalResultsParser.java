@@ -42,8 +42,9 @@ public interface ExternalResultsParser {
      * the input results representation.
      *
      * @return A collection of error messages, possibly empty. The error
-     * messages are already logged but are provided to allow the caller to
-     * provide additional user feedback via the Autopsy user interface.
+     *         messages are already logged but are provided to allow the caller
+     *         to provide additional user feedback via the Autopsy user
+     *         interface.
      */
     List<ErrorInfo> getErrorInfo();
 }

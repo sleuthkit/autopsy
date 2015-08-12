@@ -216,6 +216,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * UnsupportedOperationException.
      *
      * @param setting Per ingest job settings to initialize the panel.
+     *
      * @return An ingest job settings panel.
      */
     @Override
@@ -265,6 +266,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * this method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
+     *
      * @return A data source ingest module instance.
      */
     @Override
@@ -314,6 +316,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
+     *
      * @return A file ingest module instance.
      */
     @Override

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
@@ -40,11 +39,11 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * The action in this class is to clear the list of "Recent Cases".
- * The constructor is called when the autopsy is running.
- * All the method to create and modify the properties file are within this class
+ * The action in this class is to clear the list of "Recent Cases". The
+ * constructor is called when the autopsy is running. All the method to create
+ * and modify the properties file are within this class
  */
- final class RecentCases extends CallableSystemAction implements Presenter.Menu {
+final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
     static final int LENGTH = 6;
     static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
@@ -55,33 +54,35 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
     private Deque<RecentCase> recentCases; // newest case is last case
 
-
     /**
      * Gets the instance of the RecentCases singleton.
      *
-     * 
-     * @return INSTANCE  the RecentCases singleton
+     *
+     * @return INSTANCE the RecentCases singleton
      */
     static public RecentCases getInstance() {
         INSTANCE.refreshRecentCases();
         return INSTANCE;
     }
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     private RecentCases() {
-        
+
         for (int i = 0; i < LENGTH; i++) {
-            try{
-            if(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i)) == null)
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i), "");
-            if(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i)) == null)
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i), "");
-            }
-            catch(Exception e ){
-                
+            try {
+                if (ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i)) == null) {
+                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i), "");
+                }
+                if (ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i)) == null) {
+                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i), "");
+                }
+            } catch (Exception e) {
+
             }
         }
-        
+
         // Load recentCases from properties
         recentCases = new LinkedList<RecentCase>();
 
@@ -91,7 +92,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
                 recentCases.add(rc);
             }
         }
-        
+
         refreshRecentCases();
     }
 
@@ -113,19 +114,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     }
 
     private String getName(int i) {
-        try{
-        return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i));
-        }
-        catch(Exception e){
+        try {
+            return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i));
+        } catch (Exception e) {
             return null;
         }
     }
 
     private String getPath(int i) {
-        try{
-        return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i));
-        }
-        catch(Exception e){
+        try {
+            return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i));
+        } catch (Exception e) {
             return null;
         }
     }
@@ -146,29 +145,33 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private static final class RecentCase {
 
         String name, path;
-        
+
         /**
          * @param name The case name or "" if a blank placeholder case
-         * @param path A normalized path (via FileUtil.normalizePath(path)) or "" if a blank placeholder case
+         * @param path A normalized path (via FileUtil.normalizePath(path)) or
+         *             "" if a blank placeholder case
          */
         private RecentCase(String name, String path) {
             this.name = name;
             this.path = path;
         }
-        
+
         /**
-         * Used when creating RecentCases with external data. The path must be 
+         * Used when creating RecentCases with external data. The path must be
          * normalized so that duplicate cases always have the same path.
-         * @param name The case name.
+         *
+         * @param name       The case name.
          * @param unsafePath The (potentially un-normalized) case path.
+         *
          * @return The created RecentCase.s
          */
         static RecentCase createSafe(String name, String unsafePath) {
             return new RecentCase(name, FileUtil.normalizePath(unsafePath));
         }
-        
+
         /**
          * Does this case exist or was it manually deleted or moved?
+         *
          * @return true if the case exists, false otherwise
          */
         boolean exists() {
@@ -202,15 +205,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             return true;
         }
     }
-    
+
     /**
-     * Refresh the current list of cases, removing any cases that
-     * no longer exist.
+     * Refresh the current list of cases, removing any cases that no longer
+     * exist.
      */
     private void refreshRecentCases() {
         List<RecentCase> toDelete = new ArrayList<RecentCase>();
         for (RecentCase rc : recentCases) {
-            if(!rc.exists()) {
+            if (!rc.exists()) {
                 toDelete.add(rc);
             }
         }
@@ -239,7 +242,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * Gets a menu item that can present this action in a JMenu.
      *
-     * @return menuItem  the representation menu item for this action
+     * @return menuItem the representation menu item for this action
      */
     @Override
     public JMenuItem getMenuPresenter() {
@@ -249,7 +252,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * This action is used to clear all the recent cases menu options.
      *
-     * @param e  the action event
+     * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -268,20 +271,22 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private void addRecentCase(RecentCase rc) {
         // remove the case if it's already in the list
         recentCases.remove(rc);
-                
+
         // make space if it's needed
-        if (recentCases.size() == LENGTH) recentCases.remove();
+        if (recentCases.size() == LENGTH) {
+            recentCases.remove();
+        }
 
         recentCases.add(rc);
     }
 
     /**
      * Adds a recent case to the top of the list. If the case is already in the
-     * list, it will be removed before the new entry is added. 
+     * list, it will be removed before the new entry is added.
      *
-     * @param name  the name of the recent case to be added
-     * @param unsafePath  the (potentially un-normalized) path of the case
-     * config file
+     * @param name       the name of the recent case to be added
+     * @param unsafePath the (potentially un-normalized) path of the case config
+     *                   file
      */
     public void addRecentCase(String name, String unsafePath) {
         RecentCase rc = RecentCase.createSafe(name, unsafePath);
@@ -300,10 +305,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * This method is used to update the name and path of a RecentCase.
      *
-     * @param oldName  the old recent case name
-     * @param oldPath  the old recent case config file path
-     * @param newName  the new recent case name
-     * @param newPath  the new recent case config file path
+     * @param oldName the old recent case name
+     * @param oldPath the old recent case config file path
+     * @param newName the new recent case name
+     * @param newPath the new recent case config file path
+     *
      * @throws Exception
      */
     public void updateRecentCase(String oldName, String oldPath, String newName, String newPath) throws Exception {
@@ -327,24 +333,24 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * Gets the total number of recent cases
      *
-     * @return total  total number of recent cases
+     * @return total total number of recent cases
      */
     public int getTotalRecentCases() {
         return recentCases.size();
     }
 
     /**
-     * This method is used to remove the selected name and path of the RecentCase
+     * This method is used to remove the selected name and path of the
+     * RecentCase
      *
-     * @param name  the case name to be removed from the recent case
-     * @param path  the config file path to be removed from the recent case
+     * @param name the case name to be removed from the recent case
+     * @param path the config file path to be removed from the recent case
      */
     public void removeRecentCase(String name, String path) {
         RecentCase rc = RecentCase.createSafe(name, path);
 
         // remove all instances of the old recent case
         recentCases.removeAll(Arrays.asList(rc));
-
 
         this.getMenuPresenter().setVisible(true); // invoke the contructor again
 

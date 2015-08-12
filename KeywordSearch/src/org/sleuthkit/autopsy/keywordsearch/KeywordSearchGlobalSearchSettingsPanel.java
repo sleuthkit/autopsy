@@ -297,22 +297,22 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
 
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object newValue = evt.getNewValue();
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        String changed = evt.getPropertyName();
+                        Object newValue = evt.getNewValue();
 
-                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                    int newFilesIndexed = ((Integer) newValue).intValue();
-                    filesIndexedValue.setText(Integer.toString(newFilesIndexed));
-                    try {
-                        chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
+                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                            int newFilesIndexed = ((Integer) newValue).intValue();
+                            filesIndexedValue.setText(Integer.toString(newFilesIndexed));
+                            try {
+                                chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
+                            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                                logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
 
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
     }
 }

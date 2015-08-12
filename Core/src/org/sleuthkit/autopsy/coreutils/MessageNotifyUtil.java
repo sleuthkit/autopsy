@@ -55,7 +55,7 @@ public class MessageNotifyUtil {
         ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"), //NON-NLS
         WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"), //NON-NLS
         CONFIRM(NotifyDescriptor.YES_NO_OPTION, "warning-icon-16.png"); //NON-NLS
-        
+
         private final int notifyDescriptorType;
         private final Icon icon;
 
@@ -105,22 +105,23 @@ public class MessageNotifyUtil {
         /**
          * Show a message of the specified type
          *
-         * @param message message to show
+         * @param message     message to show
          * @param messageType message type to show
          */
         public static void show(String message, MessageType messageType) {
             getDialogDisplayer().notify(new NotifyDescriptor.Message(message,
                     messageType.getNotifyDescriptorType()));
         }
-        
+
         /**
          * Show an confirm, yes-no dialog
          *
          * @param message message to show
+         *
          * @return true if yes is clicked
          */
         public static boolean confirm(String message) {
-            return getDialogDisplayer().notify(new NotifyDescriptor.Confirmation(message, 
+            return getDialogDisplayer().notify(new NotifyDescriptor.Confirmation(message,
                     MessageType.CONFIRM.getNotifyDescriptorType())) == NotifyDescriptor.YES_OPTION;
         }
 
@@ -150,7 +151,7 @@ public class MessageNotifyUtil {
         public static void warn(String message) {
             show(message, MessageType.WARNING);
         }
-        
+
     }
 
     /**
@@ -159,7 +160,7 @@ public class MessageNotifyUtil {
     public static class Notify {
 
         private static final SimpleDateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("MM/dd/yy HH:mm:ss z");
-                
+
         //notifications to keep track of and to reset when case is closed
         private static final List<Notification> notifications = Collections.synchronizedList(new ArrayList<Notification>());
 
@@ -178,9 +179,10 @@ public class MessageNotifyUtil {
 
         /**
          * Show message with the specified type and action listener
-         * @param title message title
-         * @param message message text
-         * @param type type of the message
+         *
+         * @param title          message title
+         * @param message        message text
+         * @param type           type of the message
          * @param actionListener action listener
          */
         public static void show(String title, String message, MessageType type, ActionListener actionListener) {
@@ -194,9 +196,9 @@ public class MessageNotifyUtil {
          * displays the message using MessageNotifyUtil.Message with the same
          * message type
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
-         * @param type type of the message
+         * @param type    type of the message
          */
         public static void show(String title, final String message, final MessageType type) {
             ActionListener actionListener = (ActionEvent e) -> {
@@ -209,7 +211,7 @@ public class MessageNotifyUtil {
         /**
          * Show an information notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void info(String title, String message) {
@@ -219,7 +221,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void error(String title, String message) {
@@ -229,7 +231,7 @@ public class MessageNotifyUtil {
         /**
          * Show an warning notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void warn(String title, String message) {
@@ -241,7 +243,8 @@ public class MessageNotifyUtil {
          * will be in order (they are sorted alphabetically) in the
          * notifications area.
          *
-         * @param title A notification title without a time stamp prefix.  
+         * @param title A notification title without a time stamp prefix.
+         *
          * @return The notification title with a time stamp prefix.
          */
         private static String addTimeStampToTitle(String title) {

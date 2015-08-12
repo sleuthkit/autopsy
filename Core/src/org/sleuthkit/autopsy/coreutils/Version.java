@@ -50,7 +50,6 @@ public class Version {
             versionProperties = null;
         }
 
-
     }
 
     private static String getVersionProperty(String property) {

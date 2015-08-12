@@ -30,8 +30,8 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * Finds top level objects such as file system root directories, layout
- * files and virtual directories.
+ * Finds top level objects such as file system root directories, layout files
+ * and virtual directories.
  */
 final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
 
@@ -84,5 +84,5 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
         //TODO test this and overall scheduler with local files
         return getAllFromChildren(localFile);
     }
-    
+
 }

@@ -44,22 +44,25 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.*;
 
 /**
- * Recent documents class that will extract recent documents in the form of 
- *.lnk files
+ * Recent documents class that will extract recent documents in the form of .lnk
+ * files
  */
-class RecentDocumentsByLnk extends Extract  {
+class RecentDocumentsByLnk extends Extract {
+
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getInstance(); 
+    private IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
 
     /**
-     * Find the documents that Windows stores about recent documents and make artifacts.
+     * Find the documents that Windows stores about recent documents and make
+     * artifacts.
+     *
      * @param dataSource
-     * @param controller 
+     * @param controller
      */
     private void getRecentDocuments() {
-        
+
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> recentFiles;
         try {
@@ -68,7 +71,7 @@ class RecentDocumentsByLnk extends Extract  {
             logger.log(Level.WARNING, "Error searching for .lnk files."); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
-                                        this.getName()));
+                            this.getName()));
             return;
         }
 
@@ -76,13 +79,13 @@ class RecentDocumentsByLnk extends Extract  {
             logger.log(Level.INFO, "Didn't find any recent files."); //NON-NLS
             return;
         }
-        
+
         dataFound = true;
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            
+
             if (recentFile.getSize() == 0) {
                 continue;
             }
@@ -92,38 +95,38 @@ class RecentDocumentsByLnk extends Extract  {
                 lnk = lnkParser.parse();
             } catch (JLnkParserException e) {
                 //TODO should throw a specific checked exception
-                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) 
+                boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)
                         || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
                     logger.log(Level.SEVERE, "Error lnk parsing the file to get recent files" + recentFile, e); //NON-NLS
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errParsingFile",
-                                                this.getName(), recentFile.getName()));
+                                    this.getName(), recentFile.getName()));
                 }
                 continue;
             }
-           
+
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             String path = lnk.getBestPath();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                                                     path));
+                    NbBundle.getMessage(this.getClass(),
+                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                    path));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                                                     Util.findID(dataSource, path)));
+                    NbBundle.getMessage(this.getClass(),
+                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                    Util.findID(dataSource, path)));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
-                                                     NbBundle.getMessage(this.getClass(),
-                                                                         "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                                                     recentFile.getCrtime()));
+                    NbBundle.getMessage(this.getClass(),
+                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
+                    recentFile.getCrtime()));
             this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
     }
-    
+
     @Override
     public void process(Content dataSource, IngestJobContext context) {
         this.dataSource = dataSource;

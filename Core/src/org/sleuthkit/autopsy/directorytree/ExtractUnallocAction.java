@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Extracts all the unallocated space as a single file
  */
- final class ExtractUnallocAction extends AbstractAction {
+final class ExtractUnallocAction extends AbstractAction {
 
     private final List<UnallocStruct> LstUnallocs = new ArrayList<UnallocStruct>();
     private static final List<String> lockedVols = new ArrayList<String>();
@@ -108,20 +108,19 @@ import org.sleuthkit.datamodel.VolumeSystem;
                 }
             };
 
-
             JFileChooser fc = new JFileChooser() {
                 @Override
                 public void approveSelection() {
                     File f = getSelectedFile();
                     if (!f.exists() && getDialogType() == SAVE_DIALOG || !f.canWrite()) {
                         JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
-                                                                                "ExtractUnallocAction.msgDlg.folderDoesntExist.msg"));
+                                "ExtractUnallocAction.msgDlg.folderDoesntExist.msg"));
                         return;
                     }
-                     super.approveSelection();
+                    super.approveSelection();
                 }
             };
-            
+
             fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export"));
             fc.setDialogTitle(
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
@@ -136,8 +135,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
                         //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat                    
                         if (u.FileInstance.exists()) {
                             int res = JOptionPane.showConfirmDialog(new Frame(), NbBundle.getMessage(this.getClass(),
-                                                                                                     "ExtractUnallocAction.confDlg.unallocFileAlreadyExist.msg",
-                                                                                                     u.getFileName()));
+                                    "ExtractUnallocAction.confDlg.unallocFileAlreadyExist.msg",
+                                    u.getFileName()));
                             if (res == JOptionPane.YES_OPTION) {
                                 u.FileInstance.delete();
                             } else {
@@ -149,7 +148,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
                             uw.execute();
                         }
                     } else {
-                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked" ); //NON-NLS
+                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked"); //NON-NLS
                     }
                 }
                 if (isImage && !copyList.isEmpty()) {
@@ -165,6 +164,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
      * Gets all the unallocated files in a given Content.
      *
      * @param c Content to get Unallocated Files from
+     *
      * @return A list<LayoutFile> if it didn't crash List may be empty.
      */
     private List<LayoutFile> getUnallocFiles(Content c) {
@@ -192,7 +192,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
         private int totalSizeinMegs;
         long totalBytes = 0;
 
-        ExtractUnallocWorker(UnallocStruct us) {            
+        ExtractUnallocWorker(UnallocStruct us) {
             //Getting the total megs this worker is going to be doing
             if (!lockedVols.contains(us.getFileName())) {
                 this.lus.add(us);
@@ -230,20 +230,19 @@ import org.sleuthkit.datamodel.VolumeSystem;
             try {
                 progress = ProgressHandleFactory.createHandle(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
-                    @Override
-                    public boolean cancel() {
-                        logger.log(Level.INFO, "Canceling extraction of unallocated space"); //NON-NLS
-                        canceled = true;
-                        if (progress != null) {
-                            progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                                        "ExtractUnallocAction.progress.displayName.cancelling.text"));
-                        }
-                        return true;
-                    }
-                });
+                            @Override
+                            public boolean cancel() {
+                                logger.log(Level.INFO, "Canceling extraction of unallocated space"); //NON-NLS
+                                canceled = true;
+                                if (progress != null) {
+                                    progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                                    "ExtractUnallocAction.progress.displayName.cancelling.text"));
+                                }
+                                return true;
+                            }
+                        });
                 int MAX_BYTES = 8192;
                 byte[] buf = new byte[MAX_BYTES];    //read 8kb at a time                         
-
 
                 //Begin the actual File IO
                 progress.start(totalSizeinMegs);
@@ -255,22 +254,22 @@ import org.sleuthkit.datamodel.VolumeSystem;
                     OutputStream dos = new FileOutputStream(currentlyProcessing);
                     long bytes = 0;
                     int i = 0;
-                    while(i < u.getLayouts().size() && bytes != u.getSizeInBytes()){                        
+                    while (i < u.getLayouts().size() && bytes != u.getSizeInBytes()) {
                         LayoutFile f = u.getLayouts().get(i);
                         long offsetPerFile = 0L;
                         int bytesRead;
-                        while(offsetPerFile != f.getSize() && !canceled){
+                        while (offsetPerFile != f.getSize() && !canceled) {
                             if (++kbs % 128 == 0) {
-                                mbs++;                                
+                                mbs++;
                                 progress.progress(NbBundle.getMessage(this.getClass(),
-                                                                      "ExtractUnallocAction.processing.counter.msg",
-                                                                      mbs, totalSizeinMegs), mbs-1);
+                                        "ExtractUnallocAction.processing.counter.msg",
+                                        mbs, totalSizeinMegs), mbs - 1);
                             }
-                            bytesRead = f.read(buf, offsetPerFile, MAX_BYTES);  
-                            offsetPerFile+= bytesRead;
-                            dos.write(buf, 0, bytesRead);       
+                            bytesRead = f.read(buf, offsetPerFile, MAX_BYTES);
+                            offsetPerFile += bytesRead;
+                            dos.write(buf, 0, bytesRead);
                         }
-                        bytes+=f.getSize();
+                        bytes += f.getSize();
                         i++;
                     }
                     dos.flush();
@@ -284,7 +283,6 @@ import org.sleuthkit.datamodel.VolumeSystem;
                     }
                 }
                 progress.finish();
-
 
             } catch (IOException ioe) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error writing file", ioe); //NON-NLS
@@ -304,30 +302,31 @@ import org.sleuthkit.datamodel.VolumeSystem;
             for (UnallocStruct u : lus) {
                 lockedVols.remove(u.getFileName());
             }
-            
+
             try {
                 get();
                 if (!canceled && !lus.isEmpty()) {
                     MessageNotifyUtil.Notify.info(NbBundle.getMessage(this.getClass(),
-                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.title"),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "ExtractUnallocAction.done.notifyMsg.completedExtract.msg",
-                                                                      lus.get(0).getFile().getParent()));
+                            "ExtractUnallocAction.done.notifyMsg.completedExtract.title"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "ExtractUnallocAction.done.notifyMsg.completedExtract.msg",
+                                    lus.get(0).getFile().getParent()));
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 MessageNotifyUtil.Notify.error(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
-            } 
-            // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex ) { }
-        }        
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
+            }
+        }
     }
 
     /**
      * Determines if an image has a volume system or not.
      *
      * @param img The Image to analyze
+     *
      * @return True if there are Volume Systems present
      */
     private boolean hasVolumeSystem(Image img) {
@@ -343,8 +342,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
      * Gets the volumes on an given image.
      *
      * @param img The image to analyze
+     *
      * @return A list of volumes from the image. Returns an empty list if no
-     * matches.
+     *         matches.
      */
     private List<Volume> getVolumes(Image img) {
         List<Volume> lstVol = new ArrayList<Volume>();
@@ -371,6 +371,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
          * return the single instance of unallocated space.
          *
          * @param lf the LayoutFile the visitor encountered
+         *
          * @return A list<LayoutFile> of size 1
          */
         @Override
@@ -387,8 +388,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
          * directories and return on the Root Dir.
          *
          * @param fs the FileSystem the visitor encountered
+         *
          * @return A list<LayoutFile> containing the layout files from
-         * subsequent Visits(), or an empty list
+         *         subsequent Visits(), or an empty list
          */
         @Override
         public List<LayoutFile> visit(FileSystem fs) {
@@ -408,8 +410,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
          * LayoutDirectory has all the Layout(Unallocated) files
          *
          * @param vd VirtualDirectory the visitor encountered
-         * @return A list<LayoutFile> containing all the LayoutFile in ld,
-         * or an empty list.
+         *
+         * @return A list<LayoutFile> containing all the LayoutFile in ld, or an
+         *         empty list.
          */
         @Override
         public List<LayoutFile> visit(VirtualDirectory vd) {
@@ -430,8 +433,9 @@ import org.sleuthkit.datamodel.VolumeSystem;
          * parsing over Root
          *
          * @param dir the directory this visitor encountered
+         *
          * @return A list<LayoutFile> containing LayoutFiles encountered during
-         * subsequent Visits(), or an empty list.
+         *         subsequent Visits(), or an empty list.
          */
         @Override
         public List<LayoutFile> visit(Directory dir) {
@@ -530,17 +534,17 @@ import org.sleuthkit.datamodel.VolumeSystem;
             return llf.size();
         }
 
-       private long calcSizeInBytes() {
+        private long calcSizeInBytes() {
             long size = 0L;
             for (LayoutFile f : llf) {
                 size += f.getSize();
             }
             return size;
         }
-       
-       long getSizeInBytes(){
-           return this.SizeInBytes;
-       }
+
+        long getSizeInBytes() {
+            return this.SizeInBytes;
+        }
 
         long getVolumeId() {
             return this.VolumeId;

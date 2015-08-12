@@ -32,17 +32,16 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
 
 /**
  *
- * @author dfickling
- * Parse lnk files using documentation from 
+ * @author dfickling Parse lnk files using documentation from
  * http://msdn.microsoft.com/en-us/library/dd871305(v=prot.13).aspx
  * http://msdn.microsoft.com/en-us/library/windows/desktop/cc144090(v=vs.85).aspx#unknown_74413
  * http://blog.0x01000000.org/2010/08/10/lnk-parsing-youre-doing-it-wrong-i/
  */
- public class JLnkParser {
-    
+public class JLnkParser {
+
     private byte[] content;
     private static final Logger logger = Logger.getLogger(JLnkParser.class.getName());
-    
+
     public JLnkParser(InputStream is, int length) {
         content = new byte[length];
         try {
@@ -51,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             Logger.getLogger(JLnkParser.class.getName()).log(Level.WARNING, "Error reading input stream", ex); //NON-NLS
         }
     }
-    
+
     public JLNK parse() throws JLnkParserException {
         try {
             ByteBuffer bb = ByteBuffer.wrap(content);
@@ -69,18 +68,18 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             short hotkey = bb.getShort();
             bb.get(new byte[10]); // reserved (???)
             List<String> linkTargetIdList = new ArrayList<String>();
-            if((linkFlags & LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) == 
-                    LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag())
+                    == LnkEnums.LinkFlags.HasLinkTargetIDList.getFlag()) {
                 int idListSize = bb.getShort();
                 int bytesRead = 0;
                 List<byte[]> linkTargetIdListBytes = new ArrayList<byte[]>();
-                while(true) {
+                while (true) {
                     short itemIdSize = bb.getShort();
-                    if(itemIdSize == 0) {
+                    if (itemIdSize == 0) {
                         bytesRead += 2; // two null bytes to terminate id list
                         break;
                     }
-                    byte[] theArray = new byte[itemIdSize-2];
+                    byte[] theArray = new byte[itemIdSize - 2];
                     bb.get(theArray); // an idlist data object
                     linkTargetIdListBytes.add(theArray);
                     bytesRead = bytesRead + itemIdSize;
@@ -103,8 +102,8 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             String deviceName = null;
             String deviceNameUnicode = null;
 
-            if((linkFlags & LnkEnums.LinkFlags.HasLinkInfo.getFlag()) ==
-                    LnkEnums.LinkFlags.HasLinkInfo.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasLinkInfo.getFlag())
+                    == LnkEnums.LinkFlags.HasLinkInfo.getFlag()) {
                 int startOfLinkInfo = bb.position();
                 int linkInfoSize = bb.getInt();
                 int linkInfoHeaderSize = bb.getInt();
@@ -122,7 +121,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
                 }
                 if ((linkInfoFlags & LnkEnums.LinkInfoFlags.VolumeIDAndLocalBasePath.getFlag())
                         == LnkEnums.LinkInfoFlags.VolumeIDAndLocalBasePath.getFlag()) {
-                    bb.position(startOfLinkInfo+volumeIdOffset);
+                    bb.position(startOfLinkInfo + volumeIdOffset);
                     int volumeIdSize = bb.getInt();
                     driveType = DriveType.valueOf(bb.getInt());
                     driveSerialNumber = bb.getInt();
@@ -137,7 +136,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
                 }
                 if ((linkInfoFlags & LnkEnums.LinkInfoFlags.CommonNetworkRelativeLinkAndPathSuffix.getFlag())
                         == LnkEnums.LinkInfoFlags.CommonNetworkRelativeLinkAndPathSuffix.getFlag()) {
-                    bb.position(startOfLinkInfo+commonNetworkRelativeLinkOffset);
+                    bb.position(startOfLinkInfo + commonNetworkRelativeLinkOffset);
                     int commonNetworkRelativeLinkSize = bb.getInt();
                     commonNetworkRelativeLinkFlags = bb.getInt();
                     int netNameOffset = bb.getInt();
@@ -174,31 +173,31 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
                     commonPathSuffixUnicode = parseCommonPathSuffix(startOfLinkInfo + commonPathSuffixOffsetUnicode, true);
                 }
 
-                bb.position(startOfLinkInfo+linkInfoSize);
+                bb.position(startOfLinkInfo + linkInfoSize);
             }
             String name = null;
-            if((linkFlags & LnkEnums.LinkFlags.HasName.getFlag()) ==
-                    LnkEnums.LinkFlags.HasName.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasName.getFlag())
+                    == LnkEnums.LinkFlags.HasName.getFlag()) {
                 name = readStringData(bb);
             }
             String relativePath = null;
-            if((linkFlags & LnkEnums.LinkFlags.HasRelativePath.getFlag()) ==
-                    LnkEnums.LinkFlags.HasRelativePath.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasRelativePath.getFlag())
+                    == LnkEnums.LinkFlags.HasRelativePath.getFlag()) {
                 relativePath = readStringData(bb);
             }
             String workingDir = null;
-            if((linkFlags & LnkEnums.LinkFlags.HasWorkingDir.getFlag()) ==
-                    LnkEnums.LinkFlags.HasWorkingDir.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasWorkingDir.getFlag())
+                    == LnkEnums.LinkFlags.HasWorkingDir.getFlag()) {
                 workingDir = readStringData(bb);
             }
             String arguments = null;
-            if((linkFlags & LnkEnums.LinkFlags.HasArguments.getFlag()) ==
-                    LnkEnums.LinkFlags.HasArguments.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasArguments.getFlag())
+                    == LnkEnums.LinkFlags.HasArguments.getFlag()) {
                 arguments = readStringData(bb);
             }
             String iconLocation = null;
-            if((linkFlags & LnkEnums.LinkFlags.HasIconLocation.getFlag()) ==
-                    LnkEnums.LinkFlags.HasIconLocation.getFlag()) {
+            if ((linkFlags & LnkEnums.LinkFlags.HasIconLocation.getFlag())
+                    == LnkEnums.LinkFlags.HasIconLocation.getFlag()) {
                 iconLocation = readStringData(bb);
             }
 
@@ -215,13 +214,13 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             throw new JLnkParserException(e);
         }
     }
-    
+
     private String readStringData(ByteBuffer bb) {
         short countCharacters = bb.getShort();
-        if(countCharacters == 0) {
+        if (countCharacters == 0) {
             return null;
         }
-        byte[] theString = new byte[countCharacters*2];
+        byte[] theString = new byte[countCharacters * 2];
         bb.get(theString);
         try {
             return new String(theString, "UTF-16LE");
@@ -230,7 +229,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
             return null;
         }
     }
-    
+
     private String parseString(int offset, boolean unicode, int maxlen) {
         ByteBuffer bb = ByteBuffer.wrap(content);
         bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -240,7 +239,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         while (bb.remaining() > 0 && (i < maxlen || maxlen == -1)) // safer  
         {
             char c;
-            if(unicode) {
+            if (unicode) {
                 c = bb.getChar();
             } else {
                 c = (char) bb.get();
@@ -253,28 +252,28 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         }
         return sb.toString();
     }
-    
+
     private String parseCommonPathSuffix(int offset, boolean unicode) {
         return parseString(offset, unicode, -1);
-        
+
     }
-    
+
     private String parseLocalBasePath(int offset, boolean unicode) {
         return parseString(offset, unicode, -1);
-        
+
     }
-    
+
     private String parseNetName(int offset, boolean unicode) {
         return parseString(offset, unicode, -1);
     }
-    
+
     private String parseDeviceName(int offset, boolean unicode) {
         return parseString(offset, unicode, -1);
     }
-    
+
     private List<String> parseLinkTargetIdList(List<byte[]> idList) {
         List<String> ret = new ArrayList<String>();
-        if(!idList.isEmpty()) {
+        if (!idList.isEmpty()) {
             CommonCLSIDS clsid = CommonCLSIDS.valueOf(Arrays.copyOfRange(idList.remove(0), 2, 18));
             switch (clsid) {
                 case CDrivesFolder:
@@ -294,13 +293,13 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         }
         return ret;
     }
-    
+
     private List<String> parsePathElements(List<byte[]> idList) {
         List<String> ret = new ArrayList<String>();
         for (byte[] pathElement : idList) {
             ByteBuffer bb = ByteBuffer.wrap(pathElement);
             bb.order(ByteOrder.LITTLE_ENDIAN);
-            int offset = bb.getShort(bb.limit() - 2)-2;
+            int offset = bb.getShort(bb.limit() - 2) - 2;
             if (pathElement[offset + 0x02] < 0x03
                     || pathElement[offset + 0x10] >= pathElement[offset]
                     || pathElement[offset + 0x10] < 0x14) {
@@ -323,7 +322,7 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         }
         return ret;
     }
-    
+
     private String get0xC(ByteBuffer bb) {
         return getStringAt(bb, 0xC, false);
     }
@@ -340,5 +339,3 @@ import org.sleuthkit.autopsy.coreutils.LnkEnums.NetworkProviderType;
         return new String(nameArr).split("\0")[0];
     }
 }
-
-

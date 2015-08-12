@@ -77,7 +77,7 @@ final class IngestModuleFactoryLoader {
      * removed between invocations.
      *
      * @return A list of objects that implement the IngestModuleFactory
-     * interface.
+     *         interface.
      */
     static List<IngestModuleFactory> getIngestModuleFactories() {
         // A hash set of display names and a hash map of class names to 
@@ -116,10 +116,10 @@ final class IngestModuleFactoryLoader {
 
         // Add any remaining non-core factories discovered. Order with an 
         // alphabetical sort by module display name.
-        TreeMap<String, IngestModuleFactory> javaFactoriesSortedByName = new TreeMap<>(); 
+        TreeMap<String, IngestModuleFactory> javaFactoriesSortedByName = new TreeMap<>();
         for (IngestModuleFactory factory : javaFactoriesByClass.values()) {
             javaFactoriesSortedByName.put(factory.getModuleDisplayName(), factory);
-        }                
+        }
         factories.addAll(javaFactoriesSortedByName.values());
 
         // Add any ingest module factories implemented using Jython. Order is 

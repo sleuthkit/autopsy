@@ -21,36 +21,37 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Map;
 
 /**
- * Stores data about a search before it is done.  
+ * Stores data about a search before it is done.
  */
-class QueryRequest  {
+class QueryRequest {
 
     private KeywordSearchQuery query;
     private String queryString;
     private Map<String, Object> map;
-            
+
     KeywordSearchQuery getQuery() {
         return query;
     }
 
     /**
      * NOTE: The below descriptions are based on how it is used in teh code.
-     * @param map Map that stores settings to use during the search
-     * @param id ID that callers simply increment from 0
-     * @param query Query that will be performed. 
+     *
+     * @param map   Map that stores settings to use during the search
+     * @param id    ID that callers simply increment from 0
+     * @param query Query that will be performed.
      */
     public QueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
         this.queryString = query.getEscapedQueryString();
         this.map = map;
         this.query = query;
     }
-    
+
     public String getQueryString() {
         return queryString;
     }
-    
+
     public Map<String, Object> getProperties() {
         return map;
     }
-    
+
 }

@@ -24,8 +24,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * View nodes support
  */
 public class Views implements AutopsyVisitableItem {
+
     private SleuthkitCase skCase;
-    
+
     public Views(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
@@ -35,7 +36,7 @@ public class Views implements AutopsyVisitableItem {
         return v.visit(this);
     }
 
-    public SleuthkitCase getSleuthkitCase(){
+    public SleuthkitCase getSleuthkitCase() {
         return skCase;
     }
 }

@@ -25,9 +25,9 @@ import org.openide.util.NbBundle;
  */
 public enum DescriptionLOD {
 
-    SHORT(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.short")), MEDIUM(
-            NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.medium")), FULL(
-            NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.full"));
+    SHORT(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.short")),
+    MEDIUM(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.medium")),
+    FULL(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.full"));
 
     private final String displayName;
 

@@ -34,7 +34,7 @@ public final class UserPreferences {
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
-        
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -70,21 +70,21 @@ public final class UserPreferences {
     public static void setHideKnownFilesInViewsTree(boolean value) {
         preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
     }
-    
+
     public static boolean displayTimesInLocalTime() {
         return preferences.getBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, true);
     }
 
     public static void setDisplayTimesInLocalTime(boolean value) {
         preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
-    }    
-    
+    }
+
     public static int numberOfFileIngestThreads() {
         return preferences.getInt(NUMBER_OF_FILE_INGEST_THREADS, 2);
     }
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
-    }      
-    
+    }
+
 }

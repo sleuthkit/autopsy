@@ -46,7 +46,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
      * constructor.
      *
      * @return An instance of the ingest job settings panel interesting files
-     * identifier ingest modules.
+     *         identifier ingest modules.
      */
     static FilesIdentifierIngestJobSettingsPanel makePanel(FilesIdentifierIngestJobSettings settings) {
         FilesIdentifierIngestJobSettingsPanel panel = new FilesIdentifierIngestJobSettingsPanel(settings);
@@ -67,10 +67,11 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
     private FilesIdentifierIngestJobSettingsPanel(FilesIdentifierIngestJobSettings settings) {
         initComponents();
 
-        /* Make a table row object for each interesting files set, bundling the
-         * set with an enabled flag. The files sets are loaded into a tree map 
-         * so they are sorted by name. The keys set also serves as a cache of 
-         * set names so that new sets can be easily detected in the override of 
+        /*
+         * Make a table row object for each interesting files set, bundling the
+         * set with an enabled flag. The files sets are loaded into a tree map
+         * so they are sorted by name. The keys set also serves as a cache of
+         * set names so that new sets can be easily detected in the override of
          * Observer.update().
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
@@ -159,7 +160,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * job.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         * interesting files set with an enabled flag
+         *                     interesting files set with an enabled flag
          */
         FilesSetsTableModel(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;
@@ -169,7 +170,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * Refreshes the table with a new set of rows.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         * interesting files set with an enabled flag
+         *                     interesting files set with an enabled flag
          */
         void resetTableData(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;
@@ -301,7 +302,6 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane filesSetScrollPane;

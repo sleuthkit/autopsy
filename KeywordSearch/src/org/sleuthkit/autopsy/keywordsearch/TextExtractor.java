@@ -38,43 +38,43 @@ interface TextExtractor {
         EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
         EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
     };
-    
+
     //generally text extractors should ignore archives
     //and let unpacking modules take case of them
-    static final List<String> ARCHIVE_MIME_TYPES =
-            Arrays.asList(
-            //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
-            "application/x-7z-compressed", //NON-NLS
-            "application/x-ace-compressed", //NON-NLS
-            "application/x-alz-compressed", //NON-NLS
-            "application/x-arj", //NON-NLS
-            "application/vnd.ms-cab-compressed", //NON-NLS
-            "application/x-cfs-compressed", //NON-NLS
-            "application/x-dgc-compressed", //NON-NLS
-            "application/x-apple-diskimage", //NON-NLS
-            "application/x-gca-compressed", //NON-NLS
-            "application/x-dar", //NON-NLS
-            "application/x-lzx", //NON-NLS
-            "application/x-lzh", //NON-NLS
-            "application/x-rar-compressed", //NON-NLS
-            "application/x-stuffit", //NON-NLS
-            "application/x-stuffitx", //NON-NLS
-            "application/x-gtar", //NON-NLS
-            "application/x-archive", //NON-NLS
-            "application/x-executable", //NON-NLS
-            "application/x-gzip", //NON-NLS
-            "application/zip", //NON-NLS
-            "application/x-zoo", //NON-NLS
-            "application/x-cpio", //NON-NLS
-            "application/x-shar", //NON-NLS
-            "application/x-tar", //NON-NLS
-            "application/x-bzip", //NON-NLS
-            "application/x-bzip2", //NON-NLS
-            "application/x-lzip", //NON-NLS
-            "application/x-lzma", //NON-NLS
-            "application/x-lzop", //NON-NLS
-            "application/x-z", //NON-NLS
-            "application/x-compress"); //NON-NLS
+    static final List<String> ARCHIVE_MIME_TYPES
+            = Arrays.asList(
+                    //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
+                    "application/x-7z-compressed", //NON-NLS
+                    "application/x-ace-compressed", //NON-NLS
+                    "application/x-alz-compressed", //NON-NLS
+                    "application/x-arj", //NON-NLS
+                    "application/vnd.ms-cab-compressed", //NON-NLS
+                    "application/x-cfs-compressed", //NON-NLS
+                    "application/x-dgc-compressed", //NON-NLS
+                    "application/x-apple-diskimage", //NON-NLS
+                    "application/x-gca-compressed", //NON-NLS
+                    "application/x-dar", //NON-NLS
+                    "application/x-lzx", //NON-NLS
+                    "application/x-lzh", //NON-NLS
+                    "application/x-rar-compressed", //NON-NLS
+                    "application/x-stuffit", //NON-NLS
+                    "application/x-stuffitx", //NON-NLS
+                    "application/x-gtar", //NON-NLS
+                    "application/x-archive", //NON-NLS
+                    "application/x-executable", //NON-NLS
+                    "application/x-gzip", //NON-NLS
+                    "application/zip", //NON-NLS
+                    "application/x-zoo", //NON-NLS
+                    "application/x-cpio", //NON-NLS
+                    "application/x-shar", //NON-NLS
+                    "application/x-tar", //NON-NLS
+                    "application/x-bzip", //NON-NLS
+                    "application/x-bzip2", //NON-NLS
+                    "application/x-lzip", //NON-NLS
+                    "application/x-lzma", //NON-NLS
+                    "application/x-lzop", //NON-NLS
+                    "application/x-z", //NON-NLS
+                    "application/x-compress"); //NON-NLS
 
     /**
      * Get number of chunks resulted from extracting this AbstractFile
@@ -94,7 +94,9 @@ interface TextExtractor {
      * Index the Abstract File
      *
      * @param sourceFile file to index
+     *
      * @return true if indexed successfully, false otherwise
+     *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     boolean index(AbstractFile sourceFile) throws Ingester.IngesterException;
@@ -103,8 +105,9 @@ interface TextExtractor {
      * Sets the scripts to use for the extraction
      *
      * @param extractScripts scripts to use
+     *
      * @return true if extractor supports script - specific extraction, false
-     * otherwise
+     *         otherwise
      */
     boolean setScripts(List<SCRIPT> extractScript);
 
@@ -119,7 +122,7 @@ interface TextExtractor {
      * Get current options
      *
      * @return currently used, extractor specific options, or null of not
-     * supported
+     *         supported
      */
     Map<String, String> getOptions();
 
@@ -143,9 +146,10 @@ interface TextExtractor {
      * Determines if the file content is supported by the extractor if
      * isContentTypeSpecific() returns true.
      *
-     * @param file to test if its content should be supported
+     * @param file           to test if its content should be supported
      * @param detectedFormat mime-type with detected format (such as text/plain)
-     * or null if not detected
+     *                       or null if not detected
+     *
      * @return true if the file content is supported, false otherwise
      */
     boolean isSupported(AbstractFile file, String detectedFormat);

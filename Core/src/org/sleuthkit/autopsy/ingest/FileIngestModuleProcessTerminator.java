@@ -43,7 +43,7 @@ public final class FileIngestModuleProcessTerminator implements ProcessTerminato
     /**
      * Constructs a process terminator for a file ingest module.
      *
-     * @param context The ingest job context for the ingest module.
+     * @param context             The ingest job context for the ingest module.
      * @param maxRunTimeInSeconds Maximum allowable run time of process.
      */
     public FileIngestModuleProcessTerminator(IngestJobContext context, long maxRunTimeInSeconds) {

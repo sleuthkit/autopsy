@@ -28,7 +28,7 @@ import org.openide.nodes.PropertySupport;
 public class NodeProperty<T> extends PropertySupport.ReadOnly<T> {
 
     private T value;
-    
+
     @SuppressWarnings("unchecked")
     public NodeProperty(String name, String displayName, String desc, T value) {
         super(name, (Class<T>) value.getClass(), displayName, desc);

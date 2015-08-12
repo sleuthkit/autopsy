@@ -50,7 +50,7 @@ public final class CaseOpenAction implements ActionListener {
     public CaseOpenAction() {
         autFilter = new FileNameExtensionFilter(
                 NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(),
-                                    Case.CASE_DOT_EXTENSION),
+                        Case.CASE_DOT_EXTENSION),
                 Case.CASE_EXTENSION);
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -80,11 +80,11 @@ public final class CaseOpenAction implements ActionListener {
             // check if the file exists
             if (!new File(path).exists()) {
                 JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "CaseOpenAction.msgDlg.fileNotExist.msg"),
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "CaseOpenAction.msgDlg.fileNotExist.title"),
-                                              JOptionPane.ERROR_MESSAGE);
+                        NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.fileNotExist.msg"),
+                        NbBundle.getMessage(this.getClass(),
+                                "CaseOpenAction.msgDlg.fileNotExist.title"),
+                        JOptionPane.ERROR_MESSAGE);
                 this.actionPerformed(e); // show the dialog box again
             } else {
                 // try to close Startup window if there's one
@@ -98,12 +98,12 @@ public final class CaseOpenAction implements ActionListener {
                     Case.open(path); // open the case
                 } catch (CaseActionException ex) {
                     JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
-                                                                      ex.getMessage()),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(this.getClass(),
+                                    "CaseOpenAction.msgDlg.cantOpenCase.msg", path,
+                                    ex.getMessage()),
+                            NbBundle.getMessage(this.getClass(),
+                                    "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                            JOptionPane.ERROR_MESSAGE);
                     logger.log(Level.WARNING, "Error opening case in folder " + path, ex); //NON-NLS
 
                     StartupWindowProvider.getInstance().open();

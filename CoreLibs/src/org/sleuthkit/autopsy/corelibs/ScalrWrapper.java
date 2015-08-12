@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.corelibs;
 
 import java.awt.image.BufferedImage;
@@ -28,7 +27,7 @@ import org.imgscalr.Scalr.Method;
  * Scalr wrapper to deal with exports and provide thread-safety
  *
  */
- public class ScalrWrapper {
+public class ScalrWrapper {
 
     public static synchronized BufferedImage resize(BufferedImage input, int width, int height) {
         return Scalr.resize(input, width, height, Scalr.OP_ANTIALIAS);
@@ -45,12 +44,12 @@ import org.imgscalr.Scalr.Method;
     public static synchronized BufferedImage resizeFast(BufferedImage input, int size) {
         return Scalr.resize(input, Method.SPEED, Scalr.Mode.AUTOMATIC, size, Scalr.OP_ANTIALIAS);
     }
-    
-     public static synchronized BufferedImage resizeFast(BufferedImage input, int width, int height) {
+
+    public static synchronized BufferedImage resizeFast(BufferedImage input, int width, int height) {
         return Scalr.resize(input, Method.SPEED, Scalr.Mode.AUTOMATIC, width, height, Scalr.OP_ANTIALIAS);
     }
 
-     public static synchronized BufferedImage cropImage(BufferedImage input, int width, int height) {
-         return Scalr.crop(input, width, height, (BufferedImageOp) null);
-     }
+    public static synchronized BufferedImage cropImage(BufferedImage input, int width, int height) {
+        return Scalr.crop(input, width, height, (BufferedImageOp) null);
+    }
 }

@@ -38,9 +38,9 @@ public class EmailParserModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     static String getModuleVersion() {
-        return Version.getVersion();        
+        return Version.getVersion();
     }
-    
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();

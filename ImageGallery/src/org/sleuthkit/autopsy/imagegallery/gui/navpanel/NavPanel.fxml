@@ -6,10 +6,9 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-
-    <fx:root fx:id="navTabPane" maxHeight="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" type="TabPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root fx:id="navTabPane" maxHeight="1.7976931348623157E308" prefHeight="-1.0" prefWidth="-1.0" tabClosingPolicy="UNAVAILABLE" type="TabPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
       <tabs>
-        <Tab fx:id="navTab" text="Contents">
+        <Tab fx:id="navTab" text="All Groups">
           <content>
             <AnchorPane prefHeight="-1.0" prefWidth="-1.0">
               <children>
@@ -25,7 +24,7 @@
             </ImageView>
           </graphic>
         </Tab>
-        <Tab fx:id="hashTab" text="Hash Hits">
+        <Tab fx:id="hashTab" text="Groups With Hash Hits">
           <content>
             <AnchorPane id="Content" minHeight="0.0" minWidth="0.0" prefHeight="-1.0" prefWidth="-1.0">
               <children>

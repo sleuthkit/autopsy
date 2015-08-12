@@ -28,13 +28,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
- * 
+ *
  */
 public abstract class AbstractFsContentNode<T extends AbstractFile> extends AbstractAbstractFileNode<T> {
-    
+
     private static Logger logger = Logger.getLogger(AbstractFsContentNode.class.getName());
 
-    
     private boolean directoryBrowseMode;
     public static final String HIDE_PARENT = "hide_parent"; //NON-NLS
 
@@ -45,10 +44,11 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
     /**
      * Constructor
      *
-     * @param content the content
+     * @param content             the content
      * @param directoryBrowseMode how the user caused this node to be created:
-     * if by browsing the image contents, it is true. If by selecting a file
-     * filter (e.g. 'type' or 'recent'), it is false
+     *                            if by browsing the image contents, it is true.
+     *                            If by selecting a file filter (e.g. 'type' or
+     *                            'recent'), it is false
      */
     AbstractFsContentNode(T content, boolean directoryBrowseMode) {
         super(content);
@@ -87,6 +87,4 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         return s;
     }
 
-   
-   
 }
