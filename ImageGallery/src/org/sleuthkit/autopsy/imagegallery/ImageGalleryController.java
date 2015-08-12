@@ -69,6 +69,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -138,6 +139,7 @@ public final class ImageGalleryController {
 
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
+    private NavPanel navPanel;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -218,7 +220,7 @@ public final class ImageGalleryController {
         groupManager.getUnSeenGroups().addListener((Observable observable) -> {
             //if there are unseen groups and none being viewed
             if (groupManager.getUnSeenGroups().isEmpty() == false && (getViewState() == null || getViewState().getGroup() == null)) {
-                advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)));
+                advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)), true);
             }
         });
 
@@ -246,8 +248,12 @@ public final class ImageGalleryController {
         return historyManager.getCanRetreat();
     }
 
-    public void advance(GroupViewState newState) {
+    public void advance(GroupViewState newState, boolean forceShowTree) {
+        if (Objects.nonNull(navPanel) && forceShowTree) {
+            navPanel.showTree();
+        }
         historyManager.advance(newState);
+
     }
 
     public GroupViewState advance() {
@@ -440,13 +446,15 @@ public final class ImageGalleryController {
                 case CONTENT_CHANGED:
                 //TODO: do we need to do anything here?  -jm
                 case DATA_ADDED:
-                    /* we could listen to DATA events and progressivly
-                     * update files, and get data from DataSource ingest
-                     * modules, but given that most modules don't post new
-                     * artifacts in the events and we would have to query for
-                     * them, without knowing which are the new ones, we just
-                     * ignore these events for now. The relevant data should all
-                     * be captured by file done event, anyways -jm */
+                    /*
+                     * we could listen to DATA events and progressivly update
+                     * files, and get data from DataSource ingest modules, but
+                     * given that most modules don't post new artifacts in the
+                     * events and we would have to query for them, without
+                     * knowing which are the new ones, we just ignore these
+                     * events for now. The relevant data should all be captured
+                     * by file done event, anyways -jm
+                     */
                     break;
                 case FILE_DONE:
                     /**
@@ -521,6 +529,10 @@ public final class ImageGalleryController {
 
     public DrawableTagsManager getTagsManager() {
         return tagsManager;
+    }
+
+    public void setNavPanel(NavPanel navPanel) {
+        this.navPanel = navPanel;
     }
 
     // @@@ REVIEW IF THIS SHOLD BE STATIC...
@@ -844,8 +856,8 @@ public final class ImageGalleryController {
     }
 
     /**
-     * task that does pre-ingest copy over of files from a new datasource
-     * (uses fs_obj_id to identify files from new datasource) *
+     * task that does pre-ingest copy over of files from a new datasource (uses
+     * fs_obj_id to identify files from new datasource) *
      *
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
@@ -881,9 +893,11 @@ public final class ImageGalleryController {
             progressHandle.start();
             updateMessage("prepopulating image/video database");
 
-            /* Get all "drawable" files, based on extension. After ingest we use
+            /*
+             * Get all "drawable" files, based on extension. After ingest we use
              * file type id module and if necessary jpeg signature matching to
-             * add/remove files */
+             * add/remove files
+             */
             final List<AbstractFile> files;
             try {
                 List<Long> fsObjIds = new ArrayList<>();
@@ -896,11 +910,13 @@ public final class ImageGalleryController {
                     }
                     fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
                 } else {
-                    /* NOTE: Logical files currently (Apr '15) have a null
-                     * value for fs_obj_id in DB. for them, we will not specify
-                     * a fs_obj_id, which means we will grab files from another
+                    /*
+                     * NOTE: Logical files currently (Apr '15) have a null value
+                     * for fs_obj_id in DB. for them, we will not specify a
+                     * fs_obj_id, which means we will grab files from another
                      * data source, but the drawable DB is smart enough to
-                     * de-dupe them. */
+                     * de-dupe them.
+                     */
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 

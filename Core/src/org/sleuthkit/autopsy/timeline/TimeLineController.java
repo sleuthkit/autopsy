@@ -67,6 +67,10 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -161,10 +165,8 @@ public class TimeLineController {
     @GuardedBy("this")
     private boolean listeningToAutopsy = false;
 
-    private final PropertyChangeListener caseListener;
-
+    private final PropertyChangeListener caseListener = new AutopsyCaseListener();
     private final PropertyChangeListener ingestJobListener = new AutopsyIngestJobListener();
-
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
@@ -238,8 +240,6 @@ public class TimeLineController {
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
-        //persistent listener instances
-        caseListener = new AutopsyCaseListener();
     }
 
     /**
@@ -794,11 +794,23 @@ public class TimeLineController {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((BlackBoardArtifactTagAddedEvent) evt);
+                    break;
+                case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
+                    break;
+                case CONTENT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((ContentTagAddedEvent) evt);
+                    break;
+                case CONTENT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
+                    break;
                 case DATA_SOURCE_ADDED:
                     SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
                 case CURRENT_CASE:
-                    OpenTimelineAction.invalidateController();
+                   OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }
