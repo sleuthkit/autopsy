@@ -235,7 +235,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * respond to user interactions with the dialog.
      *
      * @param selectedSet The currently selected files set, may be null to
-     * indicate a new interesting files set definition is to be created.
+     *                    indicate a new interesting files set definition is to
+     *                    be created.
      */
     private void doFileSetsDialog(FilesSet selectedSet) {
         // Create a files set defintion panle.
@@ -258,10 +259,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
         // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
-        if(this.filesSets.containsKey(panel.getFilesSetName()) && selectedSet == null) {
+        if (this.filesSets.containsKey(panel.getFilesSetName()) && selectedSet == null) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                                                                "InterestingItemDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
-                                                                panel.getFilesSetName()));
+                    "InterestingItemDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
+                    panel.getFilesSetName()));
             return;
         }
 
@@ -282,7 +283,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * dialog box and respond to user interactions with the dialog.
      *
      * @param selectedRule The currently selected rule, may be null to indicate
-     * a new rule definition is to be created.
+     *                     a new rule definition is to be created.
      */
     private void doFilesSetRuleDialog(FilesSet.Rule selectedRule) {
         // Create a files set rule panel.
@@ -336,12 +337,13 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * owned by this panel. If there is a definition with the same name, it will
      * be replaced, so this is an add/edit operation.
      *
-     * @param oldSet A set to replace, null if the new set is not a replacement.
-     * @param name The name of the files set.
-     * @param description The description of the files set.
+     * @param oldSet            A set to replace, null if the new set is not a
+     *                          replacement.
+     * @param name              The name of the files set.
+     * @param description       The description of the files set.
      * @param ignoresKnownFiles Whether or not the files set ignores known
-     * files.
-     * @param rules The set membership rules for the set.
+     *                          files.
+     * @param rules             The set membership rules for the set.
      */
     void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules) {
         if (oldSet != null) {

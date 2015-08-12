@@ -82,8 +82,9 @@ class ContactAnalyzer {
     /**
      *
      * @param DatabasePath
-     * @param fId Will create artifact from a database given by the path The
-     * fileId will be the Abstract file associated with the artifacts
+     * @param fId          Will create artifact from a database given by the
+     *                     path The fileId will be the Abstract file associated
+     *                     with the artifacts
      */
     private void findContactsInDB(String DatabasePath, long fId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
@@ -101,11 +102,11 @@ class ContactAnalyzer {
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
-            if(f == null){
+            if (f == null) {
                 logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
                 return;
             }
-            
+
             try {
                 // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
                 //sorted by name, so phonenumber/email would be consecutive for a person if they exist.

@@ -30,8 +30,8 @@ public final class NoIngestModuleIngestJobSettings implements IngestModuleIngest
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
-    }    
-        
+    }
+
     /**
      * Gets the string used as an ingest options placeholder for serialization
      * purposes.

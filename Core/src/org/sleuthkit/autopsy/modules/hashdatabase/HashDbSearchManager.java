@@ -32,29 +32,31 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Interface/Node manager for hash searching. The manager takes in the raw
- * map of MD5 hashes to files, flattens the map, and sends it to the HashDbSearchResultFactory.
+ * Interface/Node manager for hash searching. The manager takes in the raw map
+ * of MD5 hashes to files, flattens the map, and sends it to the
+ * HashDbSearchResultFactory.
  */
- class HashDbSearchManager {
+class HashDbSearchManager {
+
     private Map<String, List<AbstractFile>> map;
     private List<AbstractFile> kvContents;
-    
+
     public HashDbSearchManager(Map<String, List<AbstractFile>> map) {
         this.map = map;
         init();
     }
-    
+
     /**
-     * Initializes the flattened map of KeyValues. Each map in a KeyValue is a 
-     * row in the table, with the String as it's column name and the Object
-     * as it's value in the row.
+     * Initializes the flattened map of KeyValues. Each map in a KeyValue is a
+     * row in the table, with the String as it's column name and the Object as
+     * it's value in the row.
      */
     private void init() {
-        if(!map.isEmpty()) {
+        if (!map.isEmpty()) {
             kvContents = new ArrayList<AbstractFile>();
             int id = 0;
-            for(String s : map.keySet()) {
-                for(AbstractFile file : map.get(s)) {
+            for (String s : map.keySet()) {
+                for (AbstractFile file : map.get(s)) {
                     kvContents.add(file);
                 }
             }
@@ -62,17 +64,17 @@ import org.sleuthkit.datamodel.AbstractFile;
     }
 
     /**
-     * Takes the key values, creates nodes through the HashDbSearchResultFactory, and
-     * displays it in the TopComponet.
+     * Takes the key values, creates nodes through the
+     * HashDbSearchResultFactory, and displays it in the TopComponet.
      */
     public void execute() {
-        if(!map.isEmpty()) {
+        if (!map.isEmpty()) {
             Collection<AbstractFile> kvCollection = kvContents;
             Node rootNode = null;
 
             if (kvCollection.size() > 0) {
-                Children childKeyValueContentNodes =
-                        Children.create(new HashDbSearchResultFactory(kvCollection), true);
+                Children childKeyValueContentNodes
+                        = Children.create(new HashDbSearchResultFactory(kvCollection), true);
 
                 rootNode = new AbstractNode(childKeyValueContentNodes);
             } else {
@@ -89,7 +91,7 @@ import org.sleuthkit.datamodel.AbstractFile;
             searchResultWin.requestActive();
         } else {
             JOptionPane.showMessageDialog(null,
-                                          NbBundle.getMessage(this.getClass(), "HashDbSearchManager.noResultsFoundMsg"));
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchManager.noResultsFoundMsg"));
         }
     }
 }

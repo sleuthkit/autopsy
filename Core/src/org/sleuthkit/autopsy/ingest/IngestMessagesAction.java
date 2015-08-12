@@ -31,7 +31,7 @@ import org.openide.util.actions.Presenter;
 //    @ActionReference(path = "Toolbars/File", position = 575)
 //})
 //@Messages("CTL_IngestMessagesAction=Messages")
- final class IngestMessagesAction extends AbstractAction implements Presenter.Toolbar {
+final class IngestMessagesAction extends AbstractAction implements Presenter.Toolbar {
 
     @Override
     public void actionPerformed(ActionEvent e) {

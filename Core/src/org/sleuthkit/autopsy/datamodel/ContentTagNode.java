@@ -61,8 +61,8 @@ class ContentTagNode extends DisplayableItemNode {
             Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + content.getId() + ")", ex); //NON-NLS
             contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
         }
-        AbstractFile file = content instanceof AbstractFile ? (AbstractFile)content : null;
-        
+        AbstractFile file = content instanceof AbstractFile ? (AbstractFile) content : null;
+
         Sheet propertySheet = super.createSheet();
         Sheet.Set properties = propertySheet.get(Sheet.PROPERTIES);
         if (properties == null) {

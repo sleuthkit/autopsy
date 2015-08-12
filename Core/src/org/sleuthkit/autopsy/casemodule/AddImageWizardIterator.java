@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -43,18 +42,18 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     }
 
     /**
-     * Initialize panels representing individual wizard's steps and sets
-     * various properties for them influencing wizard appearance.
+     * Initialize panels representing individual wizard's steps and sets various
+     * properties for them influencing wizard appearance.
      */
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
             panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
-            
+
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
-            
+
             AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
-            
+
             panels.add(dsPanel);
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
@@ -83,10 +82,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     }
 
     /**
-     * Returns the index of the current panel.
-     * Note: 0 = panel 1, 1 = panel 2, etc
+     * Returns the index of the current panel. Note: 0 = panel 1, 1 = panel 2,
+     * etc
      *
-     * @return index  the current panel index
+     * @return index the current panel index
      */
     public int getIndex() {
         return index;
@@ -95,7 +94,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     /**
      * Gets the current panel.
      *
-     * @return panel  the current panel
+     * @return panel the current panel
      */
     @Override
     public WizardDescriptor.Panel<WizardDescriptor> current() {
@@ -109,18 +108,18 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     /**
      * Gets the name of the current panel.
      *
-     * @return name  the name of the current panel
+     * @return name the name of the current panel
      */
     @Override
     public String name() {
         return NbBundle.getMessage(this.getClass(), "AddImageWizardIterator.stepXofN", Integer.toString(index + 1),
-                                   getPanels().size());
+                getPanels().size());
     }
 
     /**
      * Tests whether there is a next panel.
-     * 
-     * @return boolean  true if it has next panel, false if not
+     *
+     * @return boolean true if it has next panel, false if not
      */
     @Override
     public boolean hasNext() {
@@ -130,7 +129,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     /**
      * Tests whether there is a previous panel.
      *
-     * @return boolean  true if it has previous panel, false if not
+     * @return boolean true if it has previous panel, false if not
      */
     @Override
     // disable the previous button on all panels
@@ -159,8 +158,9 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasPrevious()) {
             throw new NoSuchElementException();
         }
-        if(index == 2)
+        if (index == 2) {
             index--;
+        }
         index--;
     }
 

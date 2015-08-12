@@ -34,8 +34,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * A class to manage various services.
  */
 public class Services implements Closeable {
-    
-    private final List<Closeable> services = new ArrayList<>();    
+
+    private final List<Closeable> services = new ArrayList<>();
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
@@ -43,18 +43,18 @@ public class Services implements Closeable {
     public Services(SleuthkitCase tskCase) {
         fileManager = new FileManager(tskCase);
         services.add(fileManager);
-        
+
         tagsManager = new TagsManager(tskCase);
         services.add(tagsManager);
-        
+
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
     }
-    
+
     public FileManager getFileManager() {
         return fileManager;
     }
-    
+
     public TagsManager getTagsManager() {
         return tagsManager;
     }
@@ -62,12 +62,12 @@ public class Services implements Closeable {
     public KeywordSearchService getKeywordSearchService() {
         return keywordSearchService;
     }
-    
+
     @Override
     public void close() throws IOException {
         for (Closeable service : services) {
             service.close();
         }
     }
-    
+
 }

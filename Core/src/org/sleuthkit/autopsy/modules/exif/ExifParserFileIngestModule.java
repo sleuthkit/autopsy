@@ -65,12 +65,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
-        
+
     ExifParserFileIngestModule() {
     }
 
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {    
+    public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
         try {
@@ -79,14 +79,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
         }
     }
-  
+
     @Override
     public ProcessResult process(AbstractFile content) {
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
         }
-        
+
         if (content.isFile() == false) {
             return ProcessResult.OK;
         }

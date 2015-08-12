@@ -195,8 +195,9 @@ class ReportKML implements GeneralReportModule {
 
                     // @@@ Should do something more fancy with these in KML and store them as a single point.
                     String display = name;
-                    if (display.isEmpty()) 
+                    if (display.isEmpty()) {
                         display = location;
+                    }
 
                     if (lon != 0 && lat != 0) {
                         out.write(NbBundle.getMessage(this.getClass(), "ReportKML.latLongStartPoint", lat, lon, display));
@@ -254,8 +255,8 @@ class ReportKML implements GeneralReportModule {
                 icon.addContent(href);
                 progressPanel.increment();
                 /*
-                 * Step 3: read data from source location and
-                 * add in a Placemark for each data element
+                 * Step 3: read data from source location and add in a Placemark
+                 * for each data element
                  */
 
                 File file = new File(reportPath2);

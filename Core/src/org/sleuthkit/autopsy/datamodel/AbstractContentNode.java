@@ -54,9 +54,10 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
     }
-    
+
     /**
      * Return the content data associated with this node
+     *
      * @return the content object wrapped by this node
      */
     public T getContent() {
@@ -134,12 +135,11 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         return children;
 
     }
-    
-     /**
+
+    /**
      * Get count of the underlying content object children.
-     * 
-     * Useful for lazy
-     * loading.
+     *
+     * Useful for lazy loading.
      *
      * @return content children count
      */
@@ -157,15 +157,17 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         return childrenCount;
     }
 
-
     /**
      * Reads the content of this node (of the underlying content object).
      *
-     * @param buf buffer to read into
+     * @param buf    buffer to read into
      * @param offset the starting offset in the content object
-     * @param len the length to read
+     * @param len    the length to read
+     *
      * @return the bytes read
-     * @throws TskException exception thrown if the requested part of content could not be read
+     *
+     * @throws TskException exception thrown if the requested part of content
+     *                      could not be read
      */
     public int read(byte[] buf, long offset, long len) throws TskException {
         return content.read(buf, offset, len);

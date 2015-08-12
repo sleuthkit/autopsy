@@ -23,11 +23,12 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 
 /**
- * A DisplayableItem is any node in the Autopsy directory tree. 
- * All of the nodes in the tree will eventually extend this. 
- * This includes the data source, views, extracted results, etc. areas.
+ * A DisplayableItem is any node in the Autopsy directory tree. All of the nodes
+ * in the tree will eventually extend this. This includes the data source,
+ * views, extracted results, etc. areas.
  */
 public abstract class DisplayableItemNode extends AbstractNode {
+
     public DisplayableItemNode(Children children) {
         super(children);
     }
@@ -35,7 +36,8 @@ public abstract class DisplayableItemNode extends AbstractNode {
     public DisplayableItemNode(Children children, Lookup lookup) {
         super(children, lookup);
     }
-     
+
     public abstract boolean isLeafTypeNode();
-    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);    
+
+    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
 }

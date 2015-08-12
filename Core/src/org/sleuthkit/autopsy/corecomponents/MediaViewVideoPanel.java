@@ -33,8 +33,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Video viewer part of the Media View layered pane.
- * Uses different engines depending on platform.
+ * Video viewer part of the Media View layered pane. Uses different engines
+ * depending on platform.
  */
 public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, DataContentViewerMedia.MediaViewPanel {
 

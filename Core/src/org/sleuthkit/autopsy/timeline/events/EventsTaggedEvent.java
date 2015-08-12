@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearchservice;
+package org.sleuthkit.autopsy.timeline.events;
 
-import java.io.Closeable;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
+import java.util.Collections;
+import java.util.Set;
 
 /**
- *
+ * Posted to eventbus when a tag as been added to a file artifact that
+ * corresponds to an event
  */
-public interface KeywordSearchService extends Closeable {
+public class EventsTaggedEvent {
 
-    /**
-     * Takes a Blackboard artifact and adds all of its attributes to the keyword
-     * search index.
-     *
-     * @param artifact
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
+    private final Set<Long> eventIDs;
+
+    public EventsTaggedEvent(Set<Long> eventIDs) {
+        this.eventIDs = eventIDs;
+    }
+
+    public Set<Long> getEventIDs() {
+        return Collections.unmodifiableSet(eventIDs);
+    }
 }

@@ -134,8 +134,10 @@ public class NavPanel extends BorderPane implements TimeLineView {
         eventsTreeLabel.setText(NbBundle.getMessage(this.getClass(), "NavPanel.eventsTreeLabel.text"));
     }
 
-    /** A tree cell to display {@link NavTreeNode}s. Shows the description, and
-     * count, as well a a "legend icon" for the event type. */
+    /**
+     * A tree cell to display {@link NavTreeNode}s. Shows the description, and
+     * count, as well a a "legend icon" for the event type.
+     */
     private static class EventTreeCell extends TreeCell<NavTreeNode> {
 
         @Override

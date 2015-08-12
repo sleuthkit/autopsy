@@ -59,6 +59,7 @@ public class XMLUtil {
      * Creates a W3C DOM.
      *
      * @return The document object.
+     *
      * @throws ParserConfigurationException
      */
     public static Document createDocument() throws ParserConfigurationException {
@@ -71,11 +72,14 @@ public class XMLUtil {
      * Loads an XML document into a WC3 DOM and validates it using a schema
      * packaged as a class resource.
      *
-     * @param <T> The name of the class associated with the resource.
-     * @param docPath The full path to the XML document.
-     * @param clazz The class associated with the schema resource.
+     * @param <T>                The name of the class associated with the
+     *                           resource.
+     * @param docPath            The full path to the XML document.
+     * @param clazz              The class associated with the schema resource.
      * @param schemaResourceName The name of the schema resource.
+     *
      * @return The WC3 DOM document object.
+     *
      * @throws IOException
      * @throws ParserConfigurationException
      * @throws SAXException
@@ -90,7 +94,9 @@ public class XMLUtil {
      * Loads an XML document into a WC3 DOM.
      *
      * @param docPath The full path to the XML document.
+     *
      * @return The WC3 DOM document object.
+     *
      * @throws ParserConfigurationException
      * @throws SAXException
      * @throws IOException
@@ -108,6 +114,7 @@ public class XMLUtil {
      * @param doc
      * @param clazz
      * @param schemaResourceName
+     *
      * @throws SAXException
      * @throws IOException
      */
@@ -123,10 +130,11 @@ public class XMLUtil {
     /**
      * Saves a WC3 DOM by writing it to an XML document.
      *
-     * @param doc The WC3 DOM document object.
-     * @param docPath The full path to the XML document.
+     * @param doc      The WC3 DOM document object.
+     * @param docPath  The full path to the XML document.
      * @param encoding Encoding scheme to use for the XML document, e.g.,
-     * "UTF-8."
+     *                 "UTF-8."
+     *
      * @throws TransformerConfigurationException
      * @throws FileNotFoundException
      * @throws UnsupportedEncodingException
@@ -157,11 +165,11 @@ public class XMLUtil {
      * called, the XML being validated is not. Be sure the XML file is already
      * extracted otherwise it will return false.
      *
-     * @param xmlfile The XML file to validate, in DOMSource format
-     * @param clazz class frm package to extract schema file from
+     * @param xmlfile    The XML file to validate, in DOMSource format
+     * @param clazz      class frm package to extract schema file from
      * @param schemaFile The file name of the schema to validate against, must
-     * exist as a resource in the same package as where this function is being
-     * called.
+     *                   exist as a resource in the same package as where this
+     *                   function is being called.
      *
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or
      * IngestModuleLoader.
@@ -196,10 +204,11 @@ public class XMLUtil {
      * called, the XML being validated is not. Be sure the XML file is already
      * extracted otherwise it will return false.
      *
-     * @param doc The XML DOM to validate
+     * @param doc   The XML DOM to validate
      * @param clazz class from package to extract schema from
-     * @param type The file name of the schema to validate against, must exist
-     * as a resource in the same package as where this function is being called
+     * @param type  The file name of the schema to validate against, must exist
+     *              as a resource in the same package as where this function is
+     *              being called
      *
      * For example usages, please see KeywordSearchListsXML, HashDbXML, or
      * IngestModuleLoader.
@@ -214,7 +223,7 @@ public class XMLUtil {
     /**
      * Loads XML files from disk
      *
-     * @param clazz the class this method is invoked from
+     * @param clazz   the class this method is invoked from
      * @param xmlPath the full path to the file to load
      */
     // TODO: Deprecate.
@@ -238,7 +247,7 @@ public class XMLUtil {
     /**
      * Loads XML files from disk
      *
-     * @param clazz the class this method is invoked from
+     * @param clazz   the class this method is invoked from
      * @param xmlPath the full path to the file to load
      * @param xsdPath the full path to the file to validate against
      */
@@ -254,10 +263,10 @@ public class XMLUtil {
     /**
      * Saves XML files to disk
      *
-     * @param clazz the class this method is invoked from
-     * @param xmlPath the full path to save the XML to
+     * @param clazz    the class this method is invoked from
+     * @param xmlPath  the full path to save the XML to
      * @param encoding to encoding, such as "UTF-8", to encode the file with
-     * @param doc the document to save
+     * @param doc      the document to save
      */
     // TODO: Deprecate.
     public static <T> boolean saveDoc(Class<T> clazz, String xmlPath, String encoding, final Document doc) {

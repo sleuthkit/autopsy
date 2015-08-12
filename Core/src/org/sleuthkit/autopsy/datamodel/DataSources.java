@@ -18,12 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-
 /**
  * Root node to store the data sources in a case
  */
 public class DataSources implements AutopsyVisitableItem {
-    
+
     public DataSources() {
     }
 

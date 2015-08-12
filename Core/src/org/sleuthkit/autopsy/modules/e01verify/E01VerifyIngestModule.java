@@ -77,21 +77,21 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         String imgName = dataSource.getName();
         if (!(dataSource instanceof Image)) {
             logger.log(Level.INFO, "Skipping disk image image {0}", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "EwfVerifyIngestModule.process.skipNonEwf",
-                    imgName)));
+                            "EwfVerifyIngestModule.process.skipNonEwf",
+                            imgName)));
             return ProcessResult.OK;
         }
-        Image img = (Image)dataSource;
+        Image img = (Image) dataSource;
 
         // Skip images that are not E01
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {
             logger.log(Level.INFO, "Skipping non-ewf image {0}", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "EwfVerifyIngestModule.process.skipNonEwf",
-                    imgName)));
+                            "EwfVerifyIngestModule.process.skipNonEwf",
+                            imgName)));
             return ProcessResult.OK;
         }
 
@@ -99,26 +99,26 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             storedHash = img.getMd5().toLowerCase();
             logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash}); //NON-NLS
         } else {
-            services.postMessage(IngestMessage.createMessage( MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "EwfVerifyIngestModule.process.noStoredHash",
-                    imgName)));
+                            "EwfVerifyIngestModule.process.noStoredHash",
+                            imgName)));
             return ProcessResult.ERROR;
         }
 
         logger.log(Level.INFO, "Starting hash verification of {0}", img.getName()); //NON-NLS
-        services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
-                "EwfVerifyIngestModule.process.startingImg",
-                imgName)));
+                        "EwfVerifyIngestModule.process.startingImg",
+                        imgName)));
 
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage( MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "EwfVerifyIngestModule.process.errGetSizeOfImg",
-                    imgName)));
+                            "EwfVerifyIngestModule.process.errGetSizeOfImg",
+                            imgName)));
         }
 
         // Libewf uses a sector size of 64 times the sector size, which is the
@@ -144,7 +144,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             } catch (TskCoreException ex) {
                 String msg = NbBundle.getMessage(this.getClass(),
                         "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
-                services.postMessage(IngestMessage.createMessage( MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
@@ -169,9 +169,9 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", msg);
         extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.calcHashLi", calculatedHash);
         extra += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.storedHashLi", storedHash);
-        services.postMessage(IngestMessage.createMessage( MessageType.INFO, E01VerifierModuleFactory.getModuleName(), imgName + msg, extra));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(), imgName + msg, extra));
         logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
-                
+
         return ProcessResult.OK;
     }
 }

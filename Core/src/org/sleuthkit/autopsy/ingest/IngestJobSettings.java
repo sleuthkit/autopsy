@@ -54,7 +54,7 @@ public class IngestJobSettings {
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
     private String moduleSettingsFolderPath;
-    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length()-1);
+    private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1);
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
@@ -243,8 +243,9 @@ public class IngestJobSettings {
     /**
      * Gets the module names for a given key within these ingest job settings.
      *
-     * @param key The key string.
+     * @param key            The key string.
      * @param defaultSetting The default list of module names.
+     *
      * @return The list of module names associated with the key.
      */
     private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
@@ -281,10 +282,13 @@ public class IngestJobSettings {
     }
 
     /**
-     * Determines if the moduleSettingsFilePath is that of a serialized jython instance.
-     * Serialized Jython instances (settings saved on the disk) contain "org.python.proxies."
-     * in their fileName based on the current implementation.
+     * Determines if the moduleSettingsFilePath is that of a serialized jython
+     * instance. Serialized Jython instances (settings saved on the disk)
+     * contain "org.python.proxies." in their fileName based on the current
+     * implementation.
+     *
      * @param moduleSettingsFilePath path to the module settings file.
+     *
      * @return True or false
      */
     private boolean isPythonModuleSettingsFile(String moduleSettingsFilePath) {
@@ -296,6 +300,7 @@ public class IngestJobSettings {
      * for these ingest job settings.
      *
      * @param factory The ingest module factory for an ingest module.
+     *
      * @return The ingest module settings.
      */
     private IngestModuleIngestJobSettings loadModuleSettings(IngestModuleFactory factory) {
@@ -332,6 +337,7 @@ public class IngestJobSettings {
      * ingest module for these ingest job settings.
      *
      * @param factory The ingest module factory for an ingest module.
+     *
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
@@ -372,7 +378,7 @@ public class IngestJobSettings {
      * Serializes the ingest job settings for this context for a given ingest
      * module.
      *
-     * @param factory The ingest module factory for the module.
+     * @param factory  The ingest module factory for the module.
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
@@ -398,8 +404,9 @@ public class IngestJobSettings {
      * Makes a comma-separated values list from a hash set of strings.
      *
      * @param input A hash set of strings.
+     *
      * @return The contents of the hash set as a single string of
-     * comma-separated values.
+     *         comma-separated values.
      */
     private static String makeCommaSeparatedValuesList(HashSet<String> input) {
         if (input == null || input.isEmpty()) {

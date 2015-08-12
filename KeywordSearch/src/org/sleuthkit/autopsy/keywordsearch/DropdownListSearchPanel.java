@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.*;
@@ -43,7 +42,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 
 /**
- * Viewer panel widget for keyword lists that is used in the ingest config and options area.
+ * Viewer panel widget for keyword lists that is used in the ingest config and
+ * options area.
  */
 class DropdownListSearchPanel extends KeywordSearchPanel {
 
@@ -129,7 +129,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
                             ingestRunning = IngestManager.getInstance().isIngestRunning();
                             updateComponents();
                         }
-                    });                                
+                    });
                 }
             }
         });
@@ -137,7 +137,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         searchAddListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ingestRunning) {                    
+                if (ingestRunning) {
                     SearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest"); //NON-NLS
                 } else {
@@ -153,8 +153,8 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         ingestRunning = IngestManager.getInstance().isIngestRunning();
         if (ingestRunning) {
             searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestTitle"));
-            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg" ));
-            
+            searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIngestMsg"));
+
         } else {
             searchAddButton.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.searchIngestTitle"));
             searchAddButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.addIdxSearchMsg"));
@@ -162,19 +162,18 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         listsTableModel.resync();
         updateIngestIndexLabel();
     }
-    
+
     private void updateIngestIndexLabel() {
         if (ingestRunning) {
             ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.ongoingIngestMsg", filesIndexed));
-        }
-        else {
+        } else {
             ingestIndexLabel.setText(NbBundle.getMessage(this.getClass(), "KeywordSearchListsViewerPanel.initIngest.fileIndexCtMsg", filesIndexed));
         }
     }
-    
+
     @Override
     protected void postFilesIndexedChange() {
-         updateIngestIndexLabel();
+        updateIngestIndexLabel();
     }
 
     /**
@@ -303,7 +302,6 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
     List<KeywordList> getKeywordLists() {
         return listsTableModel.getSelectedListsL();
     }
-
 
     void addSearchButtonActionListener(ActionListener al) {
         searchAddButton.addActionListener(al);

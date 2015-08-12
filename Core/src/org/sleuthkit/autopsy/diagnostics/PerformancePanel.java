@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.diagnostics;
 
 import java.io.File;
@@ -51,7 +49,7 @@ public class PerformancePanel extends javax.swing.JDialog {
      */
     public PerformancePanel() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-              NbBundle.getMessage(PerformancePanel.class, "PerformancePanel.title"), true);
+                NbBundle.getMessage(PerformancePanel.class, "PerformancePanel.title"), true);
         initComponents();
     }
 
@@ -173,11 +171,10 @@ public class PerformancePanel extends javax.swing.JDialog {
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
         // TODO add your handling code here:
         startButton.setEnabled(false);
-        SwingWorker<?,?> worker = new PerformanceTestWorker();
+        SwingWorker<?, ?> worker = new PerformanceTestWorker();
         worker.execute();
-        
-    }//GEN-LAST:event_startButtonActionPerformed
 
+    }//GEN-LAST:event_startButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel cpuTimeLabel;
@@ -194,26 +191,27 @@ public class PerformancePanel extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     class PerformanceTestWorker extends SwingWorker<Void, Void> {
+
         private long cpuStats;
         private long imgReadStats;
         private long dbStats;
         private long fileReadStats;
-        
+
         @Override
         protected Void doInBackground() throws Exception {
             setCpuLabel("");
             setImgLabel("");
             setDbLabel("");
             setFileReadLabel("");
-            
+
             doCpuTest();
             doImgTest();
             doFileReadTest();
             doDbTest();
-            
+
             return null;
         }
-        
+
         private void setCpuLabel(final String msg) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -222,7 +220,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             });
         }
-        
+
         private void setImgLabel(final String msg) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -231,7 +229,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             });
         }
-        
+
         private void setFileReadLabel(final String msg) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -240,7 +238,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             });
         }
-        
+
         private void setDbLabel(final String msg) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -249,7 +247,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             });
         }
-        
+
         private void setStatusMsg(final String msg) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -258,11 +256,10 @@ public class PerformancePanel extends javax.swing.JDialog {
                 }
             });
         }
-        
-        
+
         private void doCpuTest() {
             final String msg = NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.basemsg");
-            
+
             MessageDigest md;
             long start = new Date().getTime();
             try {
@@ -272,12 +269,13 @@ public class PerformancePanel extends javax.swing.JDialog {
                         NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.cpuLabel.md5AlgNotFound.text"));
                 return;
             }
-            
+
             byte[] buf = new byte[256 * 1024];
             long bytesRead = 0;
             for (int a = 0; a < 50; a++) {
-                if (a % 10 == 0)
+                if (a % 10 == 0) {
                     setStatusMsg(msg + " " + a * 100 / 50 + "%");
+                }
                 for (byte b = Byte.MIN_VALUE; b < Byte.MAX_VALUE; b++) {
                     Arrays.fill(buf, b);
                     md.update(buf);
@@ -288,27 +286,26 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             long end = new Date().getTime();
             cpuStats = (bytesRead / (1024 * 1024)) / ((end - start) / 1000);
-            
+
             setCpuLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.cpuTest.cpuLabel.MBHashedPerSec.text",
-                                            cpuStats));
+                    cpuStats));
             setStatusMsg("");
         }
-        
+
         private void doImgTest() {
             imgReadStats = 0;
             setStatusMsg(
                     NbBundle.getMessage(this.getClass(), "PerformancePanel.imgTest.statusMsg.runningImgReadTest.text"));
-            
+
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
-            }
-            catch (Exception e) {   
+            } catch (Exception e) {
                 setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
                 return;
             }
-                
+
             List<Content> dataSources;
             try {
                 dataSources = curCase.getDataSources();
@@ -320,7 +317,7 @@ public class PerformancePanel extends javax.swing.JDialog {
             Image image = null;
             for (Content c : dataSources) {
                 if (c instanceof Image) {
-                    image = (Image)c;
+                    image = (Image) c;
                 }
             }
             if (image == null) {
@@ -328,12 +325,12 @@ public class PerformancePanel extends javax.swing.JDialog {
                 setStatusMsg("");
                 return;
             }
-            
+
             long start = new Date().getTime();
 
             byte[] buf = new byte[4096];
             long bytesRead = 0;
-            
+
             // random starting point to prevent caching from effecting it
             Random rand = new Random();
             long curOffset = rand.nextLong();
@@ -342,31 +339,33 @@ public class PerformancePanel extends javax.swing.JDialog {
             }
             curOffset = curOffset % (image.getSize() / 2);
             curOffset = 512 * ((curOffset + 511) / 512);
-            
+
             //long curOffset = 0;
-            while (bytesRead < 1000 * 1024 * 1024 ) {
+            while (bytesRead < 1000 * 1024 * 1024) {
                 long read;
                 try {
                     read = image.read(buf, curOffset, buf.length);
                 } catch (TskCoreException ex) {
                     break;
                 }
-                if (read <= 0)
+                if (read <= 0) {
                     break;
+                }
                 bytesRead += read;
                 curOffset += read;
             }
             long end = new Date().getTime();
             long elapsed = (end - start) / 1000;
-            if (elapsed > 0) 
-                imgReadStats = (bytesRead / (1024 * 1024))  / elapsed;
-            else
+            if (elapsed > 0) {
+                imgReadStats = (bytesRead / (1024 * 1024)) / elapsed;
+            } else {
                 imgReadStats = 0;
+            }
             setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.ImgTest.imgLabel.MBReadPerSec.text",
-                                            imgReadStats, bytesRead));
-            setStatusMsg("");   
+                    imgReadStats, bytesRead));
+            setStatusMsg("");
         }
-        
+
         private void doFileReadTest() {
             fileReadStats = 0;
 
@@ -375,21 +374,20 @@ public class PerformancePanel extends javax.swing.JDialog {
                 setFileReadLabel(
                         NbBundle.getMessage(this.getClass(), "PerformancePanel.FileReadTest.fileReadLabel.skipped.text"));
             }
-            
+
             setStatusMsg(NbBundle.getMessage(this.getClass(),
-                                             "PerformancePanel.FileReadTest.statusMsg.runningFileReadTest.text"));
-            
+                    "PerformancePanel.FileReadTest.statusMsg.runningFileReadTest.text"));
+
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
-            }
-            catch (Exception e) {   
+            } catch (Exception e) {
                 setFileReadLabel(
                         NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
                 return;
             }
-                
+
             List<Content> dataSources;
             try {
                 dataSources = curCase.getDataSources();
@@ -402,7 +400,7 @@ public class PerformancePanel extends javax.swing.JDialog {
             Image image = null;
             for (Content c : dataSources) {
                 if (c instanceof Image) {
-                    image = (Image)c;
+                    image = (Image) c;
                 }
             }
             if (image == null) {
@@ -411,7 +409,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 setStatusMsg("");
                 return;
             }
-            
+
             File file = new File(image.getPaths()[0]);
             if (file.exists() == false) {
                 setFileReadLabel(
@@ -419,7 +417,7 @@ public class PerformancePanel extends javax.swing.JDialog {
                 setStatusMsg("");
                 return;
             }
-            
+
             FileReader fileReader;
             try {
                 fileReader = new FileReader(file);
@@ -429,94 +427,89 @@ public class PerformancePanel extends javax.swing.JDialog {
                 setStatusMsg("");
                 return;
             }
-            
+
             long start = new Date().getTime();
             // random starting point to prevent caching from effecting it
             // make RandomAccessFile instad
-            /*Random rand = new Random();
-            long curOffset = rand.nextLong();
-            if (curOffset < 0) {
-                curOffset *= -1;
-            }
-            curOffset = curOffset % (file.length());
-            curOffset = 512 * ((curOffset + 511) / 512);
-            try {
-                fileReader.skip(curOffset);
-            } catch (IOException ex) {
-                setFileReadLabel("Error seeking: " + curOffset);
-                return;
-            }*/
-            
+            /*
+             * Random rand = new Random(); long curOffset = rand.nextLong(); if
+             * (curOffset < 0) { curOffset *= -1; } curOffset = curOffset %
+             * (file.length()); curOffset = 512 * ((curOffset + 511) / 512); try
+             * { fileReader.skip(curOffset); } catch (IOException ex) {
+             * setFileReadLabel("Error seeking: " + curOffset); return; }
+             */
+
             char[] buf = new char[4096];
             int bytesRead = 0;
-            while (bytesRead < 1000 * 1024 * 1024 ) {
+            while (bytesRead < 1000 * 1024 * 1024) {
                 long read;
                 try {
                     read = fileReader.read(buf, 0, buf.length);
                 } catch (IOException ex) {
                     break;
                 }
-                if (read <= 0)
+                if (read <= 0) {
                     break;
+                }
                 bytesRead += read;
             }
             long end = new Date().getTime();
             long elapsed = (end - start) / 1000;
-            if (elapsed > 0) 
-                fileReadStats = (bytesRead / (1024 * 1024))  / elapsed;
-            else
+            if (elapsed > 0) {
+                fileReadStats = (bytesRead / (1024 * 1024)) / elapsed;
+            } else {
                 fileReadStats = 0;
+            }
             setFileReadLabel(
                     NbBundle.getMessage(this.getClass(), "PerformancePanel.ImgTest.fileReadLabel.MBReadPerSec.text",
-                                        fileReadStats, bytesRead));
-            setStatusMsg("");   
+                            fileReadStats, bytesRead));
+            setStatusMsg("");
         }
-        
+
         private void doDbTest() {
             dbStats = 0;
             setStatusMsg(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.status.running"));
-            
+
             Case curCase;
             try {
                 curCase = Case.getCurrentCase();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 return;
             }
-            
+
             try {
                 SleuthkitCase tskCase = curCase.getSleuthkitCase();
                 long start = new Date().getTime();
 
                 List<AbstractFile> files = tskCase.findAllFilesWhere("obj_id < 50000"); // NON-NLS
-                
+
                 long end = new Date().getTime();
                 long elapsed = (end - start) / 1000;
-                if (elapsed > 0) 
-                    dbStats = files.size() /  elapsed;
-                else
+                if (elapsed > 0) {
+                    dbStats = files.size() / elapsed;
+                } else {
                     dbStats = 0;
-            
+                }
+
                 setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.dbLabel.recordsPerSec.text",
-                                               dbStats));
+                        dbStats));
             } catch (TskCoreException ex) {
                 setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.dbTest.dbLabel.errPerformQuery.text"));
             }
-            
+
             setStatusMsg("");
         }
-        
+
         @Override
         protected void done() {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 setStatusMsg(NbBundle.getMessage(this.getClass(), "PerformancePanel.done.statusMsg.err.text",
-                                                 ex.getMessage()));
+                        ex.getMessage()));
             }
             startButton.setEnabled(true);
         }
     }
 }
-

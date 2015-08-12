@@ -27,7 +27,9 @@ import org.openide.nodes.Node;
  */
 class TableFilterChildren extends FilterNode.Children {
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     TableFilterChildren(Node arg) {
         super(arg);
     }
@@ -47,6 +49,7 @@ class TableFilterChildren extends FilterNode.Children {
      * Converts the given FsContent into "Children".
      *
      * @param fs
+     *
      * @return children
      */
     public static Children createInstance(Node arg, boolean createChild) {

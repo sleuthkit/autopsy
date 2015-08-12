@@ -50,17 +50,19 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     private final FileExtMismatchDetectorModuleSettings settings;
     private HashMap<String, String[]> SigTypeToExtMap = new HashMap<>();
     private long jobId;
-    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();    
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     private static class IngestJobTotals {
+
         private long processTime = 0;
         private long numFiles = 0;
     }
-     
+
     /**
      * Update the match time total and increment num of files for this job
-     * @param ingestJobId  
+     *
+     * @param ingestJobId
      * @param matchTimeInc amount of time to add
      */
     private static synchronized void addToTotals(long ingestJobId, long processTimeInc) {
@@ -69,12 +71,12 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             ingestJobTotals = new IngestJobTotals();
             totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
         }
-        
+
         ingestJobTotals.processTime += processTimeInc;
         ingestJobTotals.numFiles++;
         totalsForIngestJobs.put(ingestJobId, ingestJobTotals);
-    }    
-    
+    }
+
     FileExtMismatchIngestModule(FileExtMismatchDetectorModuleSettings settings) {
         this.settings = settings;
     }
@@ -127,6 +129,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
      * Compare file type for file and extension.
      *
      * @param abstractFile
+     *
      * @return false if the two match. True if there is a mismatch.
      */
     private boolean compareSigTypeToExt(AbstractFile abstractFile) {
@@ -175,9 +178,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         // We only need to post the summary msg from the last module per job
-        if (refCounter.decrementAndGet(jobId) == 0) {    
+        if (refCounter.decrementAndGet(jobId) == 0) {
             IngestJobTotals jobTotals;
-            synchronized(this) {
+            synchronized (this) {
                 jobTotals = totalsForIngestJobs.remove(jobId);
             }
             if (jobTotals != null) {
@@ -194,7 +197,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
                 services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, FileExtMismatchDetectorModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(),
-                        "FileExtMismatchIngestModule.complete.svcMsg.text"),
+                                "FileExtMismatchIngestModule.complete.svcMsg.text"),
                         detailsSb.toString()));
             }
         }

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -38,7 +37,7 @@ import org.openide.util.actions.Presenter;
  * The action to close the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
- final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar{
+final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     JButton toolbarButton = new JButton();
 
@@ -64,18 +63,20 @@ import org.openide.util.actions.Presenter;
     /**
      * Closes the current opened case.
      *
-     * @param e  the action event for this method
+     * @param e the action event for this method
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (Case.existsCurrentCase() == false)
+        if (Case.existsCurrentCase() == false) {
             return;
-        
+        }
+
         Case result = Case.getCurrentCase();
-        
-        if(!MessageNotifyUtil.Message.confirm("Are you sure you want to close current case?")) 
+
+        if (!MessageNotifyUtil.Message.confirm("Are you sure you want to close current case?")) {
             return;
-        
+        }
+
         try {
             result.closeCase();
             EventQueue.invokeLater(new Runnable() {
@@ -90,7 +91,8 @@ import org.openide.util.actions.Presenter;
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)" instead of this method.
+     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
+     * instead of this method.
      */
     @Override
     public void performAction() {
@@ -108,18 +110,18 @@ import org.openide.util.actions.Presenter;
 
     /**
      * Gets the HelpCtx associated with implementing object
-     * 
+     *
      * @return HelpCtx or HelpCtx.DEFAULT_HELP
      */
     @Override
     public HelpCtx getHelpCtx() {
-        return HelpCtx.DEFAULT_HELP; 
+        return HelpCtx.DEFAULT_HELP;
     }
 
     /**
      * Returns the toolbar component of this action
      *
-     * @return component  the toolbar button
+     * @return component the toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -132,10 +134,10 @@ import org.openide.util.actions.Presenter;
     /**
      * Set this action to be enabled/disabled
      *
-     * @param value  whether to enable this action or not
+     * @param value whether to enable this action or not
      */
     @Override
-    public void setEnabled(boolean value){
+    public void setEnabled(boolean value) {
         super.setEnabled(value);
         toolbarButton.setEnabled(value);
     }

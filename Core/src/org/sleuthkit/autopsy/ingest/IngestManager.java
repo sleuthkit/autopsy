@@ -300,7 +300,7 @@ public class IngestManager {
      * is the default.
      *
      * @param runInteractively whether or not to this ingest manager should run
-     * ingest interactively.
+     *                         ingest interactively.
      */
     public synchronized void setRunInteractively(boolean runInteractively) {
         this.runInteractively = runInteractively;
@@ -361,7 +361,7 @@ public class IngestManager {
      * job will be started on a worker thread.
      *
      * @param dataSources The data sources to process.
-     * @param settings The settings for the ingest job.
+     * @param settings    The settings for the ingest job.
      */
     public synchronized void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
@@ -378,7 +378,8 @@ public class IngestManager {
      * Starts an ingest job that will process a collection of data sources.
      *
      * @param dataSources The data sources to process.
-     * @param settings The settings for the ingest job.
+     * @param settings    The settings for the ingest job.
+     *
      * @return The ingest job that was started on success or null on failure.
      */
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
@@ -397,6 +398,7 @@ public class IngestManager {
      * Starts an ingest job for a collection of data sources.
      *
      * @param job The ingest job to start.
+     *
      * @return True if the job was started, false otherwise.
      */
     private boolean startIngestJob(IngestJob job) {
@@ -542,6 +544,7 @@ public class IngestManager {
      * Adds an ingest job and ingest module event property change listener.
      *
      * @param listener The PropertyChangeListener to register.
+     *
      * @deprecated Use addIngestJobEventListener() and/or
      * addIngestModuleEventListener().
      */
@@ -555,6 +558,7 @@ public class IngestManager {
      * Removes an ingest job and ingest module event property change listener.
      *
      * @param listener The PropertyChangeListener to unregister.
+     *
      * @deprecated Use removeIngestJobEventListener() and/or
      * removeIngestModuleEventListener().
      */
@@ -614,7 +618,7 @@ public class IngestManager {
      * module.
      *
      * @param moduleDataEvent A ModuleContentEvent with the details of the new
-     * content.
+     *                        content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
         fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));

@@ -35,11 +35,11 @@ import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.GroupPane;
-import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.MetaDataPane;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.GroupPane;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.MetaDataPane;
 import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 
 /**
@@ -158,6 +158,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             splitPane.setDividerPositions(0.0, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
+            ImageGalleryController.getDefault().setNavPanel(navPanel);
         });
     }
 

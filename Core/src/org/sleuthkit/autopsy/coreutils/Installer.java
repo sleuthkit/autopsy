@@ -31,14 +31,14 @@ public class Installer extends ModuleInstall {
     private static Handler logs;
 
     private static Installer instance;
-    
+
     public synchronized static Installer getDefault() {
         if (instance == null) {
             instance = new Installer();
         }
         return instance;
     }
-    
+
     private Installer() {
         super();
     }
@@ -54,14 +54,12 @@ public class Installer extends ModuleInstall {
 
         autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() //NON-NLS
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType()); //NON-NLS NON-NLS
-        
+
         autopsyLogger.log(Level.INFO, "os.name: " + System.getProperty("os.name")); //NON-NLS
         autopsyLogger.log(Level.INFO, "os.arch: " + System.getProperty("os.arch")); //NON-NLS
         autopsyLogger.log(Level.INFO, "PID: " + PlatformUtil.getPID()); //NON-NLS
         autopsyLogger.log(Level.INFO, "Process Virtual Memory Used: " + PlatformUtil.getProcessVirtualMemoryUsed()); //NON-NLS
-        
-        
-        
+
     }
 
     @Override

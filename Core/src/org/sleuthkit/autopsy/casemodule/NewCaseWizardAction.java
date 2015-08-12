@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
@@ -38,10 +37,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Action to open the New Case wizard.
  */
- final class NewCaseWizardAction extends CallableSystemAction {
+final class NewCaseWizardAction extends CallableSystemAction {
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
-    
+
     private static final Logger logger = Logger.getLogger(NewCaseWizardAction.class.getName());
 
     @Override
@@ -52,9 +51,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
             String closeCurrentCase = NbBundle
                     .getMessage(this.getClass(), "NewCaseWizardAction.closeCurCase.confMsg.msg");
             NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                                                                   NbBundle.getMessage(this.getClass(),
-                                                                                       "NewCaseWizardAction.closeCurCase.confMsg.title"),
-                                                                   NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    NbBundle.getMessage(this.getClass(),
+                            "NewCaseWizardAction.closeCurCase.confMsg.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
             d.setValue(NotifyDescriptor.NO_OPTION);
 
             Object res = DialogDisplayer.getDefault().notify(d);
@@ -83,7 +82,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         dialog.setVisible(true);
         dialog.toFront();
 
-
         boolean finished = wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION; // check if it finishes (it's not cancelled)
         boolean isCancelled = wizardDescriptor.getValue() == WizardDescriptor.CANCEL_OPTION; // check if the "Cancel" button is pressed
 
@@ -98,7 +96,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         // if Cancel button is pressed
         if (isCancelled) {
             String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-            if(createdDirectory != null) {
+            if (createdDirectory != null) {
                 logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
                 Case.deleteCaseDirectory(new File(createdDirectory));
             }
@@ -113,16 +111,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     }
 
     /**
-     * Initialize panels representing individual wizard's steps and sets
-     * various properties for them influencing wizard appearance.
+     * Initialize panels representing individual wizard's steps and sets various
+     * properties for them influencing wizard appearance.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
-                        new NewCaseWizardPanel1(),
-                        new NewCaseWizardPanel2()
-                    };
+                new NewCaseWizardPanel1(),
+                new NewCaseWizardPanel2()
+            };
             String[] steps = new String[panels.length];
             for (int i = 0; i < panels.length; i++) {
                 Component c = panels[i].getComponent();

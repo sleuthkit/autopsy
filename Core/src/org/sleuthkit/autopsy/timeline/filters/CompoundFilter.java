@@ -25,9 +25,9 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 /**
- * A Filter with a collection of {@link Filter} sub-filters. If this
- * filter is not active than none of its sub-filters are applied either.
- * Concrete implementations can decide how to combine the sub-filters.
+ * A Filter with a collection of {@link Filter} sub-filters. If this filter is
+ * not active than none of its sub-filters are applied either. Concrete
+ * implementations can decide how to combine the sub-filters.
  *
  * a {@link CompoundFilter} uses listeners to enforce the following
  * relationships between it and its sub-filters:
@@ -42,14 +42,17 @@ import javafx.collections.ObservableList;
  */
 public abstract class CompoundFilter<SubFilterType extends Filter> extends AbstractFilter {
 
-    /** the list of sub-filters that make up this filter */
+    /**
+     * the list of sub-filters that make up this filter
+     */
     private final ObservableList<SubFilterType> subFilters = FXCollections.observableArrayList();
 
     public final ObservableList<SubFilterType> getSubFilters() {
         return subFilters;
     }
 
-    /** construct a compound filter from a list of other filters to combine.
+    /**
+     * construct a compound filter from a list of other filters to combine.
      *
      * @param subFilters
      */

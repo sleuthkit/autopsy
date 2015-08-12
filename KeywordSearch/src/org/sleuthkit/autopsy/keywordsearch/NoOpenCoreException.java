@@ -30,5 +30,4 @@ public class NoOpenCoreException extends Exception {
         super(NbBundle.getMessage(NoOpenCoreException.class, "NoOpenCoreException.err.noOpenSorlCore.msg"));
     }
 
-    
 }

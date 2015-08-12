@@ -48,13 +48,13 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private String reportsBrandingDir; //dir with extracted reports branding resources
     private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
-    
+
     // this is static so that it can be set by another object
     // before the report is actually made.  Entire class should
     // probably become singleton. Is set to null until setPath
     // is called to specify something other than default.
     private static String generatorLogoPath = null;
-    
+
     private String defaultGeneratorLogoPath;
 
     public ReportBranding() {
@@ -80,7 +80,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
     public String getReportsBrandingDir() {
         return reportsBrandingDir;
     }
-    
+
     /**
      * extract default logo from JAR file to local file.
      */
@@ -96,25 +96,27 @@ public final class ReportBranding implements ReportBrandingProviderI {
     @Override
     public String getGeneratorLogoPath() {
         // if no one called to change the path, use default
-        if (generatorLogoPath == null)
+        if (generatorLogoPath == null) {
             generatorLogoPath = defaultGeneratorLogoPath;
-        
+        }
+
         return generatorLogoPath;
     }
 
     @Override
     public void setGeneratorLogoPath(String path) {
-        generatorLogoPath = path;        
+        generatorLogoPath = path;
     }
 
     @Override
     public String getAgencyLogoPath() {
         String curPath = null;
 
-        /* The agency logo code uses these properties to persist changes
-         * in the logo (within the same process). 
-         * This is different from the generator logo that uses a static variable. 
-        */
+        /*
+         * The agency logo code uses these properties to persist changes in the
+         * logo (within the same process). This is different from the generator
+         * logo that uses a static variable.
+         */
         curPath = ModuleSettings.getConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP);
         //if has been set, validate it's correct, if not set, return null
         if (curPath != null && new File(curPath).canRead() == false) {

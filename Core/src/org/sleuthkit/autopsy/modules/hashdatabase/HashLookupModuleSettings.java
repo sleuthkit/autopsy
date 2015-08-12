@@ -38,10 +38,11 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     /**
      * Constructs ingest job settings for the hash lookup module.
      *
-     * @param shouldCalculateHashes Whether or not hashes should be calculated.
-     * @param namesOfEnabledKnownHashSets A list of enabled known hash sets.
+     * @param shouldCalculateHashes          Whether or not hashes should be
+     *                                       calculated.
+     * @param namesOfEnabledKnownHashSets    A list of enabled known hash sets.
      * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
-     * sets.
+     *                                       sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
             List<String> namesOfEnabledKnownHashSets,
@@ -52,13 +53,15 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     /**
      * Constructs ingest job settings for the hash lookup module.
      *
-     * @param shouldCalculateHashes Whether or not hashes should be calculated.
-     * @param namesOfEnabledKnownHashSets A list of enabled known hash sets.
-     * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
-     * sets.
-     * @param namesOfDisabledKnownHashSets A list of disabled known hash sets.
+     * @param shouldCalculateHashes           Whether or not hashes should be
+     *                                        calculated.
+     * @param namesOfEnabledKnownHashSets     A list of enabled known hash sets.
+     * @param namesOfEnabledKnownBadHashSets  A list of enabled known bad hash
+     *                                        sets.
+     * @param namesOfDisabledKnownHashSets    A list of disabled known hash
+     *                                        sets.
      * @param namesOfDisabledKnownBadHashSets A list of disabled known bad hash
-     * sets.
+     *                                        sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
             List<String> namesOfEnabledKnownHashSets,
@@ -97,6 +100,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * the requested hash set, it is deemed to be enabled.
      *
      * @param hashSetName The name of the hash set to check.
+     *
      * @return True if the hash set is enabled, false otherwise.
      */
     boolean isHashSetEnabled(String hashSetName) {

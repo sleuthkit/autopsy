@@ -32,7 +32,8 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 
 /**
- * Responsible for opening and closing the core windows when a case is opened and closed.
+ * Responsible for opening and closing the core windows when a case is opened
+ * and closed.
  *
  * @author jantonius
  */
@@ -40,13 +41,13 @@ public class CoreComponentControl {
 
     private static final Logger logger = Logger.getLogger(CoreComponentControl.class.getName());
     private static final String DIRECTORY_TREE = NbBundle.getMessage(CoreComponentControl.class,
-                                                                     "CoreComponentControl.CTL_DirectoryTreeTopComponent");
+            "CoreComponentControl.CTL_DirectoryTreeTopComponent");
     private static final String FAVORITES = NbBundle.getMessage(CoreComponentControl.class,
-                                                                "CoreComponentControl.CTL_FavoritesTopComponent");
+            "CoreComponentControl.CTL_FavoritesTopComponent");
 
     /**
-     * Opens all TopComponent windows that are needed ({@link DataExplorer}, {@link DataResult}, and
-     * {@link DataContent})
+     * Opens all TopComponent windows that are needed
+     * ({@link DataExplorer}, {@link DataResult}, and {@link DataContent})
      */
     public static void openCoreWindows() {
         // TODO: there has to be a better way to do this.
@@ -77,18 +78,17 @@ public class CoreComponentControl {
     }
 
     /**
-     * Closes all TopComponent windows that needed ({@link DataExplorer}, {@link DataResult}, and
-     * {@link DataContent}).
-     * 
-     * Note: The DataContent Top Component must be closed before the Directory Tree
-     * and Favorites Top Components. Otherwise a NullPointerException will be thrown
-     * from JFXPanel.
+     * Closes all TopComponent windows that needed
+     * ({@link DataExplorer}, {@link DataResult}, and {@link DataContent}).
+     *
+     * Note: The DataContent Top Component must be closed before the Directory
+     * Tree and Favorites Top Components. Otherwise a NullPointerException will
+     * be thrown from JFXPanel.
      */
     public static void closeCoreWindows() {
         WindowManager wm = WindowManager.getDefault();
         Set<? extends Mode> modes = wm.getModes();
         Iterator<? extends Mode> iter = wm.getModes().iterator();
-
 
         TopComponent directoryTree = null;
         TopComponent favorites = null;
@@ -111,7 +111,7 @@ public class CoreComponentControl {
                 }
             }
         }
-        
+
         if (directoryTree != null) {
             directoryTree.close();
         }

@@ -36,14 +36,14 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
  * Since it was too hard to derive from {@link DataResultPanel}, this class
  * implements {@link TimeLineView}, listens to the events/state of a the
  * assigned {@link FilteredEventsModel} and acts appropriately on its
- * {@link DataResultPanel}. That is, this class acts as a sort of
- * bridge/adapter between a FilteredEventsModel instance and a
- * DataResultPanel instance.
+ * {@link DataResultPanel}. That is, this class acts as a sort of bridge/adapter
+ * between a FilteredEventsModel instance and a DataResultPanel instance.
  */
 public class TimeLineResultView implements TimeLineView {
 
-    /** the {@link DataResultPanel} that is the real view proxied by this
-     * class */
+    /**
+     * the {@link DataResultPanel} that is the real view proxied by this class
+     */
     private final DataResultPanel dataResultPanel;
 
     private TimeLineController controller;
@@ -60,7 +60,8 @@ public class TimeLineResultView implements TimeLineView {
         dataResultPanel = DataResultPanel.createInstanceUninitialized("", "", Node.EMPTY, 0, dataContent);
     }
 
-    /** Set the Controller for this class. Also sets the model provided by the
+    /**
+     * Set the Controller for this class. Also sets the model provided by the
      * controller as the model for this view.
      *
      * @param controller
@@ -81,30 +82,36 @@ public class TimeLineResultView implements TimeLineView {
         setModel(controller.getEventsModel());
     }
 
-    /** Set the Model for this View
+    /**
+     * Set the Model for this View
      *
-     * @param filteredEvents */
+     * @param filteredEvents
+     */
     @Override
     synchronized public void setModel(final FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
     }
 
-    /** @return a String representation of all the Events displayed */
+    /**
+     * @return a String representation of all the Events displayed
+     */
     private String getSummaryString() {
         if (controller.getSelectedTimeRange().get() != null) {
             final DateTimeFormatter zonedFormatter = TimeLineController.getZonedFormatter();
             return NbBundle.getMessage(this.getClass(), "TimeLineResultView.startDateToEndDate.text",
-                                       controller.getSelectedTimeRange().get().getStart()
-                                                 .withZone(TimeLineController.getJodaTimeZone())
-                                                 .toString(zonedFormatter),
-                                       controller.getSelectedTimeRange().get().getEnd()
-                                                 .withZone(TimeLineController.getJodaTimeZone())
-                                                 .toString(zonedFormatter));
+                    controller.getSelectedTimeRange().get().getStart()
+                    .withZone(TimeLineController.getJodaTimeZone())
+                    .toString(zonedFormatter),
+                    controller.getSelectedTimeRange().get().getEnd()
+                    .withZone(TimeLineController.getJodaTimeZone())
+                    .toString(zonedFormatter));
         }
         return "";
     }
 
-    /** refresh this view with the events selected in the controller */
+    /**
+     * refresh this view with the events selected in the controller
+     */
     public final void refresh() {
 
         Set<Long> newSelectedEventIDs = new HashSet<>(controller.getSelectedEventIDs());

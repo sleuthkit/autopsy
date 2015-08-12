@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
@@ -34,13 +33,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Opens new ContentViewer pane in a detached window
  */
-public class NewWindowViewAction extends AbstractAction{
-    
+public class NewWindowViewAction extends AbstractAction {
+
     private static Logger logger = Logger.getLogger(NewWindowViewAction.class.getName());
 
-    private Node contentNode ;
+    private Node contentNode;
 
-    public NewWindowViewAction(String title, Node contentNode){
+    public NewWindowViewAction(String title, Node contentNode) {
         super(title);
         this.contentNode = contentNode;
     }
@@ -67,7 +66,7 @@ public class NewWindowViewAction extends AbstractAction{
         Mode m = WindowManager.getDefault().findMode("outputFloat"); //NON-NLS
         m.dockInto(dctc);
         dctc.open();
-        
+
         // Queue setting the node on the EDT thread to be done later so the dctc
         // can completely initialize.
         SwingUtilities.invokeLater(new Runnable() {
@@ -79,7 +78,5 @@ public class NewWindowViewAction extends AbstractAction{
             }
         });
     }
-
-    
 
 }

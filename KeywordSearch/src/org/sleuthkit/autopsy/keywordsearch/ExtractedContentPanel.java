@@ -66,7 +66,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void customizeComponents() {
-        
+
         HTMLEditorKit editorKit = new HTMLEditorKit() {
             @Override
             public ViewFactory getViewFactory() {
@@ -118,12 +118,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 };
             }
         };
-        
+
         // set font size manually in an effort to get fonts in this panel to look
         // similar to what is in the 'String View' content viewer.
         StyleSheet ss = editorKit.getStyleSheet();
         ss.addRule("body {font-size: 8.5px;}"); //NON-NLS
-        
+
         extractedTextPane.setEditorKit(editorKit);
 
         sourceComboBox.addItemListener(new ItemListener() {
@@ -135,7 +135,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 }
             }
         });
-
 
         setSources(new ArrayList<TextMarkup>());
 
@@ -386,9 +385,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Return the types of mark up sources that this viewer knows about. 
-     * Different sources will markup the text in different ways. 
-     * 
+     * Return the types of mark up sources that this viewer knows about.
+     * Different sources will markup the text in different ways.
+     *
      * @return currently available sources on the panel
      */
     public List<TextMarkup> getSources() {
@@ -401,6 +400,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
     /**
      * Get the source selected in the combo box
+     *
      * @return currently selected Source
      */
     public TextMarkup getSelectedSource() {
@@ -588,7 +588,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         int totalPages = source.getNumberPages();
         updateTotalPageslDisplay(totalPages);
 
-
         if (totalPages == 1) {
             enableNextPageControl(false);
             enablePrevPageControl(false);
@@ -605,7 +604,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 enablePrevPageControl(false);
             }
         }
-
 
     }
 
@@ -662,9 +660,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Gets and sets new markup (i.e. based on user choose keyword hits or pure text).
-     * Updates GUI in GUI thread and gets markup in
-     * background thread. To be invoked from GUI thread only.
+     * Gets and sets new markup (i.e. based on user choose keyword hits or pure
+     * text). Updates GUI in GUI thread and gets markup in background thread. To
+     * be invoked from GUI thread only.
      */
     private void setMarkup(TextMarkup source) {
         setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
@@ -703,18 +701,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         protected void done() {
             //super.done();
             progress.finish();
-            
+
             // see if there are any errors
             // @@@ BC: Display the errors to the user somehow
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error getting marked up text" ); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting marked up text"); //NON-NLS
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
             }
-            // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex ) { }
-            
-            
+
             if (markup != null) {
                 setPanelText(markup, true);
             } else {

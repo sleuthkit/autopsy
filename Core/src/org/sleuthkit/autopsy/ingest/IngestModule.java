@@ -77,7 +77,8 @@ public interface IngestModule {
      * and shutDown() are logged, but do not stop processing of the data source.
      *
      * @param context Provides data and services specific to the ingest job and
-     * the ingest pipeline of which the module is a part.
+     *                the ingest pipeline of which the module is a part.
+     *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     void startUp(IngestJobContext context) throws IngestModuleException;

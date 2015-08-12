@@ -67,7 +67,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
      * Toggle the buttons and default close operation.
      *
      * @param enable Set true to enable buttons and DISPOSE_ON_CLOSE. Set false
-     * to disable buttons and DO_NOTHING_ON_CLOSE
+     *               to disable buttons and DO_NOTHING_ON_CLOSE
      */
     void enableAddHashValuesToDatabaseDialog(boolean enable) {
         if (enable) {
