@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+import org.apache.commons.lang.ArrayUtils;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -44,7 +45,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
-    static final int LENGTH = 5;
+    static final int LENGTH = 6;
     static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
     static final String PATH_PROP_KEY = "LBL_RecentCase_Path"; //NON-NLS
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
@@ -364,17 +365,28 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
     /**
      * Gets the recent case names.
      *
-     * @return caseNames An array String[LENGTH], newest case first, with any
-     *         extra spots filled with ""
+     * @return caseNames An array String[LENGTH - 1], newest case first, with any
+     * extra spots filled with ""
      */
     public String[] getRecentCaseNames() {
         String[] caseNames = new String[LENGTH];
 
         Iterator<RecentCase> mostRecentFirst = recentCases.descendingIterator();
         int i = 0;
+        String currentCaseName = null;
+        try {
+            currentCaseName = Case.getCurrentCase().getName();
+        } catch (IllegalStateException ex) {
+            // in case there is no current case.
+        }
+
         while (mostRecentFirst.hasNext()) {
-            caseNames[i] = mostRecentFirst.next().name;
-            i++;
+            String name = mostRecentFirst.next().name;
+            if ((currentCaseName != null && !name.equals(currentCaseName)) || currentCaseName == null) {
+                // exclude currentCaseName from the caseNames[]
+                caseNames[i] = name;
+                i++;
+            }
         }
 
         while (i < caseNames.length) {
@@ -382,23 +394,34 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
             i++;
         }
 
-        return caseNames;
+        // return last 5 case names
+        return (String[]) ArrayUtils.subarray(caseNames, 0, LENGTH - 1);
     }
 
     /**
      * Gets the recent case paths.
      *
-     * @return casePaths An array String[LENGTH], newest case first, with any
-     *         extra spots filled with ""
+     * @return casePaths An array String[LENGTH - 1], newest case first, with any
+     * extra spots filled with ""
      */
     public String[] getRecentCasePaths() {
         String[] casePaths = new String[LENGTH];
+        String currentCasePath = null;
+        try {
+            currentCasePath = Case.getCurrentCase().getConfigFilePath();
+        } catch (IllegalStateException ex) {
+            // in case there is no current case.
+        }
 
         Iterator<RecentCase> mostRecentFirst = recentCases.descendingIterator();
         int i = 0;
         while (mostRecentFirst.hasNext()) {
-            casePaths[i] = mostRecentFirst.next().path;
-            i++;
+            String path = mostRecentFirst.next().path;
+            if ((currentCasePath != null && !path.equals(currentCasePath)) || currentCasePath == null) {
+                // exclude currentCasePath from the casePaths[]
+                casePaths[i] = path;
+                i++;
+            }
         }
 
         while (i < casePaths.length) {
@@ -406,7 +429,8 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
             i++;
         }
 
-        return casePaths;
+        // return last 5 case paths
+        return (String[]) ArrayUtils.subarray(casePaths, 0, LENGTH - 1);
     }
 
     /**
@@ -424,7 +448,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
     @Override
     public String getName() {
         //return NbBundle.getMessage(RecentCases.class, "CTL_RecentCases");
-        return NbBundle.getMessage(this.getClass(), "RecentCases.getName.text");
+        return NbBundle.getMessage(RecentCases.class, "RecentCases.getName.text");
     }
 
     /**
