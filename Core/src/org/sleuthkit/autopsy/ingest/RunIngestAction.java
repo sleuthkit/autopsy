@@ -24,7 +24,6 @@ import org.openide.util.actions.Presenter;
 @ActionRegistration(
         displayName = "#CTL_RunIngestAction"
 )
-@ActionReference(path = "Menu/Tools", position = 750)
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
 

@@ -24,8 +24,7 @@ import javax.swing.JSeparator;
 import org.openide.awt.DynamicMenuContent;
 
 /**
- * This class is used to change / update the list of open images for ingest modules
- * dynamically.
+ * This class is used to populate the list of open images to run ingest on them
  */
 class UpdateIngestImages extends JMenuItem implements DynamicMenuContent {
 
