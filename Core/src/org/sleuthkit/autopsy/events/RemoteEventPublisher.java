@@ -144,40 +144,44 @@ final class RemoteEventPublisher {
          */
         @Override
         public void onMessage(Message message) {
-            if (IngestManager.getInstance().isRunningInteractively()) {
-                /**
-                 * This is a stop gap measure until a different way of handling
-                 * the closing of cases is worked out. Currently,
-                 * Case.currentCase is set to null before
-                 * Case.Event.CURRENT_CASE is published. That means that clients
-                 * of this class have not had the chance to close their remote
-                 * event channels and remote events may be received for a case
-                 * that is already closed.
-                 */
-                try {
-                    Case.getCurrentCase();
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do not publish the event.
-                     */
-                    return;
-                }
 
-                try {
-                    if (message instanceof ObjectMessage) {
-                        ObjectMessage objectMessage = (ObjectMessage) message;
-                        Object object = objectMessage.getObject();
-                        if (object instanceof AutopsyEvent) {
-                            AutopsyEvent event = (AutopsyEvent) object;
-                            event.setSourceType(AutopsyEvent.SourceType.REMOTE);
-                            localPublisher.publish(event);
-                        }
+            /**
+             * TODO! Applications running interactively also need to receive remote
+             * events. We need to figure out how to handle case closing issue
+             * differently. 
+             * 
+             * if (IngestManager.getInstance().isRunningInteractively()) {
+             *
+             * This is a stop gap measure until a different way of handling the
+             * closing of cases is worked out. Currently, Case.currentCase is
+             * set to null before Case.Event.CURRENT_CASE is published. That
+             * means that clients of this class have not had the chance to close
+             * their remote event channels and remote events may be received for
+             * a case that is already closed.
+             */
+            
+            /** TODO! Remote events may not be related to current case. It can
+             * be a status/priority/UI update.
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException notUsed) {
+                // Case is closed, do not publish the event.
+                return;
+            } **/
+
+            try {
+                if (message instanceof ObjectMessage) {
+                    ObjectMessage objectMessage = (ObjectMessage) message;
+                    Object object = objectMessage.getObject();
+                    if (object instanceof AutopsyEvent) {
+                        AutopsyEvent event = (AutopsyEvent) object;
+                        event.setSourceType(AutopsyEvent.SourceType.REMOTE);
+                        localPublisher.publish(event);
                     }
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error receiving message", ex);
                 }
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Error receiving message", ex);
             }
         }
     }
-
 }
