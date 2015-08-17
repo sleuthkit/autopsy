@@ -146,9 +146,9 @@ final class RemoteEventPublisher {
         public void onMessage(Message message) {
 
             /**
-             * TODO! Applications running interactively also need to receive remote
-             * events. We need to figure out how to handle case closing issue
-             * differently. 
+             * TODO! Applications not running interactively also need to receive 
+             * remote events. We need to figure out how to handle case closing 
+             * issue differently. 
              * 
              * if (IngestManager.getInstance().isRunningInteractively()) {
              *
