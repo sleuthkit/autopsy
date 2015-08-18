@@ -46,7 +46,7 @@ public class TimeLineEvent {
     public TimeLineEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
-        this.artifactID = artifactID;
+        this.artifactID = artifactID == 0 ? null : artifactID;
         this.time = time;
         this.subType = type;
         descriptions = Maps.immutableEnumMap(ImmutableMap.<DescriptionLOD, String>of(

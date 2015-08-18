@@ -101,20 +101,22 @@ public class TagNameFilter extends AbstractFilter {
     public boolean test(TimeLineEvent t) {
         try {
             AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(t.getFileID());
-            BlackboardArtifact blackboardArtifact = Objects.isNull(t.getArtifactID()) ? null : sleuthkitCase.getBlackboardArtifact(t.getArtifactID());
             List<ContentTag> contentTagsByContent = tagsManager.getContentTagsByContent(abstractFileById);
-            boolean contentTagged = contentTagsByContent.stream()
+            boolean tagged = contentTagsByContent.stream()
                     .map(Tag::getName).anyMatch(tagName::equals);
-            List<BlackboardArtifactTag> blackboardArtifactTagsByArtifact = tagsManager.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
-            boolean blackboardTagged = blackboardArtifactTagsByArtifact.stream()
-                    .map(Tag::getName).anyMatch(tagName::equals);
-            boolean name = contentTagged
-                    || blackboardTagged;
 
-            System.out.println(t.toString() + (contentTagged ? " passed " : " failed ") + getDisplayName() + " content filter ");
-            System.out.println(t.toString() + (blackboardTagged ? " passed " : " failed ") + getDisplayName() + "artifact filter ");
-            System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "  filter ");
-            return name;
+//            System.out.println(t.toString() + (tagged ? " passed " : " failed ") + getDisplayName() + " content filter ");
+            if (Objects.nonNull(t.getArtifactID())) {
+                BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(t.getArtifactID());
+                List<BlackboardArtifactTag> blackboardArtifactTagsByArtifact = tagsManager.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
+                boolean blackboardTagged = blackboardArtifactTagsByArtifact.stream()
+                        .map(Tag::getName).anyMatch(tagName::equals);
+//                System.out.println(t.toString() + (blackboardTagged ? " passed " : " failed ") + getDisplayName() + "artifact filter ");
+                tagged |= blackboardTagged;
+            }
+
+//            System.out.println(t.toString() + (tagged ? " passed " : " failed ") + getDisplayName() + "  filter ");
+            return tagged;
         } catch (TskCoreException ex) {
             Logger.getLogger(TagNameFilter.class.getName()).log(Level.SEVERE, "Failed to get tags for event", ex);
             return true; //show the file if there is an error

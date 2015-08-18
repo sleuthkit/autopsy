@@ -334,9 +334,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     }
                     dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
                     dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
-//                    if (chart == null) {
-//                        initializeClusterChart();
-//                    }
                     vertScrollBar.setValue(0);
                     eventTypeToSeriesMap.clear();
                     dataSets.clear();
@@ -391,7 +388,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
             if (!addedToExistingCluster) {
                 //make new cluster
-                AggregateEvent aggregateEvent = new AggregateEvent(new Interval(event.getTime(), event.getTime()),
+                AggregateEvent aggregateEvent = new AggregateEvent(new Interval(event.getTime() * 1000, event.getTime() * 1000),
                         event.getType(), Collections.singleton(event.getEventID()),
                         event.isHashHit() ? Collections.singleton(event.getEventID()) : Collections.emptySet(),
                         event.isTagged() ? Collections.singleton(event.getEventID()) : Collections.emptySet(),

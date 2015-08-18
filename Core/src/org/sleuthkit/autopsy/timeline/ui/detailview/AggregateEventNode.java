@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -311,7 +312,7 @@ public class AggregateEventNode extends StackPane {
                         }
 
                         Long artifactID = tle.getArtifactID();
-                        if (artifactID != 0) {
+                        if (Objects.nonNull(artifactID)) {
                             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
                             List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
                             for (BlackboardArtifactTag tag : artifactTags) {
