@@ -27,9 +27,9 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
         
-        <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
-        <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />
-        <property name="win64.TskLib.postgres_path" value="${env.TSK_HOME}/win32/x64/Release"/>
+        <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
+        <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release_PostgreSQL" />
+        <property name="win64.TskLib.postgres_path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
         <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
         <available property="win64.TskLib_postgres.exists" type="dir" file="{win64.TskLib.postgres_path}" />
