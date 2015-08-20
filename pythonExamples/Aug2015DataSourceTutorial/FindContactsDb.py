@@ -135,16 +135,16 @@ class ContactsDbIngestModule(DataSourceIngestModule):
             try: 
                 Class.forName("org.sqlite.JDBC").newInstance()
                 dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % lclDbPath)
-            except:
-                self.log(Level.INFO, "Could not open database file (not SQLite) " + file.getName())
+            except SQLException as e:
+                self.log(Level.INFO, "Could not open database file (not SQLite) " + file.getName() + " (" + e.getMessage() + ")")
                 return IngestModule.ProcessResult.OK
             
             # Query the contacts table in the database and get all columns. 
-            try: 
+            try:
                 stmt = dbConn.createStatement()
                 resultSet = stmt.executeQuery("SELECT * FROM contacts")
-            except:
-                self.log(Level.INFO, "Error querying database for contacts table")
+            except SQLException as e:
+                self.log(Level.INFO, "Error querying database for contacts table (" + e.getMessage() + ")")
                 return IngestModule.ProcessResult.OK
 
             # Cycle through each row and create artifacts
@@ -153,8 +153,8 @@ class ContactsDbIngestModule(DataSourceIngestModule):
                     name  = resultSet.getString("name")
                     email = resultSet.getString("email")
                     phone = resultSet.getString("phone")
-                except:
-                    self.log(Level.INFO, "Error getting values from contacts table")
+                except SQLException as e:
+                    self.log(Level.INFO, "Error getting values from contacts table (" + e.getMessage() + ")")
                 
                 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
