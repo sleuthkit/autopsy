@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.eventbus.Subscribe;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +64,6 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
@@ -545,29 +542,29 @@ public class AggregateEventNode extends StackPane {
         }
     }
 
-    synchronized void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        AggregateEvent withTagsRemoved = aggEvent.withTagsRemoved(tagEvent.getEventIDs());
-        if (withTagsRemoved != aggEvent) {
-            aggEvent = withTagsRemoved;
-            tooltip = null;
-            boolean hasTags = aggEvent.getEventIDsWithTags().isEmpty() == false;
-            Platform.runLater(() -> {
-                tagIV.setManaged(hasTags);
-                tagIV.setVisible(hasTags);
-            });
-        }
-    }
-
-    @Subscribe
-    synchronized void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
-        if (withTagsAdded != aggEvent) {
-            aggEvent = withTagsAdded;
-            tooltip = null;
-            Platform.runLater(() -> {
-                tagIV.setManaged(true);
-                tagIV.setVisible(true);
-            });
-        }
-    }
+//    synchronized void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+//        AggregateEvent withTagsRemoved = aggEvent.withTagsRemoved(tagEvent.getEventIDs());
+//        if (withTagsRemoved != aggEvent) {
+//            aggEvent = withTagsRemoved;
+//            tooltip = null;
+//            boolean hasTags = aggEvent.getEventIDsWithTags().isEmpty() == false;
+//            Platform.runLater(() -> {
+//                tagIV.setManaged(hasTags);
+//                tagIV.setVisible(hasTags);
+//            });
+//        }
+//    }
+//
+//    @Subscribe
+//    synchronized void handleEventsTagged(EventsTaggedEvent tagEvent) {
+//        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
+//        if (withTagsAdded != aggEvent) {
+//            aggEvent = withTagsAdded;
+//            tooltip = null;
+//            Platform.runLater(() -> {
+//                tagIV.setManaged(true);
+//                tagIV.setVisible(true);
+//            });
+//        }
+//    }
 }

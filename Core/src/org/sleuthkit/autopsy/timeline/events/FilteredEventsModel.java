@@ -339,24 +339,24 @@ public final class FilteredEventsModel {
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED:
                 content = ((ContentTagAddedEvent) evt).getTag().getContent();
-                return markAndPost(content.getId(), null, true);
+                return markEventsTagged(content.getId(), null, true);
             case CONTENT_TAG_DELETED:
                 content = ((ContentTagDeletedEvent) evt).getTag().getContent();
                 try {
                     boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-                    return markAndPost(content.getId(), null, tagged);
+                    return markEventsTagged(content.getId(), null, tagged);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
                 }
                 return false;
             case BLACKBOARD_ARTIFACT_TAG_ADDED:
                 artifact = ((BlackBoardArtifactTagAddedEvent) evt).getTag().getArtifact();
-                return markAndPost(artifact.getObjectID(), artifact.getArtifactID(), true);
+                return markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
             case BLACKBOARD_ARTIFACT_TAG_DELETED:
                 artifact = ((BlackBoardArtifactTagDeletedEvent) evt).getTag().getArtifact();
                 try {
                     boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-                    return markAndPost(artifact.getObjectID(), artifact.getArtifactID(), tagged);
+                    return markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
                 }
@@ -370,13 +370,9 @@ public final class FilteredEventsModel {
         }
     }
 
-    private boolean markAndPost(Long contentID, Long artifactID, boolean tagged) {
+    private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
         Set<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
-            return true;
-        }
-        return false;
+        return !updatedEventIDs.isEmpty();
     }
 
     synchronized public void registerForEvents(Object o) {
@@ -385,5 +381,9 @@ public final class FilteredEventsModel {
 
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
+    }
+
+    public void refresh() {
+        eventbus.post(new RefreshRequestedEvent());
     }
 }

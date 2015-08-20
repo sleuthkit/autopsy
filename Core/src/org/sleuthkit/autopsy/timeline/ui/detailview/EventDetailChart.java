@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Collections2;
-import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,8 +72,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -737,17 +734,17 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         super.requestChartLayout();
     }
 
-    @Subscribe
-    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        for (AggregateEventNode t : getAllNodes()) {
-            t.handleEventsUnTagged(tagEvent);
-        }
-    }
-
-    @Subscribe
-    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        for (AggregateEventNode t : getAllNodes()) {
-            t.handleEventsTagged(tagEvent);
-        }
-    }
+//    @Subscribe
+//    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+//        for (AggregateEventNode t : getAllNodes()) {
+//            t.handleEventsUnTagged(tagEvent);
+//        }
+//    }
+//
+//    @Subscribe
+//    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+//        for (AggregateEventNode t : getAllNodes()) {
+//            t.handleEventsTagged(tagEvent);
+//        }
+//    }
 }
