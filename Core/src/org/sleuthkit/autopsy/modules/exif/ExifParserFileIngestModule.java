@@ -22,15 +22,27 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.lang.Rational;
+import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
+import com.drew.metadata.exif.makernotes.CasioType1MakernoteDirectory;
+import com.drew.metadata.exif.makernotes.FujifilmMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.NikonType2MakernoteDirectory;
+import com.drew.metadata.exif.makernotes.PanasonicMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.PentaxMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.SanyoMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.SonyType1MakernoteDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -120,10 +132,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             bin = new BufferedInputStream(in);
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            Metadata metadata = ImageMetadataReader.readMetadata(bin, true);
+            Metadata metadata = ImageMetadataReader.readMetadata(bin);
 
             // Date
-            ExifSubIFDDirectory exifDir = metadata.getDirectory(ExifSubIFDDirectory.class);
+            ExifSubIFDDirectory exifDir = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
             if (exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 if (date != null) {
@@ -132,7 +144,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
 
             // GPS Stuff
-            GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
+            GpsDirectory gpsDir = metadata.getFirstDirectoryOfType(GpsDirectory.class);
             if (gpsDir != null) {
                 GeoLocation loc = gpsDir.getGeoLocation();
                 if (loc != null) {
@@ -142,14 +154,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
                 }
 
-                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
+                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
             // Device info
-            ExifIFD0Directory devDir = metadata.getDirectory(ExifIFD0Directory.class);
+            ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
@@ -160,6 +172,17 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 if (make != null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
                 }
+            }
+
+            if (containsFace(metadata)) {
+                BlackboardArtifact artifact = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+                        ExifParserModuleFactory.getModuleName(), "Face Detected - set"));
+                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
+                        ExifParserModuleFactory.getModuleName(), "Face Detected - rule"));
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
+                        Collections.singletonList(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT))));
             }
 
             // Add the attributes, if there are any, to a new artifact
@@ -192,6 +215,129 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 return ProcessResult.ERROR;
             }
         }
+    }
+
+    /**
+     * Checks if the exif metadata data contains any reference to facial
+     * information. NOTE: Cases in which metadata contains references enabled
+     * red-eye reduction settings, portrait settings, etc are assumed to contain
+     * facial information. The method returns true. The return value of this
+     * method is quite speculative.
+     *
+     * @param metadata the metadata which needs to be parsed for possible facial
+     *                 information.
+     *
+     * @return returns true if the metadata contains any reference to facial
+     *         information.
+     */
+    private boolean containsFace(Metadata metadata) {
+        Directory d = metadata.getFirstDirectoryOfType(CanonMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1)
+                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1) != null) {
+                return true;
+            }
+            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2)
+                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(CasioType1MakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(CasioType1MakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(CasioType1MakernoteDirectory.TAG_FLASH_MODE) == 0x04) { //0x04 = "Red eye reduction"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // should I throw new exception? AND/OR
+                // log this specific exception?
+                // or silently catch and ignore?
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(FujifilmMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(FujifilmMakernoteDirectory.TAG_FACES_DETECTED)
+                    && d.getString(FujifilmMakernoteDirectory.TAG_FACES_DETECTED) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(KodakMakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(KodakMakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(KodakMakernoteDirectory.TAG_FLASH_MODE) == 0x03) { //0x03 = "Red Eye"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // should I throw new exception? AND/OR
+                // log this specific exception?
+                // or silently catch and ignore?
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
+                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
+                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE")
+                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
+                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(PentaxMakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(PentaxMakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(PentaxMakernoteDirectory.TAG_FLASH_MODE) == 6) { // 6 = Red-eye Reduction
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // should I throw new exception? AND/OR
+                // log this specific exception?
+                // or silently catch and ignore?
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(SanyoMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO)
+                    && d.getString(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
+                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
+                    return true;
+                }
+                if (d.containsTag(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE)
+                        && d.getInt(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE) == 14) { //14 = "Smile shutter"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // should I throw new exception? AND/OR
+                // log this specific exception?
+                // or silently catch and ignore?
+            }
+        }
+
+        return false;
     }
 
     /**
