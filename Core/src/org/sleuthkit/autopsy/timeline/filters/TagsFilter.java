@@ -88,4 +88,6 @@ public class TagsFilter extends UnionFilter<TagNameFilter> {
         getSubFilters().removeIf(subfilter -> subfilter.getTagName().equals(tagName));
         getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
     }
+
+ 
 }

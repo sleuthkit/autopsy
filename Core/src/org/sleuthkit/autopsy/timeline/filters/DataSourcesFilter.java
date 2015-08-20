@@ -100,5 +100,4 @@ public class DataSourcesFilter extends UnionFilter<DataSourceFilter> {
     public int hashCode() {
         return 9;
     }
-
 }

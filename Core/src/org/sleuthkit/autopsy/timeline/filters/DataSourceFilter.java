@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 
 /**
  * Filter for an individual datasource
@@ -83,6 +84,13 @@ public class DataSourceFilter extends AbstractFilter {
             return false;
         }
         return isSelected() == other.isSelected();
+    }
+
+    @Override
+    public boolean test(TimeLineEvent t) {
+        boolean name = !isSelected() || isDisabled() || t.getDataSourceID() == dataSourceID;
+        System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
+        return name;
     }
 
 }

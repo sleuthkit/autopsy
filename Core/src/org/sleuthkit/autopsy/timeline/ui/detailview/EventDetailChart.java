@@ -341,11 +341,8 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        if (this.filteredEvents != null) {
-            this.filteredEvents.unRegisterForEvents(this);
-        }
+
         if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
             filteredEvents.zoomParamtersProperty().addListener(o -> {
                 clearGuideLine();
                 clearIntervalSelector();
@@ -524,7 +521,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         return nodes;
     }
 
-    private Iterable<AggregateEventNode> getAllNodes() {
+    Iterable<AggregateEventNode> getAllNodes() {
         return getNodes(x -> true);
     }
 
@@ -733,18 +730,4 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
     protected void requestChartLayout() {
         super.requestChartLayout();
     }
-
-//    @Subscribe
-//    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-//        for (AggregateEventNode t : getAllNodes()) {
-//            t.handleEventsUnTagged(tagEvent);
-//        }
-//    }
-//
-//    @Subscribe
-//    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
-//        for (AggregateEventNode t : getAllNodes()) {
-//            t.handleEventsTagged(tagEvent);
-//        }
-//    }
 }

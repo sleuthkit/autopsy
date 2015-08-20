@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyListProperty;
@@ -52,7 +53,7 @@ import javafx.scene.text.TextAlignment;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -172,7 +173,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     protected abstract Axis<Y> getYAxis();
 
     /**
-     * * update this visualization based on current state of zoom /
+     * update this visualization based on current state of zoom /
      * filters.Primarily this invokes the background {@link Task} returned by
      * {@link #getUpdateTask()} which derived classes must implement.
      */
@@ -194,7 +195,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
                     try {
                         this.hasEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
+                        Logger.getLogger(AbstractVisualization.class.getName()).log(Level.SEVERE, "Unexpected exception updating visualization", ex);
                     }
                     break;
             }
@@ -316,7 +317,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
                 }
             } else {
                 //there are two parts so ...
-                //initialize additional state 
+                //initialize additional state
                 double branchLabelX = 0;
                 double branchLabelWidth = 0;
 

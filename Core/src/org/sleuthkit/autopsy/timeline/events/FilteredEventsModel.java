@@ -139,7 +139,7 @@ public final class FilteredEventsModel {
 
         TagsFilter tagsFilter = new TagsFilter();
         repo.getTagNames().stream().forEach(t -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(t);
+            TagNameFilter tagNameFilter = new TagNameFilter(t, autoCase);
             tagNameFilter.setSelected(Boolean.TRUE);
             tagsFilter.addSubFilter(tagNameFilter);
         });
@@ -370,9 +370,11 @@ public final class FilteredEventsModel {
         }
     }
 
+
     private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
-        Set<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
+        Set<TimeLineEvent> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
         return !updatedEventIDs.isEmpty();
+
     }
 
     synchronized public void registerForEvents(Object o) {

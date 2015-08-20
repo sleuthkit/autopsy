@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -62,6 +63,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -309,7 +311,7 @@ public class AggregateEventNode extends StackPane {
                         }
 
                         Long artifactID = tle.getArtifactID();
-                        if (artifactID != 0) {
+                        if (Objects.nonNull(artifactID)) {
                             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
                             List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
                             for (BlackboardArtifactTag tag : artifactTags) {
@@ -372,6 +374,7 @@ public class AggregateEventNode extends StackPane {
     /**
      * @param descrVis the level of description that should be displayed
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = aggEvent.getEventIDs().size();
@@ -541,30 +544,4 @@ public class AggregateEventNode extends StackPane {
             }
         }
     }
-
-//    synchronized void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-//        AggregateEvent withTagsRemoved = aggEvent.withTagsRemoved(tagEvent.getEventIDs());
-//        if (withTagsRemoved != aggEvent) {
-//            aggEvent = withTagsRemoved;
-//            tooltip = null;
-//            boolean hasTags = aggEvent.getEventIDsWithTags().isEmpty() == false;
-//            Platform.runLater(() -> {
-//                tagIV.setManaged(hasTags);
-//                tagIV.setVisible(hasTags);
-//            });
-//        }
-//    }
-//
-//    @Subscribe
-//    synchronized void handleEventsTagged(EventsTaggedEvent tagEvent) {
-//        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
-//        if (withTagsAdded != aggEvent) {
-//            aggEvent = withTagsAdded;
-//            tooltip = null;
-//            Platform.runLater(() -> {
-//                tagIV.setManaged(true);
-//                tagIV.setVisible(true);
-//            });
-//        }
-//    }
 }
