@@ -65,6 +65,24 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
+    private enum supportedExifMimeTypes {
+
+        AUDIO_X_WAV("audio/x-wav"),
+        IMAGE_TIFF("image/tiff"),
+        IMAGE_JPEG("image/jpeg");
+        // NOTE: Expand this after upgrading tika.
+
+        private final String mimeType;
+
+        supportedExifMimeTypes(final String mimeType) {
+            this.mimeType = mimeType;
+        }
+
+        @Override
+        public String toString() {
+            return this.mimeType;
+        }
+    };
 
     ExifParserFileIngestModule() {
     }
@@ -206,7 +224,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             String mimeType = fileTypeDetector.getFileType(f);
             if (mimeType != null) {
-                return fileTypeDetector.getFileType(f).equals("image/jpeg");
+                for (supportedExifMimeTypes s : supportedExifMimeTypes.values()) {
+                    if (s.toString().equals(mimeType)) {
+                        return true;
+                    }
+                }
+                return false;
             } else {
                 return false;
             }
