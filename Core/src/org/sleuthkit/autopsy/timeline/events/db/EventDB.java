@@ -813,19 +813,7 @@ public class EventDB {
         }
     }
 
-    private TimeLineEvent constructTimeLineEvent(ResultSet rs, Boolean taggedOverride) throws SQLException {
-        return new TimeLineEvent(rs.getLong("event_id"),
-                rs.getLong("datasource_id"),
-                rs.getLong("file_id"),
-                rs.getLong("artifact_id"),
-                rs.getLong("time"), RootEventType.allTypes.get(rs.getInt("sub_type")),
-                rs.getString("full_description"),
-                rs.getString("med_description"),
-                rs.getString("short_description"),
-                TskData.FileKnown.valueOf(rs.getByte("known_state")),
-                rs.getInt("hash_hit") != 0,
-                taggedOverride);
-    }
+   
 
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
         return new TimeLineEvent(rs.getLong("event_id"),

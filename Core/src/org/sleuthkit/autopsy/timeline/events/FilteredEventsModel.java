@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.events;
 
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -372,7 +373,7 @@ public final class FilteredEventsModel {
 
 
     private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
-        Set<TimeLineEvent> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
+        HashSet<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
         return !updatedEventIDs.isEmpty();
 
     }

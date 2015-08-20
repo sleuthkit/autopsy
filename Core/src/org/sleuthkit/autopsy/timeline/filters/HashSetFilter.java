@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 
 /**
  * Filter for an individual hash set
@@ -86,8 +85,4 @@ public class HashSetFilter extends AbstractFilter {
         return isSelected() == other.isSelected();
     }
 
-    @Override
-    public boolean test(TimeLineEvent t) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 }

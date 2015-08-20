@@ -24,7 +24,6 @@ import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 
@@ -142,13 +141,5 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.eventType);
         return hash;
-    }
-
-    @Override
-    public boolean test(TimeLineEvent t) {
-        boolean name = !isSelected() || isDisabled() || eventType.equals(t.getType())
-                || getSubFilters().stream().anyMatch((TypeFilter f) ->  f.test(t));
-             System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
-        return name;
     }
 }

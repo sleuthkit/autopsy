@@ -23,7 +23,6 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 
 /**
  * Filter for text matching
@@ -91,15 +90,5 @@ public class TextFilter extends AbstractFilter {
         int hash = 5;
         hash = 29 * hash + Objects.hashCode(this.text.get());
         return hash;
-    }
-
-    @Override
-    public boolean test(TimeLineEvent t) {
-        boolean name = !isSelected() || isDisabled() || StringUtils.isBlank(text.get())
-                || StringUtils.containsIgnoreCase(t.getFullDescription(), text.toString())
-                || StringUtils.containsIgnoreCase(t.getMedDescription(), text.toString())
-                || StringUtils.containsIgnoreCase(t.getShortDescription(), text.toString());
-             System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
-        return name;
     }
 }

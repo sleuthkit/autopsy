@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
-import org.python.google.common.collect.ImmutableSet;
 import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -138,60 +137,5 @@ public class AggregateEvent {
         Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
 
         return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
-    }
-
-    /**
-     * get an AggregateEvent the same as this one but with the given eventIDs
-     * removed from the list of tagged events
-     *
-     * @param unTaggedIDs
-     *
-     * @return a new Aggregate event that is the same as this one but with the
-     *         given event Ids removed from the list of tagged ids, or, this
-     *         AggregateEvent if no event ids would be removed
-     */
-    public AggregateEvent withTagsRemoved(Set<Long> unTaggedIDs) {
-        Sets.SetView<Long> stillTagged = Sets.difference(tagged, unTaggedIDs);
-        if (stillTagged.size() < tagged.size()) {
-            return new AggregateEvent(span, type, eventIDs, hashHits, stillTagged.immutableCopy(), description, lod);
-        }
-        return this; //no change
-    }
-
-    /**
-     * get an AggregateEvent the same as this one but with the given eventIDs
-     * added to the list of tagged events if there are part of this Aggregate
-     *
-     * @param taggedIDs
-     *
-     * @return a new Aggregate event that is the same as this one but with the
-     *         given event Ids added to the list of tagged ids, or, this
-     *         AggregateEvent if no event ids would be added
-     */
-    public AggregateEvent withTagAdded(TimeLineEvent taggedEvent) {
-        long taggedEventID = taggedEvent.getEventID();
-        if (tagged.contains(taggedEventID)) {
-            return this;  //no change, already in cluster
-        }
-
-        if (!getSpan().contains(taggedEvent.getTime() * 1000)) {
-            return this; //no change, outside time range
-        }
-        if (!getType().equals(taggedEvent.getType())
-                && (!getType().equals(getType().getBaseType()) || !getType().equals(taggedEvent.getType().getBaseType()))) {
-            return this;    //no change, wrong type
-        }
-
-        if (!getDescription().equals(taggedEvent.getDescription(lod))) {
-            return this;    //no change , wrong description
-        }
-
-        //add to aggregate event
-        return new AggregateEvent(span, type, setWith(eventIDs, taggedEventID),
-                hashHits, setWith(tagged, taggedEventID), description, lod);
-    }
-
-    public static <T> ImmutableSet<T> setWith(Set<T> old, T item) {
-        return new ImmutableSet.Builder<T>().addAll(old).add(item).build();
     }
 }

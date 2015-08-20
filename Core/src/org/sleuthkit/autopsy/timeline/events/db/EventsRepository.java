@@ -453,8 +453,8 @@ public class EventsRepository {
         }
     }
 
-    synchronized public Set<TimeLineEvent> markEventsTagged(long objID, Long artifactID, boolean tagged) {
-        HashSet<TimeLineEvent> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
+    synchronized public HashSet<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+        HashSet<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();
             idToEventCache.invalidateAll(updatedEventIDs);

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 
 /**
  * Intersection (And) filter
@@ -95,14 +94,4 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
         int hash = 7;
         return hash;
     }
-
-    @Override
-    public boolean test(TimeLineEvent t) {
-        boolean name = !isSelected()
-                || isDisabled()
-                || getSubFilters().stream().allMatch((f) ->  f.test(t));
-             System.out.println(t.toString() + (name ? " passed " : " failed ") + getDisplayName() + "filter ");
-        return name;
-    }
-
 }
