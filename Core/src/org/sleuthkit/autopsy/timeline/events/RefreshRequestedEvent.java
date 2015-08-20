@@ -7,7 +7,7 @@ package org.sleuthkit.autopsy.timeline.events;
 
 /**
  *
- * @author Jonathan
+ *
  */
 public class RefreshRequestedEvent {
 

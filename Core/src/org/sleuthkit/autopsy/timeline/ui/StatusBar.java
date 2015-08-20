@@ -97,7 +97,8 @@ public class StatusBar extends ToolBar implements TimeLineView {
 
             @Override
             public void handle(ActionEvent event) {
-                filteredEvents.refresh()   }
+                filteredEvents.refresh();
+            }
         });
     }
 }

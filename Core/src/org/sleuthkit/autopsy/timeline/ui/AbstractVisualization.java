@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -48,12 +49,14 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
  * Abstract base class for {@link Chart} based {@link TimeLineView}s used in the
@@ -236,10 +239,23 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     }
 
     @Override
-    synchronized public void setModel(FilteredEventsModel filteredEvents) {
+    synchronized public void setModel(@Nonnull FilteredEventsModel filteredEvents) {
+
+        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
+            this.filteredEvents.unRegisterForEvents(this);
+            this.filteredEvents.zoomParamtersProperty().removeListener(invalidationListener);
+        }
+        if (this.filteredEvents != filteredEvents) {
+            filteredEvents.registerForEvents(this);
+            filteredEvents.zoomParamtersProperty().addListener(invalidationListener);
+        }
         this.filteredEvents = filteredEvents;
 
-        this.filteredEvents.zoomParamtersProperty().addListener(invalidationListener);
+        update();
+    }
+
+    @Subscribe
+    public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
     }
 
