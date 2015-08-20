@@ -1,5 +1,8 @@
 This folder contains files that were created for an August 2015 Tutorial from Basis Technology.
 
+http://www.basistech.com/python-autopsy-module-tutorial-2-the-data-source-ingest-module/
+
+
 It contains the following:
 - FindContactsDb.py: Script to find databases and parse them.
 - Contacts.db: Sample database with the correct name and schema for the FindContactsDb.py script.
