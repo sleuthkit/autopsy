@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest;
 
@@ -9,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
@@ -32,7 +44,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * This method does nothing. Use the actionPerformed instead of this method.
+     * Call getMenuPresenters to create images sublist
      */
     @Override
     public void performAction() {
@@ -59,6 +71,12 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return HelpCtx.DEFAULT_HELP;
     }
     
+    /**
+     * Create a sublist of images updated by UpdateIngestImages
+     * Each has an action to perform Ingest Modules on it.
+     *
+     * @return the images sublist created.
+     */
     @Override
     public JMenuItem getMenuPresenter() {
         JMenuItem sublist = new UpdateIngestImages();
@@ -66,6 +84,9 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return sublist;
     }
     
+    /**
+     * This method does nothing, use performAction instead.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
     }

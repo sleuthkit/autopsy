@@ -60,7 +60,7 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
                 menuItem.setActionCommand(caseName[i].toUpperCase());
                 menuItem.addActionListener(new RecentItems(caseName[i], casePath[i]));
                 comps[i] = menuItem;
-                hasRecentCase = hasRecentCase || true;
+                hasRecentCase = true;
             }
         }
 

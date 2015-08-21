@@ -21,18 +21,16 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
-import javax.swing.JPanel;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * This class is used to add the action to the recent case menu item. When the
- * the recent case menu is pressed, it should open that selected case.
+ * This class is used to add the action to the run ingest modules menu item. 
+ * When the image is pressed, it should open the wizard for ingest modules.
  */
 class MenuImageAction implements ActionListener {
 
     Image image;
-    private JPanel caller; // for error handling
 
     /**
      * the constructor
@@ -42,7 +40,7 @@ class MenuImageAction implements ActionListener {
     }
 
     /**
-     * Opens the recent case.
+     * Runs the ingest modules wizard on the image.
      *
      * @param e the action event
      */
