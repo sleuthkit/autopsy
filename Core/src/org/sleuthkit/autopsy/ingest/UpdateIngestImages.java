@@ -61,6 +61,7 @@ class UpdateIngestImages extends JMenuItem implements DynamicMenuContent {
             String action = images.get(i).getName();
             JMenuItem menuItem = new JMenuItem(action);
             menuItem.setActionCommand(action.toUpperCase());
+            menuItem.addActionListener(new MenuImageAction(images.get(i)));
             comps[i] = menuItem;
         }
 
