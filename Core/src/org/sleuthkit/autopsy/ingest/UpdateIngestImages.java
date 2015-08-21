@@ -33,9 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class is used to populate the list of open images to run ingest on them
  */
 class UpdateIngestImages extends JMenuItem implements DynamicMenuContent {
-    
-    static boolean hasImages = false;
-    
+        
     /**
      * Creates main menu/popup menu items. It's called each time a popup menu 
      * is constructed and just once for the main menu.
@@ -53,11 +51,7 @@ class UpdateIngestImages extends JMenuItem implements DynamicMenuContent {
             images = sk.getImages();
         } catch (IllegalStateException ex) {
             // No open Cases, create a disabled empty menu
-            comps = new JComponent[1];
-            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(UpdateIngestImages.class, "UpdateIngestImages.menuItem.empty"));
-            comps[0] = emptyMenu;
-            comps[0].setEnabled(false);
-            return comps;
+            return getEmpty();
         } catch (TskCoreException e) {
             System.out.println("Exception getting images: " + e.getMessage());
 	}
@@ -70,15 +64,20 @@ class UpdateIngestImages extends JMenuItem implements DynamicMenuContent {
             menuItem.setActionCommand(action.toUpperCase());
             menuItem.addActionListener(new MenuImageAction(images.get(i)));
             comps[i] = menuItem;
-            hasImages = true;
         }
         // If no images are open, create a disabled empty menu
-        if (!hasImages) {
-            comps = new JComponent[1];
-            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(UpdateIngestImages.class, "UpdateIngestImages.menuItem.empty"));
-            comps[0] = emptyMenu;
-            comps[0].setEnabled(false);    
+        if (images.isEmpty()) {
+            return getEmpty();
         }
+        return comps;
+    }
+    
+    // returns a disabled empty menu
+    private JComponent[] getEmpty() {
+        JComponent[] comps = new JComponent[1];
+        JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(UpdateIngestImages.class, "UpdateIngestImages.menuItem.empty"));
+        comps[0] = emptyMenu;
+        comps[0].setEnabled(false);
         return comps;
     }
 
