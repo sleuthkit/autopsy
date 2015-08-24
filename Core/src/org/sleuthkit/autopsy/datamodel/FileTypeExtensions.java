@@ -37,7 +37,7 @@ public class FileTypeExtensions {
     private final static List<String> TEXT_EXTENSIONS = Arrays.asList(".txt", ".rtf", ".log", ".text", ".xml"); //NON-NLS
     private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx"); //NON-NLS
     private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf"); //NON-NLS
-    private final static List<String> ARCHIVE_EXTENSIONS = Arrays.asList(".zip", ".rar", ".7zip", ".7z", ".arj", ".tar", ".gzip", ".bzip", ".bzip2", ".cab", ".jar", ".cpio", ".ar", ".gz", ".tgz", ".bz2"); //NON-NLS
+    private final static List<String> ARCHIVE_EXTENSIONS = Arrays.asList(".zip", ".rar", ".7zip", ".7z", ".arj", ".tar", ".gzip", ".bzip", ".bzip2", ".cab", ".jar", ".cpio", ".ar", ".gz", ".tgz"); //NON-NLS
 
     public static List<String> getImageExtensions() {
         return IMAGE_EXTENSIONS;
