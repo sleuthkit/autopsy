@@ -857,8 +857,8 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "select count(*), " + typeColumnHelper(useSubTypes)
-                + " from events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+        final String queryString = "SELECT count(DISTINCT event_id) AS count, " + typeColumnHelper(useSubTypes)
+                + " FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >= " + startTime + " AND time < " + endTime + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + typeColumnHelper(useSubTypes); // NON-NLS
 
         DBLock.lock();
@@ -869,7 +869,7 @@ public class EventDB {
                         ? RootEventType.allTypes.get(rs.getInt("sub_type"))
                         : BaseTypes.values()[rs.getInt("base_type")];
 
-                typeMap.put(type, rs.getLong("count(*)")); // NON-NLS
+                typeMap.put(type, rs.getLong("count")); // NON-NLS
             }
 
         } catch (Exception ex) {
