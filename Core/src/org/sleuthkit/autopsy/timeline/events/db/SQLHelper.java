@@ -61,12 +61,12 @@ public class SQLHelper {
 
     static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
-        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? " left join hash_set_hits" : "";
+        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? " left join hash_set_hits " : " ";
     }
 
     static String useTagTablesHelper(RootFilter filter) {
         TagsFilter tagsFilter = filter.getTagsFilter();
-        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " left join content_tags left join blackboard_artifact_tags " : "";
+        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " left join content_tags left join blackboard_artifact_tags " : " ";
     }
 
     static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {

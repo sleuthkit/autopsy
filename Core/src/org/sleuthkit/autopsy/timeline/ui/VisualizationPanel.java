@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import com.google.common.eventbus.Subscribe;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -45,6 +46,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
@@ -60,6 +62,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javax.annotation.concurrent.GuardedBy;
 import jfxtras.scene.control.LocalDateTimeTextField;
+import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
@@ -76,6 +79,7 @@ import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.TimeLineTagEvent;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
@@ -100,17 +104,11 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private AbstractVisualization<?, ?, ?, ?> visualization;
 
-    @FXML // ResourceBundle that was given to the FXMLLoader
-    private ResourceBundle resources;
-
-    @FXML // URL location of the FXML file that was given to the FXMLLoader
-    private URL location;
-
     //// range slider and histogram componenets
-    @FXML // fx:id="histogramBox"
+    @FXML
     protected HBox histogramBox; // Value injected by FXMLLoader
 
-    @FXML // fx:id="rangeHistogramStack"
+    @FXML
     protected StackPane rangeHistogramStack; // Value injected by FXMLLoader
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
@@ -167,7 +165,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     @FXML
     private Label endLabel;
 
-    private double preDragPos;
+    private final NotificationPane notificationPane = new NotificationPane();
 
     protected TimeLineController controller;
 
@@ -207,6 +205,18 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
+    private class RefreshAction extends Action {
+
+        public RefreshAction() {
+            super("refresh");
+            setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"));
+            setEventHandler((ActionEvent t) -> {
+                filteredEvents.refresh();
+                notificationPane.hide();
+            });
+        }
+    }
+
     @FXML // This method is called by the FXMLLoader when initialization is complete
     protected void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -216,6 +226,9 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
         assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
 
+        notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
+        notificationPane.getActions().setAll(new RefreshAction());
+        setCenter(notificationPane);
         visualizationModeLabel.setText(
                 NbBundle.getMessage(this.getClass(), "VisualizationPanel.visualizationModeLabel.text"));
         startLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.startLabel.text"));
@@ -248,20 +261,6 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         //setup rangeslider
         rangeSlider.setOpacity(.7);
         rangeSlider.setMin(0);
-
-//        /** this is still needed to not get swamped by low/high value changes.
-//         * https://bitbucket.org/controlsfx/controlsfx/issue/241/rangeslider-high-low-properties
-//         * TODO: committ an appropriate version of this fix to the ControlsFX
-//         * repo on bitbucket, remove this after next release -jm */
-//        Skin<?> skin = rangeSlider.getSkin();
-//        if (skin != null) {
-//            attachDragListener((RangeSliderSkin) skin);
-//        } else {
-//            rangeSlider.skinProperty().addListener((Observable observable) -> {
-//                RangeSliderSkin skin1 = (RangeSliderSkin) rangeSlider.getSkin();
-//                attachDragListener(skin1);
-//            });
-//        }
         rangeSlider.setBlockIncrement(1);
 
         rangeHistogramStack.getChildren().add(rangeSlider);
@@ -275,7 +274,6 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
         zoomMenuButton.getItems().clear();
         for (ZoomRanges b : ZoomRanges.values()) {
-
             MenuItem menuItem = new MenuItem(b.getDisplayName());
             menuItem.setOnAction((event) -> {
                 if (b != ZoomRanges.ALL) {
@@ -310,66 +308,11 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         snapShotButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.snapShotButton.text"));
     }
 
-//    /**
-//     * TODO: committed an appropriate version of this fix to the ControlsFX repo
-//     * on bitbucket, remove this after next release -jm
-//     *
-//     * @param skin
-//     */
-//    private void attachDragListener(RangeSliderSkin skin) {
-//        if (skin != null) {
-//            for (Node n : skin.getChildren()) {
-//                if (n.getStyleClass().contains("track")) {
-//                    n.setOpacity(.3);
-//                }
-//                if (n.getStyleClass().contains("range-bar")) {
-//                    StackPane rangeBar = (StackPane) n;
-//                    rangeBar.setOnMousePressed((MouseEvent e) -> {
-//                        rangeBar.requestFocus();
-//                        preDragPos = e.getX();
-//                    });
-//
-//                    //don't mark as not changing until mouse is released
-//                    rangeBar.setOnMouseReleased((MouseEvent event) -> {
-//                        rangeSlider.setLowValueChanging(false);
-//                        rangeSlider.setHighValueChanging(false);
-//                    });
-//                    rangeBar.setOnMouseDragged((MouseEvent event) -> {
-//                        final double min = rangeSlider.getMin();
-//                        final double max = rangeSlider.getMax();
-//
-//                        ///!!!  compensate for range and width so that rangebar actualy stays with the slider
-//                        double delta = (event.getX() - preDragPos) * (max - min) / rangeSlider.
-//                                getWidth();
-//                        ////////////////////////////////////////////////////
-//
-//                        final double lowValue = rangeSlider.getLowValue();
-//                        final double newLowValue = Math.min(Math.max(min, lowValue + delta),
-//                                                            max);
-//                        final double highValue = rangeSlider.getHighValue();
-//                        final double newHighValue = Math.min(Math.max(min, highValue + delta),
-//                                                             max);
-//
-//                        if (newLowValue <= min || newHighValue >= max) {
-//                            return;
-//                        }
-//
-//                        rangeSlider.setLowValueChanging(true);
-//                        rangeSlider.setHighValueChanging(true);
-//                        rangeSlider.setLowValue(newLowValue);
-//                        rangeSlider.setHighValue(newHighValue);
-//                    });
-//                }
-//            }
-//        }
-//    }
     @Override
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(controller.getEventsModel());
-
         setViewMode(controller.getViewMode().get());
-
         controller.getNeedsHistogramRebuild().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 refreshHistorgram();
@@ -379,7 +322,27 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         controller.getViewMode().addListener((ObservableValue<? extends VisualizationMode> ov, VisualizationMode t, VisualizationMode t1) -> {
             setViewMode(t1);
         });
+        TimeLineController.getTimeZone().addListener(timeRangeInvalidationListener);
         refreshHistorgram();
+    }
+
+    @Override
+    public void setModel(FilteredEventsModel filteredEvents) {
+        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
+            this.filteredEvents.unRegisterForEvents(this);
+            this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
+            this.filteredEvents.zoomParamtersProperty().removeListener(zoomListener);
+        }
+        if (this.filteredEvents != filteredEvents) {
+            filteredEvents.registerForEvents(this);
+            filteredEvents.timeRangeProperty().addListener(timeRangeInvalidationListener);
+            filteredEvents.zoomParamtersProperty().addListener(zoomListener);
+        }
+
+        this.filteredEvents = filteredEvents;
+
+        refreshTimeUI(filteredEvents.timeRangeProperty().get());
+
     }
 
     private void setViewMode(VisualizationMode visualizationMode) {
@@ -407,27 +370,37 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 toolBar.getItems().addAll(newViz.getSettingsNodes());
 
                 visualization.setController(controller);
-                setCenter(visualization);
+                notificationPane.setContent(visualization);
                 if (visualization instanceof DetailViewPane) {
                     navPanel.setChart((DetailViewPane) visualization);
                 }
                 visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
                     if (newValue == false) {
 
-                        setCenter(new StackPane(visualization, new Region() {
+                        notificationPane.setContent(new StackPane(visualization, new Region() {
                             {
                                 setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
                                 setOpacity(.3);
                             }
                         }, new NoEventsDialog(() -> {
-                            setCenter(visualization);
+                            notificationPane.setContent(visualization);
                         })));
                     } else {
-                        setCenter(visualization);
+                        notificationPane.setContent(visualization);
                     }
                 });
             }
         });
+    }
+
+    @Subscribe
+    public void handleTimeLineTagEvent(TimeLineTagEvent event) {
+        Platform.runLater(() -> {
+            notificationPane.show("Tag Events",
+                    new ImageView("org/sleuthkit/autopsy/timeline/images/information.png")
+            );
+        });
+
     }
 
     synchronized private void refreshHistorgram() {
@@ -514,18 +487,13 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         controller.monitorTask(histogramTask);
     }
 
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-
+    private InvalidationListener timeRangeInvalidationListener = (Observable observable) -> {
         refreshTimeUI(filteredEvents.timeRangeProperty().get());
-        this.filteredEvents.timeRangeProperty().addListener((Observable observable) -> {
-            refreshTimeUI(filteredEvents.timeRangeProperty().get());
-        });
-        TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            refreshTimeUI(filteredEvents.timeRangeProperty().get());
-        });
-    }
+    };
+    
+    private InvalidationListener zoomListener = (Observable observable) -> {
+        notificationPane.hide();
+    };
 
     private void refreshTimeUI(Interval interval) {
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());

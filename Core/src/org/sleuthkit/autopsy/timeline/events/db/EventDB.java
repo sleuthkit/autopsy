@@ -273,8 +273,8 @@ public class EventDB {
         final String sqlWhere = SQLHelper.getSQLWhere(filter);
         DBLock.lock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-                ResultSet rs = stmt.executeQuery(" select (select Max(time) from events" + useHashHitTablesHelper(filter) + " where time <=" + start + " and " + sqlWhere + ") as start,"
-                        + "(select Min(time) from  from events" + useHashHitTablesHelper(filter) + " where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
+                ResultSet rs = stmt.executeQuery(" SELECT (SELECT Max(time) FROM events " + useHashHitTablesHelper(filter)  + useTagTablesHelper(filter)+ " WHERE time <=" + start + " AND " + sqlWhere + ") AS start,"
+                        + "(SELECT Min(time)  FROM events" + useHashHitTablesHelper(filter) +  useTagTablesHelper(filter) +  " WHERE time >= " + end + " AND " + sqlWhere + ") AS end")) { // NON-NLS
             while (rs.next()) {
 
                 long start2 = rs.getLong("start"); // NON-NLS
@@ -324,7 +324,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         DBLock.lock();
-        final String query = "select event_id from  from events" + useHashHitTablesHelper(filter) + " where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)+ " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {

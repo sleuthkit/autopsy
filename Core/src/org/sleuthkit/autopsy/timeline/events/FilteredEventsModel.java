@@ -89,7 +89,6 @@ public final class FilteredEventsModel {
 
     private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
 
- 
     /**
      * time range that spans the filtered events
      */
@@ -371,11 +370,14 @@ public final class FilteredEventsModel {
         }
     }
 
-
     private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
         HashSet<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
-        return !updatedEventIDs.isEmpty();
-
+        boolean tagsUpdated = !updatedEventIDs.isEmpty();
+        
+        if (tagsUpdated) {
+            eventbus.post(new TimeLineTagEvent());
+        }
+        return tagsUpdated;
     }
 
     synchronized public void registerForEvents(Object o) {

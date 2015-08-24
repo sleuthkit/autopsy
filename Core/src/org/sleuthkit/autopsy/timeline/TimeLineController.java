@@ -807,10 +807,7 @@ public class TimeLineController {
                 case CONTENT_TAG_ADDED:
                 case CONTENT_TAG_DELETED:
                     executor.submit(() -> {
-                        final boolean tagsUpdated = filteredEvents.handleTagEvent((TagEvent<?>) evt);
-                        Platform.runLater(() -> {
-                            newEventsFlag.set(tagsUpdated);
-                        });
+                        filteredEvents.handleTagEvent((TagEvent<?>) evt);
                     });
                     break;
                 case DATA_SOURCE_ADDED:
