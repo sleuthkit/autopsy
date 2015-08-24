@@ -188,9 +188,9 @@ public class EventDB {
     public Interval getSpanningInterval(Collection<Long> eventIDs) {
         DBLock.lock();
         try (Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
+                ResultSet rs = stmt.executeQuery("SELECT Min(time), Max(time) FROM events WHERE event_id IN (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
-                return new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS
+                return new Interval(rs.getLong("Min(time)")*1000, (rs.getLong("Max(time)") + 1)*1000, DateTimeZone.UTC); // NON-NLS
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
