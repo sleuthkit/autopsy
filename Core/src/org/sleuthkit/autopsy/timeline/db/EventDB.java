@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events.db;
+package org.sleuthkit.autopsy.timeline.db;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -54,13 +54,13 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
-import static org.sleuthkit.autopsy.timeline.events.db.SQLHelper.useHashHitTablesHelper;
-import static org.sleuthkit.autopsy.timeline.events.db.SQLHelper.useTagTablesHelper;
-import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useHashHitTablesHelper;
+import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useTagTablesHelper;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;

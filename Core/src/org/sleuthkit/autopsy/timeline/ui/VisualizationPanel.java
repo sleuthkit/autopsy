@@ -79,8 +79,8 @@ import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.TimeLineTagEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.events.TimelineTagEvent;
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_refresh;
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_tagsAddedOrDeleted;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
@@ -397,7 +397,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     @Subscribe
     @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
-    public void handleTimeLineTagEvent(TimeLineTagEvent event) {
+    public void handleTimeLineTagEvent(TimelineTagEvent event) {
         Platform.runLater(() -> {
             notificationPane.show(VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
         });

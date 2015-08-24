@@ -16,12 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
+package org.sleuthkit.autopsy.timeline.datamodel;
 
 import javax.annotation.Nullable;
 import org.python.google.common.collect.ImmutableMap;
 import org.python.google.common.collect.Maps;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.datamodel.TskData;
 

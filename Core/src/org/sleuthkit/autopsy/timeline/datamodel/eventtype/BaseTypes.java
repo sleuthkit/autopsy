@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events.type;
+package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 
 import java.util.Arrays;
 import java.util.List;

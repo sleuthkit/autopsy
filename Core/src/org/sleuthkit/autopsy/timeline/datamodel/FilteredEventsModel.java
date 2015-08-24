@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
+package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
@@ -41,9 +41,11 @@ import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
+import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
+import org.sleuthkit.autopsy.timeline.events.TimelineTagEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -375,7 +377,7 @@ public final class FilteredEventsModel {
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
 
         if (tagsUpdated) {
-            eventbus.post(new TimeLineTagEvent(updatedEventIDs, tagged));
+            eventbus.post(new TimelineTagEvent(updatedEventIDs, tagged));
         }
         return tagsUpdated;
     }

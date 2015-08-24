@@ -18,11 +18,29 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-/**
- * Event indicating the user requested that the current visualization be
- * rereshed with out chaninging any of the paramaters ( to include more update
- * to date tag data for example.)
- */
-public class RefreshRequestedEvent {
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 
+/**
+ * A "local" event published by filteredEventsModel to indicate that events have
+ * been(un)tagged. This event is not intended for use out side of the timeline
+ * module.
+ */
+public class TimelineTagEvent {
+
+    private final Set<Long> updatedEventIDs;
+    private final boolean tagged;
+
+    public ImmutableSet<Long> getUpdatedEventIDs() {
+        return ImmutableSet.copyOf(updatedEventIDs);
+    }
+
+    public boolean isTagged() {
+        return tagged;
+    }
+
+    public TimelineTagEvent(Set<Long> updatedEventIDs, boolean tagged) {
+        this.updatedEventIDs = updatedEventIDs;
+        this.tagged = tagged;
+    }
 }
