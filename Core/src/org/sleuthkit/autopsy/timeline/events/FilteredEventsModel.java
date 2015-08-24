@@ -373,9 +373,9 @@ public final class FilteredEventsModel {
     private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
         HashSet<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
         boolean tagsUpdated = !updatedEventIDs.isEmpty();
-        
+
         if (tagsUpdated) {
-            eventbus.post(new TimeLineTagEvent());
+            eventbus.post(new TimeLineTagEvent(updatedEventIDs, tagged));
         }
         return tagsUpdated;
     }

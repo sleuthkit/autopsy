@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -80,6 +81,8 @@ import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TimeLineTagEvent;
+import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_refresh;
+import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_tagsAddedOrDeleted;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
@@ -95,10 +98,13 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 public class VisualizationPanel extends BorderPane implements TimeLineView {
 
-    @GuardedBy("this")
-    private LoggedTask<Void> histogramTask;
+    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
+    private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
 
     private static final Logger LOGGER = Logger.getLogger(VisualizationPanel.class.getName());
+
+    @GuardedBy("this")
+    private LoggedTask<Void> histogramTask;
 
     private final NavPanel navPanel;
 
@@ -106,10 +112,10 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     //// range slider and histogram componenets
     @FXML
-    protected HBox histogramBox; // Value injected by FXMLLoader
+    protected HBox histogramBox;
 
     @FXML
-    protected StackPane rangeHistogramStack; // Value injected by FXMLLoader
+    protected StackPane rangeHistogramStack;
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
@@ -205,19 +211,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
-    private class RefreshAction extends Action {
-
-        public RefreshAction() {
-            super("refresh");
-            setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"));
-            setEventHandler((ActionEvent t) -> {
-                filteredEvents.refresh();
-                notificationPane.hide();
-            });
-        }
-    }
-
     @FXML // This method is called by the FXMLLoader when initialization is complete
+    @NbBundle.Messages("VisualizationPanel.refresh=refresh")
     protected void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -227,12 +222,19 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
-        notificationPane.getActions().setAll(new RefreshAction());
+        notificationPane.getActions().setAll(new Action(VisualizationPanel_refresh()) {
+            {
+                setGraphic(new ImageView(REFRESH));
+                setEventHandler((ActionEvent t) -> {
+                    filteredEvents.refresh();
+                    notificationPane.hide();
+                });
+            }
+        });
         setCenter(notificationPane);
-        visualizationModeLabel.setText(
-                NbBundle.getMessage(this.getClass(), "VisualizationPanel.visualizationModeLabel.text"));
-        startLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.startLabel.text"));
-        endLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.endLabel.text"));
+        visualizationModeLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.visualizationModeLabel.text")); // NON-NLS
+        startLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.startLabel.text")); // NON-NLS
+        endLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.endLabel.text")); // NON-NLS
 
         HBox.setHgrow(leftSeperator, Priority.ALWAYS);
         HBox.setHgrow(rightSeperator, Priority.ALWAYS);
@@ -255,8 +257,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 countsToggle.getToggleGroup().selectedToggleProperty().addListener(toggleListener);
             });
         }
-        countsToggle.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.countsToggle.text"));
-        detailsToggle.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.detailsToggle.text"));
+        countsToggle.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.countsToggle.text")); // NON-NLS
+        detailsToggle.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.detailsToggle.text")); // NON-NLS
 
         //setup rangeslider
         rangeSlider.setOpacity(.7);
@@ -284,7 +286,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             });
             zoomMenuButton.getItems().add(menuItem);
         }
-        zoomMenuButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.zoomMenuButton.text"));
+        zoomMenuButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomMenuButton.text")); // NON-NLS
 
         zoomOutButton.setOnAction(e -> {
             controller.pushZoomOutTime();
@@ -305,7 +307,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             new SaveSnapshot(controller, snapshot).handle(event);
         });
 
-        snapShotButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.snapShotButton.text"));
+        snapShotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapShotButton.text")); // NON-NLS
     }
 
     @Override
@@ -394,13 +396,11 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     }
 
     @Subscribe
+    @NbBundle.Messages("VisualizationPanel.tagsAddedOrDeleted=Tags have been created and/or deleted.  The visualization may not be up to date.")
     public void handleTimeLineTagEvent(TimeLineTagEvent event) {
         Platform.runLater(() -> {
-            notificationPane.show("Tag Events",
-                    new ImageView("org/sleuthkit/autopsy/timeline/images/information.png")
-            );
+            notificationPane.show(VisualizationPanel_tagsAddedOrDeleted(), new ImageView(INFORMATION));
         });
-
     }
 
     synchronized private void refreshHistorgram() {
@@ -410,12 +410,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
 
         histogramTask = new LoggedTask<Void>(
-                NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.title"), true) {
+                NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.title"), true) { // NON-NLS
 
                     @Override
                     protected Void call() throws Exception {
 
-                        updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.preparing"));
+                        updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.preparing")); // NON-NLS
 
                         long max = 0;
                         final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
@@ -428,7 +428,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
                         //clear old data, and reset ranges and series
                         Platform.runLater(() -> {
-                            updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.resetUI"));
+                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.resetUI")); // NON-NLS
 
                         });
 
@@ -445,7 +445,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
                             start = end;
 
-                            updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.queryDb"));
+                            updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.queryDb")); // NON-NLS
                             //query for current range
                             long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                             bins.add(count);
@@ -455,7 +455,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                             final double fMax = Math.log(max);
                             final ArrayList<Long> fbins = new ArrayList<>(bins);
                             Platform.runLater(() -> {
-                                updateMessage(NbBundle.getMessage(this.getClass(), "VisualizationPanel.histogramTask.updateUI2"));
+                                updateMessage(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.histogramTask.updateUI2")); // NON-NLS
 
                                 histogramBox.getChildren().clear();
 
@@ -490,7 +490,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     private InvalidationListener timeRangeInvalidationListener = (Observable observable) -> {
         refreshTimeUI(filteredEvents.timeRangeProperty().get());
     };
-    
+
     private InvalidationListener zoomListener = (Observable observable) -> {
         notificationPane.hide();
     };
@@ -557,9 +557,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
-            noEventsDialogLabel.setText(
-                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.noEventsDialogLabel.text"));
-            zoomButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.zoomButton.text"));
+            noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
+            zoomButton.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.zoomButton.text")); // NON-NLS
 
             Action zoomOutAction = new ZoomOut(controller);
             zoomButton.setOnAction(zoomOutAction);
@@ -571,8 +570,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             Action defaultFiltersAction = new ResetFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
-            resetFiltersButton.setText(
-                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.resetFiltersButton.text"));
+            resetFiltersButton.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.resetFiltersButton.text")); // NON-NLS
         }
     }
 }
