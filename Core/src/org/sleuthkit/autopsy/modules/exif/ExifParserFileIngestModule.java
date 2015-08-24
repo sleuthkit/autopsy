@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -65,8 +66,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
+    private final HashSet<String> supportedMimeTypes = new HashSet<>();
 
     ExifParserFileIngestModule() {
+        supportedMimeTypes.add("audio/x-wav");
+        supportedMimeTypes.add("image/jpeg");
+        supportedMimeTypes.add("image/tiff");
     }
 
     @Override
@@ -206,7 +211,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         try {
             String mimeType = fileTypeDetector.getFileType(f);
             if (mimeType != null) {
-                return fileTypeDetector.getFileType(f).equals("image/jpeg");
+                return supportedMimeTypes.contains(mimeType);
             } else {
                 return false;
             }
