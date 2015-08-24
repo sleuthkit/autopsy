@@ -66,7 +66,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
-    private final HashSet supportedMimeTypes = new HashSet();
+    private final HashSet<String> supportedMimeTypes = new HashSet<>();
 
     ExifParserFileIngestModule() {
         supportedMimeTypes.add("audio/x-wav");
