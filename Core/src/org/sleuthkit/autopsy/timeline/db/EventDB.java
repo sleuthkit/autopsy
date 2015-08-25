@@ -68,6 +68,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
@@ -147,6 +148,8 @@ public class EventDB {
     private PreparedStatement recordDBInfoStmt;
     private PreparedStatement insertHashSetStmt;
     private PreparedStatement insertHashHitStmt;
+    private PreparedStatement insertTagStmt;
+    private PreparedStatement deleteTagStmt;
     private PreparedStatement selectHashSetStmt;
     private PreparedStatement countAllEventsStmt;
     private PreparedStatement dropEventsTableStmt;
@@ -564,6 +567,8 @@ public class EventDB {
                 insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)");
                 selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)");
+                insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)");
+                deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?");
                 countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events");
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events");
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits");
@@ -629,10 +634,10 @@ public class EventDB {
 
     void insertEvent(long time, EventType type, long datasourceID, long objID,
             Long artifactID, String fullDescription, String medDescription,
-            String shortDescription, TskData.FileKnown known, Set<String> hashSets, boolean tagged) {
+            String shortDescription, TskData.FileKnown known, Set<String> hashSets, List<? extends Tag> tags) {
 
         EventTransaction transaction = beginTransaction();
-        insertEvent(time, type, datasourceID, objID, artifactID, fullDescription, medDescription, shortDescription, known, hashSets, tagged, transaction);
+        insertEvent(time, type, datasourceID, objID, artifactID, fullDescription, medDescription, shortDescription, known, hashSets, tags, transaction);
         commitTransaction(transaction, true);
     }
 
@@ -645,17 +650,13 @@ public class EventDB {
     void insertEvent(long time, EventType type, long datasourceID, long objID,
             Long artifactID, String fullDescription, String medDescription,
             String shortDescription, TskData.FileKnown known, Set<String> hashSetNames,
-            boolean tagged,
-            EventTransaction transaction) {
+            List<? extends Tag> tags, EventTransaction transaction) {
 
         if (transaction.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction"); // NON-NLS
         }
-        int typeNum;
-        int superTypeNum;
-
-        typeNum = RootEventType.allTypes.indexOf(type);
-        superTypeNum = type.getSuperType().ordinal();
+        int typeNum = RootEventType.allTypes.indexOf(type);
+        int superTypeNum = type.getSuperType().ordinal();
 
         DBLock.lock();
         try {
@@ -685,7 +686,7 @@ public class EventDB {
             insertRowStmt.setByte(10, known == null ? TskData.FileKnown.UNKNOWN.getFileKnownValue() : known.getFileKnownValue());
 
             insertRowStmt.setInt(11, hashSetNames.isEmpty() ? 0 : 1);
-            insertRowStmt.setInt(12, tagged ? 1 : 0);
+            insertRowStmt.setInt(12, tags.isEmpty() ? 0 : 1);
 
             insertRowStmt.executeUpdate();
 
@@ -698,7 +699,7 @@ public class EventDB {
                         insertHashSetStmt.setString(1, name);
                         insertHashSetStmt.executeUpdate();
 
-                        //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                        //TODO: use nested select to get hash_set_id rather than seperate statement/query ?
                         //"select hash_set_id from hash_sets where hash_set_name = ?"
                         selectHashSetStmt.setString(1, name);
                         try (ResultSet rs = selectHashSetStmt.executeQuery()) {
@@ -712,6 +713,13 @@ public class EventDB {
                             }
                         }
                     }
+                    for (Tag tag : tags) {
+                        //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)");
+                        insertTagStmt.setLong(1, tag.getId());
+                        insertTagStmt.setLong(2, tag.getName().getId());
+                        insertTagStmt.setLong(3, eventID);
+                        insertTagStmt.executeUpdate();
+                    }
                     break;
                 }
             }
@@ -723,33 +731,64 @@ public class EventDB {
         }
     }
 
-    HashSet<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+    HashSet<Long> addTag(long objectID, Long artifactID, Tag tag) {
         HashSet<Long> eventIDs = new HashSet<>();
 
         DBLock.lock();
         try {
-            selectEventIDsFromOBjectAndArtifactStmt.clearParameters();
-            selectEventIDsFromOBjectAndArtifactStmt.setLong(1, objectID);
-            if (Objects.isNull(artifactID)) {
-                selectEventIDsFromOBjectAndArtifactStmt.setNull(2, Types.NULL);
-            } else {
-                selectEventIDsFromOBjectAndArtifactStmt.setLong(2, artifactID);
-            }
-            try (ResultSet executeQuery = selectEventIDsFromOBjectAndArtifactStmt.executeQuery();) {
-                while (executeQuery.next()) {
-                    eventIDs.add(executeQuery.getLong("event_id"));
-                }
-                try (Statement updateStatement = con.createStatement();) {
-                    updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
-                            + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
-                }
+            markEventsTagged(objectID, artifactID, eventIDs, true);
+            for (Long eventID : eventIDs) {
+                //could this be one insert?  is there a performance win?
+                //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)"
+                insertTagStmt.clearParameters();
+                insertTagStmt.setLong(1, tag.getId());
+                insertTagStmt.setLong(2, tag.getName().getId());
+                insertTagStmt.setLong(1, eventID);
+                insertTagStmt.executeUpdate();
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "failed to mark events as " + (tagged ? "" : "(un)") + tagged, ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
         return eventIDs;
+    }
+
+    HashSet<Long> deleteTag(long objectID, Long artifactID, Tag tag, boolean stillTagged) {
+        HashSet<Long> eventIDs = new HashSet<>();
+
+        DBLock.lock();
+        try {
+            markEventsTagged(objectID, artifactID, eventIDs, stillTagged);
+            //"DELETE FROM tags WHERE tag_id = ?
+            deleteTagStmt.clearParameters();
+            deleteTagStmt.setLong(1, tag.getId());
+            deleteTagStmt.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return eventIDs;
+    }
+
+    private void markEventsTagged(long objectID, Long artifactID, HashSet<Long> eventIDs, boolean tagged) throws SQLException {
+        selectEventIDsFromOBjectAndArtifactStmt.clearParameters();
+        selectEventIDsFromOBjectAndArtifactStmt.setLong(1, objectID);
+        if (Objects.isNull(artifactID)) {
+            selectEventIDsFromOBjectAndArtifactStmt.setNull(2, Types.NULL);
+        } else {
+            selectEventIDsFromOBjectAndArtifactStmt.setLong(2, artifactID);
+        }
+        try (ResultSet executeQuery = selectEventIDsFromOBjectAndArtifactStmt.executeQuery();) {
+            while (executeQuery.next()) {
+                eventIDs.add(executeQuery.getLong("event_id"));
+            }
+            try (Statement updateStatement = con.createStatement();) {
+                updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
+                        + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
+            }
+        }
     }
 
     void recordLastArtifactID(long lastArtfID) {

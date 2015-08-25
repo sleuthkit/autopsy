@@ -39,13 +39,12 @@ import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
-import org.sleuthkit.autopsy.timeline.events.TimelineTagEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -61,7 +60,9 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -335,49 +336,50 @@ public final class FilteredEventsModel {
         return requestedLOD.get();
     }
 
-    synchronized public boolean handleTagEvent(TagEvent<?> evt) {
-        Content content;
-        BlackboardArtifact artifact;
-        switch (Case.Events.valueOf(evt.getPropertyName())) {
-            case CONTENT_TAG_ADDED:
-                content = ((ContentTagAddedEvent) evt).getTag().getContent();
-                return markEventsTagged(content.getId(), null, true);
-            case CONTENT_TAG_DELETED:
-                content = ((ContentTagDeletedEvent) evt).getTag().getContent();
-                try {
-                    boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-                    return markEventsTagged(content.getId(), null, tagged);
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
-                }
-                return false;
-            case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                artifact = ((BlackBoardArtifactTagAddedEvent) evt).getTag().getArtifact();
-                return markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
-            case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                artifact = ((BlackBoardArtifactTagDeletedEvent) evt).getTag().getArtifact();
-                try {
-                    boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-                    return markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
-                }
-                return false;
-
-            case DATA_SOURCE_ADDED:
-            case CURRENT_CASE:
-            default:
-                LOGGER.log(Level.SEVERE, "Unknown or unexpected event:{0}", evt.getPropertyName());
-                throw new IllegalArgumentException("Unknown or unexpected event:" + evt.getPropertyName());
-        }
+    synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
+        ContentTag contentTag = evt.getTag();
+        Content content = contentTag.getContent();
+        HashSet<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
+        return postTagsUpdated(updatedEventIDs);
     }
 
-    private boolean markEventsTagged(Long contentID, Long artifactID, boolean tagged) {
-        HashSet<Long> updatedEventIDs = repo.markEventsTagged(contentID, artifactID, tagged);
-        boolean tagsUpdated = !updatedEventIDs.isEmpty();
+    synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
+        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifact artifact = artifactTag.getArtifact();
+        HashSet<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
+        return postTagsUpdated(updatedEventIDs);
+    }
 
+    synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
+        ContentTag contentTag = evt.getTag();
+        Content content = contentTag.getContent();
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+            HashSet<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, contentTag, tagged);
+            return postTagsUpdated(updatedEventIDs);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
+        }
+        return false;
+    }
+
+    synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
+        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifact artifact = artifactTag.getArtifact();
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+            HashSet<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, tagged);
+            return postTagsUpdated(updatedEventIDs);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
+        }
+        return false;
+    }
+
+    private boolean postTagsUpdated(HashSet<Long> updatedEventIDs) {
+        boolean tagsUpdated = !updatedEventIDs.isEmpty();
         if (tagsUpdated) {
-            eventbus.post(new TimelineTagEvent(updatedEventIDs, tagged));
+            eventbus.post(new TagsUpdatedEvent(updatedEventIDs));
         }
         return tagsUpdated;
     }

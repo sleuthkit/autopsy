@@ -60,7 +60,10 @@ import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -301,20 +304,20 @@ public class EventsRepository {
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
                             Set<String> hashSets = f.getHashSetNames();
-                            boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
+                            List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
 
                             process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
@@ -398,27 +401,28 @@ public class EventsRepository {
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
                 final int numArtifacts = blackboardArtifacts.size();
 
-                process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                        Bundle.progressWindow_populatingXevents(type.toString()), "")));
+                for (int i = 0; i < numArtifacts; i++) {
+                    publish(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                            Bundle.progressWindow_populatingXevents(type.getDisplayName()), ""));
 
-                int i = 0;
-                for (final BlackboardArtifact bbart : blackboardArtifacts) {
                     //for each artifact, extract the relevant information for the descriptions
+                    BlackboardArtifact bbart = blackboardArtifacts.get(i);
                     ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.AttributeEventDescription.buildEventDescription(type, bbart);
 
-                    if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
-                        long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
-
-                        AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
+                    //insert it into the db if time is > 0  => time is legitimate
+                    if (eventDescription != null && eventDescription.getTime() > 0L) {
+                        long objectID = bbart.getObjectID();
+                        AbstractFile f = skCase.getAbstractFileById(objectID);
+                        long datasourceID = f.getDataSource().getId();
+                        long artifactID = bbart.getArtifactID();
                         Set<String> hashSets = f.getHashSetNames();
-                        boolean tagged = tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
+                        List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
+                        String fullDescription = eventDescription.getFullDescription();
+                        String medDescription = eventDescription.getMedDescription();
+                        String shortDescription = eventDescription.getShortDescription();
 
-                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, tagged, trans);
+                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags, trans);
                     }
-
-                    i++;
-                    process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            Bundle.progressWindow_populatingXevents(type), "")));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
@@ -453,18 +457,30 @@ public class EventsRepository {
         }
     }
 
-    synchronized public HashSet<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
-        HashSet<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
+    synchronized public HashSet<Long> addTag(long objID, Long artifactID, Tag tag) {
+        HashSet<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
         if (!updatedEventIDs.isEmpty()) {
-            aggregateEventsCache.invalidateAll();
-            idToEventCache.invalidateAll(updatedEventIDs);
-            try {
-                tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
-            }
+            invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
+    }
+
+    synchronized public HashSet<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
+        HashSet<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized private void invalidateCaches(HashSet<Long> updatedEventIDs) {
+        aggregateEventsCache.invalidateAll();
+        idToEventCache.invalidateAll(updatedEventIDs);
+        try {
+            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
     }
 
     /**

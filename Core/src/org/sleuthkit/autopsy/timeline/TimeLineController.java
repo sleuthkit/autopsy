@@ -68,11 +68,14 @@ import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.events.TagEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -803,11 +806,23 @@ public class TimeLineController {
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                    executor.submit(() -> {
+                        filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt);
+                    });
+                    break;
                 case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                    executor.submit(() -> {
+                        filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
+                    });
+                    break;
                 case CONTENT_TAG_ADDED:
+                    executor.submit(() -> {
+                        filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt);
+                    });
+                    break;
                 case CONTENT_TAG_DELETED:
                     executor.submit(() -> {
-                        filteredEvents.handleTagEvent((TagEvent<?>) evt);
+                        filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt);
                     });
                     break;
                 case DATA_SOURCE_ADDED:

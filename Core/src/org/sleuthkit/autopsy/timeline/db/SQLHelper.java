@@ -61,13 +61,12 @@ public class SQLHelper {
 
     static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
-        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? " left join hash_set_hits " : " ";
+        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? " LEFT JOIN hash_set_hits " : " ";
     }
 
     static String useTagTablesHelper(RootFilter filter) {
-        return "";
-//        TagsFilter tagsFilter = filter.getTagsFilter();
-//        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " left join content_tags left join blackboard_artifact_tags " : " ";
+        TagsFilter tagsFilter = filter.getTagsFilter();
+        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " LEFT JOIN tags " : " ";
     }
 
     static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {
@@ -135,32 +134,19 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(TagsFilter filter) {
-//        if (filter.isSelected()
-//                && (false == filter.isDisabled())
-//                && (filter.getSubFilters().isEmpty() == false)) {
-//            String tagNameIDs = filter.getSubFilters().stream()
-//                    .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
-//                    .map((TagNameFilter t) -> String.valueOf(t.getTagName().getId()))
-//                    .collect(Collectors.joining(", ", "(", ")"));
-//            return "(CASE WHEN events.artifact_id IS NULL THEN "
-//                    + " content_tags.obj_id == events.file_id  AND content_tags.tag_name_id IN " + tagNameIDs
-//                    + " ELSE blackboard_artifact_tags.artifact_id == events.artifact_id AND blackboard_artifact_tags.tag_name_id IN " + tagNameIDs + " END) ";
-//
-//        } else {
-//            return "1";
-//        }
         if (filter.isSelected()
                 && (false == filter.isDisabled())
                 && (filter.getSubFilters().isEmpty() == false)) {
-            boolean tagNameIDs = filter.getSubFilters().stream()
+            String tagNameIDs = filter.getSubFilters().stream()
                     .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
-                    .findAny().isPresent();
-
-            return tagNameIDs ? "(tagged = 1)" : "1";
-
+                    .map((TagNameFilter t) -> String.valueOf(t.getTagName().getId()))
+                    .collect(Collectors.joining(", ", "(", ")"));
+            return "(events.event_id == tags.event_id AND "
+                    + "tags.tag_name_id IN " + tagNameIDs + ") ";
         } else {
             return "1";
         }
+
     }
 
     private static String getSQLWhere(HashHitsFilter filter) {

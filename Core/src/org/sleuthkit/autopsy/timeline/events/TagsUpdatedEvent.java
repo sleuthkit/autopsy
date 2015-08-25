@@ -26,21 +26,18 @@ import java.util.Set;
  * been(un)tagged. This event is not intended for use out side of the timeline
  * module.
  */
-public class TimelineTagEvent {
+public class TagsUpdatedEvent {
 
     private final Set<Long> updatedEventIDs;
-    private final boolean tagged;
+
 
     public ImmutableSet<Long> getUpdatedEventIDs() {
         return ImmutableSet.copyOf(updatedEventIDs);
     }
 
-    public boolean isTagged() {
-        return tagged;
-    }
 
-    public TimelineTagEvent(Set<Long> updatedEventIDs, boolean tagged) {
+    public TagsUpdatedEvent(Set<Long> updatedEventIDs) {
         this.updatedEventIDs = updatedEventIDs;
-        this.tagged = tagged;
+
     }
 }
