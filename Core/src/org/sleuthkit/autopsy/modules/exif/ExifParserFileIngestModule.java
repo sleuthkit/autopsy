@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -74,6 +75,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
+    private volatile boolean facesDetected = false;
+    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -110,9 +113,16 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
         final int filesProcessedValue = filesProcessed.incrementAndGet();
-        if ((filesToFire) && (filesProcessedValue % 1000 == 0)) {
-            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-            filesToFire = false;
+        if ((filesProcessedValue % 1000 == 0)) {
+            if (filesToFire) {
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                filesToFire = false;
+            }
+            if (facesDetected) {
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
+                listOfFacesDetectedArtifacts.removeAll(listOfFacesDetectedArtifacts);
+                facesDetected = false;
+            }
         }
 
         //skip unsupported
@@ -175,14 +185,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
 
             if (containsFace(metadata)) {
-                BlackboardArtifact artifact = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-                        ExifParserModuleFactory.getModuleName(), "Face Detected - set"));
-                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
-                        ExifParserModuleFactory.getModuleName(), "Face Detected - rule"));
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
-                        Collections.singletonList(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT))));
+                listOfFacesDetectedArtifacts.add(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED));
+                facesDetected = true;
             }
 
             // Add the attributes, if there are any, to a new artifact
@@ -218,16 +222,16 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Checks if the exif metadata data contains any reference to facial
-     * information. NOTE: Cases in which metadata contains references enabled
-     * red-eye reduction settings, portrait settings, etc are assumed to contain
+     * Checks if this metadata contains any tags related to facial information.
+     * NOTE: Cases with this metadata containing tags like enabled red-eye
+     * reduction settings, portrait settings, etc are also assumed to contain
      * facial information. The method returns true. The return value of this
-     * method is quite speculative.
+     * method does NOT guarantee actual presence of face.
      *
      * @param metadata the metadata which needs to be parsed for possible facial
      *                 information.
      *
-     * @return returns true if the metadata contains any reference to facial
+     * @return returns true if the metadata contains any tags related to facial
      *         information.
      */
     private boolean containsFace(Metadata metadata) {
@@ -251,9 +255,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (MetadataException ex) {
-                // should I throw new exception? AND/OR
-                // log this specific exception?
-                // or silently catch and ignore?
+                // move on and check next directory
             }
         }
 
@@ -273,9 +275,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (MetadataException ex) {
-                // should I throw new exception? AND/OR
-                // log this specific exception?
-                // or silently catch and ignore?
+                /// move on and check next directory
             }
         }
 
@@ -283,8 +283,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         if (d != null) {
             if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
                     && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
-                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE")
-                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) {
+                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
+                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
                 return true;
             }
         }
@@ -305,9 +305,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (MetadataException ex) {
-                // should I throw new exception? AND/OR
-                // log this specific exception?
-                // or silently catch and ignore?
+                // move on and check next directory
             }
         }
 
@@ -331,9 +329,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (MetadataException ex) {
-                // should I throw new exception? AND/OR
-                // log this specific exception?
-                // or silently catch and ignore?
+                // move on and check next directory
             }
         }
 
@@ -369,6 +365,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            }
+            if (facesDetected) {
+                //send the final new data event
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
             }
         }
     }
