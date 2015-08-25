@@ -562,13 +562,6 @@ class ReportHTML implements TableReportModule {
             return;
         }
         AbstractFile file = (AbstractFile) content;
-        // Don't make a local copy of the file if it is a directory or unallocated space.
-        if (file.isDir()
-                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
-                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-            row.add("");
-            return;
-        }
 
         // Add metadata about the file to HTML output
         row.add(file.getMtimeAsDate());
@@ -578,14 +571,18 @@ class ReportHTML implements TableReportModule {
         row.add(Long.toString(file.getSize()));
         row.add(file.getMd5Hash());
 
-        // save it in a folder based on the tag name
-        String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
-
         // Add the hyperlink to the row. A column header for it was created in startTable().
         StringBuilder localFileLink = new StringBuilder();
-        localFileLink.append("<a href=\""); //NON-NLS
-        localFileLink.append(localFilePath);
-        localFileLink.append("\">");
+        // Don't make a local copy of the file if it is a directory or unallocated space.
+        if (!(file.isDir()
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
+            localFileLink.append("<a href=\""); //NON-NLS
+            // save it in a folder based on the tag name
+            String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
+            localFileLink.append(localFilePath);
+            localFileLink.append("\">");
+        }
 
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n"); //NON-NLS
