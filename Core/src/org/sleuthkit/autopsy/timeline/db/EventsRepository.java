@@ -24,7 +24,6 @@ import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -457,23 +456,24 @@ public class EventsRepository {
         }
     }
 
-    synchronized public HashSet<Long> addTag(long objID, Long artifactID, Tag tag) {
-        HashSet<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
+    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) {
+        Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
     }
 
-    synchronized public HashSet<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
-        HashSet<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
     }
 
-    synchronized private void invalidateCaches(HashSet<Long> updatedEventIDs) {
+    synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
+        eventCountsCache.invalidateAll();
         aggregateEventsCache.invalidateAll();
         idToEventCache.invalidateAll(updatedEventIDs);
         try {

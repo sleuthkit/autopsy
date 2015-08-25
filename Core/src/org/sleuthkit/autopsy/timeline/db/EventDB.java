@@ -731,48 +731,47 @@ public class EventDB {
         }
     }
 
-    HashSet<Long> addTag(long objectID, Long artifactID, Tag tag) {
-        HashSet<Long> eventIDs = new HashSet<>();
-
+    Set<Long> addTag(long objectID, Long artifactID, Tag tag) {
         DBLock.lock();
         try {
-            markEventsTagged(objectID, artifactID, eventIDs, true);
+            Set<Long> eventIDs = markEventsTagged(objectID, artifactID, true);
             for (Long eventID : eventIDs) {
                 //could this be one insert?  is there a performance win?
                 //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)"
                 insertTagStmt.clearParameters();
                 insertTagStmt.setLong(1, tag.getId());
                 insertTagStmt.setLong(2, tag.getName().getId());
-                insertTagStmt.setLong(1, eventID);
+                insertTagStmt.setLong(3, eventID);
                 insertTagStmt.executeUpdate();
             }
+            return eventIDs;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
-        return eventIDs;
+        return Collections.emptySet();
     }
 
-    HashSet<Long> deleteTag(long objectID, Long artifactID, Tag tag, boolean stillTagged) {
-        HashSet<Long> eventIDs = new HashSet<>();
-
+    Set<Long> deleteTag(long objectID, Long artifactID, Tag tag, boolean stillTagged) {
         DBLock.lock();
         try {
-            markEventsTagged(objectID, artifactID, eventIDs, stillTagged);
+            Set<Long> eventIDs = markEventsTagged(objectID, artifactID, stillTagged);
             //"DELETE FROM tags WHERE tag_id = ?
             deleteTagStmt.clearParameters();
             deleteTagStmt.setLong(1, tag.getId());
             deleteTagStmt.executeUpdate();
+            return eventIDs;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
-        return eventIDs;
+        return Collections.emptySet();
     }
 
-    private void markEventsTagged(long objectID, Long artifactID, HashSet<Long> eventIDs, boolean tagged) throws SQLException {
+    private Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) throws SQLException {
+        HashSet<Long> eventIDs = new HashSet<>();
         selectEventIDsFromOBjectAndArtifactStmt.clearParameters();
         selectEventIDsFromOBjectAndArtifactStmt.setLong(1, objectID);
         if (Objects.isNull(artifactID)) {
@@ -789,6 +788,7 @@ public class EventDB {
                         + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
             }
         }
+        return eventIDs;
     }
 
     void recordLastArtifactID(long lastArtfID) {
@@ -830,16 +830,16 @@ public class EventDB {
         DBLock.lock();
         //this should match Sleuthkit db setup
         try (Statement statement = con.createStatement()) {
-            String autopsyDBFileName = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
-
-            ResultSet rs = statement.executeQuery("PRAGMA database_list");
-            boolean found = false;
-            while (rs.next() && !found) {
-                found |= "autopsy".equalsIgnoreCase(rs.getString("name"));
-            }
-            if (!found) {
-                statement.execute("ATTACH DATABASE 'file:" + autopsyDBFileName + "?mode=ro' AS autopsy");
-            }
+//            String autopsyDBFileName = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
+//
+//            ResultSet rs = statement.executeQuery("PRAGMA database_list");
+//            boolean found = false;
+//            while (rs.next() && !found) {
+//                found |= "autopsy".equalsIgnoreCase(rs.getString("name"));
+//            }
+//            if (!found) {
+//                statement.execute("ATTACH DATABASE 'file:" + autopsyDBFileName + "?mode=ro' AS autopsy");
+//            }
             //reduce i/o operations, we have no OS crash recovery anyway
             statement.execute("PRAGMA synchronous = OFF;"); // NON-NLS
             //we don't use this feature, so turn it off for minimal speed up on queries
@@ -907,10 +907,11 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "SELECT count(DISTINCT event_id) AS count, " + typeColumnHelper(useSubTypes)
+        final String queryString = "SELECT count(DISTINCT events.event_id) AS count, " + typeColumnHelper(useSubTypes)
                 + " FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >= " + startTime + " AND time < " + endTime + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + typeColumnHelper(useSubTypes); // NON-NLS
 
+        System.out.println(queryString);
         DBLock.lock();
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(queryString);) {
