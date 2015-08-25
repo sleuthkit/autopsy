@@ -56,12 +56,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useHashHitTablesHelper;
-import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useTagTablesHelper;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
+import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useHashHitTablesHelper;
+import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useTagTablesHelper;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
@@ -190,7 +191,7 @@ public class EventDB {
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery("SELECT Min(time), Max(time) FROM events WHERE event_id IN (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
             while (rs.next()) {
-                return new Interval(rs.getLong("Min(time)")*1000, (rs.getLong("Max(time)") + 1)*1000, DateTimeZone.UTC); // NON-NLS
+                return new Interval(rs.getLong("Min(time)") * 1000, (rs.getLong("Max(time)") + 1) * 1000, DateTimeZone.UTC); // NON-NLS
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
@@ -273,8 +274,8 @@ public class EventDB {
         final String sqlWhere = SQLHelper.getSQLWhere(filter);
         DBLock.lock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-                ResultSet rs = stmt.executeQuery(" SELECT (SELECT Max(time) FROM events " + useHashHitTablesHelper(filter)  + useTagTablesHelper(filter)+ " WHERE time <=" + start + " AND " + sqlWhere + ") AS start,"
-                        + "(SELECT Min(time)  FROM events" + useHashHitTablesHelper(filter) +  useTagTablesHelper(filter) +  " WHERE time >= " + end + " AND " + sqlWhere + ") AS end")) { // NON-NLS
+                ResultSet rs = stmt.executeQuery(" SELECT (SELECT Max(time) FROM events " + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time <=" + start + " AND " + sqlWhere + ") AS start,"
+                        + "(SELECT Min(time)  FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >= " + end + " AND " + sqlWhere + ") AS end")) { // NON-NLS
             while (rs.next()) {
 
                 long start2 = rs.getLong("start"); // NON-NLS
@@ -324,7 +325,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         DBLock.lock();
-        final String query = "SELECT event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter)+ " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -479,7 +480,9 @@ public class EventDB {
                         + " med_description TEXT, " // NON-NLS
                         + " short_description TEXT, " // NON-NLS
                         + " known_state INTEGER,"
-                        + " hash_hit INTEGER)"; //boolean // NON-NLS
+                        + " hash_hit INTEGER,"
+                        + " datasource_id INTEGER,"
+                        + " tagged INTEGER)"; //boolean // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
@@ -525,6 +528,16 @@ public class EventDB {
                         + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, "
                         + " event_id INTEGER REFERENCES events(event_id) not null, "
                         + " PRIMARY KEY (hash_set_id, event_id))";
+                stmt.execute(sql);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
+            }
+            try (Statement stmt = con.createStatement()) {
+                String sql = "CREATE TABLE IF NOT EXISTS tags "
+                        + "(tag_id INTEGER NOT NULL,"
+                        + " tag_name_id INTEGER NOT NULL, "
+                        + " event_id INTEGER REFERENCES events(event_id) NOT NULL, "
+                        + " PRIMARY KEY (event_id, tag_id))";
                 stmt.execute(sql);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
@@ -813,8 +826,6 @@ public class EventDB {
         }
     }
 
-   
-
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
         return new TimeLineEvent(rs.getLong("event_id"),
                 rs.getLong("datasource_id"),
@@ -929,7 +940,7 @@ public class EventDB {
         try (Statement createStatement = con.createStatement();
                 ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {
-                events.add(aggregateEventHelper(rs, useSubTypes, descriptionLOD));
+                events.add(aggregateEventHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get aggregate events with query: " + query, ex); // NON-NLS
@@ -953,7 +964,7 @@ public class EventDB {
      *
      * @throws SQLException
      */
-    private AggregateEvent aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD) throws SQLException {
+    private AggregateEvent aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
         Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
         String eventIDsString = rs.getString("event_ids");// NON-NLS
         Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
