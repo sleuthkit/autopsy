@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -239,8 +238,119 @@ public class EventsRepository {
         dbPopulationWorker.execute();
     }
 
+    synchronized public void rebuildTags(Runnable r) {
+        if (dbPopulationWorker != null) {
+            dbPopulationWorker.cancel(true);
+
+        }
+        dbPopulationWorker = new RebuildTagsWorker(r);
+        dbPopulationWorker.execute();
+    }
+
     public boolean hasDataSourceInfo() {
         return eventDB.hasNewColumns();
+    }
+
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        return eventDB.getTagCountsByTagName(eventIDsWithTags);
+    }
+
+    private class RebuildTagsWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
+
+        private final ProgressWindow progressDialog;
+
+        //TODO: can we avoid this with a state listener?  does it amount to the same thing?
+        //post population operation to execute
+        private final Runnable postPopulationOperation;
+        private final SleuthkitCase skCase;
+        private final TagsManager tagsManager;
+
+        public RebuildTagsWorker(Runnable postPopulationOperation) {
+            progressDialog = new ProgressWindow(null, true, this);
+            progressDialog.setVisible(true);
+
+            skCase = autoCase.getSleuthkitCase();
+            tagsManager = autoCase.getServices().getTagsManager();
+
+            this.postPopulationOperation = postPopulationOperation;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+
+            EventDB.EventTransaction trans = eventDB.beginTransaction();
+            LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
+            eventDB.reInitializeTags();
+
+            LOGGER.log(Level.INFO, "updating content tags"); // NON-NLS
+            List<ContentTag> contentTags = tagsManager.getAllContentTags();
+            int size = contentTags.size();
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    break;
+                }
+                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing file tags", ""));
+                ContentTag contentTag = contentTags.get(i);
+                eventDB.addTag(contentTag.getContent().getId(), null, contentTag);
+            }
+            LOGGER.log(Level.INFO, "updating artifact tags"); // NON-NLS
+            List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
+            size = artifactTags.size();
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    break;
+                }
+                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing result tags", ""));
+                BlackboardArtifactTag artifactTag = artifactTags.get(i);
+                eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
+            }
+
+            LOGGER.log(Level.INFO, "committing tags"); // NON-NLS
+            publish(new ProgressWindow.ProgressUpdate(0, -1, "committing tag changes", ""));
+            if (isCancelled()) {
+                eventDB.rollBackTransaction(trans);
+            } else {
+                eventDB.commitTransaction(trans);
+            }
+
+            populateFilterData(skCase);
+            invalidateCaches();
+
+            return null;
+        }
+
+        /**
+         * handle intermediate 'results': just update progress dialog
+         *
+         * @param chunks
+         */
+        @Override
+        protected void process(List<ProgressWindow.ProgressUpdate> chunks) {
+            super.process(chunks);
+            ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
+            progressDialog.update(chunk);
+        }
+
+        @Override
+        @NbBundle.Messages("msgdlg.tagsproblem.text=There was a problem refreshing the tagged events."
+                + "  Some events may have inacurate tags. See the log for details.")
+        protected void done() {
+            super.done();
+            try {
+                progressDialog.close();
+                get();
+            } catch (CancellationException ex) {
+                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
+            }
+            postPopulationOperation.run();  //execute post db population operation
+        }
+
     }
 
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -268,7 +378,7 @@ public class EventsRepository {
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), ""));
             //reset database 
             //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
@@ -277,7 +387,7 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), ""));
 
             //insert file events into db
             int i = 1;
@@ -319,8 +429,8 @@ public class EventsRepository {
                                 eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
 
-                            process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName())));
+                            publish(new ProgressWindow.ProgressUpdate(i, numFiles,
+                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName()));
                         }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
@@ -341,11 +451,11 @@ public class EventsRepository {
                 }
             }
 
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
-                eventDB.commitTransaction(trans, true);
+                eventDB.commitTransaction(trans);
             }
 
             populateFilterData(skCase);
@@ -450,6 +560,7 @@ public class EventsRepository {
         }
 
         try {
+            //should this only be tags applied to files or event bearing artifacts?
             tagNames.setAll(skCase.getTagNamesInUse());
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);

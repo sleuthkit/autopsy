@@ -155,6 +155,7 @@ public class EventDB {
     private PreparedStatement dropEventsTableStmt;
     private PreparedStatement dropHashSetHitsTableStmt;
     private PreparedStatement dropHashSetsTableStmt;
+    private PreparedStatement dropTagsTableStmt;
     private PreparedStatement dropDBInfoTableStmt;
     private PreparedStatement selectEventIDsFromOBjectAndArtifactStmt;
 
@@ -208,11 +209,11 @@ public class EventDB {
         return new EventTransaction();
     }
 
-    void commitTransaction(EventTransaction tr, Boolean notify) {
+    void commitTransaction(EventTransaction tr) {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't close already closed transaction"); // NON-NLS
         }
-        tr.commit(notify);
+        tr.commit();
     }
 
     /**
@@ -252,6 +253,25 @@ public class EventDB {
         }
     }
 
+    Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        HashMap<String, Long> counts = new HashMap<>();
+        try (Statement createStatement = con.createStatement();
+                ResultSet rs = createStatement.executeQuery("SELECT tag_name_displayName, COUNT(DISTINCT tag_id) AS count FROM tags"
+                        + " WHERE event_id IN (" + StringUtils.join(eventIDsWithTags, ", ") + ")"
+                        + " GROUP BY tag_name_id"
+                        + " ORDER BY tag_name_displayName");) {
+            while (rs.next()) {
+                counts.put(rs.getString("tag_name_displayName"), rs.getLong("count"));
+            }
+
+        } catch (SQLException ex) {
+            Exceptions.printStackTrace(ex);
+        } finally {
+
+        }
+        return counts;
+    }
+
     /**
      * drop the tables from this database and recreate them in order to start
      * over.
@@ -262,10 +282,23 @@ public class EventDB {
             dropEventsTableStmt.executeUpdate();
             dropHashSetHitsTableStmt.executeUpdate();
             dropHashSetsTableStmt.executeUpdate();
+            dropTagsTableStmt.executeUpdate();
             dropDBInfoTableStmt.executeUpdate();
-            initializeDB();;
+            initializeDB();
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "could not drop old tables table", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "could not drop old tables", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+    }
+
+    void reInitializeTags() {
+        DBLock.lock();
+        try {
+            dropTagsTableStmt.executeUpdate();
+            initializeTagsTable();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "could not drop old tags table", ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
@@ -535,16 +568,8 @@ public class EventDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
             }
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE TABLE IF NOT EXISTS tags "
-                        + "(tag_id INTEGER NOT NULL,"
-                        + " tag_name_id INTEGER NOT NULL, "
-                        + " event_id INTEGER REFERENCES events(event_id) NOT NULL, "
-                        + " PRIMARY KEY (event_id, tag_id))";
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
-            }
+
+            initializeTagsTable();
 
             createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("artifact_id"));
@@ -567,12 +592,13 @@ public class EventDB {
                 insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)");
                 selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)");
-                insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)");
+                insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_displayName, event_id) values (?,?,?,?)");
                 deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?");
                 countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events");
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events");
                 dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits");
                 dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets");
+                dropTagsTableStmt = prepareStatement("DROP TABLE IF EXISTS tags");
                 dropDBInfoTableStmt = prepareStatement("DROP TABLE IF EXISTS db_ino");
                 selectEventIDsFromOBjectAndArtifactStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS ?");
             } catch (SQLException sQLException) {
@@ -580,6 +606,20 @@ public class EventDB {
             }
         } finally {
             DBLock.unlock();
+        }
+    }
+
+    private void initializeTagsTable() {
+        try (Statement stmt = con.createStatement()) {
+            String sql = "CREATE TABLE IF NOT EXISTS tags "
+                    + "(tag_id INTEGER NOT NULL,"
+                    + " tag_name_id INTEGER NOT NULL, "
+                    + " tag_name_displayName TEXT NOT NULL, "
+                    + " event_id INTEGER REFERENCES events(event_id) NOT NULL, "
+                    + " PRIMARY KEY (event_id, tag_name_id))";
+            stmt.execute(sql);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
         }
     }
 
@@ -638,7 +678,7 @@ public class EventDB {
 
         EventTransaction transaction = beginTransaction();
         insertEvent(time, type, datasourceID, objID, artifactID, fullDescription, medDescription, shortDescription, known, hashSets, tags, transaction);
-        commitTransaction(transaction, true);
+        commitTransaction(transaction);
     }
 
     /**
@@ -714,11 +754,8 @@ public class EventDB {
                         }
                     }
                     for (Tag tag : tags) {
-                        //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)");
-                        insertTagStmt.setLong(1, tag.getId());
-                        insertTagStmt.setLong(2, tag.getName().getId());
-                        insertTagStmt.setLong(3, eventID);
-                        insertTagStmt.executeUpdate();
+                        //could this be one insert?  is there a performance win?
+                        insertTag(tag, eventID);
                     }
                     break;
                 }
@@ -736,13 +773,7 @@ public class EventDB {
         try {
             Set<Long> eventIDs = markEventsTagged(objectID, artifactID, true);
             for (Long eventID : eventIDs) {
-                //could this be one insert?  is there a performance win?
-                //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id, event_id) values (?,?,?)"
-                insertTagStmt.clearParameters();
-                insertTagStmt.setLong(1, tag.getId());
-                insertTagStmt.setLong(2, tag.getName().getId());
-                insertTagStmt.setLong(3, eventID);
-                insertTagStmt.executeUpdate();
+                insertTag(tag, eventID);
             }
             return eventIDs;
         } catch (SQLException ex) {
@@ -751,6 +782,17 @@ public class EventDB {
             DBLock.unlock();
         }
         return Collections.emptySet();
+    }
+
+    private void insertTag(Tag tag, Long eventID) throws SQLException {
+
+        //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_displayName, event_id) values (?,?,?,?)"
+        insertTagStmt.clearParameters();
+        insertTagStmt.setLong(1, tag.getId());
+        insertTagStmt.setLong(2, tag.getName().getId());
+        insertTagStmt.setString(3, tag.getName().getDisplayName());
+        insertTagStmt.setLong(4, eventID);
+        insertTagStmt.executeUpdate();
     }
 
     Set<Long> deleteTag(long objectID, Long artifactID, Tag tag, boolean stillTagged) {
@@ -1177,16 +1219,13 @@ public class EventDB {
             }
         }
 
-        private void commit(Boolean notify) {
+        private void commit() {
             if (!closed) {
                 try {
                     con.commit();
                     // make sure we close before we update, bc they'll need locks
                     close();
 
-                    if (notify) {
-//                        fireNewEvents(newEvents);
-                    }
                 } catch (SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error commiting events.db.", ex); // NON-NLS
                     rollback();

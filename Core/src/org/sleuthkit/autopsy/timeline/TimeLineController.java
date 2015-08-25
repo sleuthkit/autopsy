@@ -297,7 +297,6 @@ public class TimeLineController {
             //TODO: verify this locking is correct? -jm
             synchronized (eventsRepository) {
                 eventsRepository.rebuildRepository(() -> {
-
                     synchronized (eventsRepository) {
                         eventsRepository.recordLastObjID(lastObjId);
                         eventsRepository.recordLastArtifactID(lastArtfID);
@@ -309,7 +308,7 @@ public class TimeLineController {
                         needsHistogramRebuild.set(false);
                         showWindow();
                     }
-
+                    
                     Platform.runLater(() -> {
                         //TODO: should this be an event?
                         newEventsFlag.set(false);
@@ -321,6 +320,25 @@ public class TimeLineController {
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
             return false;
+        }
+        return true;
+    }
+
+    boolean rebuildTagsTable() {
+
+        LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
+        SwingUtilities.invokeLater(() -> {
+            if (isWindowOpen()) {
+                mainFrame.close();
+            }
+        });
+        synchronized (eventsRepository) {
+            eventsRepository.rebuildTags(() -> {
+                showWindow();
+                Platform.runLater(() -> {
+                    showFullRange();
+                });
+            });
         }
         return true;
     }
@@ -389,14 +407,12 @@ public class TimeLineController {
                     }
                 }
             }
-
             /*
-             * if the repo was not rebuilt show the UI. If the repo was rebuild
-             * it will be displayed as part of that process
+             * if the repo was not rebuilt at minimum rebuild the tags which may
+             * have been updated without or knowing it.
              */
             if (repoRebuilt == false) {
-                showWindow();
-                showFullRange();
+                rebuildTagsTable();
             }
 
         } catch (TskCoreException ex) {

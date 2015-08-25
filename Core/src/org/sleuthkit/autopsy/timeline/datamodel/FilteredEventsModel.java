@@ -242,6 +242,10 @@ public final class FilteredEventsModel {
         return repo.getEventsById(eventIDs);
     }
 
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        return repo.getTagCountsByTagName(eventIDsWithTags);
+    }
+
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
         final Interval overlap;
         final RootFilter intersect;
@@ -398,4 +402,5 @@ public final class FilteredEventsModel {
     public void refresh() {
         eventbus.post(new RefreshRequestedEvent());
     }
+
 }

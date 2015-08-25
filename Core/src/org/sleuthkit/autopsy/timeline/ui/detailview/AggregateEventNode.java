@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -73,10 +72,6 @@ import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -301,27 +296,25 @@ public class AggregateEventNode extends StackPane {
 
             Map<String, Long> tagCounts = new HashMap<>();
             if (!aggEvent.getEventIDsWithTags().isEmpty()) {
-                try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithTags())) {
-
-                        AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
-                        List<ContentTag> contentTags = sleuthkitCase.getContentTagsByContent(abstractFileById);
-                        for (ContentTag tag : contentTags) {
-                            tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-                        }
-
-                        Long artifactID = tle.getArtifactID();
-                        if (Objects.nonNull(artifactID)) {
-                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
-                            List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
-                            for (BlackboardArtifactTag tag : artifactTags) {
-                                tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-                            }
-                        }
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error getting tag info for event.", ex);
-                }
+                tagCounts.putAll( eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
+//
+//                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithTags())) {
+//
+//                        AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
+//                        List<ContentTag> contentTags = sleuthkitCase.getContentTagsByContent(abstractFileById);
+//                        for (ContentTag tag : contentTags) {
+//                            tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
+//                        }
+//
+//                        Long artifactID = tle.getArtifactID();
+//                        if (Objects.nonNull(artifactID)) {
+//                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
+//                            List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
+//                            for (BlackboardArtifactTag tag : artifactTags) {
+//                                tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
+//                            }
+//                        }
+//                    }
             }
 
             String hashSetCountsString = hashSetCounts.entrySet().stream()
