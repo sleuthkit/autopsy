@@ -481,7 +481,7 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-
+        
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);

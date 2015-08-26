@@ -41,10 +41,10 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -52,13 +52,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 class ReportHTML implements TableReportModule {
@@ -1114,7 +1114,7 @@ class ReportHTML implements TableReportModule {
     }
 
     private String prepareThumbnail(AbstractFile file) {
-        File thumbFile = ImageUtils.getIconFile(file, ImageUtils.ICON_SIZE_MEDIUM);
+        File thumbFile = ImageUtils.getCachedThumbnailFile(file, ImageUtils.ICON_SIZE_MEDIUM);
         if (thumbFile.exists() == false) {
             return null;
         }

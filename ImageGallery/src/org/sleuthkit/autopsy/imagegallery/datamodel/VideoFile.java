@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,23 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.io.Files;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
+import java.util.Objects;
+import java.util.logging.Level;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -37,37 +46,59 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         super(file, analyzed);
     }
 
-    @Override
-    public Image getThumbnail() {
-        //TODO: implement video thumbnailing here?
+    public static Image getGenericVideoThumbnail() {
         return VIDEO_ICON;
     }
-    SoftReference<Media> mediaRef;
+
+    @Override
+    public Image getFullSizeImage() {
+        Image image = (null == imageRef) ? null : imageRef.get();
+
+        if (image == null) {
+            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
+            image = (bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null);
+            imageRef = new SoftReference<>(image);
+        }
+
+        return image;
+    }
+
+    private SoftReference<Media> mediaRef;
 
     public Media getMedia() throws IOException, MediaException {
-        Media media = null;
-        if (mediaRef != null) {
-            media = mediaRef.get();
-        }
+        Media media = (mediaRef != null) ? mediaRef.get() : null;
+
         if (media != null) {
             return media;
         }
-        final File cacheFile = getCacheFile(this.getId());
-        if (cacheFile.exists() == false) {
-            ContentUtils.writeToFile(this.getAbstractFile(), cacheFile);
+        final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
+
+        if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
+
+            Files.createParentDirs(cacheFile);
+            ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
+            progressHandle.start(100);
+            ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
+            progressHandle.finish();
+
         }
-        try {
-            media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
-            mediaRef = new SoftReference<>(media);
-            return media;
-        } catch (MediaException ex) {
-            throw ex;
-        }
+
+        media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
+        mediaRef = new SoftReference<>(media);
+        return media;
+
     }
 
-
-    private File getCacheFile(long id) {
-        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id);
+    public boolean isDisplayableAsMedia() {
+        try {
+            Media media = getMedia();
+            return Objects.nonNull(media) && Objects.isNull(media.getError());
+        } catch (IOException ex) {
+            Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "failed to write video to cache for playback.", ex);
+            return false;
+        } catch (MediaException ex) {
+            return false;
+        }
     }
 
     @Override

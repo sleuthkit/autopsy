@@ -21,16 +21,24 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.List;
+import static java.util.Objects.nonNull;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Video viewer part of the Media View layered pane. Uses different engines
  * depending on platform.
  */
-public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture {
+public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, DataContentViewerMedia.MediaViewPanel {
+
+    private static final Set<String> AUDIO_EXTENSIONS = new TreeSet<>(Arrays.asList(".mp3", ".wav", ".wma")); //NON-NLS
 
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
 
@@ -107,11 +115,42 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
 
     /**
      * Return the extensions supported by this video panel.
+     *
+     * @return
      */
     abstract public String[] getExtensions();
 
     /**
      * Return the MimeTypes supported by this video panel.
      */
+    @Override
     abstract public List<String> getMimeTypes();
+
+    @Override
+    public List<String> getExtensionsList() {
+        return Arrays.asList(getExtensions());
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        String extension = file.getNameExtension();
+        //TODO: is this what we want, to require both extension and mimetype support?
+        if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
+            SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
+            try {
+                String mimeType = new FileTypeDetector().getFileType(file);
+                if (nonNull(mimeType)) {
+                    return mimeTypes.contains(mimeType);
+                }
+            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
+                    return true;
+                }
+            }
+
+            return getExtensionsList().contains("." + extension);
+        }
+        return false;
+    }
 }

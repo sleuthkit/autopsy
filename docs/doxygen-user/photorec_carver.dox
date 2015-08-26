@@ -29,4 +29,13 @@ The results of carving show up on the tree under the appropriate data source wit
 \image html photorec_output.PNG
 
 Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
+
+Custom File Signatures
+======
+To add custom file signatures, create a file (if it does not exist) photorec.sig in the user home directory (for example - /home/john/photorec.sig, or C:\\Users\john\photorec.sig). The photorec.sig file should contain one expression per line.
+For example, to detect a file foo.bar which has header signature - 0x4141414141414141, add an expression
+
+	bar 0 0x4141414141414141
+in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature.
+Add another expression on a new line to detect another custom file based on its signature.
 */

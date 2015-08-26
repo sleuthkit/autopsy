@@ -34,19 +34,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
@@ -54,8 +54,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -583,27 +581,29 @@ public final class DrawableDB {
             stmt.setBoolean(8, f.isAnalyzed());
             stmt.executeUpdate();
 
-            final Collection<String> hashSetNames = getHashSetsForFileFromAutopsy(f.getId());
+            try {
+                for (String name : f.getHashSetNames()) {
 
-            for (String name : hashSetNames) {
+                    // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                    insertHashSetStmt.setString(1, name);
+                    insertHashSetStmt.executeUpdate();
 
-                // "insert or ignore into hash_sets (hash_set_name)  values (?)"
-                insertHashSetStmt.setString(1, name);
-                insertHashSetStmt.executeUpdate();
-
-                //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                //"select hash_set_id from hash_sets where hash_set_name = ?"
-                selectHashSetStmt.setString(1, name);
-                try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                    while (rs.next()) {
-                        int hashsetID = rs.getInt("hash_set_id");
-                        //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
-                        insertHashHitStmt.setInt(1, hashsetID);
-                        insertHashHitStmt.setLong(2, f.getId());
-                        insertHashHitStmt.executeUpdate();
-                        break;
+                    //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                    //"select hash_set_id from hash_sets where hash_set_name = ?"
+                    selectHashSetStmt.setString(1, name);
+                    try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                        while (rs.next()) {
+                            int hashsetID = rs.getInt("hash_set_id");
+                            //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                            insertHashHitStmt.setInt(1, hashsetID);
+                            insertHashHitStmt.setLong(2, f.getId());
+                            insertHashHitStmt.executeUpdate();
+                            break;
+                        }
                     }
                 }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getName(), ex);
             }
 
             //and update all groups this file is in
@@ -622,6 +622,7 @@ public final class DrawableDB {
             if (Case.isCaseOpen()) {
                 LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getName(), ex);
             }
+
         } finally {
             dbWriteUnlock();
         }
@@ -877,7 +878,7 @@ public final class DrawableDB {
 
                 query.append(orderByClause);
 
-                if (orderByClause.equals("") == false) {
+                if (orderByClause.isEmpty() == false) {
                     String sortOrderClause = "";
 
                     switch (sortOrder) {
@@ -960,7 +961,7 @@ public final class DrawableDB {
             return DrawableFile.create(f,
                     areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id);
+            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: {0}", id);
             return null;
         }
     }
@@ -1116,36 +1117,6 @@ public final class DrawableDB {
     }
 
     /**
-     * For the given fileID, get the names of all the hashsets that the file is
-     * in.
-     *
-     * @param fileID the fileID to file all the hash sets for
-     *
-     * @return a set of names, each of which is a hashset that the given file is
-     *         in.
-     */
-    @Nonnull
-    public Set<String> getHashSetsForFileFromAutopsy(long fileID) {
-        try {
-            Set<String> hashNames = new HashSet<>();
-            List<BlackboardArtifact> arts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
-
-            for (BlackboardArtifact a : arts) {
-                List<BlackboardAttribute> attrs = a.getAttributes();
-                for (BlackboardAttribute attr : attrs) {
-                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        hashNames.add(attr.getValueString());
-                    }
-                }
-            }
-            return hashNames;
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "failed to get hash sets for file", ex);
-        }
-        return Collections.emptySet();
-    }
-
-    /**
      * For performance reasons, keep a list of all file IDs currently in the
      * drawable database. Otherwise the database is queried many times to
      * retrieve the same data.
@@ -1209,12 +1180,9 @@ public final class DrawableDB {
      *         returns false if passed a null AbstractFile
      */
     public boolean isVideoFile(AbstractFile f) {
+        return isNull(f) ? false
+                : videoFileMap.computeIfAbsent(f.getId(), id -> FileTypeUtils.isVideoFile(f));
 
-        if (Objects.isNull(f)) {
-            return false;
-        } else {
-            return videoFileMap.computeIfAbsent(f.getId(), (id) -> ImageGalleryModule.isVideoFile(f));
-        }
     }
 
     /**

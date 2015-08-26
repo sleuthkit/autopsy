@@ -54,8 +54,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -70,13 +68,15 @@ import org.sleuthkit.autopsy.imagegallery.actions.DeleteFollowUpTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstract base class for {@link DrawableTile} and {@link SlideShowView},
- * since they share a similar node tree and many behaviors, other implementers
+ * since they share a similar node tree and many behaviors, other implementors
  * of {@link DrawableView}s should implement the interface directly
  *
  */
@@ -85,52 +85,46 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     private static final Logger LOGGER = Logger.getLogger(DrawableTileBase.class.getName());
 
     private static final Border UNSELECTED_BORDER = new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
-
     private static final Border SELECTED_BORDER = new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, new CornerRadii(2), new BorderWidths(3)));
 
     //TODO: do this in CSS? -jm
-    protected static final Image videoIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/video-file.png");
-    protected static final Image hashHitIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png");
     protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
     protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
 
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
     private static ContextMenu contextMenu;
 
-    /**
-     * displays the icon representing video files
-     */
+    /** displays the icon representing video files */
     @FXML
-    protected ImageView fileTypeImageView;
+    private ImageView fileTypeImageView;
 
-    /**
-     * displays the icon representing hash hits
-     */
+    /** displays the icon representing hash hits */
     @FXML
-    protected ImageView hashHitImageView;
-
-    /**
-     * displays the icon representing follow up tag
-     */
-    @FXML
-    protected ImageView followUpImageView;
+    private ImageView hashHitImageView;
 
     @FXML
-    protected ToggleButton followUpToggle;
-
-    /**
-     * the label that shows the name of the represented file
-     */
+    protected ImageView undisplayableImageView;
+    /** displays the icon representing follow up tag */
     @FXML
-    protected Label nameLabel;
+    private ImageView followUpImageView;
 
     @FXML
-    protected BorderPane imageBorder;
+    private ToggleButton followUpToggle;
 
+    @FXML
+    BorderPane imageBorder;
+
+    /** the label that shows the name of the represented file */
+    @FXML
+    Label nameLabel;
+
+    @FXML
+    protected ImageView imageView;
     /**
      * the groupPane this {@link DrawableTileBase} is embedded in
      */
     final private GroupPane groupPane;
+
     volatile private boolean registered = false;
 
     protected DrawableTileBase(GroupPane groupPane) {
@@ -153,13 +147,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                         case PRIMARY:
                             if (t.getClickCount() == 1) {
                                 if (t.isControlDown()) {
-
                                     globalSelectionModel.toggleSelection(fileID);
                                 } else {
                                     groupPane.makeSelection(t.isShiftDown(), fileID);
                                 }
                             } else if (t.getClickCount() > 1) {
-                                groupPane.activateSlideShowViewer(fileID);
+                                if (groupPane.getGroupViewMode() == GroupViewMode.TILE) {
+                                    groupPane.activateSlideShowViewer(fileID);
+                                } else {
+                                    groupPane.activateTileViewer();
+                                }
                             }
                             break;
                         case SECONDARY:
@@ -241,13 +238,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         return groupPane;
     }
 
-    @ThreadConfined(type = ThreadType.UI)
-    protected abstract void clearContent();
-
-    protected abstract void disposeContent();
-
-    protected abstract Runnable getContentUpdateRunnable();
-
     protected abstract String getTextForLabel();
 
     protected void initialize() {
@@ -285,6 +275,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Override
     synchronized protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
+        setFileOpt(Optional.empty());
+
         disposeContent();
 
         if (getFileID().isPresent() == false || Case.isCaseOpen() == false) {
@@ -293,23 +285,18 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 getController().getTagsManager().unregisterListener(this);
                 registered = false;
             }
-            setFileOpt(Optional.empty());
-            Platform.runLater(() -> {
-                clearContent();
-            });
+            updateContent();
         } else {
             if (registered == false) {
                 getController().getCategoryManager().registerListener(this);
                 getController().getTagsManager().registerListener(this);
                 registered = true;
             }
-            setFileOpt(Optional.empty());
-
             updateSelectionState();
             updateCategory();
             updateFollowUpIcon();
             updateUI();
-            Platform.runLater(getContentUpdateRunnable());
+            updateContent();
         }
     }
 
@@ -317,11 +304,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
+            final boolean isUndisplayable = (isVideo ? ((VideoFile<?>) file).isDisplayableAsMedia() : file.isDisplayableAsImage()) == false;
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
-                fileTypeImageView.setImage(isVideo ? videoIcon : null);
-                hashHitImageView.setImage(hasHashSetHits ? hashHitIcon : null);
+                fileTypeImageView.setManaged(isVideo);
+                fileTypeImageView.setVisible(isVideo);
+                hashHitImageView.setManaged(hasHashSetHits);
+                hashHitImageView.setVisible(hasHashSetHits);
+                undisplayableImageView.setManaged(isUndisplayable);
+                undisplayableImageView.setVisible(isUndisplayable);
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });
@@ -391,4 +383,40 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             followUpToggle.setSelected(hasFollowUp);
         });
     }
+
+//    @Override
+//    Node getContentNode() {
+//        if (getFile().isPresent() == false) {
+//            imageCache = null;
+//            Platform.runLater(() -> {
+//                imageView.setImage(null);
+//            });
+//            return null;
+//        } else {
+//            Image thumbnail = isNull(imageCache) ? null : imageCache.get();
+//
+//            if (nonNull(thumbnail)) {
+//                Platform.runLater(() -> {
+//                    imageView.setImage(thumbnail);
+//                });
+//                return imageView;
+//            } else {
+//                DrawableFile<?> file = getFile().get();
+//
+//                if (isNull(imageTask) || imageTask.isDone()) {
+//                    imageTask = new ImageLoadTask(file) {
+//
+//                        @Override
+//                        void saveToCache(Image result) {
+//                            synchronized (DrawableTileBase.this) {
+//                                imageCache = new SoftReference<>(result);
+//                            }
+//                        }
+//                    };
+//                    new Thread(imageTask).start();
+//                }
+//                return getLoadingProgressIndicator();
+//            }
+//        }
+//    }
 }

@@ -388,7 +388,7 @@ public class IngestJobSettings {
             if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
                 // compiled python modules have variable instance number as a part of their file name.
                 // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-                moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
+                moduleSettingsFilePath = moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
             }
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
                 out.writeObject(settings);

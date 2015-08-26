@@ -127,6 +127,10 @@
                                                           <Component id="hashDbLocationLabel" alignment="0" max="32767" attributes="0"/>
                                                           <Component id="indexPathLabel" max="32767" attributes="0"/>
                                                           <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
+                                                          <Group type="102" alignment="0" attributes="0">
+                                                              <Component id="addHashesToDatabaseButton" min="-2" max="-2" attributes="0"/>
+                                                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                                          </Group>
                                                       </Group>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
@@ -204,7 +208,10 @@
                                   <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="indexButton" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="indexButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="addHashesToDatabaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
@@ -451,6 +458,17 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.indexPathLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="addHashesToDatabaseButton">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.addHashesToDatabaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+                <Property name="enabled" type="boolean" value="false"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addHashesToDatabaseButtonActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

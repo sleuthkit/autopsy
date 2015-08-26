@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Set;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 
 /**
  * This class encapsulates all the zoom(and filter) parameters into one object
@@ -36,20 +34,9 @@ public class ZoomParams {
 
     private final EventTypeZoomLevel typeZoomLevel;
 
-    private final Filter filter;
+    private final RootFilter filter;
 
     private final DescriptionLOD descrLOD;
-
-    private final Set<Field> changedFields;
-
-    public Set<Field> getChangedFields() {
-        return Collections.unmodifiableSet(changedFields);
-    }
-
-    public enum Field {
-
-        TIME, EVENT_TYPE_ZOOM, FILTER, DESCRIPTION_LOD;
-    }
 
     public Interval getTimeRange() {
         return timeRange;
@@ -59,7 +46,7 @@ public class ZoomParams {
         return typeZoomLevel;
     }
 
-    public Filter getFilter() {
+    public RootFilter getFilter() {
         return filter;
     }
 
@@ -67,40 +54,32 @@ public class ZoomParams {
         return descrLOD;
     }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, Filter filter, DescriptionLOD descrLOD) {
+    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilter filter, DescriptionLOD descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
-        changedFields = EnumSet.allOf(Field.class);
-    }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, Filter filter, DescriptionLOD descrLOD, EnumSet<Field> changed) {
-        this.timeRange = timeRange;
-        this.typeZoomLevel = zoomLevel;
-        this.filter = filter;
-        this.descrLOD = descrLOD;
-        changedFields = changed;
     }
 
     public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD, EnumSet.of(Field.TIME, Field.EVENT_TYPE_ZOOM));
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD, EnumSet.of(Field.EVENT_TYPE_ZOOM));
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withTimeRange(Interval timeRange) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.TIME));
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public ZoomParams withDescrLOD(DescriptionLOD descrLOD) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.DESCRIPTION_LOD));
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withFilter(Filter filter) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD, EnumSet.of(Field.FILTER));
+    public ZoomParams withFilter(RootFilter filter) {
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public boolean hasFilter(Filter filterSet) {
@@ -125,7 +104,7 @@ public class ZoomParams {
         hash = 97 * hash + Objects.hashCode(this.timeRange.getStartMillis());
         hash = 97 * hash + Objects.hashCode(this.timeRange.getEndMillis());
         hash = 97 * hash + Objects.hashCode(this.typeZoomLevel);
-        hash = 97 * hash + Objects.hashCode(this.filter.isActive());
+        hash = 97 * hash + Objects.hashCode(this.filter.isSelected());
         hash = 97 * hash + Objects.hashCode(this.descrLOD);
 
         return hash;
@@ -149,11 +128,7 @@ public class ZoomParams {
         if (this.filter.equals(other.filter) == false) {
             return false;
         }
-        if (this.descrLOD != other.descrLOD) {
-            return false;
-        }
-
-        return true;
+        return this.descrLOD == other.descrLOD;
     }
 
     @Override

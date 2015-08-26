@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,36 +19,50 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.events.TagEvent;
+import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -58,37 +72,26 @@ public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
 
-    @FXML
-    private ImageView imageView;
+    private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
 
     @FXML
-    private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>> attributeColumn;
+    private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>> attributeColumn;
 
     @FXML
-    private TableView<Pair<DrawableAttribute<?>, ? extends Object>> tableView;
+    private TableView<Pair<DrawableAttribute<?>, Collection<?>>> tableView;
 
     @FXML
-    private TableColumn<Pair<DrawableAttribute<?>, ? extends Object>, String> valueColumn;
+    private TableColumn<Pair<DrawableAttribute<?>, Collection<?>>, String> valueColumn;
 
-    @FXML
-    private BorderPane imageBorder;
+    private final MenuItem copyMenuItem = new MenuItem("Copy");
+    private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
-
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("MetaDataPane.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-
-        try {
-            fxmlLoader.load();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+        FXMLConstructor.construct(this, "MetaDataPane.fxml");
     }
 
     @FXML
-    @SuppressWarnings("unchecked")
     void initialize() {
         assert attributeColumn != null : "fx:id=\"attributeColumn\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
         assert imageView != null : "fx:id=\"imageView\" was not injected: check your FXML file 'MetaDataPane.fxml'.";
@@ -97,54 +100,74 @@ public class MetaDataPane extends DrawableUIBase {
         getController().getTagsManager().registerListener(this);
         getController().getCategoryManager().registerListener(this);
 
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableView.setPlaceholder(new Label("Select a file to show its details here."));
-
-        attributeColumn.setCellValueFactory((param) -> new SimpleObjectProperty<>(param.getValue().getKey()));
-        attributeColumn.setCellFactory((param) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, DrawableAttribute<?>>() {
-            @Override
-            protected void updateItem(DrawableAttribute<?> item, boolean empty) {
-                super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
-                if (item != null) {
-                    setText(item.getDisplayName());
-                    setGraphic(new ImageView(item.getIcon()));
-                } else {
-                    setGraphic(null);
-                    setText(null);
-                }
-            }
-        });
-
-        attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
-
-        valueColumn.setCellValueFactory((p) -> {
-            return (p.getValue().getKey() == DrawableAttribute.TAGS)
-                    ? new SimpleStringProperty(((Collection<TagName>) p.getValue().getValue()).stream()
-                            .map(TagName::getDisplayName)
-                            .filter(Category::isNotCategoryName)
-                            .collect(Collectors.joining(" ; ")))
-                    : new SimpleStringProperty(StringUtils.join((Iterable<?>) p.getValue().getValue(), " ; "));
-        });
-        valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
-        valueColumn.setCellFactory((p) -> new TableCell<Pair<DrawableAttribute<?>, ? extends Object>, String>() {
-            @Override
-            public void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (!isEmpty()) {
-                    Text text = new Text(item);
-                    text.wrappingWidthProperty().bind(getTableColumn().widthProperty());
-                    setGraphic(text);
-                } else {
-                    setGraphic(null);
-                }
-            }
-        });
-        tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
-
         //listen for selection change
         getController().getSelectionModel().lastSelectedProperty().addListener((observable, oldFileID, newFileID) -> {
             setFile(newFileID);
         });
+
+        copyMenuItem.setAccelerator(COPY_KEY_COMBINATION);
+        copyMenuItem.setOnAction(actionEvent -> {
+            copyValueToClipBoard();
+        });
+
+        tableView.setContextMenu(contextMenu);
+        tableView.setOnKeyPressed((KeyEvent event) -> {
+            if (COPY_KEY_COMBINATION.match(event)) {
+                contextMenu.hide();
+                copyMenuItem.fire();
+                event.consume();
+            }
+        });
+
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.setPlaceholder(new Label("Select a file to show its details here."));
+        tableView.getColumns().setAll(Arrays.asList(attributeColumn, valueColumn));
+
+        attributeColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        attributeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getKey()));
+        attributeColumn.setCellFactory(param -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, DrawableAttribute<?>>() {
+            @Override
+            protected void updateItem(DrawableAttribute<?> item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isNull(item) || empty) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    setText(item.getDisplayName());
+                    setGraphic(new ImageView(item.getIcon()));
+                }
+            }
+        });
+
+        valueColumn.setPrefWidth(USE_COMPUTED_SIZE);
+        valueColumn.setCellValueFactory(p -> new SimpleStringProperty(getValueDisplayString(p.getValue())));
+        valueColumn.setCellFactory(p -> new TableCell<Pair<DrawableAttribute<?>, Collection<?>>, String>() {
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isNull(item) || empty) {
+                    setGraphic(null);
+                } else {
+                    Text text = new Text(item);
+                    text.wrappingWidthProperty().bind(getTableColumn().widthProperty());
+                    setGraphic(text);
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    static private String getValueDisplayString(Pair<DrawableAttribute<?>, Collection<?>> p) {
+        if (p.getKey() == DrawableAttribute.TAGS) {
+            return ((Collection<TagName>) p.getValue()).stream()
+                    .map(TagName::getDisplayName)
+                    .filter(Category::isNotCategoryName)
+                    .collect(Collectors.joining(" ; "));
+        } else {
+            return p.getValue().stream()
+                    .map(value -> Objects.toString(value, ""))
+                    .collect(Collectors.joining(" ; "));
+        }
     }
 
     @Override
@@ -153,22 +176,26 @@ public class MetaDataPane extends DrawableUIBase {
         if (newFileID == null) {
             Platform.runLater(() -> {
                 imageView.setImage(null);
+                imageBorder.setCenter(null);
                 tableView.getItems().clear();
                 getCategoryBorderRegion().setBorder(null);
-
             });
         } else {
+            disposeContent();
             updateUI();
+            updateContent();
         }
+    }
+
+    @Override
+    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+        return new ThumbnailLoaderTask(file);
     }
 
     public void updateUI() {
         getFile().ifPresent(file -> {
-            final Image icon = file.getThumbnail();
-            final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributesList = file.getAttributesList();
-
+            final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
             Platform.runLater(() -> {
-                imageView.setImage(icon);
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });
@@ -210,5 +237,13 @@ public class MetaDataPane extends DrawableUIBase {
                 updateUI();
             }
         });
+    }
+
+    private void copyValueToClipBoard() {
+        Pair<DrawableAttribute<?>, Collection<?>> selectedItem = tableView.getSelectionModel().getSelectedItem();
+        if (nonNull(selectedItem)) {
+            Clipboard.getSystemClipboard().setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT,
+                    getValueDisplayString(selectedItem)));
+        }
     }
 }

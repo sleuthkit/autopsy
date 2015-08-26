@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -48,7 +47,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private IngestJobSettingsPanel ingestJobSettingsPanel;
+    private final IngestJobSettingsPanel ingestJobSettingsPanel;
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -221,7 +220,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * DataSourceProcessor
      */
     private void startDataSourceProcessing(WizardDescriptor settings) {
-
         final UUID dataSourceId = UUID.randomUUID();
 
         // Add a cleanup task to interrupt the background process if the
@@ -271,7 +269,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * thread, when it finishes processing the data source.
      */
     private void dataSourceProcessorDone(UUID dataSourceId, DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-
         // disable the cleanup task
         cleanupTask.disable();
 

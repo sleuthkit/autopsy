@@ -34,7 +34,16 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToolBar;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -63,7 +72,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
-import org.sleuthkit.autopsy.timeline.actions.DefaultFilters;
+import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
@@ -150,6 +159,13 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     @FXML
     private Button snapShotButton;
+    @FXML
+    private Label visualizationModeLabel;
+    @FXML
+    private Label startLabel;
+
+    @FXML
+    private Label endLabel;
 
     private double preDragPos;
 
@@ -199,6 +215,11 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         assert rangeHistogramStack != null : "fx:id=\"rangeHistogramStack\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert countsToggle != null : "fx:id=\"countsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
         assert detailsToggle != null : "fx:id=\"eventsToggle\" was not injected: check your FXML file 'VisToggle.fxml'."; // NON-NLS
+
+        visualizationModeLabel.setText(
+                NbBundle.getMessage(this.getClass(), "VisualizationPanel.visualizationModeLabel.text"));
+        startLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.startLabel.text"));
+        endLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.endLabel.text"));
 
         HBox.setHgrow(leftSeperator, Priority.ALWAYS);
         HBox.setHgrow(rightSeperator, Priority.ALWAYS);
@@ -554,16 +575,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         private Button zoomButton;
 
         @FXML
-        private Label visualizationModeLabel;
-
-        @FXML
         private Label noEventsDialogLabel;
-
-        @FXML
-        private Label startLabel;
-
-        @FXML
-        private Label endLabel;
 
         public NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
@@ -577,13 +589,9 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             assert dismissButton != null : "fx:id=\"dismissButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
-            visualizationModeLabel.setText(
-                    NbBundle.getMessage(this.getClass(), "VisualizationPanel.visualizationModeLabel.text"));
             noEventsDialogLabel.setText(
                     NbBundle.getMessage(this.getClass(), "VisualizationPanel.noEventsDialogLabel.text"));
             zoomButton.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.zoomButton.text"));
-            startLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.startLabel.text"));
-            endLabel.setText(NbBundle.getMessage(this.getClass(), "VisualizationPanel.endLabel.text"));
 
             Action zoomOutAction = new ZoomOut(controller);
             zoomButton.setOnAction(zoomOutAction);
@@ -592,7 +600,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             dismissButton.setOnAction(e -> {
                 closeCallback.run();
             });
-            Action defaultFiltersAction = new DefaultFilters(controller);
+            Action defaultFiltersAction = new ResetFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
             resetFiltersButton.setText(
