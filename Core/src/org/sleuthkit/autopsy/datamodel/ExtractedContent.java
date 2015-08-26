@@ -356,6 +356,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     return "mismatch-16.png"; //NON-NLS
                 case TSK_OS_INFO:
                     return "computer.png"; //NON-NLS
+                case TSK_FACE_DETECTED:
+                    return "face.png"; //NON-NLS
 
             }
             return "artifact-icon.png"; //NON-NLS
