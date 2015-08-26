@@ -134,6 +134,8 @@ class RunExeIngestModule(DataSourceIngestModule):
         reportHandle = open(reportPath, 'w')
         
         # Run the EXE, saving output to the report
+        # NOTE: we should really be checking for if the module has been
+        # cancelled and then killing the process. 
         self.log(Level.INFO, "Running program on data source")
         subprocess.Popen([self.path_to_exe, imagePaths[0]], stdout=reportHandle).communicate()[0]    
         reportHandle.close()
