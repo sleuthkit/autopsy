@@ -37,7 +37,8 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
      * the constructor
      */
     UpdateRecentCases() {
-        length = RecentCases.LENGTH;
+        // display last 5 cases.
+        length = RecentCases.LENGTH - 1;
     }
 
     /**
@@ -69,13 +70,13 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
         if (hasRecentCase) {
             comps[length] = new JSeparator();
             JMenuItem clearMenu = new JMenuItem(
-                    NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.clearRecentCases.text"));
+                    NbBundle.getMessage(UpdateRecentCases.class, "UpdateRecentCases.menuItem.clearRecentCases.text"));
             clearMenu.addActionListener(SystemAction.get(RecentCases.class));
             comps[length + 1] = clearMenu;
         } // otherwise, just create a disabled empty menu
         else {
             comps = new JComponent[1];
-            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.empty"));
+            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(UpdateRecentCases.class, "UpdateRecentCases.menuItem.empty"));
             emptyMenu.addActionListener(new RecentItems("", ""));
             comps[0] = emptyMenu;
             comps[0].setEnabled(false);

@@ -25,13 +25,13 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,9 +45,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
@@ -177,6 +177,12 @@ public class Case {
          * value is a reference to a Report object representing the new report.
          */
         REPORT_ADDED,
+        /**
+         * Name for the property change event when a report is deleted from the
+         * case. Both the old value and the new value supplied by the event
+         * object are null.
+         */
+        REPORT_DELETED,
         /**
          * Property name for the event when a new BlackBoardArtifactTag is
          * added. The new value is tag added, the old value is empty
@@ -1624,6 +1630,44 @@ public class Case {
 
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
+    }
+
+    /**
+     * Deletes reports from the case - deletes it from the disk as well as the
+     * database.
+     *
+     * @param reports        Collection of Report to be deleted from the case.
+     * @param deleteFromDisk Set true to perform reports file deletion from
+     *                       disk.
+     *
+     * @throws TskCoreException
+     */
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+
+        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString(); // NON-NLS
+        for (Report report : reports) {
+
+            // delete from the database.
+            this.db.deleteReport(report);
+
+            if (deleteFromDisk) {
+                // traverse to the root directory of Report report.
+                String reportPath = report.getPath();
+                while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) { // NON-NLS
+                    reportPath = Paths.get(reportPath, "..").normalize().toString(); // NON-NLS
+                }
+
+                // delete from the disk.
+                try {
+                    FileUtils.deleteDirectory(new File(reportPath));
+                } catch (IOException | SecurityException ex) {
+                    logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
+                }
+            }
+
+            eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), null, null));
+        }
     }
 
     /**

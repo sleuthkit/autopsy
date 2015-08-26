@@ -270,10 +270,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
             switch (column) {
                 case 0:
-                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.caseName");
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.caseName");
                     break;
                 case 1:
-                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.path");
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.path");
                     break;
                 default:
                     ;

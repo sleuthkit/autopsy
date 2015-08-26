@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
@@ -56,12 +54,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  * hashTree. Extract the common code to some new class.
  */
 public class NavPanel extends TabPane {
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     /**
      * TreeView for folders with hash hits
@@ -212,7 +204,7 @@ public class NavPanel extends TabPane {
     private void updateControllersGroup() {
         final TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getValue() != null && selectedItem.getValue().getGroup() != null) {
-            controller.advance(GroupViewState.tile(selectedItem.getValue().getGroup()));
+            controller.advance(GroupViewState.tile(selectedItem.getValue().getGroup()), false);
         }
     }
 
@@ -233,14 +225,15 @@ public class NavPanel extends TabPane {
         final GroupTreeItem treeItemForGroup = ((GroupTreeItem) activeTreeProperty.get().getRoot()).getTreeItemForPath(path);
 
         if (treeItemForGroup != null) {
-            /* When we used to run the below code on the FX thread, it would
-             * get into infinite loops when the next group button was pressed
+            /*
+             * When we used to run the below code on the FX thread, it would get
+             * into infinite loops when the next group button was pressed
              * quickly because the udpates became out of order and History could
-             * not
-             * keep track of what was current.
+             * not keep track of what was current.
              *
              * Currently (4/2/15), this method is already on the FX thread, so
-             * it is OK. */
+             * it is OK.
+             */
             //Platform.runLater(() -> {
             TreeItem<TreeNode> ti = treeItemForGroup;
             while (ti != null) {
@@ -315,5 +308,9 @@ public class NavPanel extends TabPane {
                 hashTreeRoot.setExpanded(true);
             });
         }
+    }
+
+    public void showTree() {
+        getSelectionModel().select(navTab);
     }
 }

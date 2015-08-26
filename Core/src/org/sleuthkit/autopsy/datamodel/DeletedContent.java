@@ -337,6 +337,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private final Observer observer = new DeletedContentChildrenObserver();
 
             // Cause refresh of children if there are changes
+
             private class DeletedContentChildrenObserver implements Observer {
 
                 @Override

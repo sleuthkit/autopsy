@@ -34,6 +34,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import org.openide.util.Exceptions;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -122,6 +123,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         hashDbIndexStatusLabel.setForeground(Color.black);
         indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
         indexButton.setEnabled(false);
+        addHashesToDatabaseButton.setEnabled(false);
 
         // Update ingest options.
         sendIngestMessagesCheckBox.setSelected(false);
@@ -157,6 +159,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         } catch (TskCoreException ex) {
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
             indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
+        }
+
+        try {
+            addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
+            addHashesToDatabaseButton.setEnabled(false);
         }
 
         // Update indexing components.
@@ -490,6 +499,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         createDatabaseButton = new javax.swing.JButton();
         indexPathLabelLabel = new javax.swing.JLabel();
         indexPathLabel = new javax.swing.JLabel();
+        addHashesToDatabaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
 
@@ -599,6 +609,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         org.openide.awt.Mnemonics.setLocalizedText(indexPathLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.indexPathLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(addHashesToDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.addHashesToDatabaseButton.text")); // NOI18N
+        addHashesToDatabaseButton.setEnabled(false);
+        addHashesToDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addHashesToDatabaseButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -637,7 +655,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                                     .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                     .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                     .addComponent(indexPathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                                        .addComponent(addHashesToDatabaseButton)
+                                                        .addGap(0, 0, Short.MAX_VALUE))))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
@@ -692,7 +713,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                             .addComponent(indexLabel)
                             .addComponent(hashDbIndexStatusLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(indexButton)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(indexButton)
+                            .addComponent(addHashesToDatabaseButton))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(optionsLabel)
@@ -807,7 +830,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
+
+    private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
+
+        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        new AddHashValuesToDatabaseDialog(hashDb);
+    }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addHashesToDatabaseButton;
     private javax.swing.JButton createDatabaseButton;
     private javax.swing.JButton deleteDatabaseButton;
     private javax.swing.JLabel hashDatabasesLabel;

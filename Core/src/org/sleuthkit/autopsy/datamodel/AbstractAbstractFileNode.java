@@ -20,21 +20,16 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import org.openide.nodes.Children;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.nodes.Children;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -44,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
-    private static Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
     /**
      * @param <T>          type of the AbstractFile data to encapsulate
@@ -213,7 +208,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         MD5HASH {
                     @Override
                     public String toString() {
-
                         return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
                     }
                 },
@@ -239,7 +233,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
         }
 
         map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
@@ -268,43 +262,22 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         String name = file.getName();
         switch (name) {
             case "..":
-                name = DirectoryNode.DOTDOTDIR;
-                break;
+                return DirectoryNode.DOTDOTDIR;
+
             case ".":
-                name = DirectoryNode.DOTDIR;
-                break;
+                return DirectoryNode.DOTDIR;
+            default:
+                return name;
         }
-        return name;
     }
 
+    @SuppressWarnings("deprecation")
     private static String getHashSetHitsForFile(AbstractFile content) {
-        String strList = "";
-        SleuthkitCase skCase = content.getSleuthkitCase();
-        long objId = content.getId();
-
-        int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-        int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
-
-        String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                + "attribute_type_id=" + setNameId //NON-NLS
-                + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                + " AND blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
-                + " AND blackboard_artifacts.obj_id=" + objId; //NON-NLS
-
-        try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
-            ResultSet resultSet = dbQuery.getResultSet();
-            int i = 0;
-            while (resultSet.next()) {
-                if (i++ > 0) {
-                    strList += ", ";
-                }
-                strList += resultSet.getString("value_text"); //NON-NLS
-            }
-        } catch (TskCoreException | SQLException ex) {
-            logger.log(Level.WARNING, "Error getting hashset hits: ", ex); //NON-NLS
+        try {
+            return StringUtils.join(content.getHashSetNames(), ", ");
+        } catch (TskCoreException tskCoreException) {
+            LOGGER.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
+            return "";
         }
-        return strList;
     }
-
 }

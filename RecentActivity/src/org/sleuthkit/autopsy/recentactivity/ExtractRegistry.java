@@ -649,6 +649,12 @@ class ExtractRegistry extends Extract {
                                     }
                                     break;
 
+                                case "shellfolders": // NON-NLS
+                                    // The User Shell Folders subkey stores the paths to Windows Explorer folders for the current user of the computer
+                                    // (https://technet.microsoft.com/en-us/library/Cc962613.aspx).
+                                    // No useful information. Skip.
+                                    break;
+
                                 default:
                                     logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType); //NON-NLS
                                     break;

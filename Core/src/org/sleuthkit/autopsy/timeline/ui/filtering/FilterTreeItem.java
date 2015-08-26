@@ -1,6 +1,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.beans.Observable;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
@@ -38,12 +39,20 @@ public class FilterTreeItem extends TreeItem<Filter> {
             expansionMap.put(f.getDisplayName(), isExpanded());
         });
 
-        if (f instanceof CompoundFilter) {
-            CompoundFilter cf = (CompoundFilter) f;
+        if (f instanceof CompoundFilter<?>) {
+            CompoundFilter<?> cf = (CompoundFilter<?>) f;
 
             for (Filter af : cf.getSubFilters()) {
                 getChildren().add(new FilterTreeItem(af, expansionMap));
             }
+
+            cf.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
+                while (c.next()) {
+                    for (Filter af : c.getAddedSubList()) {
+                        getChildren().add(new FilterTreeItem(af, expansionMap));
+                    }
+                }
+            });
         }
     }
 }

@@ -85,7 +85,7 @@ public interface DrawableView {
 
     default boolean hasHashHit() {
         try {
-            return getFile().map(DrawableFile::getHashHitSetNames)
+            return getFile().map(DrawableFile::getHashSetNamesUnchecked)
                     .map((Collection<String> t) -> t.isEmpty() == false)
                     .orElse(false);
 

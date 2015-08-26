@@ -83,7 +83,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
         numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
-
         if (UserPreferences.getIsTimeOutEnabled()) {
             // user specified time out
             jCheckBoxEnableProcTimeout.setSelected(true);

@@ -66,11 +66,15 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -130,6 +134,15 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
+    private final Case autoCase;
+
+    /**
+     * @return the autopsy Case assigned to the controller
+     */
+    public Case getAutopsyCase() {
+        return autoCase;
+    }
+
     synchronized public ReadOnlyListProperty<Task<?>> getTasks() {
         return tasks.getReadOnlyProperty();
     }
@@ -153,10 +166,8 @@ public class TimeLineController {
     @GuardedBy("this")
     private boolean listeningToAutopsy = false;
 
-    private final PropertyChangeListener caseListener;
-
+    private final PropertyChangeListener caseListener = new AutopsyCaseListener();
     private final PropertyChangeListener ingestJobListener = new AutopsyIngestJobListener();
-
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
@@ -219,19 +230,17 @@ public class TimeLineController {
     }
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
-    public TimeLineController() {
-        //initalize repository and filteredEvents on creation
-        eventsRepository = new EventsRepository(historyManager.currentState());
+    public TimeLineController(Case autoCase) {
+        this.autoCase = autoCase;        //initalize repository and filteredEvents on creation
+        eventsRepository = new EventsRepository(autoCase, historyManager.currentState());
 
         filteredEvents = eventsRepository.getEventsModel();
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
-                Filter.getDefaultFilter(),
+                filteredEvents.filter().get(),
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
 
-        //persistent listener instances
-        caseListener = new AutopsyCaseListener();
     }
 
     /**
@@ -242,7 +251,7 @@ public class TimeLineController {
     }
 
     public void applyDefaultFilters() {
-        pushFilters(Filter.getDefaultFilter());
+        pushFilters(filteredEvents.getDefaultFilter());
     }
 
     public void zoomOutToActivity() {
@@ -250,10 +259,17 @@ public class TimeLineController {
         advance(filteredEvents.getRequestedZoomParamters().get().withTimeRange(boundingEventsInterval));
     }
 
+    /**
+     * rebuld the repo.
+     *
+     * @return False if the repo was not rebuilt because of an error or because
+     *         the user aborted after prompt about ingest running. True if the
+     *         repo was rebuilt.
+     */
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
             //confirm timeline during ingest
-            if (showIngestConfirmation() != JOptionPane.YES_OPTION) {
+            if (confirmRebuildDuringIngest() == false) {
                 return false;
             }
         }
@@ -278,13 +294,16 @@ public class TimeLineController {
                         eventsRepository.recordWasIngestRunning(injestRunning);
                     }
                     synchronized (TimeLineController.this) {
+                        //TODO: this looks hacky.  what is going on? should this be an event?
                         needsHistogramRebuild.set(true);
                         needsHistogramRebuild.set(false);
                         showWindow();
                     }
 
                     Platform.runLater(() -> {
+                        //TODO: should this be an event?
                         newEventsFlag.set(false);
+                        historyManager.reset(filteredEvents.getRequestedZoomParamters().get());
                         TimeLineController.this.showFullRange();
                     });
                 });
@@ -330,24 +349,42 @@ public class TimeLineController {
         try {
             long timeLineLastObjectId = eventsRepository.getLastObjID();
 
-            boolean rebuildingRepo = false;
+            boolean repoRebuilt = false;
             if (timeLineLastObjectId == -1) {
-                rebuildingRepo = rebuildRepo();
+                repoRebuilt = rebuildRepo();
             }
-            if (rebuildingRepo == false
-                    && eventsRepository.getWasIngestRunning()) {
-                if (showLastPopulatedWhileIngestingConfirmation() == JOptionPane.YES_OPTION) {
-                    rebuildingRepo = rebuildRepo();
+            if (repoRebuilt == false) {
+                if (eventsRepository.getWasIngestRunning()) {
+                    if (confirmLastBuiltDuringIngestRebuild()) {
+                        repoRebuilt = rebuildRepo();
+                    }
                 }
             }
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            if ((rebuildingRepo == false)
-                    && (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
-                    || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID())) {
-                rebuildingRepo = outOfDatePromptAndRebuild();
+
+            if (repoRebuilt == false) {
+                final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
+                if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
+                        || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
+                    if (confirmOutOfDateRebuild()) {
+                        repoRebuilt = rebuildRepo();
+                    }
+                }
             }
 
-            if (rebuildingRepo == false) {
+            if (repoRebuilt == false) {
+                boolean hasDSInfo = eventsRepository.hasDataSourceInfo();
+                if (hasDSInfo == false) {
+                    if (confirmDataSourceIDsMissingRebuild()) {
+                        repoRebuilt = rebuildRepo();
+                    }
+                }
+            }
+
+            /*
+             * if the repo was not rebuilt show the UI. If the repo was rebuild
+             * it will be displayed as part of that process
+             */
+            if (repoRebuilt == false) {
                 showWindow();
                 showFullRange();
             }
@@ -359,7 +396,6 @@ public class TimeLineController {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
@@ -519,7 +555,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushFilters(Filter filter) {
+    synchronized public void pushFilters(RootFilter filter) {
         ZoomParams currentZoom = filteredEvents.getRequestedZoomParamters().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));
@@ -638,15 +674,6 @@ public class TimeLineController {
     }
 
     /**
-     * prompt the user to rebuild and then rebuild if the user chooses to
-     */
-    synchronized private boolean outOfDatePromptAndRebuild() {
-        return showOutOfDateConfirmation() == JOptionPane.YES_OPTION
-                ? rebuildRepo()
-                : false;
-    }
-
-    /**
      * is the timeline window open.
      *
      * @return true if the timeline window is open
@@ -655,32 +682,63 @@ public class TimeLineController {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
-    synchronized int showLastPopulatedWhileIngestingConfirmation() {
+    /**
+     * prompt the user to rebuild the db because that datasource_ids are missing
+     * from the database and that the datasource filter will not work
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmDataSourceIDsMissingRebuild() {
+        return JOptionPane.showConfirmDialog(mainFrame,
+                NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
+                "Update Timeline database?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+    }
+
+    /**
+     * prompt the user to rebuild the db because the db was last build during
+     * ingest and may be incomplete
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmLastBuiltDuringIngestRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
                 DO_REPOPULATE_MESSAGE,
                 NbBundle.getMessage(TimeLineTopComponent.class,
                         "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-
+                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
 
-    synchronized int showOutOfDateConfirmation() throws MissingResourceException, HeadlessException {
+    /**
+     * prompt the user to rebuild the db because the db is out of date and
+     * doesn't include things from subsequent ingests
+     *
+     * @return true if they agree to rebuild
+     */
+    synchronized boolean confirmOutOfDateRebuild() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.propChg.confDlg.timelineOOD.msg"),
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.propChg.confDlg.timelineOOD.details"),
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
-    synchronized int showIngestConfirmation() throws MissingResourceException, HeadlessException {
+    /**
+     * prompt the user that ingest is running and the db may not end up
+     * complete.
+     *
+     * @return true if they want to continue anyways
+     */
+    synchronized boolean confirmRebuildDuringIngest() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
                 NbBundle.getMessage(TimeLineController.class,
                         "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {
@@ -718,25 +776,14 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCase();
-                        SwingUtilities.invokeLater(() -> {
-                            if (isWindowOpen()) {
-                                outOfDatePromptAndRebuild();
+                    //if we are doing incremental updates, drop this
+                    SwingUtilities.invokeLater(() -> {
+                        if (isWindowOpen()) {
+                            if (confirmOutOfDateRebuild()) {
+                                rebuildRepo();
                             }
-                        });
-                    } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                    break;
+                        }
+                    });
             }
         }
     }
@@ -747,33 +794,33 @@ public class TimeLineController {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((BlackBoardArtifactTagAddedEvent) evt);
+                    break;
+                case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((BlackBoardArtifactTagDeletedEvent) evt);
+                    break;
+                case CONTENT_TAG_ADDED:
+                    filteredEvents.handleTagAdded((ContentTagAddedEvent) evt);
+                    break;
+                case CONTENT_TAG_DELETED:
+                    filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
+                    break;
                 case DATA_SOURCE_ADDED:
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCase();
-                        SwingUtilities.invokeLater(() -> {
-                            //if we are doing incremental updates, drop this
-                            if (isWindowOpen()) {
-                                outOfDatePromptAndRebuild();
+//                    Content content = (Content) evt.getNewValue();
+                    //if we are doing incremental updates, drop this
+                    SwingUtilities.invokeLater(() -> {
+                        if (isWindowOpen()) {
+                            if (confirmOutOfDateRebuild()) {
+                                rebuildRepo();
                             }
-                        });
-                    } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
+                        }
+                    });
                     break;
 
                 case CURRENT_CASE:
-                    SwingUtilities.invokeLater(() -> {
-                        OpenTimelineAction.invalidateController();
-                        closeTimeLine();
-                    });
+                   OpenTimelineAction.invalidateController();
+                    SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }
         }

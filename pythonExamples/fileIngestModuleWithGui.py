@@ -130,7 +130,7 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
             self.log(Level.INFO, "flag is not set")
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
-        # raise IngestModuleException(IngestModule(), "Oh No!")
+        # raise IngestModuleException("Oh No!")
         pass
 
     # Where the analysis is done.  Each file will be passed into here.
