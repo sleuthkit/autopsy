@@ -208,7 +208,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
-
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
@@ -444,7 +443,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());

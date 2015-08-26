@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * The JPanel for the first page of the new case wizard.
  */
-final class NewCaseVisualPanel1 extends JPanel {
+final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final NewCaseWizardPanel1 wizPanel;
@@ -374,4 +374,60 @@ final class NewCaseVisualPanel1 extends JPanel {
     private javax.swing.JRadioButton singleUserCaseRadioButton;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Gives notification that there was an insert into the document. The range
+     * given by the DocumentEvent bounds the freshly inserted region.
+     *
+     * @param e the document event
+     */
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        this.wizPanel.fireChangeEvent();
+        updateUI(e);
+    }
+
+    /**
+     * Gives notification that a portion of the document has been removed. The
+     * range is given in terms of what the view last saw (that is, before
+     * updating sticky positions).
+     *
+     * @param e the document event
+     */
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        this.wizPanel.fireChangeEvent();
+        updateUI(e);
+    }
+
+    /**
+     * Gives notification that an attribute or set of attributes changed.
+     *
+     * @param e the document event
+     */
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        this.wizPanel.fireChangeEvent();
+        updateUI(e);
+    }
+
+    /**
+     * The "listener" that listens when the fields in this form are updated.
+     * This method is used to determine when to enable / disable the "Finish"
+     * button.
+     *
+     * @param e the document event
+     */
+    public void updateUI(DocumentEvent e) {
+
+        String caseName = getCaseName();
+        String parentDir = getCaseParentDir();
+
+        if (!caseName.equals("") && !parentDir.equals("")) {
+            caseDirTextField.setText(parentDir + caseName);
+            wizPanel.setIsFinish(true);
+        } else {
+            caseDirTextField.setText("");
+            wizPanel.setIsFinish(false);
+        }
+    }
 }

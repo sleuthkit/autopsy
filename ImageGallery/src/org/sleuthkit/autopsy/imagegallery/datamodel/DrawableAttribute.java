@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,9 @@ import org.sleuthkit.datamodel.TagName;
  */
 public class DrawableAttribute<T extends Comparable<T>> {
 
+    public final static DrawableAttribute<String> MD5_HASH
+            = new DrawableAttribute<>(AttributeName.MD5_HASH, "MD5 Hash", false, "icon-hashtag.png", f -> Collections.singleton(f.getMd5Hash()));
+
     public final static DrawableAttribute<String> NAME
             = new DrawableAttribute<>(AttributeName.NAME, "Name", true, "folder-rename.png", f -> Collections.singleton(f.getName()));
 
@@ -50,8 +53,8 @@ public class DrawableAttribute<T extends Comparable<T>> {
      * in the DrawableDB. they have special code in various places to make this
      * transparent.
      *
-     * //TODO: this had lead to awkward hard to maintain code, and little
-     * advantage. move categories into DrawableDB
+     * //TODO: this has lead to awkward hard to maintain code, and little
+     * advantage. move categories into DrawableDB?
      */
     public final static DrawableAttribute<Category> CATEGORY
             = new DrawableAttribute<>(AttributeName.CATEGORY, "Category", false, "category-icon.png", f -> Collections.singleton(f.getCategory()));
@@ -75,7 +78,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
             = new DrawableAttribute<>(AttributeName.MODEL, "Camera Model", true, "camera.png", f -> Collections.singleton(f.getModel()));
 
     public final static DrawableAttribute<String> HASHSET
-            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashHitSetNames);
+            = new DrawableAttribute<>(AttributeName.HASHSET, "Hashset", true, "hashset_hits.png", DrawableFile::getHashSetNamesUnchecked);
 
     public final static DrawableAttribute<Long> OBJ_ID
             = new DrawableAttribute<>(AttributeName.OBJ_ID, "Internal Object ID", true, "", f -> Collections.singleton(f.getId()));
@@ -91,7 +94,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
     final private static List<DrawableAttribute<?>> values
             = Arrays.asList(NAME, ANALYZED, CATEGORY, TAGS, PATH, CREATED_TIME,
-                    MODIFIED_TIME, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT);
+                    MODIFIED_TIME, MD5_HASH, HASHSET, MAKE, MODEL, OBJ_ID, WIDTH, HEIGHT);
 
     private final Function<DrawableFile<?>, Collection<T>> extractor;
 
@@ -123,7 +126,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
     }
 
     public static List<DrawableAttribute<?>> getGroupableAttrs() {
-        return groupables;
+        return Collections.unmodifiableList(groupables);
     }
 
     public static List<DrawableAttribute<?>> getValues() {
@@ -152,7 +155,8 @@ public class DrawableAttribute<T extends Comparable<T>> {
         HASHSET,
         OBJ_ID,
         WIDTH,
-        HEIGHT;
+        HEIGHT,
+        MD5_HASH;
     }
 
     public Collection<T> getValue(DrawableFile<?> f) {

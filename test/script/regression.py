@@ -870,7 +870,9 @@ class TestResultsDiffer(object):
             diff_path = os.path.splitext(os.path.basename(output_file))[0]
             diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", output_file, gold_file]
+
+            # Gold needs to be passed in before output.
+            dffcmdlst = ["diff", gold_file, output_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_errors_out(diff_path)
 
@@ -902,7 +904,8 @@ class TestResultsDiffer(object):
         gold_report_path = test_data.get_html_report_path(DBType.GOLD)
         output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
         try:
-            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+            # Ensure gold is passed before output 
+            (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
                                       '\|Examiner:', gold_report_path, output_report_path]))
             print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")

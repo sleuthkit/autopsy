@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,35 +18,32 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG;
-import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
@@ -60,38 +57,30 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile {
 
+    private static final Logger LOGGER = Logger.getLogger(DrawableFile.class.getName());
+
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed) {
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return create(abstractFileById, analyzed, FileTypeUtils.isVideoFile(abstractFileById));
     }
 
     /**
      * Skip the database query if we have already determined the file type.
      */
     public static DrawableFile<?> create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
-        if (isVideo) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return isVideo
+                ? new VideoFile<>(abstractFileById, analyzed)
+                : new ImageFile<>(abstractFileById, analyzed);
     }
 
     public static DrawableFile<?> create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
-
-        AbstractFile abstractFileById = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
-        if (ImageGalleryModule.isVideoFile(abstractFileById)) {
-            return new VideoFile<>(abstractFileById, analyzed);
-        } else {
-            return new ImageFile<>(abstractFileById, analyzed);
-        }
+        return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
+
+    SoftReference<Image> imageRef;
 
     private String drawablePath;
 
-    protected T file;
+    private final T file;
 
     private final SimpleBooleanProperty analyzed;
 
@@ -114,10 +103,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     public abstract boolean isVideo();
 
-    public Collection<String> getHashHitSetNames() {
-        return ImageGalleryController.getDefault().getHashSetManager().getHashSetsForFile(getId());
-    }
-
     @Override
     public boolean isRoot() {
         return false;
@@ -125,7 +110,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     @Override
     public <T> T accept(SleuthkitItemVisitor<T> v) {
-
         return file.accept(v);
     }
 
@@ -144,12 +128,14 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return new ArrayList<>();
     }
 
-    public ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> getAttributesList() {
-        final ObservableList<Pair<DrawableAttribute<?>, ? extends Object>> attributeList = FXCollections.observableArrayList();
-        for (DrawableAttribute<?> attr : DrawableAttribute.getValues()) {
-            attributeList.add(new Pair<>(attr, attr.getValue(this)));
-        }
-        return attributeList;
+    public List<Pair<DrawableAttribute<?>, Collection<?>>> getAttributesList() {
+        return DrawableAttribute.getValues().stream()
+                .map(this::makeAttributeValuePair)
+                .collect(Collectors.toList());
+    }
+
+    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> t) {
+        return new Pair<>(t, t.getValue(DrawableFile.this));
     }
 
     public String getModel() {
@@ -178,47 +164,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
             Logger.getAnonymousLogger().log(Level.WARNING, "there is no case open; failed to look up " + DrawableAttribute.TAGS.getDisplayName() + " for " + file.getName());
         }
         return Collections.emptySet();
-    }
-
-    @Deprecated
-    protected final List<? extends Object> getValuesOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
-        ArrayList<Object> vals = new ArrayList<>();
-        try {
-            //why doesn't file.getArtifacts() work?
-            //TODO: this seams like overkill, use a more targeted query
-            ArrayList<BlackboardArtifact> artifacts = getAllArtifacts();
-
-            for (BlackboardArtifact artf : artifacts) {
-                if (artf.getArtifactTypeID() == artType.getTypeID()) {
-                    for (BlackboardAttribute attr : artf.getAttributes()) {
-                        if (attr.getAttributeTypeID() == attrType.getTypeID()) {
-
-                            switch (attr.getValueType()) {
-                                case BYTE:
-                                    vals.add(attr.getValueBytes());
-                                    break;
-                                case DOUBLE:
-                                    vals.add(attr.getValueDouble());
-                                    break;
-                                case INTEGER:
-                                    vals.add(attr.getValueInt());
-                                    break;
-                                case LONG:
-                                    vals.add(attr.getValueLong());
-                                    break;
-                                case STRING:
-                                    vals.add(attr.getValueString());
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (TskCoreException ex) {
-            Logger.getAnonymousLogger().log(Level.WARNING, "problem looking up {0}/{1}" + " " + " for {2}", new Object[]{artType.getDisplayName(), attrType.getDisplayName(), getName()});
-        }
-
-        return vals;
     }
 
     protected Object getValueOfBBAttribute(BlackboardArtifact.ARTIFACT_TYPE artType, BlackboardAttribute.ATTRIBUTE_TYPE attrType) {
@@ -279,13 +224,17 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .orElse(Category.ZERO)
             );
         } catch (TskCoreException ex) {
-            Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
+            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
     }
 
-    public abstract Image getThumbnail();
+    public Image getThumbnail() {
+        return ThumbnailCache.getDefault().get(this);
+    }
+
+    public abstract Image getFullSizeImage();
 
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);
@@ -311,9 +260,24 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
                 return drawablePath;
             } catch (TskCoreException ex) {
-                Logger.getLogger(DrawableFile.class.getName()).log(Level.WARNING, "failed to get drawablePath from {0}", getName());
+                LOGGER.log(Level.WARNING, "failed to get drawablePath from {0}", getName());
                 return "";
             }
+        }
+    }
+
+    public boolean isDisplayableAsImage() {
+        Image thumbnail = getThumbnail();
+        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
+    }
+
+    @Nonnull
+    public Set<String> getHashSetNamesUnchecked() {
+        try {
+            return getHashSetNames();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get hash set names", ex);
+            return Collections.emptySet();
         }
     }
 }

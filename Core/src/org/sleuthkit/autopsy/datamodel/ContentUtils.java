@@ -23,14 +23,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -181,8 +182,8 @@ public final class ContentUtils {
      *
      * @throws IOException if file could not be written
      */
-    public static <T, V> long writeToFile(Content content, java.io.File outputFile,
-            ProgressHandle progress, SwingWorker<T, V> worker, boolean source) throws IOException {
+    public static <T> long writeToFile(Content content, java.io.File outputFile,
+            ProgressHandle progress, Future<T> worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
 

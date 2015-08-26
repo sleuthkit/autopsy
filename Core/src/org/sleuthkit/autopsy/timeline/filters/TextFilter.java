@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,8 +43,9 @@ public class TextFilter extends AbstractFilter {
     }
 
     @Override
+    @NbBundle.Messages("TextFilter.displayName.text=Text Filter")
     public String getDisplayName() {
-        return NbBundle.getMessage(this.getClass(), "TextFilter.displayName.text");
+        return Bundle.TextFilter_displayName_text();
     }
 
     synchronized public String getText() {
@@ -58,7 +59,7 @@ public class TextFilter extends AbstractFilter {
     @Override
     synchronized public TextFilter copyOf() {
         TextFilter textFilter = new TextFilter(getText());
-        textFilter.setActive(isActive());
+        textFilter.setSelected(isSelected());
         textFilter.setDisabled(isDisabled());
         return textFilter;
     }
@@ -78,7 +79,7 @@ public class TextFilter extends AbstractFilter {
         }
         final TextFilter other = (TextFilter) obj;
 
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
         return Objects.equals(text.get(), other.text.get());

@@ -190,8 +190,6 @@ class Util {
         int index = parent_path.lastIndexOf('/');
         String name = parent_path.substring(++index);
         parent_path = parent_path.substring(0, index);
-        //String query = "SELECT * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
-
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<AbstractFile> files = null;
         try {

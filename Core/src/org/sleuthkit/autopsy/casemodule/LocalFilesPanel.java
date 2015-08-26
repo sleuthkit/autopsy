@@ -137,8 +137,6 @@ class LocalFilesPanel extends JPanel {
         selectedPaths.setText("");
         enableNext = false;
         errorLabel.setVisible(false);
-
-        //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override

@@ -167,7 +167,8 @@ public class FileTypeDetector {
         // as octet-stream.
         if (!file.isFile() || file.getSize() <= 0
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
             return MimeTypes.OCTET_STREAM;
         }
 

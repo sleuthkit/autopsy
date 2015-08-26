@@ -263,7 +263,7 @@ public interface TimeLineChart<X> extends TimeLineView {
             final X end = getSpanEnd();
             Tooltip.uninstall(this, tooltip);
             tooltip = new Tooltip(
-                    NbBundle.getMessage(this.getClass(), "Timeline.ui.TimeLineChart.tooltip.text", formatSpan(start),
+                    NbBundle.getMessage(TimeLineChart.class, "Timeline.ui.TimeLineChart.tooltip.text", formatSpan(start),
                             formatSpan(end)));
             Tooltip.install(this, tooltip);
         }

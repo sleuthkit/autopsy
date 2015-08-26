@@ -136,7 +136,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     }
                 }
             }.execute();
-
         } else {
             new Thread(() -> {
                 doFailedCaseCleanup(wizardDescriptor);

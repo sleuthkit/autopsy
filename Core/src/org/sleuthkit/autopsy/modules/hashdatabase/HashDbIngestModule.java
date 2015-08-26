@@ -334,7 +334,8 @@ public class HashDbIngestModule implements FileIngestModule {
         }
     }
 
-    private synchronized void postSummary() {
+    private static synchronized void postSummary(long jobId,
+            List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
         if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
@@ -343,20 +344,20 @@ public class HashDbIngestModule implements FileIngestModule {
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
 
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.knownBadsFound"))
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.knownBadsFound"))
                     .append("</td>"); //NON-NLS
             detailsSb.append("<td>").append(jobTotals.totalKnownBadCount.get()).append("</td></tr>"); //NON-NLS
 
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalCalcTime"))
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime"))
                     .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.totalLookupTime"))
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalLookupTime"))
                     .append("</td><td>").append(jobTotals.totalLookuptime.get()).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("</table>"); //NON-NLS
 
             detailsSb.append("<p>") //NON-NLS
-                    .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.complete.databasesUsed"))
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
                     .append("</p>\n<ul>"); //NON-NLS
             for (HashDb db : knownBadHashSets) {
                 detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS
@@ -364,10 +365,10 @@ public class HashDbIngestModule implements FileIngestModule {
 
             detailsSb.append("</ul>"); //NON-NLS
 
-            services.postMessage(IngestMessage.createMessage(
+            IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                     IngestMessage.MessageType.INFO,
                     HashLookupModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(),
+                    NbBundle.getMessage(HashDbIngestModule.class,
                             "HashDbIngestModule.complete.hashLookupResults"),
                     detailsSb.toString()));
         }
@@ -376,7 +377,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
-            postSummary();
+            postSummary(jobId, knownBadHashSets, knownHashSets);
         }
     }
 }

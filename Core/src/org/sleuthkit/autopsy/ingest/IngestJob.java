@@ -102,7 +102,6 @@ public final class IngestJob {
      */
     synchronized List<IngestModuleError> start() {
         List<IngestModuleError> errors = new ArrayList<>();
-
         if (started) {
             errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started")));
             return errors;

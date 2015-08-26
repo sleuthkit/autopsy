@@ -98,10 +98,7 @@ class ReportKML implements GeneralReportModule {
         // Why not just print the coordinates as we find them and make some utility methods to do the printing?
         // Should pull out time values for all of these points and store in TimeSpan element
         try {
-
-            BufferedWriter out = null;
-            try {
-                out = new BufferedWriter(new FileWriter(reportPath2));
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(reportPath2))) {
 
                 double lat = 0; // temp latitude
                 double lon = 0; //temp longitude
@@ -212,7 +209,6 @@ class ReportKML implements GeneralReportModule {
                 }
 
                 out.flush();
-                out.close();
 
                 progressPanel.increment();
                 /*
@@ -264,70 +260,67 @@ class ReportKML implements GeneralReportModule {
                  */
 
                 File file = new File(reportPath2);
-                BufferedReader reader;
+                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    String line = reader.readLine();
+                    while (line != null) {
+                        String[] lineParts = line.split(";");
+                        if (lineParts.length > 1) {
+                            String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
+                            // Placemark
+                            Element placemark = new Element("Placemark", ns); //NON-NLS
+                            document.addContent(placemark);
 
-                reader = new BufferedReader(new FileReader(file));
+                            if (lineParts.length == 4) {
+                                // name
+                                Element pmName = new Element("name", ns); //NON-NLS
+                                pmName.setText(lineParts[3].trim());
+                                placemark.addContent(pmName);
 
-                String line = reader.readLine();
-                while (line != null) {
-                    String[] lineParts = line.split(";");
-                    if (lineParts.length > 1) {
-                        String coordinates = lineParts[1].trim() + "," + lineParts[0].trim(); //lat,lon
-                        // Placemark
-                        Element placemark = new Element("Placemark", ns); //NON-NLS
-                        document.addContent(placemark);
+                                String savedPath = lineParts[2].trim();
+                                if (savedPath.isEmpty() == false) {
+                                    // Path
+                                    Element pmPath = new Element("Path", ns); //NON-NLS
+                                    pmPath.setText(savedPath);
+                                    placemark.addContent(pmPath);
 
-                        if (lineParts.length == 4) {
-                            // name
-                            Element pmName = new Element("name", ns); //NON-NLS
-                            pmName.setText(lineParts[3].trim());
-                            placemark.addContent(pmName);
-
-                            String savedPath = lineParts[2].trim();
-                            if (savedPath.isEmpty() == false) {
-                                // Path
-                                Element pmPath = new Element("Path", ns); //NON-NLS
-                                pmPath.setText(savedPath);
-                                placemark.addContent(pmPath);
-
-                                // description
-                                Element pmDescription = new Element("description", ns); //NON-NLS
-                                String xml = "<![CDATA[  \n" + " <img src='file:///" + savedPath + "' width='400' /><br/&gt;  \n"; //NON-NLS
-                                StringEscapeUtils.unescapeXml(xml);
-                                pmDescription.setText(xml);
-                                placemark.addContent(pmDescription);
+                                    // description
+                                    Element pmDescription = new Element("description", ns); //NON-NLS
+                                    String xml = "<![CDATA[  \n" + " <img src='file:///" + savedPath + "' width='400' /><br/&gt;  \n"; //NON-NLS
+                                    StringEscapeUtils.unescapeXml(xml);
+                                    pmDescription.setText(xml);
+                                    placemark.addContent(pmDescription);
+                                }
                             }
+
+                            // styleUrl
+                            Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
+                            pmStyleUrl.setText("#redIcon"); //NON-NLS
+                            placemark.addContent(pmStyleUrl);
+
+                            // Point
+                            Element pmPoint = new Element("Point", ns); //NON-NLS
+                            placemark.addContent(pmPoint);
+
+                            // coordinates
+                            Element pmCoordinates = new Element("coordinates", ns); //NON-NLS
+
+                            pmCoordinates.setText(coordinates);
+                            pmPoint.addContent(pmCoordinates);
+
                         }
 
-                        // styleUrl
-                        Element pmStyleUrl = new Element("styleUrl", ns); //NON-NLS
-                        pmStyleUrl.setText("#redIcon"); //NON-NLS
-                        placemark.addContent(pmStyleUrl);
-
-                        // Point
-                        Element pmPoint = new Element("Point", ns); //NON-NLS
-                        placemark.addContent(pmPoint);
-
-                        // coordinates
-                        Element pmCoordinates = new Element("coordinates", ns); //NON-NLS
-
-                        pmCoordinates.setText(coordinates);
-                        pmPoint.addContent(pmCoordinates);
-
+                        // read the next line
+                        line = reader.readLine();
                     }
 
-                    // read the next line
-                    line = reader.readLine();
                 }
                 progressPanel.increment();
                 /*
                  * Step 4: write the XML file
                  */
-                try {
+                try (FileOutputStream writer = new FileOutputStream(reportPath)) {
                     XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
-                    FileOutputStream writer = new FileOutputStream(reportPath);
                     outputter.output(kmlDocument, writer);
-                    writer.close();
                     Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
                             "ReportKML.genReport.srcModuleName.text"), "");
                 } catch (IOException ex) {

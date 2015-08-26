@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Collections2;
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,6 +73,8 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -341,15 +344,22 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-        filteredEvents.getRequestedZoomParamters().addListener(o -> {
-            clearGuideLine();
-            clearIntervalSelector();
+        if (this.filteredEvents != null) {
+            this.filteredEvents.unRegisterForEvents(this);
+        }
+        if (this.filteredEvents != filteredEvents) {
+            filteredEvents.registerForEvents(this);
+            filteredEvents.getRequestedZoomParamters().addListener(o -> {
+                clearGuideLine();
+                clearIntervalSelector();
 
-            selectedNodes.clear();
-            projectionMap.clear();
-            controller.selectEventIDs(Collections.emptyList());
-        });
+                selectedNodes.clear();
+                projectionMap.clear();
+                controller.selectEventIDs(Collections.emptyList());
+            });
+        }
+        this.filteredEvents = filteredEvents;
+
     }
 
     @Override
@@ -517,6 +527,10 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         return nodes;
     }
 
+    private Iterable<AggregateEventNode> getAllNodes() {
+        return getNodes(x -> true);
+    }
+
     synchronized SimpleDoubleProperty getTruncateWidth() {
         return truncateWidth;
     }
@@ -526,9 +540,8 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         nodeGroup.setTranslateY(-d * h);
     }
 
-    private void checkNode(AggregateEventNode node, Predicate<AggregateEventNode> p, List<AggregateEventNode> nodes) {
+    private static void checkNode(AggregateEventNode node, Predicate<AggregateEventNode> p, List<AggregateEventNode> nodes) {
         if (node != null) {
-            AggregateEvent event = node.getEvent();
             if (p.test(node)) {
                 nodes.add(node);
             }
@@ -716,8 +729,25 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         requiresLayout = true;
     }
 
+    /**
+     * make this accessible to AggregateEventNode
+     */
     @Override
     protected void requestChartLayout() {
-        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
+        super.requestChartLayout();
+    }
+
+    @Subscribe
+    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+        for (AggregateEventNode t : getAllNodes()) {
+            t.handleEventsUnTagged(tagEvent);
+        }
+    }
+
+    @Subscribe
+    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+        for (AggregateEventNode t : getAllNodes()) {
+            t.handleEventsTagged(tagEvent);
+        }
     }
 }

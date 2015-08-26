@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.*;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -45,7 +44,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     // for error handling
     private static JPanel caller = new JPanel();
-    private String className = this.getClass().toString();
 
     public CueBannerPanel() {
         initComponents();
