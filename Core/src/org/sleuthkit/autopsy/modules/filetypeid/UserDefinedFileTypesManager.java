@@ -36,7 +36,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.TransformerException;
-import org.apache.commons.lang.ArrayUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
