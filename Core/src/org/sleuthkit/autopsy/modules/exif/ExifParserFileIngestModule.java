@@ -120,7 +120,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
             if (facesDetected) {
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
-                listOfFacesDetectedArtifacts.removeAll(listOfFacesDetectedArtifacts);
+                listOfFacesDetectedArtifacts.clear();
                 facesDetected = false;
             }
         }
