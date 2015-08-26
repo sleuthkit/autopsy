@@ -297,24 +297,7 @@ public class AggregateEventNode extends StackPane {
             Map<String, Long> tagCounts = new HashMap<>();
             if (!aggEvent.getEventIDsWithTags().isEmpty()) {
                 tagCounts.putAll( eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
-//
-//                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithTags())) {
-//
-//                        AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
-//                        List<ContentTag> contentTags = sleuthkitCase.getContentTagsByContent(abstractFileById);
-//                        for (ContentTag tag : contentTags) {
-//                            tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-//                        }
-//
-//                        Long artifactID = tle.getArtifactID();
-//                        if (Objects.nonNull(artifactID)) {
-//                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
-//                            List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
-//                            for (BlackboardArtifactTag tag : artifactTags) {
-//                                tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-//                            }
-//                        }
-//                    }
+
             }
 
             String hashSetCountsString = hashSetCounts.entrySet().stream()
