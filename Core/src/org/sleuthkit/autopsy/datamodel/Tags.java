@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -120,11 +120,38 @@ public class Tags implements AutopsyVisitableItem {
                         || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
                         || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
                         || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                    refresh(true);
-                    tagResults.update();
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    refresh(true);
-                    tagResults.update();
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        refresh(true);
+                        tagResults.update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        refresh(true);
+                        tagResults.update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that this can be garbage collected
                     if (evt.getNewValue() == null) {
@@ -435,7 +462,7 @@ public class Tags implements AutopsyVisitableItem {
         BlackboardArtifactTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
-              tagResults.addObserver(this);
+            tagResults.addObserver(this);
         }
 
         @Override
@@ -454,7 +481,8 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-            @Override
+        
+        @Override
         public void update(Observable o, Object arg) {
             refresh(true);
         }

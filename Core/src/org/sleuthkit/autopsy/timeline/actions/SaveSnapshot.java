@@ -69,7 +69,7 @@ public class SaveSnapshot extends Action {
                 //choose location/name
                 DirectoryChooser fileChooser = new DirectoryChooser();
                 fileChooser.setTitle(NbBundle.getMessage(this.getClass(), "SaveSnapshot.fileChoose.title.text"));
-                fileChooser.setInitialDirectory(new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Reports")); // NON-NLS
+                fileChooser.setInitialDirectory(new File(Case.getCurrentCase().getReportDirectory()));
                 File outFolder = fileChooser.showDialog(null);
                 if (outFolder == null) {
                     return;

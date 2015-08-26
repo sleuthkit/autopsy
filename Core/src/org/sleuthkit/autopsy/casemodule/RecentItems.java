@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +22,10 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * This class is used to add the action to the recent case menu item. When the
@@ -34,8 +33,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class RecentItems implements ActionListener {
 
-    String caseName;
-    String casePath;
+    final String caseName;
+    final String casePath;
     private JPanel caller; // for error handling
 
     /**
@@ -65,22 +64,25 @@ class RecentItems implements ActionListener {
 
             //if case is not opened, open the start window
             if (Case.isCaseOpen() == false) {
-                EventQueue.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        StartupWindowProvider.getInstance().open();
-                    }
-
+                EventQueue.invokeLater(() -> {
+                    StartupWindowProvider.getInstance().open();
                 });
 
             }
         } else {
-            try {
-                Case.open(casePath); // open the case
-            } catch (CaseActionException ex) {
-                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex); //NON-NLS
-            }
+            new Thread(() -> {
+                // Create case.
+                try {
+                    Case.open(casePath);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        if (!Case.isCaseOpen()) {
+                            StartupWindowProvider.getInstance().open();
+                        }
+                    });
+                }
+            }).start();
         }
     }
 }

@@ -50,6 +50,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
+import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.events.TagEvent;
@@ -168,7 +171,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    synchronized protected void setFileHelper(Long newFileID) {
+    protected synchronized void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
             Platform.runLater(() -> {
@@ -220,23 +223,18 @@ public class MetaDataPane extends DrawableUIBase {
     @Subscribe
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
-        handleTagEvent(evt, this::updateUI);
+        getFileID().ifPresent((fileID) -> {
+            if (Objects.equals(evt.getAddedTag().getContent().getId(), fileID)) {
+                updateUI();
+            }
+        });
     }
 
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
-        handleTagEvent(evt, this::updateUI);
-    }
-
-    /**
-     *
-     * @param tagFileID the value of tagEvent
-     * @param runnable  the value of runnable
-     */
-    void handleTagEvent(TagEvent<ContentTag> tagEvent, final Runnable runnable) {
-        getFileID().ifPresent(fileID -> {
-            if (Objects.equals(tagEvent.getTag().getContent().getId(), fileID)) {
-                runnable.run();
+        getFileID().ifPresent((fileID) -> {
+            if (Objects.equals(evt.getDeletedTagInfo().getContentID(), fileID)) {
+                updateUI();
             }
         });
     }

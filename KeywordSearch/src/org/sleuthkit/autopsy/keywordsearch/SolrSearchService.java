@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.util.HashMap;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -27,6 +29,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -53,8 +56,11 @@ public class SolrSearchService implements KeywordSearchService {
             return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        if (currentCase == null) {
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCase();
+        } catch (IllegalStateException ignore) {
+            // thorown by Case.getCurrentCase() if currentCase is null
             return;
         }
 
@@ -103,7 +109,8 @@ public class SolrSearchService implements KeywordSearchService {
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), abstractFile));
+
+                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
             } else {
                 artifactContents.append(attribute.getDisplayString());
             }
@@ -147,6 +154,23 @@ public class SolrSearchService implements KeywordSearchService {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
         }
+    }
+
+    @Override
+    public boolean canConnectToRemoteSolrServer() {
+        try {
+            String host = UserPreferences.getIndexingServerHost();
+            String port = UserPreferences.getIndexingServerPort();
+            if (host.isEmpty() || port.isEmpty()) {
+                return false;
+            }
+            HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
+        } catch (SolrServerException | IOException ex) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override

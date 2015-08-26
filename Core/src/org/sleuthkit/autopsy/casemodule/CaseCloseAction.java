@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +19,11 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingWorker;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -49,13 +45,7 @@ final class CaseCloseAction extends CallableSystemAction implements Presenter.To
         putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
 
         // set action of the toolbar button
-        toolbarButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                CaseCloseAction.this.actionPerformed(e);
-            }
-        });
+        toolbarButton.addActionListener(CaseCloseAction.this::actionPerformed);
 
         this.setEnabled(false);
     }
@@ -71,23 +61,24 @@ final class CaseCloseAction extends CallableSystemAction implements Presenter.To
             return;
         }
 
-        Case result = Case.getCurrentCase();
+        new SwingWorker<Void, Void>() {
 
-        if (!MessageNotifyUtil.Message.confirm("Are you sure you want to close current case?")) {
-            return;
-        }
-
-        try {
-            result.closeCase();
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    StartupWindowProvider.getInstance().open();
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    Case result = Case.getCurrentCase();
+                    result.closeCase();
+                } catch (CaseActionException | IllegalStateException unused) {
+                    // Already logged.
                 }
-            });
-        } catch (Exception ex) {
-            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
-        }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                StartupWindowProvider.getInstance().open();
+            }
+        }.execute();
     }
 
     /**

@@ -66,7 +66,7 @@ public class TextFilter extends AbstractFilter {
 
     @Override
     public String getHTMLReportString() {
-        return "text like \"" + StringUtils.defaultIfBlank(text.getValue(), "") + "\"" + getStringCheckBox(); // NON-NLS
+        return "LOWER(text) LIKE LOWER(\'" + StringUtils.defaultIfBlank(text.getValue(), "") + "\')" + getStringCheckBox(); // NON-NLS
     }
 
     @Override

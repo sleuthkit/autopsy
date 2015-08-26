@@ -29,17 +29,16 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * Keyword search toolbar (in upper right, by default) which allows to search
- * for single terms or phrases
- *
+ * Keyword search tool bar (in upper right, by default) with drop down panels
+ * for ad hoc searches by list or expression.
  */
 class DropdownToolbar extends javax.swing.JPanel {
 
@@ -49,17 +48,11 @@ class DropdownToolbar extends javax.swing.JPanel {
     private static DropdownToolbar instance;
     private DropdownSingleTermSearchPanel dropPanel = null;
 
-    /**
-     * Creates new form DropdownToolbar
-     */
     private DropdownToolbar() {
         initComponents();
         customizeComponents();
     }
 
-    /**
-     * @return the default instance DropdownToolbar
-     */
     public synchronized static DropdownToolbar getDefault() {
         if (instance == null) {
             instance = new DropdownToolbar();
@@ -228,28 +221,20 @@ class DropdownToolbar extends javax.swing.JPanel {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
-
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 dropPanel.resetSearchBox();
-                if (newValue == null) {
-                    setFields(false);
-                } else {
-                    setFields(true);
-                }
+                setFields(null != evt.getNewValue() && IngestManager.getInstance().isRunningInteractively());
             } else if (changed.equals(Server.CORE_EVT)) {
-                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) newValue;
+                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
                 switch (state) {
                     case STARTED:
                         try {
                             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-                            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
-                            //setFilesIndexed(numIndexedFiles);
+                            KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
                         } catch (NoOpenCoreException ex) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, " + ex); //NON-NLS
+                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", ex); //NON-NLS
                         } catch (KeywordSearchModuleException se) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage()); //NON-NLS
+                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", se.getMessage()); //NON-NLS
                         }
                         break;
                     case STOPPED:

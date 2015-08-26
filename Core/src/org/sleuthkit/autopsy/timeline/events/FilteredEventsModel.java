@@ -33,10 +33,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
@@ -83,7 +83,6 @@ public final class FilteredEventsModel {
 
     private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
 
- 
     /**
      * time range that spans the filtered events
      */
@@ -316,7 +315,7 @@ public final class FilteredEventsModel {
     }
 
     synchronized public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
+        BlackboardArtifact artifact = e.getAddedTag().getArtifact();
         Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
         if (!updatedEventIDs.isEmpty()) {
             eventbus.post(new EventsTaggedEvent(updatedEventIDs));
@@ -324,8 +323,8 @@ public final class FilteredEventsModel {
     }
 
     synchronized public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
         try {
+            BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(e.getDeletedTagInfo().getArtifactID());
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
             if (!updatedEventIDs.isEmpty()) {
@@ -337,7 +336,7 @@ public final class FilteredEventsModel {
     }
 
     synchronized public void handleTagAdded(ContentTagAddedEvent e) {
-        Content content = e.getTag().getContent();
+        Content content = e.getAddedTag().getContent();
         Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, true);
         if (!updatedEventIDs.isEmpty()) {
             eventbus.post(new EventsTaggedEvent(updatedEventIDs));
@@ -345,8 +344,8 @@ public final class FilteredEventsModel {
     }
 
     synchronized public void handleTagDeleted(ContentTagDeletedEvent e) {
-        Content content = e.getTag().getContent();
         try {
+            Content content = autoCase.getSleuthkitCase().getContentById(e.getDeletedTagInfo().getContentID());
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
             Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, tagged);
             if (!updatedEventIDs.isEmpty()) {

@@ -18,7 +18,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_FileExtMismatchOptions",
         iconBase = "org/sleuthkit/autopsy/modules/fileextmismatch/options-icon.png",
-        position = 4,
+        position = 5,
         keywords = "#OptionsCategory_FileExtMismatch",
         keywordsCategory = "KeywordSearchOptions")
 public final class FileExtMismatchOptionsPanelController extends OptionsPanelController {

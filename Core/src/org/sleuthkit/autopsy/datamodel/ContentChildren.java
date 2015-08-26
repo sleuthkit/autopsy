@@ -116,6 +116,16 @@ class ContentChildren extends AbstractContentChildren<Content> {
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        setKeys(new ArrayList<Content>());
+        setKeys(new ArrayList<>());
+    }
+
+    /**
+     * Refresh the list of children due to a change in one (or more) of our
+     * children (e.g. archive files can change as new content is extracted from
+     * them).
+     */
+    void refreshChildren() {
+        List<Content> children = getDisplayChildren(parent);
+        setKeys(children);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,10 @@ import javax.xml.parsers.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -60,6 +60,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
     final static String SCHEMA_VERSION_NAME = "SchemaVersion"; //NON-NLS
     final static String AUTOPSY_CRVERSION_NAME = "AutopsyCreatedVersion"; //NON-NLS
     final static String AUTOPSY_MVERSION_NAME = "AutopsySavedVersion"; //NON-NLS
+    final static String CASE_TEXT_INDEX_NAME = "TextIndexName"; //NON-NLS
     // folders inside case directory
     final static String LOG_FOLDER_NAME = "LogFolder"; //NON-NLS
     final static String LOG_FOLDER_RELPATH = "Log"; //NON-NLS
@@ -69,6 +70,8 @@ class XMLCaseManagement implements CaseConfigFileInterface {
     final static String EXPORT_FOLDER_RELPATH = "Export"; //NON-NLS
     final static String CACHE_FOLDER_NAME = "CacheFolder"; //NON-NLS
     final static String CACHE_FOLDER_RELPATH = "Cache"; //NON-NLS
+    final static String CASE_TYPE = "CaseType"; //NON-NLS
+    final static String DATABASE_NAME = "DatabaseName"; //NON-NLS
     // folders attribute
     final static String RELATIVE_NAME = "Relative";    // relevant path info NON-NLS
     // folder attr values
@@ -77,23 +80,26 @@ class XMLCaseManagement implements CaseConfigFileInterface {
     // the document
     private Document doc;
     // general info
-    private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
-    private String caseNumber;         // case number
+    private String caseNumber;      // case number
     private String examiner;        // examiner name
-    private String schemaVersion = "1.0";
-    private String autopsySavedVersion;
+    private final String schemaVersion = "1.0";
+    private final String autopsySavedVersion;
+    private CaseType caseType;      // The type of case: local or shared
+    private String dbName;          // The name of the database    
+    private String textIndexName;   // The name of the index where extracted text is stored.
+
     // for error handling
     private JPanel caller;
-    private String className = this.getClass().toString();
+    private final String className = this.getClass().toString();
     private static final Logger logger = Logger.getLogger(XMLCaseManagement.class.getName());
 
     /**
      * The constructor
      */
-    XMLCaseManagement() {
-//        System.setProperty("netbeans.buildnumber", autopsyVer); // set the current autopsy version // moved to CoreComponents installer
+    public XMLCaseManagement() {
         autopsySavedVersion = System.getProperty("netbeans.buildnumber");
     }
 
@@ -149,6 +155,23 @@ class XMLCaseManagement implements CaseConfigFileInterface {
     }
 
     /**
+     * Sets the created date on the XML configuration file. This method is for
+     * preserving the created date when converting a case from single-user to
+     * multi-user.
+     *
+     * @param createdDate the date the case was originally created
+     *
+     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
+     */
+    public void setCreatedDate(String createdDate) throws CaseActionException {
+        String newDate = dateFormat.format(new Date());
+        Element rootEl = getRootElement();
+        rootEl.getElementsByTagName(CREATED_DATE_NAME).item(0).setTextContent(createdDate);
+        rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+        writeFile();
+    }
+
+    /**
      * Sets the examiner on the XML configuration file
      *
      * @param givenExaminer the new examiner to be set
@@ -185,6 +208,89 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      */
     private void setNumber(String givenCaseNumber) {
         caseNumber = givenCaseNumber; // change this to change the xml file if needed
+    }
+
+    /**
+     * Sets the case type internally (on local variable in this class)
+     *
+     * @param givenCaseType the new case type
+     */
+    private void setCaseType(CaseType givenCaseType) {
+        caseType = givenCaseType; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the case Type from the document handler. Defaults to local if it
+     * can't figure it out.
+     *
+     * @return caseType from the document handler
+     */
+    public CaseType getCaseType() {
+        if (doc == null) {
+            return CaseType.SINGLE_USER_CASE;
+        } else {
+            if (getCaseElement().getElementsByTagName(CASE_TYPE).getLength() > 0) {
+                Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TYPE).item(0);
+                return CaseType.fromString(nameElement.getTextContent());
+            } else {
+                return CaseType.SINGLE_USER_CASE;
+            }
+        }
+    }
+
+    /**
+     * Sets the database name internally (on local variable in this class)
+     *
+     * @param givenDbName the new db name
+     */
+    private void setDatabaseName(String givenDbName) {
+        dbName = givenDbName; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the database name from the document handler
+     *
+     * @return the database name
+     */
+    public String getDatabaseName() {
+        if (doc == null) {
+            return "";
+        } else {
+            if (getCaseElement().getElementsByTagName(DATABASE_NAME).getLength() > 0) {
+                Element nameElement = (Element) getCaseElement().getElementsByTagName(DATABASE_NAME).item(0);
+                return nameElement.getTextContent();
+            } else {
+                return ""; /// couldn't find one, so return a blank name   
+            }
+        }
+    }
+
+    /**
+     * Sets the text index name internally (on local variable in this class)
+     *
+     * @param textIndexName the new name for the index where extracted text is
+     *                      stored for the case.
+     */
+    private void setTextIndexName(String textIndexName) {
+        this.textIndexName = textIndexName; // change this to change the xml file if needed
+    }
+
+    /**
+     * Gets the name of the index where extracted text is stored.
+     *
+     * @return the index name
+     */
+    public String getTextIndexName() {
+        if (doc == null) {
+            return "";
+        } else {
+            if (getCaseElement().getElementsByTagName(CASE_TEXT_INDEX_NAME).getLength() > 0) {
+                Element nameElement = (Element) getCaseElement().getElementsByTagName(CASE_TEXT_INDEX_NAME).item(0);
+                return nameElement.getTextContent();
+            } else {
+                return ""; /// couldn't find one, so return a blank index name   
+            }
+        }
     }
 
     /**
@@ -282,7 +388,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      *
      * @return createdDate the creation date of this case
      */
-    protected String getCreatedDate() {
+    public String getCreatedDate() {
         if (doc != null) {
             Element crDateElement = (Element) getRootElement().getElementsByTagName(CREATED_DATE_NAME).item(0);
             return crDateElement.getTextContent();
@@ -437,13 +543,17 @@ class XMLCaseManagement implements CaseConfigFileInterface {
      * Initialize the basic values for a new case management file. Note: this is
      * the schema version 1.0
      *
-     * @param dirPath    case directory path
-     * @param caseName   the name of the config file to be located in the case
-     *                   directory
-     * @param examiner   examiner for the case (optional, can be empty string
-     * @param caseNumber case number (optional), can be empty
+     * @param dirPath       case directory path
+     * @param caseName      the name of the config file to be located in the
+     *                      case directory
+     * @param examiner      examiner for the case (optional, can be empty string
+     * @param caseNumber    case number (optional), can be empty
+     * @param dbName        the name of the database. Could be a local path,
+     *                      could be a Postgre db name.
+     * @param textIndexName The name of the index where extracted text is
+     *                      stored.
      */
-    protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws CaseActionException {
+    public void create(String dirPath, String caseName, String examiner, String caseNumber, CaseType caseType, String dbName, String textIndexName) throws CaseActionException {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -451,6 +561,9 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         setName(caseName);
         setExaminer(examiner);
         setNumber(caseNumber);
+        setCaseType(caseType);
+        setDatabaseName(dbName);
+        setTextIndexName(textIndexName);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -521,6 +634,18 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         cacheElement.appendChild(doc.createTextNode(CACHE_FOLDER_RELPATH));
         cacheElement.setAttribute(RELATIVE_NAME, "true"); //NON-NLS
         caseElement.appendChild(cacheElement);
+
+        Element typeElement = doc.createElement(CASE_TYPE); // <CaseType> ... </CaseType>
+        typeElement.appendChild(doc.createTextNode(caseType.toString()));
+        caseElement.appendChild(typeElement);
+
+        Element dbNameElement = doc.createElement(DATABASE_NAME); // <DatabaseName> ... </DatabaseName>
+        dbNameElement.appendChild(doc.createTextNode(dbName));
+        caseElement.appendChild(dbNameElement);
+
+        Element indexNameElement = doc.createElement(CASE_TEXT_INDEX_NAME); // <TextIndexName> ... </TextIndexName>
+        indexNameElement.appendChild(doc.createTextNode(textIndexName));
+        caseElement.appendChild(indexNameElement);
 
         // write more code if needed ...
     }
@@ -597,19 +722,11 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         File file = new File(conFilePath);
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = null;
+        DocumentBuilder db;
         try {
             db = dbf.newDocumentBuilder();
             doc = db.parse(file);
-        } catch (ParserConfigurationException ex) {
-            throw new CaseActionException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                            conFilePath), ex);
-        } catch (SAXException ex) {
-            throw new CaseActionException(
-                    NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
-                            conFilePath), ex);
-        } catch (IOException ex) {
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseActionException(
                     NbBundle.getMessage(this.getClass(), "XMLCaseManagement.open.exception.errReadXMLFile.msg",
                             conFilePath), ex);
@@ -618,10 +735,10 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         doc.getDocumentElement().normalize();
         doc.getDocumentElement().normalize();
 
-        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
-            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
-        }
-
+        // TODO: Restore later
+//        if (!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)) {
+//            logger.log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate"); //NON-NLS
+//        }
         Element rootEl = doc.getDocumentElement();
         String rootName = rootEl.getNodeName();
 
@@ -629,13 +746,16 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         if (!rootName.equals(TOP_ROOT_NAME)) {
             // throw an error ...
             clear();
-            JOptionPane.showMessageDialog(caller,
-                    NbBundle.getMessage(this.getClass(),
-                            "XMLCaseManagement.open.msgDlg.notAutCase.msg",
-                            file.getName(), className),
-                    NbBundle.getMessage(this.getClass(),
-                            "XMLCaseManagement.open.msgDlg.notAutCase.title"),
-                    JOptionPane.ERROR_MESSAGE);
+            if (IngestManager.getInstance().isRunningInteractively()) {
+
+                JOptionPane.showMessageDialog(caller,
+                        NbBundle.getMessage(this.getClass(),
+                                "XMLCaseManagement.open.msgDlg.notAutCase.msg",
+                                file.getName(), className),
+                        NbBundle.getMessage(this.getClass(),
+                                "XMLCaseManagement.open.msgDlg.notAutCase.title"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
         } else {
             /*
              * Autopsy Created Version
@@ -687,5 +807,8 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         caseName = "";
         caseNumber = "";
         examiner = "";
+        caseType = CaseType.SINGLE_USER_CASE;
+        dbName = "";
+        textIndexName = "";
     }
 }

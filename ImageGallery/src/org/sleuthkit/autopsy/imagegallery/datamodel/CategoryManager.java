@@ -31,8 +31,8 @@ import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -55,8 +55,6 @@ public class CategoryManager {
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(CategoryManager.class.getName());
 
     private final ImageGalleryController controller;
-
-
 
     /**
      * the DrawableDB that backs the category counts cache. The counts are
@@ -234,7 +232,7 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent event) {
-        final ContentTag addedTag = event.getTag();
+        final ContentTag addedTag = event.getAddedTag();
         if (isCategoryTagName(addedTag.getName())) {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             try {
@@ -263,14 +261,15 @@ public class CategoryManager {
 
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent event) {
-        ContentTag deleted = event.getTag();
-        if (isCategoryTagName(deleted.getName())) {
+        final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+        TagName tagName = deletedTagInfo.getName();
+        if (isCategoryTagName(tagName)) {
 
-            Category deletedCat = CategoryManager.categoryFromTagName(deleted.getName());
+            Category deletedCat = CategoryManager.categoryFromTagName(tagName);
             if (deletedCat != Category.ZERO) {
                 decrementCategoryCount(deletedCat);
             }
-            fireChange(Collections.singleton(deleted.getContent().getId()), null);
+            fireChange(Collections.singleton(deletedTagInfo.getContentID()), null);
         }
     }
 

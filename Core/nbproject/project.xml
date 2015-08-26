@@ -184,9 +184,11 @@
             <public-packages>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
+                <package>org.sleuthkit.autopsy.casemodule.events</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.core</package>
+                <package>org.sleuthkit.autopsy.core.events</package>
                 <package>org.sleuthkit.autopsy.corecomponentinterfaces</package>
                 <package>org.sleuthkit.autopsy.corecomponents</package>
                 <package>org.sleuthkit.autopsy.coreutils</package>
@@ -208,16 +210,16 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jython-standalone-2.7.0.jar</binary-origin>
+                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
@@ -232,8 +234,28 @@
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.8.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activemq-all-5.11.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython-standalone-2.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.6.2.jar</runtime-relative-path>
@@ -242,10 +264,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmpcore.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-core-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>

@@ -92,7 +92,7 @@ class TextMessageAnalyzer {
 
             try {
                 resultSet = statement.executeQuery(
-                        "Select address,date,type,subject,body FROM sms;"); //NON-NLS
+                        "SELECT address,date,type,subject,body FROM sms;"); //NON-NLS
 
                 BlackboardArtifact bba;
                 String address; // may be phone number, or other addresses

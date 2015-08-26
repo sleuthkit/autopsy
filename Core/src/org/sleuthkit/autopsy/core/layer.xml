@@ -19,7 +19,7 @@
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
         <file name="org-sleuthkit-autopsy-corecomponents-AutopsyOptionsPanelController.instance">
-            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox.png"/>
+            <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/corecomponents/checkbox32.png"/>
             <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
             <attr name="keywordsCategory" stringvalue="General"/>
             <attr name="position" intvalue="1"/>
@@ -44,7 +44,6 @@
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseNewAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseNewAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>

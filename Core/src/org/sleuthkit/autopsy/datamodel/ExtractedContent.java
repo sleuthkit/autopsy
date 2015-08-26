@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -127,7 +127,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.ARTIFACT_TYPE> {
 
-        private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow;
+        private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow = new ArrayList<>();
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
 
@@ -135,7 +135,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super();
 
             // these are shown in other parts of the UI tree
-            doNotShow = new ArrayList<>();
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
@@ -144,25 +143,50 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
         }
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
+                    /**
+                     * Due to some unresolved issues with how cases are closed,
+                     * it is possible for the event to have a null oldValue if
+                     * the event is a remote event.
+                     */
                     final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    if (doNotShow.contains(event.getArtifactType()) == false) {
+                    if (null != event && doNotShow.contains(event.getArtifactType()) == false) {
                         refresh(true);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
                     refresh(true);
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
         };
@@ -184,33 +208,30 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
-            if (skCase == null) {
-                return false;
-            }
+            if (skCase != null) {
+                try {
+                    List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
+                    inUse.removeAll(doNotShow);
+                    Collections.sort(inUse,
+                            new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
+                                @Override
+                                public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
+                                    return a.getDisplayName().compareTo(b.getDisplayName());
+                                }
+                            });
+                    list.addAll(inUse);
 
-            try {
-                List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
-                inUse.removeAll(doNotShow);
-                Collections.sort(inUse,
-                        new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
-                            @Override
-                            public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
-                                return a.getDisplayName().compareTo(b.getDisplayName());
-                            }
-                        });
-                list.addAll(inUse);
-
-                // the create node method will get called only for new types
-                // refresh the counts if we already created them from a previous update
-                for (BlackboardArtifact.ARTIFACT_TYPE art : inUse) {
-                    TypeNode node = typeNodeList.get(art);
-                    if (node != null) {
-                        node.updateDisplayName();
+                    // the create node method will get called only for new types
+                    // refresh the counts if we already created them from a previous update
+                    for (BlackboardArtifact.ARTIFACT_TYPE art : inUse) {
+                        TypeNode node = typeNodeList.get(art);
+                        if (node != null) {
+                            node.updateDisplayName();
+                        }
                     }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
-                return false;
             }
             return true;
         }
@@ -362,15 +383,46 @@ public class ExtractedContent implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-
                 if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    if (event.getArtifactType() == type) {
-                        refresh(true);
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        /**
+                         * Even with the check above, it is still possible that
+                         * the case will be closed in a different thread before
+                         * this code executes. If that happens, it is possible
+                         * for the event to have a null oldValue.
+                         */
+                        final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+                        if (null != event && event.getArtifactType() == type) {
+                            refresh(true);
+                        }
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    refresh(true);
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        refresh(true);
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
                 }
             }
         };
@@ -389,15 +441,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            if (skCase == null) {
-                return false;
-            }
-
-            try {
-                List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
-                list.addAll(arts);
-            } catch (TskException ex) {
-                Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
+            if (skCase != null) {
+                try {
+                    List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
+                    list.addAll(arts);
+                } catch (TskException ex) {
+                    Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
+                }
             }
             return true;
         }

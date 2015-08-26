@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
@@ -30,7 +32,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
@@ -61,8 +65,8 @@ class LocalFilesPanel extends JPanel {
 
     private void customInit() {
         localFileChooser.setMultiSelectionEnabled(true);
+        errorLabel.setVisible(false);
         selectedPaths.setText("");
-
     }
 
     //@Override
@@ -93,7 +97,33 @@ class LocalFilesPanel extends JPanel {
 
     //@Override
     public boolean validatePanel() {
+
+        // display warning if there is one (but don't disable "next" button)
+        warnIfPathIsInvalid(getContentPaths());
+
         return enableNext;
+    }
+
+    /**
+     * Validates path to selected data source and displays warning if it is
+     * invalid.
+     *
+     * @param path Absolute path to the selected data source
+     */
+    private void warnIfPathIsInvalid(String path) {
+        errorLabel.setVisible(false);
+
+        // Path variable for "Local files" module is a coma separated string containg multiple paths
+        List<String> pathsList = Arrays.asList(path.split(","));
+        CaseType currentCaseType = Case.getCurrentCase().getCaseType();
+
+        for (String currentPath : pathsList) {
+            if (!PathValidator.isValid(currentPath, currentCaseType)) {
+                errorLabel.setVisible(true);
+                errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+                return;
+            }
+        }
     }
 
     //@Override
@@ -106,8 +136,7 @@ class LocalFilesPanel extends JPanel {
         currentFiles.clear();
         selectedPaths.setText("");
         enableNext = false;
-
-        //pcs.firePropertyChange(AddImageWizardChooseDataSourceVisual.EVENT.UPDATE_UI.toString(), false, true);
+        errorLabel.setVisible(false);
     }
 
     @Override
@@ -150,6 +179,7 @@ class LocalFilesPanel extends JPanel {
         clearButton = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
+        errorLabel = new javax.swing.JLabel();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -185,6 +215,9 @@ class LocalFilesPanel extends JPanel {
         selectedPaths.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectedPaths.toolTipText")); // NOI18N
         jScrollPane2.setViewportView(selectedPaths);
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -199,19 +232,23 @@ class LocalFilesPanel extends JPanel {
                     .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(2, 2, 2))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(errorLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(infoLabel)
                 .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(selectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                        .addComponent(clearButton))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addGap(0, 0, 0))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(clearButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorLabel))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -256,6 +293,7 @@ class LocalFilesPanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel infoLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

@@ -1,0 +1,5 @@
+# Ignore everything in this directory
+*
+# Except this file and api-docs folder
+!api-docs
+!.gitignore

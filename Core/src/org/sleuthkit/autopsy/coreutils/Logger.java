@@ -51,13 +51,11 @@ public final class Logger extends java.util.logging.Logger {
                     f.setFormatter(new Formatter() {
                         @Override
                         public String format(LogRecord record) {
-                            synchronized (fileHandlerLock) {
-                                return (new Date(record.getMillis())).toString() + " "
-                                        + record.getSourceClassName() + " "
-                                        + record.getSourceMethodName() + "\n"
-                                        + record.getLevel() + ": "
-                                        + this.formatMessage(record) + "\n";
-                            }
+                            return (new Date(record.getMillis())).toString() + " "
+                                    + record.getSourceClassName() + " "
+                                    + record.getSourceMethodName() + "\n"
+                                    + record.getLevel() + ": "
+                                    + this.formatMessage(record) + "\n";
                         }
                     });
                     break;
@@ -65,30 +63,28 @@ public final class Logger extends java.util.logging.Logger {
                     f.setFormatter(new Formatter() {
                         @Override
                         public String format(LogRecord record) {
-                            synchronized (fileHandlerLock) {
-                                if (record.getThrown() != null) {
+                            if (record.getThrown() != null) {
 
-                                    StackTraceElement ele[] = record.getThrown().getStackTrace();
-                                    String StackTrace = "";
-                                    for (StackTraceElement ele1 : ele) {
-                                        StackTrace += "\t" + ele1.toString() + "\n";
-                                    }
-
-                                    return (new Timestamp(record.getMillis())).toString() + " "
-                                            + record.getSourceClassName() + " "
-                                            + record.getSourceMethodName() + "\n"
-                                            + record.getLevel() + ": "
-                                            + this.formatMessage(record) + "\n"
-                                            + record.getThrown().toString() + ":\n"
-                                            + StackTrace
-                                            + "\n";
-                                } else {
-                                    return (new Timestamp(record.getMillis())).toString() + " "
-                                            + record.getSourceClassName() + " "
-                                            + record.getSourceMethodName() + "\n"
-                                            + record.getLevel() + ": "
-                                            + this.formatMessage(record) + "\n";
+                                StackTraceElement ele[] = record.getThrown().getStackTrace();
+                                String StackTrace = "";
+                                for (StackTraceElement ele1 : ele) {
+                                    StackTrace += "\t" + ele1.toString() + "\n";
                                 }
+
+                                return (new Timestamp(record.getMillis())).toString() + " "
+                                        + record.getSourceClassName() + " "
+                                        + record.getSourceMethodName() + "\n"
+                                        + record.getLevel() + ": "
+                                        + this.formatMessage(record) + "\n"
+                                        + record.getThrown().toString() + ":\n"
+                                        + StackTrace
+                                        + "\n";
+                            } else {
+                                return (new Timestamp(record.getMillis())).toString() + " "
+                                        + record.getSourceClassName() + " "
+                                        + record.getSourceMethodName() + "\n"
+                                        + record.getLevel() + ": "
+                                        + this.formatMessage(record) + "\n";
                             }
                         }
                     });

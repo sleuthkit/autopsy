@@ -55,11 +55,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -88,6 +88,8 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
+
+    private static final String IMAGEGALLERY = "ImageGallery";
 
     private final Region infoOverLayBackground = new Region() {
         {
@@ -504,13 +506,13 @@ public final class ImageGalleryController {
                     break;
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (getDatabase().isInDB((tagAddedEvent).getTag().getContent().getId())) {
+                    if (getDatabase().isInDB((tagAddedEvent).getAddedTag().getContent().getId())) {
                         getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }
                     break;
                 case CONTENT_TAG_DELETED:
                     final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (getDatabase().isInDB((tagDeletedEvent).getTag().getContent().getId())) {
+                    if (getDatabase().isInDB((tagDeletedEvent).getDeletedTagInfo().getContentID())) {
                         getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                     }
                     break;
@@ -843,9 +845,7 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } catch (IllegalStateException ex) {
-                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.SEVERE, "Case was closed out from underneath CopyDataSource task", ex);
-            }
+            } 
 
             progressHandle.finish();
 
@@ -920,7 +920,7 @@ public final class ImageGalleryController {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 
-                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " and " + DRAWABLE_QUERY);
+                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction
@@ -945,9 +945,7 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } catch (IllegalStateException | NullPointerException ex) {
-                Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "Case was closed out from underneath prepopulating database");
-            }
+            } 
 
             progressHandle.finish();
         }

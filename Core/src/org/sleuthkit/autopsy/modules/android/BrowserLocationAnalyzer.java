@@ -87,7 +87,7 @@ class BrowserLocationAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;"); //NON-NLS
+                    "SELECT timestamp, latitude, longitude, accuracy FROM CachedPosition;"); //NON-NLS
 
             while (resultSet.next()) {
                 Long timestamp = Long.valueOf(resultSet.getString("timestamp")) / 1000; //NON-NLS

@@ -33,14 +33,15 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -204,48 +205,50 @@ class LuceneQuery implements KeywordSearchQuery {
         final Server solrServer = KeywordSearch.getServer();
 
         SolrQuery q = createAndConfigureSolrQuery(snippets);
+        QueryResponse response;
+        SolrDocumentList resultList;
+        Map<String, Map<String, List<String>>> highlightResponse;
+        Set<SolrDocument> uniqueSolrDocumentsWithHits;
+
+        try {
+            response = solrServer.query(q, METHOD.POST);
+
+            resultList = response.getResults();
+
+            // objectId_chunk -> "text" -> List of previews
+            highlightResponse = response.getHighlighting();
+
+            // get the unique set of files with hits
+            uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS            
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
+            return matches;
+        }
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
             q.setStart(start);
 
+            allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
+
+            SleuthkitCase sleuthkitCase;
             try {
-                QueryResponse response = solrServer.query(q, METHOD.POST);
-                SolrDocumentList resultList = response.getResults();
-
-                // objectId_chunk -> "text" -> List of previews
-                Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
-
-                // get the unique set of files with hits
-                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
-
-                allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
-
-                SleuthkitCase sleuthkitCase;
-                try {
-                    sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-                } catch (IllegalStateException ex) {
-                    //no case open, must be just closed
-                    return matches;
-                }
-
-                for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
-                    KeywordHit contentHit;
-                    try {
-                        contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
-                    } catch (TskException ex) {
-                        return matches;
-                    }
-                    matches.add(contentHit);
-                }
-
-            } catch (NoOpenCoreException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
-                throw ex;
-            } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
+                sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            } catch (IllegalStateException ex) {
+                //no case open, must be just closed
+                return matches;
             }
 
+            for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
+                KeywordHit contentHit;
+                try {
+                    contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
+                } catch (TskException ex) {
+                    return matches;
+                }
+                matches.add(contentHit);
+            }
         }
         return matches;
     }
@@ -500,9 +503,9 @@ class LuceneQuery implements KeywordSearchQuery {
                 rightID = rightID.substring(0, index);
             }
 
-            Integer leftInt = new Integer(leftID);
-            Integer rightInt = new Integer(rightID);
-            return leftInt.compareTo(rightInt);
+            Long leftLong = new Long(leftID);
+            Long rightLong = new Long(rightID);
+            return leftLong.compareTo(rightLong);
         }
     }
 

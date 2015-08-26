@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -152,13 +152,15 @@ final class IngestTasksScheduler {
      *                              full tasks queue and is interrupted.
      */
     synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
-        // Scheduling of both a data source ingest task and file ingest tasks 
-        // for a job must be an atomic operation. Otherwise, the data source 
-        // task might be completed before the file tasks are scheduled, 
-        // resulting in a potential false positive when another thread checks 
-        // whether or not all the tasks for the job are completed.
-        this.scheduleDataSourceIngestTask(job);
-        this.scheduleFileIngestTasks(job);
+        if (!job.isCancelled()) {
+            // Scheduling of both a data source ingest task and file ingest tasks 
+            // for a job must be an atomic operation. Otherwise, the data source 
+            // task might be completed before the file tasks are scheduled, 
+            // resulting in a potential false positive when another thread checks 
+            // whether or not all the tasks for the job are completed.
+            this.scheduleDataSourceIngestTask(job);
+            this.scheduleFileIngestTasks(job);
+        }
     }
 
     /**
@@ -167,17 +169,19 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      */
     synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
-        DataSourceIngestTask task = new DataSourceIngestTask(job);
-        this.tasksInProgress.add(task);
-        try {
-            this.pendingDataSourceTasks.put(task);
-        } catch (InterruptedException ex) {
-            /**
-             * The current thread was interrupted while blocked on a full queue.
-             * Discard the task and reset the interrupted flag.
-             */
-            this.tasksInProgress.remove(task);
-            Thread.currentThread().interrupt();
+        if (!job.isCancelled()) {
+            DataSourceIngestTask task = new DataSourceIngestTask(job);
+            this.tasksInProgress.add(task);
+            try {
+                this.pendingDataSourceTasks.put(task);
+            } catch (InterruptedException ex) {
+                /**
+                 * The current thread was interrupted while blocked on a full
+                 * queue. Discard the task and reset the interrupted flag.
+                 */
+                this.tasksInProgress.remove(task);
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -187,17 +191,19 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      */
     synchronized void scheduleFileIngestTasks(DataSourceIngestJob job) {
-        // Get the top level files for the data source associated with this job
-        // and add them to the root directories priority queue.  
-        List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
-        for (AbstractFile firstLevelFile : topLevelFiles) {
-            FileIngestTask task = new FileIngestTask(job, firstLevelFile);
-            if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-                this.tasksInProgress.add(task);
-                this.rootDirectoryTasks.add(task);
+        if (!job.isCancelled()) {
+            // Get the top level files for the data source associated with this job
+            // and add them to the root directories priority queue.  
+            List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
+            for (AbstractFile firstLevelFile : topLevelFiles) {
+                FileIngestTask task = new FileIngestTask(job, firstLevelFile);
+                if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+                    this.tasksInProgress.add(task);
+                    this.rootDirectoryTasks.add(task);
+                }
             }
+            shuffleFileTaskQueues();
         }
-        shuffleFileTaskQueues();
     }
 
     /**
@@ -207,10 +213,12 @@ final class IngestTasksScheduler {
      * @param file The file to be associated with the task.
      */
     synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
-        FileIngestTask task = new FileIngestTask(job, file);
-        if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
-            this.tasksInProgress.add(task);
-            addToPendingFileTasksQueue(task);
+        if (!job.isCancelled()) {
+            FileIngestTask task = new FileIngestTask(job, file);
+            if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
+                this.tasksInProgress.add(task);
+                addToPendingFileTasksQueue(task);
+            }
         }
     }
 
@@ -242,19 +250,27 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Clears the task scheduling queues for an ingest job, but does nothing
-     * about tasks that have already been taken by ingest threads. Those tasks
-     * will be flushed out when the ingest threads call back with their task
-     * completed notifications.
+     * Clears the "upstream" task scheduling queues for an ingest job, but does
+     * nothing about tasks that have already been shuffled into the concurrently
+     * accessed blocking queues shared with the ingest threads. Note that tasks
+     * in the "downstream" queues or already taken by the ingest threads will be
+     * flushed out when the ingest threads call back with their task completed
+     * notifications.
      *
      * @param job The job for which the tasks are to to canceled.
      */
     synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
+        /**
+         * This code should not flush the blocking queues that are concurrently
+         * accessed by the ingest threads. This is because the "lock striping"
+         * and "weakly consistent" iterators of these collections make it so
+         * that this code could have a different view of the queues than the
+         * ingest threads. It does clean out the directory level tasks before
+         * they are exploded into file tasks.
+         */
         long jobId = job.getId();
         this.removeTasksForJob(this.rootDirectoryTasks, jobId);
         this.removeTasksForJob(this.directoryTasks, jobId);
-        this.removeTasksForJob(this.pendingFileTasks, jobId);
-        this.removeTasksForJob(this.pendingDataSourceTasks, jobId);
         this.shuffleFileTaskQueues();
     }
 
@@ -465,7 +481,7 @@ final class IngestTasksScheduler {
      * @param taskQueue The queue from which to remove the tasks.
      * @param jobId     The id of the job for which the tasks are to be removed.
      */
-    private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
+    synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
