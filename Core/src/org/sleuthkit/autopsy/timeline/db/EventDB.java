@@ -361,7 +361,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         DBLock.lock();
-        final String query = "SELECT event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT events.event_id as event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -515,9 +515,8 @@ public class EventDB {
                         + " full_description TEXT, " // NON-NLS
                         + " med_description TEXT, " // NON-NLS
                         + " short_description TEXT, " // NON-NLS
-                        + " known_state INTEGER,"
-                        + " hash_hit INTEGER,"
-                        + " datasource_id INTEGER,"
+                        + " known_state INTEGER," // NON-NLS
+                        + " hash_hit INTEGER," // NON-NLS
                         + " tagged INTEGER)"; //boolean // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
@@ -953,7 +952,6 @@ public class EventDB {
                 + " FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >= " + startTime + " AND time < " + endTime + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + " GROUP BY " + typeColumnHelper(useSubTypes); // NON-NLS
 
-        System.out.println(queryString);
         DBLock.lock();
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(queryString);) {
@@ -1014,7 +1012,7 @@ public class EventDB {
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
-        System.out.println(query);
+
         // perform query and map results to AggregateEvent objects
         List<AggregateEvent> events = new ArrayList<>();
         DBLock.lock();
