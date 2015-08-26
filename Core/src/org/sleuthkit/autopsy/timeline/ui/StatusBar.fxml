@@ -6,32 +6,28 @@
 <?import javafx.scene.layout.*?>
 
 <fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="ToolBar" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-<items>
-      <HBox fx:id="refreshBox" alignment="CENTER_LEFT">
-         <children>
-            <Label fx:id="refreshLabel">
-      <graphic>
-                  <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-      <image>
-      <Image url="@../images/info-icon-16.png" />
-      </image>
-                  </ImageView>
-      </graphic>
-            </Label>
-            <Button fx:id="refreshButton" mnemonicParsing="false" text="refresh">
-               <graphic>
-                  <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../images/arrow-circle-double-135.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
-         </children>
-      </HBox><Separator orientation="VERTICAL" /><Region fx:id="spacer" /><Separator orientation="VERTICAL" /><Label fx:id="taskLabel" contentDisplay="RIGHT">
-<graphic><StackPane>
-<children><ProgressBar fx:id="progressBar" progress="0.0" /><Label fx:id="messageLabel" />
-</children></StackPane>
-</graphic></Label>
-</items>
+    <items>
+        <Label fx:id="refreshLabel">
+            <graphic>
+                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/info-icon-16.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+        </Label>
+        <Separator orientation="VERTICAL" />
+        <Region fx:id="spacer" maxWidth="1.7976931348623157E308" />
+        <Separator orientation="VERTICAL" />
+        <Label fx:id="taskLabel" contentDisplay="RIGHT">
+            <graphic>
+                <StackPane>
+                    <children>
+                        <ProgressBar fx:id="progressBar" progress="0.0" />
+                        <Label fx:id="messageLabel" />
+                    </children>
+                </StackPane>
+            </graphic>
+        </Label>
+    </items>
 </fx:root>

@@ -127,7 +127,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        filteredEvents.zoomParamtersProperty().addListener(o -> {
+        filteredEvents.zoomParametersProperty().addListener(o -> {
             clearIntervalSelector();
             controller.selectEventIDs(Collections.emptyList());
         });

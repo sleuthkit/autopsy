@@ -18,16 +18,17 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.ImmutableMap;
 import javax.annotation.Nullable;
-import org.python.google.common.collect.ImmutableMap;
-import org.python.google.common.collect.Maps;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * A single event.
  */
+@Immutable
 public class TimeLineEvent {
 
     private final long eventID;
@@ -49,10 +50,10 @@ public class TimeLineEvent {
         this.artifactID = artifactID == 0 ? null : artifactID;
         this.time = time;
         this.subType = type;
-        descriptions = Maps.immutableEnumMap(ImmutableMap.<DescriptionLOD, String>of(
+        descriptions = ImmutableMap.<DescriptionLOD, String>of(
                 DescriptionLOD.FULL, fullDescription,
                 DescriptionLOD.MEDIUM, medDescription,
-                DescriptionLOD.SHORT, shortDescription));
+                DescriptionLOD.SHORT, shortDescription);
 
         this.known = known;
         this.hashHit = hashHit;

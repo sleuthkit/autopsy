@@ -163,7 +163,7 @@ public final class FilteredEventsModel {
         requestedZoomParamters.bind(currentStateProperty);
     }
 
-    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParamtersProperty() {
+    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
         return requestedZoomParamters.getReadOnlyProperty();
     }
 
@@ -231,7 +231,7 @@ public final class FilteredEventsModel {
     }
 
     public Interval getBoundingEventsInterval() {
-        return repo.getBoundingEventsInterval(zoomParamtersProperty().get().getTimeRange(), zoomParamtersProperty().get().getFilter());
+        return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter());
     }
 
     public TimeLineEvent getEventById(Long eventID) {
@@ -242,6 +242,14 @@ public final class FilteredEventsModel {
         return repo.getEventsById(eventIDs);
     }
 
+    /**
+     * get a count of tagnames applied to the given event ids as a map from
+     * tagname displayname to count of tag applications
+     *
+     * @param eventIDsWithTags the event ids to get the tag counts map for
+     *
+     * @return a map from tagname displayname to count of applications
+     */
     public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
         return repo.getTagCountsByTagName(eventIDsWithTags);
     }

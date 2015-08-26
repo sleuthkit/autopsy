@@ -37,12 +37,12 @@ public class ResetFilters extends Action {
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {
-                bind(eventsModel.zoomParamtersProperty());
+                bind(eventsModel.zoomParametersProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.zoomParamtersProperty().getValue().getFilter().equals(eventsModel.getDefaultFilter());
+                return eventsModel.zoomParametersProperty().getValue().getFilter().equals(eventsModel.getDefaultFilter());
             }
         });
         setEventHandler((ActionEvent t) -> {

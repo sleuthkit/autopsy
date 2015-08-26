@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToolBar;
@@ -31,14 +28,13 @@ import javafx.scene.layout.Region;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.TimeLineUI;
 
 /**
  * simple status bar that only shows one possible message determined by
  * {@link TimeLineController#newEventsFlag}
  */
-public class StatusBar extends ToolBar implements TimeLineView {
+public class StatusBar extends ToolBar implements TimeLineUI {
 
     private TimeLineController controller;
 
@@ -57,11 +53,6 @@ public class StatusBar extends ToolBar implements TimeLineView {
     @FXML
     private Label messageLabel;
 
-    @FXML
-    private HBox refreshBox;
-    @FXML
-    private Button refreshButton;
-
     public StatusBar() {
         FXMLConstructor.construct(this, "StatusBar.fxml"); // NON-NLS
     }
@@ -75,6 +66,8 @@ public class StatusBar extends ToolBar implements TimeLineView {
         assert messageLabel != null : "fx:id=\"messageLabel\" was not injected: check your FXML file 'StatusBar.fxml'."; // NON-NLS
         refreshLabel.setVisible(false);
         refreshLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.refreshLabel.text"));
+        messageLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.messageLabel.text"));
+        taskLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.taskLabel.text"));
         taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);
     }
@@ -82,23 +75,10 @@ public class StatusBar extends ToolBar implements TimeLineView {
     @Override
     public void setController(TimeLineController controller) {
         this.controller = controller;
-
-        refreshBox.visibleProperty().bind(this.controller.getNewEventsFlag());
+        refreshLabel.visibleProperty().bind(this.controller.getNewEventsFlag());
         taskLabel.textProperty().bind(this.controller.getTaskTitle());
         messageLabel.textProperty().bind(this.controller.getMessage());
         progressBar.progressProperty().bind(this.controller.getProgress());
         taskLabel.visibleProperty().bind(this.controller.getTasks().emptyProperty().not());
-        setModel(controller.getEventsModel());
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        refreshButton.setOnAction(new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                filteredEvents.refresh();
-            }
-        });
     }
 }

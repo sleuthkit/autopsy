@@ -334,12 +334,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
             this.filteredEvents.unRegisterForEvents(this);
             this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
-            this.filteredEvents.zoomParamtersProperty().removeListener(zoomListener);
+            this.filteredEvents.zoomParametersProperty().removeListener(zoomListener);
         }
         if (this.filteredEvents != filteredEvents) {
             filteredEvents.registerForEvents(this);
             filteredEvents.timeRangeProperty().addListener(timeRangeInvalidationListener);
-            filteredEvents.zoomParamtersProperty().addListener(zoomListener);
+            filteredEvents.zoomParametersProperty().addListener(zoomListener);
         }
 
         this.filteredEvents = filteredEvents;

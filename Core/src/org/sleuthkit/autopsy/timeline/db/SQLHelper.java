@@ -69,9 +69,21 @@ public class SQLHelper {
         return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " LEFT JOIN tags " : " ";
     }
 
-    static <X> Set<X> unGroupConcat(String s, Function<String, X> mapper) {
-        return StringUtils.isBlank(s) ? Collections.emptySet()
-                : Stream.of(s.split(","))
+    /**
+     * take the result of a group_concat SQLite operation and split it into a
+     * set of X using the mapper to to convert from string to X
+     *
+     * @param <X>         the type of elements to return
+     * @param groupConcat a string containing the group_concat result ( a comma
+     *                    separated list)
+     * @param mapper      a function from String to X
+     *
+     * @return a Set of X, each element mapped from one element of the original
+     *         comma delimited string
+     */
+    static <X> Set<X> unGroupConcat(String groupConcat, Function<String, X> mapper) {
+        return StringUtils.isBlank(groupConcat) ? Collections.emptySet()
+                : Stream.of(groupConcat.split(","))
                 .map(mapper::apply)
                 .collect(Collectors.toSet());
     }
@@ -164,7 +176,11 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(DataSourceFilter filter) {
-        return (filter.isSelected()) ? "(datasource_id = '" + filter.getDataSourceID() + "')" : "1";
+        if (filter.isSelected()) {
+            return "(datasource_id = '" + filter.getDataSourceID() + "')";
+        } else {
+            return "1";
+        }
     }
 
     private static String getSQLWhere(DataSourcesFilter filter) {

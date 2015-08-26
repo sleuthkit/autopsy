@@ -46,11 +46,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -144,6 +144,7 @@ public class EventDB {
     private PreparedStatement getMaxTimeStmt;
     private PreparedStatement getMinTimeStmt;
     private PreparedStatement getDataSourceIDsStmt;
+    private PreparedStatement getHashSetNamesStmt;
     private PreparedStatement insertRowStmt;
     private PreparedStatement recordDBInfoStmt;
     private PreparedStatement insertHashSetStmt;
@@ -253,21 +254,29 @@ public class EventDB {
         }
     }
 
+    /**
+     * get a count of tagnames applied to the given event ids as a map from
+     * tagname displayname to count of tag applications
+     *
+     * @param eventIDsWithTags the event ids to get the tag counts map for
+     *
+     * @return a map from tagname displayname to count of applications
+     */
     Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
         HashMap<String, Long> counts = new HashMap<>();
+        DBLock.lock();
         try (Statement createStatement = con.createStatement();
-                ResultSet rs = createStatement.executeQuery("SELECT tag_name_displayName, COUNT(DISTINCT tag_id) AS count FROM tags"
+                ResultSet rs = createStatement.executeQuery("SELECT tag_name_display_name, COUNT(DISTINCT tag_id) AS count FROM tags"
                         + " WHERE event_id IN (" + StringUtils.join(eventIDsWithTags, ", ") + ")"
                         + " GROUP BY tag_name_id"
-                        + " ORDER BY tag_name_displayName");) {
+                        + " ORDER BY tag_name_display_name");) {
             while (rs.next()) {
-                counts.put(rs.getString("tag_name_displayName"), rs.getLong("count"));
+                counts.put(rs.getString("tag_name_display_name"), rs.getLong("count"));
             }
-
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Failed to get tag counts by tag name.", ex);
         } finally {
-
+            DBLock.unlock();
         }
         return counts;
     }
@@ -292,6 +301,10 @@ public class EventDB {
         }
     }
 
+    /**
+     * drop only the tags table and rebuild it incase the tags have changed
+     * while TL was not listening,
+     */
     void reInitializeTags() {
         DBLock.lock();
         try {
@@ -361,7 +374,7 @@ public class EventDB {
         Set<Long> resultIDs = new HashSet<>();
 
         DBLock.lock();
-        final String query = "SELECT events.event_id as event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
+        final String query = "SELECT events.event_id AS event_id FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) + " WHERE time >=  " + startTime + " AND time <" + endTime + " AND " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -385,11 +398,11 @@ public class EventDB {
         return getDBInfo(DBInfoKey.LAST_OBJECT_ID, -1);
     }
 
+    /**
+     * this relies on the fact that no tskObj has ID 0 but 0 is the default
+     * value for the datasource_id column in the events table.
+     */
     boolean hasNewColumns() {
-        /*
-         * this relies on the fact that no tskObj has ID 0 but 0 is the default
-         * value for the datasource_id column in the events table.
-         */
         return hasHashHitColumn() && hasDataSourceIDColumn() && hasTaggedColumn()
                 && (getDataSourceIDs().isEmpty() == false);
     }
@@ -416,7 +429,7 @@ public class EventDB {
     Map<Long, String> getHashSetNames() {
         Map<Long, String> hashSets = new HashMap<>();
         DBLock.lock();
-        try (ResultSet rs = con.createStatement().executeQuery("select * from hash_sets")) {
+        try (ResultSet rs = getHashSetNamesStmt.executeQuery();) {
             while (rs.next()) {
                 long hashSetID = rs.getLong("hash_set_id");
                 String hashSetName = rs.getString("hash_set_name");
@@ -515,8 +528,8 @@ public class EventDB {
                         + " full_description TEXT, " // NON-NLS
                         + " med_description TEXT, " // NON-NLS
                         + " short_description TEXT, " // NON-NLS
-                        + " known_state INTEGER," // NON-NLS
-                        + " hash_hit INTEGER," // NON-NLS
+                        + " known_state INTEGER," //boolean // NON-NLS
+                        + " hash_hit INTEGER," //boolean // NON-NLS
                         + " tagged INTEGER)"; //boolean // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
@@ -581,7 +594,7 @@ public class EventDB {
                 insertRowStmt = prepareStatement(
                         "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit, tagged) " // NON-NLS
                         + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
-
+                getHashSetNamesStmt = prepareStatement("SELECT hash_set_id, hash_set_name FROM hash_sets"); // NON-NLS
                 getDataSourceIDsStmt = prepareStatement("SELECT DISTINCT datasource_id FROM events"); // NON-NLS
                 getMaxTimeStmt = prepareStatement("SELECT Max(time) AS max FROM events"); // NON-NLS
                 getMinTimeStmt = prepareStatement("SELECT Min(time) AS min FROM events"); // NON-NLS
@@ -591,7 +604,7 @@ public class EventDB {
                 insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)");
                 selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
                 insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)");
-                insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_displayName, event_id) values (?,?,?,?)");
+                insertTagStmt = prepareStatement("INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_display_name, event_id) values (?,?,?,?)");
                 deleteTagStmt = prepareStatement("DELETE FROM tags WHERE tag_id = ?");
                 countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events");
                 dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events");
@@ -608,17 +621,21 @@ public class EventDB {
         }
     }
 
+    /**
+     * create the tags table if it doesn't already exist. This is broken out as
+     * a separate method so it can be used by {@link #reInitializeTags() }
+     */
     private void initializeTagsTable() {
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE IF NOT EXISTS tags "
                     + "(tag_id INTEGER NOT NULL,"
                     + " tag_name_id INTEGER NOT NULL, "
-                    + " tag_name_displayName TEXT NOT NULL, "
+                    + " tag_name_display_name TEXT NOT NULL, "
                     + " event_id INTEGER REFERENCES events(event_id) NOT NULL, "
                     + " PRIMARY KEY (event_id, tag_name_id))";
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
+            LOGGER.log(Level.SEVERE, "problem creating tags table", ex);
         }
     }
 
@@ -767,7 +784,20 @@ public class EventDB {
         }
     }
 
-    Set<Long> addTag(long objectID, Long artifactID, Tag tag) {
+    /**
+     * mark any events with the given object and artifact ids as tagged, and
+     * record the tag it self.
+     *
+     * @param objectID   the obj_id that this tag applies to, the id of the
+     *                   content that the artifact is derived from for artifact
+     *                   tags
+     * @param artifactID the artifact_id that this tag applies to, or null if
+     *                   this is a content tag
+     * @param tag        the tag that should be inserted
+     *
+     * @return the event ids that match the object/artifact pair
+     */
+    Set<Long> addTag(long objectID, @Nullable Long artifactID, Tag tag) {
         DBLock.lock();
         try {
             Set<Long> eventIDs = markEventsTagged(objectID, artifactID, true);
@@ -783,9 +813,20 @@ public class EventDB {
         return Collections.emptySet();
     }
 
-    private void insertTag(Tag tag, Long eventID) throws SQLException {
+    /**
+     * insert this tag into the db
+     * <p>
+     * NOTE: does not lock the db, must be called form inside a
+     * DBLock.lock/unlock pair
+     *
+     * @param tag     the tag to insert
+     * @param eventID the event id that this tag is applied to.
+     *
+     * @throws SQLException if there was a problem executing insert
+     */
+    private void insertTag(Tag tag, long eventID) throws SQLException {
 
-        //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_displayName, event_id) values (?,?,?,?)"
+        //"INSERT OR IGNORE INTO tags (tag_id, tag_name_id,tag_name_display_name, event_id) values (?,?,?,?)"
         insertTagStmt.clearParameters();
         insertTagStmt.setLong(1, tag.getId());
         insertTagStmt.setLong(2, tag.getName().getId());
@@ -794,14 +835,30 @@ public class EventDB {
         insertTagStmt.executeUpdate();
     }
 
-    Set<Long> deleteTag(long objectID, Long artifactID, Tag tag, boolean stillTagged) {
+    /**
+     * mark any events with the given object and artifact ids as tagged, and
+     * record the tag it self.
+     *
+     * @param objectID    the obj_id that this tag applies to, the id of the
+     *                    content that the artifact is derived from for artifact
+     *                    tags
+     * @param artifactID  the artifact_id that this tag applies to, or null if
+     *                    this is a content tag
+     * @param tag         the tag that should be deleted
+     * @param stillTagged true if there are other tags still applied to this
+     *                    event in autopsy
+     *
+     * @return the event ids that match the object/artifact pair
+     */
+    Set<Long> deleteTag(long objectID, @Nullable Long artifactID, Tag tag, boolean stillTagged) {
         DBLock.lock();
         try {
-            Set<Long> eventIDs = markEventsTagged(objectID, artifactID, stillTagged);
             //"DELETE FROM tags WHERE tag_id = ?
             deleteTagStmt.clearParameters();
             deleteTagStmt.setLong(1, tag.getId());
             deleteTagStmt.executeUpdate();
+
+            Set<Long> eventIDs = markEventsTagged(objectID, artifactID, stillTagged);
             return eventIDs;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
@@ -811,8 +868,28 @@ public class EventDB {
         return Collections.emptySet();
     }
 
-    private Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) throws SQLException {
-        HashSet<Long> eventIDs = new HashSet<>();
+    /**
+     * mark any events with the given object and artifact ids as tagged, and
+     * record the tag it self.
+     * <p>
+     * NOTE: does not lock the db, must be called form inside a
+     * DBLock.lock/unlock pair
+     *
+     * @param objectID   the obj_id that this tag applies to, the id of the
+     *                   content that the artifact is derived from for artifact
+     *                   tags
+     * @param artifactID the artifact_id that this tag applies to, or null if
+     *                   this is a content tag
+     * @param tagged     true to mark the matching events tagged, false to mark
+     *                   them as untagged
+     *
+     * @return the event ids that match the object/artifact pair
+     *
+     * @throws SQLException if there is an error marking the events as
+     *                      (un)taggedS
+     */
+    private Set<Long> markEventsTagged(long objectID, @Nullable Long artifactID, boolean tagged) throws SQLException {
+        //first select the  matching event ids
         selectEventIDsFromOBjectAndArtifactStmt.clearParameters();
         selectEventIDsFromOBjectAndArtifactStmt.setLong(1, objectID);
         if (Objects.isNull(artifactID)) {
@@ -820,15 +897,20 @@ public class EventDB {
         } else {
             selectEventIDsFromOBjectAndArtifactStmt.setLong(2, artifactID);
         }
+
+        HashSet<Long> eventIDs = new HashSet<>();
         try (ResultSet executeQuery = selectEventIDsFromOBjectAndArtifactStmt.executeQuery();) {
             while (executeQuery.next()) {
                 eventIDs.add(executeQuery.getLong("event_id"));
             }
-            try (Statement updateStatement = con.createStatement();) {
-                updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
-                        + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
-            }
         }
+
+        //then update tagged state for all event with selected ids
+        try (Statement updateStatement = con.createStatement();) {
+            updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
+                    + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
+        }
+
         return eventIDs;
     }
 
@@ -848,19 +930,6 @@ public class EventDB {
         trans.rollback();
     }
 
-    boolean tableExists() {
-        //TODO: use prepared statement - jm
-        try (Statement createStatement = con.createStatement();
-                ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
-            if (executeQuery.getString("name").equals("events") == false) { // NON-NLS
-                return false;
-            }
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return true;
-    }
-
     private void closeStatements() throws SQLException {
         for (PreparedStatement pStmt : preparedStatements) {
             pStmt.close();
@@ -871,16 +940,6 @@ public class EventDB {
         DBLock.lock();
         //this should match Sleuthkit db setup
         try (Statement statement = con.createStatement()) {
-//            String autopsyDBFileName = Paths.get(dbPath).getParent().resolve("autopsy.db").toString();
-//
-//            ResultSet rs = statement.executeQuery("PRAGMA database_list");
-//            boolean found = false;
-//            while (rs.next() && !found) {
-//                found |= "autopsy".equalsIgnoreCase(rs.getString("name"));
-//            }
-//            if (!found) {
-//                statement.execute("ATTACH DATABASE 'file:" + autopsyDBFileName + "?mode=ro' AS autopsy");
-//            }
             //reduce i/o operations, we have no OS crash recovery anyway
             statement.execute("PRAGMA synchronous = OFF;"); // NON-NLS
             //we don't use this feature, so turn it off for minimal speed up on queries
@@ -903,6 +962,7 @@ public class EventDB {
                     SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
                             ? "native" : "pure-java")); // NON-NLS
         } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Failed to determine if sqlite-jdbc is loaded in native or pure-java mode.", exception);
         }
     }
 
@@ -923,7 +983,6 @@ public class EventDB {
     /**
      * count all the events with the given options and return a map organizing
      * the counts in a hierarchy from date > eventtype> count
-     *
      *
      * @param startTime events before this time will be excluded (seconds from
      *                  unix epoch)

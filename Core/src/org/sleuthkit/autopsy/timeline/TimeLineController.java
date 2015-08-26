@@ -189,7 +189,7 @@ public class TimeLineController {
     private final History<ZoomParams> historyManager = new History<>();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<ZoomParams> currentState = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<ZoomParams> currentParams = new ReadOnlyObjectWrapper<>();
 
     //all members should be access with the intrinsict lock of this object held
     //selected events (ie shown in the result viewer)
@@ -233,24 +233,30 @@ public class TimeLineController {
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
     public TimeLineController(Case autoCase) {
-        this.autoCase = autoCase;        //initalize repository and filteredEvents on creation
-        historyManager.currentState().addListener(new InvalidationListener() {
+        this.autoCase = autoCase;
 
+        /*
+         * as the history manager's current state changes, modify the tags
+         * filter to be in sync, and expose that as propery from
+         * TimeLineController. Do we need to do this with datasource or hash hit
+         * filters?
+         */
+        historyManager.currentState().addListener(new InvalidationListener() {
             public void invalidated(Observable observable) {
-                ZoomParams currentState1 = historyManager.getCurrentState();
-                eventsRepository.syncTagsFilter(currentState1.getFilter().getTagsFilter());
-                currentState.set(currentState1);
+                ZoomParams historyManagerParams = historyManager.getCurrentState();
+                eventsRepository.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
+                currentParams.set(historyManagerParams);
             }
         });
-        eventsRepository = new EventsRepository(autoCase, currentState.getReadOnlyProperty());
 
+        eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
         filteredEvents = eventsRepository.getEventsModel();
+
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
                 filteredEvents.filterProperty().get(),
                 DescriptionLOD.SHORT);
         historyManager.advance(InitialZoomState);
-
     }
 
     /**
@@ -266,7 +272,7 @@ public class TimeLineController {
 
     public void zoomOutToActivity() {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
-        advance(filteredEvents.zoomParamtersProperty().get().withTimeRange(boundingEventsInterval));
+        advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
     /**
@@ -308,11 +314,11 @@ public class TimeLineController {
                         needsHistogramRebuild.set(false);
                         showWindow();
                     }
-                    
+
                     Platform.runLater(() -> {
                         //TODO: should this be an event?
                         newEventsFlag.set(false);
-                        historyManager.reset(filteredEvents.zoomParamtersProperty().get());
+                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
                         TimeLineController.this.showFullRange();
                     });
                 });
@@ -324,8 +330,12 @@ public class TimeLineController {
         return true;
     }
 
-    boolean rebuildTagsTable() {
-
+    /**
+     * Since tags might have changed while TimeLine wasn't listening, drop the
+     * tags table and rebuild it by querying for all the tags and inserting them
+     * in to the TimeLine DB.
+     */
+    void rebuildTagsTable() {
         LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
         SwingUtilities.invokeLater(() -> {
             if (isWindowOpen()) {
@@ -340,7 +350,6 @@ public class TimeLineController {
                 });
             });
         }
-        return true;
     }
 
     public void showFullRange() {
@@ -365,7 +374,6 @@ public class TimeLineController {
      * show the timeline window and prompt for rebuilding database if necessary.
      */
     synchronized void openTimeLine() {
-
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -375,13 +383,16 @@ public class TimeLineController {
         }
 
         try {
+            boolean repoRebuilt = false;  //has the repo been rebuilt
             long timeLineLastObjectId = eventsRepository.getLastObjID();
 
-            boolean repoRebuilt = false;
+            //if the repo is empty rebuild it
             if (timeLineLastObjectId == -1) {
                 repoRebuilt = rebuildRepo();
             }
+
             if (repoRebuilt == false) {
+                //if ingest was running uring last rebuild, prompt to rebuild
                 if (eventsRepository.getWasIngestRunning()) {
                     if (confirmLastBuiltDuringIngestRebuild()) {
                         repoRebuilt = rebuildRepo();
@@ -391,6 +402,7 @@ public class TimeLineController {
 
             if (repoRebuilt == false) {
                 final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
+                //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
                 if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
                         || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
                     if (confirmOutOfDateRebuild()) {
@@ -400,16 +412,17 @@ public class TimeLineController {
             }
 
             if (repoRebuilt == false) {
-                boolean hasDSInfo = eventsRepository.hasDataSourceInfo();
-                if (hasDSInfo == false) {
+                // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
+                if (eventsRepository.hasNewColumns() == false) {
                     if (confirmDataSourceIDsMissingRebuild()) {
                         repoRebuilt = rebuildRepo();
                     }
                 }
             }
+
             /*
              * if the repo was not rebuilt at minimum rebuild the tags which may
-             * have been updated without or knowing it.
+             * have been updated without our knowing it.
              */
             if (repoRebuilt == false) {
                 rebuildTagsTable();
@@ -521,7 +534,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
-        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
+        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
         } else if (currentZoom.hasTypeZoomLevel(typeZoomeLevel) == false) {
@@ -531,7 +544,7 @@ public class TimeLineController {
 
     synchronized public void pushTimeRange(Interval timeRange) {
 //        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
-        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
+        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
@@ -540,7 +553,7 @@ public class TimeLineController {
     }
 
     synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
-        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParamtersProperty().get().getTimeRange());
+        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
@@ -558,7 +571,7 @@ public class TimeLineController {
         }
 
         if (shouldContinue) {
-            ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
+            ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
             if (currentZoom == null) {
                 advance(InitialZoomState.withDescrLOD(newLOD));
             } else if (currentZoom.hasDescrLOD(newLOD) == false) {
@@ -570,7 +583,7 @@ public class TimeLineController {
 
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
 //        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
-        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
+        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
@@ -583,7 +596,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushFilters(RootFilter filter) {
-        ZoomParams currentZoom = filteredEvents.zoomParamtersProperty().get();
+        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));
         } else if (currentZoom.hasFilter(filter) == false) {
@@ -710,9 +723,11 @@ public class TimeLineController {
     }
 
     /**
+     * prompt the user to rebuild the db because the db is out of date and
+     * doesn't include things from subsequent ingests ONLY IF THE TIMELINE
+     * WINDOW IS OPEN
      *
-     * @throws MissingResourceException
-     * @throws HeadlessException
+     * @return true if they agree to rebuild
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {

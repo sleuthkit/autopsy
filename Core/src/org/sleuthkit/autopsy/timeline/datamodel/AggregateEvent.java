@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
-import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;

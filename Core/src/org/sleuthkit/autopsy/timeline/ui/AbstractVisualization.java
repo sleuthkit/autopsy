@@ -174,7 +174,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
 
     /**
      * update this visualization based on current state of zoom /
-     * filters.Primarily this invokes the background {@link Task} returned by
+     * filters.  Primarily this invokes the background {@link Task} returned by
      * {@link #getUpdateTask()} which derived classes must implement.
      */
     synchronized public void update() {
@@ -207,7 +207,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         if (updateTask != null) {
             updateTask.cancel(true);
         }
-        this.filteredEvents.zoomParamtersProperty().removeListener(invalidationListener);
+        this.filteredEvents.zoomParametersProperty().removeListener(invalidationListener);
         invalidationListener = null;
     }
 
@@ -244,11 +244,11 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
 
         if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
             this.filteredEvents.unRegisterForEvents(this);
-            this.filteredEvents.zoomParamtersProperty().removeListener(invalidationListener);
+            this.filteredEvents.zoomParametersProperty().removeListener(invalidationListener);
         }
         if (this.filteredEvents != filteredEvents) {
             filteredEvents.registerForEvents(this);
-            filteredEvents.zoomParamtersProperty().addListener(invalidationListener);
+            filteredEvents.zoomParametersProperty().addListener(invalidationListener);
         }
         this.filteredEvents = filteredEvents;
 

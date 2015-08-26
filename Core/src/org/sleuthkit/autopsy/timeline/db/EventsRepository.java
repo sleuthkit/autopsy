@@ -67,11 +67,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Provides public API (over EventsDB) to access events. In theory this
- * insulates the rest of the timeline module form the details of the db
+ * Provides higher-level public API (over EventsDB) to access events. In theory
+ * this insulates the rest of the timeline module form the details of the db
  * implementation. Since there are no other implementations of the database or
  * clients of this class, and no Java Interface defined yet, in practice this
- * just delegates everything to the eventDB
+ * just delegates everything to the eventDB. Some results are also cached by
+ * this layer.
  *
  * Concurrency Policy:
  *
@@ -229,6 +230,94 @@ public class EventsRepository {
         return eventDB.getSpanningInterval(eventIDs);
     }
 
+    public boolean hasNewColumns() {
+        return eventDB.hasNewColumns();
+    }
+
+    /**
+     * get a count of tagnames applied to the given event ids as a map from
+     * tagname displayname to count of tag applications
+     *
+     * @param eventIDsWithTags the event ids to get the tag counts map for
+     *
+     * @return a map from tagname displayname to count of applications
+     */
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        return eventDB.getTagCountsByTagName(eventIDsWithTags);
+    }
+
+    /**
+     * use the given SleuthkitCase to update the data used to determine the
+     * available filters.
+     *
+     * @param skCase
+     */
+    synchronized private void populateFilterData(SleuthkitCase skCase) {
+
+        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
+            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
+        }
+        //because there is no way to remove a datasource we only add to this map.
+        for (Long id : eventDB.getDataSourceIDs()) {
+            try {
+                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
+            }
+        }
+
+        try {
+            //should this only be tags applied to files or event bearing artifacts?
+            tagNames.setAll(skCase.getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
+    }
+
+    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) {
+        Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
+        eventCountsCache.invalidateAll();
+        aggregateEventsCache.invalidateAll();
+        idToEventCache.invalidateAll(updatedEventIDs);
+        try {
+            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
+    }
+
+    /**
+     * "sync" the given tags filter with the tagnames in use: Disable filters
+     * for tags that are not in use in the case, and add new filters for tags
+     * that don't have them. New filters are selected by default.
+     *
+     * @param tagsFilter the tags filter to modify so it is consistent with the
+     *                   tags in use in the case
+     */
+    public void syncTagsFilter(TagsFilter tagsFilter) {
+        for (TagName t : tagNames) {
+            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
+        }
+        for (TagNameFilter t : tagsFilter.getSubFilters()) {
+            t.setDisabled(tagNames.contains(t.getTagName()) == false);
+        }
+    }
+
     synchronized public void rebuildRepository(Runnable r) {
         if (dbPopulationWorker != null) {
             dbPopulationWorker.cancel(true);
@@ -245,14 +334,6 @@ public class EventsRepository {
         }
         dbPopulationWorker = new RebuildTagsWorker(r);
         dbPopulationWorker.execute();
-    }
-
-    public boolean hasDataSourceInfo() {
-        return eventDB.hasNewColumns();
-    }
-
-    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
-        return eventDB.getTagCountsByTagName(eventIDsWithTags);
     }
 
     private class RebuildTagsWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -340,7 +421,7 @@ public class EventsRepository {
                 progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
@@ -350,7 +431,6 @@ public class EventsRepository {
             }
             postPopulationOperation.run();  //execute post db population operation
         }
-
     }
 
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -485,7 +565,7 @@ public class EventsRepository {
                 progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
@@ -539,75 +619,4 @@ public class EventsRepository {
         }
     }
 
-    /**
-     * use the given SleuthkitCase to update the data used to determine the
-     * available filters.
-     *
-     * @param skCase
-     */
-    synchronized private void populateFilterData(SleuthkitCase skCase) {
-
-        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
-            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
-        }
-        //because there is no way to remove a datasource we only add to this map.
-        for (Long id : eventDB.getDataSourceIDs()) {
-            try {
-                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
-            }
-        }
-
-        try {
-            //should this only be tags applied to files or event bearing artifacts?
-            tagNames.setAll(skCase.getTagNamesInUse());
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
-        }
-    }
-
-    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) {
-        Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
-        if (!updatedEventIDs.isEmpty()) {
-            invalidateCaches(updatedEventIDs);
-        }
-        return updatedEventIDs;
-    }
-
-    synchronized public Set<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
-        if (!updatedEventIDs.isEmpty()) {
-            invalidateCaches(updatedEventIDs);
-        }
-        return updatedEventIDs;
-    }
-
-    synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
-        eventCountsCache.invalidateAll();
-        aggregateEventsCache.invalidateAll();
-        idToEventCache.invalidateAll(updatedEventIDs);
-        try {
-            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
-        }
-    }
-
-    /**
-     * "sync" the given tags filter with the tagnames in use: Disable filters
-     * for tags that are not in use in the case, and add new filters for tags
-     * that don't have them. New filters are selected by default.
-     *
-     * @param tagsFilter the tags filter to modify so it is consistent with the
-     *                   tags in use in the case
-     */
-    public void syncTagsFilter(TagsFilter tagsFilter) {
-        for (TagName t : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
-        }
-        for (TagNameFilter t : tagsFilter.getSubFilters()) {
-            t.setDisabled(tagNames.contains(t.getTagName()) == false);
-        }
-    }
 }
