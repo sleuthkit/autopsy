@@ -49,6 +49,7 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -60,6 +61,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -152,12 +154,23 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             Metadata metadata = ImageMetadataReader.readMetadata(bin);
 
             // Date
+            Case.getCurrentCase().getTimeZone();
             ExifSubIFDDirectory exifDir = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
             if (exifDir != null) {
+
+                // set the timeZone for the current datasource.
                 if (timeZone == null) {
-                    Image image = (Image) f.getDataSource();
-                    timeZone = TimeZone.getTimeZone(image.getTimeZone());
+                    try {
+                        Content dataSource = f.getDataSource();
+                        if ((dataSource != null) && (dataSource instanceof Image)) {
+                            Image image = (Image) dataSource;
+                            timeZone = TimeZone.getTimeZone(image.getTimeZone());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
+                    }
                 }
+
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
