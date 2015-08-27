@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -59,6 +60,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -81,6 +83,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
     private final HashSet<String> supportedMimeTypes = new HashSet<>();
+    private TimeZone timeZone = null;
 
     ExifParserFileIngestModule() {
         supportedMimeTypes.add("audio/x-wav");
@@ -151,7 +154,11 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             // Date
             ExifSubIFDDirectory exifDir = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
             if (exifDir != null) {
-                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+                if (timeZone == null) {
+                    Image image = (Image) f.getDataSource();
+                    timeZone = TimeZone.getTimeZone(image.getTimeZone());
+                }
+                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
@@ -366,6 +373,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     public void shutDown() {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
+            timeZone = null;
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
