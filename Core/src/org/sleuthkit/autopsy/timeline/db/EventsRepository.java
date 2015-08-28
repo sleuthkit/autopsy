@@ -532,6 +532,7 @@ public class EventsRepository {
             }
 
             publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
+
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -618,5 +619,4 @@ public class EventsRepository {
             }
         }
     }
-
 }
