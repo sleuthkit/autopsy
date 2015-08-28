@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import java.net.URL;
+import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.ResourceBundle;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -35,36 +32,25 @@ import javafx.scene.layout.Priority;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.TagUtils;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays summary statistics (counts) for each group
  */
-public class SummaryTablePane extends AnchorPane implements Category.CategoryListener {
-
-    private static SummaryTablePane instance;
+public class SummaryTablePane extends AnchorPane {
 
     @FXML
-    private ResourceBundle resources;
+    private TableColumn<Pair<Category, Long>, String> catColumn;
 
     @FXML
-    private URL location;
+    private TableColumn<Pair<Category, Long>, Long> countColumn;
 
     @FXML
-    private TableColumn<Pair<Category, Integer>, String> catColumn;
-
-    @FXML
-    private TableColumn<Pair<Category, Integer>, Integer> countColumn;
-
-    @FXML
-    private TableView<Pair<Category, Integer>> tableView;
+    private TableView<Pair<Category, Long>> tableView;
+    private final ImageGalleryController controller;
 
     @FXML
     void initialize() {
@@ -78,50 +64,40 @@ public class SummaryTablePane extends AnchorPane implements Category.CategoryLis
         tableView.prefHeightProperty().set(7 * 25);
 
         //set up columns
-        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Integer>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
+        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
         catColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
-        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Integer>, Integer> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
+        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
 
         tableView.getColumns().setAll(Arrays.asList(catColumn, countColumn));
 
-//        //register for category events
-        Category.registerListener(this);
+        //register for category events
+        controller.getCategoryManager().registerListener(this);
+        handleCategoryChanged(null);
     }
 
-    private SummaryTablePane() {
+    public SummaryTablePane(ImageGalleryController controller) {
+        this.controller = controller;
         FXMLConstructor.construct(this, "SummaryTablePane.fxml");
-    }
 
-    public static synchronized SummaryTablePane getDefault() {
-        if (instance == null) {
-            instance = new SummaryTablePane();
-        }
-
-        return instance;
     }
 
     /**
      * listen to Category updates and rebuild the table
      */
-    @Override
-    public void handleCategoryChanged(Collection<Long> ids) {
+    @Subscribe
+    public void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
+        final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
-            final ObservableList<Pair<Category, Integer>> data = FXCollections.observableArrayList();
-
             for (Category cat : Category.values()) {
-                try {
-                    data.add(new Pair<>(cat, ImageGalleryController.getDefault().getGroupManager().countFilesWithCategory(cat)));
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(SummaryTablePane.class.getName()).log(Level.WARNING, "Error performing category file count");
-                }
+                data.add(new Pair<>(cat, controller.getCategoryManager().getCategoryCount(cat)));
             }
-            Platform.runLater(() -> {
-                if (tableView != null) {
-                    tableView.setItems(data);
-                }
-            });
         }
+        Platform.runLater(() -> {
+            if (tableView != null) {
+                tableView.setItems(data);
+            }
+        });
     }
 }

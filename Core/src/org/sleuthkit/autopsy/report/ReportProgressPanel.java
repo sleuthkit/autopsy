@@ -29,12 +29,14 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ReportProgressPanel extends javax.swing.JPanel {
+
     private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
     private ReportStatus STATUS;
-    
+
     // Enum to represent if a report is waiting,
     // running, done, or has been canceled
     public enum ReportStatus {
+
         QUEUING,
         RUNNING,
         COMPLETE,
@@ -49,20 +51,20 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         initComponents();
         customInit(reportName, reportPath);
     }
-    
+
     private void customInit(String reportName, String reportPath) {
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
 
-        reportLabel.setText(reportName);        
+        reportLabel.setText(reportName);
         processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
         STATUS = ReportStatus.QUEUING;
-        
+
         if (reportPath != null) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
             pathLabel.setToolTipText(reportPath);
 
-        // Add the "link" effect to the pathLabel
+            // Add the "link" effect to the pathLabel
             final String linkPath = reportPath;
             pathLabel.addMouseListener(new MouseListener() {
 
@@ -102,12 +104,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 }
 
             });
-        }
-        else {
+        } else {
             pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
         }
     }
-    
+
     /**
      * Return a shortened version of the given path.
      */
@@ -118,19 +119,19 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         }
         return path;
     }
-    
+
     /**
      * Return the current ReportStatus of this report.
-     * 
+     *
      * @return ReportStatus status of this report
      */
     public ReportStatus getStatus() {
         return STATUS;
     }
-    
+
     /**
      * Start the JProgressBar for this report.
-     * 
+     *
      * Enables the cancelButton, updates the processingLabel, and changes this
      * report's ReportStatus.
      */
@@ -143,10 +144,10 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
      * Set the maximum progress for this report's JProgressBar.
-     * 
+     *
      * @param max maximum progress for JProgressBar
      */
     public void setMaximumProgress(final int max) {
@@ -159,7 +160,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
      * Increment the JProgressBar for this report by one unit.
      */
@@ -173,11 +174,11 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
      * Set the value of the JProgressBar for this report.
-     * 
-     * @param value value to be set at 
+     *
+     * @param value value to be set at
      */
     public void setProgress(final int value) {
         EventQueue.invokeLater(new Runnable() {
@@ -189,11 +190,13 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
-     * Changes the status of the JProgressBar to be determinate or indeterminate.
-     * 
-     * @param indeterminate sets the JProgressBar to be indeterminate if true, determinate otherwise
+     * Changes the status of the JProgressBar to be determinate or
+     * indeterminate.
+     *
+     * @param indeterminate sets the JProgressBar to be indeterminate if true,
+     *                      determinate otherwise
      */
     public void setIndeterminate(final boolean indeterminate) {
         EventQueue.invokeLater(new Runnable() {
@@ -205,13 +208,12 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
-     * Change the text of this report's status label. The text given will
-     * be the full text used.
-     * e.g. updateStatusLabel("Now processing files...")
-     *      sets the label to "Now processing files..."
-     * 
+     * Change the text of this report's status label. The text given will be the
+     * full text used. e.g. updateStatusLabel("Now processing files...") sets
+     * the label to "Now processing files..."
+     *
      * @param status String to use as status
      */
     public void updateStatusLabel(final String status) {
@@ -224,21 +226,23 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
-     * Declare the report completed.
-     * This will fill the JProgressBar, update the cancelButton to completed,
-     * and disallow any cancellation of this report.
+     * Declare the report completed. This will fill the JProgressBar, update the
+     * cancelButton to completed, and disallow any cancellation of this report.
+     *
      * @deprecated Use {@link #complete(ReportStatus)}
      */
     @Deprecated
     public void complete() {
         complete(ReportStatus.COMPLETE);
     }
+
     /**
-     * Declare the report completed ands sets if completed successfully or with errors.
-     * This will fill the JProgressBar, update the cancelButton to completed,
-     * and disallow any cancellation of this report.
+     * Declare the report completed ands sets if completed successfully or with
+     * errors. This will fill the JProgressBar, update the cancelButton to
+     * completed, and disallow any cancellation of this report.
+     *
      * @param reportStatus set to appropriate ResultStatus enum.
      */
     public void complete(ReportStatus reportStatus) {
@@ -255,19 +259,19 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
                             reportProgressBar.setStringPainted(true);
                             // set reportProgressBar color as green.
-                            reportProgressBar.setForeground(new Color(50,205,50));
+                            reportProgressBar.setForeground(new Color(50, 205, 50));
                             reportProgressBar.setString("Complete"); //NON-NLS
                             break;
                         }
                         case ERROR: {
                             STATUS = ReportStatus.ERROR;
-                            processingLabel.setForeground(new Color(178,34,34));
+                            processingLabel.setForeground(new Color(178, 34, 34));
                             processingLabel.setText(
                                     NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
                             reportProgressBar.setValue(reportProgressBar.getMaximum());
                             reportProgressBar.setStringPainted(true);
                             // set reportProgressBar color as red.
-                            reportProgressBar.setForeground(new Color(178,34,34));
+                            reportProgressBar.setForeground(new Color(178, 34, 34));
                             reportProgressBar.setString("Error"); //NON-NLS
                             break;
                         }
@@ -282,6 +286,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         });
         // Do something with the button to change the icon and make not clickable
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -349,7 +354,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * complete or has already been completed, nothing happens.
      */
     void cancel() {
-        switch(STATUS) {
+        switch (STATUS) {
             case COMPLETE:
                 break;
             case CANCELED:
@@ -362,14 +367,14 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setValue(0);
                 reportProgressBar.setStringPainted(true);
                 // set reportProgressBar color as red.
-                reportProgressBar.setForeground(new Color(178,34,34));
+                reportProgressBar.setForeground(new Color(178, 34, 34));
                 reportProgressBar.setString("Cancelled"); //NON-NLS
-                processingLabel.setForeground(new Color(178,34,34));
+                processingLabel.setForeground(new Color(178, 34, 34));
                 processingLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel pathLabel;
     private javax.swing.JLabel processingLabel;

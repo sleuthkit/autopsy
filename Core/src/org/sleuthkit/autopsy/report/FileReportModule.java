@@ -23,36 +23,41 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A Report Module that reports information on files in a case.
- * 
+ *
  * @author jwallace
  */
- interface FileReportModule extends ReportModule {
-    /** 
-     * Initialize the report which will be stored at the given path.
-     * @param path 
-     */
-    public void startReport(String path);
-    
+interface FileReportModule extends ReportModule {
+
     /**
-     * End the report. 
-     * Will be called after the entire report has been written.
+     * Initialize the report which will be stored at the given path.
+     *
+     * @param baseReportDir Base directory to store the report file in. Report
+     *                      should go into baseReportDir +
+     *                      getRelativeFilePath().
+     */
+    public void startReport(String baseReportDir);
+
+    /**
+     * End the report. Will be called after the entire report has been written.
      */
     public void endReport();
-    
+
     /**
      * Start the file list table.
+     *
      * @param headers The columns that should be included in the table.
      */
     public void startTable(List<FileReportDataTypes> headers);
-    
+
     /**
-     * Add the given AbstractFile as a row in the table. 
-     * Guaranteed to be called between startTable and endTable.
-     * @param toAdd the AbstractFile to be added.
+     * Add the given AbstractFile as a row in the table. Guaranteed to be called
+     * between startTable and endTable.
+     *
+     * @param toAdd   the AbstractFile to be added.
      * @param columns the columns that should be included
      */
     public void addRow(AbstractFile toAdd, List<FileReportDataTypes> columns);
-    
+
     /**
      * Close the table.
      */

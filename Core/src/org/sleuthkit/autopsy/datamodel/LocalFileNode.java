@@ -83,7 +83,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
-            actionsList.add(null); // creates a menu separator
+        actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
@@ -110,6 +110,9 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
     @Override
     public boolean isLeafTypeNode() {
+        // This seems wrong, but it also seems that it is never called
+        // because the visitor to figure out if there are children or 
+        // not will check if it has children using the Content API
         return true; //!this.hasContentChildren();
     }
 }

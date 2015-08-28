@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
  *
@@ -46,36 +47,34 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-
     private IngestJobSettingsPanel ingestJobSettingsPanel;
-    
+
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private Component component = null;
-    
+
     private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private boolean ingested = false;
     private boolean readyToIngest = false;
-    
+
     // task that will clean up the created database file if the wizard is cancelled before it finishes
-    private AddImageAction.CleanupTask cleanupTask; 
-   
+    private AddImageAction.CleanupTask cleanupTask;
+
     private final AddImageAction addImageAction;
-    
+
     private final AddImageWizardAddingProgressPanel progressPanel;
     private final AddImageWizardChooseDataSourcePanel dataSourcePanel;
-    
+
     private DataSourceProcessor dsProcessor;
-    
 
     AddImageWizardIngestConfigPanel(AddImageWizardChooseDataSourcePanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
         this.addImageAction = action;
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
-        
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());        
+
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
     }
@@ -167,7 +166,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         readyToIngest = false;
 
         newContents.clear();
-       
+
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules
         startDataSourceProcessing(settings);
@@ -187,7 +186,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
-        
+
         // Start ingest if it hasn't already been started
         readyToIngest = true;
         startIngest();
@@ -203,7 +202,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
-    
+
     /**
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
@@ -215,14 +214,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             progressPanel.setStateFinished();
         }
     }
-    
-     /**
-     * Starts the Data source processing by kicking off the selected DataSourceProcessor
+
+    /**
+     * Starts the Data source processing by kicking off the selected
+     * DataSourceProcessor
      */
     private void startDataSourceProcessing(WizardDescriptor settings) {
-        
-       
-       
+
         // Add a cleanup task to interrupt the background process if the
         // wizard exits while the background process is running.
         cleanupTask = addImageAction.new CleanupTask() {
@@ -231,43 +229,43 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
                 cancelDataSourceProcessing();
             }
         };
-        
+
         cleanupTask.enable();
-       
-         // get the selected DSProcessor
-        dsProcessor =  dataSourcePanel.getComponent().getCurrentDSProcessor();
-        
-        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback () {
+
+        // get the selected DSProcessor
+        dsProcessor = dataSourcePanel.getComponent().getCurrentDSProcessor();
+
+        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
             @Override
-            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents)  {
-                dataSourceProcessorDone(result, errList, contents );
+            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+                dataSourceProcessorDone(result, errList, contents);
             }
-            
+
         };
-        
+
         progressPanel.setStateStarted();
-        
+
         // Kick off the DSProcessor 
         dsProcessor.run(progressPanel.getDSPProgressMonitorImpl(), cbObj);
-     
+
     }
 
     /*
      * Cancels the data source processing - in case the users presses 'Cancel'
      */
     private void cancelDataSourceProcessing() {
-         dsProcessor.cancel();
+        dsProcessor.cancel();
     }
-    
+
     /*
-     * Callback for the data source processor. 
-     * Invoked by the DSP on the EDT thread, when it finishes processing the data source.
+     * Callback for the data source processor. Invoked by the DSP on the EDT
+     * thread, when it finishes processing the data source.
      */
-    private void dataSourceProcessorDone(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList,  List<Content> contents) {
-         
-         // disable the cleanup task
+    private void dataSourceProcessorDone(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+
+        // disable the cleanup task
         cleanupTask.disable();
-       
+
         // Get attention for the process finish
         java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
         AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
@@ -279,40 +277,38 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         }
         // Tell the panel we're done
         progressPanel.setStateFinished();
-                
-      
+
         //check the result and display to user
-        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS)
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS) {
             progressPanel.getComponent().setProgressBarTextAndColor(
                     NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text"), 100, Color.black);
-        else 
+        } else {
             progressPanel.getComponent().setProgressBarTextAndColor(
                     NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.errs.text"), 100, Color.red);
-       
-        
+        }
+
         //if errors, display them on the progress panel
         boolean critErr = false;
         if (result == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
             critErr = true;
         }
-        for ( String err: errList ) {
+        for (String err : errList) {
             //  TBD: there probably should be an error level for each error
             progressPanel.addErrors(err, critErr);
         }
-      
+
         newContents.clear();
         newContents.addAll(contents);
-        
+
         //notify the UI of the new content added to the case
         if (!newContents.isEmpty()) {
-            
-             Case.getCurrentCase().notifyNewDataSource(newContents.get(0));
+
+            Case.getCurrentCase().notifyNewDataSource(newContents.get(0));
         }
 
-        
-       // Start ingest if we can
+        // Start ingest if we can
         progressPanel.setStateStarted();
         startIngest();
-        
+
     }
 }

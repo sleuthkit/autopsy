@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.events.db;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import java.io.File;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -45,11 +44,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
@@ -57,59 +59,60 @@ import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.events.type.BaseTypes;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
-import org.sleuthkit.autopsy.timeline.filters.IntersectionFilter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
+import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.FULL;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.MEDIUM;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.SHORT;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MONTHS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.SECONDS;
+import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.YEARS;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class provides access to the  Timeline SQLite database. This
- * class borrows a lot of ideas and techniques from {@link  SleuthkitCase},
- * Creating an abstract base class for sqlite databases, or using a higherlevel
+ * Provides access to the Timeline SQLite database.
+ *
+ * This class borrows a lot of ideas and techniques from {@link  SleuthkitCase}.
+ * Creating an abstract base class for SQLite databases, or using a higherlevel
  * persistence api may make sense in the future.
  */
 public class EventDB {
 
-    private static final String ARTIFACT_ID_COLUMN = "artifact_id"; // NON-NLS
+    /**
+    
+     * enum to represent keys stored in db_info table
+     */
+    private enum DBInfoKey {
 
-    private static final String BASE_TYPE_COLUMN = "base_type"; // NON-NLS
+        LAST_ARTIFACT_ID("last_artifact_id"), // NON-NLS
+        LAST_OBJECT_ID("last_object_id"), // NON-NLS
+        WAS_INGEST_RUNNING("was_ingest_running"); // NON-NLS
 
-    private static final String EVENT_ID_COLUMN = "event_id"; // NON-NLS
+        private final String keyName;
 
-    //column name constants//////////////////////
-    private static final String FILE_ID_COLUMN = "file_id"; // NON-NLS
+        private DBInfoKey(String keyName) {
+            this.keyName = keyName;
+        }
 
-    private static final String FULL_DESCRIPTION_COLUMN = "full_description"; // NON-NLS
-
-    private static final String KNOWN_COLUMN = "known_state"; // NON-NLS
-
-    private static final String LAST_ARTIFACT_ID_KEY = "last_artifact_id"; // NON-NLS
-
-    private static final String LAST_OBJECT_ID_KEY = "last_object_id"; // NON-NLS
+        @Override
+        public String toString() {
+            return keyName;
+        }
+    }
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
-    private static final String MED_DESCRIPTION_COLUMN = "med_description"; // NON-NLS
-
-    private static final String SHORT_DESCRIPTION_COLUMN = "short_description"; // NON-NLS
-
-    private static final String SUB_TYPE_COLUMN = "sub_type"; // NON-NLS
-
-    private static final String TIME_COLUMN = "time"; // NON-NLS
-
-    private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
-
     static {
-        //make sure sqlite driver is loaded // possibly redundant
+        //make sure sqlite driver is loaded, possibly redundant
         try {
             Class.forName("org.sqlite.JDBC"); // NON-NLS
         } catch (ClassNotFoundException ex) {
@@ -122,15 +125,13 @@ public class EventDB {
      * the given path. If a database does not already exist at that path, one is
      * created.
      *
-     * @param dbPath
+     * @param autoCase the Autopsy {@link Case} the is events database is for.
      *
-     * @return
+     * @return a new EventDB or null if there was an error.
      */
-    public static EventDB getEventDB(String dbPath) {
+    public static EventDB getEventDB(Case autoCase) {
         try {
-            EventDB eventDB = new EventDB(dbPath + File.separator + "events.db"); // NON-NLS
-
-            return eventDB;
+            return new EventDB(autoCase);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "sql error creating database connection", ex); // NON-NLS
             return null;
@@ -140,121 +141,34 @@ public class EventDB {
         }
     }
 
-    static List<Integer> getActiveSubTypes(TypeFilter filter) {
-        if (filter.isActive()) {
-            if (filter.getSubFilters().isEmpty()) {
-                return Collections.singletonList(RootEventType.allTypes.indexOf(filter.getEventType()));
-            } else {
-                return filter.getSubFilters().stream().flatMap((Filter t) -> getActiveSubTypes((TypeFilter) t).stream()).collect(Collectors.toList());
-            }
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    static String getSQLWhere(IntersectionFilter filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isActive)
-                .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" and ", "( ", ")")); // NON-NLS
-    }
-
-    static String getSQLWhere(UnionFilter filter) {
-        return filter.getSubFilters().stream()
-                .filter(Filter::isActive)
-                .map(EventDB::getSQLWhere)
-                .collect(Collectors.joining(" or ", "( ", ")")); // NON-NLS
-    }
-
-    private static String getSQLWhere(Filter filter) {
-        //TODO: this is here so that the filters don't depend, even implicitly, on the db, but it leads to some nasty code
-        //it would all be much easier if all the getSQLWhere methods where moved to their respective filter classes
-        String result = "";
-        if (filter == null) {
-            return "1";
-        } else if (filter instanceof HideKnownFilter) {
-            result = getSQLWhere((HideKnownFilter) filter);
-        } else if (filter instanceof TextFilter) {
-            result = getSQLWhere((TextFilter) filter);
-        } else if (filter instanceof TypeFilter) {
-            result = getSQLWhere((TypeFilter) filter);
-        } else if (filter instanceof IntersectionFilter) {
-            result = getSQLWhere((IntersectionFilter) filter);
-        } else if (filter instanceof UnionFilter) {
-            result = getSQLWhere((UnionFilter) filter);
-        } else {
-            return "1";
-        }
-        result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result; // NON-NLS
-        //System.out.println(result);
-        return result;
-    }
-
-    private static String getSQLWhere(HideKnownFilter filter) {
-        return (filter.isActive())
-               ? "(known_state is not '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')" // NON-NLS
-               : "1";
-    }
-
-    private static String getSQLWhere(TextFilter filter) {
-        if (filter.isActive()) {
-            if (StringUtils.isBlank(filter.getText())) {
-                return "1";
-            }
-            String strip = StringUtils.strip(filter.getText());
-            return "((" + MED_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
-                    + FULL_DESCRIPTION_COLUMN + " like '%" + strip + "%') or (" // NON-NLS
-                    + SHORT_DESCRIPTION_COLUMN + " like '%" + strip + "%'))"; // NON-NLS
-        } else {
-            return "1";
-        }
-    }
-
-    /**
-     * generate a sql where clause for the given type filter, while trying to be
-     * as simple as possible to improve performance.
-     *
-     * @param filter
-     *
-     * @return
-     */
-    private static String getSQLWhere(TypeFilter filter) {
-        if (filter.isActive() == false) {
-            return "0";
-        } else if (filter.getEventType() instanceof RootEventType) {
-            //if the filter is a root filter and all base type filtes and subtype filters are active,
-            if (filter.getSubFilters().stream().allMatch(f
-                    -> f.isActive() && ((TypeFilter) f).getSubFilters().stream().allMatch(Filter::isActive))) {
-                return "1"; //then collapse clause to true
-            }
-        }
-        return "(" + SUB_TYPE_COLUMN + " in (" + StringUtils.join(getActiveSubTypes(filter), ",") + "))"; // NON-NLS
-    }
-
     private volatile Connection con;
 
     private final String dbPath;
 
     private PreparedStatement getDBInfoStmt;
-
     private PreparedStatement getEventByIDStmt;
-
     private PreparedStatement getMaxTimeStmt;
-
     private PreparedStatement getMinTimeStmt;
-
+    private PreparedStatement getDataSourceIDsStmt;
     private PreparedStatement insertRowStmt;
+    private PreparedStatement recordDBInfoStmt;
+    private PreparedStatement insertHashSetStmt;
+    private PreparedStatement insertHashHitStmt;
+    private PreparedStatement selectHashSetStmt;
+    private PreparedStatement countAllEventsStmt;
+    private PreparedStatement dropEventsTableStmt;
+    private PreparedStatement dropHashSetHitsTableStmt;
+    private PreparedStatement dropHashSetsTableStmt;
+    private PreparedStatement dropDBInfoTableStmt;
+    private PreparedStatement selectEventsFromOBjectAndArtifactStmt;
 
     private final Set<PreparedStatement> preparedStatements = new HashSet<>();
 
-    private PreparedStatement recordDBInfoStmt;
+    private final Lock DBLock = new ReentrantReadWriteLock(true).writeLock(); //using exclusive lock for all db ops for now
 
-    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-
-    private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
-
-    private EventDB(String dbPath) throws SQLException, Exception {
-        this.dbPath = dbPath;
+    private EventDB(Case autoCase) throws SQLException, Exception {
+        //should this go into module output (or even cache, we should be able to rebuild it)?
+        this.dbPath = Paths.get(autoCase.getCaseDirectory(), "events.db").toString(); //NON-NLS
         initializeDB();
     }
 
@@ -265,30 +179,6 @@ public class EventDB {
         } finally {
             super.finalize();
         }
-    }
-
-    public Interval getSpanningInterval(Collection<Long> eventIDs) {
-
-        Interval span = null;
-        dbReadLock();
-        try (Statement stmt = con.createStatement();
-             //You can't inject multiple values into one ? paramater in prepared statement,
-             //so we make new statement each time...
-             ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
-            while (rs.next()) {
-                span = new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS
-
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
-        } finally {
-            dbReadUnlock();
-        }
-        return span;
-    }
-
-    EventTransaction beginTransaction() {
-        return new EventTransaction();
     }
 
     void closeDBCon() {
@@ -303,6 +193,25 @@ public class EventDB {
         con = null;
     }
 
+    public Interval getSpanningInterval(Collection<Long> eventIDs) {
+        DBLock.lock();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery("select Min(time), Max(time) from events where event_id in (" + StringUtils.join(eventIDs, ", ") + ")");) { // NON-NLS
+            while (rs.next()) {
+                return new Interval(rs.getLong("Min(time)"), rs.getLong("Max(time)") + 1, DateTimeZone.UTC); // NON-NLS
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing get spanning interval query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return null;
+    }
+
+    EventTransaction beginTransaction() {
+        return new EventTransaction();
+    }
+
     void commitTransaction(EventTransaction tr, Boolean notify) {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't close already closed transaction"); // NON-NLS
@@ -310,90 +219,70 @@ public class EventDB {
         tr.commit(notify);
     }
 
+    /**
+     * @return the total number of events in the database or, -1 if there is an
+     *         error.
+     */
     int countAllEvents() {
-        int result = -1;
-        dbReadLock();
-        //TODO convert this to prepared statement -jm
-        try (ResultSet rs = con.createStatement().executeQuery("select count(*) as count from events")) { // NON-NLS
+        DBLock.lock();
+        try (ResultSet rs = countAllEventsStmt.executeQuery()) { // NON-NLS
             while (rs.next()) {
-                result = rs.getInt("count"); // NON-NLS
-                break;
+                return rs.getInt("count"); // NON-NLS
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Error counting all events", ex);
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
-        return result;
+        return -1;
     }
 
-    Map<EventType, Long> countEvents(ZoomParams params) {
+    /**
+     * get the count of all events that fit the given zoom params organized by
+     * the EvenType of the level spcified in the ZoomParams
+     *
+     * @param params the params that control what events to count and how to
+     *               organize the returned map
+     *
+     * @return a map from event type( of the requested level) to event counts
+     */
+    Map<EventType, Long> countEventsByType(ZoomParams params) {
         if (params.getTimeRange() != null) {
-            return countEvents(params.getTimeRange().getStartMillis() / 1000, params.getTimeRange().getEndMillis() / 1000, params.getFilter(), params.getTypeZoomLevel());
+            return countEvents(params.getTimeRange().getStartMillis() / 1000,
+                    params.getTimeRange().getEndMillis() / 1000,
+                    params.getFilter(), params.getTypeZoomLevel());
         } else {
             return Collections.emptyMap();
         }
     }
 
     /**
-     * Lock to protect against read while it is in a write transaction state.
-     * Supports multiple concurrent readers if there is no writer. MUST always
-     * call dbReadUnLock() as early as possible, in the same thread where
-     * dbReadLock() was called.
+     * drop the tables from this database and recreate them in order to start
+     * over.
      */
-    void dbReadLock() {
+    void reInitializeDB() {
         DBLock.lock();
-    }
-
-    /**
-     * Release previously acquired read lock acquired in this thread using
-     * dbReadLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-    void dbReadUnlock() {
-        DBLock.unlock();
-    }
-
-    //////////////general database logic , mostly borrowed from sleuthkitcase
-    void dbWriteLock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "Locking " + rwLock.toString());
-        DBLock.lock();
-    }
-
-    /**
-     * Release previously acquired write lock acquired in this thread using
-     * dbWriteLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-    void dbWriteUnlock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "UNLocking " + rwLock.toString());
-        DBLock.unlock();
-    }
-
-    void dropTable() {
-        //TODO: use prepared statement - jm
-        dbWriteLock();
-        try (Statement createStatement = con.createStatement()) {
-            createStatement.execute("drop table if exists events"); // NON-NLS
+        try {
+            dropEventsTableStmt.executeUpdate();
+            dropHashSetHitsTableStmt.executeUpdate();
+            dropHashSetsTableStmt.executeUpdate();
+            dropDBInfoTableStmt.executeUpdate();
+            initializeDB();;
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "could not drop old events table", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "could not drop old tables table", ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
     }
 
-    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
-        return getAggregatedEvents(params.getTimeRange(), params.getFilter(), params.getTypeZoomLevel(), params.getDescrLOD());
-    }
-
-    Interval getBoundingEventsInterval(Interval timeRange, Filter filter) {
+    Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;
-        final String sqlWhere = getSQLWhere(filter);
-
-        dbReadLock();
+        final String sqlWhere = SQLHelper.getSQLWhere(filter);
+        DBLock.lock();
         try (Statement stmt = con.createStatement(); //can't use prepared statement because of complex where clause
-             ResultSet rs = stmt.executeQuery(" select (select Max(time) from events where time <=" + start + " and " + sqlWhere + ") as start,(select Min(time) from events where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
+                ResultSet rs = stmt.executeQuery(" select (select Max(time) from events" + useHashHitTablesHelper(filter) + " where time <=" + start + " and " + sqlWhere + ") as start,"
+                        + "(select Min(time) from  from events" + useHashHitTablesHelper(filter) + " where time >= " + end + " and " + sqlWhere + ") as end")) { // NON-NLS
             while (rs.next()) {
 
                 long start2 = rs.getLong("start"); // NON-NLS
@@ -402,20 +291,19 @@ public class EventDB {
                 if (end2 == 0) {
                     end2 = getMaxTime();
                 }
-                //System.out.println(start2 + " " + start + " " + end + " " + end2);
                 return new Interval(start2 * 1000, (end2 + 1) * 1000, TimeLineController.getJodaTimeZone());
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return null;
     }
 
     TimeLineEvent getEventById(Long eventID) {
         TimeLineEvent result = null;
-        dbReadLock();
+        DBLock.lock();
         try {
             getEventByIDStmt.clearParameters();
             getEventByIDStmt.setLong(1, eventID);
@@ -428,51 +316,97 @@ public class EventDB {
         } catch (SQLException sqlEx) {
             LOGGER.log(Level.SEVERE, "exception while querying for event with id = " + eventID, sqlEx); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return result;
     }
 
-    Set<Long> getEventIDs(Interval timeRange, Filter filter) {
+    Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return getEventIDs(timeRange.getStartMillis() / 1000, timeRange.getEndMillis() / 1000, filter);
     }
 
-    Set<Long> getEventIDs(Long startTime, Long endTime, Filter filter) {
+    Set<Long> getEventIDs(Long startTime, Long endTime, RootFilter filter) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
         Set<Long> resultIDs = new HashSet<>();
 
-        dbReadLock();
-        final String query = "select event_id from events where time >=  " + startTime + " and time <" + endTime + " and " + getSQLWhere(filter); // NON-NLS
-        //System.out.println(query);
+        DBLock.lock();
+        final String query = "select event_id from  from events" + useHashHitTablesHelper(filter) + " where time >=  " + startTime + " and time <" + endTime + " and " + SQLHelper.getSQLWhere(filter); // NON-NLS
         try (Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+                ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                resultIDs.add(rs.getLong(EVENT_ID_COLUMN));
+                resultIDs.add(rs.getLong("event_id"));
             }
 
         } catch (SQLException sqlEx) {
             LOGGER.log(Level.SEVERE, "failed to execute query for event ids in range", sqlEx); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
 
         return resultIDs;
     }
 
     long getLastArtfactID() {
-        return getDBInfo(LAST_ARTIFACT_ID_KEY, -1);
+        return getDBInfo(DBInfoKey.LAST_ARTIFACT_ID, -1);
     }
 
     long getLastObjID() {
-        return getDBInfo(LAST_OBJECT_ID_KEY, -1);
+        return getDBInfo(DBInfoKey.LAST_OBJECT_ID, -1);
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    boolean hasNewColumns() {
+        /*
+         * this relies on the fact that no tskObj has ID 0 but 0 is the default
+         * value for the datasource_id column in the events table.
+         */
+        return hasHashHitColumn() && hasDataSourceIDColumn() && hasTaggedColumn()
+                && (getDataSourceIDs().isEmpty() == false);
+    }
+
+    Set<Long> getDataSourceIDs() {
+        HashSet<Long> hashSet = new HashSet<>();
+        DBLock.lock();
+        try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
+            while (rs.next()) {
+                long datasourceID = rs.getLong("datasource_id");
+                //this relies on the fact that no tskObj has ID 0 but 0 is the default value for the datasource_id column in the events table.
+                if (datasourceID != 0) {
+                    hashSet.add(datasourceID);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return hashSet;
+    }
+
+    Map<Long, String> getHashSetNames() {
+        Map<Long, String> hashSets = new HashMap<>();
+        DBLock.lock();
+        try (ResultSet rs = con.createStatement().executeQuery("select * from hash_sets")) {
+            while (rs.next()) {
+                long hashSetID = rs.getLong("hash_set_id");
+                String hashSetName = rs.getString("hash_set_name");
+                hashSets.put(hashSetID, hashSetName);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get hash sets.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return Collections.unmodifiableMap(hashSets);
+    }
+
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMaxTime() {
-        dbReadLock();
+        DBLock.lock();
         try (ResultSet rs = getMaxTimeStmt.executeQuery()) {
             while (rs.next()) {
                 return rs.getLong("max"); // NON-NLS
@@ -480,14 +414,16 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return -1l;
     }
 
-    /** @return maximum time in seconds from unix epoch */
+    /**
+     * @return maximum time in seconds from unix epoch
+     */
     Long getMinTime() {
-        dbReadLock();
+        DBLock.lock();
         try (ResultSet rs = getMinTimeStmt.executeQuery()) {
             while (rs.next()) {
                 return rs.getLong("min"); // NON-NLS
@@ -495,13 +431,13 @@ public class EventDB {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MIN time.", ex); // NON-NLS
         } finally {
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return -1l;
     }
 
     boolean getWasIngestRunning() {
-        return getDBInfo(WAS_INGEST_RUNNING_KEY, 0) != 0;
+        return getDBInfo(DBInfoKey.WAS_INGEST_RUNNING, 0) != 0;
     }
 
     /**
@@ -512,17 +448,23 @@ public class EventDB {
      *         existing table
      */
     final synchronized void initializeDB() {
-        try {
-            if (isClosed()) {
-                openDBCon();
-            }
-            configureDB();
 
+        try {
+            if (con == null || con.isClosed()) {
+                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath); // NON-NLS
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to open connection to events.db", ex); // NON-NLS
+            return;
+        }
+        try {
+            configureDB();
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "problem accessing  database", ex); // NON-NLS
+            return;
         }
 
-        dbWriteLock();
+        DBLock.lock();
         try {
             try (Statement stmt = con.createStatement()) {
                 String sql = "CREATE TABLE if not exists db_info " // NON-NLS
@@ -531,12 +473,13 @@ public class EventDB {
                         + "PRIMARY KEY (key))"; // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating  db_info table", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "problem creating db_info table", ex); // NON-NLS
             }
 
             try (Statement stmt = con.createStatement()) {
                 String sql = "CREATE TABLE if not exists events " // NON-NLS
                         + " (event_id INTEGER PRIMARY KEY, " // NON-NLS
+                        + " datasource_id INTEGER, " // NON-NLS
                         + " file_id INTEGER, " // NON-NLS
                         + " artifact_id INTEGER, " // NON-NLS
                         + " time INTEGER, " // NON-NLS
@@ -545,87 +488,166 @@ public class EventDB {
                         + " full_description TEXT, " // NON-NLS
                         + " med_description TEXT, " // NON-NLS
                         + " short_description TEXT, " // NON-NLS
-                        + " known_state INTEGER)"; // NON-NLS
+                        + " known_state INTEGER,"
+                        + " hash_hit INTEGER)"; //boolean // NON-NLS
                 stmt.execute(sql);
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "problem creating  database table", ex); // NON-NLS
             }
 
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists file_idx ON events(file_id)"; // NON-NLS
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating file_idx", ex); // NON-NLS
+            if (hasDataSourceIDColumn() == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN datasource_id INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+
+                    LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
+                }
             }
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists artifact_idx ON events(artifact_id)"; // NON-NLS
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating artifact_idx", ex); // NON-NLS
+            if (hasTaggedColumn() == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN tagged INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+
+                    LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
+                }
             }
 
-            //for common queries the covering indexes below were better, but having the time index 'blocke' them
-//            try (Statement stmt = con.createStatement()) {
-//                String sql = "CREATE INDEX if not exists time_idx ON events(time)";
-//                stmt.execute(sql);
-//            } catch (SQLException ex) {
-//                LOGGER.log(Level.SEVERE, "problem creating time_idx", ex);
-//            }
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists sub_type_idx ON events(sub_type, time)"; // NON-NLS
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating sub_type_idx", ex); // NON-NLS
-            }
-
-            try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists base_type_idx ON events(base_type, time)"; // NON-NLS
-                stmt.execute(sql);
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating base_type_idx", ex); // NON-NLS
+            if (hasHashHitColumn() == false) {
+                try (Statement stmt = con.createStatement()) {
+                    String sql = "ALTER TABLE events ADD COLUMN hash_hit INTEGER"; // NON-NLS
+                    stmt.execute(sql);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "problem upgrading events table", ex); // NON-NLS
+                }
             }
 
             try (Statement stmt = con.createStatement()) {
-                String sql = "CREATE INDEX if not exists known_idx ON events(known_state)"; // NON-NLS
+                String sql = "CREATE TABLE  if not exists hash_sets "
+                        + "( hash_set_id INTEGER primary key,"
+                        + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)";
                 stmt.execute(sql);
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "problem creating known_idx", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "problem creating hash_sets table", ex);
             }
+
+            try (Statement stmt = con.createStatement()) {
+                String sql = "CREATE TABLE  if not exists hash_set_hits "
+                        + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, "
+                        + " event_id INTEGER REFERENCES events(event_id) not null, "
+                        + " PRIMARY KEY (hash_set_id, event_id))";
+                stmt.execute(sql);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex);
+            }
+
+            createIndex("events", Arrays.asList("file_id"));
+            createIndex("events", Arrays.asList("artifact_id"));
+            createIndex("events", Arrays.asList("sub_type", "time"));
+            createIndex("events", Arrays.asList("base_type", "time"));
+            createIndex("events", Arrays.asList("known_state"));
 
             try {
                 insertRowStmt = prepareStatement(
-                        "INSERT INTO events (file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state) " // NON-NLS
-                        + "VALUES (?,?,?,?,?,?,?,?,?)"); // NON-NLS
+                        "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit, tagged) " // NON-NLS
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
 
-                getMaxTimeStmt = prepareStatement("select Max(time) as max from events"); // NON-NLS
-                getMinTimeStmt = prepareStatement("select Min(time) as min from events"); // NON-NLS
-                getEventByIDStmt = prepareStatement("select * from events where event_id =  ?"); // NON-NLS
-                recordDBInfoStmt = prepareStatement("insert or replace into db_info (key, value) values (?, ?)"); // NON-NLS
-                getDBInfoStmt = prepareStatement("select value from db_info where key = ?"); // NON-NLS
+                getDataSourceIDsStmt = prepareStatement("SELECT DISTINCT datasource_id FROM events"); // NON-NLS
+                getMaxTimeStmt = prepareStatement("SELECT Max(time) AS max FROM events"); // NON-NLS
+                getMinTimeStmt = prepareStatement("SELECT Min(time) AS min FROM events"); // NON-NLS
+                getEventByIDStmt = prepareStatement("SELECT * FROM events WHERE event_id =  ?"); // NON-NLS
+                recordDBInfoStmt = prepareStatement("INSERT OR REPLACE INTO db_info (key, value) values (?, ?)"); // NON-NLS
+                getDBInfoStmt = prepareStatement("SELECT value FROM db_info WHERE key = ?"); // NON-NLS
+                insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  values (?)");
+                selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
+                insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, event_id) values (?,?)");
+                countAllEventsStmt = prepareStatement("SELECT count(*) AS count FROM events");
+                dropEventsTableStmt = prepareStatement("DROP TABLE IF EXISTS events");
+                dropHashSetHitsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_set_hits");
+                dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets");
+                dropDBInfoTableStmt = prepareStatement("DROP TABLE IF EXISTS db_ino");
+                selectEventsFromOBjectAndArtifactStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS ?");
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
 
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
-
     }
 
-    void insertEvent(long time, EventType type, Long objID, Long artifactID, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
-        EventTransaction trans = beginTransaction();
-        insertEvent(time, type, objID, artifactID, fullDescription, medDescription, shortDescription, known, trans);
-        commitTransaction(trans, true);
+    /**
+     *
+     * @param tableName  the value of tableName
+     * @param columnList the value of columnList
+     */
+    private void createIndex(final String tableName, final List<String> columnList) {
+        String indexColumns = columnList.stream().collect(Collectors.joining(",", "(", ")"));
+        String indexName = tableName + StringUtils.join(columnList, "_") + "_idx";
+        try (Statement stmt = con.createStatement()) {
+
+            String sql = "CREATE INDEX IF NOT EXISTS " + indexName + " ON " + tableName + indexColumns; // NON-NLS
+            stmt.execute(sql);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problem creating index " + indexName, ex); // NON-NLS
+        }
+    }
+
+    /**
+     * @param dbColumn the value of dbColumn
+     *
+     * @return the boolean
+     */
+    private boolean hasDBColumn(@Nonnull final String dbColumn) {
+        try (Statement stmt = con.createStatement()) {
+
+            ResultSet executeQuery = stmt.executeQuery("PRAGMA table_info(events)");
+            while (executeQuery.next()) {
+                if (dbColumn.equals(executeQuery.getString("name"))) {
+                    return true;
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problem executing pragma", ex); // NON-NLS
+        }
+        return false;
+    }
+
+    private boolean hasDataSourceIDColumn() {
+        return hasDBColumn("datasource_id");
+    }
+
+    private boolean hasTaggedColumn() {
+        return hasDBColumn("tagged");
+    }
+
+    private boolean hasHashHitColumn() {
+        return hasDBColumn("hash_hit");
+    }
+
+    void insertEvent(long time, EventType type, long datasourceID, long objID,
+            Long artifactID, String fullDescription, String medDescription,
+            String shortDescription, TskData.FileKnown known, Set<String> hashSets, boolean tagged) {
+
+        EventTransaction transaction = beginTransaction();
+        insertEvent(time, type, datasourceID, objID, artifactID, fullDescription, medDescription, shortDescription, known, hashSets, tagged, transaction);
+        commitTransaction(transaction, true);
     }
 
     /**
      * use transactions to update files
      *
      * @param f
-     * @param tr
+     * @param transaction
      */
-    void insertEvent(long time, EventType type, Long objID, Long artifactID, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, EventTransaction tr) {
-        if (tr.isClosed()) {
+    void insertEvent(long time, EventType type, long datasourceID, long objID,
+            Long artifactID, String fullDescription, String medDescription,
+            String shortDescription, TskData.FileKnown known, Set<String> hashSetNames,
+            boolean tagged,
+            EventTransaction transaction) {
+
+        if (transaction.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction"); // NON-NLS
         }
         int typeNum;
@@ -634,72 +656,112 @@ public class EventDB {
         typeNum = RootEventType.allTypes.indexOf(type);
         superTypeNum = type.getSuperType().ordinal();
 
-        dbWriteLock();
+        DBLock.lock();
         try {
 
-            //"INSERT INTO events (file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description) "
+            //"INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hashHit, tagged) " 
             insertRowStmt.clearParameters();
-            if (objID != null) {
-                insertRowStmt.setLong(1, objID);
-            } else {
-                insertRowStmt.setNull(1, Types.INTEGER);
-            }
+            insertRowStmt.setLong(1, datasourceID);
+            insertRowStmt.setLong(2, objID);
             if (artifactID != null) {
-                insertRowStmt.setLong(2, artifactID);
+                insertRowStmt.setLong(3, artifactID);
             } else {
-                insertRowStmt.setNull(2, Types.INTEGER);
+                insertRowStmt.setNull(3, Types.NULL);
             }
-            insertRowStmt.setLong(3, time);
+            insertRowStmt.setLong(4, time);
 
             if (typeNum != -1) {
-                insertRowStmt.setInt(4, typeNum);
+                insertRowStmt.setInt(5, typeNum);
             } else {
-                insertRowStmt.setNull(4, Types.INTEGER);
+                insertRowStmt.setNull(5, Types.INTEGER);
             }
 
-            insertRowStmt.setInt(5, superTypeNum);
-            insertRowStmt.setString(6, fullDescription);
-            insertRowStmt.setString(7, medDescription);
-            insertRowStmt.setString(8, shortDescription);
+            insertRowStmt.setInt(6, superTypeNum);
+            insertRowStmt.setString(7, fullDescription);
+            insertRowStmt.setString(8, medDescription);
+            insertRowStmt.setString(9, shortDescription);
 
-            insertRowStmt.setByte(9, known == null ? TskData.FileKnown.UNKNOWN.getFileKnownValue() : known.getFileKnownValue());
+            insertRowStmt.setByte(10, known == null ? TskData.FileKnown.UNKNOWN.getFileKnownValue() : known.getFileKnownValue());
+
+            insertRowStmt.setInt(11, hashSetNames.isEmpty() ? 0 : 1);
+            insertRowStmt.setInt(12, tagged ? 1 : 0);
 
             insertRowStmt.executeUpdate();
+
+            try (ResultSet generatedKeys = insertRowStmt.getGeneratedKeys()) {
+                while (generatedKeys.next()) {
+                    long eventID = generatedKeys.getLong("last_insert_rowid()");
+                    for (String name : hashSetNames) {
+
+                        // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                        insertHashSetStmt.setString(1, name);
+                        insertHashSetStmt.executeUpdate();
+
+                        //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                        //"select hash_set_id from hash_sets where hash_set_name = ?"
+                        selectHashSetStmt.setString(1, name);
+                        try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                            while (rs.next()) {
+                                int hashsetID = rs.getInt("hash_set_id");
+                                //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                                insertHashHitStmt.setInt(1, hashsetID);
+                                insertHashHitStmt.setLong(2, eventID);
+                                insertHashHitStmt.executeUpdate();
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            };
 
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to insert event", ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
     }
 
-    boolean isClosed() throws SQLException {
-        if (con == null) {
-            return true;
-        }
-        return con.isClosed();
-    }
+    Set<Long> markEventsTagged(long objectID, Long artifactID, boolean tagged) {
+        HashSet<Long> eventIDs = new HashSet<>();
 
-    void openDBCon() {
+        DBLock.lock();
+
         try {
-            if (con == null || con.isClosed()) {
-                con = DriverManager.getConnection("jdbc:sqlite:" + dbPath); // NON-NLS
+            selectEventsFromOBjectAndArtifactStmt.clearParameters();
+            selectEventsFromOBjectAndArtifactStmt.setLong(1, objectID);
+            if (Objects.isNull(artifactID)) {
+                selectEventsFromOBjectAndArtifactStmt.setNull(2, Types.NULL);
+            } else {
+                selectEventsFromOBjectAndArtifactStmt.setLong(2, artifactID);
+            }
+            try (ResultSet executeQuery = selectEventsFromOBjectAndArtifactStmt.executeQuery();) {
+                while (executeQuery.next()) {
+                    eventIDs.add(executeQuery.getLong("event_id"));
+                }
+                try (Statement updateStatement = con.createStatement();) {
+                    updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
+                            + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");
+                }
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Failed to open connection to events.db", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "failed to mark events as " + (tagged ? "" : "(un)") + tagged, ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
         }
+        return eventIDs;
     }
 
     void recordLastArtifactID(long lastArtfID) {
-        recordDBInfo(LAST_ARTIFACT_ID_KEY, lastArtfID);
+        recordDBInfo(DBInfoKey.LAST_ARTIFACT_ID, lastArtfID);
     }
 
     void recordLastObjID(Long lastObjID) {
-        recordDBInfo(LAST_OBJECT_ID_KEY, lastObjID);
+        recordDBInfo(DBInfoKey.LAST_OBJECT_ID, lastObjID);
     }
 
     void recordWasIngestRunning(boolean wasIngestRunning) {
-        recordDBInfo(WAS_INGEST_RUNNING_KEY, (wasIngestRunning ? 1 : 0));
+        recordDBInfo(DBInfoKey.WAS_INGEST_RUNNING, (wasIngestRunning ? 1 : 0));
     }
 
     void rollBackTransaction(EventTransaction trans) {
@@ -709,7 +771,7 @@ public class EventDB {
     boolean tableExists() {
         //TODO: use prepared statement - jm
         try (Statement createStatement = con.createStatement();
-             ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
+                ResultSet executeQuery = createStatement.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")) { // NON-NLS
             if (executeQuery.getString("name").equals("events") == false) { // NON-NLS
                 return false;
             }
@@ -726,7 +788,7 @@ public class EventDB {
     }
 
     private void configureDB() throws SQLException {
-        dbWriteLock();
+        DBLock.lock();
         //this should match Sleuthkit db setupt
         try (Statement statement = con.createStatement()) {
             //reduce i/o operations, we have no OS crash recovery anyway
@@ -743,28 +805,28 @@ public class EventDB {
             //allow to query while in transaction - no need read locks
             statement.execute("PRAGMA read_uncommitted = True;"); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
         }
 
         try {
             LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", // NON-NLS
-                                                 SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                                                                                ? "native" : "pure-java")); // NON-NLS
+                    SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
+                            ? "native" : "pure-java")); // NON-NLS
         } catch (Exception exception) {
         }
     }
 
     private TimeLineEvent constructTimeLineEvent(ResultSet rs) throws SQLException {
-        EventType type = RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN));
-        return new TimeLineEvent(rs.getLong(EVENT_ID_COLUMN),
-                                 rs.getLong(FILE_ID_COLUMN),
-                                 rs.getLong(ARTIFACT_ID_COLUMN),
-                                 rs.getLong(TIME_COLUMN),
-                                 type,
-                                 rs.getString(FULL_DESCRIPTION_COLUMN),
-                                 rs.getString(MED_DESCRIPTION_COLUMN),
-                                 rs.getString(SHORT_DESCRIPTION_COLUMN),
-                                 TskData.FileKnown.valueOf(rs.getByte(KNOWN_COLUMN)));
+        return new TimeLineEvent(rs.getLong("event_id"),
+                rs.getLong("file_id"),
+                rs.getLong("artifact_id"),
+                rs.getLong("time"), RootEventType.allTypes.get(rs.getInt("sub_type")),
+                rs.getString("full_description"),
+                rs.getString("med_description"),
+                rs.getString("short_description"),
+                TskData.FileKnown.valueOf(rs.getByte("known_state")),
+                rs.getInt("hash_hit") != 0,
+                rs.getInt("tagged") != 0);
     }
 
     /**
@@ -778,13 +840,13 @@ public class EventDB {
      *                  from unix epoch)
      * @param filter    only events that pass this filter will be counted
      * @param zoomLevel only events of this type or a subtype will be counted
-     *                  and the counts will be organized into bins for each of the subtypes of
-     *                  the given event type
+     *                  and the counts will be organized into bins for each of
+     *                  the subtypes of the given event type
      *
      * @return a map organizing the counts in a hierarchy from date > eventtype>
      *         count
      */
-    private Map<EventType, Long> countEvents(Long startTime, Long endTime, Filter filter, EventTypeZoomLevel zoomLevel) {
+    private Map<EventType, Long> countEvents(Long startTime, Long endTime, RootFilter filter, EventTypeZoomLevel zoomLevel) {
         if (Objects.equals(startTime, endTime)) {
             endTime++;
         }
@@ -795,39 +857,31 @@ public class EventDB {
         final boolean useSubTypes = (zoomLevel == EventTypeZoomLevel.SUB_TYPE);
 
         //get some info about the range of dates requested
-        final String queryString = "select count(*), " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
-                + " from events where time >= " + startTime + " and time < " + endTime + " and " + getSQLWhere(filter) // NON-NLS
-                + " GROUP BY " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN); // NON-NLS
+        final String queryString = "select count(*), " + useSubTypeHelper(useSubTypes)
+                + " from events" + useHashHitTablesHelper(filter) + " where time >= " + startTime + " and time < " + endTime + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " GROUP BY " + useSubTypeHelper(useSubTypes); // NON-NLS
 
-        ResultSet rs = null;
-        dbReadLock();
-        //System.out.println(queryString);
-        try (Statement stmt = con.createStatement();) {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.start();
-            rs = stmt.executeQuery(queryString);
-            stopwatch.stop();
-            // System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
+        DBLock.lock();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString);) {
             while (rs.next()) {
-
                 EventType type = useSubTypes
-                                 ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN))
-                                 : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
+                        ? RootEventType.allTypes.get(rs.getInt("sub_type"))
+                        : BaseTypes.values()[rs.getInt("base_type")];
 
                 typeMap.put(type, rs.getLong("count(*)")); // NON-NLS
             }
 
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "error getting count of events from db.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting count of events from db.", ex); // NON-NLS
         } finally {
-            try {
-                rs.close();
-            } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            dbReadUnlock();
+            DBLock.unlock();
         }
         return typeMap;
+    }
+
+    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
+        return getAggregatedEvents(params.getTimeRange(), params.getFilter(), params.getTypeZoomLevel(), params.getDescrLOD());
     }
 
     /**
@@ -837,10 +891,9 @@ public class EventDB {
      *
      * General algorithm is as follows:
      *
-     * - get all aggregate events, via one db query.
-     * - sort them into a map from (type, description)-> aggevent
-     * - for each key in map, merge the events and accumulate them in a list
-     * to return
+     * 1)get all aggregate events, via one db query. 2) sort them into a map
+     * from (type, description)-> aggevent 3) for each key in map, merge the
+     * events and accumulate them in a list to return
      *
      *
      * @param timeRange the Interval within in which all returned aggregate
@@ -852,10 +905,10 @@ public class EventDB {
      *
      *
      * @return a list of aggregate events within the given timerange, that pass
-     *         the supplied filter, aggregated according to the given event type and
-     *         description zoom levels
+     *         the supplied filter, aggregated according to the given event type
+     *         and description zoom levels
      */
-    private List<AggregateEvent> getAggregatedEvents(Interval timeRange, Filter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
+    private List<AggregateEvent> getAggregatedEvents(Interval timeRange, RootFilter filter, EventTypeZoomLevel zoomLevel, DescriptionLOD lod) {
         String descriptionColumn = getDescriptionColumn(lod);
         final boolean useSubTypes = (zoomLevel.equals(EventTypeZoomLevel.SUB_TYPE));
 
@@ -875,30 +928,42 @@ public class EventDB {
         Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
 
         //get all agregate events in this time unit
-        dbReadLock();
-        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,  group_concat(event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) // NON-NLS
-                + " from events where time >= " + start + " and time < " + end + " and " + getSQLWhere(filter) // NON-NLS
-                + " group by interval, " + (useSubTypes ? SUB_TYPE_COLUMN : BASE_TYPE_COLUMN) + " , " + descriptionColumn // NON-NLS
+        DBLock.lock();
+        String query = "select strftime('" + strfTimeFormat + "',time , 'unixepoch'" + (TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "") + ") as interval,"
+                + "  group_concat(events.event_id) as event_ids, Min(time), Max(time),  " + descriptionColumn + ", " + useSubTypeHelper(useSubTypes)
+                + " from events" + useHashHitTablesHelper(filter) + " where " + "time >= " + start + " and time < " + end + " and " + SQLHelper.getSQLWhere(filter) // NON-NLS
+                + " group by interval, " + useSubTypeHelper(useSubTypes) + " , " + descriptionColumn // NON-NLS
                 + " order by Min(time)"; // NON-NLS
-        //System.out.println(query);
-        ResultSet rs = null;
-        try (Statement stmt = con.createStatement(); // scoop up requested events in groups organized by interval, type, and desription
-                ) {
-
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.start();
-
-            rs = stmt.executeQuery(query);
-            stopwatch.stop();
-            //System.out.println(stopwatch.elapsedMillis() / 1000.0 + " seconds");
+        // scoop up requested events in groups organized by interval, type, and desription
+        try (ResultSet rs = con.createStatement().executeQuery(query);) {
             while (rs.next()) {
-                EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt(SUB_TYPE_COLUMN)) : BaseTypes.values()[rs.getInt(BASE_TYPE_COLUMN)];
+                Interval interval = new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone());
+                String eventIDS = rs.getString("event_ids");
+                EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];
+
+                HashSet<Long> hashHits = new HashSet<>();
+                HashSet<Long> tagged = new HashSet<>();
+                try (Statement st2 = con.createStatement();
+                        ResultSet hashQueryResults = st2.executeQuery("select event_id , tagged, hash_hit from events where event_id in (" + eventIDS + ")");) {
+                    while (hashQueryResults.next()) {
+                        long eventID = hashQueryResults.getLong("event_id");
+                        if (hashQueryResults.getInt("tagged") != 0) {
+                            tagged.add(eventID);
+                        }
+                        if (hashQueryResults.getInt("hash_hit") != 0) {
+                            hashHits.add(eventID);
+                        }
+                    }
+                }
 
                 AggregateEvent aggregateEvent = new AggregateEvent(
-                        new Interval(rs.getLong("Min(time)") * 1000, rs.getLong("Max(time)") * 1000, TimeLineController.getJodaTimeZone()), // NON-NLS
+                        interval, // NON-NLS
                         type,
-                        Arrays.asList(rs.getString("event_ids").split(",")), // NON-NLS
-                        rs.getString(descriptionColumn), lod);
+                        Stream.of(eventIDS.split(",")).map(Long::valueOf).collect(Collectors.toSet()), // NON-NLS
+                        hashHits,
+                        tagged,
+                        rs.getString(descriptionColumn),
+                        lod);
 
                 //put events in map from type/descrition -> event
                 SetMultimap<String, AggregateEvent> descrMap = typeMap.get(type);
@@ -912,12 +977,7 @@ public class EventDB {
         } catch (SQLException ex) {
             Exceptions.printStackTrace(ex);
         } finally {
-            try {
-                rs.close();
-            } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            dbReadUnlock();
+            DBLock.unlock();
         }
 
         //result list to return
@@ -959,10 +1019,18 @@ public class EventDB {
         return aggEvents;
     }
 
-    private long getDBInfo(String key, long defaultValue) {
-        dbReadLock();
+    private String useHashHitTablesHelper(RootFilter filter) {
+        return SQLHelper.hasActiveHashFilter(filter) ? ", hash_set_hits" : "";
+    }
+
+    private static String useSubTypeHelper(final boolean useSubTypes) {
+        return useSubTypes ? "sub_type" : "base_type";
+    }
+
+    private long getDBInfo(DBInfoKey key, long defaultValue) {
+        DBLock.lock();
         try {
-            getDBInfoStmt.setString(1, key);
+            getDBInfoStmt.setString(1, key.toString());
 
             try (ResultSet rs = getDBInfoStmt.executeQuery()) {
                 long result = defaultValue;
@@ -973,7 +1041,7 @@ public class EventDB {
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "failed to read key: " + key + " from db_info", ex); // NON-NLS
             } finally {
-                dbReadUnlock();
+                DBLock.unlock();
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to set key: " + key + " on getDBInfoStmt ", ex); // NON-NLS
@@ -985,12 +1053,12 @@ public class EventDB {
     private String getDescriptionColumn(DescriptionLOD lod) {
         switch (lod) {
             case FULL:
-                return FULL_DESCRIPTION_COLUMN;
+                return "full_description";
             case MEDIUM:
-                return MED_DESCRIPTION_COLUMN;
+                return "med_description";
             case SHORT:
             default:
-                return SHORT_DESCRIPTION_COLUMN;
+                return "short_description";
         }
     }
 
@@ -1019,16 +1087,17 @@ public class EventDB {
         return prepareStatement;
     }
 
-    private void recordDBInfo(String key, long value) {
-        dbWriteLock();
+    private void recordDBInfo(DBInfoKey key, long value) {
+        DBLock.lock();
         try {
-            recordDBInfoStmt.setString(1, key);
+            recordDBInfoStmt.setString(1, key.toString());
             recordDBInfoStmt.setLong(2, value);
             recordDBInfoStmt.executeUpdate();
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to set dbinfo  key: " + key + " value: " + value, ex); // NON-NLS
         } finally {
-            dbWriteUnlock();
+            DBLock.unlock();
+
         }
     }
 
@@ -1051,7 +1120,7 @@ public class EventDB {
         private EventTransaction() {
 
             //get the write lock, released in close()
-            dbWriteLock();
+            DBLock.lock();
             try {
                 con.setAutoCommit(false);
 
@@ -1100,7 +1169,7 @@ public class EventDB {
                 } finally {
                     closed = true;
 
-                    dbWriteUnlock();
+                    DBLock.unlock();
                 }
             }
         }
@@ -1108,15 +1177,5 @@ public class EventDB {
         public Boolean isClosed() {
             return closed;
         }
-    }
-
-    public class MultipleTransactionException extends IllegalStateException {
-
-        private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "cannot have more than one open transaction"; // NON-NLS
-
-        public MultipleTransactionException() {
-            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
-        }
-
     }
 }

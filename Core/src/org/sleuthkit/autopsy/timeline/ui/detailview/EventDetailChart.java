@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Collections2;
+import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,6 +73,8 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
@@ -88,15 +91,18 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
  * Series help organize events for the banding by event type, we could add a
  * node to contain each band if we need a place for per band controls.
  *
- * //TODO: refactor the projected lines to a separate class. -jm */
+ * //TODO: refactor the projected lines to a separate class. -jm
+ */
 public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> implements TimeLineChart<DateTime> {
 
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
 
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
 
-    /** true == layout each event type in its own band, false == mix all the
-     * events together during layout */
+    /**
+     * true == layout each event type in its own band, false == mix all the
+     * events together during layout
+     */
     private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
 
     // I don't like having these package visible, but it was the easiest way to
@@ -106,18 +112,26 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     private FilteredEventsModel filteredEvents;
 
-    /** how much detail of the description to show in the ui */
+    /**
+     * how much detail of the description to show in the ui
+     */
     private final SimpleObjectProperty<DescriptionVisibility> descrVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
 
-    /** a user position-able vertical line to help the compare events */
+    /**
+     * a user position-able vertical line to help the compare events
+     */
     private Line guideLine;
 
-    /** * the user can drag out a time range to zoom into and this
+    /**
+     * * the user can drag out a time range to zoom into and this
      * {@link IntervalSelector} is the visual representation of it while the
-     * user is dragging */
+     * user is dragging
+     */
     private IntervalSelector<? extends DateTime> intervalSelector;
 
-    /** listener that triggers layout pass */
+    /**
+     * listener that triggers layout pass
+     */
     private final InvalidationListener layoutInvalidationListener = (
             Observable o) -> {
                 synchronized (EventDetailChart.this) {
@@ -126,7 +140,9 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
                 }
             };
 
-    /** the maximum y value used so far during the most recent layout pass */
+    /**
+     * the maximum y value used so far during the most recent layout pass
+     */
     private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
 
     /**
@@ -135,7 +151,9 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
      */
     private final Group nodeGroup = new Group();
 
-    /** map from event to node */
+    /**
+     * map from event to node
+     */
     private final Map<AggregateEvent, AggregateEventNode> nodeMap = new TreeMap<>((
             AggregateEvent o1,
             AggregateEvent o2) -> {
@@ -147,14 +165,18 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
                 }
             });
 
-    /** true == enforce that no two events can share the same 'row', leading to
+    /**
+     * true == enforce that no two events can share the same 'row', leading to
      * sparser but possibly clearer layout. false == put unrelated events in the
-     * same 'row', creating a denser more compact layout */
+     * same 'row', creating a denser more compact layout
+     */
     private final SimpleBooleanProperty oneEventPerRow = new SimpleBooleanProperty(false);
 
     private final ObservableMap<AggregateEventNode, Line> projectionMap = FXCollections.observableHashMap();
 
-    /** flag indicating whether this chart actually needs a layout pass */
+    /**
+     * flag indicating whether this chart actually needs a layout pass
+     */
     @GuardedBy(value = "this")
     private boolean requiresLayout = true;
 
@@ -173,14 +195,18 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
                 return Integer.compare(collect.indexOf(s1.getName()), collect.indexOf(s2.getName()));
             });
 
-    /** true == truncate all the labels to the greater of the size of their
+    /**
+     * true == truncate all the labels to the greater of the size of their
      * timespan indicator or the value of truncateWidth. false == don't truncate
      * the labels, alow them to extend past the timespan indicator and off the
-     * edge of the screen */
+     * edge of the screen
+     */
     private final SimpleBooleanProperty truncateAll = new SimpleBooleanProperty(false);
 
-    /** the width to truncate all labels to if truncateAll is true. adjustable
-     * via slider if truncateAll is true */
+    /**
+     * the width to truncate all labels to if truncateAll is true. adjustable
+     * via slider if truncateAll is true
+     */
     private final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
     EventDetailChart(DateAxis dateAxis, final Axis<AggregateEvent> verticalAxis, ObservableList<AggregateEventNode> selectedNodes) {
@@ -222,32 +248,32 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
                 chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action(
                         NbBundle.getMessage(this.getClass(), "EventDetailChart.chartContextMenu.placeMarker.name")) {
-                    {
-                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
-                        setEventHandler((ActionEvent t) -> {
-                            if (guideLine == null) {
-                                guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
-                                guideLine.relocate(clickEvent.getX(), 0);
-                                guideLine.endYProperty().bind(heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
+                            {
+                                setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
+                                setEventHandler((ActionEvent t) -> {
+                                    if (guideLine == null) {
+                                        guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
+                                        guideLine.relocate(clickEvent.getX(), 0);
+                                        guideLine.endYProperty().bind(heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
 
-                                getChartChildren().add(guideLine);
+                                        getChartChildren().add(guideLine);
 
-                                guideLine.setOnMouseClicked((MouseEvent event) -> {
-                                    if (event.getButton() == MouseButton.SECONDARY) {
-                                        clearGuideLine();
-                                        event.consume();
+                                        guideLine.setOnMouseClicked((MouseEvent event) -> {
+                                            if (event.getButton() == MouseButton.SECONDARY) {
+                                                clearGuideLine();
+                                                event.consume();
+                                            }
+                                        });
+                                    } else {
+                                        guideLine.relocate(clickEvent.getX(), 0);
                                     }
                                 });
-                            } else {
-                                guideLine.relocate(clickEvent.getX(), 0);
                             }
-                        });
-                    }
 
-                }, new ActionGroup(
-                        NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
-                        new Back(controller),
-                        new Forward(controller))));
+                        }, new ActionGroup(
+                                NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
+                                new Back(controller),
+                                new Forward(controller))));
                 chartContextMenu.setAutoHide(true);
                 chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
@@ -318,15 +344,22 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-        filteredEvents.getRequestedZoomParamters().addListener(o -> {
-            clearGuideLine();
-            clearIntervalSelector();
+        if (this.filteredEvents != null) {
+            this.filteredEvents.unRegisterForEvents(this);
+        }
+        if (this.filteredEvents != filteredEvents) {
+            filteredEvents.registerForEvents(this);
+            filteredEvents.getRequestedZoomParamters().addListener(o -> {
+                clearGuideLine();
+                clearIntervalSelector();
 
-            selectedNodes.clear();
-            projectionMap.clear();
-            controller.selectEventIDs(Collections.emptyList());
-        });
+                selectedNodes.clear();
+                projectionMap.clear();
+                controller.selectEventIDs(Collections.emptyList());
+            });
+        }
+        this.filteredEvents = filteredEvents;
+
     }
 
     @Override
@@ -338,7 +371,8 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         bandByType.set(t1);
     }
 
-    /** get the DateTime along the x-axis that corresponds to the given
+    /**
+     * get the DateTime along the x-axis that corresponds to the given
      * x-coordinate in the coordinate system of this {@link EventDetailChart}
      *
      * @param x a x-coordinate in the space of this {@link EventDetailChart}
@@ -493,6 +527,10 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         return nodes;
     }
 
+    private Iterable<AggregateEventNode> getAllNodes() {
+        return getNodes(x -> true);
+    }
+
     synchronized SimpleDoubleProperty getTruncateWidth() {
         return truncateWidth;
     }
@@ -502,9 +540,8 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         nodeGroup.setTranslateY(-d * h);
     }
 
-    private void checkNode(AggregateEventNode node, Predicate<AggregateEventNode> p, List<AggregateEventNode> nodes) {
+    private static void checkNode(AggregateEventNode node, Predicate<AggregateEventNode> p, List<AggregateEventNode> nodes) {
         if (node != null) {
-            AggregateEvent event = node.getEvent();
             if (p.test(node)) {
                 nodes.add(node);
             }
@@ -692,8 +729,25 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         requiresLayout = true;
     }
 
+    /**
+     * make this accessible to AggregateEventNode
+     */
     @Override
     protected void requestChartLayout() {
-        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
+        super.requestChartLayout();
+    }
+
+    @Subscribe
+    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
+        for (AggregateEventNode t : getAllNodes()) {
+            t.handleEventsUnTagged(tagEvent);
+        }
+    }
+
+    @Subscribe
+    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
+        for (AggregateEventNode t : getAllNodes()) {
+            t.handleEventsTagged(tagEvent);
+        }
     }
 }

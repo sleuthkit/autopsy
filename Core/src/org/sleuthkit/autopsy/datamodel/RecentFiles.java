@@ -22,49 +22,51 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Recent files node support
+ * Recent files node support NOTE: As of june '15 we do not display this in the
+ * tree. It can be added back when we have filtering in the results area.
  */
- class RecentFiles implements AutopsyVisitableItem {
-    
+class RecentFiles implements AutopsyVisitableItem {
+
     SleuthkitCase skCase;
-    
+
     public enum RecentFilesFilter implements AutopsyVisitableItem {
+
         AUT_0DAY_FILTER(0, "AUT_0DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut0DayFilter.displayName.text"), 0),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut0DayFilter.displayName.text"), 0),
         AUT_1DAY_FILTER(0, "AUT_1DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut1dayFilter.displayName.text"), 1),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut1dayFilter.displayName.text"), 1),
         AUT_2DAY_FILTER(0, "AUT_2DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut2dayFilter.displayName.text"), 2),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut2dayFilter.displayName.text"), 2),
         AUT_3DAY_FILTER(0, "AUT_3DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut3dayFilter.displayName.text"), 3),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut3dayFilter.displayName.text"), 3),
         AUT_4DAY_FILTER(0, "AUT_4DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut4dayFilter.displayName.text"), 4),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut4dayFilter.displayName.text"), 4),
         AUT_5DAY_FILTER(0, "AUT_5DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut5dayFilter.displayName.text"), 5),
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut5dayFilter.displayName.text"), 5),
         AUT_6DAY_FILTER(0, "AUT_6DAY_FILTER", //NON-NLS
-                        NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut6dayFilter.displayName.text"), 6);
-        
+                NbBundle.getMessage(RecentFiles.class, "RecentFiles.aut6dayFilter.displayName.text"), 6);
+
         private int id;
         private String name;
         private String displayName;
         private int durationDays;
-        
-        private RecentFilesFilter(int id, String name, String displayName, int durationDays){
+
+        private RecentFilesFilter(int id, String name, String displayName, int durationDays) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
             this.durationDays = durationDays;
         }
-        
-        public String getName(){
+
+        public String getName() {
             return this.name;
         }
 
-        public int getId(){
+        public int getId() {
             return this.id;
         }
 
-        public String getDisplayName(){
+        public String getDisplayName() {
             return this.displayName;
         }
 
@@ -74,13 +76,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
         @Override
         public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this); 
+            return v.visit(this);
         }
-      
-        
+
     }
-    
-    public RecentFiles(SleuthkitCase skCase){
+
+    public RecentFiles(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 
@@ -88,8 +89,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
     }
-    public SleuthkitCase getSleuthkitCase(){
+
+    public SleuthkitCase getSleuthkitCase() {
         return this.skCase;
     }
-    
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,36 +18,73 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import java.util.Optional;
+import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.binding.ObjectExpression;
 import javafx.event.ActionEvent;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
- *
+ * Marks the currently fisplayed group as "seen" and advances to the next unseen
+ * group
  */
 public class NextUnseenGroup extends Action {
+
+    private static final Image END
+            = new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png"));
+    private static final Image ADVANCE
+            = new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
+
+    private static final String MARK_GROUP_SEEN = "Mark Group Seen";
+    private static final String NEXT_UNSEEN_GROUP = "Next Unseen group";
 
     private final ImageGalleryController controller;
 
     public NextUnseenGroup(ImageGalleryController controller) {
-        super("Next Unseen group");
+        super(NEXT_UNSEEN_GROUP);
         this.controller = controller;
-        setGraphic(new ImageView("/org/sleuthkit/autopsy/imagegallery/images/control-double.png"));
-        disabledProperty().set(controller.getGroupManager().getUnSeenGroups().size() <= 1);
+        setGraphic(new ImageView(ADVANCE));
+
+        //TODO: do we need both these listeners?
+        controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> {
+            Platform.runLater(this::updateButton);
+
+        });
         controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            disabledProperty().set(controller.getGroupManager().getUnSeenGroups().size() <= 1);
+            Platform.runLater(this::updateButton);
+
         });
 
         setEventHandler((ActionEvent t) -> {
-            if (controller.viewState() != null && controller.viewState().get() != null && controller.viewState().get().getGroup() != null) {
-                controller.getGroupManager().markGroupSeen(controller.viewState().get().getGroup());
+            Optional.ofNullable(controller.viewState())
+                    .map(ObjectExpression<GroupViewState>::getValue)
+                    .map(GroupViewState::getGroup)
+                    .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
+
+            if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
+                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), true);
             }
-            if (controller.getGroupManager().getUnSeenGroups().size() > 0) {
-                controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)));
-            }
+            updateButton();
         });
+
+        updateButton();
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void updateButton() {
+        setDisabled(controller.getGroupManager().getUnSeenGroups().isEmpty());
+        if (controller.getGroupManager().getUnSeenGroups().size() <= 1) {
+            setText(MARK_GROUP_SEEN);
+            setGraphic(new ImageView(END));
+        } else {
+            setText(NEXT_UNSEEN_GROUP);
+            setGraphic(new ImageView(ADVANCE));
+        }
     }
 }

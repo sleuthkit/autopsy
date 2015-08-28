@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -52,57 +53,59 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             },
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT)),
     GPS_ROUTE(NbBundle.getMessage(MiscTypes.class, "MiscTypes.GPSRoutes.name"), "gps-search.png", // NON-NLS
-              BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
-              BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-              new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
-              new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION),
-              (BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) -> {
-                  final BlackboardAttribute latStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-                  final BlackboardAttribute longStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
-                  final BlackboardAttribute latEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-                  final BlackboardAttribute longEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
-                  return String.format("from %1$g %2$g to %3$g %4$g", latStart.getValueDouble(), longStart.getValueDouble(), latEnd.getValueDouble(), longEnd.getValueDouble()); // NON-NLS
-              }),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION),
+            (BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) -> {
+                final BlackboardAttribute latStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
+                final BlackboardAttribute longStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
+                final BlackboardAttribute latEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
+                final BlackboardAttribute longEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
+                return String.format("from %1$g %2$g to %3$g %4$g", latStart.getValueDouble(), longStart.getValueDouble(), latEnd.getValueDouble(), longEnd.getValueDouble()); // NON-NLS
+            }),
     GPS_TRACKPOINT(NbBundle.getMessage(MiscTypes.class, "MiscTypes.GPSTrackpoint.name"), "gps-trackpoint.png", // NON-NLS
-                   BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
-                   BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-                   new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
-                   (artf, attrMap) -> {
-                       final BlackboardAttribute longitude = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                       final BlackboardAttribute latitude = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                       return (latitude != null ? latitude.getValueDouble() : "") + " " + (longitude != null ? longitude.getValueDouble() : ""); // NON-NLS
-                   },
-                   (artf, attrMap) -> ""),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
+            (artf, attrMap) -> {
+                final BlackboardAttribute longitude = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
+                final BlackboardAttribute latitude = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
+                return (latitude != null ? latitude.getValueDouble() : "") + " " + (longitude != null ? longitude.getValueDouble() : ""); // NON-NLS
+            },
+            (artf, attrMap) -> ""),
     CALL_LOG(NbBundle.getMessage(MiscTypes.class, "MiscTypes.Calls.name"), "calllog.png", // NON-NLS
-             BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG,
-             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
-             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
-             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER),
-             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION)),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION)),
     EMAIL(NbBundle.getMessage(MiscTypes.class, "MiscTypes.Email.name"), "mail-icon-16.png", // NON-NLS
-          BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG,
-          BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT,
-          (artifact, attrMap) -> {
-              final BlackboardAttribute emailFrom = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
-              final BlackboardAttribute emailTo = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO);
-              return (emailFrom != null ? emailFrom.getValueString() : "") + " to " + (emailTo != null ? emailTo.getValueString() : ""); // NON-NLS
-          },
-          new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT),
-          new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN)),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT,
+            (artifact, attrMap) -> {
+                final BlackboardAttribute emailFrom = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM);
+                final BlackboardAttribute emailTo = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO);
+                return (emailFrom != null ? emailFrom.getValueString() : "") + " to " + (emailTo != null ? emailTo.getValueString() : ""); // NON-NLS
+            },
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN)),
     RECENT_DOCUMENTS(NbBundle.getMessage(MiscTypes.class, "MiscTypes.recentDocuments.name"), "recent_docs.png", // NON-NLS
-                     BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT,
-                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH).andThen(
-                             (String t) -> (StringUtils.substringBeforeLast(StringUtils.substringBeforeLast(t, "\\"), "\\"))),
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH).andThen(
-                             (String t) -> StringUtils.substringBeforeLast(t, "\\")),
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)) {
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH).andThen(
+                    (String t) -> (StringUtils.substringBeforeLast(StringUtils.substringBeforeLast(t, "\\"), "\\"))),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH).andThen(
+                    (String t) -> StringUtils.substringBeforeLast(t, "\\")),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)) {
 
-                /** Override
+                /**
+                 * Override
                  * {@link ArtifactEventType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
-                 * with non-default description construction */
+                 * with non-default description construction
+                 */
                 @Override
-        public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) throws TskCoreException {
+                public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) throws TskCoreException {
                     final BlackboardAttribute dateTimeAttr = attrMap.get(getDateTimeAttrubuteType());
 
                     long time = dateTimeAttr.getValueLong();
@@ -116,31 +119,35 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                 }
             },
     INSTALLED_PROGRAM(NbBundle.getMessage(MiscTypes.class, "MiscTypes.installedPrograms.name"), "programs.png", // NON-NLS
-                      BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG,
-                      BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-                      new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
-                      new EmptyExtractor(),
-                      new EmptyExtractor()),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
+            new EmptyExtractor(),
+            new EmptyExtractor()),
     EXIF(NbBundle.getMessage(MiscTypes.class, "MiscTypes.exif.name"), "camera-icon-16.png", // NON-NLS
-         BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF,
-         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-         new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE),
-         new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL),
-         (BlackboardArtifact t,
-          Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> u) -> {
-             try {
-                 return t.getSleuthkitCase().getAbstractFileById(t.getObjectID()).getName();
-             } catch (TskCoreException ex) {
-                 Exceptions.printStackTrace(ex);
-                 return " error loading file name"; // NON-NLS
-             }
-         }),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL),
+            (BlackboardArtifact t,
+                    Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> u) -> {
+                try {
+                    AbstractFile f = t.getSleuthkitCase().getAbstractFileById(t.getObjectID());
+                    if (f != null) {
+                        return f.getName();
+                    }
+                    return " error loading file name"; // NON-NLS
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                    return " error loading file name"; // NON-NLS
+                }
+            }),
     DEVICES_ATTACHED(NbBundle.getMessage(MiscTypes.class, "MiscTypes.devicesAttached.name"), "usb_devices.png", // NON-NLS
-                     BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED,
-                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE),
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL),
-                     new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID));
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED,
+            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL),
+            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID));
 
     static public String stringValueOf(BlackboardAttribute attr) {
         return attr != null ? attr.getDisplayString() : "";
@@ -223,10 +230,10 @@ public enum MiscTypes implements EventType, ArtifactEventType {
     }
 
     private MiscTypes(String displayName, String iconBase, BlackboardArtifact.ARTIFACT_TYPE artifactType,
-                      BlackboardAttribute.ATTRIBUTE_TYPE dateTimeAttributeType,
-                      BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> shortExtractor,
-                      BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> medExtractor,
-                      BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> longExtractor) {
+            BlackboardAttribute.ATTRIBUTE_TYPE dateTimeAttributeType,
+            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> shortExtractor,
+            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> medExtractor,
+            BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> longExtractor) {
         this.displayName = displayName;
         this.iconBase = iconBase;
         this.artifactType = artifactType;

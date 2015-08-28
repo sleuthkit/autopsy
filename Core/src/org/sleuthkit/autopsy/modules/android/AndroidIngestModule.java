@@ -55,8 +55,8 @@ class AndroidIngestModule implements DataSourceIngestModule {
     @Override
     public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(),
-                                                         NbBundle.getMessage(this.getClass(),
-                                                                             "AndroidIngestModule.processing.startedAnalysis")));
+                NbBundle.getMessage(this.getClass(),
+                        "AndroidIngestModule.processing.startedAnalysis")));
 
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
@@ -71,14 +71,14 @@ class AndroidIngestModule implements DataSourceIngestModule {
         listOfAndroidAnalyzer.add(new TangoMessageAnalyzer());
         listOfAndroidAnalyzer.add(new TextMessageAnalyzer());
         listOfAndroidAnalyzer.add(new WWFMessageAnalyzer());
-        
+
         progressBar.switchToDeterminate(listOfAndroidAnalyzer.size());
         int i = 0;
-        
+
         for (AndroidAnalyzer androidAnalyzer : listOfAndroidAnalyzer) {
             try {
                 List<AbstractFile> listOfDBAbstractFiles = new ArrayList<>();
-                for(String databaseName : androidAnalyzer.getDatabaseNames()) {
+                for (String databaseName : androidAnalyzer.getDatabaseNames()) {
                     listOfDBAbstractFiles.addAll(fileManager.findFiles(dataSource, databaseName));
                 }
                 for (AbstractFile dBAbstractFile : listOfDBAbstractFiles) {
@@ -115,7 +115,7 @@ class AndroidIngestModule implements DataSourceIngestModule {
 
         return IngestModule.ProcessResult.OK;
     }
-    
+
     private void postFinalMessageToInbox(List<String> errors) {
 
         StringBuilder errorMessage = new StringBuilder();

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
@@ -29,23 +28,20 @@ import javax.swing.filechooser.FileFilter;
 /**
  * FileFilter helper class. Matches files based on extension
  */
-public class GeneralFilter extends FileFilter{
+public class GeneralFilter extends FileFilter {
 
-    
     // Extensions & Descriptions for commonly used filters
     public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin"}); //NON-NLS
     public static final String RAW_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.rawImageDesc.text");
-    
+
     public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"}); //NON-NLS
     public static final String ENCASE_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class,
-                                                                       "GeneralFilter.encaseImageDesc.text");
-    
-   
-  
+            "GeneralFilter.encaseImageDesc.text");
+
     private List<String> extensions;
     private String desc;
 
-    public GeneralFilter(List<String> ext, String desc){
+    public GeneralFilter(List<String> ext, String desc) {
         super();
         this.extensions = ext;
         this.desc = desc;
@@ -54,12 +50,13 @@ public class GeneralFilter extends FileFilter{
     /**
      * Checks whether the given file is accepted by this filter.
      *
-     * @param f         the given file
-     * @return boolean  return true if accepted, false otherwise
+     * @param f the given file
+     *
+     * @return boolean return true if accepted, false otherwise
      */
     @Override
     public boolean accept(File f) {
-        if(f.isDirectory()){
+        if (f.isDirectory()) {
             return true;
         } else {
             Boolean result = false;
@@ -77,7 +74,7 @@ public class GeneralFilter extends FileFilter{
     /**
      * Returns the description of this file filter
      *
-     * @return desc  return the description
+     * @return desc return the description
      */
     @Override
     public String getDescription() {

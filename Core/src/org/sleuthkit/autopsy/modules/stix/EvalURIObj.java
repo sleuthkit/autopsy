@@ -70,35 +70,33 @@ class EvalURIObj extends EvaluatableObject {
 
         try {
             /*
-             if ((obj.getValue().getCondition() == null)
-             || (obj.getValue().getCondition() == ConditionTypeEnum.EQUALS)) {
-
-             // Old version - uses a database query but only works on full strings.
-             // It will be faster to use this in the "equals" case
-             String[] parts = addressStr.split("##comma##");
-             List<BlackboardArtifact> arts = new ArrayList<BlackboardArtifact>();
-             for (String part : parts) {
-             arts.addAll(sleuthkitCase.getBlackboardArtifacts(
-             BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT,
-             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD,
-             part));
-             }
-
-             if (!arts.isEmpty()) {
-
-             List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
-             for (BlackboardArtifact a : arts) {
-             artData.add(new StixArtifactData(a.getObjectID(), id, "URIObject"));
-             }
-
-             return new ObservableResult(id, "URIObject: Found " + arts.size() + " matches for address = \"" + addressStr + "\"",
-             spacing, ObservableResult.ObservableState.TRUE, artData);
-
-             } else {
-             return new ObservableResult(id, "URIObject: Found no matches for address = \"" + addressStr + "\"",
-             spacing, ObservableResult.ObservableState.FALSE, null);
-             }
-             } else {*/
+             * if ((obj.getValue().getCondition() == null) ||
+             * (obj.getValue().getCondition() == ConditionTypeEnum.EQUALS)) {
+             *
+             * // Old version - uses a database query but only works on full
+             * strings. // It will be faster to use this in the "equals" case
+             * String[] parts = addressStr.split("##comma##");
+             * List<BlackboardArtifact> arts = new
+             * ArrayList<BlackboardArtifact>(); for (String part : parts) {
+             * arts.addAll(sleuthkitCase.getBlackboardArtifacts(
+             * BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT,
+             * BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, part)); }
+             *
+             * if (!arts.isEmpty()) {
+             *
+             * List<StixArtifactData> artData = new
+             * ArrayList<StixArtifactData>(); for (BlackboardArtifact a : arts)
+             * { artData.add(new StixArtifactData(a.getObjectID(), id,
+             * "URIObject")); }
+             *
+             * return new ObservableResult(id, "URIObject: Found " + arts.size()
+             * + " matches for address = \"" + addressStr + "\"", spacing,
+             * ObservableResult.ObservableState.TRUE, artData);
+             *
+             * } else { return new ObservableResult(id, "URIObject: Found no
+             * matches for address = \"" + addressStr + "\"", spacing,
+             * ObservableResult.ObservableState.FALSE, null); } } else {
+             */
 
             // This is inefficient, but the easiest way to do it.
             List<BlackboardArtifact> finalHits = new ArrayList<BlackboardArtifact>();
@@ -137,7 +135,9 @@ class EvalURIObj extends EvaluatableObject {
 
             return new ObservableResult(id, "URIObject: Found no matches for " + addressStr, //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);
-            /*}*/
+            /*
+             * }
+             */
 
         } catch (TskCoreException ex) {
             return new ObservableResult(id, "URIObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS

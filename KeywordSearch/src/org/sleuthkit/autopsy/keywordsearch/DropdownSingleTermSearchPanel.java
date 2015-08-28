@@ -32,15 +32,18 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A simple UI for finding text after ingest
- * 
- * The toolbar uses a different font from the rest of the application, Monospaced 14, 
- * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
- * The default, Tahoma 14, could not perform this task at the desired size, and neither could numerous other fonts. 
+ *
+ * The toolbar uses a different font from the rest of the application,
+ * Monospaced 14, due to the necessity to find a font that displays both Arabic
+ * and Asian fonts at an acceptable size. The default, Tahoma 14, could not
+ * perform this task at the desired size, and neither could numerous other
+ * fonts.
  */
 public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
+
     private static final Logger logger = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
     private static DropdownSingleTermSearchPanel instance = null;
-    
+
     /**
      * Creates new form DropdownSingleTermSearchPanel
      */
@@ -48,7 +51,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         keywordTextField.addFocusListener(new FocusListener() {
             @Override
@@ -63,7 +66,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
                 }
             }
         });
-        
+
         keywordTextField.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
             @Override
@@ -83,41 +86,41 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         cutMenuItem.addActionListener(actList);
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);        
+        selectAllMenuItem.addActionListener(actList);
     }
-    
+
     public static synchronized DropdownSingleTermSearchPanel getDefault() {
         if (instance == null) {
             instance = new DropdownSingleTermSearchPanel();
         }
         return instance;
     }
-    
+
     void addSearchButtonActionListener(ActionListener actionListener) {
         searchButton.addActionListener(actionListener);
-    }    
-       
+    }
+
     void resetSearchBox() {
         keywordTextField.setText("");
     }
 
     @Override
-    List<KeywordList> getKeywordLists() {        
+    List<KeywordList> getKeywordLists() {
         List<Keyword> keywords = new ArrayList<>();
-        keywords.add(new Keyword(keywordTextField.getText(), 
+        keywords.add(new Keyword(keywordTextField.getText(),
                 !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
-        
-        List <KeywordList> keywordLists = new ArrayList<>();
+
+        List<KeywordList> keywordLists = new ArrayList<>();
         keywordLists.add(new KeywordList(keywords));
-        
+
         return keywordLists;
-    }    
+    }
 
     @Override
     protected void postFilesIndexedChange() {
         //nothing to update
-    }    
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -228,13 +231,13 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
     private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
         try {
             search();
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "search() threw exception", e); //NON-NLS
         }
     }//GEN-LAST:event_keywordTextFieldActionPerformed
 
     private void keywordTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_keywordTextFieldMouseClicked
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             rightClickMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_keywordTextFieldMouseClicked

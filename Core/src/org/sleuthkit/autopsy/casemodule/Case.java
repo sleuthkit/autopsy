@@ -19,14 +19,18 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Frame;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +41,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -49,8 +54,19 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Stores all information for a given case. Only a single case can currently be
@@ -126,7 +142,33 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * case. The old value supplied by the event object is null and the new
          * value is a reference to a Report object representing the new report.
          */
-        REPORT_ADDED;
+        REPORT_ADDED,
+        /**
+         * Name for the property change event when a report is deleted from the
+         * case. Both the old value and the new value supplied by the event
+         * object are null.
+         */
+        REPORT_DELETED,
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * added. The new value is tag added, the old value is empty
+         */
+        BLACKBOARD_ARTIFACT_TAG_ADDED,
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * deleted. The new value is empty, the old value is the deleted tag
+         */
+        BLACKBOARD_ARTIFACT_TAG_DELETED,
+        /**
+         * Property name for the event when a new ContentTag is added. The new
+         * value is tag added, the old value is empty
+         */
+        CONTENT_TAG_ADDED,
+        /**
+         * Property name for the event when a new ContentTag is deleted. The new
+         * value is empty, the old value is the deleted tag
+         */
+        CONTENT_TAG_DELETED;
     };
 
     private String name;
@@ -267,12 +309,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Creates a new case (create the XML config file and database)
      *
-     * @param caseDir The directory to store case data in. Will be created if it
-     * doesn't already exist. If it exists, it should have all of the needed sub
-     * dirs that createCaseDirectory() will create.
-     * @param caseName the name of case
+     * @param caseDir    The directory to store case data in. Will be created if
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
+     * @param caseName   the name of case
      * @param caseNumber the case number
-     * @param examiner the examiner for this case
+     * @param examiner   the examiner for this case
      */
     public static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
         logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName}); //NON-NLS
@@ -418,7 +461,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
-     * @param imgId the ID of the image that being added
+     * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      */
     @Deprecated
@@ -463,9 +506,54 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * @param newDataSource new data source added
      */
     void notifyNewDataSource(Content newDataSource) {
+        notifyPropertyChangeEvent(new PropertyChangeEvent(Case.class, Events.DATA_SOURCE_ADDED.toString(), null, newDataSource));
+        CoreComponentControl.openCoreWindows();
+    }
 
+    /**
+     * Notifies the UI that a new ContentTag has been added.
+     *
+     * @param newTag new ContentTag added
+     */
+    public void notifyContentTagAdded(ContentTag newTag) {
+        notifyPropertyChangeEvent(new ContentTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a ContentTag has been deleted.
+     *
+     * @param deletedTag ContentTag deleted
+     */
+    public void notifyContentTagDeleted(ContentTag deletedTag) {
+        notifyPropertyChangeEvent(new ContentTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies the UI that a new BlackboardArtifactTag has been added.
+     *
+     * @param newTag new BlackboardArtifactTag added
+     */
+    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
+        notifyPropertyChangeEvent(new BlackBoardArtifactTagAddedEvent(newTag));
+    }
+
+    /**
+     * Notifies the UI that a BlackboardArtifactTag has been.
+     *
+     * @param deletedTag BlackboardArtifactTag deleted
+     */
+    public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
+        notifyPropertyChangeEvent(new BlackBoardArtifactTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies the UI about a Case level event.
+     *
+     * @param propertyChangeEvent the event to distribute
+     */
+    private void notifyPropertyChangeEvent(final PropertyChangeEvent propertyChangeEvent) {
         try {
-            pcs.firePropertyChange(Events.DATA_SOURCE_ADDED.toString(), null, newDataSource);
+            pcs.firePropertyChange(propertyChangeEvent);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Case threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "Case.moduleErr"),
@@ -473,7 +561,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
                             "Case.changeCase.errListenToCaseUpdates.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
-        CoreComponentControl.openCoreWindows();
     }
 
     /**
@@ -540,9 +627,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Updates the case name.
      *
      * @param oldCaseName the old case name that wants to be updated
-     * @param oldPath the old path that wants to be updated
+     * @param oldPath     the old path that wants to be updated
      * @param newCaseName the new case name
-     * @param newPath the new path
+     * @param newPath     the new path
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -801,6 +888,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Get the data model Content objects in the root of this case's hierarchy.
      *
      * @return a list of the root objects
+     *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Content> getDataSources() throws TskCoreException {
@@ -934,7 +1022,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * to create the case directory
      *
-     * @param caseDir Path to the case directory (typically base + case name)
+     * @param caseDir  Path to the case directory (typically base + case name)
      * @param caseName the case name (used only for error messages)
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -1154,16 +1242,24 @@ public class Case implements SleuthkitCase.ErrorObserver {
     /**
      * Adds a report to the case.
      *
-     * @param [in] localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
-     * @param [in] sourceModuleName The name of the module that created the
-     * report.
-     * @param [in] reportName The report name, may be empty.
+     * @param localPath        The path of the report file, must be in the case
+     *                         directory or one of its subdirectories.
+     * @param sourceModuleName The name of the module that created the report.
+     * @param reportName       The report name, may be empty.
+     *
      * @return A Report data transfer object (DTO) for the new row.
+     *
      * @throws TskCoreException
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
-        Report report = this.db.addReport(localPath, srcModuleName, reportName);
+        String normalizedLocalPath;
+        try {
+            normalizedLocalPath = Paths.get(localPath).normalize().toString();
+        } catch (InvalidPathException ex) {
+            String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
+            throw new TskCoreException(errorMsg, ex);
+        }
+        Report report = this.db.addReport(normalizedLocalPath, srcModuleName, reportName);
         try {
             Case.pcs.firePropertyChange(Events.REPORT_ADDED.toString(), null, report);
         } catch (Exception ex) {
@@ -1174,6 +1270,50 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
+    }
+
+    /**
+     * Deletes reports from the case - deletes it from the disk as well as the
+     * database.
+     *
+     * @param reports        Collection of Report to be deleted from the case.
+     * @param deleteFromDisk Set true to perform reports file deletion from
+     *                       disk.
+     *
+     * @throws TskCoreException
+     */
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+
+        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString(); // NON-NLS
+        for (Report report : reports) {
+
+            // delete from the database.
+            this.db.deleteReport(report);
+
+            if (deleteFromDisk) {
+                // traverse to the root directory of Report report.
+                String reportPath = report.getPath();
+                while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) { // NON-NLS
+                    reportPath = Paths.get(reportPath, "..").normalize().toString(); // NON-NLS
+                }
+
+                // delete from the disk.
+                try {
+                    FileUtils.deleteDirectory(new File(reportPath));
+                } catch (IOException | SecurityException ex) {
+                    logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
+                }
+            }
+
+            // fire property change event.
+            try {
+                Case.pcs.firePropertyChange(Events.REPORT_DELETED.toString(), null, null);
+            } catch (Exception ex) {
+                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_DELETED.toString()); //NON-NLS
+                logger.log(Level.SEVERE, errorMessage, ex);
+            }
+        }
     }
 
     /**

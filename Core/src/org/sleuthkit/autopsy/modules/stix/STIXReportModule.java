@@ -96,16 +96,16 @@ public class STIXReportModule implements GeneralReportModule {
     /**
      * .
      *
-     * @param path path to save the report
+     * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
     @Override
-    public void generateReport(String path, ReportProgressPanel progressPanel) {
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));
-        reportPath = path + getRelativeFilePath();
+        reportPath = baseReportDir + getRelativeFilePath();
 
         // Check if the user wants to display all output or just hits
         reportAllResults = configPanel.getShowAllResults();
@@ -117,9 +117,9 @@ public class STIXReportModule implements GeneralReportModule {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX report file %s", reportPath), ex); //NON-NLS
             MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                                          NbBundle.getMessage(this.getClass(),
-                                                              "STIXReportModule.notifyMsg.unableToOpenReportFile",
-                                                              reportPath),
+                    NbBundle.getMessage(this.getClass(),
+                            "STIXReportModule.notifyMsg.unableToOpenReportFile",
+                            reportPath),
                     MessageNotifyUtil.MessageType.ERROR);
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
@@ -155,8 +155,8 @@ public class STIXReportModule implements GeneralReportModule {
         if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName)); //NON-NLS
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                                                                "STIXReportModule.notifyMsg.unableToOpenFileDir",
-                                                                stixFileName));
+                    "STIXReportModule.notifyMsg.unableToOpenFileDir",
+                    stixFileName));
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
@@ -189,7 +189,7 @@ public class STIXReportModule implements GeneralReportModule {
                         MessageNotifyUtil.MessageType.ERROR);
                 hadErrors = true;
             }
-            
+
             // Clear out the ID maps before loading the next file
             idToObjectMap = new HashMap<String, ObjectType>();
             idToResult = new HashMap<String, ObservableResult>();
@@ -218,8 +218,9 @@ public class STIXReportModule implements GeneralReportModule {
     /**
      * Process a STIX file.
      *
-     * @param stixFile - Name of the file
+     * @param stixFile      - Name of the file
      * @param progressPanel - Progress panel (for updating)
+     *
      * @throws TskCoreException
      */
     private void processFile(String stixFile, ReportProgressPanel progressPanel) throws
@@ -248,7 +249,9 @@ public class STIXReportModule implements GeneralReportModule {
      * Load a STIX-formatted XML file into a STIXPackage object.
      *
      * @param stixFileName Name of the STIX file to unmarshal
+     *
      * @return Unmarshalled file contents
+     *
      * @throws TskCoreException
      */
     private STIXPackage loadSTIXFile(String stixFileName) throws TskCoreException {
@@ -325,6 +328,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param ind
      * @param result
+     *
      * @throws TskCoreException
      */
     private void saveResultsAsArtifacts(Indicator ind, ObservableResult result) throws TskCoreException {
@@ -354,9 +358,9 @@ public class STIXReportModule implements GeneralReportModule {
             count++;
             if (count > 1000) {
                 MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "STIXReportModule.notifyMsg.tooManyArtifactsgt1000",
-                                                                  ind.getId()),
+                        NbBundle.getMessage(this.getClass(),
+                                "STIXReportModule.notifyMsg.tooManyArtifactsgt1000",
+                                ind.getId()),
                         MessageNotifyUtil.MessageType.INFO);
                 break;
             }
@@ -367,9 +371,10 @@ public class STIXReportModule implements GeneralReportModule {
     /**
      * Write the full results string to the output file.
      *
-     * @param ind - Used to get the title, ID, and description of the indicator
+     * @param ind       - Used to get the title, ID, and description of the
+     *                  indicator
      * @param resultStr - Full results for this indicator
-     * @param found - true if the indicator was found in datasource(s)
+     * @param found     - true if the indicator was found in datasource(s)
      */
     private void writeResultsToFile(Indicator ind, String resultStr, boolean found) {
         if (output != null) {
@@ -429,6 +434,7 @@ public class STIXReportModule implements GeneralReportModule {
      * Use the ID or ID ref to create a key into the observable map.
      *
      * @param obs
+     *
      * @return
      */
     private String makeMapKey(Observable obs) {
@@ -459,9 +465,11 @@ public class STIXReportModule implements GeneralReportModule {
     /**
      * Evaluate an observable composition. Can be called recursively.
      *
-     * @param comp The observable composition object to evaluate
+     * @param comp    The observable composition object to evaluate
      * @param spacing Used to formatting the output
+     *
      * @return The status of the composition
+     *
      * @throws TskCoreException
      */
     private ObservableResult evaluateObservableComposition(ObservableCompositionType comp, String spacing) throws TskCoreException {
@@ -553,9 +561,11 @@ public class STIXReportModule implements GeneralReportModule {
      * Evaluate one observable and return the result. This is at the end of the
      * observable composition tree and will not be called recursively.
      *
-     * @param obs The observable object to evaluate
+     * @param obs     The observable object to evaluate
      * @param spacing For formatting the output
+     *
      * @return The status of the observable
+     *
      * @throws TskCoreException
      */
     private ObservableResult evaluateSingleObservable(Observable obs, String spacing) throws TskCoreException {
@@ -594,8 +604,9 @@ public class STIXReportModule implements GeneralReportModule {
      * Evaluate a STIX object.
      *
      *
-     * @param obj The object to evaluate against the datasource(s)
+     * @param obj     The object to evaluate against the datasource(s)
      * @param spacing For formatting the output
+     *
      * @return
      */
     private ObservableResult evaluateObject(ObjectType obj, String spacing, String id) {

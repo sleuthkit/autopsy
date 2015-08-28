@@ -40,7 +40,8 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * This class provides methods for creating sets of actions for data model objects. 
+ * This class provides methods for creating sets of actions for data model
+ * objects.
  */
 // TODO: All of the methods below that deal with classes derived from AbstractFile are the same except for the creation of wrapper nodes to pass to actions.
 //   1. Do the types of the wrapper nodes really need to vary? If not, it would mean a single 
@@ -48,7 +49,8 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 //   method could be implemented. If the different nodes are necessary, is it merely because of some misuse of the Visitor pattern somewhere?
 //   2. All of this would be much improved by not constructing nodes with actions, but this might be necessary with pushing of nodes rather than use of lookups to 
 //   handle selections.
-public class DataModelActionsFactory  {
+public class DataModelActionsFactory {
+
     public static final String VIEW_SOURCE_FILE_IN_DIR = NbBundle
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.srcFileInDir.text");
     public static final String VIEW_FILE_IN_DIR = NbBundle
@@ -60,7 +62,7 @@ public class DataModelActionsFactory  {
     public static final String SEARCH_FOR_FILES_SAME_MD5 = NbBundle
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.srfFileSameMD5.text");
 
- public   static List<Action> getActions(File file, boolean isArtifactSource) {
+    public static List<Action> getActions(File file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         final FileNode fileNode = new FileNode(file);
@@ -77,9 +79,9 @@ public class DataModelActionsFactory  {
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
-    }        
+    }
 
-  public  static List<Action> getActions(LayoutFile file, boolean isArtifactSource) {
+    public static List<Action> getActions(LayoutFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         LayoutFileNode layoutFileNode = new LayoutFileNode(file);
@@ -95,10 +97,10 @@ public class DataModelActionsFactory  {
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
-    }        
-    
-  public  static List<Action> getActions(Directory directory, boolean isArtifactSource) {
-        List<Action> actions = new ArrayList<>();        
+    }
+
+    public static List<Action> getActions(Directory directory, boolean isArtifactSource) {
+        List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         DirectoryNode directoryNode = new DirectoryNode(directory);
         actions.add(null); // creates a menu separator
@@ -113,9 +115,9 @@ public class DataModelActionsFactory  {
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
-    }        
-    
-  public  static List<Action> getActions(VirtualDirectory directory, boolean isArtifactSource) {
+    }
+
+    public static List<Action> getActions(VirtualDirectory directory, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         VirtualDirectoryNode directoryNode = new VirtualDirectoryNode(directory);
@@ -131,27 +133,9 @@ public class DataModelActionsFactory  {
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
-    }        
-        
-  public  static List<Action> getActions(LocalFile file, boolean isArtifactSource) {
-        List<Action> actions = new ArrayList<>();
-        actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
-        final LocalFileNode localFileNode = new LocalFileNode(file);
-        actions.add(null); // creates a menu separator
-        actions.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, localFileNode));
-        actions.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
-        actions.add(null); // creates a menu separator
-        actions.add(ExtractAction.getInstance());
-        actions.add(null); // creates a menu separator
-        actions.add(AddContentTagAction.getInstance());
-        if (isArtifactSource) {
-            actions.add(AddBlackboardArtifactTagAction.getInstance());
-        }
-        actions.addAll(ContextMenuExtensionPoint.getActions());
-        return actions;
-    }        
-        
-  public  static List<Action> getActions(DerivedFile file, boolean isArtifactSource) {
+    }
+
+    public static List<Action> getActions(LocalFile file, boolean isArtifactSource) {
         List<Action> actions = new ArrayList<>();
         actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
         final LocalFileNode localFileNode = new LocalFileNode(file);
@@ -168,28 +152,40 @@ public class DataModelActionsFactory  {
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions;
     }
-    
-  public  static List<Action> getActions(Content content, boolean isArtifactSource) {
+
+    public static List<Action> getActions(DerivedFile file, boolean isArtifactSource) {
+        List<Action> actions = new ArrayList<>();
+        actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), file));
+        final LocalFileNode localFileNode = new LocalFileNode(file);
+        actions.add(null); // creates a menu separator
+        actions.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, localFileNode));
+        actions.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
+        actions.add(null); // creates a menu separator
+        actions.add(ExtractAction.getInstance());
+        actions.add(null); // creates a menu separator
+        actions.add(AddContentTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
+        actions.addAll(ContextMenuExtensionPoint.getActions());
+        return actions;
+    }
+
+    public static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
-            return getActions((File)content, isArtifactSource);
-        }
-        else if (content instanceof LayoutFile) {
-            return getActions((LayoutFile)content, isArtifactSource);            
-        }
-        else if (content instanceof Directory) {
-            return getActions((Directory)content, isArtifactSource);            
-        }
-        else if (content instanceof VirtualDirectory) {
-            return getActions((VirtualDirectory)content, isArtifactSource);            
-        }
-        else if (content instanceof LocalFile) {
-            return getActions((LocalFile)content, isArtifactSource);            
-        }
-        else if (content instanceof DerivedFile) {
-            return getActions((DerivedFile)content, isArtifactSource);            
-        }
-        else {
+            return getActions((File) content, isArtifactSource);
+        } else if (content instanceof LayoutFile) {
+            return getActions((LayoutFile) content, isArtifactSource);
+        } else if (content instanceof Directory) {
+            return getActions((Directory) content, isArtifactSource);
+        } else if (content instanceof VirtualDirectory) {
+            return getActions((VirtualDirectory) content, isArtifactSource);
+        } else if (content instanceof LocalFile) {
+            return getActions((LocalFile) content, isArtifactSource);
+        } else if (content instanceof DerivedFile) {
+            return getActions((DerivedFile) content, isArtifactSource);
+        } else {
             return new ArrayList<>();
         }
-    }    
+    }
 }

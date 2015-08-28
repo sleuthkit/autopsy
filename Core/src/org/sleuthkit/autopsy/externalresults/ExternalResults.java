@@ -117,15 +117,15 @@ final public class ExternalResults {
         void addAttribute(String type, String value, String valueType, String sourceModule) {
             if (type.isEmpty()) {
                 throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                                                                       "ExternalResults.Artifact.addAttribute.exception.msg1.text"));
+                        "ExternalResults.Artifact.addAttribute.exception.msg1.text"));
             }
             if (value.isEmpty()) {
                 throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                                                                       "ExternalResults.Artifact.addAttribute.exception.msg2.text"));
+                        "ExternalResults.Artifact.addAttribute.exception.msg2.text"));
             }
             if (valueType.isEmpty()) {
                 throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                                                                       "ExternalResults.Artifact.addAttribute.exception.msg3.text"));
+                        "ExternalResults.Artifact.addAttribute.exception.msg3.text"));
             }
             attributes.add(new ArtifactAttribute(type, value, valueType, sourceModule));
         }
@@ -181,14 +181,14 @@ final public class ExternalResults {
         String getLocalPath() {
             return localPath;
         }
-        
+
         String getSourceModuleName() {
             return sourceModuleName;
         }
-        
+
         String getReportName() {
             return reportName;
-        }        
+        }
     }
 
     static final class DerivedFile {

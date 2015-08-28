@@ -34,33 +34,47 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 
-/** * bundles up the results of analyzing a time range for the appropriate
- * {@link TimeUnits} to use to visualize it. Partly, this class exists
- * so I don't have to have more member variables in other places , and partly
- * because I can only return a single value from a function. This might only be
- * a temporary design but is working well for now. */
+/**
+ * * bundles up the results of analyzing a time range for the appropriate
+ * {@link TimeUnits} to use to visualize it. Partly, this class exists so I
+ * don't have to have more member variables in other places , and partly because
+ * I can only return a single value from a function. This might only be a
+ * temporary design but is working well for now.
+ */
 @Immutable
 public class RangeDivisionInfo {
 
-    /** the size of the periods we should divide the interval into */
+    /**
+     * the size of the periods we should divide the interval into
+     */
     private final TimeUnits blockSize;
 
-    /** The number of Blocks we are going to divide the interval into. */
+    /**
+     * The number of Blocks we are going to divide the interval into.
+     */
     private final int numberOfBlocks;
 
-    /** a {@link DateTimeFormatter} corresponding to the block size for the
-     * tick marks on the date axis of the graph */
+    /**
+     * a {@link DateTimeFormatter} corresponding to the block size for the tick
+     * marks on the date axis of the graph
+     */
     private final DateTimeFormatter tickFormatter;
 
-    /** an adjusted lower bound for the range such that is lines up with a block
-     * boundary before or at the start of the timerange */
+    /**
+     * an adjusted lower bound for the range such that is lines up with a block
+     * boundary before or at the start of the timerange
+     */
     private final long lowerBound;
 
-    /** an adjusted upper bound for the range such that is lines up with a block
-     * boundary at or after the end of the timerange */
+    /**
+     * an adjusted upper bound for the range such that is lines up with a block
+     * boundary at or after the end of the timerange
+     */
     private final long upperBound;
 
-    /** the time range this {@link RangeDivisionInfo} describes */
+    /**
+     * the time range this {@link RangeDivisionInfo} describes
+     */
     private final Interval timeRange;
 
     public Interval getTimeRange() {

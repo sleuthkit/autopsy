@@ -18,28 +18,26 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
-import org.sleuthkit.autopsy.imagegallery.FileUpdateEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.grouping.GroupKey;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -55,13 +53,13 @@ public class CategorizeAction extends AddTagAction {
 
     private final ImageGalleryController controller;
 
-    public CategorizeAction() {
+    public CategorizeAction(ImageGalleryController controller) {
         super();
-        this.controller = ImageGalleryController.getDefault();
+        this.controller = controller;
     }
 
-    static public Menu getPopupMenu() {
-        return new CategoryMenu();
+    public Menu getPopupMenu() {
+        return new CategoryMenu(controller);
     }
 
     @Override
@@ -72,71 +70,30 @@ public class CategorizeAction extends AddTagAction {
     @Override
     public void addTag(TagName tagName, String comment) {
         Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
+        addTagsToFiles(tagName, comment, selectedFiles);
+    }
 
-        //TODO: should this get submitted to controller rather than a swingworker ? -jm
-        new SwingWorker<Object, Object>() {
+    @Override
+    public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
 
-            @Override
-            protected Object doInBackground() throws Exception {
-                Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
-                for (Long fileID : selectedFiles) {
+        Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
 
-                    try {
-                        DrawableFile<?> file = controller.getFileFromId(fileID);
+        for (Long fileID : selectedFiles) {
+            controller.queueDBWorkerTask(new CategorizeTask(fileID, tagName, comment));
+        }
+    }
 
-                        Category oldCat = file.getCategory();
-                        // remove file from old category group
-                        controller.getGroupManager().removeFromGroup(new GroupKey<Category>(DrawableAttribute.CATEGORY, oldCat), fileID);
-
-                        //remove old category tag if necessary
-                        List<ContentTag> allContentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(file);
-
-                        for (ContentTag ct : allContentTags) {
-                            //this is bad: treating tags as categories as long as their names start with prefix
-                            //TODO:  abandon using tags for categories and instead add a new column to DrawableDB
-                            if (ct.getName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                                LOGGER.log(Level.INFO, "removing old category from {0}", file.getName());
-                                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(ct);
-                            }
-                        }
-
-                        if (tagName != Category.ZERO.getTagName()) { // no tags for cat-0
-                            Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
-                        }
-                        //make sure rest of ui  hears category change.
-                        controller.getGroupManager().handleFileUpdate(FileUpdateEvent.newUpdateEvent(Collections.singleton(fileID), DrawableAttribute.CATEGORY));
-
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
-                        JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-
-                refreshDirectoryTree();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "unexpected exception while categorizing files", ex);
-                }
-            }
-
-        }.execute();
-
+    public void enforceOneCat(TagName name, String string) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
      * Instances of this class implement a context menu user interface for
      * selecting a category
      */
-    static protected class CategoryMenu extends Menu {
+    static private class CategoryMenu extends Menu {
 
-        CategoryMenu() {
+        CategoryMenu(ImageGalleryController controller) {
             super("Categorize");
 
             // Each category get an item in the sub-menu. Selecting one of these menu items adds
@@ -145,12 +102,64 @@ public class CategorizeAction extends AddTagAction {
 
                 MenuItem categoryItem = new MenuItem(cat.getDisplayName());
                 categoryItem.setOnAction((ActionEvent t) -> {
-                    final CategorizeAction categorizeAction = new CategorizeAction();
-                    categorizeAction.addTag(cat.getTagName(), NO_COMMENT);
+                    final CategorizeAction categorizeAction = new CategorizeAction(controller);
+                    categorizeAction.addTag(controller.getCategoryManager().getTagName(cat), NO_COMMENT);
                 });
-                categoryItem.setAccelerator(new KeyCodeCombination(cat.getHotKeycode()));
+                categoryItem.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(cat.getCategoryNumber()))));
                 getItems().add(categoryItem);
             }
         }
     }
+
+    private class CategorizeTask extends ImageGalleryController.InnerTask {
+
+        private final long fileID;
+        private final TagName tagName;
+        private final String comment;
+
+        public CategorizeTask(long fileID, TagName tagName, String comment) {
+            super();
+            this.fileID = fileID;
+            this.tagName = tagName;
+            this.comment = comment;
+        }
+
+        @Override
+        public void run() {
+            final CategoryManager categoryManager = controller.getCategoryManager();
+            final DrawableTagsManager tagsManager = controller.getTagsManager();
+
+
+            try {
+                DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db
+                final List<ContentTag> fileTags = tagsManager.getContentTagsByContent(file);
+                if (tagName == categoryManager.getTagName(Category.ZERO)) {
+                    // delete all cat tags for cat-0
+                    fileTags.stream()
+                            .filter(tag -> CategoryManager.isCategoryTagName(tag.getName()))
+                            .forEach((ct) -> {
+                                try {
+                                    tagsManager.deleteContentTag(ct);
+                                } catch (TskCoreException ex) {
+                                    LOGGER.log(Level.SEVERE, "Error removing old categories result", ex);
+                                }
+                            });
+                } else {
+                    //add cat tag if no existing cat tag for that cat
+                    if (fileTags.stream()
+                            .map(Tag::getName)
+                            .filter(tagName::equals)
+                            .collect(Collectors.toList()).isEmpty()) {
+                        tagsManager.addContentTag(file, tagName, comment);
+                    }
+                }
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error categorizing result", ex);
+                JOptionPane.showMessageDialog(null, "Unable to categorize " + fileID + ".", "Categorizing Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }
+
 }

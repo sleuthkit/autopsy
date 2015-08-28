@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextField;
@@ -38,8 +37,8 @@ import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
- * A TreeTableCell that shows an icon and color corresponding to the
- * represented filter
+ * A TreeTableCell that shows an icon and color corresponding to the represented
+ * filter
  */
 class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implements TimeLineView {
 
@@ -56,6 +55,7 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
     }
 
     @Override
+    @NbBundle.Messages("Timeline.ui.filtering.promptText=enter filter string")
     public void updateItem(AbstractFilter item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null) {
@@ -74,15 +74,12 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
                 rect.setArcWidth(5);
                 rect.setStrokeWidth(3);
                 setLegendColor(filter, rect, this.filteredEvents.getEventTypeZoom());
-                this.filteredEvents.eventTypeZoom().addListener((
-                        ObservableValue<? extends EventTypeZoomLevel> observable,
-                        EventTypeZoomLevel oldValue,
-                        EventTypeZoomLevel newValue) -> {
-                            setLegendColor(filter, rect, newValue);
-                        });
+                this.filteredEvents.eventTypeZoom().addListener((obs, oldZoomLevel, newZoomLevel) -> {
+                    setLegendColor(filter, rect, newZoomLevel);
+                });
 
                 HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
-                                     new ImageView(((TypeFilter) item).getFXImage()), rect
+                        new ImageView(((TypeFilter) item).getFXImage()), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {
@@ -93,7 +90,7 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
             } else if (item instanceof TextFilter) {
                 TextFilter f = (TextFilter) item;
                 TextField textField = new TextField();
-                textField.setPromptText(NbBundle.getMessage(this.getClass(), "Timeline.ui.filtering.promptText"));
+                textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
                 textField.textProperty().bindBidirectional(f.textProperty());
                 Platform.runLater(() -> {
                     setGraphic(textField);

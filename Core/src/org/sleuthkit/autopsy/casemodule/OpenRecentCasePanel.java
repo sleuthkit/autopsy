@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.awt.Event;
-import java.awt.EventQueue;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -201,19 +198,19 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             try {
                 if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
                     JOptionPane.showMessageDialog(null,
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                                                      caseName),
-                                                  NbBundle.getMessage(this.getClass(),
-                                                                      "OpenRecentCasePanel.openCase.msgDlg.err"),
-                                                  JOptionPane.ERROR_MESSAGE);
+                            NbBundle.getMessage(OpenRecentCasePanel.class,
+                                    "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
+                                    caseName),
+                            NbBundle.getMessage(OpenRecentCasePanel.class,
+                                    "OpenRecentCasePanel.openCase.msgDlg.err"),
+                            JOptionPane.ERROR_MESSAGE);
                     RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
-                     //if case is not opened, open the start window
+                    //if case is not opened, open the start window
                     if (Case.isCaseOpen() == false) {
                         StartupWindowProvider.getInstance().open();
                     }
- 
+
                 } else {
                     Case.open(casePath); // open the case
                 }
@@ -266,10 +263,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
             switch (column) {
                 case 0:
-                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.caseName");
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.caseName");
                     break;
                 case 1:
-                    colName = NbBundle.getMessage(this.getClass(), "OpenRecentCasePanel.colName.path");
+                    colName = NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.colName.path");
                     break;
                 default:
                     ;

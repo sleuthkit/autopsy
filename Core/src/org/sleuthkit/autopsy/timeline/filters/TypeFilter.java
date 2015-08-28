@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,19 +27,25 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
 
-/** Event Type Filter. An instance of TypeFilter is usually a tree that
- * parallels the event type hierarchy with one filter/node for each event type. */
-public class TypeFilter extends UnionFilter {
+/**
+ * Event Type Filter. An instance of TypeFilter is usually a tree that parallels
+ * the event type hierarchy with one filter/node for each event type.
+ */
+public class TypeFilter extends UnionFilter<TypeFilter> {
 
-    /** the event type this filter passes */
+    /**
+     * the event type this filter passes
+     */
     private final EventType eventType;
 
-    /** private constructor that enables non recursive/tree construction of the
+    /**
+     * private constructor that enables non recursive/tree construction of the
      * filter hierarchy for use in {@link TypeFilter#copyOf()}.
      *
      * @param et        the event type this filter passes
      * @param recursive true if subfilters should be added for each subtype.
-     *                  False if no subfilters should be added. */
+     *                  False if no subfilters should be added.
+     */
     private TypeFilter(EventType et, boolean recursive) {
         super(FXCollections.observableArrayList());
         this.eventType = et;
@@ -51,10 +57,12 @@ public class TypeFilter extends UnionFilter {
         }
     }
 
-    /** public constructor. creates a subfilter for each subtype of the given
+    /**
+     * public constructor. creates a subfilter for each subtype of the given
      * event type
      *
-     * @param et the event type this filter will pass */
+     * @param et the event type this filter will pass
+     */
     public TypeFilter(EventType et) {
         this(et, true);
     }
@@ -64,20 +72,23 @@ public class TypeFilter extends UnionFilter {
     }
 
     @Override
+    @NbBundle.Messages("TypeFilter.displayName.text=Event Type Filter")
     public String getDisplayName() {
-        if (eventType == RootEventType.getInstance()) {
-            return NbBundle.getMessage(this.getClass(), "TypeFilter.displayName.text");
-        } else {
-            return eventType.getDisplayName();
-        }
+        return (eventType == RootEventType.getInstance())
+                ? Bundle.TypeFilter_displayName_text()
+                : eventType.getDisplayName();
     }
 
-    /** @return a color to use in GUI components representing this filter */
+    /**
+     * @return a color to use in GUI components representing this filter
+     */
     public Color getColor() {
         return eventType.getColor();
     }
 
-    /** @return an image to use in GUI components representing this filter */
+    /**
+     * @return an image to use in GUI components representing this filter
+     */
     public Image getFXImage() {
         return eventType.getFXImage();
     }
@@ -86,10 +97,10 @@ public class TypeFilter extends UnionFilter {
     public TypeFilter copyOf() {
         //make a nonrecursive copy of this filter
         final TypeFilter typeFilter = new TypeFilter(eventType, false);
-        typeFilter.setActive(isActive());
+        typeFilter.setSelected(isSelected());
         typeFilter.setDisabled(isDisabled());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((Filter t) -> {
+        this.getSubFilters().forEach((TypeFilter t) -> {
             typeFilter.getSubFilters().add(t.copyOf());
         });
 
@@ -100,7 +111,7 @@ public class TypeFilter extends UnionFilter {
     public String getHTMLReportString() {
         String string = getEventType().getDisplayName() + getStringCheckBox();
         if (getSubFilters().isEmpty() == false) {
-            string = string + " : " + getSubFilters().stream().filter(Filter::isActive).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
+            string = string + " : " + getSubFilters().stream().filter(Filter::isSelected).map(Filter::getHTMLReportString).collect(Collectors.joining("</li><li>", "<ul><li>", "</li></ul>")); // NON-NLS
         }
         return string;
     }
@@ -115,20 +126,14 @@ public class TypeFilter extends UnionFilter {
         }
         final TypeFilter other = (TypeFilter) obj;
 
-        if (isActive() != other.isActive()) {
+        if (isSelected() != other.isSelected()) {
             return false;
         }
 
         if (this.eventType != other.eventType) {
             return false;
         }
-
-        for (int i = 0; i < getSubFilters().size(); i++) {
-            if (getSubFilters().get(i).equals(other.getSubFilters().get(i)) == false) {
-                return false;
-            }
-        }
-        return true;
+        return hashEqualSubFilters(this, other);
     }
 
     @Override

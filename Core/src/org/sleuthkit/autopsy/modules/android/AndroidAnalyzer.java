@@ -26,30 +26,34 @@ public interface AndroidAnalyzer {
 
     /**
      * Implement this method if the android analyzer analyzes database artifact
-     * @param connection jdbc:sqlite connection to the database.
+     *
+     * @param connection   jdbc:sqlite connection to the database.
      * @param abstractFile file used to create the artifacts and add attributes.
-     * Must correspond to the database file.
+     *                     Must correspond to the database file.
      */
     public void findInDB(Connection connection, AbstractFile abstractFile);
 
-
     /**
-     * Implement this method if the android analyzer analyzes file (non database) artifact.
-     * @param file File instance of the file to be analyzed.
+     * Implement this method if the android analyzer analyzes file (non
+     * database) artifact.
+     *
+     * @param file         File instance of the file to be analyzed.
      * @param abstractFile file used to create the artifacts and add attributes.
-     * Must correspond to the File instance.
+     *                     Must correspond to the File instance.
      */
     public void findInFile(File file, AbstractFile abstractFile);
 
-
     /**
      * Returns an array of names of files analyzed by the analyzer.
-     * @return array of names of the files (database or non-database) to be analyzed.
+     *
+     * @return array of names of the files (database or non-database) to be
+     *         analyzed.
      */
     public String[] getDatabaseNames();
 
     /**
      * Checks if the android analyzer parses a database.
+     *
      * @return true if the analyzer parses a database. Else returns false.
      */
     public boolean parsesDB();

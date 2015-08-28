@@ -28,31 +28,35 @@ import org.openide.util.NbBundle;
 
 /**
  * Wizard panel that allows configuration of File Report options.
- * 
+ *
  * @author jwallace
  */
- class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>{
+class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+
     private WizardDescriptor wiz;
     private ReportWizardFileOptionsVisualPanel component;
     private JButton finishButton;
-    
+
     ReportWizardFileOptionsPanel() {
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);
-        
+
         finishButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 wiz.doFinishClick();
-            };
-        });
+            }
+        ;
+    }
+
+    );
     }
     
     public void setFinish(boolean enable) {
         finishButton.setEnabled(enable);
     }
-    
+
     @Override
     public boolean isFinishPanel() {
         return true;
@@ -74,7 +78,7 @@ import org.openide.util.NbBundle;
     @Override
     public void readSettings(WizardDescriptor data) {
         this.wiz = data;
-        wiz.setOptions(new Object[] {WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, finishButton, WizardDescriptor.CANCEL_OPTION});
+        wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, finishButton, WizardDescriptor.CANCEL_OPTION});
     }
 
     @Override
@@ -94,5 +98,5 @@ import org.openide.util.NbBundle;
     @Override
     public void removeChangeListener(ChangeListener cl) {
     }
-    
+
 }

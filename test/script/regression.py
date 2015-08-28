@@ -170,14 +170,15 @@ class TestRunner(object):
             test_data.printerror = Errors.printerror
             # give solr process time to die.
             time.sleep(10)
+            TestRunner._cleanup(test_data)
 
-       
-        # This code was causing errors with paths, so its disabled 
+
+        # This code was causing errors with paths, so its disabled
         #if test_config.jenkins:
         #    copyErrorFiles(Errors.errors_out, test_config)
 
         if all([ test_data.overall_passed for test_data in test_data_list ]):
-            pass 
+            pass
         else:
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
@@ -242,7 +243,7 @@ class TestRunner(object):
         print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
-        
+
         # run time test only for the specific jenkins test
         if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
@@ -431,6 +432,30 @@ class TestRunner(object):
             theproc = subprocess.Popen(test_data.ant, shell = True, stdout=subprocess.PIPE)
             theproc.communicate()
         antout.close()
+
+    def _cleanup(test_data):
+        """
+        Delete the additional files.
+        :param test_data:
+        :return:
+        """
+        try:
+            os.remove(test_data.get_sorted_data_path(DBType.OUTPUT))
+        except:
+            pass
+        try:
+            os.remove(test_data.get_sorted_errors_path(DBType.OUTPUT))
+        except:
+            pass
+        try:
+            os.remove(test_data.get_db_dump_path(DBType.OUTPUT))
+        except:
+            pass
+        try:
+            os.remove(test_data.get_run_time_path(DBType.OUTPUT))
+        except:
+            pass
+
 
 
 class TestData(object):
@@ -845,7 +870,9 @@ class TestResultsDiffer(object):
             diff_path = os.path.splitext(os.path.basename(output_file))[0]
             diff_path += "-Diff.txt"
             diff_file = codecs.open(diff_path, "wb", "utf_8")
-            dffcmdlst = ["diff", output_file, gold_file]
+
+            # Gold needs to be passed in before output.
+            dffcmdlst = ["diff", gold_file, output_file]
             subprocess.call(dffcmdlst, stdout = diff_file)
             Errors.add_errors_out(diff_path)
 
@@ -877,7 +904,8 @@ class TestResultsDiffer(object):
         gold_report_path = test_data.get_html_report_path(DBType.GOLD)
         output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
         try:
-            (subprocess.check_output(['diff', '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+            # Ensure gold is passed before output 
+            (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
                                       '\|Examiner:', gold_report_path, output_report_path]))
             print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")
@@ -904,7 +932,7 @@ class TestResultsDiffer(object):
 
     def _run_time_diff(test_data, old_time_path):
         """ Compare run times for this run, and the run previous.
-        
+
         Args:
             test_data: the TestData
             old_time_path: path to the log containing the run time from a previous test
@@ -919,14 +947,14 @@ class TestResultsDiffer(object):
         # avoid dividing by zero below.
         if oldtime == 0:
             return True
-            
+
         newtime = test_data.total_ingest_time
-        
+
         # write newtime to the file inside the report dir.
         file = open(test_data.get_run_time_path(DBType.OUTPUT), "w")
         file.writelines(newtime)
         file.close()
-        
+
         newtime = int(newtime[:newtime.find("ms")].replace(',', ''))
 
         # run the test, 5% tolerance
@@ -937,7 +965,7 @@ class TestResultsDiffer(object):
             print("This run took: " + str(newtime))
             diff = ((newtime / oldtime) * 100) - 100
             diff = str(diff)[:str(diff).find('.') + 3]
-            print("This run took " + diff + "% longer to run than the last run.") 
+            print("This run took " + diff + "% longer to run than the last run.")
             return False
 
 
@@ -953,10 +981,10 @@ class Reports(object):
             Reports._generate_csv(test_data.main_config.global_csv, test_data)
         else:
             Reports._generate_csv(test_data.main_config.csv, test_data)
-        
+
         if test_data.main_config.timing:
             Reports._write_time(test_data)
-            
+
     def _generate_html(test_data):
         """Generate the HTML log file."""
         # If the file doesn't exist yet, this is the first test_config to run for
@@ -1328,16 +1356,16 @@ class Logs(object):
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
-            
+
             message_line_count = find_msg_in_log_set("Ingest messages count:", test_data)
             test_data.indexed_files = message_line_count
-            
+
             files_line_count = find_msg_in_log_set("Indexed files count:", test_data)
             test_data.indexed_files = files_line_count
-            
+
             chunks_line_count = find_msg_in_log_set("Indexed file chunks count:", test_data)
             test_data.indexed_chunks = chunks_line_count
-            
+
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to find the required information to fill test_config data.")
             Errors.print_error(str(e) + "\n")
@@ -1870,7 +1898,7 @@ def find_msg_in_log(log, string, test_data):
       string: the String to search for.
       test_data: the TestData containing the log to search.
    Returns:
-      a listof_String, the lines on which the String was found. 
+      a listof_String, the lines on which the String was found.
    """
    lines = []
    try:
@@ -1956,14 +1984,14 @@ def find_file_in_dir(dir, name, ext):
 def copyErrorFiles(attachments, test_config):
     """Move email attachments to the location specified in the config file.
        Used for Jenkins build.
-       
+
     Args:
        attachments: a listof_String, the files to be moved
        test_config: TestConfiguration, used to determine where to move the files to
     """
     call = ['pwd']
     subprocess.call(call)
-   
+
     # remove old diff files
     filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
     for f in filelist:
@@ -1976,7 +2004,7 @@ def copyErrorFiles(attachments, test_config):
         destination = os.path.join(test_config.diff_dir, filename)
         call = ['cp', file, destination]
         subprocess.call(call)
-        
+
 
 class OS:
   LINUX, MAC, WIN, CYGWIN = range(4)

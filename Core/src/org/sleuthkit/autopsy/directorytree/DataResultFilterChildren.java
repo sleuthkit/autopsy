@@ -27,11 +27,13 @@ import org.openide.nodes.Node;
  * DataResultFilterNode that created in the DataResultFilterNode.java.
  *
  */
- class DataResultFilterChildren extends FilterNode.Children {
-    
+class DataResultFilterChildren extends FilterNode.Children {
+
     ExplorerManager sourceEm;
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     public DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
         super(arg);
         this.sourceEm = sourceEm;

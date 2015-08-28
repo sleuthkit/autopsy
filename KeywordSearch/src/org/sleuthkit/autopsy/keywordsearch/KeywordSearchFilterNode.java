@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.File;
 
 /**
- * 
+ *
  */
 class KeywordSearchFilterNode extends FilterNode {
 
@@ -81,6 +81,7 @@ class KeywordSearchFilterNode extends FilterNode {
      * table and the output view.
      *
      * @param popup
+     *
      * @return actions
      */
     @Override
@@ -100,12 +101,12 @@ class KeywordSearchFilterNode extends FilterNode {
         public List<Action> visit(File f) {
             return getFileActions();
         }
-        
+
         @Override
         public List<Action> visit(DerivedFile f) {
             return getFileActions();
         }
-        
+
         private List<Action> getFileActions() {
             List<Action> actions = new ArrayList<>();
             actions.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
@@ -116,7 +117,7 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(null); // creates a menu separator
             actions.add(AddContentTagAction.getInstance());
             actions.addAll(ContextMenuExtensionPoint.getActions());
-            return actions;            
+            return actions;
         }
 
         @Override

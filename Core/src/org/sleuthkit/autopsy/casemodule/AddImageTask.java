@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
-
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,282 +37,278 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /*
- * A background task that adds the given image to 
- * database using the Sleuthkit JNI interface.
- * 
+ * A background task that adds the given image to database using the Sleuthkit
+ * JNI interface.
+ *
  * It updates the given ProgressMonitor as it works through adding the image,
  * and et the end, calls the specified Callback.
  */
- class AddImageTask implements Runnable {
+class AddImageTask implements Runnable {
 
-        private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
-        
-        private final Case currentCase;
-        
-        // true if the process was requested to cancel
-        private final Object lock = new Object();   // synchronization object for cancelRequested
-        private volatile boolean cancelRequested = false;
-        
-        //true if revert has been invoked.
-        private boolean reverted = false;
-        
-        // true if there was a critical error in adding the data source
-        private boolean hasCritError = false;
-        
-        private final List<String> errorList = new ArrayList<>();
-        
-        private final DataSourceProcessorProgressMonitor progressMonitor;
-        private final DataSourceProcessorCallback callbackObj;
-        
-        private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
-        
-        private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
-        private Thread dirFetcher;
-   
-        private final String imagePath;
-        String timeZone;
-        boolean noFatOrphans;
-          
-        /*
-         * A thread that updates the progressMonitor with the name of the 
-         * directory currently being processed  by the AddImageTask 
-         */
-        private class CurrentDirectoryFetcher implements Runnable {
+    private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
 
-            DataSourceProcessorProgressMonitor progressMonitor;
-            SleuthkitJNI.CaseDbHandle.AddImageProcess process;
+    private final Case currentCase;
 
-            CurrentDirectoryFetcher(DataSourceProcessorProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
-                this.progressMonitor = aProgressMonitor;
-                this.process = proc;
-            }
+    // true if the process was requested to cancel
+    private final Object lock = new Object();   // synchronization object for cancelRequested
+    private volatile boolean cancelRequested = false;
 
-            /**
-             * @return the currently processing directory
-             */
-            @Override
-            public void run() {
-                try {
-                    while (!Thread.currentThread().isInterrupted()) { 
-                        String currDir = process.currentDirectory();
-                        if (currDir != null) {
-                            if (!currDir.isEmpty() ) {
-                                progressMonitor.setProgressText(
-                                        NbBundle.getMessage(this.getClass(), "AddImageTask.run.progress.adding",
-                                                            currDir));
-                            }
-                        }
-                        // this sleep here prevents the UI from locking up 
-                        // due to too frequent updates to the progressMonitor above
-                        Thread.sleep(500);
-                    }
-                } catch (InterruptedException ie) {
-                    // nothing to do, thread was interrupted externally  
-                    // signaling the end of AddImageProcess 
-                }
-            }
-        }
-    
-        public AddImageTask(String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj ) {
-           
-            currentCase = Case.getCurrentCase();
-            
-            this.imagePath = imgPath;
-            this.timeZone = tz;
-            this.noFatOrphans = noOrphans;
-            
-            this.callbackObj = cbObj;
+    //true if revert has been invoked.
+    private boolean reverted = false;
+
+    // true if there was a critical error in adding the data source
+    private boolean hasCritError = false;
+
+    private final List<String> errorList = new ArrayList<>();
+
+    private final DataSourceProcessorProgressMonitor progressMonitor;
+    private final DataSourceProcessorCallback callbackObj;
+
+    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
+
+    private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess;
+    private Thread dirFetcher;
+
+    private final String imagePath;
+    String timeZone;
+    boolean noFatOrphans;
+
+    /*
+     * A thread that updates the progressMonitor with the name of the directory
+     * currently being processed by the AddImageTask
+     */
+    private class CurrentDirectoryFetcher implements Runnable {
+
+        DataSourceProcessorProgressMonitor progressMonitor;
+        SleuthkitJNI.CaseDbHandle.AddImageProcess process;
+
+        CurrentDirectoryFetcher(DataSourceProcessorProgressMonitor aProgressMonitor, SleuthkitJNI.CaseDbHandle.AddImageProcess proc) {
             this.progressMonitor = aProgressMonitor;
+            this.process = proc;
         }
 
         /**
-         * Starts the addImage process, but does not commit the results.
-         *
-         * @return
-         *
-         * @throws Exception
+         * @return the currently processing directory
          */
         @Override
-        public void run() {             
-            errorList.clear();           
+        public void run() {
             try {
-                currentCase.getSleuthkitCase().acquireExclusiveLock();
-                addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-                dirFetcher = new Thread( new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
-                try {
-                    progressMonitor.setIndeterminate(true);
-                    progressMonitor.setProgress(0);
-                    dirFetcher.start();
-                    addImageProcess.run(new String[]{this.imagePath});
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
-                    hasCritError = true;
-                    errorList.add(ex.getMessage());
-                } catch (TskDataException ex) {
-                    logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
-                    errorList.add(ex.getMessage());
-                } 
-                postProcess();
-            } finally {
-                currentCase.getSleuthkitCase().releaseExclusiveLock();
-            }
-        }
-
-        /**
-         * Commit the newly added image to DB
-         *
-         *
-         * @throws Exception if commit or adding the image to the case failed
-         */
-        private void commitImage() throws Exception {
-   
-            long imageId = 0;
-            try {
-                imageId = addImageProcess.commit();
-            } catch (TskCoreException e) {
-                logger.log(Level.WARNING, "Errors occured while committing the image", e); //NON-NLS
-                errorList.add(e.getMessage());
-            } finally {
-                if (imageId != 0) {
-                    // get the newly added Image so we can return to caller
-                    Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
-                     
-                    //while we have the image, verify the size of its contents
-                    String verificationErrors = newImage.verifyImageSize();
-                    if (verificationErrors.equals("") == false) {
-                        //data error (non-critical)
-                        errorList.add(verificationErrors);
-                    }
-
-                    // Add the image to the list of new content
-                    newContents.add(newImage);
-                }
-
-                logger.log(Level.INFO, "Image committed, imageId: {0}", imageId); //NON-NLS
-                logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
-            }
-        }
-
-        /**
-         * Post processing after the addImageProcess is done.
-         * 
-         */
-        private void postProcess() {
-        
-            // cancel the directory fetcher
-            dirFetcher.interrupt();
-            
-            if (cancelRequested() || hasCritError) {
-                logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be committed."); //NON-NLS
-                revert();
-            }
-            
-            if (!errorList.isEmpty()) {
-                logger.log(Level.INFO, "There were errors that occured in add image process"); //NON-NLS
-            }
-            
-            // When everything happens without an error:
-            if (!(cancelRequested() || hasCritError)) {
-                try {
-                    if (addImageProcess != null) {
-                        // commit image
-                        try {
-                            commitImage();
-                        } catch (Exception ex) {
-                            errorList.add(ex.getMessage());
-                            // Log error/display warning
-                            logger.log(Level.SEVERE, "Error adding image to case.", ex); //NON-NLS
+                while (!Thread.currentThread().isInterrupted()) {
+                    String currDir = process.currentDirectory();
+                    if (currDir != null) {
+                        if (!currDir.isEmpty()) {
+                            progressMonitor.setProgressText(
+                                    NbBundle.getMessage(this.getClass(), "AddImageTask.run.progress.adding",
+                                            currDir));
                         }
-                    } else {
-                        logger.log(Level.SEVERE, "Missing image process object"); //NON-NLS
                     }
-                    
-                    // Tell the progress monitor we're done
-                    progressMonitor.setProgress(100);
-                } catch (Exception ex) {
-                    //handle unchecked exceptions post image add
-                    errorList.add(ex.getMessage());
-                    
-                    logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex); //NON-NLS
-                    logger.log(Level.SEVERE, "Error adding image to case", ex); //NON-NLS
-                } 
-            }
-            
-            // invoke the callBack, unless the caller cancelled 
-            if (!cancelRequested()) {
-                doCallBack();
-            }
-        }
-   
-        /*
-         * Call the callback with results, new content, and errors, if any
-         */
-        private void doCallBack()
-        {     
-              DataSourceProcessorCallback.DataSourceProcessorResult result;
-              
-              if (hasCritError) {
-                    result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
-              }
-              else if (!errorList.isEmpty()) {
-                  result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;       
-              }      
-              else {
-                  result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
-              }
-
-              // invoke the callback, passing it the result, list of new contents, and list of errors
-              callbackObj.done(result, errorList, newContents);
-        }
-        
-        /*
-         * cancel the image addition, if possible
-         */
-        public void cancelTask() {
-            
-            synchronized (lock) {
-                cancelRequested = true;
-                try {
-                  interrupt();
+                        // this sleep here prevents the UI from locking up 
+                    // due to too frequent updates to the progressMonitor above
+                    Thread.sleep(500);
                 }
-                catch (Exception ex) {
-                      logger.log(Level.SEVERE, "Failed to interrupt the add image task...");     //NON-NLS
-                }
-            }
-        }
-        
-        /*
-         * Interrupt the add image process if it is still running
-         */
-        private void interrupt() throws Exception {
-            
-            try {
-                logger.log(Level.INFO, "interrupt() add image process"); //NON-NLS
-                addImageProcess.stop();  //it might take time to truly stop processing and writing to db
-            } catch (TskCoreException ex) {
-                throw new Exception(NbBundle.getMessage(this.getClass(), "AddImageTask.interrupt.exception.msg"), ex);
-            }
-        }
-
-        /*
-         * Revert - if image has already been added but not committed yet
-         */
-        private void revert() {
-            
-             if (!reverted) {     
-                logger.log(Level.INFO, "Revert after add image process"); //NON-NLS
-                try {
-                    addImageProcess.revert();
-                } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error reverting add image process", ex); //NON-NLS
-                }
-                reverted = true;
-            }
-        }
-        
-        private boolean cancelRequested() {
-            synchronized (lock) {
-                return cancelRequested;   
+            } catch (InterruptedException ie) {
+                    // nothing to do, thread was interrupted externally  
+                // signaling the end of AddImageProcess 
             }
         }
     }
+
+    public AddImageTask(String imgPath, String tz, boolean noOrphans, DataSourceProcessorProgressMonitor aProgressMonitor, DataSourceProcessorCallback cbObj) {
+
+        currentCase = Case.getCurrentCase();
+
+        this.imagePath = imgPath;
+        this.timeZone = tz;
+        this.noFatOrphans = noOrphans;
+
+        this.callbackObj = cbObj;
+        this.progressMonitor = aProgressMonitor;
+    }
+
+    /**
+     * Starts the addImage process, but does not commit the results.
+     *
+     * @return
+     *
+     * @throws Exception
+     */
+    @Override
+    public void run() {
+        errorList.clear();
+        try {
+            currentCase.getSleuthkitCase().acquireExclusiveLock();
+            addImageProcess = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
+            dirFetcher = new Thread(new CurrentDirectoryFetcher(progressMonitor, addImageProcess));
+            try {
+                progressMonitor.setIndeterminate(true);
+                progressMonitor.setProgress(0);
+                dirFetcher.start();
+                addImageProcess.run(new String[]{this.imagePath});
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Core errors occurred while running add image. ", ex); //NON-NLS
+                hasCritError = true;
+                errorList.add(ex.getMessage());
+            } catch (TskDataException ex) {
+                logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex); //NON-NLS
+                errorList.add(ex.getMessage());
+            }
+            postProcess();
+        } finally {
+            currentCase.getSleuthkitCase().releaseExclusiveLock();
+        }
+    }
+
+    /**
+     * Commit the newly added image to DB
+     *
+     *
+     * @throws Exception if commit or adding the image to the case failed
+     */
+    private void commitImage() throws Exception {
+
+        long imageId = 0;
+        try {
+            imageId = addImageProcess.commit();
+        } catch (TskCoreException e) {
+            logger.log(Level.WARNING, "Errors occured while committing the image", e); //NON-NLS
+            errorList.add(e.getMessage());
+        } finally {
+            if (imageId != 0) {
+                // get the newly added Image so we can return to caller
+                Image newImage = currentCase.getSleuthkitCase().getImageById(imageId);
+
+                //while we have the image, verify the size of its contents
+                String verificationErrors = newImage.verifyImageSize();
+                if (verificationErrors.equals("") == false) {
+                    //data error (non-critical)
+                    errorList.add(verificationErrors);
+                }
+
+                // Add the image to the list of new content
+                newContents.add(newImage);
+            }
+
+            logger.log(Level.INFO, "Image committed, imageId: {0}", imageId); //NON-NLS
+            logger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+        }
+    }
+
+    /**
+     * Post processing after the addImageProcess is done.
+     *
+     */
+    private void postProcess() {
+
+        // cancel the directory fetcher
+        dirFetcher.interrupt();
+
+        if (cancelRequested() || hasCritError) {
+            logger.log(Level.WARNING, "Critical errors or interruption in add image process. Image will not be committed."); //NON-NLS
+            revert();
+        }
+
+        if (!errorList.isEmpty()) {
+            logger.log(Level.INFO, "There were errors that occured in add image process"); //NON-NLS
+        }
+
+        // When everything happens without an error:
+        if (!(cancelRequested() || hasCritError)) {
+            try {
+                if (addImageProcess != null) {
+                    // commit image
+                    try {
+                        commitImage();
+                    } catch (Exception ex) {
+                        errorList.add(ex.getMessage());
+                        // Log error/display warning
+                        logger.log(Level.SEVERE, "Error adding image to case.", ex); //NON-NLS
+                    }
+                } else {
+                    logger.log(Level.SEVERE, "Missing image process object"); //NON-NLS
+                }
+
+                // Tell the progress monitor we're done
+                progressMonitor.setProgress(100);
+            } catch (Exception ex) {
+                //handle unchecked exceptions post image add
+                errorList.add(ex.getMessage());
+
+                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error adding image to case", ex); //NON-NLS
+            }
+        }
+
+        // invoke the callBack, unless the caller cancelled 
+        if (!cancelRequested()) {
+            doCallBack();
+        }
+    }
+
+    /*
+     * Call the callback with results, new content, and errors, if any
+     */
+    private void doCallBack() {
+        DataSourceProcessorCallback.DataSourceProcessorResult result;
+
+        if (hasCritError) {
+            result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
+        } else if (!errorList.isEmpty()) {
+            result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;
+        } else {
+            result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
+        }
+
+        // invoke the callback, passing it the result, list of new contents, and list of errors
+        callbackObj.done(result, errorList, newContents);
+    }
+
+    /*
+     * cancel the image addition, if possible
+     */
+    public void cancelTask() {
+
+        synchronized (lock) {
+            cancelRequested = true;
+            try {
+                interrupt();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Failed to interrupt the add image task...");     //NON-NLS
+            }
+        }
+    }
+
+    /*
+     * Interrupt the add image process if it is still running
+     */
+    private void interrupt() throws Exception {
+
+        try {
+            logger.log(Level.INFO, "interrupt() add image process"); //NON-NLS
+            addImageProcess.stop();  //it might take time to truly stop processing and writing to db
+        } catch (TskCoreException ex) {
+            throw new Exception(NbBundle.getMessage(this.getClass(), "AddImageTask.interrupt.exception.msg"), ex);
+        }
+    }
+
+    /*
+     * Revert - if image has already been added but not committed yet
+     */
+    private void revert() {
+
+        if (!reverted) {
+            logger.log(Level.INFO, "Revert after add image process"); //NON-NLS
+            try {
+                addImageProcess.revert();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error reverting add image process", ex); //NON-NLS
+            }
+            reverted = true;
+        }
+    }
+
+    private boolean cancelRequested() {
+        synchronized (lock) {
+            return cancelRequested;
+        }
+    }
+}

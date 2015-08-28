@@ -32,11 +32,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Locates a variety of different contacts databases, parses them, and populates the blackboard. 
+ * Locates a variety of different contacts databases, parses them, and populates
+ * the blackboard.
  */
+public class ContactAnalyzer implements AndroidAnalyzer {
 
-public class ContactAnalyzer implements AndroidAnalyzer{
-    
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
     private static final String[] databaseNames = {"contacts.db", "contacts2.db"};

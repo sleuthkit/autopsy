@@ -47,14 +47,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * View the directory content associated with the given Artifact in the DataResultViewer.
- * 
- * 1.   Expands the Directory Tree to the location of the parent Node of the 
- *      associated Content.
- * 2.   Selects the parent Node of the associated Content in the Directory Tree,
- *      which causes the parent Node's Children to be visible in the DataResultViewer.
- * 3.   Waits for all the Children to be contentNode in the DataResultViewer and
- *      selects the Node that represents the Content.
+ * View the directory content associated with the given Artifact in the
+ * DataResultViewer.
+ *
+ * 1. Expands the Directory Tree to the location of the parent Node of the
+ * associated Content. 2. Selects the parent Node of the associated Content in
+ * the Directory Tree, which causes the parent Node's Children to be visible in
+ * the DataResultViewer. 3. Waits for all the Children to be contentNode in the
+ * DataResultViewer and selects the Node that represents the Content.
  */
 public class ViewContextAction extends AbstractAction {
 
@@ -125,7 +125,6 @@ public class ViewContextAction extends AbstractAction {
                     logger.log(Level.WARNING, "Couldn't set selected node", ex); //NON-NLS
                 }
 
-                
                 EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -138,7 +137,7 @@ public class ViewContextAction extends AbstractAction {
             }
         });
     }
-    
+
     /**
      * Waits for a Node's children to be generated, regardless of whether they
      * are lazily loaded, then sets the correct selection in a specified
@@ -149,13 +148,13 @@ public class ViewContextAction extends AbstractAction {
         DataResultTopComponent dataResultTC;
         String nameOfNodeToSelect;
         Node originalRootNodeOfDataResultTC;
-        
+
         SelectionWorker(DataResultTopComponent dataResult, String nameToSelect, Node originalRoot) {
             this.dataResultTC = dataResult;
             this.nameOfNodeToSelect = nameToSelect;
             this.originalRootNodeOfDataResultTC = originalRoot;
         }
-        
+
         @Override
         protected Node[] doInBackground() throws Exception {
             // Calls to Children::getNodes(true) block until all child Nodes have
@@ -166,7 +165,7 @@ public class ViewContextAction extends AbstractAction {
             // be a lengthy operation. 
             return originalRootNodeOfDataResultTC.getChildren().getNodes(true);
         }
-        
+
         @Override
         protected void done() {
             Node[] nodesDisplayedInDataResultViewer;
@@ -175,12 +174,11 @@ public class ViewContextAction extends AbstractAction {
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Failed to get nodes in selection worker.", ex); //NON-NLS
                 return;
-            } 
-            // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex ) {
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
                 return;
             }
-            
+
             // It is possible the user selected a different Node to be displayed
             // in the DataResultViewer while the child Nodes were being generated.
             // In that case, we don't want to set the selection because it the
@@ -190,7 +188,7 @@ public class ViewContextAction extends AbstractAction {
             if (dataResultTC.getRootNode().equals(originalRootNodeOfDataResultTC) == false) {
                 return;
             }
-            
+
             // Find the correct node to select from the nodes that are displayed
             // in the data result viewer and set it as the selection of the 
             // DataResultTopComponent.
@@ -203,7 +201,7 @@ public class ViewContextAction extends AbstractAction {
                 }
             }
         }
-        
+
     }
 
     /**

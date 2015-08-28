@@ -100,10 +100,12 @@ Before we cover the specific interfaces of the two different types of modules, l
 
 To create a data source ingest module:
 -# Create the ingest module class by either:
- - Define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  If you are using Java, the NetBeans IDE 
+ - Copy and paste the sample modules from:
+  - Java: Core/src/org/sleuthkit/autopsy/examples/SampleDataSourceIngestModule.java
+  - Python: pythonExamples/dataSourceIngestModule.py (https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples)
+ - Or the manual approach is to define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.DataSourceIngestModule.  If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
 You can use its "hints" to automatically generate stubs for the missing methods.  
- - Copy and paste the sample modules from org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py. 
 -# Configure your factory class to create instances of the new ingest module class. To do this, you will need to change the isDataSourceIngestModuleFactory() method to return true and have the createDataSourceIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
@@ -119,8 +121,8 @@ You can use its "hints" to automatically generate stubs for the missing methods.
 \endcode
 -# Use this page, the sample, and the documentation for the 
 org.sleuthkit.autopsy.ingest.DataSourceIngestModule interfaces to implement the startUp() and process() methods. 
-
-The process() method is where all of the work of a data source ingest module is
+ - org.sleuthkit.autopsy.ingest.DataSourceIngestModule.startUp() is where any initialiation occurs.  If your module has a critical failure and will not be able to run, your startUp method should throw an IngestModuleException to stop ingest. 
+ - org.sleuthkit.autopsy.ingest.DataSourceIngestModule.process() is where all of the work of a data source ingest module is
 done. It will be called exactly once. The 
 process() method receives a reference to an org.sleuthkit.datamodel.Content object
 and an org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress object.
@@ -140,10 +142,12 @@ org.sleuthkit.autopsy.casemodule.services.FileManager class.  See
 To create a file ingest module:
 To create a data source ingest module:
 -# Create the ingest module class by either:
- - Define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.FileIngestModule.  If you are using Java, the NetBeans IDE 
+ - Copy and paste the sample modules from:
+  - Java: Core/src/org/sleuthkit/autopsy/examples/SampleFileIngestModule.java
+  - Python: pythonExamples/fileIngestModule.py (https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples)
+ - Or the manual approach is to define a new class that implements (Java) or inherits (Jython) org.sleuthkit.autopsy.ingest.FileIngestModule.  If you are using Java, the NetBeans IDE 
 will complain that you have not implemented one or more of the required methods.
 You can use its "hints" to automatically generate stubs for the missing methods.  
- - Copy and paste the sample modules from org.sleuthkit.autopsy.examples.SampleDataSourceIngestModule or org.sleuthkit.autopsy.examples.ingestmodule.py. 
 -# Configure your factory class to create instances of the new ingest module class. To do this, you will need to change the isFileIngestModuleFactory() method to return true and have the createFileIngestModule() method return a new instance of your ingest module. Both of these methods have default "no-op" implementations in the IngestModuleFactoryAdapter that we used.  Your factory should have code similar to this Java code:
 
 \code
@@ -160,9 +164,8 @@ You can use its "hints" to automatically generate stubs for the missing methods.
 
 -# Use this page, the sample, and the documentation for the 
 org.sleuthkit.autopsy.ingest.FileIngestModule interface to implement the startUp(), and process(), and shutDown() methods. 
-
-
-The process() method is where all of the work of a file ingest module is
+ - org.sleuthkit.autopsy.ingest.FileIngestModule.startUp() should have any code that you need to initialize your module.  If you have any startup errors, be sure to throw a IngestModuleException exception to stop ingest. 
+ - org.sleuthkit.autopsy.ingest.FileIngestModule.process() is where all of the work of a file ingest module is
 done. It will be called repeatedly between startUp() and shutDown(), once for 
 each file Autopsy feeds into the pipeline of which the module instance is a part. The 
 process() method receives a reference to a org.sleuthkit.datamodel.AbstractFile 
@@ -271,16 +274,21 @@ that the samples do not do anything particularly useful.
 
 Autopsy allows you to provide a graphical panel that will be displayed when the user decides to enable the ingest module.  This panel is supposed to be for settings that the user may turn on or off for different data sources. 
 
+
 To provide options for each ingest job:
 - Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.hasIngestJobSettingsPanel() in your factory class to return true.
-- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options and returns a IngestModuleIngestJobSettings object based on the settings.  This will get passed in the last configuration setting that was used, so that you can populate the panel accordlingly and the user doesn't have to choose new settings. 
-- Create a class based on org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings to store the settings.
+- Update org.sleuthkit.autopsy.ingest.IngestModuleFactory.getIngestJobSettingsPanel() in your factory class to return a IngestModuleIngestJobSettingsPanel that displays the needed configuration options.  The org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel.getSettings() method should return an instance of a org.sleutkit.autopsy.ingest.IngestModuleIngestJobSettings object based on the user-specified settings (see next bullet).
+- Create a class that implements org.sleutkit.autopsy.ingest.IngestModuleIngestJobSettings. Your IngestModuleIngestJobSettingsPanel should store settings in here.  This class needs to be Serializable, so keep all data types simple or mark them as transient with some custom deserialization code. You should also set the serialVersionUID (see http://stackoverflow.com/questions/285793/what-is-a-serialversionuid-and-why-should-i-use-it). 
+- If you decide to store settings internal to the module (NOT RECOMMENDED), the getSettings() method can return an instance of NoIngestModuleIngestJobSettings.  
+- Your instance of IngestModuleIngestJobSettings will be saved and passed to your panel the next time so that you can pre-populate it accordingly. 
 
-Your panel should create the IngestModuleIngestJobSettings class to store the settings and that will be passed back into your factory with each call to createDataSourceIngestModule() or createFileIngestModule().  The factory should cast it to its internal class that implements IngestModuleIngestJobSettings and pass that object into the constructor of its ingest module so that it can use the settings when it runs. 
+Your panel should create the IngestModuleIngestJobSettings class to store the settings and that will be passed back into your factory with each call to createDataSourceIngestModule() or createFileIngestModule().  The way that we have implemented this in Autopsy modules is that the factory casts the IngestModuleINgestJobSettings object to the module-specific implementation and then passes it into the constructor of the ingest module.  The ingest module can then call whatever getter methods that were defined based on the panel settings. 
+
 
 You can also implement the getDefaultIngestJobSettings() method to return an instance of your IngestModuleIngestJobSettings class with default settings.  Autopsy will call this when the module has not been run before. 
 
 NOTE: We recommend storing simple data in the IngestModuleIngestJobSettings-based class.  In the case of our hash lookup module, we store the string names of the hash databases to do lookups in.  We then get the hash database handles in the call to startUp() using the global module settings. 
+
 
 NOTE: The main benefit of using the IngestModuleIngestJobSettings-based class to store settings (versus some static variables in your package) are:
 - When multiple jobs are running at the same time, each can have their own settings.

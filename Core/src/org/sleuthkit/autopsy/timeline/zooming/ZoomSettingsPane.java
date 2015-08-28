@@ -38,10 +38,12 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
-/** FXML Controller class for the ZoomSettingsPane.fxml
+/**
+ * FXML Controller class for the ZoomSettingsPane.fxml
  *
  * has sliders to provide context/control over three axes of zooming (timescale,
- * event hierarchy, and description detail). */
+ * event hierarchy, and description detail).
+ */
 public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
     @FXML
@@ -119,13 +121,13 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         backButton.setOnAction(back);
         backButton.setTooltip(new Tooltip(
                 NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.backButton.toolTip.text",
-                                    back.getAccelerator().getName())));
+                        back.getAccelerator().getName())));
         Forward forward = new Forward(controller);
         forwardButton.disableProperty().bind(forward.disabledProperty());
         forwardButton.setOnAction(forward);
         forwardButton.setTooltip(new Tooltip(
                 NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.forwardButton.toolTip.text",
-                                    forward.getAccelerator().getName())));
+                        forward.getAccelerator().getName())));
 
     }
 
@@ -185,8 +187,9 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
      * @param driver              the property that drives updates to this
      *                            slider
      * @param driverChangHandler  the code to update the slider bases on the
-     *                            value of the driving property. This will be wrapped in a
-     *                            remove/add-listener pair to prevent circular updates.
+     *                            value of the driving property. This will be
+     *                            wrapped in a remove/add-listener pair to
+     *                            prevent circular updates.
      */
     private <T> void initializeSlider(Slider slider, Runnable sliderChangeHandler, ReadOnlyObjectProperty<T> driver, Runnable driverChangHandler) {
         final InvalidationListener sliderListener = observable -> {

@@ -55,8 +55,9 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 
-/** Abstract base class for {@link Chart} based {@link TimeLineView}s used in
- * the main visualization area.
+/**
+ * Abstract base class for {@link Chart} based {@link TimeLineView}s used in the
+ * main visualization area.
  *
  * @param <X> the type of data plotted along the x axis
  * @param <Y> the type of data plotted along the y axis
@@ -65,8 +66,8 @@ import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
  *            data.
  *
  * TODO: this is becoming (too?) closely tied to the notion that their is a
- * {@link XYChart} doing the rendering. Is this a good idea? -jm
- * TODO: pull up common history context menu items out of derived classes? -jm
+ * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
+ * common history context menu items out of derived classes? -jm
  */
 public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
 
@@ -83,7 +84,9 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
 
     protected final Region spacer;
 
-    /** task used to reload the content of this visualization */
+    /**
+     * task used to reload the content of this visualization
+     */
     private Task<Boolean> updateTask;
 
     protected TimeLineController controller;
@@ -96,24 +99,30 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         return selectedNodes.getReadOnlyProperty();
     }
 
-    /** list of {@link Node}s to insert into the toolbar. This should be
-     * set in an implementations constructor. */
+    /**
+     * list of {@link Node}s to insert into the toolbar. This should be set in
+     * an implementations constructor.
+     */
     protected List<Node> settingsNodes;
 
-    /** @return the list of nodes containing settings widgets to insert into
-     *          this visualization's header */
+    /**
+     * @return the list of nodes containing settings widgets to insert into this
+     *         visualization's header
+     */
     protected List<Node> getSettingsNodes() {
         return Collections.unmodifiableList(settingsNodes);
     }
 
-    /** @param value a value along this visualization's x axis
+    /**
+     * @param value a value along this visualization's x axis
      *
      * @return true if the tick label for the given value should be bold ( has
-     *         relevant data),
-     *         false* otherwise */
+     *         relevant data), false* otherwise
+     */
     protected abstract Boolean isTickBold(X value);
 
-    /** apply this visualization's 'selection effect' to the given node
+    /**
+     * apply this visualization's 'selection effect' to the given node
      *
      * @param node    the node to apply the 'effect' to
      * @param applied true if the effect should be applied, false if the effect
@@ -121,37 +130,49 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
      */
     protected abstract void applySelectionEffect(N node, Boolean applied);
 
-    /** @return a task to execute on a background thread to reload this
-     *          visualization with different data. */
+    /**
+     * @return a task to execute on a background thread to reload this
+     *         visualization with different data.
+     */
     protected abstract Task<Boolean> getUpdateTask();
 
-    /** @return return the {@link Effect} applied to 'selected nodes' in this
-     *          visualization, or null if selection is visualized via another
-     *          mechanism */
+    /**
+     * @return return the {@link Effect} applied to 'selected nodes' in this
+     *         visualization, or null if selection is visualized via another
+     *         mechanism
+     */
     protected abstract Effect getSelectionEffect();
 
-    /** @param tickValue
+    /**
+     * @param tickValue
      *
      * @return a String to use for a tick mark label given a tick value
      */
     protected abstract String getTickMarkLabel(X tickValue);
 
-    /** the spacing (in pixels) between tick marks of the horizontal
-     * axis. This will be used to layout the decluttered replacement labels.
+    /**
+     * the spacing (in pixels) between tick marks of the horizontal axis. This
+     * will be used to layout the decluttered replacement labels.
      *
-     * @return the spacing in pixels between tick marks of the horizontal
-     *         axis */
+     * @return the spacing in pixels between tick marks of the horizontal axis
+     */
     protected abstract double getTickSpacing();
 
-    /** @return the horizontal axis used by this Visualization's chart */
+    /**
+     * @return the horizontal axis used by this Visualization's chart
+     */
     protected abstract Axis<X> getXAxis();
 
-    /** @return the vertical axis used by this Visualization's chart */
+    /**
+     * @return the vertical axis used by this Visualization's chart
+     */
     protected abstract Axis<Y> getYAxis();
 
-    /** * update this visualization based on current state of zoom /
-     * filters.Primarily this invokes the background {@link Task} returned
-     * by {@link #getUpdateTask()} which derived classes must implement. */
+    /**
+     * * update this visualization based on current state of zoom /
+     * filters.Primarily this invokes the background {@link Task} returned by
+     * {@link #getUpdateTask()} which derived classes must implement.
+     */
     synchronized public void update() {
         if (updateTask != null) {
             updateTask.cancel(true);
@@ -226,11 +247,11 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         update();
     };
 
-    /** iterate through the list of tick-marks building a two level structure of
+    /**
+     * iterate through the list of tick-marks building a two level structure of
      * replacement tick marl labels. (Visually) upper level has most
      * detailed/highest frequency part of date/time. Second level has rest of
-     * date/time grouped by unchanging part.
-     * eg:
+     * date/time grouped by unchanging part. eg:
      *
      *
      * october-30_october-31_september-01_september-02_september-03
@@ -270,9 +291,9 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
                 //if there is only one part to the date (ie only year), just add a label for each tick
                 for (Axis.TickMark<X> t : tickMarks) {
                     assignLeafLabel(new TwoPartDateTime(getTickMarkLabel(t.getValue())).leaf,
-                                    spacing,
-                                    leafLabelX,
-                                    isTickBold(t.getValue())
+                            spacing,
+                            leafLabelX,
+                            isTickBold(t.getValue())
                     );
 
                     leafLabelX += spacing;  //increment x
@@ -321,7 +342,8 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         });
     }
 
-    /** add a {@link Text} node to the leaf container for the decluttered axis
+    /**
+     * add a {@link Text} node to the leaf container for the decluttered axis
      * labels
      *
      * @param labelText  the string to add
@@ -351,8 +373,9 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         }
     }
 
-    /** add a {@link Label} node to the branch container for the decluttered
-     * axis labels
+    /**
+     * add a {@link Label} node to the branch container for the decluttered axis
+     * labels
      *
      * @param labelText  the string to add
      * @param labelWidth the width of the space to use for the label
@@ -382,20 +405,26 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
         branchPane.getChildren().add(label);
     }
 
-    /** A simple data object used to represent a partial date as up to two
-     * parts. A low frequency part (branch) containing all but the most
-     * specific element, and a highest frequency part (leaf) containing the most
-     * specific element. The branch and leaf names come from thinking of the
-     * space of all date times as a tree with higher frequency information
-     * further from the root. If there is only one part, it will be in the
-     * branch and the leaf will equal an empty string */
+    /**
+     * A simple data object used to represent a partial date as up to two parts.
+     * A low frequency part (branch) containing all but the most specific
+     * element, and a highest frequency part (leaf) containing the most specific
+     * element. The branch and leaf names come from thinking of the space of all
+     * date times as a tree with higher frequency information further from the
+     * root. If there is only one part, it will be in the branch and the leaf
+     * will equal an empty string
+     */
     @Immutable
     private static final class TwoPartDateTime {
 
-        /** the low frequency part of a date/time eg 2001-May-4 */
+        /**
+         * the low frequency part of a date/time eg 2001-May-4
+         */
         private final String branch;
 
-        /** the highest frequency part of a date/time eg 14 (2pm) */
+        /**
+         * the highest frequency part of a date/time eg 14 (2pm)
+         */
         private final String leaf;
 
         TwoPartDateTime(String dateString) {

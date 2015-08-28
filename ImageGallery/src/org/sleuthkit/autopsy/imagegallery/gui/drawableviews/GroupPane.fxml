@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import org.controlsfx.control.*?>
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   
+    <center>
+        <GridView fx:id="gridView" BorderPane.alignment="CENTER" />
+    </center>
+    <bottom>
+        <BorderPane BorderPane.alignment="CENTER">
+            <left>
+                <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="TOP_LEFT">
+                    <children>
+                        <Label text="Group Viewing History: " />
+                        <Button fx:id="backButton" mnemonicParsing="false" text="back">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../images/arrow-180.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="forwardButton" mnemonicParsing="false" text="forward">
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../images/arrow.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </BorderPane.margin>
+                </HBox>
+            </left>
+            <right>
+                <HBox alignment="CENTER_RIGHT" spacing="5.0" BorderPane.alignment="TOP_RIGHT">
+                    <children>
+                        <Button fx:id="nextButton" contentDisplay="RIGHT" mnemonicParsing="false" text="next unseen group" BorderPane.alignment="CENTER_RIGHT">
+                            <BorderPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </BorderPane.margin>
+                            <graphic>
+                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../images/control-double.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </BorderPane.margin>
+                </HBox>
+            </right>
+            <top>
+                <Separator prefWidth="200.0" BorderPane.alignment="CENTER">
+                    <BorderPane.margin>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                    </BorderPane.margin>
+                </Separator>
+            </top>
+        </BorderPane>
+    </bottom>
+    <top>
+        <VBox>
+            <children>
+                <Label fx:id="groupLabel" wrapText="true">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </VBox.margin>
+                </Label>
+     
+                <ToolBar id="headToolBar" fx:id="headerToolBar" maxHeight="-Infinity" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER" VBox.vgrow="NEVER">
+                    <items>
+                        <Label text="Apply to Group:" />
+                        <SplitMenuButton fx:id="grpTagSplitMenu" mnemonicParsing="false" text="Follow Up">
+                            <items>
+                                <MenuItem mnemonicParsing="false" text="Action 1" />
+                                <MenuItem mnemonicParsing="false" text="Action 2" />
+                            </items>
+                        </SplitMenuButton>
+                        <SplitMenuButton fx:id="grpCatSplitMenu" mnemonicParsing="false" text="Cat-0">
+                            <items>
+                                <MenuItem mnemonicParsing="false" text="Action 1" />
+                                <MenuItem mnemonicParsing="false" text="Action 2" />
+                            </items>
+                        </SplitMenuButton>
+                        <Region fx:id="spacer" prefHeight="-1.0" prefWidth="-1.0" />
+                        <Separator prefWidth="30.0" />
+                        <SegmentedButton fx:id="segButton">
+                            <buttons>
+                                <ToggleButton id="" fx:id="tileToggle" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" scaleX="1.0" selected="true" text="" textAlignment="CENTER">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" translateY="1.0">
+                                            <image>
+                                                <Image url="@../../images/application_view_tile.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </ToggleButton>
+                                <ToggleButton id="filmStripToggle" fx:id="slideShowToggle" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="32.0" mnemonicParsing="false" prefWidth="-1.0" text="">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="90.0" translateY="1.0">
+                                            <image>
+                                                <Image url="@../../images/film.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </ToggleButton>        
+                            </buttons>       
+                        </SegmentedButton>
+
+                    </items>
+                </ToolBar>
+            </children>
+        </VBox>
+    </top>
+    <padding>
+        <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+    </padding>
+</fx:root>

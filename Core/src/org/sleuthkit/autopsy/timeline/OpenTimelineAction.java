@@ -42,20 +42,18 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     private static final boolean fxInited = Installer.isJavaFxInited();
 
+    private static TimeLineController timeLineController = null;
+
     synchronized static void invalidateController() {
         timeLineController = null;
     }
 
-    private static TimeLineController timeLineController = null;
-
-    public OpenTimelineAction() {
-        super();
-    }
-
     @Override
     public boolean isEnabled() {
-        /** we disabled the check to hasData() because if it is executed while a
-         * data source is being added, it blocks the edt */
+        /**
+         * we disabled the check to hasData() because if it is executed while a
+         * data source is being added, it blocks the edt
+         */
         return Case.isCaseOpen() && fxInited;// && Case.getCurrentCase().hasData();
     }
 
@@ -63,7 +61,7 @@ public class OpenTimelineAction extends CallableSystemAction {
     public void performAction() {
 
         //check case
-        if (!Case.existsCurrentCase()) {
+        if (!Case.isCaseOpen()) {
             return;
         }
         final Case currentCase = Case.getCurrentCase();
@@ -76,8 +74,10 @@ public class OpenTimelineAction extends CallableSystemAction {
         }
         synchronized (OpenTimelineAction.class) {
             if (timeLineController == null) {
-                timeLineController = new TimeLineController();
-                LOGGER.log(Level.WARNING, "Failed to get TimeLineController from lookup. Instantiating one directly.S");// NON-NLS
+                timeLineController = new TimeLineController(currentCase);
+            } else if (timeLineController.getAutopsyCase() != currentCase) {
+                timeLineController.closeTimeLine();
+                timeLineController = new TimeLineController(currentCase);
             }
         }
         timeLineController.openTimeLine();

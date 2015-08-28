@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -43,9 +44,9 @@ final class FileIngestPipeline {
      * modules. It starts the modules, runs files through them, and shuts them
      * down when file level ingest is complete.
      *
-     * @param job The data source ingest job that owns the pipeline.
+     * @param job             The data source ingest job that owns the pipeline.
      * @param moduleTemplates The ingest module templates that define the
-     * pipeline.
+     *                        pipeline.
      */
     FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
@@ -79,7 +80,7 @@ final class FileIngestPipeline {
      * Returns the start up time of this pipeline.
      *
      * @return The file processing start time, may be null if this pipeline has
-     * not been started yet.
+     *         not been started yet.
      */
     Date getStartTime() {
         return this.startTime;
@@ -108,6 +109,7 @@ final class FileIngestPipeline {
      * Runs a file through the ingest modules in sequential order.
      *
      * @param task A file level ingest task containing a file to be processed.
+     *
      * @return A list of processing errors, possible empty.
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
@@ -119,6 +121,12 @@ final class FileIngestPipeline {
                 module.process(file);
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null) {
+                    msg = ex.toString();
+                }
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
             if (this.job.isCancelled()) {
                 break;
@@ -144,6 +152,12 @@ final class FileIngestPipeline {
                 module.shutDown();
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null) {
+                    msg = ex.toString();
+                }
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
         }
         this.running = false;
@@ -162,7 +176,7 @@ final class FileIngestPipeline {
          * Constructs an object that decorates a file level ingest module with a
          * display name.
          *
-         * @param module The file level ingest module to be decorated.
+         * @param module      The file level ingest module to be decorated.
          * @param displayName The display name.
          */
         PipelineModule(FileIngestModule module, String displayName) {

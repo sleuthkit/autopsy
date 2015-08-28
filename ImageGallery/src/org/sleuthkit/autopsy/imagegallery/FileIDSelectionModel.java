@@ -70,7 +70,11 @@ public class FileIDSelectionModel {
     public void clearAndSelectAll(Long... ids) {
         selected.clear();
         selected.addAll(Arrays.asList(ids));
-        setLastSelected(ids[ids.length - 1]);
+        if (ids.length > 0) {
+            setLastSelected(ids[ids.length - 1]);
+        } else {
+            setLastSelected(null);
+        }
     }
 
     public void clearAndSelect(Long id) {

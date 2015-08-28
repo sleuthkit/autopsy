@@ -70,9 +70,11 @@ public class EventRootNode extends DisplayableItemNode {
         return childCount;
     }
 
-    /** The node factories used to make lists of files to send to the result
+    /**
+     * The node factories used to make lists of files to send to the result
      * viewer using the lazy loading (rather than background) loading option to
-     * facilitate */
+     * facilitate
+     */
     private static class EventNodeChildFactory extends ChildFactory<Long> {
 
         private static final Logger LOGGER = Logger.getLogger(EventNodeChildFactory.class.getName());
@@ -101,13 +103,18 @@ public class EventRootNode extends DisplayableItemNode {
             if (eventID >= 0) {
                 final TimeLineEvent eventById = filteredEvents.getEventById(eventID);
                 try {
-                    if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
-                        return new EventNode(eventById, Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID()));
-                    } else {
-                        AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
-                        BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());
+                    AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(eventById.getFileID());
+                    if (file != null) {
+                        if (eventById.getType().getSuperType() == BaseTypes.FILE_SYSTEM) {
+                            return new EventNode(eventById, file);
+                        } else {
+                            BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(eventById.getArtifactID());
 
-                        return new EventNode(eventById, file, blackboardArtifact);
+                            return new EventNode(eventById, file, blackboardArtifact);
+                        }
+                    } else {
+                        LOGGER.log(Level.WARNING, "Failed to lookup sleuthkit object backing TimeLineEvent."); // NON-NLS
+                        return null;
                     }
 
                 } catch (TskCoreException tskCoreException) {
@@ -127,9 +134,9 @@ public class EventRootNode extends DisplayableItemNode {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/info-icon-16.png"); // NON-NLS
             setDisplayName(
                     NbBundle.getMessage(this.getClass(),
-                                        "EventRoodNode.tooManyNode.displayName",
-                                        MAX_EVENTS_TO_DISPLAY,
-                                        size));
+                            "EventRoodNode.tooManyNode.displayName",
+                            MAX_EVENTS_TO_DISPLAY,
+                            size));
         }
     }
 }

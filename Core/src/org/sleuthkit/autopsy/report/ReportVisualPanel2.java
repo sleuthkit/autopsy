@@ -94,7 +94,7 @@ final class ReportVisualPanel2 extends JPanel {
         tagsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-              
+
                 int index = tagsList.locationToIndex(evt.getPoint());
                 String value = tagsModel.getElementAt(index);
                 tagStates.put(value, !tagStates.get(value));
@@ -112,7 +112,6 @@ final class ReportVisualPanel2 extends JPanel {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotReport = new ArrayList<>();
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
             doNotReport.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT); // output is too unstructured for table review
-          
 
             artifacts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTypesInUse();
 

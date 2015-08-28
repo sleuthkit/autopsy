@@ -23,6 +23,7 @@ import org.openide.nodes.Node;
 /**
  * Lookup interface for hash search (to deal with circular deps)
  */
- public interface HashSearchProvider {
+public interface HashSearchProvider {
+
     public void search(Node contentNode);
 }

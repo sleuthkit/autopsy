@@ -27,7 +27,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
  * A node in the nav/hash tree. Manages inserts and removals. Has parents and
@@ -37,10 +37,28 @@ import org.sleuthkit.autopsy.imagegallery.grouping.DrawableGroup;
  */
 class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeItem> {
 
+    static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, DrawableGroup grouping) {
+        if (Objects.equals(root.getValue().getGroup(), grouping)) {
+            return root;
+        } else {
+            synchronized (root.getChildren()) {
+                for (TreeItem<TreeNode> child : root.getChildren()) {
+                    final GroupTreeItem childGTI = (GroupTreeItem) child;
+
+                    GroupTreeItem val = getTreeItemForGroup(childGTI, grouping);
+                    if (val != null) {
+                        return val;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * maps a path segment to the child item of this item with that path segment
      */
-    private Map<String, GroupTreeItem> childMap = new HashMap<>();
+    private final Map<String, GroupTreeItem> childMap = new HashMap<>();
     /**
      * the comparator if any used to sort the children of this item
      */
@@ -68,7 +86,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * Recursive method to add a grouping at a given path.
      *
      * @param path Full path (or subset not yet added) to add
-     * @param g Group to add
+     * @param g    Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
     void insert(String path, DrawableGroup g, Boolean tree) {
@@ -88,12 +106,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
 
                     prefixTreeItem = newTreeItem;
                     childMap.put(prefix, prefixTreeItem);
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            synchronized (getChildren()) {
-                                getChildren().add(newTreeItem);
-                            }
+                    Platform.runLater(() -> {
+                        synchronized (getChildren()) {
+                            getChildren().add(newTreeItem);
                         }
                     });
 
@@ -109,14 +124,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 newTreeItem.setExpanded(true);
                 childMap.put(path, newTreeItem);
 
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        synchronized (getChildren()) {
-                            getChildren().add(newTreeItem);
-                            if (comp != null) {
-                                FXCollections.sort(getChildren(), comp);
-                            }
+                Platform.runLater(() -> {
+                    synchronized (getChildren()) {
+                        getChildren().add(newTreeItem);
+                        if (comp != null) {
+                            FXCollections.sort(getChildren(), comp);
                         }
                     }
                 });
@@ -129,7 +141,7 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
      * Recursive method to add a grouping at a given path.
      *
      * @param path Full path (or subset not yet added) to add
-     * @param g Group to add
+     * @param g    Group to add
      * @param tree True if it is part of a tree (versus a list)
      */
     void insert(List<String> path, DrawableGroup g, Boolean tree) {
@@ -147,12 +159,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                     prefixTreeItem = newTreeItem;
                     childMap.put(prefix, prefixTreeItem);
 
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            synchronized (getChildren()) {
-                                getChildren().add(newTreeItem);
-                            }
+                    Platform.runLater(() -> {
+                        synchronized (getChildren()) {
+                            getChildren().add(newTreeItem);
                         }
                     });
 
@@ -169,14 +178,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 newTreeItem.setExpanded(true);
                 childMap.put(path.get(0), newTreeItem);
 
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        synchronized (getChildren()) {
-                            getChildren().add(newTreeItem);
-                            if (comp != null) {
-                                FXCollections.sort(getChildren(), comp);
-                            }
+                Platform.runLater(() -> {
+                    synchronized (getChildren()) {
+                        getChildren().add(newTreeItem);
+                        if (comp != null) {
+                            FXCollections.sort(getChildren(), comp);
                         }
                     }
                 });
@@ -187,24 +193,6 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
     @Override
     public int compareTo(GroupTreeItem o) {
         return comp.compare(this, o);
-    }
-
-    static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, DrawableGroup grouping) {
-        if (Objects.equals(root.getValue().getGroup(), grouping)) {
-            return root;
-        } else {
-            synchronized (root.getChildren()) {
-                for (TreeItem<TreeNode> child : root.getChildren()) {
-                    final GroupTreeItem childGTI = (GroupTreeItem) child;
-
-                    GroupTreeItem val = getTreeItemForGroup(childGTI, grouping);
-                    if (val != null) {
-                        return val;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     GroupTreeItem getTreeItemForPath(List<String> path) {
@@ -253,4 +241,5 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
             ti.resortChildren(comp);
         }
     }
+
 }

@@ -31,47 +31,47 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- * @author dfickling
- * EnCaseKeywordSearchList adds support for Encase tab-delimited
- * keyword list exports to Autopsy.
- * 
- * load() does the I/O operation, converting lines from the text file to
- * an unsorted list of EncaseFileEntrys
- * The next step is to recreate the original folder hierarchy,
- * and finally the EncaseFileEntries are converted to KeywordSearchLists
- * 
+ * @author dfickling EnCaseKeywordSearchList adds support for Encase
+ * tab-delimited keyword list exports to Autopsy.
+ *
+ * load() does the I/O operation, converting lines from the text file to an
+ * unsorted list of EncaseFileEntrys The next step is to recreate the original
+ * folder hierarchy, and finally the EncaseFileEntries are converted to
+ * KeywordSearchLists
+ *
  */
-class EnCaseKeywordSearchList extends KeywordSearchList{
-    
+class EnCaseKeywordSearchList extends KeywordSearchList {
+
     ArrayList<EncaseFileEntry> entriesUnsorted;
     EncaseFileEntry rootEntry;
-    
+
     public EnCaseKeywordSearchList(String encasePath) {
         super(encasePath);
     }
-    
+
     /**
-     * Follow the EncaseFileEntry hierarchy starting with given entry
-     * Create list for each Folder entry, add keyword for each Expression
+     * Follow the EncaseFileEntry hierarchy starting with given entry Create
+     * list for each Folder entry, add keyword for each Expression
+     *
      * @param entry
-     * @param parentPath 
+     * @param parentPath
      */
     private void doCreateListsFromEntries(EncaseFileEntry entry, String parentPath) {
         String name;
-        if(parentPath.isEmpty()) {
+        if (parentPath.isEmpty()) {
             name = entry.name;
         } else {
             name = parentPath + "/" + entry.name;
         }
-        
+
         List<Keyword> children = new ArrayList<>();
-        for(EncaseFileEntry child : entry.children) {
-            switch(child.type) {
+        for (EncaseFileEntry child : entry.children) {
+            switch (child.type) {
                 case Folder:
                     doCreateListsFromEntries(child, name);
                     break;
                 case Expression:
-                    if(child.flags.contains(EncaseFlag.pg)) { // Skip GREP keywords
+                    if (child.flags.contains(EncaseFlag.pg)) { // Skip GREP keywords
                         break;
                     }
                     children.add(new Keyword(child.value, true));
@@ -79,10 +79,10 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             }
         }
         // Give each list a unique name
-        if(theLists.containsKey(name)) {
+        if (theLists.containsKey(name)) {
             int i = 2;
-            while(theLists.containsKey(name + "(" + i + ")")) {
-                i+=1;
+            while (theLists.containsKey(name + "(" + i + ")")) {
+                i += 1;
             }
             name = name + "(" + i + ")";
         }
@@ -93,9 +93,10 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             theLists.put(name, newList);
         }
     }
-    
-    /** 
-     * Convert entriesUnsorted (a list of childless and parentless EncaseFileEntries) into an EncaseFileEntry structure
+
+    /**
+     * Convert entriesUnsorted (a list of childless and parentless
+     * EncaseFileEntries) into an EncaseFileEntry structure
      */
     private void doCreateEntryStructure(EncaseFileEntry parent) {
         if (!parent.isFull()) {
@@ -103,7 +104,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             child.hasParent = true;
             child.parent = parent;
             parent.addChild(child);
-            if(!child.isFull()) {
+            if (!child.isFull()) {
                 doCreateEntryStructure(child);
             }
             if (!parent.isFull()) {
@@ -120,7 +121,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
         throw new UnsupportedOperationException(
                 NbBundle.getMessage(this.getClass(), "KeywordSearchListsEncase.save.exception.msg"));
     }
-    
+
     @Override
     public boolean save(boolean isExport) {
         throw new UnsupportedOperationException(
@@ -134,7 +135,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             String structLine;
             String metaLine;
             entriesUnsorted = new ArrayList<>();
-            for(int line = 1; line < 6; line++) {
+            for (int line = 1; line < 6; line++) {
                 readBuffer.readLine();
             }
             while ((structLine = readBuffer.readLine()) != null && (metaLine = readBuffer.readLine()) != null) {
@@ -145,11 +146,11 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
                 String name = metaArr[1];
                 String value = metaArr[2];
                 ArrayList<EncaseFlag> flags = new ArrayList<>();
-                for(int i = 0; i < 17; i++) {
-                    if(metaArr.length < i+4) {
+                for (int i = 0; i < 17; i++) {
+                    if (metaArr.length < i + 4) {
                         continue;
                     }
-                    if(!metaArr[i+3].equals("")) {
+                    if (!metaArr[i + 3].equals("")) {
                         flags.add(EncaseFlag.getFlag(i));
                     }
                 }
@@ -158,12 +159,12 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             if (entriesUnsorted.isEmpty()) {
                 return false;
             }
-            
+
             this.rootEntry = entriesUnsorted.remove(0);
             doCreateEntryStructure(this.rootEntry);
             doCreateListsFromEntries(this.rootEntry, "");
             return true;
-            
+
         } catch (FileNotFoundException ex) {
             logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex); //NON-NLS
         } catch (IOException ex) {
@@ -171,42 +172,42 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
         }
         return false;
     }
-    
+
     private enum EncaseMetaType {
+
         Expression, Folder;
-        
+
         static EncaseMetaType getType(String type) {
-            if(type.equals("5")) {
+            if (type.equals("5")) {
                 return Folder;
-            } else if(type.equals("")) {
+            } else if (type.equals("")) {
                 return Expression;
             } else {
                 throw new IllegalArgumentException(
                         NbBundle.getMessage(EnCaseKeywordSearchList.class,
-                                            "KeywordSearchListsEncase.encaseMetaType.exception.msg",
-                                            type));
+                                "KeywordSearchListsEncase.encaseMetaType.exception.msg",
+                                type));
             }
         }
     }
-    
+
     /*
-     * Flags for EncaseFileEntries.
-     * p8 = UTF-8
-     * p7 = UTF-7
-     * pg = GREP
+     * Flags for EncaseFileEntries. p8 = UTF-8 p7 = UTF-7 pg = GREP
      */
     private enum EncaseFlag {
+
         pc, pu, pb, p8, p7, pg, an, ph, or, di, um, st, ww, pr, lo, ta, cp;
-        
+
         static EncaseFlag getFlag(int i) {
             return EncaseFlag.values()[i];
         }
     }
-    
+
     /**
      * An entry in the Encase keyword list file.
      */
     private class EncaseFileEntry {
+
         String name;
         String value;
         int childCount;
@@ -215,6 +216,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
         EncaseMetaType type;
         boolean hasParent;
         ArrayList<EncaseFlag> flags;
+
         EncaseFileEntry(String name, String value, int childCount, boolean hasParent, EncaseFileEntry parent, EncaseMetaType type, ArrayList<EncaseFlag> flags) {
             this.name = name;
             this.value = value;
@@ -225,12 +227,14 @@ class EnCaseKeywordSearchList extends KeywordSearchList{
             this.type = type;
             this.flags = flags;
         }
+
         boolean isFull() {
             return children.size() == childCount;
         }
+
         void addChild(EncaseFileEntry child) {
             children.add(child);
         }
     }
-    
+
 }

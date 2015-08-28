@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -74,7 +73,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
-    //only search images from current ingest, not images previously ingested/indexed
+    private FileTypeDetector fileTypeDetector;
+//only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
@@ -83,12 +83,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
-    private long dataSourceId;   
+    private long dataSourceId;
     private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private IngestJobContext context;
-    
+
     private enum IngestStatus {
 
         TEXT_INGESTED, /// Text was extracted by knowing file type and text_ingested
@@ -99,20 +99,20 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
     };
     private static final Map<Long, Map<Long, IngestStatus>> ingestStatus = new HashMap<>(); //guarded by itself
-   
+
     private static void putIngestStatus(long ingestJobId, long fileId, IngestStatus status) {
-        synchronized(ingestStatus) {            
-            Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);                       
+        synchronized (ingestStatus) {
+            Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(ingestJobId);
             if (ingestStatusForJob == null) {
                 ingestStatusForJob = new HashMap<>();
                 ingestStatus.put(ingestJobId, ingestStatusForJob);
             }
-            
+
             ingestStatusForJob.put(fileId, status);
             ingestStatus.put(ingestJobId, ingestStatusForJob);
         }
-    }    
-    
+    }
+
     KeywordSearchIngestModule(KeywordSearchJobSettings settings) {
         this.settings = settings;
         instanceNum = instanceCount.getAndIncrement();
@@ -126,10 +126,15 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         logger.log(Level.INFO, "Initializing instance {0}", instanceNum); //NON-NLS
-        initialized = false;       
-        jobId = context.getJobId();  
+        initialized = false;
+        jobId = context.getJobId();
         dataSourceId = context.getDataSource().getId();
-        
+
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+        }
         ingester = Server.getIngester();
         this.context = context;
 
@@ -160,7 +165,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
                 throw new IngestModuleException(
                         NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.exception.errConnToSolr.msg",
-                        ex.getMessage()));
+                                ex.getMessage()));
             }
 
             // check if this job has any searchable keywords    
@@ -175,9 +180,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (!hasKeywordsForSearch) {
                 services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
-            }            
+            }
         }
-        
+
         //initialize extractors
         stringExtractor = new StringsTextExtractor(this);
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
@@ -194,7 +199,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor(this));
         textExtractors.add(new TikaTextExtractor(this));
-        
+
         indexer = new Indexer();
         initialized = true;
     }
@@ -228,7 +233,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
             startedSearching = true;
         }
-        
+
         return ProcessResult.OK;
     }
 
@@ -239,7 +244,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
-       
+
         if (initialized == false) {
             return;
         }
@@ -251,15 +256,15 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // Remove from the search list and trigger final commit and final search
         SearchRunner.getInstance().endJob(jobId);
-        
+
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             postIndexSummary();
-            synchronized(ingestStatus) {
+            synchronized (ingestStatus) {
                 ingestStatus.remove(jobId);
-            }            
+            }
         }
-        
+
         //log number of files / chunks in index
         //signal a potential change in number of text_ingested files
         try {
@@ -270,7 +275,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex); //NON-NLS
         }
-        
+
         cleanup();
     }
 
@@ -281,7 +286,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         logger.log(Level.INFO, "stop()"); //NON-NLS
 
         SearchRunner.getInstance().stopJob(jobId);
-    
+
         cleanup();
     }
 
@@ -307,7 +312,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         int error_index = 0;
         int error_io = 0;
 
-        synchronized(ingestStatus) {
+        synchronized (ingestStatus) {
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(jobId);
             for (IngestStatus s : ingestStatusForJob.values()) {
                 switch (s) {
@@ -334,7 +339,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             }
         }
-        
+
         StringBuilder msg = new StringBuilder();
         msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>"); //NON-NLS
         msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>"); //NON-NLS
@@ -368,10 +373,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * streaming) from the file Divide the file into chunks and index the
          * chunks
          *
-         * @param aFile file to extract strings from, divide into chunks and
-         * index
+         * @param aFile          file to extract strings from, divide into
+         *                       chunks and index
          * @param detectedFormat mime-type detected, or null if none detected
+         *
          * @return true if the file was text_ingested, false otherwise
+         *
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
@@ -391,7 +398,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
-
             //divide into chunks and index
             return fileExtract.index(aFile);
         }
@@ -400,7 +406,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * Extract strings using heuristics from the file and add to index.
          *
          * @param aFile file to extract strings from, divide into chunks and
-         * index
+         *              index
+         *
          * @return true if the file was text_ingested, false otherwise
          */
         private boolean extractStringsAndIndex(AbstractFile aFile) {
@@ -424,9 +431,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * Check with every extractor if it supports the file with the detected
          * format
          *
-         * @param aFile file to check for
+         * @param aFile          file to check for
          * @param detectedFormat mime-type with detected format (such as
-         * text/plain) or null if not detected
+         *                       text/plain) or null if not detected
+         *
          * @return true if text extraction is supported
          */
         private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
@@ -442,9 +450,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         /**
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
-         * @param aFile File to analyze
+         * @param aFile        File to analyze
          * @param indexContent False if only metadata should be text_ingested.
-         * True if content and metadata should be index.
+         *                     True if content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
@@ -454,6 +462,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             // unallocated and unused blocks can only have strings extracted from them. 
             if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
                 extractStringsAndIndex(aFile);
+                return;
             }
 
             final long size = aFile.getSize();
@@ -469,30 +478,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            
-            
-            // try to get the file type from the BB
-            String detectedFormat = null;
+            String detectedFormat;
             try {
-                ArrayList<BlackboardAttribute> attributes = aFile.getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG);
-                for (BlackboardAttribute attribute : attributes) {
-                    detectedFormat = attribute.getValueString();
-                    break;
-                }
+                detectedFormat = fileTypeDetector.getFileType(aFile);
             } catch (TskCoreException ex) {
-            }
-            // else, use FileType module to detect the format
-            if (detectedFormat == null) {
-                try {
-                    detectedFormat = new FileTypeDetector().detectAndPostToBlackboard(aFile);
-                } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
-                }
-                if (detectedFormat == null) {
-                    logger.log(Level.WARNING, "Could not detect format using file type detector for file: {0}", aFile); //NON-NLS
-                    return;
-                } 
+                logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
+                return;
             }
 
             // we skip archive formats that are opened by the archive module. 

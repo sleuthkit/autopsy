@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * the main layered pane container for messages table (IngestMessagePanel) and
  * details view (IngestMessageDetailsPanel)
  */
- class IngestMessageMainPanel extends javax.swing.JPanel {
+class IngestMessageMainPanel extends javax.swing.JPanel {
 
     private IngestMessagePanel messagePanel;
     private IngestMessageDetailsPanel detailsPanel;

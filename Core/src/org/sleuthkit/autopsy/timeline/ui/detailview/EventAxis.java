@@ -24,8 +24,10 @@ import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
 import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
 
-/** No-Op axis that doesn't do anything usefull but is necessary to pass
- * AggregateEvent as the second member of {@link XYChart.Data} objects */
+/**
+ * No-Op axis that doesn't do anything usefull but is necessary to pass
+ * AggregateEvent as the second member of {@link XYChart.Data} objects
+ */
 class EventAxis extends Axis<AggregateEvent> {
 
     @Override

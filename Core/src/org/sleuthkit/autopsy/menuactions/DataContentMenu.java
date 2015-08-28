@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.menuactions;
 
 import javax.swing.JMenuItem;
@@ -28,9 +27,10 @@ import org.openide.util.actions.Presenter;
 /**
  * Menu item that displays DataContentViewers
  */
- class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
+class DataContentMenu extends CallableSystemAction implements Presenter.Menu {
 
-    DataContentMenu(){}
+    DataContentMenu() {
+    }
 
     @Override
     public JMenuItem getMenuPresenter() {

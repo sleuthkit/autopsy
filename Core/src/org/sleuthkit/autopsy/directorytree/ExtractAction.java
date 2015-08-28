@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts AbstractFiles to a location selected by the user.
  */
 public final class ExtractAction extends AbstractAction {
+
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
     // This class is a singleton to support multi-selection of nodes, since 
@@ -68,31 +69,31 @@ public final class ExtractAction extends AbstractAction {
     private ExtractAction() {
         super(NbBundle.getMessage(ExtractAction.class, "ExtractAction.title.extractFiles.text"));
     }
-        
+
     /**
      * Asks user to choose destination, then extracts content to destination
      * (recursing on directories).
-     * @param e  The action event.
+     *
+     * @param e The action event.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
         if (selectedFiles.size() > 1) {
             extractFiles(e, selectedFiles);
-        }
-        else if (selectedFiles.size() == 1) {
+        } else if (selectedFiles.size() == 1) {
             AbstractFile source = selectedFiles.iterator().next();
             if (source.isDir()) {
-                extractFiles(e, selectedFiles);                
-            }
-            else {
+                extractFiles(e, selectedFiles);
+            } else {
                 extractFile(e, selectedFiles.iterator().next());
             }
         }
     }
-    
+
     /**
      * Called when user has selected a single file to extract
+     *
      * @param e
      * @param selectedFile Selected file
      */
@@ -101,15 +102,16 @@ public final class ExtractAction extends AbstractAction {
         fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(selectedFile.getName().replace(':', '_')));
-        if (fileChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+        if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
-            runExtractionTasks(e, fileExtractionTasks);            
-        }        
+            runExtractionTasks(e, fileExtractionTasks);
+        }
     }
-        
+
     /**
      * Called when a user has selected multiple files to extract
+     *
      * @param e
      * @param selectedFiles Selected files
      */
@@ -117,15 +119,14 @@ public final class ExtractAction extends AbstractAction {
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
-        if (folderChooser.showSaveDialog((Component)e.getSource()) == JFileChooser.APPROVE_OPTION) {
+        if (folderChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
                 try {
                     destinationFolder.mkdirs();
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog((Component) e.getSource(), NbBundle.getMessage(this.getClass(),
-                                                                                                 "ExtractAction.extractFiles.cantCreateFolderErr.msg"));
+                            "ExtractAction.extractFiles.cantCreateFolderErr.msg"));
                     logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex); //NON-NLS
                     return;
                 }
@@ -136,40 +137,40 @@ public final class ExtractAction extends AbstractAction {
             for (AbstractFile source : selectedFiles) {
                 // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName().replace(':', '_'))));
-            }            
-            runExtractionTasks(e, fileExtractionTasks);            
+            }
+            runExtractionTasks(e, fileExtractionTasks);
         }
     }
-        
+
     private void runExtractionTasks(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
-        
+
         // verify all of the sources and destinations are OK
-        for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext(); ) {
+        for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext();) {
             FileExtractionTask task = it.next();
-            
+
             if (ContentUtils.isDotDirectory(task.source)) {
                 //JOptionPane.showMessageDialog((Component) e.getSource(), "Cannot extract virtual " + task.source.getName() + " directory.", "File is Virtual Directory", JOptionPane.WARNING_MESSAGE);
                 it.remove();
                 continue;
             }
-            
+
             /*
-             * @@@ Problems with this code:
-             * - does not prevent us from having multiple files with the same target name in the task list (in which case, the first ones are overwritten)
-             * Unique Id was added to set of names before calling this method to deal with that.
+             * @@@ Problems with this code: - does not prevent us from having
+             * multiple files with the same target name in the task list (in
+             * which case, the first ones are overwritten) Unique Id was added
+             * to set of names before calling this method to deal with that.
              */
             if (task.destination.exists()) {
                 if (JOptionPane.showConfirmDialog((Component) e.getSource(),
-                                                  NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.msg", task.destination.getAbsolutePath()),
-                                                  NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.title"),
-                                                  JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                        NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.msg", task.destination.getAbsolutePath()),
+                        NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.title"),
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     if (!FileUtil.deleteFileDir(task.destination)) {
                         JOptionPane.showMessageDialog((Component) e.getSource(),
-                                                      NbBundle.getMessage(this.getClass(), "ExtractAction.msgDlg.cantOverwriteFile.msg", task.destination.getAbsolutePath()));
+                                NbBundle.getMessage(this.getClass(), "ExtractAction.msgDlg.cantOverwriteFile.msg", task.destination.getAbsolutePath()));
                         it.remove();
                     }
-                }
-                else {
+                } else {
                     it.remove();
                 }
             }
@@ -178,117 +179,112 @@ public final class ExtractAction extends AbstractAction {
         // launch a thread to do the work
         if (!fileExtractionTasks.isEmpty()) {
             try {
-                FileExtracter extracter = new FileExtracter(fileExtractionTasks);    
+                FileExtracter extracter = new FileExtracter(fileExtractionTasks);
                 extracter.execute();
-            } 
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background file extraction thread", ex); //NON-NLS
-            }                                    
-        }
-        else {
+            }
+        } else {
             MessageNotifyUtil.Message.info(
                     NbBundle.getMessage(this.getClass(), "ExtractAction.notifyDlg.noFileToExtr.msg"));
         }
     }
-        
+
     private class FileExtractionTask {
+
         AbstractFile source;
         File destination;
 
         FileExtractionTask(AbstractFile source, File destination) {
             this.source = source;
             this.destination = destination;
-        }        
+        }
     }
-        
+
     /**
      * Thread that does the actual extraction work
      */
-    private class FileExtracter extends SwingWorker<Object,Void> {
+    private class FileExtracter extends SwingWorker<Object, Void> {
+
         private Logger logger = Logger.getLogger(FileExtracter.class.getName());
         private ProgressHandle progress;
         private ArrayList<FileExtractionTask> extractionTasks;
-        
+
         FileExtracter(ArrayList<FileExtractionTask> extractionTasks) {
-            this.extractionTasks = extractionTasks;            
+            this.extractionTasks = extractionTasks;
         }
-        
+
         @Override
         protected Object doInBackground() throws Exception {
             if (extractionTasks.isEmpty()) {
                 return null;
             }
-            
+
             // Setup progress bar.
             final String displayName = NbBundle.getMessage(this.getClass(), "ExtractAction.progress.extracting");
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                 @Override
                 public boolean cancel() {
-                    if (progress != null)
+                    if (progress != null) {
                         progress.setDisplayName(
                                 NbBundle.getMessage(this.getClass(), "ExtractAction.progress.cancellingExtraction", displayName));
+                    }
                     return ExtractAction.FileExtracter.this.cancel(true);
                 }
             });
             progress.start();
             progress.switchToIndeterminate();
-            
-            /* @@@ Add back in -> Causes exceptions
-            int workUnits = 0;
-            for (FileExtractionTask task : extractionTasks) {
-                workUnits += calculateProgressBarWorkUnits(task.source);
-            }
-            progress.switchToDeterminate(workUnits);
-            */
-        
+
+            /*
+             * @@@ Add back in -> Causes exceptions int workUnits = 0; for
+             * (FileExtractionTask task : extractionTasks) { workUnits +=
+             * calculateProgressBarWorkUnits(task.source); }
+             * progress.switchToDeterminate(workUnits);
+             */
             // Do the extraction tasks.
             for (FileExtractionTask task : this.extractionTasks) {
                 // @@@ Note, we are no longer passing in progress
-                ExtractFscContentVisitor.extract(task.source, task.destination, null, this);            
+                ExtractFscContentVisitor.extract(task.source, task.destination, null, this);
             }
-            
+
             return null;
         }
-        
+
         @Override
         protected void done() {
             boolean msgDisplayed = false;
             try {
                 super.get();
-            } 
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during file extraction", ex); //NON-NLS
                 MessageNotifyUtil.Message.info(
                         NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.extractErr", ex.getMessage()));
                 msgDisplayed = true;
-            }  
-            finally {
+            } finally {
                 progress.finish();
                 if (!this.isCancelled() && !msgDisplayed) {
                     MessageNotifyUtil.Message.info(
                             NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.fileExtr.text"));
-                } 
+                }
             }
         }
-        
+
         private int calculateProgressBarWorkUnits(AbstractFile file) {
             int workUnits = 0;
             if (file.isFile()) {
                 workUnits += file.getSize();
-            }
-            else {
+            } else {
                 try {
                     for (Content child : file.getChildren()) {
-                       if (child instanceof AbstractFile) {
-                        workUnits += calculateProgressBarWorkUnits((AbstractFile)child);
-                       }
+                        if (child instanceof AbstractFile) {
+                            workUnits += calculateProgressBarWorkUnits((AbstractFile) child);
+                        }
                     }
-                }
-                catch (TskCoreException ex) {
+                } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Could not get children of content", ex); //NON-NLS
                 }
             }
-            return workUnits;            
+            return workUnits;
         }
-    } 
+    }
 }

@@ -207,6 +207,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * be called if isValidDefintion() returns true.
      *
      * @return A name filter.
+     *
      * @throws IllegalStateException if the specified name filter is not valid.
      */
     FilesSet.Rule.FileNameFilter getFileNameFilter() throws IllegalStateException {
@@ -260,6 +261,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * Should only be called if isValidDefintion() returns true.
      *
      * @return A path filter or null if no path filter was specified.
+     *
      * @throws IllegalStateException if the specified path filter is not valid.
      */
     FilesSet.Rule.ParentPathFilter getPathFilter() throws IllegalStateException {
@@ -296,10 +298,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Checks an input string for the use of illegal characters.
      *
-     * @param toBeChecked The input string.
+     * @param toBeChecked  The input string.
      * @param illegalChars The characters deemed to be illegal.
+     *
      * @return True if the string does not contain illegal characters, false
-     * otherwise.
+     *         otherwise.
      */
     private static boolean containsOnlyLegalChars(String toBeChecked, List<String> illegalChars) {
         for (String illegalChar : illegalChars) {

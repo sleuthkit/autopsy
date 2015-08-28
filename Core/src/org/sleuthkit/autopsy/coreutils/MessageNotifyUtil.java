@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Icon;
@@ -51,9 +53,11 @@ public class MessageNotifyUtil {
 
         INFO(NotifyDescriptor.INFORMATION_MESSAGE, "info-icon-16.png"), //NON-NLS
         ERROR(NotifyDescriptor.ERROR_MESSAGE, "error-icon-16.png"), //NON-NLS
-        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"); //NON-NLS
-        private int notifyDescriptorType;
-        private Icon icon;
+        WARNING(NotifyDescriptor.WARNING_MESSAGE, "warning-icon-16.png"), //NON-NLS
+        CONFIRM(NotifyDescriptor.YES_NO_OPTION, "warning-icon-16.png"); //NON-NLS
+
+        private final int notifyDescriptorType;
+        private final Icon icon;
 
         private MessageType(int notifyDescriptorType, String resourceName) {
             this.notifyDescriptorType = notifyDescriptorType;
@@ -101,12 +105,24 @@ public class MessageNotifyUtil {
         /**
          * Show a message of the specified type
          *
-         * @param message message to show
+         * @param message     message to show
          * @param messageType message type to show
          */
         public static void show(String message, MessageType messageType) {
             getDialogDisplayer().notify(new NotifyDescriptor.Message(message,
                     messageType.getNotifyDescriptorType()));
+        }
+
+        /**
+         * Show an confirm, yes-no dialog
+         *
+         * @param message message to show
+         *
+         * @return true if yes is clicked
+         */
+        public static boolean confirm(String message) {
+            return getDialogDisplayer().notify(new NotifyDescriptor.Confirmation(message,
+                    MessageType.CONFIRM.getNotifyDescriptorType())) == NotifyDescriptor.YES_OPTION;
         }
 
         /**
@@ -121,7 +137,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error dialog
          *
-         * @param message message to shpw
+         * @param message message to show
          */
         public static void error(String message) {
             show(message, MessageType.ERROR);
@@ -135,36 +151,43 @@ public class MessageNotifyUtil {
         public static void warn(String message) {
             show(message, MessageType.WARNING);
         }
+
     }
 
     /**
-     * Utility to display notifications with baloons
+     * Utility to display notifications with balloons
      */
     public static class Notify {
+
+        private static final SimpleDateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("MM/dd/yy HH:mm:ss z");
 
         //notifications to keep track of and to reset when case is closed
         private static final List<Notification> notifications = Collections.synchronizedList(new ArrayList<Notification>());
 
         private Notify() {
         }
-        
+
         /**
-         * Clear pending notifications
-         * Should really only be used by Case
+         * Clear pending notifications Should really only be used by Case
          */
         public static void clear() {
-            for (Notification n : notifications) {
+            notifications.stream().forEach((n) -> {
                 n.clear();
-            }
+            });
             notifications.clear();
         }
 
         /**
          * Show message with the specified type and action listener
+         *
+         * @param title          message title
+         * @param message        message text
+         * @param type           type of the message
+         * @param actionListener action listener
          */
         public static void show(String title, String message, MessageType type, ActionListener actionListener) {
-            Notification newNotification = 
-                    NotificationDisplayer.getDefault().notify(title, type.getIcon(), message, actionListener);
+            Notification newNotification
+                    = NotificationDisplayer.getDefault().notify(addTimeStampToTitle(title), type.getIcon(), message, actionListener);
             notifications.add(newNotification);
         }
 
@@ -173,16 +196,13 @@ public class MessageNotifyUtil {
          * displays the message using MessageNotifyUtil.Message with the same
          * message type
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
-         * @param type type of the message
+         * @param type    type of the message
          */
         public static void show(String title, final String message, final MessageType type) {
-            ActionListener actionListener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    MessageNotifyUtil.Message.show(message, type);
-                }
+            ActionListener actionListener = (ActionEvent e) -> {
+                MessageNotifyUtil.Message.show(message, type);
             };
 
             show(title, message, type, actionListener);
@@ -191,7 +211,7 @@ public class MessageNotifyUtil {
         /**
          * Show an information notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void info(String title, String message) {
@@ -201,7 +221,7 @@ public class MessageNotifyUtil {
         /**
          * Show an error notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void error(String title, String message) {
@@ -211,11 +231,24 @@ public class MessageNotifyUtil {
         /**
          * Show an warning notification
          *
-         * @param title message title
+         * @param title   message title
          * @param message message text
          */
         public static void warn(String title, String message) {
             show(title, message, MessageType.WARNING);
+        }
+
+        /**
+         * Adds a time stamp prefix to the title of notifications so that they
+         * will be in order (they are sorted alphabetically) in the
+         * notifications area.
+         *
+         * @param title A notification title without a time stamp prefix.
+         *
+         * @return The notification title with a time stamp prefix.
+         */
+        private static String addTimeStampToTitle(String title) {
+            return TIME_STAMP_FORMAT.format(new Date()) + " " + title;
         }
     }
 }

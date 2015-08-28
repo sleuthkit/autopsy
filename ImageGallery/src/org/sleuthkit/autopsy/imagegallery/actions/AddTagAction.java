@@ -18,44 +18,32 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.logging.Level;
+import java.util.Collection;
+import java.util.Set;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for Actions that allow users to tag SleuthKit data
+ * An abstract base class for actions that allow users to tag SleuthKit data
  * model objects.
+ *
+ * //TODO: this class started as a cut and paste from
+ * org.sleuthkit.autopsy.actions.AddTagAction and needs to be
+ * refactored or reintegrated to the AddTagAction hierarchy of Autopysy.
  */
 abstract class AddTagAction {
 
-    protected void refreshDirectoryTree() {
-        // The way the "directory tree" currently works, a new tags sub-tree 
-        // needs to be made to reflect the results of invoking tag Actions. 
-        SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().refreshContentTreeSafe());
-
-    }
-
     protected static final String NO_COMMENT = "";
 
-    AddTagAction() {
-    }
-
     /**
-     * Template method to allow derived classes to provide a string for for a
+     * Template method to allow derived classes to provide a string for a
      * menu item label.
      */
     abstract protected String getActionDisplayName();
@@ -67,6 +55,12 @@ abstract class AddTagAction {
     abstract protected void addTag(TagName tagName, String comment);
 
     /**
+     * Template method to allow derived classes to add the indicated tag and
+     * comment to a list of one or more file IDs.
+     */
+    abstract protected void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles);
+
+    /**
      * Instances of this class implement a context menu user interface for
      * creating or selecting a tag name for a tag and specifying an optional tag
      * comment.
@@ -75,82 +69,61 @@ abstract class AddTagAction {
     // to be reworked.
     protected class TagMenu extends Menu {
 
-        TagMenu() {
+        TagMenu(ImageGalleryController controller) {
             super(getActionDisplayName());
-
-            // Get the current set of tag names.
-            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-            List<TagName> tagNames = null;
-            try {
-                tagNames = tagsManager.getAllTagNames();
-            } catch (TskCoreException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
-            }
 
             // Create a "Quick Tag" sub-menu.
             Menu quickTagMenu = new Menu("Quick Tag");
             getItems().add(quickTagMenu);
 
-            // Each tag name in the current set of tags gets its own menu item in
-            // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name. 
-            if (null != tagNames && !tagNames.isEmpty()) {
-                for (final TagName tagName : tagNames) {
-                    if (tagName.getDisplayName().startsWith(Category.CATEGORY_PREFIX) == false) {
-                        MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
-                        tagNameItem.setOnAction((ActionEvent t) -> {
-                            addTag(tagName, NO_COMMENT);
-                            refreshDirectoryTree();
-                        });
-                        quickTagMenu.getItems().add(tagNameItem);
-                    }
-                }
-            } else {
+            /* Each non-Category tag name in the current set of tags gets its
+             * own menu item in the "Quick Tags" sub-menu. Selecting one of
+             * these menu items adds a tag with the associated tag name. */
+            Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
+            if (tagNames.isEmpty()) {
                 MenuItem empty = new MenuItem("No tags");
                 empty.setDisable(true);
                 quickTagMenu.getItems().add(empty);
+            } else {
+                for (final TagName tagName : tagNames) {
+                    MenuItem tagNameItem = new MenuItem(tagName.getDisplayName());
+                    tagNameItem.setOnAction((ActionEvent t) -> {
+                        addTag(tagName, NO_COMMENT);
+                    });
+                    quickTagMenu.getItems().add(tagNameItem);
+                }
             }
 
-            //   quickTagMenu.addSeparator();
-            // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
-            // Selecting this item initiates a dialog that can be used to create
-            // or select a tag name and adds a tag with the resulting name.
+            /* The "Quick Tag" menu also gets an "New Tag..." menu item.
+             * Selecting this item initiates a dialog that can be used to create
+             * or select a tag name and adds a tag with the resulting name. */
             MenuItem newTagMenuItem = new MenuItem("New Tag...");
             newTagMenuItem.setOnAction((ActionEvent t) -> {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        TagName tagName = GetTagNameDialog.doDialog();
-                        if (tagName != null) {
-                            addTag(tagName, NO_COMMENT);
-                            refreshDirectoryTree();
-                        }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                SwingUtilities.invokeLater(() -> {
+                    TagName tagName = GetTagNameDialog.doDialog();
+                    if (tagName != null) {
+                        addTag(tagName, NO_COMMENT);
+                    }
+                });
             });
             quickTagMenu.getItems().add(newTagMenuItem);
 
-            // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
-            // a dialog that can be used to create or select a tag name with an 
-            // optional comment and adds a tag with the resulting name.
+            /* Create a "Tag and Comment..." menu item. Selecting this item
+             * initiates a dialog that can be used to create or select a tag
+             * name with an optional comment and adds a tag with the resulting
+             * name. */
             MenuItem tagAndCommentItem = new MenuItem("Tag and Comment...");
             tagAndCommentItem.setOnAction((ActionEvent t) -> {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
-                        if (null != tagNameAndComment) {
-                            if (tagNameAndComment.getTagName().getDisplayName().startsWith(Category.CATEGORY_PREFIX)) {
-                                new CategorizeAction().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                            } else {
-                                AddDrawableTagAction.getInstance().addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
-                            }
-                            refreshDirectoryTree();
+                SwingUtilities.invokeLater(() -> {
+                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
+                    if (null != tagNameAndComment) {
+                        if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
+                            new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                        } else {
+                            new AddDrawableTagAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
                         }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                    }
+                });
             });
             getItems().add(tagAndCommentItem);
         }

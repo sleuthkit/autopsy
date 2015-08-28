@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,29 +22,46 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.lang.Rational;
+import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
+import com.drew.metadata.exif.makernotes.CasioType1MakernoteDirectory;
+import com.drew.metadata.exif.makernotes.FujifilmMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.NikonType2MakernoteDirectory;
+import com.drew.metadata.exif.makernotes.PanasonicMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.PentaxMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.SanyoMakernoteDirectory;
+import com.drew.metadata.exif.makernotes.SonyType1MakernoteDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -59,28 +76,40 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
-    private AtomicInteger filesProcessed = new AtomicInteger(0);
+    private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
+    private volatile boolean facesDetected = false;
+    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-        
+    private FileTypeDetector fileTypeDetector;
+    private final HashSet<String> supportedMimeTypes = new HashSet<>();
+    private TimeZone timeZone = null;
+
     ExifParserFileIngestModule() {
+        supportedMimeTypes.add("audio/x-wav");
+        supportedMimeTypes.add("image/jpeg");
+        supportedMimeTypes.add("image/tiff");
     }
 
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {    
+    public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         refCounter.incrementAndGet(jobId);
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "ExifParserFileIngestModule.startUp.fileTypeDetectorInitializationException.msg"));
+        }
     }
 
-    
     @Override
     public ProcessResult process(AbstractFile content) {
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
         }
-        
+
         if (content.isFile() == false) {
             return ProcessResult.OK;
         }
@@ -92,9 +121,16 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
         // update the tree every 1000 files if we have EXIF data that is not being being displayed 
         final int filesProcessedValue = filesProcessed.incrementAndGet();
-        if ((filesToFire) && (filesProcessedValue % 1000 == 0)) {
-            services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-            filesToFire = false;
+        if ((filesProcessedValue % 1000 == 0)) {
+            if (filesToFire) {
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+                filesToFire = false;
+            }
+            if (facesDetected) {
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
+                listOfFacesDetectedArtifacts.clear();
+                facesDetected = false;
+            }
         }
 
         //skip unsupported
@@ -114,19 +150,32 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             bin = new BufferedInputStream(in);
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            Metadata metadata = ImageMetadataReader.readMetadata(bin, true);
+            Metadata metadata = ImageMetadataReader.readMetadata(bin);
 
             // Date
-            ExifSubIFDDirectory exifDir = metadata.getDirectory(ExifSubIFDDirectory.class);
+            ExifSubIFDDirectory exifDir = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
             if (exifDir != null) {
-                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+
+                // set the timeZone for the current datasource.
+                if (timeZone == null) {
+                    try {
+                        Content dataSource = f.getDataSource();
+                        if ((dataSource != null) && (dataSource instanceof Image)) {
+                            Image image = (Image) dataSource;
+                            timeZone = TimeZone.getTimeZone(image.getTimeZone());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
+                    }
+                }
+                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
             }
 
             // GPS Stuff
-            GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
+            GpsDirectory gpsDir = metadata.getFirstDirectoryOfType(GpsDirectory.class);
             if (gpsDir != null) {
                 GeoLocation loc = gpsDir.getGeoLocation();
                 if (loc != null) {
@@ -136,14 +185,14 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), longitude));
                 }
 
-                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_GPS_ALTITUDE);
+                Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), ExifParserModuleFactory.getModuleName(), altitude.doubleValue()));
                 }
             }
 
             // Device info
-            ExifIFD0Directory devDir = metadata.getDirectory(ExifIFD0Directory.class);
+            ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null && !model.isEmpty()) {
@@ -154,6 +203,11 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 if (make != null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), ExifParserModuleFactory.getModuleName(), make));
                 }
+            }
+
+            if (containsFace(metadata)) {
+                listOfFacesDetectedArtifacts.add(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED));
+                facesDetected = true;
             }
 
             // Add the attributes, if there are any, to a new artifact
@@ -189,6 +243,121 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
+     * Checks if this metadata contains any tags related to facial information.
+     * NOTE: Cases with this metadata containing tags like enabled red-eye
+     * reduction settings, portrait settings, etc are also assumed to contain
+     * facial information. The method returns true. The return value of this
+     * method does NOT guarantee actual presence of face.
+     *
+     * @param metadata the metadata which needs to be parsed for possible facial
+     *                 information.
+     *
+     * @return returns true if the metadata contains any tags related to facial
+     *         information.
+     */
+    private boolean containsFace(Metadata metadata) {
+        Directory d = metadata.getFirstDirectoryOfType(CanonMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1)
+                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1) != null) {
+                return true;
+            }
+            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2)
+                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(CasioType1MakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(CasioType1MakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(CasioType1MakernoteDirectory.TAG_FLASH_MODE) == 0x04) { //0x04 = "Red eye reduction"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // move on and check next directory
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(FujifilmMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(FujifilmMakernoteDirectory.TAG_FACES_DETECTED)
+                    && d.getString(FujifilmMakernoteDirectory.TAG_FACES_DETECTED) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(KodakMakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(KodakMakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(KodakMakernoteDirectory.TAG_FLASH_MODE) == 0x03) { //0x03 = "Red Eye"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                /// move on and check next directory
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
+                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
+                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
+                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
+                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(PentaxMakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(PentaxMakernoteDirectory.TAG_FLASH_MODE)
+                        && d.getInt(PentaxMakernoteDirectory.TAG_FLASH_MODE) == 6) { // 6 = Red-eye Reduction
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // move on and check next directory
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(SanyoMakernoteDirectory.class);
+        if (d != null) {
+            if (d.containsTag(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO)
+                    && d.getString(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO) != null) {
+                return true;
+            }
+        }
+
+        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
+        if (d != null) {
+            try {
+                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
+                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
+                    return true;
+                }
+                if (d.containsTag(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE)
+                        && d.getInt(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE) == 14) { //14 = "Smile shutter"
+                    return true;
+                }
+            } catch (MetadataException ex) {
+                // move on and check next directory
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Checks if should try to attempt to extract exif. Currently checks if JPEG
      * image (by signature)
      *
@@ -197,16 +366,31 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        return ImageUtils.isJpegFileHeader(f);
+        try {
+            String mimeType = fileTypeDetector.getFileType(f);
+            if (mimeType != null) {
+                return supportedMimeTypes.contains(mimeType);
+            } else {
+                return false;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
+            return false;
+        }
     }
 
     @Override
     public void shutDown() {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
+            timeZone = null;
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
+            }
+            if (facesDetected) {
+                //send the final new data event
+                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
             }
         }
     }

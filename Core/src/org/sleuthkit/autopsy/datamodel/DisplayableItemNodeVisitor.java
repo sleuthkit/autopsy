@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,21 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 
 /**
- * Visitor pattern implementation for DisplayableItemNodes
+ * Visitor pattern that goes over all nodes in the directory tree. This includes
+ * extracted content, reports, and the data sources area.
  */
 public interface DisplayableItemNodeVisitor<T> {
+
+    /*
+     * Data Sources Area
+     */
+    T visit(DataSourcesNode in);
+
+    T visit(LayoutFileNode lfn);
+
+    T visit(LocalFileNode dfn);
+
+    T visit(VirtualDirectoryNode ldn);
 
     T visit(DirectoryNode dn);
 
@@ -36,11 +48,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(VolumeNode vn);
 
-    T visit(BlackboardArtifactNode ban);
-
-    T visit(ExtractedContent.TypeNode atn);
-
-    T visit(ExtractedContent.RootNode ecn);
+    /*
+     * Views Area
+     */
+    T visit(ViewsNode vn);
 
     T visit(FileTypeNode fsfn);
 
@@ -58,6 +69,17 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(RecentFilesFilterNode rffn);
 
+    /*
+     * Extracted Results Area
+     */
+    T visit(ResultsNode rn);
+
+    T visit(BlackboardArtifactNode ban);
+
+    T visit(ExtractedContent.TypeNode atn);
+
+    T visit(ExtractedContent.RootNode ecn);
+
     T visit(KeywordHits.RootNode khrn);
 
     T visit(KeywordHits.ListNode khsn);
@@ -74,38 +96,32 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmailExtracted.FolderNode eefn);
 
-    T visit(Tags.RootNode node);
-    
     T visit(InterestingHits.RootNode ihrn);
 
     T visit(InterestingHits.SetNameNode ihsn);
-    
+
+    /*
+     * Tags
+     */
+    T visit(Tags.RootNode node);
+
     T visit(Tags.TagNameNode node);
 
-    T visit(Tags.ContentTagTypeNode node);    
+    T visit(Tags.ContentTagTypeNode node);
 
     T visit(ContentTagNode node);
-        
+
     T visit(Tags.BlackboardArtifactTagTypeNode node);
 
-    T visit(BlackboardArtifactTagNode node);    
+    T visit(BlackboardArtifactTagNode node);
 
-    T visit(ViewsNode vn);
-
-    T visit(ResultsNode rn);
-
-    T visit(DataSourcesNode in);
-
-    T visit(LayoutFileNode lfn);
-
-    T visit(LocalFileNode dfn);
-
-    T visit(VirtualDirectoryNode ldn);
-
+    /*
+     * Reports
+     */
     T visit(Reports.ReportsListNode reportsNode);
 
     T visit(Reports.ReportNode reportNode);
-        
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -118,6 +134,7 @@ public interface DisplayableItemNodeVisitor<T> {
          * Default visit for all types
          *
          * @param c
+         *
          * @return
          */
         protected abstract T defaultVisit(DisplayableItemNode c);
@@ -236,8 +253,8 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(HashsetHits.HashsetNameNode hhsn) {
             return defaultVisit(hhsn);
         }
-        
-         @Override
+
+        @Override
         public T visit(InterestingHits.RootNode ihrn) {
             return defaultVisit(ihrn);
         }
@@ -246,7 +263,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(InterestingHits.SetNameNode ihsn) {
             return defaultVisit(ihsn);
         }
-        
+
         @Override
         public T visit(EmailExtracted.RootNode eern) {
             return defaultVisit(eern);
@@ -296,7 +313,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ContentTagNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(Tags.BlackboardArtifactTagTypeNode node) {
             return defaultVisit(node);

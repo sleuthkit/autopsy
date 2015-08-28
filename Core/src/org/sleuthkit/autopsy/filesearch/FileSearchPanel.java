@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
- class FileSearchPanel extends javax.swing.JPanel {
+class FileSearchPanel extends javax.swing.JPanel {
 
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
@@ -70,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     public FileSearchPanel() {
         initComponents();
         customizeComponents();
-      
+
     }
 
     /**
@@ -158,7 +158,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                     Logger logger = Logger.getLogger(this.getClass().getName());
                     logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex); //NON-NLS
                 }
-                
+
                 if (contentList == null) {
                     contentList = Collections.<AbstractFile>emptyList();
                 }
@@ -192,16 +192,23 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
     }
 
-
-
     /**
      * Gets the SQL query to get the data from the database based on the
      * criteria that user chooses on the FileSearch.
      *
      * @return query the SQL query
+     *
      * @throws
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
-     * if an enabled filter is in an invalid state
+     *                                                                           if
+     *                                                                           an
+     *                                                                           enabled
+     *                                                                           filter
+     *                                                                           is
+     *                                                                           in
+     *                                                                           an
+     *                                                                           invalid
+     *                                                                           state
      */
     private String getQuery() throws FilterValidationException {
 

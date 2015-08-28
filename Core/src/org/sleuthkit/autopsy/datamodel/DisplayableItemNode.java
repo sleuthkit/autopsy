@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011 - 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,9 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 
 /**
- * Interface for all displayable Nodes
+ * A DisplayableItem is any node in the Autopsy directory tree. All of the nodes
+ * in the tree will eventually extend this. This includes the data source,
+ * views, extracted results, etc. areas.
  */
 public abstract class DisplayableItemNode extends AbstractNode {
 
@@ -34,7 +36,8 @@ public abstract class DisplayableItemNode extends AbstractNode {
     public DisplayableItemNode(Children children, Lookup lookup) {
         super(children, lookup);
     }
-     
-    abstract public boolean isLeafTypeNode();
-    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);    
+
+    public abstract boolean isLeafTypeNode();
+
+    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
 }

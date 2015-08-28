@@ -121,7 +121,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             } else {
                 JMenuItem empty = new JMenuItem(
                         NbBundle.getMessage(this.getClass(),
-                        "AddContentToHashDbAction.ContentMenu.noHashDbsConfigd"));
+                                "AddContentToHashDbAction.ContentMenu.noHashDbsConfigd"));
                 empty.setEnabled(false);
                 add(empty);
             }
@@ -154,10 +154,10 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)"); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
-                                "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
-                                file.getName()),
+                                        "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
+                                        file.getName()),
                                 NbBundle.getMessage(this.getClass(),
-                                                    "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr1.text"),
+                                        "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr1.text"),
                                 JOptionPane.ERROR_MESSAGE);
                         continue;
                     }
@@ -167,23 +167,23 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
-                                "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
-                                file.getName()),
+                                        "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
+                                        file.getName()),
                                 NbBundle.getMessage(this.getClass(),
-                                                    "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr2.text"),
+                                        "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr2.text"),
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(this.getClass(),
-                            "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
-                            files.size() > 1 ? NbBundle
-                            .getMessage(this.getClass(),
-                            "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
-                            .getMessage(this.getClass(),
-                            "AddContentToHashDbAction.addFilesToHashSet.file")),
+                                    "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
+                                    files.size() > 1 ? NbBundle
+                                            .getMessage(this.getClass(),
+                                                    "AddContentToHashDbAction.addFilesToHashSet.files") : NbBundle
+                                            .getMessage(this.getClass(),
+                                                    "AddContentToHashDbAction.addFilesToHashSet.file")),
                             NbBundle.getMessage(this.getClass(),
-                                                "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr3.text"),
+                                    "AddContentToHashDbAction.addFilesToHashSet.addToHashDbErr3.text"),
                             JOptionPane.ERROR_MESSAGE);
                     break;
                 }

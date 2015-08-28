@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -34,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class TextMessageAnalyzer implements AndroidAnalyzer {
-    
+
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(GoogleMapLocationAnalyzer.class.getName());
     private static final String[] databaseNames = {"mmssms.db"};
@@ -64,7 +63,7 @@ public class TextMessageAnalyzer implements AndroidAnalyzer {
             while (resultSet.next()) {
                 address = resultSet.getString("address"); //NON-NLS
                 Long date = Long.valueOf(resultSet.getString("date")) / 1000; //NON-NLS
-                
+
                 read = resultSet.getInt("read"); //NON-NLS
                 subject = resultSet.getString("subject"); //NON-NLS
                 body = resultSet.getString("body"); //NON-NLS
@@ -72,23 +71,23 @@ public class TextMessageAnalyzer implements AndroidAnalyzer {
                 BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                 if (resultSet.getString("type").equals("1")) { //NON-NLS
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
-                                                             NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
-                                                                                 "TextMessageAnalyzer.bbAttribute.incoming")));
+                            NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
+                                    "TextMessageAnalyzer.bbAttribute.incoming")));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, address));
                 } else {
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
-                                                             NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
-                                                                                 "TextMessageAnalyzer.bbAttribute.outgoing")));
+                            NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
+                                    "TextMessageAnalyzer.bbAttribute.outgoing")));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, address));
                 }
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, date));
-                
+
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS.getTypeID(), moduleName, read));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
-                                                                             "TextMessageAnalyzer.bbAttribute.smsMessage")));
+                        NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
+                                "TextMessageAnalyzer.bbAttribute.smsMessage")));
             }
 
         } catch (SQLException | NumberFormatException | TskCoreException | MissingResourceException e) {
@@ -120,5 +119,5 @@ public class TextMessageAnalyzer implements AndroidAnalyzer {
     public void findInFile(File file, AbstractFile abstractFile) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }

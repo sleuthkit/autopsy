@@ -34,13 +34,12 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.gui.GroupPane;
-import org.sleuthkit.autopsy.imagegallery.gui.MetaDataPane;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.GroupPane;
+import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.MetaDataPane;
 import org.sleuthkit.autopsy.imagegallery.gui.navpanel.NavPanel;
 
 /**
@@ -145,13 +144,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             fullUIStack.getChildren().add(borderPane);
             splitPane = new SplitPane();
             borderPane.setCenter(splitPane);
-            borderPane.setTop(Toolbar.getDefault());
+            borderPane.setTop(Toolbar.getDefault(controller));
             borderPane.setBottom(new StatusBar(controller));
 
             metaDataTable = new MetaDataPane(controller);
 
             navPanel = new NavPanel(controller);
-            leftPane = new VBox(navPanel, SummaryTablePane.getDefault());
+            leftPane = new VBox(navPanel, new SummaryTablePane(controller));
             SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
             SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
             SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
@@ -159,6 +158,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             splitPane.setDividerPositions(0.0, 1.0);
 
             ImageGalleryController.getDefault().setStacks(fullUIStack, centralStack);
+            ImageGalleryController.getDefault().setNavPanel(navPanel);
         });
     }
 

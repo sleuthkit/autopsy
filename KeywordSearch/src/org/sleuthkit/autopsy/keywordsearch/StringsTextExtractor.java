@@ -36,10 +36,10 @@ import org.sleuthkit.datamodel.AbstractFile;
  * the original source file) up to 1MB then and indexes chunks as text with Solr
  */
 class StringsTextExtractor implements TextExtractor {
-    
-    private static Ingester ingester;    
+
+    private static Ingester ingester;
     private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
-    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;        
+    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
     //private static final int BOM_LEN = 3; 
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
@@ -48,7 +48,7 @@ class StringsTextExtractor implements TextExtractor {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private final List<SCRIPT> extractScripts = new ArrayList<>();
-    private Map<String, String> extractOptions = new HashMap<>();   
+    private Map<String, String> extractOptions = new HashMap<>();
 
     //disabled prepending of BOM
     //static {
@@ -101,12 +101,11 @@ class StringsTextExtractor implements TextExtractor {
         this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
 
+        final boolean extractUTF8
+                = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
 
-        final boolean extractUTF8 =
-                Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
-
-        final boolean extractUTF16 =
-                Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+        final boolean extractUTF16
+                = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         if (extractUTF8 == false && extractUTF16 == false) {
             //nothing to do
@@ -122,7 +121,6 @@ class StringsTextExtractor implements TextExtractor {
             stringStream = new AbstractFileStringIntStream(
                     sourceFile, extractScripts, extractUTF8, extractUTF16, INDEX_CHARSET);
         }
-
 
         try {
             success = true;
@@ -148,7 +146,6 @@ class StringsTextExtractor implements TextExtractor {
                 //debug.close();    
             }
 
-
             //after all chunks, ingest the parent file without content itself, and store numChunks
             ingester.ingest(this);
 
@@ -162,7 +159,6 @@ class StringsTextExtractor implements TextExtractor {
                 logger.log(Level.WARNING, "Error closing input stream stream, file: " + sourceFile.getName(), ex); //NON-NLS
             }
         }
-
 
         return success;
     }

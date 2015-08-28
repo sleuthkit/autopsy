@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +177,7 @@ class LuceneQuery implements KeywordSearchQuery {
         if (hit.isArtifactHit()) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(), MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
-        
+
         try {
             bba.addAttributes(attributes); //write out to bb
             writeResult.add(attributes);
@@ -191,8 +192,10 @@ class LuceneQuery implements KeywordSearchQuery {
      * Perform the query and return results of unique files.
      *
      * @param snippets True if results should have a snippet
+     *
      * @return list of ContentHit objects. One per file with hit (ignores
-     * multiple hits of the word in the same doc)
+     *         multiple hits of the word in the same doc)
+     *
      * @throws NoOpenCoreException
      */
     private List<KeywordHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
@@ -214,7 +217,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
 
                 // get the unique set of files with hits
-                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterDuplicateSolrDocuments(resultList);
+                Set<SolrDocument> uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
 
                 allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
 
@@ -251,6 +254,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Create the query object for the stored keyword
      *
      * @param snippets True if query should request snippets
+     *
      * @return
      */
     private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
@@ -303,9 +307,26 @@ class LuceneQuery implements KeywordSearchQuery {
      * file in results.
      *
      * @param resultList
+     *
      * @return
      */
-    private Set<SolrDocument> filterDuplicateSolrDocuments(SolrDocumentList resultList) {
+    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
+        // sort the list so that we consistently pick the same chunk each time.
+        // note this sort is doing a string comparison and not an integer comparison, so 
+        // chunk 10 will be smaller than chunk 9. 
+        Collections.sort(resultList, new Comparator<SolrDocument>() {
+            @Override
+            public int compare(SolrDocument left, SolrDocument right) {
+                // ID is in the form of ObjectId_Chunk
+                String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
+                String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
+                return leftID.compareTo(rightID);
+            }
+        });
+
+        // NOTE: We could probably just iterate through the list and compare each ID with the
+        // previous ID to get the unique documents faster than using this set now that the list
+        // is sorted.
         Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
         solrDocumentsWithMatches.addAll(resultList);
         return solrDocumentsWithMatches;
@@ -322,7 +343,6 @@ class LuceneQuery implements KeywordSearchQuery {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
             // list is null if there wasn't a snippet
             if (snippetList != null) {
-                snippetList.sort(null);
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
@@ -332,13 +352,15 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * return snippet preview context
      *
-     * @param query the keyword query for text to highlight. Lucene special
-     * cahrs should already be escaped.
-     * @param solrObjectId The Solr object id associated with the file or artifact
-     * @param isRegex whether the query is a regular expression (different Solr
-     * fields are then used to generate the preview)
-     * @param group whether the query should look for all terms grouped together
-     * in the query order, or not
+     * @param query        the keyword query for text to highlight. Lucene
+     *                     special cahrs should already be escaped.
+     * @param solrObjectId The Solr object id associated with the file or
+     *                     artifact
+     * @param isRegex      whether the query is a regular expression (different
+     *                     Solr fields are then used to generate the preview)
+     * @param group        whether the query should look for all terms grouped
+     *                     together in the query order, or not
+     *
      * @return
      */
     public static String querySnippet(String query, long solrObjectId, boolean isRegex, boolean group) throws NoOpenCoreException {
@@ -348,15 +370,16 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * return snippet preview context
      *
-     * @param query the keyword query for text to highlight. Lucene special
-     * cahrs should already be escaped.
+     * @param query        the keyword query for text to highlight. Lucene
+     *                     special cahrs should already be escaped.
      * @param solrObjectId Solr object id associated with the hit
-     * @param chunkID chunk id associated with the content hit, or 0 if no
-     * chunks
-     * @param isRegex whether the query is a regular expression (different Solr
-     * fields are then used to generate the preview)
-     * @param group whether the query should look for all terms grouped together
-     * in the query order, or not
+     * @param chunkID      chunk id associated with the content hit, or 0 if no
+     *                     chunks
+     * @param isRegex      whether the query is a regular expression (different
+     *                     Solr fields are then used to generate the preview)
+     * @param group        whether the query should look for all terms grouped
+     *                     together in the query order, or not
+     *
      * @return
      */
     public static String querySnippet(String query, long solrObjectId, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
@@ -422,7 +445,6 @@ class LuceneQuery implements KeywordSearchQuery {
         //docs says makes sense for the original Highlighter only, but not really
         //analyze all content SLOW! consider lowering
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED);  //NON-NLS
-        q.setParam("hl.preserveMulti", true); //NON-NLS
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -435,8 +457,6 @@ class LuceneQuery implements KeywordSearchQuery {
             if (contentHighlights == null) {
                 return "";
             } else {
-                // Sort contentHighlights in order to get consistently same snippet.
-                contentHighlights.sort(null);
                 // extracted content is HTML-escaped, but snippet goes in a plain text field
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
@@ -464,20 +484,26 @@ class LuceneQuery implements KeywordSearchQuery {
         public int compare(SolrDocument left, SolrDocument right) {
             // ID is in the form of ObjectId_Chunk
 
-            String idName = Server.Schema.ID.toString();
+            final String idName = Server.Schema.ID.toString();
+
+            // get object id of left doc
             String leftID = left.getFieldValue(idName).toString();
             int index = leftID.indexOf(Server.ID_CHUNK_SEP);
             if (index != -1) {
                 leftID = leftID.substring(0, index);
             }
 
+            // get object id of right doc
             String rightID = right.getFieldValue(idName).toString();
             index = rightID.indexOf(Server.ID_CHUNK_SEP);
             if (index != -1) {
                 rightID = rightID.substring(0, index);
             }
 
-            return leftID.compareTo(rightID);
+            Integer leftInt = new Integer(leftID);
+            Integer rightInt = new Integer(rightID);
+            return leftInt.compareTo(rightInt);
         }
     }
+
 }

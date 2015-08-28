@@ -18,9 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
- interface AutopsyItemVisitor<T> {
+/**
+ * This visitor goes over the AutopsyVisitableItems, which are currently the
+ * nodes in the tree that are structural and not nodes that are from
+ * Sleuthkit-based data model objects.
+ */
+interface AutopsyItemVisitor<T> {
 
-    T visit(ExtractedContent ec);
+    T visit(DataSources i);
+
+    T visit(Views v);
 
     T visit(FileTypeExtensionFilters sf);
 
@@ -42,24 +49,22 @@ package org.sleuthkit.autopsy.datamodel;
 
     T visit(FileSize.FileSizeFilter fsf);
 
+    T visit(ExtractedContent ec);
+
     T visit(KeywordHits kh);
 
     T visit(HashsetHits hh);
 
     T visit(EmailExtracted ee);
 
-    T visit(Tags tagsNodeKey);
-    
     T visit(InterestingHits ih);
-        
-    T visit(DataSources i);
-
-    T visit(Views v);
 
     T visit(Results r);
 
+    T visit(Tags tagsNodeKey);
+
     T visit(Reports reportsItem);
-        
+
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -128,11 +133,12 @@ package org.sleuthkit.autopsy.datamodel;
         public T visit(HashsetHits hh) {
             return defaultVisit(hh);
         }
-        
+
         @Override
         public T visit(InterestingHits ih) {
             return defaultVisit(ih);
         }
+
         @Override
         public T visit(EmailExtracted ee) {
             return defaultVisit(ee);

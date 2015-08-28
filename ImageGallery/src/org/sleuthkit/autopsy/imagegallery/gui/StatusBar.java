@@ -94,7 +94,7 @@ public class StatusBar extends AnchorPane {
         
 
         Platform.runLater(() -> {
-            staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable listening to ingest in Tools | Options | Image /Video Gallery , after ingest is complete to update."));
+            staleLabel.setTooltip(new Tooltip("Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data."));
         });
         staleLabel.visibleProperty().bind(controller.stale());
     }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -36,7 +37,7 @@ import org.sleuthkit.datamodel.Content;
 final class DataSourceIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());    
+    private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
     private final DataSourceIngestJob job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private volatile PipelineModule currentModule;
@@ -46,9 +47,10 @@ final class DataSourceIngestPipeline {
      * modules. It starts the modules, runs data sources through them, and shuts
      * them down when data source level ingest is complete.
      *
-     * @param job The data source ingest job that owns this pipeline.
+     * @param job             The data source ingest job that owns this
+     *                        pipeline.
      * @param moduleTemplates Templates for the creating the ingest modules that
-     * make up this pipeline.
+     *                        make up this pipeline.
      */
     DataSourceIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
         this.job = job;
@@ -90,7 +92,8 @@ final class DataSourceIngestPipeline {
      * Runs a data source through the ingest modules in sequential order.
      *
      * @param task A data source level ingest task containing a data source to
-     * be processed.
+     *             be processed.
+     *
      * @return A list of processing errors, possible empty.
      */
     synchronized List<IngestModuleError> process(DataSourceIngestTask task) {
@@ -110,6 +113,12 @@ final class DataSourceIngestPipeline {
                 logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
             } catch (Throwable ex) { // Catch-all exception firewall
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                String msg = ex.getMessage();
+                // Jython run-time errors don't seem to have a message, but have details in toString.
+                if (msg == null) {
+                    msg = ex.toString();
+                }
+                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
             if (this.job.isCancelled()) {
                 break;
@@ -145,7 +154,8 @@ final class DataSourceIngestPipeline {
          * Constructs an object that decorates a data source level ingest module
          * with a display name and a processing start time.
          *
-         * @param module The data source level ingest module to be decorated.
+         * @param module      The data source level ingest module to be
+         *                    decorated.
          * @param displayName The display name.
          */
         PipelineModule(DataSourceIngestModule module, String displayName) {
@@ -177,7 +187,7 @@ final class DataSourceIngestPipeline {
          * source.
          *
          * @return The start time, will be null if the module has not started
-         * processing the data source yet.
+         *         processing the data source yet.
          */
         Date getProcessingStartTime() {
             return this.processingStartTime;

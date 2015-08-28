@@ -35,20 +35,20 @@ public interface DataResult {
     /**
      * Gets the unique TopComponent ID of this class.
      *
-     * @return preferredID  the unique ID
+     * @return preferredID the unique ID
      */
     public String getPreferredID();
 
     /**
      * Sets the title of this TopComponent
-     * 
-     * @param title  the given title (String)
+     *
+     * @param title the given title (String)
      */
     public void setTitle(String title);
-    
-    
+
     /**
      * Sets the descriptive context text at the top of the pane.
+     *
      * @param pathText Descriptive text giving context for the current results
      */
     public void setPath(String pathText);
@@ -59,10 +59,11 @@ public interface DataResult {
      * @return true if it is the main instance, otherwise false
      */
     public boolean isMain();
-    
+
     /**
      * Get child viewers within this DataResult
-     * @return 
+     *
+     * @return
      */
     public List<DataResultViewer> getViewers();
 }

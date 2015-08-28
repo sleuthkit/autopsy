@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
-import org.sleuthkit.autopsy.modules.sevenzip.ArchiveFileExtractorModuleFactory;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
@@ -57,7 +57,7 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
             add(HashLookupModuleFactory.class.getCanonicalName());
             add(FileTypeIdModuleFactory.class.getCanonicalName());
-            add(ArchiveFileExtractorModuleFactory.class.getCanonicalName());
+            add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
             add(ExifParserModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
@@ -77,7 +77,7 @@ final class IngestModuleFactoryLoader {
      * removed between invocations.
      *
      * @return A list of objects that implement the IngestModuleFactory
-     * interface.
+     *         interface.
      */
     static List<IngestModuleFactory> getIngestModuleFactories() {
         // A hash set of display names and a hash map of class names to 
@@ -116,10 +116,10 @@ final class IngestModuleFactoryLoader {
 
         // Add any remaining non-core factories discovered. Order with an 
         // alphabetical sort by module display name.
-        TreeMap<String, IngestModuleFactory> javaFactoriesSortedByName = new TreeMap<>(); 
+        TreeMap<String, IngestModuleFactory> javaFactoriesSortedByName = new TreeMap<>();
         for (IngestModuleFactory factory : javaFactoriesByClass.values()) {
             javaFactoriesSortedByName.put(factory.getModuleDisplayName(), factory);
-        }                
+        }
         factories.addAll(javaFactoriesSortedByName.values());
 
         // Add any ingest module factories implemented using Jython. Order is 

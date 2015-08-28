@@ -32,19 +32,22 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Locates a variety of different call log databases, parses them, and populates the blackboard. 
+ * Locates a variety of different call log databases, parses them, and populates
+ * the blackboard.
  */
 public class CallLogAnalyzer implements AndroidAnalyzer {
-    
+
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
     private static final String[] databaseNames = {"logs.db", "contacts.db", "contacts2.db"};
-    /** the names of tables that potentially hold call logs in the dbs */
+    /**
+     * the names of tables that potentially hold call logs in the dbs
+     */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
     @Override
     public void findInDB(Connection connection, AbstractFile abstractFile) {
-        
+
         try {
             Statement statement = connection.createStatement();
             for (String tableName : tableNames) {
@@ -58,13 +61,12 @@ public class CallLogAnalyzer implements AndroidAnalyzer {
                         final String number = resultSet.getString("number"); //NON-NLS
                         final long duration = resultSet.getLong("duration"); //NON-NLS  //duration of call is in seconds
                         final String name = resultSet.getString("name"); //NON-NLS  // name of person dialed or called. null if unregistered
-                        
+
                         try {
                             BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                            if(direction == CallLogAnalyzer.CallDirection.OUTGOING) {
+                            if (direction == CallLogAnalyzer.CallDirection.OUTGOING) {
                                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
-                            }
-                            else { /// Covers INCOMING and MISSED
+                            } else { /// Covers INCOMING and MISSED
                                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
                             }
                             bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
@@ -98,7 +100,7 @@ public class CallLogAnalyzer implements AndroidAnalyzer {
     public void findInFile(File file, AbstractFile abstractFile) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     private static enum CallDirection {
 
         INCOMING(1, "Incoming"), OUTGOING(2, "Outgoing"), MISSED(3, "Missed"); //NON-NLS

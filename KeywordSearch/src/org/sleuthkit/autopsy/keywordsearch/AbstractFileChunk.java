@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.nio.charset.Charset;
@@ -25,9 +24,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
- * Represents each string chunk to be indexed, a derivative of TextExtractor file
+ * Represents each string chunk to be indexed, a derivative of TextExtractor
+ * file
  */
 class AbstractFileChunk {
+
     private int chunkID;
     private TextExtractor parent;
 
@@ -62,9 +63,9 @@ class AbstractFileChunk {
         } catch (Exception ingEx) {
             success = false;
             throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
-                                                            parent.getSourceFile().getId(), chunkID), ingEx);
+                    parent.getSourceFile().getId(), chunkID), ingEx);
         }
         return success;
     }
-    
+
 }

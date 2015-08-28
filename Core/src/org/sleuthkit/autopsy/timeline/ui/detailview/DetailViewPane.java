@@ -37,7 +37,17 @@ import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Slider;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.KP_DOWN;
@@ -94,12 +104,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<NavTreeNode>> treeSelectionModel;
-
-    @FXML
-    protected ResourceBundle resources;
-
-    @FXML
-    protected URL location;
 
     //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();
@@ -207,8 +211,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (AggregateEventNode n : chart.getNodes((
-                        AggregateEventNode t) -> t.getEvent().getDescription().equals(tn.getEvent().getDescription()))) {
+                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
+                        -> t.getEvent().getDescription().equals(tn.getEvent().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -226,8 +230,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (AggregateEventNode n : chart.getNodes((
-                        AggregateEventNode t)
+                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
                         -> t.getEvent().getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -260,13 +263,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         return dateAxis.getTickMarkLabel(value);
     }
 
-    /** NOTE: Because this method modifies data directly used by the chart,
-     * this method should only be called from JavaFX thread!
+    /**
+     * NOTE: Because this method modifies data directly used by the chart, this
+     * method should only be called from JavaFX thread!
      *
      * @param et the EventType to get the series for
      *
      * @return a Series object to contain all the events with the given
-     *         EventType */
+     *         EventType
+     */
     private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
         XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
         if (series == null) {

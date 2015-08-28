@@ -82,8 +82,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * bars, and forwards them to the assigned {@link TimeLineController} *
  *
  * Concurrency Policy: Access to the private members stackedBarChart, countAxis,
- * dateAxis, EventTypeMap, and dataSets affects the stackedBarChart so
- * they all must only be manipulated on the JavaFx thread (through {@link Platform#runLater(java.lang.Runnable)}
+ * dateAxis, EventTypeMap, and dataSets affects the stackedBarChart so they all
+ * must only be manipulated on the JavaFx thread (through {@link Platform#runLater(java.lang.Runnable)}
  *
  * {@link CountsChartPane#filteredEvents} should encapsulate all need
  * synchronization internally.
@@ -211,11 +211,11 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                         //defer tooltip creation till needed, this had a surprisingly large impact on speed of loading the chart
                                         final Tooltip tooltip = new Tooltip(
                                                 NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
-                                                                    count,
-                                                                    et.getDisplayName(),
-                                                                    dateString,
-                                                                    interval.getEnd().toString(
-                                                                            rangeInfo.getTickFormatter())));
+                                                        count,
+                                                        et.getDisplayName(),
+                                                        dateString,
+                                                        interval.getEnd().toString(
+                                                                rangeInfo.getTickFormatter())));
                                         tooltip.setGraphic(new ImageView(et.getFXImage()));
                                         Tooltip.install(node, tooltip);
                                         node.setEffect(new DropShadow(10, et.getColor()));
@@ -400,7 +400,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                             barContextMenu.setAutoHide(true);
                             barContextMenu.getItems().addAll(
                                     new MenuItem(NbBundle.getMessage(this.getClass(),
-                                                                     "Timeline.ui.countsview.menuItem.selectTimeRange")) {
+                                                    "Timeline.ui.countsview.menuItem.selectTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, RootEventType.getInstance());
@@ -417,7 +417,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                         }
                                     },
                                     new MenuItem(NbBundle.getMessage(this.getClass(),
-                                                                     "Timeline.ui.countsview.menuItem.selectEventType")) {
+                                                    "Timeline.ui.countsview.menuItem.selectEventType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(filteredEvents.getSpanningInterval(), type);
@@ -431,7 +431,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                         }
                                     },
                                     new MenuItem(NbBundle.getMessage(this.getClass(),
-                                                                     "Timeline.ui.countsview.menuItem.selectTimeandType")) {
+                                                    "Timeline.ui.countsview.menuItem.selectTimeandType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 controller.selectTimeAndType(interval, type);
@@ -441,7 +441,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                     },
                                     new SeparatorMenuItem(),
                                     new MenuItem(NbBundle.getMessage(this.getClass(),
-                                                                     "Timeline.ui.countsview.menuItem.zoomIntoTimeRange")) {
+                                                    "Timeline.ui.countsview.menuItem.zoomIntoTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
                                                 if (interval.toDuration().isShorterThan(Seconds.ONE.toStandardDuration()) == false) {
@@ -469,7 +469,8 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                         controller.setViewMode(VisualizationMode.DETAIL);
                     }
 
-                    /* //I would like to use the JAvafx dialog, but it doesn't
+                    /*
+                     * //I would like to use the JAvafx dialog, but it doesn't
                      * block the ui (because it is embeded in a TopComponent)
                      * -jm
                      *
@@ -477,18 +478,15 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                      * Dialogs.CommandLink("Yes", "switch to Details view");
                      * final Dialogs.CommandLink no = new
                      * Dialogs.CommandLink("No", "return to Counts view with a
-                     * resolution of Seconds");
-                     * Action choice = Dialogs.create()
-                     * .title("Switch to Details View?")
-                     * .masthead("There is no temporal resolution smaller than
-                     * Seconds.")
+                     * resolution of Seconds"); Action choice = Dialogs.create()
+                     * .title("Switch to Details View?") .masthead("There is no
+                     * temporal resolution smaller than Seconds.")
                      * .message("Would you like to switch to the Details view
-                     * instead?")
-                     * .showCommandLinks(Arrays.asList(yes, no));
+                     * instead?") .showCommandLinks(Arrays.asList(yes, no));
                      *
                      * if (choice == yes) {
-                     * controller.setViewMode(VisualizationMode.DETAIL);
-                     * } */
+                     * controller.setViewMode(VisualizationMode.DETAIL); }
+                     */
                 }
             }
         }

@@ -27,15 +27,16 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbPreferences;
 
- final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+
     private int index;
-    
+
     private ReportWizardPanel1 firstPanel;
     private ReportWizardPanel2 tableConfigPanel;
     private ReportWizardFileOptionsPanel fileConfigPanel;
-    
+
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
-    
+
     // Panels that should be shown if both Table and File report modules should
     // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
@@ -48,13 +49,13 @@ import org.openide.util.NbPreferences;
     // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
     private String[] fileConfigIndex;
-    
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     ReportWizardIterator() {
         firstPanel = new ReportWizardPanel1();
         tableConfigPanel = new ReportWizardPanel2();
         fileConfigPanel = new ReportWizardFileOptionsPanel();
-        
+
         allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
@@ -77,17 +78,19 @@ import org.openide.util.NbPreferences;
                     jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
                 }
             }
-            
+
             allConfigIndex = steps;
-            tableConfigIndex = new String[] {steps[0], steps[1]};
-            fileConfigIndex = new String[] {steps[0], steps[2]};
+            tableConfigIndex = new String[]{steps[0], steps[1]};
+            fileConfigIndex = new String[]{steps[0], steps[2]};
         }
         return panels;
     }
-    
+
     /**
-     * Change which panels will be shown based on the selection of reporting modules.
-     * @param moreConfig true if a GeneralReportModule was selected
+     * Change which panels will be shown based on the selection of reporting
+     * modules.
+     *
+     * @param moreConfig  true if a GeneralReportModule was selected
      * @param tableConfig true if a TReportModule was selected
      */
     private void enableConfigPanels(boolean generalModule, boolean tableModule) {
@@ -129,8 +132,8 @@ import org.openide.util.NbPreferences;
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        
-        if(index == 0) {
+
+        if (index == 0) {
             // Update path through configuration panels
             boolean generalModule, tableModule;
             // These preferences are set in ReportWizardPanel1.storeSettings()
@@ -138,7 +141,7 @@ import org.openide.util.NbPreferences;
             tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
             enableConfigPanels(generalModule, tableModule);
         }
-        
+
         index++;
     }
 

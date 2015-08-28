@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -38,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * @author sidhesh
  */
 public class WWFMessageAnalyzer implements AndroidAnalyzer {
-    
+
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(GoogleMapLocationAnalyzer.class.getName());
     private static final String[] databaseNames = {"WordsFramework"};
@@ -75,8 +74,8 @@ public class WWFMessageAnalyzer implements AndroidAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), moduleName, game_id));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, message));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.WWFMessageAnalyzer.class,
-                                                                             "WWFMessageAnalyzer.bbAttribute.wordsWithFriendsMsg")));
+                        NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.WWFMessageAnalyzer.class,
+                                "WWFMessageAnalyzer.bbAttribute.wordsWithFriendsMsg")));
             }
         } catch (SQLException | TskCoreException | MissingResourceException e) {
             logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", e); //NON-NLS
@@ -107,5 +106,5 @@ public class WWFMessageAnalyzer implements AndroidAnalyzer {
     public void findInFile(File file, AbstractFile abstractFile) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }

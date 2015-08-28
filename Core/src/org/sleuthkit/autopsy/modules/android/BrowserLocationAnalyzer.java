@@ -15,8 +15,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
-
+ */
 package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
@@ -36,9 +35,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Analyzes database created by browser that stores GEO location info.
  */
-
 public class BrowserLocationAnalyzer implements AndroidAnalyzer {
-    
+
     private static final String moduleName = org.sleuthkit.autopsy.modules.android.AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(org.sleuthkit.autopsy.modules.android.BrowserLocationAnalyzer.class.getName());
     private static final String[] dataBaseNames = {"CachedGeoposition%.db"};
@@ -67,8 +65,8 @@ public class BrowserLocationAnalyzer implements AndroidAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName,
-                                                         NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.BrowserLocationAnalyzer.class,
-                                                                             "BrowserLocationAnalyzer.bbAttribute.browserLocationHistory")));
+                        NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.BrowserLocationAnalyzer.class,
+                                "BrowserLocationAnalyzer.bbAttribute.browserLocationHistory")));
                 //  bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy)); 
             }
         } catch (SQLException | NumberFormatException | TskCoreException | MissingResourceException e) {

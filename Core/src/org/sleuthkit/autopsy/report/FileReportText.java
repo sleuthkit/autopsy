@@ -30,21 +30,24 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Tab-delimited text report of the files in the case.
- * 
+ *
  * @author jwallace
  */
- class FileReportText implements FileReportModule {
+class FileReportText implements FileReportModule {
+
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;
     private Writer out;
     private static final String FILE_NAME = "file-report.txt"; //NON-NLS
-    
+
     private static FileReportText instance;
-    
+
     // Get the default implementation of this report
     public static synchronized FileReportText getDefault() {
         if (instance == null) {
@@ -52,10 +55,10 @@ import org.sleuthkit.datamodel.AbstractFile;
         }
         return instance;
     }
-    
+
     @Override
-    public void startReport(String path) {
-        this.reportPath = path + FILE_NAME;
+    public void startReport(String baseReportDir) {
+        this.reportPath = baseReportDir + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
@@ -68,25 +71,30 @@ import org.sleuthkit.datamodel.AbstractFile;
         if (out != null) {
             try {
                 out.close();
+                Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                        "FileReportText.getName.text"), "");
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not close output writer when ending report.", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
+                logger.log(Level.SEVERE, errorMessage, ex);
             }
         }
     }
-    
+
     private String getTabDelimitedList(List<String> list) {
         StringBuilder output = new StringBuilder();
         Iterator<String> it = list.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             output.append(it.next()).append((it.hasNext() ? "\t" : System.lineSeparator()));
         }
         return output.toString();
     }
-    
+
     @Override
     public void startTable(List<FileReportDataTypes> headers) {
         List<String> titles = new ArrayList<>();
-        for(FileReportDataTypes col : headers) {
+        for (FileReportDataTypes col : headers) {
             titles.add(col.getName());
         }
         try {
@@ -99,7 +107,7 @@ import org.sleuthkit.datamodel.AbstractFile;
     @Override
     public void addRow(AbstractFile toAdd, List<FileReportDataTypes> columns) {
         List<String> cells = new ArrayList<>();
-        for(FileReportDataTypes type : columns) {
+        for (FileReportDataTypes type : columns) {
             cells.add(type.getValue(toAdd));
         }
         try {

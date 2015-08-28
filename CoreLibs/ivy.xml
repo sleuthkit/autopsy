@@ -1,4 +1,5 @@
 
+
 <ivy-module version="2.0">
     <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
     <configurations >
@@ -36,13 +37,31 @@
         <dependency conf="autopsy_core->*" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
         <!-- timeline and image analyzer -->
-        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.20.8" />
-        <dependency org="org.controlsfx" name="openjfx-dialogs" rev="1.0.2"/>
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="8.40.9" />
 
-        <!-- timeline and -->
+        <!-- timeline  -->
         <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r1" />
-        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="8.0-r1" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r3" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r3" />
+        <dependency conf="autopsy_core->*" org="org.jfxtras" name="jfxtras-common" rev="8.0-r3" />
+        
+        <!-- image support for autopsy and image gallery -->
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-jpeg" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-bmp" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-tiff" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pnm" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-psd" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-iff" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pcx" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pict" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-sgi" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-tga" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-icns" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-lang" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-io" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-image" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.1.1" />
+        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.1.1" />
     </dependencies>
 </ivy-module>

@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -57,8 +58,8 @@ class DirectoryTreeFilterNode extends FilterNode {
      */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
-              new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
-                              arg.getLookup()));
+                new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
+                        arg.getLookup()));
     }
 
     @Override
@@ -106,22 +107,35 @@ class DirectoryTreeFilterNode extends FilterNode {
                 actions.add(ExtractAction.getInstance());
             }
 
-            // file search action
             final Image img = this.getLookup().lookup(Image.class);
-            if (img != null) {
-                actions.add(new FileSearchAction(
-                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
+
+            VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
+            // determine if the virtualDireory is at root-level (Logical File Set).
+            boolean isRootVD = false;
+            if (virtualDirectory != null) {
+                try {
+                    if (virtualDirectory.getParent() == null) {
+                        isRootVD = true;
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
+                }
             }
 
-            //ingest action
-            actions.add(new AbstractAction(
-                    NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                            ingestDialog.display();
-                        }
-                    });
+            // 'run ingest' action and 'file search' action are added only if the
+            // selected node is img node or a root level virtual directory.
+            if (img != null || isRootVD) {
+                actions.add(new FileSearchAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
+                actions.add(new AbstractAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
+                                ingestDialog.display();
+                            }
+                        });
+            }
         }
 
         //check if delete actions should be added

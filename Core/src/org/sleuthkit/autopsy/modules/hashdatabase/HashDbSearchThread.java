@@ -33,17 +33,19 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.datamodel.AbstractFile;
 
-class HashDbSearchThread extends SwingWorker<Object,Void> {
+class HashDbSearchThread extends SwingWorker<Object, Void> {
+
     private Logger logger = Logger.getLogger(HashDbSearchThread.class.getName());
     private ProgressHandle progress;
     private Map<String, List<AbstractFile>> map;
     private ArrayList<String> hashes = new ArrayList<>();
     private AbstractFile file;
-    
+
     HashDbSearchThread(AbstractFile file) {
         this.file = file;
         this.hashes.add(this.file.getMd5Hash());
     }
+
     HashDbSearchThread(ArrayList<String> hashes) {
         this.hashes = hashes;
     }
@@ -51,30 +53,31 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
     @Override
     protected Object doInBackground() throws Exception {
         logger.log(Level.INFO, "Starting background processing for file search by MD5 hash."); //NON-NLS
-            
+
         // Setup progress bar
         final String displayName = NbBundle.getMessage(this.getClass(), "HashDbSearchThread.name.searching");
         progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                if (progress != null)
+                if (progress != null) {
                     progress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "HashDbSearchThread.progress.cancellingSearch",
-                                                displayName));
+                                    displayName));
+                }
                 return HashDbSearchThread.this.cancel(true);
             }
         });
         // Start the progress bar as indeterminate
         progress.start();
         progress.switchToIndeterminate();
-        
+
         // Do the querying
         map = HashDbSearcher.findFilesBymd5(hashes, progress, this);
         logger.log(Level.INFO, "Done background processing"); //NON-NLS
-        
+
         return null;
     }
-        
+
     @Override
     protected void done() {
         try {
@@ -91,18 +94,18 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
                 logger.log(Level.INFO, "File search by MD5 hash completed without cancellation."); //NON-NLS
                 // If its a right click action, we are given an FsContent which
                 // is the file right clicked, so we can remove that from the search
-                if(file!=null) {
+                if (file != null) {
                     boolean quit = true;
-                    for(List<AbstractFile> files: map.values()) {
+                    for (List<AbstractFile> files : map.values()) {
                         files.remove(file);
-                        if(!files.isEmpty()) {
+                        if (!files.isEmpty()) {
                             quit = false;
                         }
                     }
-                    if(quit) {
+                    if (quit) {
                         JOptionPane.showMessageDialog(null,
-                                                      NbBundle.getMessage(this.getClass(),
-                                                                        "HashDbSearchThread.noMoreFilesWithMD5Msg"));
+                                NbBundle.getMessage(this.getClass(),
+                                        "HashDbSearchThread.noMoreFilesWithMD5Msg"));
                         return;
                     }
                 }
@@ -113,5 +116,5 @@ class HashDbSearchThread extends SwingWorker<Object,Void> {
             }
         }
     }
-    
+
 }

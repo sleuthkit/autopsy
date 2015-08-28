@@ -30,10 +30,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
- class ReportExcel implements TableReportModule {
+class ReportExcel implements TableReportModule {
+
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
-    
+
     private Workbook wb;
     private Sheet sheet;
     private CellStyle titleStyle;
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     private int rowIndex = 0;
     private int sheetColCount = 0;
     private String reportPath;
-    
+
     // Get the default instance of this report
     public static synchronized ReportExcel getDefault() {
         if (instance == null) {
@@ -50,24 +51,25 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         return instance;
     }
-    
+
     // Hidden constructor
     private ReportExcel() {
     }
 
     /**
-     * Start the Excel report by creating the Workbook, initializing styles,
-     * and writing the summary.
-     * @param path path to save the report
+     * Start the Excel report by creating the Workbook, initializing styles, and
+     * writing the summary.
+     *
+     * @param baseReportDir path to save the report
      */
     @Override
-    public void startReport(String path) {        
+    public void startReport(String baseReportDir) {
         // Set the path and save it for when the report is written to disk.
-        this.reportPath = path + getRelativeFilePath();
-                
+        this.reportPath = baseReportDir + getRelativeFilePath();
+
         // Make a workbook.
         wb = new XSSFWorkbook();
-        
+
         // Create some cell styles.
         // TODO: The commented out cell style settings below do not work as desired when
         // the output file is loaded by MS Excel or OfficeLibre. The font height and weight
@@ -80,7 +82,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         titleStyle.setFont(titleFont);
         titleStyle.setAlignment(CellStyle.ALIGN_LEFT);
         titleStyle.setWrapText(true);
-        
+
         setStyle = wb.createCellStyle();
         Font setFont = wb.createFont();
         setFont.setFontHeightInPoints((short) 14);
@@ -88,7 +90,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         setStyle.setFont(setFont);
         setStyle.setAlignment(CellStyle.ALIGN_LEFT);
         setStyle.setWrapText(true);
-        
+
         elementStyle = wb.createCellStyle();
 //        elementStyle.setF illBackgroundColor(HSSFColor.LIGHT_YELLOW.index);
         Font elementFont = wb.createFont();
@@ -96,7 +98,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         elementStyle.setFont(elementFont);
         elementStyle.setAlignment(CellStyle.ALIGN_LEFT);
         elementStyle.setWrapText(true);
-                
+
         writeSummaryWorksheet();
     }
 
@@ -110,7 +112,7 @@ import org.sleuthkit.datamodel.TskCoreException;
             out = new FileOutputStream(reportPath);
             wb.write(out);
             Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
-                                                                            "ReportExcel.endReport.srcModuleName.text"), "");
+                    "ReportExcel.endReport.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
         } catch (TskCoreException ex) {
@@ -125,12 +127,12 @@ import org.sleuthkit.datamodel.TskCoreException;
             }
         }
     }
-    
+
     /**
-     * Start a new worksheet for the given data type.
-     * Note: This method is a temporary workaround to avoid modifying the TableReportModule interface.     
-     * 
-     * @param name Name of the data type
+     * Start a new worksheet for the given data type. Note: This method is a
+     * temporary workaround to avoid modifying the TableReportModule interface.
+     *
+     * @param name    Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
     @Override
@@ -140,16 +142,16 @@ import org.sleuthkit.datamodel.TskCoreException;
         sheet = wb.createSheet(name);
         sheet.setAutobreaks(true);
         rowIndex = 0;
-                
+
         // There will be at least two columns, one each for the artifacts count and its label.
         sheetColCount = 2;
-    }    
-    
+    }
+
     /**
      * End the current data type and sheet.
      */
     @Override
-    public void endDataType() {  
+    public void endDataType() {
         // Now that the sheet is complete, size the columns to the content.
         for (int i = 0; i < sheetColCount; ++i) {
             sheet.autoSizeColumn(i);
@@ -158,6 +160,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     /**
      * Start a new set for the current data type.
+     *
      * @param setName name of the set
      */
     @Override
@@ -186,6 +189,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     /**
      * Add an element to the set
+     *
      * @param elementName element name
      */
     @Override
@@ -199,6 +203,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     /**
      * Label the top of this sheet with the table column names.
+     *
      * @param titles column names
      */
     @Override
@@ -206,12 +211,12 @@ import org.sleuthkit.datamodel.TskCoreException;
         int tableColCount = 0;
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(titleStyle);
-        for (int i=0; i<titles.size(); i++) {
+        for (int i = 0; i < titles.size(); i++) {
             row.createCell(i).setCellValue(titles.get(i));
             ++tableColCount;
         }
         ++rowIndex;
-        
+
         // Keep track of the number of columns with data in them for later column auto-sizing.
         if (tableColCount > sheetColCount) {
             sheetColCount = tableColCount;
@@ -227,6 +232,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     /**
      * Add a row of information to the report.
+     *
      * @param row cells to add
      */
     @Override
@@ -240,7 +246,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
     /**
      * Return the given long date as a String.
+     *
      * @param date as a long
+     *
      * @return String date
      */
     @Override
@@ -263,21 +271,23 @@ import org.sleuthkit.datamodel.TskCoreException;
     public String getRelativeFilePath() {
         return "Excel.xlsx"; //NON-NLS
     }
-    
+
     /**
-     * Escape special chars for Excel that would cause errors/hangs in generating report
-     * The following are not valid for sheet names: ? / \ * :
+     * Escape special chars for Excel that would cause errors/hangs in
+     * generating report The following are not valid for sheet names: ? / \ * :
+     *
      * @param text
-     * @return 
+     *
+     * @return
      */
     private static String escapeForExcel(String text) {
-         return text.replaceAll("[\\/\\:\\?\\*\\\\]", "_");
+        return text.replaceAll("[\\/\\:\\?\\*\\\\]", "_");
     }
-    
+
     private void writeSummaryWorksheet() {
         sheet = wb.createSheet(NbBundle.getMessage(this.getClass(), "ReportExcel.sheetName.text"));
         rowIndex = 0;
-        
+
         Row row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.summary"));
@@ -285,9 +295,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
         sheet.createRow(rowIndex);
         ++rowIndex;
-                                
-        Case currentCase = Case.getCurrentCase();        
-               
+
+        Case currentCase = Case.getCurrentCase();
+
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseName"));
@@ -317,8 +327,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         }
         row.createCell(1).setCellValue(numImages);
         ++rowIndex;
-        
+
         sheet.autoSizeColumn(0);
-        sheet.autoSizeColumn(1);        
+        sheet.autoSizeColumn(1);
     }
 }

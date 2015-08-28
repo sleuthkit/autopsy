@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.io.Files;
 import java.awt.Dimension;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -26,11 +28,8 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.embed.swing.JFXPanel;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -55,17 +54,15 @@ import static javafx.scene.media.MediaPlayer.Status.STOPPED;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -79,53 +76,34 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class FXVideoPanel extends MediaViewVideoPanel {
 
-    private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".mpg", ".mpeg"}; //NON-NLS
+    // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
+    // for Javafx supported formats 
+    private static final String[] EXTENSIONS = new String[]{".m4v", ".fxm", ".flv", ".m3u8", ".mp4", ".aif", ".aiff", ".mp3", "m4a", ".wav"}; //NON-NLS
     private static final List<String> MIMETYPES = Arrays.asList("audio/x-aiff", "video/x-javafx", "video/x-flv", "application/vnd.apple.mpegurl", " audio/mpegurl", "audio/mpeg", "video/mp4", "audio/x-m4a", "video/x-m4v", "audio/x-wav"); //NON-NLS
-    private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(FXVideoPanel.class.getName());
 
     private boolean fxInited = false;
 
-    // FX Components
     private MediaPane mediaPane;
 
-    // Current media content representations
     private AbstractFile currentFile;
 
-    // FX UI Components
-    private JFXPanel videoComponent;
-
-    /**
-     * Creates new form MediaViewVideoPanel
-     */
     public FXVideoPanel() {
         fxInited = Installer.isJavaFxInited();
         initComponents();
         if (fxInited) {
-            setupFx();
+            Platform.runLater(() -> {
+
+                mediaPane = new MediaPane();
+                Scene fxScene = new Scene(mediaPane);
+                jFXPanel.setScene(fxScene);
+            });
         }
     }
 
+    @Deprecated
     public JPanel getVideoPanel() {
         return this;
-    }
-
-    private void setupFx() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                videoComponent = new JFXPanel();
-                mediaPane = new MediaPane();
-                Scene fxScene = new Scene(mediaPane);
-                videoComponent.setScene(fxScene);
-
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        add(videoComponent);
-                    }
-                });
-            }
-        });
     }
 
     @Override
@@ -146,48 +124,31 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             removeAll();
             return;
         }
+        mediaPane.setFit(dims);
 
         String path = "";
         try {
             path = file.getUniquePath();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
+            logger.log(Level.SEVERE, "Cannot get unique path of video file", ex); //NON-NLS
         }
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
 
-        ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
-        em.execute();
+        final File tempFile = VideoUtils.getTempVideoFile(currentFile);
 
-        mediaPane.setFit(dims);
+        new Thread(mediaPane.new ExtractMedia(currentFile, tempFile)).start();
+
     }
 
     @Override
     void reset() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                if (mediaPane != null) {
-                    mediaPane.reset();
-                }
+        Platform.runLater(() -> {
+            if (mediaPane != null) {
+                mediaPane.reset();
             }
         });
         currentFile = null;
-    }
-
-    private java.io.File getJFile(AbstractFile file) {
-        // Get the temp folder path of the case
-        String tempPath = Case.getCurrentCase().getTempDirectory();
-        String name = file.getName();
-        int extStart = name.lastIndexOf(".");
-        String ext = "";
-        if (extStart != -1) {
-            ext = name.substring(extStart, name.length()).toLowerCase();
-        }
-        tempPath = tempPath + java.io.File.separator + file.getId() + ext;
-
-        java.io.File tempFile = new java.io.File(tempPath);
-        return tempFile;
     }
 
     /**
@@ -199,10 +160,34 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jFXPanel = new javafx.embed.swing.JFXPanel();
+
         setBackground(new java.awt.Color(0, 0, 0));
-        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
+
+        javax.swing.GroupLayout jFXPanelLayout = new javax.swing.GroupLayout(jFXPanel);
+        jFXPanel.setLayout(jFXPanelLayout);
+        jFXPanelLayout.setHorizontalGroup(
+            jFXPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        jFXPanelLayout.setVerticalGroup(
+            jFXPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jFXPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jFXPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javafx.embed.swing.JFXPanel jFXPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -210,134 +195,38 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         return fxInited;
     }
 
-    /**
-     * Thread that extracts Media from a Sleuthkit file representation to a
-     * Java file representation that the Media Player can take as input.
-     */
-    private class ExtractMedia extends SwingWorker<Object, Void> {
-
-        private ProgressHandle progress;
-
-        boolean success = false;
-
-        private AbstractFile sFile;
-
-        private java.io.File jFile;
-
-        private long extractedBytes;
-
-        ExtractMedia(org.sleuthkit.datamodel.AbstractFile sFile, java.io.File jFile) {
-            this.sFile = sFile;
-            this.jFile = jFile;
-        }
-
-        public long getExtractedBytes() {
-            return extractedBytes;
-        }
-
-        /**
-         * Get the URI of the media file.
-         *
-         * @return the URI of the media file.
-         */
-        public String getMediaUri() {
-            return Paths.get(jFile.getAbsolutePath()).toUri().toString();
-        }
-
-        @Override
-        protected Object doInBackground() throws Exception {
-            success = false;
-            progress = ProgressHandleFactory.createHandle(
-                    NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingFile", sFile.getName()),
-                    new Cancellable() {
-                        @Override
-                        public boolean cancel() {
-                            return ExtractMedia.this.cancel(true);
-                        }
-                    });
-            mediaPane.setProgressLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progressLabel.buffering"));
-            progress.start();
-            progress.switchToDeterminate(100);
-            try {
-                extractedBytes = ContentUtils.writeToFile(sFile, jFile, progress, this, true);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-            }
-            logger.log(Level.INFO, "Done buffering: " + jFile.getName()); //NON-NLS
-            success = true;
-            return null;
-        }
-
-        /* clean up or start the worker threads */
-        @Override
-        protected void done() {
-            mediaPane.setProgressLabelText("");
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()
-            } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
-                mediaPane.setProgressLabelText(
-                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingCancelled"));
-            } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
-                mediaPane.setProgressLabelText(
-                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingInterrupted"));
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
-                mediaPane.setProgressLabelText(
-                        NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.errorWritingVideoToDisk"));
-            } finally {
-                progress.finish();
-                if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "ExtractMedia in done: " + jFile.getName()); //NON-NLS
-                    try {
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                mediaPane.prepareMedia(getMediaUri());
-                            }
-                        });
-                    } catch (MediaException e) {
-                        logger.log(Level.WARNING, "something went wrong with javafx", e); //NON-NLS
-                        reset();
-                        mediaPane.setInfoLabelText(e.getMessage());
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * The JavaFX Component that contains the Media and it's Controls.
-     *
-     */
     private class MediaPane extends BorderPane {
 
         private MediaPlayer mediaPlayer;
 
-        private MediaView mediaView;
+        private final MediaView mediaView;
 
-        /** The Duration of the media. * */
+        /**
+         * The Duration of the media. *
+         */
         private Duration duration;
 
-        /** The container for the media controls. * */
-        private HBox mediaTools;
+        /**
+         * The container for the media controls. *
+         */
+        private final HBox mediaTools;
 
-        /** The container for the media video output. * */
-        private HBox mediaViewPane;
+        /**
+         * The container for the media video output. *
+         */
+        private final HBox mediaViewPane;
 
-        private VBox controlPanel;
+        private final VBox controlPanel;
 
-        private Slider progressSlider;
+        private final Slider progressSlider;
 
-        private Button pauseButton;
+        private final Button pauseButton;
 
-        private Button stopButton;
+        private final Button stopButton;
 
-        private Label progressLabel;
+        private final Label progressLabel;
 
-        private Label infoLabel;
+        private final Label infoLabel;
 
         private int totalHours;
 
@@ -345,22 +234,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         private int totalSeconds;
 
-        private String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
-
-        /** The EventHandler for MediaPlayer.onReady(). * */
-        private final ReadyListener READY_LISTENER = new ReadyListener();
-
-        /** The EventHandler for MediaPlayer.onEndOfMedia(). * */
-        private final EndOfMediaListener END_LISTENER = new EndOfMediaListener();
-
-        /** The EventHandler for the CurrentTime property of the MediaPlayer. * */
-        private final TimeListener TIME_LISTENER = new TimeListener();
-
-        /** The EventHandler for MediaPlayer.onPause and MediaPlayer.onStop. * */
-        private final NotPlayListener NOT_PLAY_LISTENER = new NotPlayListener();
-
-        /** The EventHandler for MediaPlayer.onPlay. * */
-        private final PlayListener PLAY_LISTENER = new PlayListener();
+        private final String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
 
         private static final String PLAY_TEXT = "►";
 
@@ -408,22 +282,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
 
         /**
-         * Setup the MediaPane for media playback. Run on the JavaFx Thread.
-         *
-         *
-         * @param mediaUri the URI of the media
-         */
-        public void prepareMedia(String mediaUri) {
-            try {
-                mediaPlayer = createMediaPlayer(mediaUri);
-                mediaView.setMediaPlayer(mediaPlayer);
-            } catch (MediaException ex) {
-                this.setProgressLabelText("");
-                this.setInfoLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.media.unsupportedFormat"));
-            }
-        }
-
-        /**
          * Reset this MediaPane.
          *
          */
@@ -445,12 +303,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param text
          */
         public void setInfoLabelText(final String text) {
-            logger.log(Level.INFO, "Setting Info Label Text: " + text); //NON-NLS
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    infoLabel.setText(text);
-                }
+            logger.log(Level.INFO, "Setting Info Label Text: {0}", text); //NON-NLS
+            Platform.runLater(() -> {
+                infoLabel.setText(text);
             });
         }
 
@@ -460,14 +315,11 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * @param dims the current dimensions of the DataContentViewer
          */
         public void setFit(final Dimension dims) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    setPrefSize(dims.getWidth(), dims.getHeight());
-                    // Set the Video output to fit the size allocated for it. give an 
-                    // extra few px to ensure the info label will be shown
-                    mediaView.setFitHeight(dims.getHeight() - controlPanel.getHeight());
-                }
+            Platform.runLater(() -> {
+                setPrefSize(dims.getWidth(), dims.getHeight());
+                // Set the Video output to fit the size allocated for it. give an
+                // extra few px to ensure the info label will be shown
+                mediaView.setFitHeight(dims.getHeight() - controlPanel.getHeight());
             });
         }
 
@@ -478,6 +330,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             pauseButton.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
+                    if (mediaPlayer == null) {
+                        return;
+                    }
+
                     Status status = mediaPlayer.getStatus();
 
                     switch (status) {
@@ -492,29 +348,31 @@ public class FXVideoPanel extends MediaViewVideoPanel {
                             mediaPlayer.play();
                             break;
                         default:
-                            logger.log(Level.INFO, "MediaPlayer in unexpected state: " + status.toString()); //NON-NLS
+                            logger.log(Level.INFO, "MediaPlayer in unexpected state: {0}", status.toString()); //NON-NLS
                             // If the MediaPlayer is in an unexpected state, stop playback.
                             mediaPlayer.stop();
                             setInfoLabelText(NbBundle.getMessage(this.getClass(),
-                                                                 "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
+                                    "FXVideoPanel.pauseButton.infoLabel.playbackErr"));
                             break;
                     }
                 }
             });
 
-            stopButton.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    mediaPlayer.stop();
+            stopButton.setOnAction((ActionEvent e) -> {
+                if (mediaPlayer == null) {
+                    return;
                 }
+
+                mediaPlayer.stop();
             });
 
-            progressSlider.valueProperty().addListener(new InvalidationListener() {
-                @Override
-                public void invalidated(Observable o) {
-                    if (progressSlider.isValueChanging()) {
-                        mediaPlayer.seek(duration.multiply(progressSlider.getValue() / 100.0));
-                    }
+            progressSlider.valueProperty().addListener((Observable o) -> {
+                if (mediaPlayer == null) {
+                    return;
+                }
+
+                if (progressSlider.isValueChanging()) {
+                    mediaPlayer.seek(duration.multiply(progressSlider.getValue() / 100.0));
                 }
             });
         }
@@ -543,13 +401,21 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             Media media = new Media(mediaUri);
 
             MediaPlayer player = new MediaPlayer(media);
-            player.setOnReady(READY_LISTENER);
-            player.setOnPaused(NOT_PLAY_LISTENER);
-            player.setOnStopped(NOT_PLAY_LISTENER);
-            player.setOnPlaying(PLAY_LISTENER);
-            player.setOnEndOfMedia(END_LISTENER);
+            player.setOnReady(new ReadyListener());
+            final Runnable pauseListener = () -> {
+                pauseButton.setText(PLAY_TEXT);
+            };
+            player.setOnPaused(pauseListener);
+            player.setOnStopped(pauseListener);
+            player.setOnPlaying(() -> {
+                pauseButton.setText(PAUSE_TEXT);
+            });
+            player.setOnEndOfMedia(new EndOfMediaListener());
 
-            player.currentTimeProperty().addListener(TIME_LISTENER);
+            player.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
+                updateSlider(newTime);
+                updateTime(newTime);
+            });
 
             return player;
         }
@@ -559,6 +425,9 @@ public class FXVideoPanel extends MediaViewVideoPanel {
          * media.
          */
         private void updateProgress() {
+            if (mediaPlayer == null) {
+                return;
+            }
             Duration currentTime = mediaPlayer.getCurrentTime();
             updateSlider(currentTime);
             updateTime(currentTime);
@@ -597,31 +466,16 @@ public class FXVideoPanel extends MediaViewVideoPanel {
             elapsedSeconds = (int) secondsElapsed;
 
             String durationStr = String.format(durationFormat,
-                                               elapsedHours, elapsedMinutes, elapsedSeconds,
-                                               totalHours, totalMinutes, totalSeconds);
-            setProgressLabelText(durationStr);
-        }
-
-        /**
-         * Update the progress label to show the text.
-         *
-         * @param text
-         */
-        private void setProgressLabelText(final String text) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    progressLabel.setText(text);
-                }
+                    elapsedHours, elapsedMinutes, elapsedSeconds,
+                    totalHours, totalMinutes, totalSeconds);
+            Platform.runLater(() -> {
+                progressLabel.setText(durationStr);
             });
         }
 
         private void setInfoLabelToolTipText(final String text) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    infoLabel.setTooltip(new Tooltip(text));
-                }
+            Platform.runLater(() -> {
+                infoLabel.setTooltip(new Tooltip(text));
             });
         }
 
@@ -634,6 +488,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
+                if (mediaPlayer == null) {
+                    return;
+                }
+
                 duration = mediaPlayer.getMedia().getDuration();
                 long durationInMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
 
@@ -657,6 +515,10 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
             @Override
             public void run() {
+                if (mediaPlayer == null) {
+                    return;
+                }
+
                 Duration beginning = mediaPlayer.getStartTime();
                 mediaPlayer.stop();
                 mediaPlayer.pause();
@@ -667,38 +529,105 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
 
         /**
-         * Responds to changes in the MediaPlayer currentTime property.
-         *
-         * Updates the progress slider and label with the current Time.
+         * Thread that extracts Media from a Sleuthkit file representation to a
+         * Java file representation that the Media Player can take as input.
          */
-        private class TimeListener implements ChangeListener<Duration> {
+        private class ExtractMedia extends Task<Long> {
 
-            @Override
-            public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
-                updateSlider(newValue);
-                updateTime(newValue);
+            private ProgressHandle progress;
+
+            private final AbstractFile sourceFile;
+
+            private final java.io.File tempFile;
+
+            ExtractMedia(AbstractFile sFile, java.io.File jFile) {
+                this.sourceFile = sFile;
+                this.tempFile = jFile;
             }
-        }
 
-        /**
-         * Triggered when MediaPlayer State changes to PAUSED or Stopped.
-         */
-        private class NotPlayListener implements Runnable {
-
-            @Override
-            public void run() {
-                pauseButton.setText(PLAY_TEXT);
+            /**
+             * Get the URI of the media file.
+             *
+             * @return the URI of the media file.
+             */
+            public String getMediaUri() {
+                return Paths.get(tempFile.getAbsolutePath()).toUri().toString();
             }
-        }
-
-        /**
-         * Triggered when MediaPlayer State changes to PLAYING.
-         */
-        private class PlayListener implements Runnable {
 
             @Override
-            public void run() {
-                pauseButton.setText(PAUSE_TEXT);
+            protected Long call() throws Exception {
+                if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
+                    progress = ProgressHandleFactory.createHandle(
+                            NbBundle.getMessage(this.getClass(),
+                                    "FXVideoPanel.progress.bufferingFile",
+                                    sourceFile.getName()
+                            ),
+                            () -> ExtractMedia.this.cancel(true));
+
+                    Platform.runLater(() -> {
+                        progressLabel.setText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progressLabel.buffering"));
+                    });
+
+                    progress.start(100);
+                    try {
+                        Files.createParentDirs(tempFile);
+                        return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
+                        return 0L;
+                    } finally {
+                        logger.log(Level.INFO, "Done buffering: {0}", tempFile.getName()); //NON-NLS
+                    }
+                }
+                return 0L;
+            }
+
+            @Override
+            protected void failed() {
+                super.failed();
+                onDone();
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                onDone();
+            }
+
+            @Override
+            protected void cancelled() {
+                super.cancelled();
+                onDone();
+            }
+
+            private void onDone() {
+                progressLabel.setText("");
+                try {
+                    super.get(); //block and get all exceptions thrown while doInBackground()
+                } catch (CancellationException ex) {
+                    logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
+                    progressLabel.setText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingCancelled"));
+                } catch (InterruptedException ex) {
+                    logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
+                    progressLabel.setText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.bufferingInterrupted"));
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
+                    progressLabel.setText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.progress.errorWritingVideoToDisk"));
+                } finally {
+                    if (null != progress) {
+                        progress.finish();
+                    }
+                    if (!this.isCancelled()) {
+                        logger.log(Level.INFO, "ExtractMedia is done: {0}", tempFile.getName()); //NON-NLS
+                        try {
+                            mediaPane.mediaPlayer = mediaPane.createMediaPlayer(getMediaUri());
+                            mediaView.setMediaPlayer(mediaPane.mediaPlayer);
+                        } catch (MediaException ex) {
+                            progressLabel.setText("");
+                            mediaPane.setInfoLabelText(NbBundle.getMessage(this.getClass(), "FXVideoPanel.media.unsupportedFormat"));
+                        }
+                    }
+                }
             }
         }
     }
@@ -706,122 +635,22 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     /**
      * @param file      a video file from which to capture frames
      * @param numFrames the number of frames to capture. These frames will be
-     *                  captured at successive intervals given by durationOfVideo/numFrames. If
-     *                  this frame interval is less than MIN_FRAME_INTERVAL_MILLIS, then only one
-     *                  frame will be captured and returned.
+     *                  captured at successive intervals given by
+     *                  durationOfVideo/numFrames. If this frame interval is
+     *                  less than MIN_FRAME_INTERVAL_MILLIS, then only one frame
+     *                  will be captured and returned.
      *
      * @return a List of VideoFrames representing the captured frames.
      */
     @Override
     public List<VideoFrame> captureFrames(java.io.File file, int numFrames) throws Exception {
-//
-//        try {
-//        List<VideoFrame> frames = new ArrayList<>();
-//
-//        FrameCapturer fc = new FrameCapturer(file);
-//        logger.log(Level.INFO, "Fc is null? " + (fc == null));
-//        frames = fc.getFrames(numFrames);
-//        
-//        return frames;
-//        }
-//        catch (NullPointerException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
+        //What is/was the point of this method /interface.
         return null;
     }
 
-//    private class FrameCapturer {
-//        
-//        private MediaPlayer mediaPlayer;
-//        private JFXPanel panel;
-//        private boolean isReady = false;
-//        
-//        FrameCapturer(java.io.File file) {
-//            initFx(file);
-//        }
-//        
-//        boolean isReady() {
-//            return isReady;
-//        }
-//        
-//        private void initFx(final java.io.File file) {
-//            Platform.runAndWait(new Runnable() {
-//                @Override
-//                public void run() {
-//                    logger.log(Level.INFO, "In initFX.");
-//                    // Create Media Player with no video output
-//                    Media media = new Media(Paths.get(file.getAbsolutePath()).toUri().toString());
-//                    mediaPlayer = new MediaPlayer(media);
-//                    MediaView mediaView = new MediaView(mediaPlayer);
-//                    mediaView.setStyle("-fx-background-color: black");
-//                    Pane mediaViewPane = new Pane();
-//                    mediaViewPane.getChildren().add(mediaView);
-//                    Scene scene = new Scene(mediaViewPane);
-//                    panel = new JFXPanel();
-//                    panel.setScene(scene);
-//                    isReady = true;
-//                }
-//            });
-//        }
-//        
-//        List<VideoFrame> getFrames(int numFrames) {
-//            logger.log(Level.INFO, "in get frames");
-//            List<VideoFrame> frames = new ArrayList<VideoFrame>(0);
-//            
-//            if (mediaPlayer.getStatus() != Status.READY) {
-//                try {
-//                   Thread.sleep(500);
-//               } catch (InterruptedException e) {
-//                   return frames;
-//               }
-//            }
-//
-//            // get the duration of the video
-//            long myDurationMillis = (long) mediaPlayer.getMedia().getDuration().toMillis();
-//            if (myDurationMillis <= 0) {
-//               return frames;
-//            }
-//
-//            // calculate the frame interval
-//            int numFramesToGet = numFrames;
-//            long frameInterval = (myDurationMillis - INTER_FRAME_PERIOD_MS) / numFrames;
-//            if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
-//               numFramesToGet = 1;
-//            }
-//
-//            final Object frameLock = new Object();
-//            BufferedImage frame;
-//            final int width = (int) panel.getSize().getWidth();
-//            final int height = (int) panel.getSize().getHeight();
-//            // for each timeStamp, grap a frame
-//            for (int i = 0; i < numFramesToGet; ++i) {
-//               frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-//               logger.log(Level.INFO, "Grabbing a frame...");
-//               final long timeStamp = i * frameInterval + INTER_FRAME_PERIOD_MS;
-//
-//            //            Platform.runLater(new Runnable() {
-//            //                @Override
-//            //                public void run() {
-//            //                    synchronized (frameLock) {
-//                           logger.log(Level.INFO, "seeking.");
-//                           mediaPlayer.seek(new Duration(timeStamp));
-//            //                    }
-//            //                }
-//            //            });
-//
-//               synchronized (frameLock) {
-//                   panel.paint(frame.createGraphics());
-//                   logger.log(Level.INFO, "Adding image to frames");
-//               }
-//               frames.add(new VideoFrame(frame, timeStamp));
-//            }
-//            return frames;
-//        }
-//    }
     @Override
     public String[] getExtensions() {
-        return EXTENSIONS;
+        return EXTENSIONS.clone();
     }
 
     @Override
