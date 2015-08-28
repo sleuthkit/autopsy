@@ -142,7 +142,6 @@ public class NavPanel extends TabPane {
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             //analyzed groups shoud only be modified on jfx thread
-            TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
@@ -154,10 +153,6 @@ public class NavPanel extends TabPane {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
                 }
-            }
-
-            if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
-                setFocusedGroup(selectedItem.getValue().getGroup());
             }
         });
 
