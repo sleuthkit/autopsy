@@ -248,6 +248,7 @@ public final class ImageGalleryController {
         return historyManager.getCanRetreat();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void advance(GroupViewState newState, boolean forceShowTree) {
         if (Objects.nonNull(navPanel) && forceShowTree) {
             navPanel.showTree();

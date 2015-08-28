@@ -55,15 +55,15 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  */
 public class NavPanel extends TabPane {
 
+    @FXML
+    private ComboBox<TreeNodeComparators> sortByBox;
+    @FXML
+    private TabPane navTabPane;
     /**
      * TreeView for folders with hash hits
      */
     @FXML
     private TreeView<TreeNode> hashTree;
-
-    @FXML
-    private TabPane navTabPane;
-
     /**
      * TreeView for all folders
      */
@@ -76,17 +76,14 @@ public class NavPanel extends TabPane {
     @FXML
     private Tab navTab;
 
-    @FXML
-    private ComboBox<TreeNodeComparators> sortByBox;
-
-    /**
-     * contains the 'active tree'
-     */
-    private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
+    private GroupTreeItem hashTreeRoot;
 
     private GroupTreeItem navTreeRoot;
 
-    private GroupTreeItem hashTreeRoot;
+    /**
+     * contains the 'active tree', three in the selected Tab.
+     */
+    private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
 
     private final ImageGalleryController controller;
 
@@ -144,13 +141,7 @@ public class NavPanel extends TabPane {
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
-            boolean wasPermuted = false;
             while (change.next()) {
-                if (change.wasPermutated()) {
-                    // Handle this afterward
-                    wasPermuted = true;
-                    break;
-                }
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
                     if (g.getHashSetHitsCount() > 0) {
@@ -163,9 +154,6 @@ public class NavPanel extends TabPane {
                 }
             }
 
-            if (wasPermuted) {
-                rebuildTrees();
-            }
             if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
                 Platform.runLater(() -> {
                     setFocusedGroup(selectedItem.getValue().getGroup());
@@ -310,6 +298,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     public void showTree() {
         getSelectionModel().select(navTab);
     }
