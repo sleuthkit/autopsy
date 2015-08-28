@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -256,7 +255,7 @@ public class EventsRepository {
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), ""));
             //reset database 
             //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
@@ -265,7 +264,8 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), "")));
+
+            publish(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), ""));
 
             //insert file events into db
             int i = 1;
@@ -289,8 +289,8 @@ public class EventsRepository {
                             String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
                             String medD = datasourceName + parentPath;
-                            final TskData.FileKnown known = f.getKnown();                   
-                            Set<String> hashSets =  f.getHashSetNames() ;
+                            final TskData.FileKnown known = f.getKnown();
+                            Set<String> hashSets = f.getHashSetNames();
                             boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
@@ -307,8 +307,8 @@ public class EventsRepository {
                                 eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
                             }
 
-                            process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numFiles,
-                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName())));
+                            publish(new ProgressWindow.ProgressUpdate(i, numFiles,
+                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName()));
                         }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
@@ -329,7 +329,8 @@ public class EventsRepository {
                 }
             }
 
-            process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), "")));
+            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
+
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -388,8 +389,8 @@ public class EventsRepository {
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
                 final int numArtifacts = blackboardArtifacts.size();
 
-                process(Arrays.asList(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                        Bundle.progressWindow_populatingXevents(type.toString()), "")));
+                publish(new ProgressWindow.ProgressUpdate(0, numArtifacts,
+                        Bundle.progressWindow_populatingXevents(type.toString()), ""));
 
                 int i = 0;
                 for (final BlackboardArtifact bbart : blackboardArtifacts) {
@@ -400,15 +401,15 @@ public class EventsRepository {
                         long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
 
                         AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
-                        Set<String> hashSets =  f.getHashSetNames();
+                        Set<String> hashSets = f.getHashSetNames();
                         boolean tagged = tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
 
                         eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, tagged, trans);
                     }
 
                     i++;
-                    process(Arrays.asList(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            Bundle.progressWindow_populatingXevents(type), "")));
+                    publish(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                            Bundle.progressWindow_populatingXevents(type), ""));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
@@ -440,7 +441,7 @@ public class EventsRepository {
         }
     }
 
-  synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
+    synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
         Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             aggregateEventsCache.invalidateAll();

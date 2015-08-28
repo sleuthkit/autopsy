@@ -50,19 +50,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.events.TagEvent;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 
 /**

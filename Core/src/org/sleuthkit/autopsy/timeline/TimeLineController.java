@@ -70,6 +70,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
@@ -99,12 +100,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * </li>
  * <ul>
  */
+@NbBundle.Messages({"Timeline.confirmation.dialogs.title=Update Timeline database?"})
 public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
-
-    private static final String DO_REPOPULATE_MESSAGE = NbBundle.getMessage(TimeLineController.class,
-            "Timeline.do_repopulate.msg");
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -480,7 +479,7 @@ public class TimeLineController {
         if (mainFrame == null) {
             LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI."); // NON-NLS
             mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent(
-                    NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponentAction"));
+                    NbBundle.getMessage(TimeLineController.class, "CTL_TimeLineTopComponentAction"));
             if (mainFrame == null) {
                 mainFrame = new TimeLineTopComponent();
             }
@@ -512,19 +511,19 @@ public class TimeLineController {
         }
     }
 
+    @NbBundle.Messages({"Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
+        + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
     synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.getRequestedZoomParamters().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
         if (newLOD == DescriptionLOD.FULL && count > 10_000) {
+            String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
-                    NbBundle.getMessage(this.getClass(),
-                            "Timeline.pushDescrLOD.confdlg.msg",
-                            NumberFormat.getInstance().format(count)),
-                    NbBundle.getMessage(TimeLineTopComponent.class,
-                            "Timeline.pushDescrLOD.confdlg.details"),
+                    Bundle.Timeline_pushDescrLOD_confdlg_msg(format),
+                    Bundle.Timeline_confirmation_dialogs_title(),
                     JOptionPane.YES_NO_OPTION);
 
             shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
@@ -682,16 +681,29 @@ public class TimeLineController {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void confirmOutOfDateRebuildIfWindowOpen() throws HeadlessException, MissingResourceException {
+        if (isWindowOpen()) {
+            if (confirmOutOfDateRebuild()) {
+                rebuildRepo();
+            }
+        }
+    }
+
     /**
      * prompt the user to rebuild the db because that datasource_ids are missing
      * from the database and that the datasource filter will not work
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @NbBundle.Messages({"datasource.missing.confirmation=The Timeline events database was previously populated with an old version of Autopsy."
+        + "\nThe data source filter will be unavailable unless you update the events database."
+        + "\nDo you want to update the events database now?"})
     synchronized boolean confirmDataSourceIDsMissingRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                NbBundle.getMessage(TimeLineController.class, "datasource.missing.confirmation"),
-                "Update Timeline database?",
+                Bundle.datasource_missing_confirmation(),
+                Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
@@ -702,11 +714,14 @@ public class TimeLineController {
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @NbBundle.Messages({"Timeline.do_repopulate.msg=The Timeline events database was previously populated while ingest was running."
+        + "\nSome events may not have been populated or may have been populated inaccurately."
+        + "\nDo you want to repopulate the events database now?"})
     synchronized boolean confirmLastBuiltDuringIngestRebuild() {
         return JOptionPane.showConfirmDialog(mainFrame,
-                DO_REPOPULATE_MESSAGE,
-                NbBundle.getMessage(TimeLineTopComponent.class,
-                        "Timeline.showLastPopulatedWhileIngestingConf.confDlg.details"),
+                Bundle.Timeline_do_repopulate_msg(),
+                Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
     }
@@ -717,12 +732,12 @@ public class TimeLineController {
      *
      * @return true if they agree to rebuild
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @NbBundle.Messages({"Timeline.propChg.confDlg.timelineOOD.msg=The event data is out of date. Would you like to regenerate it?",})
     synchronized boolean confirmOutOfDateRebuild() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
-                NbBundle.getMessage(TimeLineController.class,
-                        "Timeline.propChg.confDlg.timelineOOD.msg"),
-                NbBundle.getMessage(TimeLineController.class,
-                        "Timeline.propChg.confDlg.timelineOOD.details"),
+                Bundle.Timeline_propChg_confDlg_timelineOOD_msg(),
+                Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
@@ -732,12 +747,13 @@ public class TimeLineController {
      *
      * @return true if they want to continue anyways
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    @NbBundle.Messages({"Timeline.initTimeline.confDlg.genBeforeIngest.msg=You are trying to generate a timeline before ingest has been completed. "
+        + "The timeline may be incomplete. Do you want to continue?"})
     synchronized boolean confirmRebuildDuringIngest() throws MissingResourceException, HeadlessException {
         return JOptionPane.showConfirmDialog(mainFrame,
-                NbBundle.getMessage(TimeLineController.class,
-                        "Timeline.initTimeline.confDlg.genBeforeIngest.msg"),
-                NbBundle.getMessage(TimeLineController.class,
-                        "Timeline.initTimeline.confDlg.genBeforeIngest.details"),
+                Bundle.Timeline_initTimeline_confDlg_genBeforeIngest_msg(),
+                Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
@@ -745,25 +761,30 @@ public class TimeLineController {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /**
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
+             */
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
+                return;
+            }
+
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
+                case CONTENT_CHANGED:
+                case DATA_ADDED:
+                    break;
                 case FILE_DONE:
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCase();
-                        Platform.runLater(() -> {
-                            newEventsFlag.set(true);
-                        });
-                        break;
-                    } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
+                    Platform.runLater(() -> {
+                        newEventsFlag.set(true);
+                    });
+                    break;
             }
         }
     }
@@ -776,14 +797,7 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case CANCELLED:
                 case COMPLETED:
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
             }
         }
     }
@@ -807,19 +821,11 @@ public class TimeLineController {
                     filteredEvents.handleTagDeleted((ContentTagDeletedEvent) evt);
                     break;
                 case DATA_SOURCE_ADDED:
-//                    Content content = (Content) evt.getNewValue();
-                    //if we are doing incremental updates, drop this
-                    SwingUtilities.invokeLater(() -> {
-                        if (isWindowOpen()) {
-                            if (confirmOutOfDateRebuild()) {
-                                rebuildRepo();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
 
                 case CURRENT_CASE:
-                   OpenTimelineAction.invalidateController();
+                    OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);
                     break;
             }
