@@ -414,7 +414,7 @@ public final class ImageGalleryController {
         dbWorkerThread.addTask(innerTask);
     }
 
-    public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
 
