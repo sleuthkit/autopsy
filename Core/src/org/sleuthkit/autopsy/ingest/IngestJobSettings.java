@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectStreamClass;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -341,7 +342,9 @@ public class IngestJobSettings {
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        // add serialVersionUID to maintain unique names for ingest modules with
+        // same factory class name.
+        String fileName = factory.getClass().getCanonicalName() + "-" + Long.toString(ObjectStreamClass.lookup(factory.getDefaultIngestJobSettings().getClass()).getSerialVersionUID()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }
@@ -384,12 +387,6 @@ public class IngestJobSettings {
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
         try {
             String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
-            // compiled python modules have substring org.python.proxies. It can be used to identify them.
-            if (isPythonModuleSettingsFile(moduleSettingsFilePath)) {
-                // compiled python modules have variable instance number as a part of their file name.
-                // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-                moduleSettingsFilePath = moduleSettingsFilePath.replaceAll("[$][\\d]+.settings$", "\\$.settings");
-            }
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
                 out.writeObject(settings);
             }
