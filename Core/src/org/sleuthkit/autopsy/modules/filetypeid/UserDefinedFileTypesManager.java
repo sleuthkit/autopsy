@@ -26,9 +26,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
@@ -82,7 +82,7 @@ final class UserDefinedFileTypesManager {
      * map is guarded by the intrinsic lock of the user-defined file types
      * manager for thread-safety.
      */
-    private final Map<String, FileType> userDefinedFileTypes = new HashMap<>();
+    private final Set<FileType> userDefinedFileTypes = new HashSet<>();
 
     /**
      * The combined set of user-defined file types and file types predefined by
@@ -91,7 +91,7 @@ final class UserDefinedFileTypesManager {
      * the intrinsic lock of the user-defined file types manager for
      * thread-safety.
      */
-    private final Map<String, FileType> fileTypes = new HashMap<>();
+    private final Set<FileType> fileTypes = new HashSet<>();
 
     /**
      * Gets the singleton manager of user-defined file types characterized by
@@ -122,7 +122,7 @@ final class UserDefinedFileTypesManager {
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
-    synchronized Map<String, FileType> getFileTypes() throws UserDefinedFileTypesException {
+    synchronized Set<FileType> getFileTypes() throws UserDefinedFileTypesException {
         loadFileTypes();
 
         /**
@@ -131,7 +131,7 @@ final class UserDefinedFileTypesManager {
          * Collections.unmodifiableCollection() is not used here because this
          * view of the file types is a snapshot.
          */
-        return new HashMap<>(fileTypes);
+        return new HashSet<>(fileTypes);
     }
 
     /**
@@ -142,7 +142,7 @@ final class UserDefinedFileTypesManager {
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
-    synchronized Map<String, FileType> getUserDefinedFileTypes() throws UserDefinedFileTypesException {
+    synchronized Set<FileType> getUserDefinedFileTypes() throws UserDefinedFileTypesException {
         loadFileTypes();
 
         /**
@@ -151,7 +151,7 @@ final class UserDefinedFileTypesManager {
          * Collections.unmodifiableCollection() is not used here because this
          * view of the file types is a snapshot.
          */
-        return new HashMap<>(userDefinedFileTypes);
+        return new HashSet<>(userDefinedFileTypes);
     }
 
     /**
@@ -182,7 +182,7 @@ final class UserDefinedFileTypesManager {
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         try {
             FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-            fileTypes.put(fileType.getMimeType(), fileType);
+            fileTypes.add(fileType);
 
         } catch (UnsupportedEncodingException ex) {
             /**
@@ -227,8 +227,8 @@ final class UserDefinedFileTypesManager {
      * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
-        userDefinedFileTypes.put(fileType.getMimeType(), fileType);
-        fileTypes.put(fileType.getMimeType(), fileType);
+        userDefinedFileTypes.add(fileType);
+        fileTypes.add(fileType);
     }
 
     /**
@@ -237,10 +237,10 @@ final class UserDefinedFileTypesManager {
      * @param newFileTypes A mapping of file type names to user-defined file
      *                     types.
      */
-    synchronized void setUserDefinedFileTypes(Map<String, FileType> newFileTypes) throws UserDefinedFileTypesException {
+    synchronized void setUserDefinedFileTypes(Set<FileType> newFileTypes) throws UserDefinedFileTypesException {
         try {
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            XmlWriter.writeFileTypes(newFileTypes.values(), filePath);
+            XmlWriter.writeFileTypes(newFileTypes, filePath);
         } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
             throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
         } catch (IOException ex) {
