@@ -31,12 +31,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * This class provides a default implementation of selected methods of the 
- * DataResultViewer interface. Derived classes will be Swing JPanel objects. 
- * Additionally, the ExplorerManager.Provider interface is implemented to 
- * supply an ExplorerManager to derived classes and their child components. 
+ * This class provides a default implementation of selected methods of the
+ * DataResultViewer interface. Derived classes will be Swing JPanel objects.
+ * Additionally, the ExplorerManager.Provider interface is implemented to supply
+ * an ExplorerManager to derived classes and their child components.
  */
- abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
+abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em;
@@ -49,19 +49,19 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
      * an ExplorerManager provided by a TopComponent, allowing Node selections
-     * to be available to Actions via the action global context lookup when 
-     * the TopComponent has focus. The ExplorerManager must be present when the
+     * to be available to Actions via the action global context lookup when the
+     * TopComponent has focus. The ExplorerManager must be present when the
      * object is constructed so that its child components can discover it using
-     * the ExplorerManager.find() method. 
+     * the ExplorerManager.find() method.
      */
     public AbstractDataResultViewer(ExplorerManager explorerManager) {
         this.em = explorerManager;
         initialize();
     }
-    
+
     /**
      * This constructor can be used by AbstractDataResultViewers that do not
-     * need to make Node selections available to Actions via the action global 
+     * need to make Node selections available to Actions via the action global
      * context lookup.
      */
     public AbstractDataResultViewer() {
@@ -72,9 +72,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     private void initialize() {
         //DataContent is designed to return only the default viewer from lookup
         //use the default one unless set otherwise
-        contentViewer = Lookup.getDefault().lookup(DataContent.class);       
+        contentViewer = Lookup.getDefault().lookup(DataContent.class);
     }
-    
+
     @Override
     public void clearComponent() {
     }

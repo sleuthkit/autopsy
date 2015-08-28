@@ -59,20 +59,15 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         actions.addAll(c.accept(instance));
         //TODO: fix this
         /*
-         while (c.isOnto()) {
-         try {
-         List<? extends Content> children = c.getChildren();
-         if (!children.isEmpty()) {
-         c = c.getChildren().get(0);
-         } else {
-         return actions;
+         * while (c.isOnto()) { try { List<? extends Content> children =
+         * c.getChildren(); if (!children.isEmpty()) { c =
+         * c.getChildren().get(0); } else { return actions; } } catch
+         * (TskException ex) {
+         * Log.get(ExplorerNodeActionVisitor.class).log(Level.WARNING, "Error
+         * getting show detail actions.", ex); return actions; }
+         * actions.addAll(c.accept(instance));
          }
-         } catch (TskException ex) {
-         Log.get(ExplorerNodeActionVisitor.class).log(Level.WARNING, "Error getting show detail actions.", ex);
-         return actions;
-         }
-         actions.addAll(c.accept(instance));
-         }*/
+         */
         return actions;
     }
 
@@ -258,12 +253,11 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             imgDetailPanel.setImgTypeValue(img.getType().getName());
             imgDetailPanel.setImgSectorSizeValue(Long.toString(img.getSsize()));
             imgDetailPanel.setImgTotalSizeValue(Long.toString(img.getSize()));
-            String hash=img.getMd5();
+            String hash = img.getMd5();
             // don't show the hash if there isn't one
             imgDetailPanel.setVisibleHashInfo(hash != null);
             imgDetailPanel.setImgHashValue(hash);
-            
-            
+
             counter = true;
 
             if (counter) {
@@ -284,7 +278,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                     popUpWindow.dispose();
                 }
             });
-
 
             popUpWindow.pack();
             popUpWindow.setResizable(false);
@@ -314,7 +307,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
 
             // set the popUp window / JFrame
-
             popUpWindow.setSize(1000, 500);
 
             int w = popUpWindow.getSize().width;
@@ -343,7 +335,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             } catch (Exception ex) {
                 throw new RuntimeException(
                         NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.exception.probGetParent.text",
-                                            FileSystem.class.getName(), fs), ex);
+                                FileSystem.class.getName(), fs), ex);
             }
             long id = -1;
             if (parent != null) {
@@ -361,7 +353,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
                 fs.getFirst_inum(),
                 fs.getLastInum()
             });
-
 
             JTable table = new JTable(new DefaultTableModel(rowValues, columnNames));
 

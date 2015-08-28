@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
+import javax.annotation.Nullable;
 import org.sleuthkit.autopsy.timeline.events.type.EventType;
 import org.sleuthkit.datamodel.TskData;
 
@@ -28,7 +29,9 @@ public class TimeLineEvent {
 
     private final Long eventID;
 
-    private final Long fileID, time;
+    private final Long fileID;
+
+    private final Long time;
 
     private final Long artifactID;
 
@@ -38,6 +41,33 @@ public class TimeLineEvent {
 
     private final TskData.FileKnown known;
 
+    private final boolean hashHit;
+    private final boolean tagged;
+
+    public TimeLineEvent(Long eventID, Long objID, @Nullable Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
+        this.eventID = eventID;
+        this.fileID = objID;
+        this.artifactID = artifactID;
+        this.time = time;
+        this.subType = type;
+
+        this.fullDescription = fullDescription;
+        this.medDescription = medDescription;
+        this.shortDescription = shortDescription;
+        this.known = known;
+        this.hashHit = hashHit;
+        this.tagged = tagged;
+    }
+
+    public boolean isTagged() {
+        return tagged;
+    }
+
+    public boolean isHashHit() {
+        return hashHit;
+    }
+
+    @Nullable
     public Long getArtifactID() {
         return artifactID;
     }
@@ -50,7 +80,9 @@ public class TimeLineEvent {
         return fileID;
     }
 
-    /** @return the time in seconds from unix epoch */
+    /**
+     * @return the time in seconds from unix epoch
+     */
     public Long getTime() {
         return time;
     }
@@ -69,20 +101,6 @@ public class TimeLineEvent {
 
     public String getShortDescription() {
         return shortDescription;
-    }
-
-    public TimeLineEvent(Long eventID, Long objID, Long artifactID, Long time,
-                         EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known) {
-        this.eventID = eventID;
-        this.fileID = objID;
-        this.artifactID = artifactID;
-        this.time = time;
-        this.subType = type;
-
-        this.fullDescription = fullDescription;
-        this.medDescription = medDescription;
-        this.shortDescription = shortDescription;
-        this.known = known;
     }
 
     public TskData.FileKnown getKnown() {

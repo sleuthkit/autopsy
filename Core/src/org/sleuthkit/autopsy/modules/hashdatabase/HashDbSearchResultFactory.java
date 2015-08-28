@@ -27,15 +27,17 @@ import org.sleuthkit.autopsy.datamodel.FilterNodeLeaf;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Factory class to create a KeyValueFileNode for each KeyValueContent in the Collection.
+ * Factory class to create a KeyValueFileNode for each KeyValueContent in the
+ * Collection.
  */
- class HashDbSearchResultFactory extends ChildFactory<AbstractFile> {
-    Collection<AbstractFile>  kvContents;
-    
+class HashDbSearchResultFactory extends ChildFactory<AbstractFile> {
+
+    Collection<AbstractFile> kvContents;
+
     HashDbSearchResultFactory(Collection<AbstractFile> kvContents) {
         this.kvContents = kvContents;
     }
-    
+
     @Override
     protected boolean createKeys(List<AbstractFile> toPopulate) {
         toPopulate.addAll(kvContents);

@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author dfickling
  */
- class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
+class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
 
     private SleuthkitCase skCase;
     private Calendar lastDay;
@@ -91,7 +91,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get recent files results: ", ex); //NON-NLS
         }
-        
+
         return result;
     }
 }

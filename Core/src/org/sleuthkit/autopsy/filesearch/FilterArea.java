@@ -28,7 +28,8 @@ import javax.swing.border.EmptyBorder;
 
 /**
  * Holds the filters in one category (and in the future controls toggling the
- * visibility of the category in the search panel) 
+ * visibility of the category in the search panel)
+ *
  * @author pmartel
  */
 class FilterArea extends JPanel {
@@ -41,7 +42,8 @@ class FilterArea extends JPanel {
 
     /**
      * Filter areas with one filter
-     * @param title name of the area
+     *
+     * @param title  name of the area
      * @param filter single filter
      */
     FilterArea(String title, FileSearchFilter filter) {
@@ -50,7 +52,8 @@ class FilterArea extends JPanel {
 
     /**
      * Filter area with multiple filters
-     * @param title name of the area
+     *
+     * @param title   name of the area
      * @param filters multiple filters
      */
     FilterArea(String title, List<FileSearchFilter> filters) {
@@ -63,6 +66,7 @@ class FilterArea extends JPanel {
 
     /**
      * Get the filters for this area
+     *
      * @return all the filters
      */
     List<FileSearchFilter> getFilters() {
@@ -71,11 +75,8 @@ class FilterArea extends JPanel {
 
     private void init() {
 
-
-
         // Commmented-out code is for collapable filter areas
 //        this.dateFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/filesearch/arrow_down.gif"))); // NOI18N
-
 //        toggleButton = new JButton();
 //        toggleButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 //        toggleButton.addActionListener(new ActionListener() {
@@ -88,7 +89,6 @@ class FilterArea extends JPanel {
 //        });
 //
 //        this.add(toggleButton);
-
         filtersPanel = new JPanel();
         filtersPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 

@@ -60,7 +60,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Gets the ingest settings made using this panel. 
+     * Gets the ingest settings made using this panel.
      *
      * @return The settings.
      */

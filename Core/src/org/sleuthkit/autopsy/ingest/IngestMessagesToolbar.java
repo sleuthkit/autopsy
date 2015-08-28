@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * Toolbar for Ingest
  *
  */
- class IngestMessagesToolbar extends javax.swing.JPanel {
+class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();
     private static volatile IngestMessagesToolbar instance;

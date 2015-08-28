@@ -139,6 +139,7 @@ class TskDbDiff(object):
 
         # If they are different, invoke 'diff'
         diff_file = codecs.open(diff_path, "wb", "utf_8")
+        # Gold needs to be passed in as 1st arg and output as 2nd
         dffcmdlst = ["diff", gold_file, output_file]
         subprocess.call(dffcmdlst, stdout = diff_file)
 

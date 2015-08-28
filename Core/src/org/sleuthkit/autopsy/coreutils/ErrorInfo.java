@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.coreutils;
  * Encapsulates an error message and an associated exception, if any.
  */
 final public class ErrorInfo {
+
     private final String errorSource;
     private final String message;
     private final Exception exception;
@@ -41,7 +42,7 @@ final public class ErrorInfo {
     public String getErrroSource() {
         return this.errorSource;
     }
-    
+
     public String getMessage() {
         return this.message;
     }
@@ -49,7 +50,7 @@ final public class ErrorInfo {
     public boolean hasException() {
         return exception != null;
     }
-    
+
     public Exception getException() {
         return this.exception;
     }

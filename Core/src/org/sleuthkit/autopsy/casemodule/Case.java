@@ -30,6 +30,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -141,17 +143,31 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * value is a reference to a Report object representing the new report.
          */
         REPORT_ADDED,
-        /** Property name for the event when a new BlackBoardArtifactTag is
-         * added. The new value is tag added, the old value is empty */
+        /**
+         * Name for the property change event when a report is deleted from the
+         * case. Both the old value and the new value supplied by the event
+         * object are null.
+         */
+        REPORT_DELETED,
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * added. The new value is tag added, the old value is empty
+         */
         BLACKBOARD_ARTIFACT_TAG_ADDED,
-        /** Property name for the event when a new BlackBoardArtifactTag is
-         * deleted. The new value is empty, the old value is the deleted tag */
+        /**
+         * Property name for the event when a new BlackBoardArtifactTag is
+         * deleted. The new value is empty, the old value is the deleted tag
+         */
         BLACKBOARD_ARTIFACT_TAG_DELETED,
-        /** Property name for the event when a new ContentTag is
-         * added. The new value is tag added, the old value is empty */
+        /**
+         * Property name for the event when a new ContentTag is added. The new
+         * value is tag added, the old value is empty
+         */
         CONTENT_TAG_ADDED,
-        /** Property name for the event when a new ContentTag is
-         * deleted. The new value is empty, the old value is the deleted tag */
+        /**
+         * Property name for the event when a new ContentTag is deleted. The new
+         * value is empty, the old value is the deleted tag
+         */
         CONTENT_TAG_DELETED;
     };
 
@@ -294,9 +310,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      * Creates a new case (create the XML config file and database)
      *
      * @param caseDir    The directory to store case data in. Will be created if
-     *                   it
-     *                   doesn't already exist. If it exists, it should have all of the needed sub
-     *                   dirs that createCaseDirectory() will create.
+     *                   it doesn't already exist. If it exists, it should have
+     *                   all of the needed sub dirs that createCaseDirectory()
+     *                   will create.
      * @param caseName   the name of case
      * @param caseNumber the case number
      * @param examiner   the examiner for this case
@@ -1228,8 +1244,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param localPath        The path of the report file, must be in the case
      *                         directory or one of its subdirectories.
-     * @param sourceModuleName The name of the module that created the
-     *                         report.
+     * @param sourceModuleName The name of the module that created the report.
      * @param reportName       The report name, may be empty.
      *
      * @return A Report data transfer object (DTO) for the new row.
@@ -1255,6 +1270,50 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     public List<Report> getAllReports() throws TskCoreException {
         return this.db.getAllReports();
+    }
+
+    /**
+     * Deletes reports from the case - deletes it from the disk as well as the
+     * database.
+     *
+     * @param reports        Collection of Report to be deleted from the case.
+     * @param deleteFromDisk Set true to perform reports file deletion from
+     *                       disk.
+     *
+     * @throws TskCoreException
+     */
+    public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
+
+        String pathToReportsFolder = Paths.get(this.db.getDbDirPath(), "Reports").normalize().toString(); // NON-NLS
+        for (Report report : reports) {
+
+            // delete from the database.
+            this.db.deleteReport(report);
+
+            if (deleteFromDisk) {
+                // traverse to the root directory of Report report.
+                String reportPath = report.getPath();
+                while (!Paths.get(reportPath, "..").normalize().toString().equals(pathToReportsFolder)) { // NON-NLS
+                    reportPath = Paths.get(reportPath, "..").normalize().toString(); // NON-NLS
+                }
+
+                // delete from the disk.
+                try {
+                    FileUtils.deleteDirectory(new File(reportPath));
+                } catch (IOException | SecurityException ex) {
+                    logger.log(Level.WARNING, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.log.msg"), ex);
+                    JOptionPane.showMessageDialog(null, NbBundle.getMessage(Case.class, "Case.deleteReports.deleteFromDiskException.msg", report.getReportName(), reportPath));
+                }
+            }
+
+            // fire property change event.
+            try {
+                Case.pcs.firePropertyChange(Events.REPORT_DELETED.toString(), null, null);
+            } catch (Exception ex) {
+                String errorMessage = String.format("A Case %s listener threw an exception", Events.REPORT_DELETED.toString()); //NON-NLS
+                logger.log(Level.SEVERE, errorMessage, ex);
+            }
+        }
     }
 
     /**

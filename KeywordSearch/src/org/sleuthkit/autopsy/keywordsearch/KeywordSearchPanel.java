@@ -27,12 +27,13 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.openide.util.NbBundle;
 
 /**
- * Common functionality among keyword search widgets / panels.
- * This is extended by the various panels and interfaces that perform the keyword searches.
- * This class and extended classes model the user's intentions, not necessarily how the 
- * search manager and 3rd party tools actually perform the search.
+ * Common functionality among keyword search widgets / panels. This is extended
+ * by the various panels and interfaces that perform the keyword searches. This
+ * class and extended classes model the user's intentions, not necessarily how
+ * the search manager and 3rd party tools actually perform the search.
  */
 abstract class KeywordSearchPanel extends javax.swing.JPanel {
+
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
 
@@ -62,24 +63,25 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
      */
     protected abstract void postFilesIndexedChange();
 
-    
     /**
      * Returns the list of Keyword objects that the user entered/selected
-     * @return 
+     *
+     * @return
      */
     abstract List<KeywordList> getKeywordLists();
 
     /**
      * Set the number of files that have been indexed
-     * @param filesIndexed 
+     *
+     * @param filesIndexed
      */
     public void setFilesIndexed(int filesIndexed) {
         this.filesIndexed = filesIndexed;
     }
 
     /**
-     * Performs the search using the selected keywords.  
-     * Creates a DataResultTopComponent with the results. 
+     * Performs the search using the selected keywords. Creates a
+     * DataResultTopComponent with the results.
      */
     public void search() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
@@ -103,9 +105,9 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
                 return;
             }
         }
-        
+
         KeywordSearchQueryDelegator man = null;
-        
+
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
@@ -114,7 +116,7 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
             return;
         }
         man = new KeywordSearchQueryDelegator(keywordLists);
-        
+
         if (man.validate()) {
             man.execute();
         } else {

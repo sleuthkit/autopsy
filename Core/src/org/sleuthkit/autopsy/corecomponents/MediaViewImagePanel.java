@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,41 +21,68 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javax.imageio.ImageIO;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Container for the image viewer part of media view, on a layered pane. To be
- * used with JavaFx image viewer only.
+ * Image viewer part of the Media View layered pane. Uses JavaFX to display the
+ * image.
  */
- public class MediaViewImagePanel extends javax.swing.JPanel {
+public class MediaViewImagePanel extends JPanel implements DataContentViewerMedia.MediaViewPanel {
+
+    private static final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
+
+    private final boolean fxInited;
+
     private JFXPanel fxPanel;
     private ImageView fxImageView;
-    private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
-    private boolean fxInited = false;
-    
-    private final List<String> supportedExtensions;
-    static private final List<String> supportedMimes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/x-ms-bmp"); //NON-NLS
+    private BorderPane borderpane;
+
+    private final Label errorLabel = new Label("Could not load file into media view.");
+    private final Label tooLargeLabel = new Label("Could not load file into media view (too large).");
+
+    static {
+        ImageIO.scanForPlugins();
+
+    }
+    /**
+     * mime types we should be able to display. if the mimetype is unknown we
+     * will fall back on extension and jpg/png header
+     */
+    static private final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
+
+    /**
+     * extensions we should be able to display
+     */
+    static private final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
+            .map("."::concat)
+            .collect(Collectors.toList());
 
     /**
      * Creates new form MediaViewImagePanel
@@ -64,74 +91,59 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
-            setupFx();
-        }
-        
-        supportedExtensions = new ArrayList<>();
-        //logger.log(Level.INFO, "Supported image formats by javafx image viewer: ");
-        for (String suffix : ImageIO.getReaderFileSuffixes()) {
-            //logger.log(Level.INFO, "suffix: " + suffix);
-            supportedExtensions.add("." + suffix);
+            Platform.runLater(() -> {
+
+                // build jfx ui (we could do this in FXML?)
+                fxImageView = new ImageView();  // will hold image
+                borderpane = new BorderPane(fxImageView); // centers and sizes imageview
+                borderpane.getStyleClass().add("bg");
+                fxPanel = new JFXPanel(); // bridge jfx-swing
+                Scene scene = new Scene(borderpane); //root of jfx tree
+                scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm());
+                fxPanel.setScene(scene);
+
+                //bind size of image to that of scene, while keeping proportions
+                fxImageView.fitWidthProperty().bind(scene.widthProperty());
+                fxImageView.fitHeightProperty().bind(scene.heightProperty());
+                fxImageView.setPreserveRatio(true);
+                fxImageView.setSmooth(true);
+                fxImageView.setCache(true);
+
+                EventQueue.invokeLater(() -> {
+                    add(fxPanel);//add jfx ui to JPanel
+                });
+            });
         }
     }
-    
+
     public boolean isInited() {
         return fxInited;
     }
 
     /**
-     * Setup FX components
+     * clear the displayed image
      */
-    private void setupFx() {
-        // load the image
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                fxPanel = new JFXPanel();
-                fxImageView = new ImageView();
-                // resizes the image to have width of 100 while preserving the ratio and using
-                // higher quality filtering method; this ImageView is also cached to
-                // improve performance
-                fxImageView.setPreserveRatio(true);
-                fxImageView.setSmooth(true);
-                fxImageView.setCache(true);
-
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        add(fxPanel);
-
-                        //TODO
-                        // setVisible(true);
-                    }
-                });
-            }
-        });
-    }
-
     public void reset() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                fxImageView.setImage(null);
-            }
+        Platform.runLater(() -> {
+            fxImageView.setImage(null);
+            borderpane.setCenter(null);
         });
     }
-    
+
     /**
-     * Show image
+     * Show the contents of the given AbstractFile as a visual image.
      *
      * @param file image file to show
-     * @param dims dimension of the parent window
+     * @param dims dimension of the parent window (ignored)
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showImageFx(final AbstractFile file, final Dimension dims) {
         if (!fxInited) {
             return;
         }
 
-        final String fileName = file.getName();
-
         //hide the panel during loading/transformations
+        //TODO: repalce this with a progress indicator
         fxPanel.setVisible(false);
 
         // load the image
@@ -139,90 +151,78 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
             @Override
             public void run() {
                 if (!Case.isCaseOpen()) {
-                    //handle in-between condition when case is being closed
-                    //and an image was previously selected
+                    /*
+                     * handle in-between condition when case is being closed and
+                     * an image was previously selected
+                     */
                     return;
                 }
+                try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
-                final InputStream inputStream = new ReadContentInputStream(file);
-
-                final Image fxImage;
-                try {
-                    //original input stream
-                    BufferedImage bi = ImageIO.read(inputStream);
-                    if (bi == null) {
-                        logger.log(Level.WARNING, "Could image reader not found for file: " + fileName); //NON-NLS
-                        return;
+                    BufferedImage bufferedImage = ImageIO.read(inputStream);
+                    if (bufferedImage == null) {
+                        LOGGER.log(Level.WARNING, "Image reader not found for file: {0}", file.getName()); //NON-NLS
+                        borderpane.setCenter(errorLabel);
+                    } else {
+                        Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+                        if (fxImage.isError()) {
+                            LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
+                            borderpane.setCenter(errorLabel);
+                            return;
+                        } else {
+                            fxImageView.setImage(fxImage);
+                            borderpane.setCenter(fxImageView);
+                        }
                     }
-                    //scale image using Scalr
-                    BufferedImage biScaled = ScalrWrapper.resizeHighQuality(bi, (int) dims.getWidth(), (int) dims.getHeight());
-                    //convert from awt imageto fx image
-                    fxImage = SwingFXUtils.toFXImage(biScaled, null);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName, ex); //NON-NLS
-                    return;
-                } catch (OutOfMemoryError ex) {
-                    logger.log(Level.WARNING, "Could not load image file into media view (too large): " + fileName, ex); //NON-NLS
+                } catch (IllegalArgumentException | IOException ex) {
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
+                    borderpane.setCenter(errorLabel);
+                } catch (OutOfMemoryError ex) {  // this might be redundant since we are not attempting to rescale the image anymore
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.warn(
                             NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
                             ex.getMessage());
-                    return;
-                } finally {
-                    try {
-                        inputStream.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close input stream after loading image in media view: " + fileName, ex); //NON-NLS
-                    }
+                    borderpane.setCenter(tooLargeLabel);
                 }
 
-                if (fxImage == null || fxImage.isError()) {
-                    logger.log(Level.WARNING, "Could not load image file into media view: " + fileName); //NON-NLS
-                    return;
-                }
-
-                //use border pane to center the image in the scene
-                BorderPane borderpane = new BorderPane();
-                borderpane.setCenter(fxImageView);
-
-                fxImageView.setImage(fxImage);
-                fxImageView.setFitWidth(dims.getWidth());
-                fxImageView.setFitHeight(dims.getHeight());
-
-                //Group fxRoot = new Group();
-
-                //Scene fxScene = new Scene(fxRoot, dims.getWidth(), dims.getHeight(), javafx.scene.paint.Color.BLACK);
-                Scene fxScene = new Scene(borderpane, javafx.scene.paint.Color.BLACK);
-                // borderpane.getChildren().add(fxImageView);
-
-                fxPanel.setScene(fxScene);
-
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        //show the panel after fully loaded
-                        fxPanel.setVisible(true);
-                    }
+                SwingUtilities.invokeLater(() -> {
+                    //show the panel after fully loaded
+                    fxPanel.setVisible(true);
                 });
-
             }
         });
+    }
 
-    }
-    
     /**
-     * returns supported mime types
-     * @return 
+     * @return supported mime types
      */
+    @Override
     public List<String> getMimeTypes() {
-        return supportedMimes;
+        return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
-    
+
     /**
      * returns supported extensions (each starting with .)
-     * @return 
+     *
+     * @return
+     */
+    @Override
+    public List<String> getExtensionsList() {
+        return getExtensions();
+    }
+
+    /**
+     * returns supported extensions (each starting with .)
+     *
+     * @return
      */
     public List<String> getExtensions() {
-        return supportedExtensions;
+        return Collections.unmodifiableList(supportedExtensions);
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        return ImageUtils.isImageThumbnailSupported(file);
     }
 
     /**
@@ -239,4 +239,5 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
 }

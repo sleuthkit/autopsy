@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -45,26 +44,26 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Singleton keyword search manager:
- * Launches search threads for each job and performs commits, both on timed 
- * intervals.
+ * Singleton keyword search manager: Launches search threads for each job and
+ * performs commits, both on timed intervals.
  */
 public final class SearchRunner {
+
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private volatile boolean updateTimerRunning = false;
     private Timer updateTimer;
-    
+
     // maps a jobID to the search
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
-    
+
     SearchRunner() {
-        ingester = Server.getIngester();       
+        ingester = Server.getIngester();
         updateTimer = new Timer(NbBundle.getMessage(this.getClass(), "SearchRunner.updateTimer.title.text"), true); // run as a daemon
     }
-    
+
     /**
      *
      * @return the singleton object
@@ -75,98 +74,105 @@ public final class SearchRunner {
         }
         return instance;
     }
-    
+
     /**
-     * Add a new job.  Searches will be periodically performed after this is called. 
-     * @param jobId Job ID that this is associated with
-     * @param dataSourceId Data source that is being indexed and that searches should be restricted to. 
-     * @param keywordListNames List of keyword lists that will be searched. List contents will be refreshed each search.
+     * Add a new job. Searches will be periodically performed after this is
+     * called.
+     *
+     * @param jobId            Job ID that this is associated with
+     * @param dataSourceId     Data source that is being indexed and that
+     *                         searches should be restricted to.
+     * @param keywordListNames List of keyword lists that will be searched. List
+     *                         contents will be refreshed each search.
      */
     public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
         if (jobs.containsKey(jobId) == false) {
             logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
             SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
-            jobs.put(jobId, jobData);         
+            jobs.put(jobId, jobData);
         }
-        
+
         // keep track of how many threads / module instances from this job have asked for this
         jobs.get(jobId).incrementModuleReferenceCount();
-        
+
         // start the timer, if needed
         if ((jobs.size() > 0) && (updateTimerRunning == false)) {
-            final long updateIntervalMs = ((long)KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
+            final long updateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
             updateTimer.scheduleAtFixedRate(new UpdateTimerTask(), updateIntervalMs, updateIntervalMs);
             updateTimerRunning = true;
         }
     }
-    
+
     /**
      * Perform normal finishing of searching for this job, including one last
      * commit and search. Blocks until the final search is complete.
+     *
      * @param jobId
      */
-    public void endJob(long jobId) {        
+    public void endJob(long jobId) {
         SearchJobInfo job;
         boolean readyForFinalSearch = false;
-        synchronized(this) {
+        synchronized (this) {
             job = jobs.get(jobId);
             if (job == null) {
                 return;
             }
-            
+
             // Only do final search if this is the last module/thread in this job to call endJob()
-            if(job.decrementModuleReferenceCount() == 0) {
+            if (job.decrementModuleReferenceCount() == 0) {
                 jobs.remove(jobId);
                 readyForFinalSearch = true;
             }
-        }                  
-        
-        if (readyForFinalSearch) {          
-            commit();        
+        }
+
+        if (readyForFinalSearch) {
+            commit();
             doFinalSearch(job); //this will block until it's done
         }
     }
-    
-    
+
     /**
-     * Immediate stop and removal of job from SearchRunner. Cancels the 
+     * Immediate stop and removal of job from SearchRunner. Cancels the
      * associated search worker if it's still running.
+     *
      * @param jobId
      */
     public void stopJob(long jobId) {
         logger.log(Level.INFO, "Stopping job {0}", jobId); //NON-NLS
-        commit(); 
+        commit();
 
         SearchJobInfo job;
-        synchronized(this) {
+        synchronized (this) {
             job = jobs.get(jobId);
             if (job == null) {
                 return;
             }
-            
+
             //stop currentSearcher
             SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
             if ((currentSearcher != null) && (!currentSearcher.isDone())) {
                 currentSearcher.cancel(true);
-            }            
-            
+            }
+
             jobs.remove(jobId);
-        }        
+        }
     }
-    
+
     /**
-     * Add these lists to all of the jobs.  Used when user wants to search for a list while ingest has already started. 
+     * Add these lists to all of the jobs. Used when user wants to search for a
+     * list while ingest has already started.
+     *
      * @param keywordListNames
      */
     public synchronized void addKeywordListsToAllJobs(List<String> keywordListNames) {
-        for(String listName : keywordListNames) {
+        for (String listName : keywordListNames) {
             logger.log(Level.INFO, "Adding keyword list {0} to all jobs", listName); //NON-NLS
-            for(SearchJobInfo j : jobs.values()) {
+            for (SearchJobInfo j : jobs.values()) {
                 j.addKeywordListName(listName);
             }
         }
     }
-    
+
     /**
      * Commits index and notifies listeners of index update
      */
@@ -180,12 +186,13 @@ public final class SearchRunner {
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex); //NON-NLS
         }
-    }    
-    
+    }
+
     /**
      * A final search waits for any still-running workers, and then executes a
      * new one and waits until that is done.
-     * @param job 
+     *
+     * @param job
      */
     private void doFinalSearch(SearchJobInfo job) {
         // Run one last search as there are probably some new files committed
@@ -198,21 +205,21 @@ public final class SearchRunner {
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
                 finalSearcher.execute(); //start thread
-                
+
                 // block until the search is complete
                 finalSearcher.get();
-                
+
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex}); //NON-NLS
             }
         }
     }
-    
-   
+
     /**
      * Timer triggered re-search for each job (does a single index commit first)
      */
     private class UpdateTimerTask extends TimerTask {
+
         private final Logger logger = Logger.getLogger(SearchRunner.UpdateTimerTask.class.getName());
 
         @Override
@@ -223,12 +230,12 @@ public final class SearchRunner {
                 updateTimerRunning = false;
                 return;
             }
-            
+
             commit();
 
-            synchronized(SearchRunner.this) {
+            synchronized (SearchRunner.this) {
                 // Spawn a search thread for each job
-                for(Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
+                for (Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
                     SearchJobInfo job = j.getValue();
                     // If no lists or the worker is already running then skip it
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
@@ -240,13 +247,14 @@ public final class SearchRunner {
                 }
             }
         }
-    }    
-    
+    }
+
     /**
-     * Data structure to keep track of keyword lists, current results, and search
-     * running status for each jobid
+     * Data structure to keep track of keyword lists, current results, and
+     * search running status for each jobid
      */
     private class SearchJobInfo {
+
         private final long jobId;
         private final long dataSourceId;
         // mutable state:
@@ -265,25 +273,25 @@ public final class SearchRunner {
             workerRunning = false;
             currentSearcher = null;
         }
-              
+
         public long getJobId() {
             return jobId;
         }
-        
+
         public long getDataSourceId() {
             return dataSourceId;
         }
-        
+
         public synchronized List<String> getKeywordListNames() {
             return new ArrayList<>(keywordListNames);
         }
-        
+
         public synchronized void addKeywordListName(String keywordListName) {
             if (!keywordListNames.contains(keywordListName)) {
                 keywordListNames.add(keywordListName);
             }
         }
-        
+
         public synchronized List<Long> currentKeywordResults(Keyword k) {
             return currentResults.get(k);
         }
@@ -291,54 +299,55 @@ public final class SearchRunner {
         public synchronized void addKeywordResults(Keyword k, List<Long> resultsIDs) {
             currentResults.put(k, resultsIDs);
         }
-        
+
         public boolean isWorkerRunning() {
             return workerRunning;
         }
-        
+
         public void setWorkerRunning(boolean flag) {
-            workerRunning = flag;           
+            workerRunning = flag;
         }
-        
+
         public synchronized SearchRunner.Searcher getCurrentSearcher() {
             return currentSearcher;
         }
-        
+
         public synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
             currentSearcher = searchRunner;
         }
-        
+
         public void incrementModuleReferenceCount() {
             moduleReferenceCount.incrementAndGet();
         }
-        
+
         public long decrementModuleReferenceCount() {
             return moduleReferenceCount.decrementAndGet();
         }
-        
-        /** In case this job still has a worker running, wait for it to finish
-         * 
-         * @throws InterruptedException 
+
+        /**
+         * In case this job still has a worker running, wait for it to finish
+         *
+         * @throws InterruptedException
          */
-        public void waitForCurrentWorker() throws InterruptedException {            
-            synchronized(finalSearchLock) {
-                while(workerRunning) {
+        public void waitForCurrentWorker() throws InterruptedException {
+            synchronized (finalSearchLock) {
+                while (workerRunning) {
                     finalSearchLock.wait(); //wait() releases the lock
                 }
             }
         }
-        
+
         /**
-         * Unset workerRunning and wake up thread(s) waiting on finalSearchLock 
+         * Unset workerRunning and wake up thread(s) waiting on finalSearchLock
          */
         public void searchNotify() {
-            synchronized(finalSearchLock) {                        
+            synchronized (finalSearchLock) {
                 workerRunning = false;
                 finalSearchLock.notify();
             }
         }
     }
-    
+
     /**
      * Searcher responsible for searching the current index and writing results
      * to blackboard and the inbox. Also, posts results to listeners as Ingest
@@ -465,7 +474,6 @@ public final class SearchRunner {
                     if (!newResults.getKeywords().isEmpty()) {
 
                         // Write results to BB
-
                         //new artifacts created, to report to listeners
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
 
@@ -478,10 +486,10 @@ public final class SearchRunner {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
                         subProgresses[keywordsSearched].progress(list.getName() + ": " + queryDisplayStr, unitProgress);
-        
+
                         // Create blackboard artifacts                
                         newArtifacts = newResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, list.getIngestMessages());
-                        
+
                     } //if has results
 
                     //reset the status text before it goes away
@@ -497,8 +505,8 @@ public final class SearchRunner {
             } finally {
                 try {
                     finalizeSearcher();
-                    stopWatch.stop();                   
-                    
+                    stopWatch.stop();
+
                     logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs()); //NON-NLS
                 } finally {
                     // In case a thread is waiting on this worker to be done
@@ -517,8 +525,8 @@ public final class SearchRunner {
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage()); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
-                                                                      NbBundle.getMessage(this.getClass(),
-                                                                                          "SearchRunner.Searcher.done.err.msg"), e.getMessage()));
+                        NbBundle.getMessage(this.getClass(),
+                                "SearchRunner.Searcher.done.err.msg"), e.getMessage()));
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }
@@ -561,7 +569,7 @@ public final class SearchRunner {
         //calculate new results but substracting results already obtained in this ingest
         //update currentResults map with the new results
         private QueryResults filterResults(QueryResults queryResult) {
-            
+
             QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
 
             for (Keyword keyword : queryResult.getKeywords()) {
@@ -595,6 +603,6 @@ public final class SearchRunner {
             }
 
             return newResults;
-        }   
+        }
     }
 }

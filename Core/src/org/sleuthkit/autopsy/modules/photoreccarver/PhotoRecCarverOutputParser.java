@@ -41,7 +41,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * This class parses the xml output from PhotoRec, and creates a list of entries to add back in to be processed.
+ * This class parses the xml output from PhotoRec, and creates a list of entries
+ * to add back in to be processed.
  */
 class PhotoRecCarverOutputParser {
 
@@ -53,13 +54,19 @@ class PhotoRecCarverOutputParser {
     }
 
     /**
-     * Parses the given report.xml file, creating a List<LayoutFile> to return. Uses FileManager to add all carved files
-     * that it finds to the TSK database as $CarvedFiles under the passed-in parent id.
+     * Parses the given report.xml file, creating a List<LayoutFile> to return.
+     * Uses FileManager to add all carved files that it finds to the TSK
+     * database as $CarvedFiles under the passed-in parent id.
      *
      * @param xmlInputFile The XML file we are trying to read and parse
-     * @param id The parent id of the unallocated space we are parsing.
-     * @param af The AbstractFile representing the unallocated space we are parsing.
-     * @return A List<LayoutFile> containing all the files added into the database
+     * @param id           The parent id of the unallocated space we are
+     *                     parsing.
+     * @param af           The AbstractFile representing the unallocated space
+     *                     we are parsing.
+     *
+     * @return A List<LayoutFile> containing all the files added into the
+     *         database
+     *
      * @throws FileNotFoundException
      * @throws IOException
      */
@@ -93,26 +100,26 @@ class PhotoRecCarverOutputParser {
 
             // create and initialize the list to put into the database
             List<CarvedFileContainer> carvedFileContainer = new ArrayList<>();
-            
+
             for (int fileIndex = 0; fileIndex < numberOfFiles; ++fileIndex) {
                 entry = (Element) fileObjects.item(fileIndex);
                 fileNames = entry.getElementsByTagName("filename"); //NON-NLS
                 fileSizes = entry.getElementsByTagName("filesize"); //NON-NLS
                 fileRanges = entry.getElementsByTagName("byte_run"); //NON-NLS
 
-                fileSize=Long.parseLong(fileSizes.item(0).getTextContent());
-                fileName=fileNames.item(0).getTextContent();
+                fileSize = Long.parseLong(fileSizes.item(0).getTextContent());
+                fileName = fileNames.item(0).getTextContent();
                 filePath = Paths.get(fileName);
-                if (filePath.startsWith(basePath)) {		
-                    fileName = filePath.getFileName().toString();		
+                if (filePath.startsWith(basePath)) {
+                    fileName = filePath.getFileName().toString();
                 }
-                
+
                 List<TskFileRange> tskRanges = new ArrayList<>();
                 for (int rangeIndex = 0; rangeIndex < fileRanges.getLength(); ++rangeIndex) {
-                    
+
                     Long img_offset = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("img_offset")); //NON-NLS
                     Long len = Long.parseLong(((Element) fileRanges.item(rangeIndex)).getAttribute("len")); //NON-NLS
-                    
+
                     // Verify PhotoRec's output
                     long fileByteStart = af.convertToImgOffset(img_offset);
                     if (fileByteStart == -1) {
@@ -122,7 +129,7 @@ class PhotoRecCarverOutputParser {
                     }
 
                     // check that carved file is within unalloc block
-                    long fileByteEnd = img_offset + len;     
+                    long fileByteEnd = img_offset + len;
                     if (fileByteEnd > af.getSize()) {
                         long overshoot = fileByteEnd - af.getSize();
                         if (fileSize > overshoot) {
@@ -131,18 +138,17 @@ class PhotoRecCarverOutputParser {
                             // This better never happen... Data for this file is corrupted. Skip it.
                             continue;
                         }
-                    }                    
+                    }
 
                     tskRanges.add(new TskFileRange(fileByteStart, len, rangeIndex));
                 }
-                
+
                 if (!tskRanges.isEmpty()) {
                     carvedFileContainer.add(new CarvedFileContainer(fileName, fileSize, id, tskRanges));
                 }
             }
             return fileManager.addCarvedFiles(carvedFileContainer);
-        }
-        catch (NumberFormatException | TskCoreException ex) {
+        } catch (NumberFormatException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON_NLS
         }
 

@@ -41,8 +41,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Node wrapping a blackboard artifact object.  This is generated from several
- * places in the tree. 
+ * Node wrapping a blackboard artifact object. This is generated from several
+ * places in the tree.
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
@@ -51,21 +51,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private List<NodeProperty<? extends Object>> customProperties;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
     /*
-     * Artifact types which should have the full unique path of the associated 
+     * Artifact types which should have the full unique path of the associated
      * content as a property.
      */
-    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[] { 
+    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[]{
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-    };
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),};
 
     // TODO (RC): This is an unattractive alternative to subclassing BlackboardArtifactNode,
     // cut from the same cloth as the equally unattractive SHOW_UNIQUE_PATH array
     // above. It should be removed when and if the subclassing is implemented.
-    private static final Integer[] SHOW_FILE_METADATA = new Integer[] { 
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-    };
+    private static final Integer[] SHOW_FILE_METADATA = new Integer[]{
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),};
 
     /**
      * Construct blackboard artifact node from an artifact and using provided
@@ -104,14 +102,15 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
     /**
      * Set the filter node display name. The value will either be the file name
-     * or something along the lines of e.g. "Messages Artifact" for keyword 
-     * hits on artifacts. 
+     * or something along the lines of e.g. "Messages Artifact" for keyword hits
+     * on artifacts.
      */
-    private void setDisplayName() {        
+    private void setDisplayName() {
         String displayName = "";
-        if (associated != null)
+        if (associated != null) {
             displayName = associated.getName();
-                
+        }
+
         // If this is a node for a keyword hit on an artifact, we set the 
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
@@ -125,14 +124,13 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         }
                     }
                 }
-            }
-            catch (TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 // Do nothing since the display name will be set to the file name.
             }
         }
         this.setDisplayName(displayName);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -147,9 +145,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         fillPropertyMap(map, artifact);
 
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
-                                NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.displayName"),
-                                NO_DESCR,
-                                this.getDisplayName()));
+                NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.displayName"),
+                NO_DESCR,
+                this.getDisplayName()));
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
@@ -165,7 +163,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
         }
         final int artifactTypeId = artifact.getArtifactTypeID();
-        
+
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             String ext = "";
@@ -174,20 +172,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 ext = af.getNameExtension();
             }
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
-                                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
-                                    NO_DESCR,
-                                    ext));
-            
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
+                    NO_DESCR,
+                    ext));
+
             try {
                 String actualMimeType = "";
                 ArrayList<BlackboardArtifact> artList = associated.getAllArtifacts();
                 for (BlackboardArtifact art : artList) {
                     List<BlackboardAttribute> atrList = art.getAttributes();
                     for (BlackboardAttribute att : atrList) {
-                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {                        
+                        if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG.getTypeID()) {
                             actualMimeType = att.getValueString();
                         }
-                    }                
+                    }
                 }
                 if (actualMimeType.isEmpty()) {
                     logger.log(Level.WARNING, "Could not find expected TSK_FILE_TYPE_SIG attribute."); //NON-NLS
@@ -200,9 +198,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error while searching for TSK_FILE_TYPE_SIG attribute: ", ex); //NON-NLS
-            }            
-        }        
-        
+            }
+        }
+
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
             String sourcePath = "";
             try {
@@ -218,9 +216,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         NO_DESCR,
                         sourcePath));
             }
-            
+
             if (Arrays.asList(SHOW_FILE_METADATA).contains(artifactTypeId)) {
-                AbstractFile file = associated instanceof AbstractFile ? (AbstractFile)associated : null;        
+                AbstractFile file = associated instanceof AbstractFile ? (AbstractFile) associated : null;
                 ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.name"),
                         NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
@@ -240,8 +238,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
                         NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                         "",
-                        associated.getSize()));             
-            }            
+                        associated.getSize()));
+            }
         } else {
             String dataSourceStr = "";
             try {
@@ -254,7 +252,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
             }
-            
+
             if (dataSourceStr.isEmpty() == false) {
                 ss.put(new NodeProperty<>(
                         NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.name"),
@@ -266,7 +264,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
         return s;
     }
-    
+
     private String getRootParentName() {
         String parentName = associated.getName();
         Content parent = associated;
@@ -299,8 +297,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Fill map with Artifact properties
      *
-     * @param map map with preserved ordering, where property names/values are
-     * put
+     * @param map      map with preserved ordering, where property names/values
+     *                 are put
      * @param artifact to extract properties from
      */
     @SuppressWarnings("deprecation") // TODO: Remove this when TSK_TAGGED_ARTIFACT rows are removed in a database upgrade.
@@ -322,19 +320,21 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
                     map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-                } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID() && 
-                        attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
-                    /* This was added because the RegRipper output would often cause the UI to 
-                     * get a black line accross it and hang if you hovered over large output
-                     * or selected it.  This reduces the amount of data in the table.
-                     * Could consider doing this for all fields in the UI.  
-                    */
+                } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
+                        && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                    /*
+                     * This was added because the RegRipper output would often
+                     * cause the UI to get a black line accross it and hang if
+                     * you hovered over large output or selected it. This
+                     * reduces the amount of data in the table. Could consider
+                     * doing this for all fields in the UI.
+                     */
                     String value = attribute.getDisplayString();
-                    if (value.length() > 512)
+                    if (value.length() > 512) {
                         value = value.substring(0, 512);
+                    }
                     map.put(attribute.getAttributeTypeDisplayName(), value);
-                } 
-                else {
+                } else {
                     map.put(attribute.getAttributeTypeDisplayName(), attribute.getDisplayString());
                 }
             }
@@ -350,20 +350,21 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
     /**
      * Create a Lookup based on what is in the passed in artifact.
-     * 
+     *
      * @param artifact
-     * @return 
+     *
+     * @return
      */
     private static Lookup createLookup(BlackboardArtifact artifact) {
         List<Object> forLookup = new ArrayList<>();
         forLookup.add(artifact);
-        
+
         // Add the content the artifact is associated with
         Content content = getAssociatedContent(artifact);
         if (content != null) {
             forLookup.add(content);
         }
-        
+
         // if there is a text highlighted version, of the content, add it too
         // currently happens from keyword search module
         TextMarkupLookup highlight = getHighlightLookup(artifact, content);
@@ -383,14 +384,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
-                    
+
     private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
         }
-        
+
         long objectId = content.getId();
-        
+
         Lookup lookup = Lookup.getDefault();
         TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
         try {
@@ -403,8 +404,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
-                }
-                else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                     objectId = att.getValueLong();
                 }
             }

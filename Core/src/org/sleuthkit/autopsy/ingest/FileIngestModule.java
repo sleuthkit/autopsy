@@ -31,6 +31,7 @@ public interface FileIngestModule extends IngestModule {
      * be called for each file in a data source.
      *
      * @param file The file to analyze.
+     *
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(AbstractFile file);

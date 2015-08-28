@@ -118,7 +118,10 @@ public class DataResultFilterNode extends FilterNode {
         List<Action> actions = new ArrayList<>();
 
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
-        actions.addAll(originalNode.accept(getActionsDIV));
+        List<Action> accept = originalNode.accept(getActionsDIV);
+        if (accept != null) {
+            actions.addAll(accept);
+        }
 
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
         return actions.toArray(new Action[actions.size()]);
@@ -239,8 +242,6 @@ public class DataResultFilterNode extends FilterNode {
             }
             return actions;
         }
-
-      
 
         @Override
         public List<Action> visit(Reports.ReportsListNode ditem) {
@@ -494,12 +495,12 @@ public class DataResultFilterNode extends FilterNode {
                         // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
                         Node newSelection = children.findChild(dataModelNode.getName());
 
-                        /* We got null here when we were viewing a ZIP file in
-                         * the Views -> Archives area and double clicking on
-                         * it got to this code. It tried to find the child in
-                         * the tree and didn't find it. An exception was
-                         * then thrown from setting the selected node to be
-                         * null.
+                        /*
+                         * We got null here when we were viewing a ZIP file in
+                         * the Views -> Archives area and double clicking on it
+                         * got to this code. It tried to find the child in the
+                         * tree and didn't find it. An exception was then thrown
+                         * from setting the selected node to be null.
                          */
                         if (newSelection != null) {
                             try {

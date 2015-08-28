@@ -31,12 +31,13 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to delete tags applied to content.  
+ * Instances of this Action allow users to delete tags applied to content.
  */
 public class DeleteContentTagAction extends AbstractAction {
+
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
-                                                                "DeleteContentTagAction.deleteTags");
-        
+            "DeleteContentTagAction.deleteTags");
+
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -51,24 +52,23 @@ public class DeleteContentTagAction extends AbstractAction {
 
     private DeleteContentTagAction() {
         super(MENU_TEXT);
-    }    
-    
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
         for (ContentTag tag : selectedTags) {
             try {
                 Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
-            }
-            catch (TskCoreException ex) {                        
+            } catch (TskCoreException ex) {
                 Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
-                                              NbBundle.getMessage(this.getClass(),
-                                                                  "DeleteContentTagAction.unableToDelTag.msg",
-                                                                  tag.getName()),
-                                              NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
-                                              JOptionPane.ERROR_MESSAGE);
-            }                    
-        }                             
-    }    
+                        NbBundle.getMessage(this.getClass(),
+                                "DeleteContentTagAction.unableToDelTag.msg",
+                                tag.getName()),
+                        NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 }

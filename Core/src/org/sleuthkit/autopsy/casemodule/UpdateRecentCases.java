@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.JComponent;
@@ -29,14 +28,15 @@ import org.openide.util.actions.SystemAction;
 /**
  * This class is used to change / update the list of recent cases dynamically.
  */
- class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
+class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
 
     int length;
     static boolean hasRecentCase = false;
 
     /** the constructor */
     UpdateRecentCases(){
-        length = RecentCases.LENGTH;
+        // display last 5 cases.
+        length = RecentCases.LENGTH - 1;
     }
 
     /**
@@ -55,7 +55,7 @@ import org.openide.util.actions.SystemAction;
 
         // if it has the recent menus, add them to the component list
         for (int i = 0; i < length; i++) {
-            if((!caseName[i].equals(""))){
+            if ((!caseName[i].equals(""))) {
                 JMenuItem menuItem = new JMenuItem(caseName[i]);
                 menuItem.setActionCommand(caseName[i].toUpperCase());
                 menuItem.addActionListener(new RecentItems(caseName[i], casePath[i]));
@@ -65,17 +65,16 @@ import org.openide.util.actions.SystemAction;
         }
 
         // if it has recent case, create clear menu
-        if(hasRecentCase){
+        if (hasRecentCase) {
             comps[length] = new JSeparator();
             JMenuItem clearMenu = new JMenuItem(
-                    NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.clearRecentCases.text"));
+                    NbBundle.getMessage(UpdateRecentCases.class, "UpdateRecentCases.menuItem.clearRecentCases.text"));
             clearMenu.addActionListener(SystemAction.get(RecentCases.class));
-            comps[length+1] = clearMenu;
-        }
-        // otherwise, just create a disabled empty menu
-        else{
+            comps[length + 1] = clearMenu;
+        } // otherwise, just create a disabled empty menu
+        else {
             comps = new JComponent[1];
-            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(this.getClass(), "UpdateRecentCases.menuItem.empty"));
+            JMenuItem emptyMenu = new JMenuItem(NbBundle.getMessage(UpdateRecentCases.class, "UpdateRecentCases.menuItem.empty"));
             emptyMenu.addActionListener(new RecentItems("", ""));
             comps[0] = emptyMenu;
             comps[0].setEnabled(false);
@@ -84,10 +83,14 @@ import org.openide.util.actions.SystemAction;
     }
 
     /**
-     * Updates main menu presenters. This method is called only by the main menu processing.
+     * Updates main menu presenters. This method is called only by the main menu
+     * processing.
      *
-     * @param jcs    the previously used menu items returned by previous call to getMenuPresenters() or synchMenuPresenters()
-     * @return menu  a new set of items to show in menu. Can be either an updated old set of instances or a completely new one.
+     * @param jcs the previously used menu items returned by previous call to
+     *            getMenuPresenters() or synchMenuPresenters()
+     *
+     * @return menu a new set of items to show in menu. Can be either an updated
+     *         old set of instances or a completely new one.
      */
     @Override
     public JComponent[] synchMenuPresenters(JComponent[] jcs) {

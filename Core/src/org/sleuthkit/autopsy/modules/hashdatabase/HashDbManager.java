@@ -134,17 +134,19 @@ public class HashDbManager implements PropertyChangeListener {
      * Adds an existing hash database to the set of hash databases used to
      * classify files as known or known bad and saves the configuration.
      *
-     * @param hashSetName Name used to represent the hash database in user
-     * interface components.
-     * @param path Full path to either a hash database file or a hash database
-     * index file.
+     * @param hashSetName        Name used to represent the hash database in
+     *                           user interface components.
+     * @param path               Full path to either a hash database file or a
+     *                           hash database index file.
      * @param searchDuringIngest A flag indicating whether or not the hash
-     * database should be searched during ingest.
+     *                           database should be searched during ingest.
      * @param sendIngestMessages A flag indicating whether hash set hit messages
-     * should be sent as ingest messages.
-     * @param knownFilesType The classification to apply to files whose hashes
-     * are found in the hash database.
+     *                           should be sent as ingest messages.
+     * @param knownFilesType     The classification to apply to files whose
+     *                           hashes are found in the hash database.
+     *
      * @return A HashDb representing the hash database.
+     *
      * @throws HashDbManagerException
      */
     public HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
@@ -169,17 +171,19 @@ public class HashDbManager implements PropertyChangeListener {
      * the configuration is only saved on demand to support cancellation of
      * configuration panels.
      *
-     * @param hashSetName Name used to represent the hash database in user
-     * interface components.
-     * @param path Full path to either a hash database file or a hash database
-     * index file.
+     * @param hashSetName        Name used to represent the hash database in
+     *                           user interface components.
+     * @param path               Full path to either a hash database file or a
+     *                           hash database index file.
      * @param searchDuringIngest A flag indicating whether or not the hash
-     * database should be searched during ingest.
+     *                           database should be searched during ingest.
      * @param sendIngestMessages A flag indicating whether hash set hit messages
-     * should be sent as ingest messages.
-     * @param knownFilesType The classification to apply to files whose hashes
-     * are found in the hash database.
+     *                           should be sent as ingest messages.
+     * @param knownFilesType     The classification to apply to files whose
+     *                           hashes are found in the hash database.
+     *
      * @return A HashDb representing the hash database.
+     *
      * @throws HashDbManagerException, TskCoreException
      */
     synchronized HashDb addExistingHashDatabaseInternal(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException, TskCoreException {
@@ -202,16 +206,18 @@ public class HashDbManager implements PropertyChangeListener {
      * Adds a new hash database to the set of hash databases used to classify
      * files as known or known bad and saves the configuration.
      *
-     * @param hashSetName Hash set name used to represent the hash database in
-     * user interface components.
-     * @param path Full path to the database file to be created.
+     * @param hashSetName        Hash set name used to represent the hash
+     *                           database in user interface components.
+     * @param path               Full path to the database file to be created.
      * @param searchDuringIngest A flag indicating whether or not the hash
-     * database should be searched during ingest.
+     *                           database should be searched during ingest.
      * @param sendIngestMessages A flag indicating whether hash set hit messages
-     * should be sent as ingest messages.
-     * @param knownFilesType The classification to apply to files whose hashes
-     * are found in the hash database.
+     *                           should be sent as ingest messages.
+     * @param knownFilesType     The classification to apply to files whose
+     *                           hashes are found in the hash database.
+     *
      * @return A HashDb representing the hash database.
+     *
      * @throws HashDbManagerException
      */
     public HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
@@ -238,16 +244,18 @@ public class HashDbManager implements PropertyChangeListener {
      * configuration is only saved on demand to support cancellation of
      * configuration panels.
      *
-     * @param hashSetName Hash set name used to represent the hash database in
-     * user interface components.
-     * @param path Full path to the database file to be created.
+     * @param hashSetName        Hash set name used to represent the hash
+     *                           database in user interface components.
+     * @param path               Full path to the database file to be created.
      * @param searchDuringIngest A flag indicating whether or not the hash
-     * database should be searched during ingest.
+     *                           database should be searched during ingest.
      * @param sendIngestMessages A flag indicating whether hash set hit messages
-     * should be sent as ingest messages.
-     * @param knownFilesType The classification to apply to files whose hashes
-     * are found in the hash database.
+     *                           should be sent as ingest messages.
+     * @param knownFilesType     The classification to apply to files whose
+     *                           hashes are found in the hash database.
+     *
      * @return A HashDb representing the hash database.
+     *
      * @throws HashDbManagerException, TskCoreException
      */
     synchronized HashDb addNewHashDatabaseInternal(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException, TskCoreException {
@@ -338,6 +346,7 @@ public class HashDbManager implements PropertyChangeListener {
      * files as known or known bad and saves the configuration.
      *
      * @param hashDb
+     *
      * @throws HashDbManagerException
      */
     public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
@@ -390,7 +399,6 @@ public class HashDbManager implements PropertyChangeListener {
         }
 
         // Let any external listeners know that a set has been deleted
-
         try {
             changeSupport.firePropertyChange(SetEvt.DB_DELETED.toString(), null, hashSetName);
         } catch (Exception e) {
@@ -596,8 +604,8 @@ public class HashDbManager implements PropertyChangeListener {
                 } while (hashSetNames.contains(newHashSetName));
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
-                        "HashDbManager.replacingDuplicateHashsetNameMsg",
-                        hashSetName, newHashSetName),
+                                "HashDbManager.replacingDuplicateHashsetNameMsg",
+                                hashSetName, newHashSetName),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
                 hashSetName = newHashSetName;
@@ -658,7 +666,7 @@ public class HashDbManager implements PropertyChangeListener {
                     Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(this.getClass(),
-                            "HashDbManager.unableToOpenHashDbMsg", dbPath),
+                                    "HashDbManager.unableToOpenHashDbMsg", dbPath),
                             NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                             JOptionPane.ERROR_MESSAGE);
                 }
@@ -677,8 +685,8 @@ public class HashDbManager implements PropertyChangeListener {
                 FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
-                        "HashDbManager.savedBackupOfOldConfigMsg",
-                        baseMessage, backupFilePath),
+                                "HashDbManager.savedBackupOfOldConfigMsg",
+                                baseMessage, backupFilePath),
                         messageBoxTitle,
                         JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException ex) {
@@ -703,7 +711,7 @@ public class HashDbManager implements PropertyChangeListener {
         String newPath = null;
         if (JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgMsg.dbNotFoundAtLoc",
-                hashSetName, configuredPath),
+                        hashSetName, configuredPath),
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgTitle.MissingDb"),
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             newPath = searchForFile();
@@ -846,7 +854,8 @@ public class HashDbManager implements PropertyChangeListener {
          * Adds hashes of content (if calculated) to the hash database.
          *
          * @param content The content for which the calculated hashes, if any,
-         * are to be added to the hash database.
+         *                are to be added to the hash database.
+         *
          * @throws TskCoreException
          */
         public void addHashes(Content content) throws TskCoreException {
@@ -857,9 +866,10 @@ public class HashDbManager implements PropertyChangeListener {
          * Adds hashes of content (if calculated) to the hash database.
          *
          * @param content The content for which the calculated hashes, if any,
-         * are to be added to the hash database.
+         *                are to be added to the hash database.
          * @param comment A comment to associate with the hashes, e.g., the name
-         * of the case in which the content was encountered.
+         *                of the case in which the content was encountered.
+         *
          * @throws TskCoreException
          */
         public void addHashes(Content content, String comment) throws TskCoreException {
@@ -877,6 +887,7 @@ public class HashDbManager implements PropertyChangeListener {
          * Adds a list of hashes to the hash database at once
          *
          * @param hashes List of hashes
+         *
          * @throws TskCoreException
          */
         public void addHashes(List<HashEntry> hashes) throws TskCoreException {
@@ -884,10 +895,13 @@ public class HashDbManager implements PropertyChangeListener {
         }
 
         /**
-         * Perform a basic boolean lookup of the file's hash. 
+         * Perform a basic boolean lookup of the file's hash.
+         *
          * @param content
+         *
          * @return True if file's MD5 is in the hash database
-         * @throws TskCoreException 
+         *
+         * @throws TskCoreException
          */
         public boolean lookupMD5Quick(Content content) throws TskCoreException {
             boolean result = false;
@@ -902,10 +916,13 @@ public class HashDbManager implements PropertyChangeListener {
         }
 
         /**
-         * Lookup hash value in DB and provide details on file. 
+         * Lookup hash value in DB and provide details on file.
+         *
          * @param content
+         *
          * @return null if file is not in database.
-         * @throws TskCoreException 
+         *
+         * @throws TskCoreException
          */
         public HashHitInfo lookupMD5(Content content) throws TskCoreException {
             HashHitInfo result = null;
@@ -919,7 +936,6 @@ public class HashDbManager implements PropertyChangeListener {
             }
             return result;
         }
-        
 
         boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);
@@ -969,8 +985,8 @@ public class HashDbManager implements PropertyChangeListener {
                 Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
-                        "HashDbManager.dlgMsg.errorIndexingHashSet",
-                        hashDb.getHashSetName()),
+                                "HashDbManager.dlgMsg.errorIndexingHashSet",
+                                hashDb.getHashSetName()),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.hashDbIndexingErr"),
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -991,9 +1007,9 @@ public class HashDbManager implements PropertyChangeListener {
                         NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.title"),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.errCreatingIndex.msg", ex.getMessage()),
                         MessageNotifyUtil.MessageType.ERROR);
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
             }
-            // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex ) { }
 
             try {
                 hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);

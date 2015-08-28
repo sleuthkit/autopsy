@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.ingest;
  * as startup or shut down with an exception object for the error that occurred.
  */
 final class IngestModuleError {
+
     private final String moduleDisplayName;
     private final Throwable error;
 

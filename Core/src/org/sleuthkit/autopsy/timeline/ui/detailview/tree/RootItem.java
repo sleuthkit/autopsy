@@ -32,10 +32,14 @@ import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
  */
 class RootItem extends NavTreeItem {
 
-    /** maps a description to the child item of this item with that description */
+    /**
+     * maps a description to the child item of this item with that description
+     */
     private final Map<EventType, EventTypeTreeItem> childMap = new HashMap<>();
 
-    /** the comparator if any used to sort the children of this item */
+    /**
+     * the comparator if any used to sort the children of this item
+     */
 //    private TreeNodeComparators comp;
     RootItem() {
 
@@ -46,7 +50,8 @@ class RootItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    /** Recursive method to add a grouping at a given path.
+    /**
+     * Recursive method to add a grouping at a given path.
      *
      * @param g Group to add
      */

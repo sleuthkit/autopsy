@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.beans.PropertyChangeListener;
@@ -32,6 +31,7 @@ public interface DataContent extends PropertyChangeListener {
 
     /**
      * Sets the "selected" node in this class
+     *
      * @param selectedNode node to use
      */
     void setNode(Node selectedNode);

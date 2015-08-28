@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
@@ -26,45 +27,44 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
+import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * ImageGallery data model object that represents an image file. It is a
  * wrapper(/decorator?/adapter?) around {@link AbstractFile} and provides
- * methods to get an icon sized and a full sized {@link  Image}.
- *
- *
+ * methods to get an thumbnail sized and a full sized {@link  Image}.
  */
 public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
-    private SoftReference<Image> imageRef;
+    private static final Logger LOGGER = Logger.getLogger(ImageFile.class.getName());
+
+    static {
+        ImageIO.scanForPlugins();
+    }
 
     ImageFile(T f, Boolean analyzed) {
         super(f, analyzed);
 
     }
 
+
     @Override
-    public Image getThumbnail() {
-        return ThumbnailCache.getDefault().get(this);
-    }
-
-   
-
     public Image getFullSizeImage() {
-        Image image = null;
-        if (imageRef != null) {
-            image = imageRef.get();
+        Image image = (imageRef != null) ? imageRef.get() : null;
+        if (image == null || image.isError()) {
+            if (FileTypeUtils.isGIF(getAbstractFile())) {
+                //directly read gif to preserve potential animation,
+                image = new Image(new BufferedInputStream(new ReadContentInputStream(getAbstractFile())));
+            }
         }
-
-        if (image == null) {
-            try (ReadContentInputStream readContentInputStream = new ReadContentInputStream(this.getAbstractFile())) {
+        if (image == null || image.isError()) {
+            try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
             } catch (IOException | NullPointerException ex) {
-                Logger.getLogger(ImageFile.class.getName()).log(Level.WARNING, "unable to read file" + getName());
+                LOGGER.log(Level.WARNING, "unable to read file " + getName());
                 return null;
             }
         }
@@ -94,4 +94,4 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     public boolean isVideo() {
         return false;
     }
- }
+}

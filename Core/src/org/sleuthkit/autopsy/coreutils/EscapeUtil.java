@@ -35,6 +35,7 @@ public class EscapeUtil {
      * Decode the given url in UTF-8.
      *
      * @param url the url to be decoded
+     *
      * @return the decoded URL
      */
     public static String decodeURL(String url) {
@@ -51,6 +52,7 @@ public class EscapeUtil {
      * Encode the given url in UTF-8 to
      *
      * @param url the url to be decoded
+     *
      * @return the encoded URL string
      */
     public static String encodeURL(String url) {
@@ -62,19 +64,23 @@ public class EscapeUtil {
             return "";
         }
     }
-    
+
     /**
-     * Escape html 
+     * Escape html
+     *
      * @param toEscape text (with html tags) to escape
+     *
      * @return html-escaped string
      */
     public static String escapeHtml(String toEscape) {
         return StringEscapeUtils.escapeHtml4(toEscape);
     }
-    
+
     /**
      * Unescape html
+     *
      * @param toUnescape text (potentially escaped html) to unescape
+     *
      * @return html unescaped string
      */
     public static String unEscapeHtml(String toUnescape) {

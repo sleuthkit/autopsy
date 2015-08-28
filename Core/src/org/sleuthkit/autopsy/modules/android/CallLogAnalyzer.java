@@ -43,15 +43,17 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Locates a variety of different call log databases, parses them, and populates the blackboard. 
+ * Locates a variety of different call log databases, parses them, and populates
+ * the blackboard.
  */
 class CallLogAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
 
-
-    /** the names of tables that potentially hold call logs in the dbs */
+    /**
+     * the names of tables that potentially hold call logs in the dbs
+     */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
     public static void findCallLogs(Content dataSource, FileManager fileManager) {
@@ -79,7 +81,7 @@ class CallLogAnalyzer {
             return;
         }
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
-             Statement statement = connection.createStatement();) {
+                Statement statement = connection.createStatement();) {
 
             for (String tableName : tableNames) {
                 try (ResultSet resultSet = statement.executeQuery(
@@ -95,10 +97,9 @@ class CallLogAnalyzer {
 
                         try {
                             BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                            if(direction == CallDirection.OUTGOING) {
+                            if (direction == CallDirection.OUTGOING) {
                                 bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
-                            }
-                            else { /// Covers INCOMING and MISSED
+                            } else { /// Covers INCOMING and MISSED
                                 bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
                             }
                             bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));

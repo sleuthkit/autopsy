@@ -91,6 +91,12 @@ public class History<T> {
         canRetreat.bind(historyStack.emptyProperty().not());
     }
 
+    synchronized public void reset(T newState) {
+        forwardStack.clear();
+        historyStack.clear();
+        currentState.set(newState);
+    }
+
     /**
      * advance through the forward states by one, and put the current state in
      * the history. Is a no-op if there are no forward states.

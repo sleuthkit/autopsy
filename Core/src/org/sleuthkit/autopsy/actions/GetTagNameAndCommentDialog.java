@@ -40,12 +40,14 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class GetTagNameAndCommentDialog extends JDialog {
+
     private static final String NO_TAG_NAMES_MESSAGE = NbBundle.getMessage(GetTagNameAndCommentDialog.class,
-                                                                           "GetTagNameAndCommentDialog.noTags");
+            "GetTagNameAndCommentDialog.noTags");
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagNameAndComment tagNameAndComment = null;
 
     public static class TagNameAndComment {
+
         private TagName tagName;
         private String comment;
 
@@ -53,7 +55,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
             this.tagName = tagName;
             this.comment = comment;
         }
-        
+
         public TagName getTagName() {
             return tagName;
         }
@@ -62,16 +64,16 @@ public class GetTagNameAndCommentDialog extends JDialog {
             return comment;
         }
     }
-    
+
     public static TagNameAndComment doDialog() {
         GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog();
         return dialog.tagNameAndComment;
     }
-    
+
     private GetTagNameAndCommentDialog() {
-        super((JFrame)WindowManager.getDefault().getMainWindow(),
-              NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
-              true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
+                NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
+                true);
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
@@ -85,32 +87,30 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 dispose();
             }
         });
-                        
+
         // Populate the combo box with the available tag names and save the 
         // tag name DTOs to be enable to return the one the user selects.
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();        
-        }
-        catch (TskCoreException ex) {
+            currentTagNames = tagsManager.getAllTagNames();
+        } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-        }        
+        }
         if (null != currentTagNames && currentTagNames.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
-        }
-        else {
+        } else {
             for (TagName tagName : currentTagNames) {
                 tagNames.put(tagName.getDisplayName(), tagName);
                 tagCombo.addItem(tagName.getDisplayName());
-            }            
+            }
         }
-      
+
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());        
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
-        
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -216,7 +216,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        tagNameAndComment = new TagNameAndComment(tagNames.get((String)tagCombo.getSelectedItem()), commentText.getText());        
+        tagNameAndComment = new TagNameAndComment(tagNames.get((String) tagCombo.getSelectedItem()), commentText.getText());
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 

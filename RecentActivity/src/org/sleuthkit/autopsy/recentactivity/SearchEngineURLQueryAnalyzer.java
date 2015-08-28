@@ -64,7 +64,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private static final String XMLFILE = "SEUQAMappings.xml"; //NON-NLS
     private static final String XSDFILE = "SearchEngineSchema.xsd"; //NON-NLS
     private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
-    
+
     private Content dataSource;
     private IngestJobContext context;
 
@@ -73,14 +73,15 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     /**
-     * Stores the regular expression and non-reg exp pair of keys.
-     * Key in the case of "?q=foo" would be "?q=". 
+     * Stores the regular expression and non-reg exp pair of keys. Key in the
+     * case of "?q=foo" would be "?q=".
      */
     private static class KeyPair {
+
         private final String key;
         private final String keyRegExp;
-        
-        KeyPair (String key, String keyRegExp) {
+
+        KeyPair(String key, String keyRegExp) {
             this.key = key;
             this.keyRegExp = keyRegExp;
         }
@@ -89,12 +90,12 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             return key;
         }
 
-        
         String getKeyRegExp() {
             return keyRegExp;
         }
-        
+
     }
+
     private static class SearchEngine {
 
         private final String engineName;
@@ -127,7 +128,8 @@ class SearchEngineURLQueryAnalyzer extends Extract {
 
         /**
          * Get the key values used in the URL to denote the search term
-         * @return 
+         *
+         * @return
          */
         List<KeyPair> getKeys() {
             return this.keyPairs;
@@ -140,7 +142,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 split = split + "[ " + kp.getKey() + " :: " + kp.getKeyRegExp() + " ]" + ", ";
             }
             return NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.toString",
-                                       engineName, domainSubstring, count, split);
+                    engineName, domainSubstring, count, split);
         }
     }
 
@@ -153,7 +155,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             xmlinput = db.parse(f);
-            
+
             if (!XMLUtil.xmlIsValid(xmlinput, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
                 logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate."); //NON-NLS
             }
@@ -165,7 +167,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (SAXException sxe) {
             throw new IngestModuleException("Unable to parse XML file: " + sxe.getLocalizedMessage()); //NON-NLS
         }
-        
+
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine"); //NON-NLS
         SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for (int i = 0; i < nlist.getLength(); i++) {
@@ -174,12 +176,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             String EngineName = nnm.getNamedItem("engine").getNodeValue(); //NON-NLS
             String EnginedomainSubstring = nnm.getNamedItem("domainSubstring").getNodeValue(); //NON-NLS
             List<KeyPair> keys = new ArrayList<>();
-            
 
             NodeList listSplits = xmlinput.getElementsByTagName("splitToken"); //NON-NLS
             for (int k = 0; k < listSplits.getLength(); k++) {
                 if (listSplits.item(k).getParentNode().getAttributes().getNamedItem("engine").getNodeValue().equals(EngineName)) { //NON-NLS
-                    keys.add( new KeyPair(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue())); //NON-NLS
+                    keys.add(new KeyPair(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue())); //NON-NLS
                 }
             }
 
@@ -195,7 +196,9 @@ class SearchEngineURLQueryAnalyzer extends Extract {
      * belongs to.
      *
      * @param domain domain as part of the URL
-     * @return supported search engine the domain belongs to or null if no match is found
+     *
+     * @return supported search engine the domain belongs to or null if no match
+     *         is found
      *
      */
     private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngineFromUrl(String domain) {
@@ -210,12 +213,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         return null;
     }
 
-
-
     /**
      * Attempts to extract the query from a URL.
      *
      * @param url The URL string to be dissected.
+     *
      * @return The extracted search query.
      */
     private String extractSearchEngineQuery(SearchEngineURLQueryAnalyzer.SearchEngine eng, String url) {
@@ -239,19 +241,22 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     /**
      * Splits URLs based on a delimeter (key). .contains() and .split()
      *
-     * @param url The URL to be split
-     * @param regExpKey the delimeter value used to split the URL into its search
-     * token, extracted from the xml.
+     * @param url       The URL to be split
+     * @param regExpKey the delimeter value used to split the URL into its
+     *                  search token, extracted from the xml.
+     *
      * @return The extracted search query
      *
      */
     private String getValue(String url, String regExpKey) {
-        /* NOTE: This doesn't seem like the most wonderful way to do this, but we have data 
-         * that has a bunch of bogus URLs.  Such as:
-         * - Multiple google "q=" terms, including one after a "#" tag.  Google used the last one
-         * - Search/query part of the URL starting with a '#'.
-         * Attemps at more formal approaches of splitting on the "?" and then on "&" resulting in missing things. 
-        */
+        /*
+         * NOTE: This doesn't seem like the most wonderful way to do this, but
+         * we have data that has a bunch of bogus URLs. Such as: - Multiple
+         * google "q=" terms, including one after a "#" tag. Google used the
+         * last one - Search/query part of the URL starting with a '#'. Attemps
+         * at more formal approaches of splitting on the "?" and then on "&"
+         * resulting in missing things.
+         */
         String value = ""; //NON-NLS
         String v = regExpKey;
         //Want to determine if string contains a string based on splitkey, but we want to split the string on splitKeyConverted due to regex
@@ -276,12 +281,12 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (`artifact_type_id` = '" + ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() //NON-NLS
                     + "' OR `artifact_type_id` = '" + ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() + "') ");  //List of every 'web_history' and 'bookmark' artifact NON-NLS
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
-            
+
             for (BlackboardArtifact artifact : listArtifacts) {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancled the process.
                 }
-                
+
                 //initializing default attributes
                 String query = "";
                 String searchEngineDomain = "";
@@ -308,13 +313,16 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
                         final String urlString = attribute.getValueString();
                         se = getSearchEngineFromUrl(urlString);
-                        if (se == null) 
+                        if (se == null) {
                             break;
-                        
+                        }
+
                         query = extractSearchEngineQuery(se, attribute.getValueString());
-                        if (query.equals(""))    //False positive match, artifact was not a query. NON-NLS
+                        if (query.equals("")) //False positive match, artifact was not a query. NON-NLS
+                        {
                             break;
-                         
+                        }
+
                     } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
                         browser = attribute.getValueString();
                     } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
@@ -325,19 +333,23 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 }
 
                 if (se != null && !query.equals("")) { //NON-NLS
+                    // If date doesn't exist, change to 0 (instead of 1969)
+                    if (last_accessed == -1) {
+                        last_accessed = 0;
+                    }
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), searchEngineDomain));
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), searchEngineDomain));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), query));
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), query));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(),
-                                                             NbBundle.getMessage(this.getClass(),
-                                                                                 "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
                     this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
                     se.increment();
                     ++totalQueries;
@@ -385,10 +397,9 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             logger.log(Level.SEVERE, message, e);
             throw new IngestModuleException(message);
         }
-        
+
         loadConfigFile();
     }
-
 
     @Override
     public void complete() {

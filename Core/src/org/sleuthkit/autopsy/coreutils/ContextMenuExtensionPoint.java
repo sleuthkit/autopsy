@@ -29,9 +29,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
  * This class implements the ContextMenuActionsProvider extension point.
  */
 public class ContextMenuExtensionPoint {
+
     /**
-     * Gets all of the Actions provided by registered implementers of the 
+     * Gets all of the Actions provided by registered implementers of the
      * ContextMenuActionsProvider interface.
+     *
      * @return A list, possibly empty, of Action objects.
      */
     static public List<Action> getActions() {

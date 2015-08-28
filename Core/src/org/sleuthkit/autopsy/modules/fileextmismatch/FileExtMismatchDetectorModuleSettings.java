@@ -40,8 +40,8 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
-    }    
-        
+    }
+
     void setSkipFilesWithNoExtension(boolean enabled) {
         skipFilesWithNoExtension = enabled;
     }

@@ -49,14 +49,13 @@ public class Installer extends ModuleInstall {
     @Override
     public void validate() throws IllegalStateException {
         /*
-         * The NetBeans API specifies that a module should throw an IllegalStateException
-         * if it can't be initalized, but NetBeans doesn't handle that behaviour
-         * well (it just disables the module, and all dependant modules, on the
-         * current and all subsequent application launches). Hence, we deal with
-         * it manually.
+         * The NetBeans API specifies that a module should throw an
+         * IllegalStateException if it can't be initalized, but NetBeans doesn't
+         * handle that behaviour well (it just disables the module, and all
+         * dependant modules, on the current and all subsequent application
+         * launches). Hence, we deal with it manually.
          *
          */
-
 
         // Check that the the Sleuth Kit JNI is working by getting the Sleuth Kit version number
         Logger logger = Logger.getLogger(Installer.class.getName());
@@ -74,7 +73,6 @@ public class Installer extends ModuleInstall {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error calling Sleuth Kit library (test call failed)", e); //NON-NLS
 
-
             // Normal error box log handler won't be loaded yet, so show error here.
             final Component parentComponent = null; // Use default window frame.
             final String message = NbBundle.getMessage(this.getClass(), "Installer.tskLibErr.msg", e.toString());
@@ -86,7 +84,6 @@ public class Installer extends ModuleInstall {
                     message,
                     title,
                     messageType);
-
 
             // exit after user exits the error dialog box
             LifecycleManager.getDefault().exit();

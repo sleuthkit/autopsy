@@ -116,11 +116,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
     }
 
     /**
-     * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy 
-     * tree view from each type of AutopsyVisitableItem visited. There are 
-     * AutopsyVisitableItems for the Data Sources, Views, Results, and Reports 
-     * subtrees, and for the subtrees of Results (e.g., Extracted Content, 
-     * Hash Set Hits, etc.). 
+     * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy
+     * tree view from each type of AutopsyVisitableItem visited. There are
+     * AutopsyVisitableItems for the Data Sources, Views, Results, and Reports
+     * subtrees, and for the subtrees of Results (e.g., Extracted Content, Hash
+     * Set Hits, etc.).
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
@@ -198,7 +198,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),
-                    "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
+                            "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
         }
     }
 }

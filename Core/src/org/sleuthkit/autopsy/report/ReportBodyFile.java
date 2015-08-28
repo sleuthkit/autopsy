@@ -37,16 +37,18 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
 
 /**
- * ReportBodyFile generates a report in the body file format specified on
- * The Sleuth Kit wiki as MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
+ * ReportBodyFile generates a report in the body file format specified on The
+ * Sleuth Kit wiki as
+ * MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
- class ReportBodyFile implements GeneralReportModule {
+class ReportBodyFile implements GeneralReportModule {
+
     private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
     private static ReportBodyFile instance = null;
-    
+
     private Case currentCase;
     private SleuthkitCase skCase;
-    
+
     private String reportPath;
 
     // Hidden constructor for the report
@@ -63,6 +65,7 @@ import org.sleuthkit.datamodel.*;
 
     /**
      * Generates a body file format report for use with the MAC time tool.
+     *
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
@@ -76,26 +79,25 @@ import org.sleuthkit.datamodel.*;
         reportPath = baseReportDir + "BodyFile.txt"; //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
-        
+
         // Run query to get all files
-        
         try {
             // exclude non-fs files/dirs and . and .. files
-            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()  //NON-NLS
-                               + " AND name != '.' AND name != '..'"; //NON-NLS
-            
+            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
+                    + " AND name != '.' AND name != '..'"; //NON-NLS
+
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
             List<FsContent> fs = skCase.findFilesWhere(query);
-            
+
             // Check if ingest has finished
             String ingestwarning = "";
             if (IngestManager.getInstance().isIngestRunning()) {
                 ingestwarning = NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text");
             }
-            
+
             int size = fs.size();
-            progressPanel.setMaximumProgress(size/100);
-                
+            progressPanel.setMaximumProgress(size / 100);
+
             BufferedWriter out = null;
             try {
                 // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
@@ -107,26 +109,26 @@ import org.sleuthkit.datamodel.*;
                     if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                         break;
                     }
-                    if(count++ == 100) {
+                    if (count++ == 100) {
                         progressPanel.increment();
                         progressPanel.updateStatusLabel(
                                 NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.processing",
-                                                    file.getName()));
+                                        file.getName()));
                         count = 0;
                     }
 
-                    if(file.getMd5Hash()!=null) {
+                    if (file.getMd5Hash() != null) {
                         out.write(file.getMd5Hash());
                     }
                     out.write("|");
-                    if(file.getUniquePath()!=null) {
+                    if (file.getUniquePath() != null) {
                         out.write(file.getUniquePath());
                     }
                     out.write("|");
                     out.write(Long.toString(file.getMetaAddr()));
                     out.write("|");
                     String modeString = file.getModesAsString();
-                    if(modeString != null) {
+                    if (modeString != null) {
                         out.write(modeString);
                     }
                     out.write("|");
@@ -153,8 +155,8 @@ import org.sleuthkit.datamodel.*;
                         out.flush();
                         out.close();
                         Case.getCurrentCase().addReport(reportPath,
-                                                        NbBundle.getMessage(this.getClass(),
-                                                                            "ReportBodyFile.generateReport.srcModuleName.text"), "");
+                                NbBundle.getMessage(this.getClass(),
+                                        "ReportBodyFile.generateReport.srcModuleName.text"), "");
 
                     }
                 } catch (IOException ex) {
@@ -162,12 +164,12 @@ import org.sleuthkit.datamodel.*;
                 } catch (TskCoreException ex) {
                     String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
                     logger.log(Level.SEVERE, errorMessage, ex);
-                }                    
+                }
             }
             progressPanel.complete();
-        }  catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
-        } 
+        }
     }
 
     @Override

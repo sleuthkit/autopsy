@@ -157,6 +157,7 @@ class EvalRegistryObj extends EvaluatableObject {
      * Test the Registry object against one registry file.
      *
      * @param a_regInfo The registry file
+     *
      * @return Result of the test
      */
     private ObservableResult testRegistryFile(RegistryFileInfo a_regInfo) {
@@ -169,8 +170,8 @@ class EvalRegistryObj extends EvaluatableObject {
                 // Take another shot looking for the key minus the first part of the path (sometimes the
                 // hive file name is here). This should only happen if the hive name started
                 // with "HKEY"
-                if((obj.getHive() != null) 
-                    && obj.getHive().getValue().toString().startsWith("HKEY")){ //NON-NLS
+                if ((obj.getHive() != null)
+                        && obj.getHive().getValue().toString().startsWith("HKEY")) { //NON-NLS
                     String[] parts = obj.getKey().getValue().toString().split("\\\\");
                     String newKey = "";
                     for (int i = 1; i < parts.length; i++) {
@@ -252,7 +253,7 @@ class EvalRegistryObj extends EvaluatableObject {
 
                                     break;
                                 default:
-                                    // Nothing to do here. These are the types we don't handle:
+                                // Nothing to do here. These are the types we don't handle:
                                 // REG_BIN, REG_FULL_RESOURCE_DESCRIPTOR, REG_LINK, REG_MULTI_SZ, REG_NONE,
                                 // REG_RESOURCE_LIST, REG_RESOURCE_REQUIREMENTS_LIST
                             }
@@ -301,6 +302,7 @@ class EvalRegistryObj extends EvaluatableObject {
      *
      * @param root Root of the registry hive
      * @param name Name of the subkey to seach for
+     *
      * @return The matching subkey or null if not found
      */
     public RegistryKey findKey(RegistryKey root, String name) {

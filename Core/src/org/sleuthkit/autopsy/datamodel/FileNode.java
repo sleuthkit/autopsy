@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -72,11 +72,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
      * Right click action for this node
      *
      * @param popup
+     *
      * @return
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actionsList = new ArrayList<>();        
+        List<Action> actionsList = new ArrayList<>();
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "FileNode.viewFileInDir.text"), this));
             actionsList.add(null); // creates a menu separator
@@ -91,7 +92,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "FileNode.getActions.searchFilesSameMD5.text"), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());        
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[0]);
     }
 
@@ -118,7 +119,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
 
         // Images
         for (String s : FileTypeExtensions.getImageExtensions()) {
-            if (ext.equals(s)) {
+            if (ImageUtils.thumbnailSupported(file) || ext.equals(s)) {
                 return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
             }
         }

@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 /**
  * Dialog to show add image error messages
  */
- public class AddImageErrorsDialog extends javax.swing.JDialog {
+public class AddImageErrorsDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AddImageErrorsDialog

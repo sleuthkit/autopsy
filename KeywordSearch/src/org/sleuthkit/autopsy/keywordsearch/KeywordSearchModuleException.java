@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 /**
@@ -35,6 +34,5 @@ public class KeywordSearchModuleException extends Exception {
     public KeywordSearchModuleException(Throwable cause) {
         super(cause);
     }
-    
-    
+
 }

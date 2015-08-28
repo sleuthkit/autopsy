@@ -26,7 +26,8 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
- class ReportGenerationPanel extends javax.swing.JPanel {
+class ReportGenerationPanel extends javax.swing.JPanel {
+
     private GridBagConstraints c;
     ReportProgressPanel progressPanel;
     private Component glue;
@@ -39,7 +40,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         initComponents();
         customInit();
     }
-    
+
     private void customInit() {
         reportPanel.setLayout(new GridBagLayout());
         c = new GridBagConstraints();
@@ -49,35 +50,37 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
         c.weightx = 1.0;
         glue = Box.createVerticalGlue();
     }
-    
+
     /**
-     * Add a ReportProgressPanel to this panel with the given report name and path.
-     * 
+     * Add a ReportProgressPanel to this panel with the given report name and
+     * path.
+     *
      * @param reportName report name
      * @param reportPath report path
+     *
      * @return ReportProgressPanel progress panel to update
      */
     public ReportProgressPanel addReport(String reportName, String reportPath) {
         // Remove the glue
         reportPanel.remove(glue);
-        
+
         progressPanel = new ReportProgressPanel(reportName, reportPath);
         c.weighty = 0.0;
         c.anchor = GridBagConstraints.NORTH;
         reportPanel.add(progressPanel, c);
         c.gridy++;
-        
+
         // Add the glue back to the bottom
         c.weighty = 1.0;
         c.anchor = GridBagConstraints.PAGE_END;
         reportPanel.add(glue, c);
-        
+
         // 80 px per progressPanel.
         reportPanel.setPreferredSize(new Dimension(600, 1 * 80));
         reportPanel.repaint();
         return progressPanel;
     }
-    
+
     /**
      * Close this panel and it's dialog if all reports are done.
      */
@@ -90,18 +93,17 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
             actionListener.actionPerformed(null);
         } else {
             int result = JOptionPane.showConfirmDialog(null,
-                                                       NbBundle.getMessage(this.getClass(),
-                                                                                 "ReportGenerationPanel.confDlg.sureToClose.msg"),
-                                                       NbBundle.getMessage(this.getClass(),
-                                                                           "ReportGenerationPanel.confDlg.title.closing"),
-                                                       JOptionPane.YES_NO_OPTION);
+                    NbBundle.getMessage(this.getClass(),
+                            "ReportGenerationPanel.confDlg.sureToClose.msg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "ReportGenerationPanel.confDlg.title.closing"),
+                    JOptionPane.YES_NO_OPTION);
             if (result == 0) {
                 progressPanel.cancel();
                 actionListener.actionPerformed(null);
             }
         }
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -206,12 +208,12 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        if(progressPanel.getStatus() == ReportStatus.QUEUING || progressPanel.getStatus() == ReportStatus.RUNNING) {
+        if (progressPanel.getStatus() == ReportStatus.QUEUING || progressPanel.getStatus() == ReportStatus.RUNNING) {
             int result = JOptionPane.showConfirmDialog(null, NbBundle.getMessage(this.getClass(),
-                                                                             "ReportGenerationPanel.confDlg.cancelReport.msg"),
-                                                   NbBundle.getMessage(this.getClass(),
-                                                                       "ReportGenerationPanel.cancelButton.text"),
-                                                  JOptionPane.YES_NO_OPTION);
+                    "ReportGenerationPanel.confDlg.cancelReport.msg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "ReportGenerationPanel.cancelButton.text"),
+                    JOptionPane.YES_NO_OPTION);
             if (result == 0) {
                 progressPanel.cancel();
             }
@@ -221,7 +223,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
     void addCloseAction(ActionListener l) {
         this.actionListener = l;
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JButton closeButton;

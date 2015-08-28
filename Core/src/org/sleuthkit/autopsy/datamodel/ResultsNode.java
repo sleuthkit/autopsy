@@ -37,7 +37,7 @@ public class ResultsNode extends DisplayableItemNode {
                 new HashsetHits(sleuthkitCase),
                 new EmailExtracted(sleuthkitCase),
                 new InterestingHits(sleuthkitCase)
-                )), Lookups.singleton(NAME));
+        )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png"); //NON-NLS

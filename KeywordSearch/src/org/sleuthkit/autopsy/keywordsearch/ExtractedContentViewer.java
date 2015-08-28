@@ -55,7 +55,6 @@ public class ExtractedContentViewer implements DataContentViewer {
     private TextMarkup currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
 
-
     public ExtractedContentViewer() {
         logger.log(Level.INFO, "Created TextView instance: " + this); //NON-NLS
     }
@@ -73,15 +72,14 @@ public class ExtractedContentViewer implements DataContentViewer {
         //for now, do not update second time
         if (selectedNode == currentNode) {
             return;
-        }
-        else {
+        } else {
             currentNode = selectedNode;
         }
 
-        /* Sources contain implementations that will markup the text
-         * in different ways. The original behavior for this was a source
-         * for the text markedup by SOLR and another that just displayed
-         * raw text. 
+        /*
+         * Sources contain implementations that will markup the text in
+         * different ways. The original behavior for this was a source for the
+         * text markedup by SOLR and another that just displayed raw text.
          */
         final List<TextMarkup> sources = new ArrayList<TextMarkup>();
 
@@ -99,18 +97,18 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         long objectId = getDocumentId(selectedNode);
         boolean isDir = content.accept(isDirVisitor);
-        
+
         if (!isDir && solrHasContent(objectId) == false) {
             setPanel(sources);
-            return;            
+            return;
         }
-                
+
         // make a new source for the raw content
         TextMarkup rawSource = new RawTextMarkup(content, objectId);
-        
+
         currentSource = rawSource;
         sources.add(rawSource);
-      
+
         //init pages
         int currentPage = currentSource.getCurrentPage();
         if (currentPage == 0 && currentSource.hasNextPage()) {
@@ -180,7 +178,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (sources.isEmpty() == false) {
             return true;
         }
-        
+
         // see if the node has a Highlight object in it.  
         // BC @@@ This seems to be added by BlackboardArtifactNode from the tree
         if (node.getLookup().lookup(TextMarkupLookup.class) != null) {
@@ -215,8 +213,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
-
-
     private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
 
         @Override
@@ -233,12 +229,13 @@ public class ExtractedContentViewer implements DataContentViewer {
     /**
      * Check if Solr has extracted content for a given node
      *
-     * @param objectId 
+     * @param objectId
+     *
      * @return true if Solr has content, else false
      */
     private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
-        
+
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException ex) {
@@ -251,27 +248,30 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     /**
-     * Get the correct document id for the given node. If the node contains a 
-     * HighlightedTextMarkup object, its object id will have been set. 
-     * Otherwise the document id is obtained from the Content object.
+     * Get the correct document id for the given node. If the node contains a
+     * HighlightedTextMarkup object, its object id will have been set. Otherwise
+     * the document id is obtained from the Content object.
+     *
      * @param node
-     * @return Either the artifact id, file id or 0. 
+     *
+     * @return Either the artifact id, file id or 0.
      */
     private Long getDocumentId(Node node) {
         HighlightedTextMarkup markup = node.getLookup().lookup(HighlightedTextMarkup.class);
-        
+
         if (markup != null) {
             return markup.getObjectId();
         }
-                
+
         Content content = node.getLookup().lookup(Content.class);
-        
-        if (content != null)
+
+        if (content != null) {
             return content.getId();
-        
+        }
+
         return 0L;
     }
-    
+
     private class NextFindActionListener implements ActionListener {
 
         @Override
@@ -379,7 +379,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateControls(null);
             return;
         }
-        
+
         if (currentSource.hasNextPage()) {
             currentSource.nextPage();
 
@@ -412,7 +412,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateControls(null);
             return;
         }
-        
+
         if (currentSource.hasPreviousPage()) {
             currentSource.previousPage();
 
@@ -436,7 +436,6 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
 
             updateSearchControls();
-
 
         }
     }

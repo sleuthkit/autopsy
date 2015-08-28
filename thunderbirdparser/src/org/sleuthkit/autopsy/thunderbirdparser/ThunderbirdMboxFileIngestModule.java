@@ -111,6 +111,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * Processes a pst/ost data file and extracts and adds email artifacts.
      *
      * @param abstractFile The pst/ost data file to process.
+     *
      * @return
      */
     private ProcessResult processPst(AbstractFile abstractFile) {
@@ -122,8 +123,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                    "ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace",
-                    abstractFile.getName()));
+                            "ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace",
+                            abstractFile.getName()));
             services.postMessage(msg);
             return ProcessResult.OK;
         }
@@ -154,9 +155,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             // parsing error: log message
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
-                    abstractFile.getName()),
+                            abstractFile.getName()),
                     NbBundle.getMessage(this.getClass(),
-                    "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
+                            "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
             logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
             return ProcessResult.ERROR;
         }
@@ -169,7 +170,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (errors.isEmpty() == false) {
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg2",
-                    abstractFile.getName()), errors);
+                            abstractFile.getName()), errors);
         }
 
         return ProcessResult.OK;
@@ -180,6 +181,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param abstractFile
      * @param ingestContext
+     *
      * @return
      */
     private ProcessResult processMBox(AbstractFile abstractFile) {
@@ -204,9 +206,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg",
-                    abstractFile.getName()),
+                            abstractFile.getName()),
                     NbBundle.getMessage(this.getClass(),
-                    "ThunderbirdMboxFileIngestModule.processMBox.errProfFile.details"));
+                            "ThunderbirdMboxFileIngestModule.processMBox.errProfFile.details"));
             return ProcessResult.OK;
         }
 
@@ -230,7 +232,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (errors.isEmpty() == false) {
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
-                    abstractFile.getName()), errors);
+                            abstractFile.getName()), errors);
         }
 
         return ProcessResult.OK;
@@ -298,6 +300,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param attachments
      * @param abstractFile
+     *
      * @return
      */
     private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile) {
@@ -319,9 +322,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             } catch (TskCoreException ex) {
                 postErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.handleAttch.errMsg",
-                        abstractFile.getName()),
+                                abstractFile.getName()),
                         NbBundle.getMessage(this.getClass(),
-                        "ThunderbirdMboxFileIngestModule.handleAttch.errMsg.details", filename));
+                                "ThunderbirdMboxFileIngestModule.handleAttch.errMsg.details", filename));
                 logger.log(Level.INFO, "", ex);
             }
         }
@@ -401,8 +404,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     IngestServices getServices() {
         return services;
     }
-    
+
     @Override
-    public void shutDown() {        
+    public void shutDown() {
     }
 }

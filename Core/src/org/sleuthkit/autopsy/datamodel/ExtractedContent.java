@@ -126,6 +126,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * more specific form elsewhere in the tree.
      */
     private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.ARTIFACT_TYPE> {
+
         private final ArrayList<BlackboardArtifact.ARTIFACT_TYPE> doNotShow;
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.ARTIFACT_TYPE, TypeNode> typeNodeList = new HashMap<>();
@@ -142,7 +143,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             doNotShow.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
         }
-        
+
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -156,8 +157,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     refresh(true);
-                }
-                else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     if (evt.getNewValue() == null) {
                         removeNotify();
@@ -187,17 +187,17 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase == null) {
                 return false;
             }
-            
+
             try {
                 List<BlackboardArtifact.ARTIFACT_TYPE> inUse = skCase.getBlackboardArtifactTypesInUse();
                 inUse.removeAll(doNotShow);
                 Collections.sort(inUse,
                         new Comparator<BlackboardArtifact.ARTIFACT_TYPE>() {
-                    @Override
-                    public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
-                        return a.getDisplayName().compareTo(b.getDisplayName());
-                    }
-                });
+                            @Override
+                            public int compare(BlackboardArtifact.ARTIFACT_TYPE a, BlackboardArtifact.ARTIFACT_TYPE b) {
+                                return a.getDisplayName().compareTo(b.getDisplayName());
+                            }
+                        });
                 list.addAll(inUse);
 
                 // the create node method will get called only for new types
@@ -246,7 +246,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase == null) {
                 return;
             }
-            
+
             // NOTE: This completely destroys our lazy-loading ideal
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
@@ -357,7 +357,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super();
             this.type = type;
         }
-        
+
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -392,7 +392,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase == null) {
                 return false;
             }
-            
+
             try {
                 List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
                 list.addAll(arts);

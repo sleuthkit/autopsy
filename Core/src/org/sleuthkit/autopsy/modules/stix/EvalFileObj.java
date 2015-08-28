@@ -172,18 +172,17 @@ class EvalFileObj extends EvaluatableObject {
                 if (h.getSimpleHashValue() != null) {
                     if (h.getType().getValue().equals("MD5")) { //NON-NLS
                         String newClause = "";
-                        if(h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")){
+                        if (h.getSimpleHashValue().getValue().toString().toLowerCase().contains("##comma##")) {
                             String[] parts = h.getSimpleHashValue().getValue().toString().toLowerCase().split("##comma##"); //NON-NLS
                             String hashList = "";
-                            for(String s:parts){
-                                if(!hashList.isEmpty()){
+                            for (String s : parts) {
+                                if (!hashList.isEmpty()) {
                                     hashList += ", ";
                                 }
                                 hashList += "\'" + s + "\'";
                             }
                             newClause = "md5 IN (" + hashList + ")";
-                        }
-                        else{
+                        } else {
                             newClause = "md5=\'" + h.getSimpleHashValue().getValue().toString().toLowerCase() + "\'"; //NON-NLS
                         }
                         whereClause = addClause(whereClause, newClause);
@@ -427,7 +426,9 @@ class EvalFileObj extends EvaluatableObject {
      * Convert timestamp string into a long.
      *
      * @param timeStr
+     *
      * @return
+     *
      * @throws ParseException
      */
     private static long convertTimestamp(String timeStr) throws ParseException {
@@ -444,9 +445,11 @@ class EvalFileObj extends EvaluatableObject {
      * Return the SQL clause for an unsigned long object. Splits into fields and
      * call the more generic version of the function.
      *
-     * @param longObj The Cybox UnsignedLong object
+     * @param longObj   The Cybox UnsignedLong object
      * @param fieldName Name of the field to test against
+     *
      * @return SQL clause
+     *
      * @throws TskCoreException
      */
     private static String processULongObject(UnsignedLongObjectPropertyType longObj, String fieldName)
@@ -459,11 +462,13 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Return the SQL clause for a numeric object.
      *
-     * @param valueStr Value (as string)
-     * @param typeCondition Cybox condition
+     * @param valueStr       Value (as string)
+     * @param typeCondition  Cybox condition
      * @param applyCondition Cybox apply_condition
-     * @param fieldName Name of the field to test against
+     * @param fieldName      Name of the field to test against
+     *
      * @return SQL clause
+     *
      * @throws TskCoreException
      */
     private static String processNumericFields(String valueStr, ConditionTypeEnum typeCondition,
@@ -553,7 +558,9 @@ class EvalFileObj extends EvaluatableObject {
      *
      * @param stringObj The full Cybox String object
      * @param fieldName Name of the field we're testing against
+     *
      * @return SQL clause
+     *
      * @throws TskCoreException
      */
     private static String processStringObject(StringObjectPropertyType stringObj, String fieldName)
@@ -566,11 +573,13 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Return the SQL clause for a String object
      *
-     * @param valueStr Value as a string
-     * @param condition Cybox condition
+     * @param valueStr       Value as a string
+     * @param condition      Cybox condition
      * @param applyCondition Cybox apply_condition
-     * @param fieldName Name of the field we're testing against
+     * @param fieldName      Name of the field we're testing against
+     *
      * @return SQL clause
+     *
      * @throws TskCoreException
      */
     public static String processStringObject(String valueStr, ConditionTypeEnum condition,
@@ -637,9 +646,11 @@ class EvalFileObj extends EvaluatableObject {
      * Create the SQL clause for a timestamp object. Converts the time into a
      * numeric field and then creates the clause from that.
      *
-     * @param dateObj Cybox DateTimeObject
+     * @param dateObj   Cybox DateTimeObject
      * @param fieldName Name of the field we're testing against
+     *
      * @return SQL clause
+     *
      * @throws TskCoreException
      */
     private static String processTimestampObject(DateTimeObjectPropertyType dateObj, String fieldName)
@@ -661,7 +672,9 @@ class EvalFileObj extends EvaluatableObject {
      * that's what we get from other object types.
      *
      * @param timestampStr
+     *
      * @return String version with timestamps replaced by numeric values
+     *
      * @throws TskCoreException
      */
     private static String convertTimestampString(String timestampStr)
@@ -687,8 +700,9 @@ class EvalFileObj extends EvaluatableObject {
     /**
      * Add a new clause to the existing clause
      *
-     * @param a_clause Current clause
+     * @param a_clause    Current clause
      * @param a_newClause New clause
+     *
      * @return Full clause
      */
     private static String addClause(String a_clause, String a_newClause) {

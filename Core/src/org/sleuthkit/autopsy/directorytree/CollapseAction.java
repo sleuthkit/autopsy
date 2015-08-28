@@ -25,7 +25,6 @@ import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
-
 /**
  *
  * @author jantonius
@@ -42,23 +41,23 @@ class CollapseAction extends AbstractAction {
         Node[] selectedNode = em.getSelectedNodes();
 
         // Collapse all
-
         BeanTreeView tree = DirectoryTreeTopComponent.findInstance().getTree();
-        if(selectedNode.length != 0) {
+        if (selectedNode.length != 0) {
             collapseSelectedNode(tree, selectedNode[0]);
         } else {
             // If no node is selected, all the level-2 nodes (children of the
             // root node) are collapsed.
-            for(Node childOfRoot: em.getRootContext().getChildren().getNodes())
+            for (Node childOfRoot : em.getRootContext().getChildren().getNodes()) {
                 collapseSelectedNode(tree, childOfRoot);
+            }
         }
     }
 
     /**
      * Collapse all visible children of the given node on the given tree.
      *
-     * @param tree          the given tree
-     * @param currentNode   the current selectedNode
+     * @param tree        the given tree
+     * @param currentNode the current selectedNode
      */
     private void collapseSelectedNode(BeanTreeView tree, Node currentNode) {
 
