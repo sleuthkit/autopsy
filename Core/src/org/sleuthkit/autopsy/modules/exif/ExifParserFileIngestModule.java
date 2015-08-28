@@ -168,7 +168,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                         logger.log(Level.INFO, "Error getting time zones", ex); //NON-NLS
                     }
                 }
-                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+                Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID(), ExifParserModuleFactory.getModuleName(), date.getTime() / 1000));
                 }
