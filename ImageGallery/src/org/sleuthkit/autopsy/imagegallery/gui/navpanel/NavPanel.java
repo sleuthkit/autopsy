@@ -157,9 +157,7 @@ public class NavPanel extends TabPane {
             }
 
             if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
-                Platform.runLater(() -> {
-                    setFocusedGroup(selectedItem.getValue().getGroup());
-                });
+                setFocusedGroup(selectedItem.getValue().getGroup());
             }
         });
 
