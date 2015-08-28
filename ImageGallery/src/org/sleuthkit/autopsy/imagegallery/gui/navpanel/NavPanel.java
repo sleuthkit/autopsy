@@ -115,6 +115,7 @@ public class NavPanel extends TabPane {
         sortByBox.setItems(FXCollections.observableArrayList(FXCollections.observableArrayList(TreeNodeComparators.values())));
         sortByBox.getSelectionModel().select(TreeNodeComparators.HIT_COUNT);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
+            //user action ->jfx thread
             resortHashTree();
         });
 
@@ -140,6 +141,7 @@ public class NavPanel extends TabPane {
         });
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            //analyzed groups shoud only be modified on jfx thread
             TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
             while (change.next()) {
                 for (DrawableGroup g : change.getAddedSubList()) {
@@ -196,6 +198,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void resortHashTree() {
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
     }
@@ -250,16 +253,19 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void insertIntoHashTree(DrawableGroup g) {
         initHashTree();
         hashTreeRoot.insert(groupingToPath(g), g, false);
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void insertIntoNavTree(DrawableGroup g) {
         initNavTree();
         navTreeRoot.insert(groupingToPath(g), g, true);
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void removeFromNavTree(DrawableGroup g) {
         initNavTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(navTreeRoot, g);
@@ -268,6 +274,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void removeFromHashTree(DrawableGroup g) {
         initHashTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(hashTreeRoot, g);
