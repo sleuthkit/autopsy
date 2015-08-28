@@ -20,71 +20,37 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.MissingResourceException;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Analyzes database created by browser that stores GEO location info.
  */
-class BrowserLocationAnalyzer {
+public class BrowserLocationAnalyzer implements AndroidAnalyzer {
 
-    private static final String moduleName = AndroidModuleFactory.getModuleName();
-    private static final Logger logger = Logger.getLogger(BrowserLocationAnalyzer.class.getName());
+    private static final String moduleName = org.sleuthkit.autopsy.modules.android.AndroidModuleFactory.getModuleName();
+    private static final Logger logger = Logger.getLogger(org.sleuthkit.autopsy.modules.android.BrowserLocationAnalyzer.class.getName());
+    private static final String[] dataBaseNames = {"CachedGeoposition%.db"};
 
-    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
-        try {
-            List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "CachedGeoposition%.db"); //NON-NLS
-
-            for (AbstractFile abstractFile : abstractFiles) {
-                try {
-                    if (abstractFile.getSize() == 0) {
-                        continue;
-                    }
-                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
-                    findGeoLocationsInDB(jFile.toString(), abstractFile);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Browser Location files", e); //NON-NLS
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Browser Location files", e); //NON-NLS
-
-        }
-    }
-
-    private static void findGeoLocationsInDB(String DatabasePath, AbstractFile f) {
-        Connection connection = null;
+    @Override
+    public void findInDB(Connection connection, AbstractFile abstractFile) {
         ResultSet resultSet = null;
         Statement statement = null;
-        if (DatabasePath == null || DatabasePath.isEmpty()) {
-            return;
-        }
         try {
-            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error connecting to sql database", e); //NON-NLS
             return;
         }
-
         try {
             resultSet = statement.executeQuery(
                     "Select timestamp, latitude, longitude, accuracy FROM CachedPosition;"); //NON-NLS
@@ -94,16 +60,16 @@ class BrowserLocationAnalyzer {
                 double latitude = Double.valueOf(resultSet.getString("latitude")); //NON-NLS
                 double longitude = Double.valueOf(resultSet.getString("longitude")); //NON-NLS
 
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
+                BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, latitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), moduleName,
-                        NbBundle.getMessage(BrowserLocationAnalyzer.class,
+                        NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.BrowserLocationAnalyzer.class,
                                 "BrowserLocationAnalyzer.bbAttribute.browserLocationHistory")));
                 //  bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy)); 
             }
-        } catch (Exception e) {
+        } catch (SQLException | NumberFormatException | TskCoreException | MissingResourceException e) {
             logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", e); //NON-NLS
         } finally {
             try {
@@ -111,11 +77,24 @@ class BrowserLocationAnalyzer {
                     resultSet.close();
                 }
                 statement.close();
-                connection.close();
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
+    }
 
+    @Override
+    public String[] getDatabaseNames() {
+        return dataBaseNames;
+    }
+
+    @Override
+    public boolean parsesDB() {
+        return true;
+    }
+
+    @Override
+    public void findInFile(File file, AbstractFile abstractFile) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -21,76 +21,34 @@ package org.sleuthkit.autopsy.modules.android;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import java.util.logging.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Locates a variety of different contacts databases, parses them, and populates
  * the blackboard.
  */
-class ContactAnalyzer {
+public class ContactAnalyzer implements AndroidAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
+    private static final String[] databaseNames = {"contacts.db", "contacts2.db"};
 
-    public static void findContacts(Content dataSource, FileManager fileManager) {
-
-        List<AbstractFile> absFiles;
-        try {
-            absFiles = fileManager.findFiles(dataSource, "contacts.db"); //NON-NLS
-            absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
-            if (absFiles.isEmpty()) {
-                return;
-            }
-            for (AbstractFile AF : absFiles) {
-                try {
-                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), AF.getName());
-                    ContentUtils.writeToFile(AF, jFile);
-                    findContactsInDB(jFile.toString(), AF);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding Contacts", e); //NON-NLS
-        }
-    }
-
-    /**
-     *
-     * @param databasePath
-     * @param fId          Will create artifact from a database given by the
-     *                     path The fileId will be the Abstract file associated
-     *                     with the artifacts
-     */
-    private static void findContactsInDB(String databasePath, AbstractFile f) {
-        Connection connection = null;
+    @Override
+    public void findInDB(Connection connection, AbstractFile abstractFile) {
         ResultSet resultSet = null;
         Statement statement = null;
 
-        if (databasePath == null || databasePath.isEmpty()) {
-            return;
-        }
         try {
-            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath); //NON-NLS
             statement = connection.createStatement();
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
@@ -128,7 +86,7 @@ class ContactAnalyzer {
             }
 
             BlackboardArtifact bba;
-            bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+            bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
             String name;
             String oldName = "";
             String mimetype; // either phone or email
@@ -137,9 +95,8 @@ class ContactAnalyzer {
                 name = resultSet.getString("display_name"); //NON-NLS
                 data1 = resultSet.getString("data1"); //NON-NLS
                 mimetype = resultSet.getString("mimetype"); //NON-NLS
-//                    System.out.println(resultSet.getString("data1") + resultSet.getString("mimetype") + resultSet.getString("display_name")); //Test code
                 if (name.equals(oldName) == false) {
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+                    bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
                 }
                 if (mimetype.equals("vnd.android.cursor.item/phone_v2")) { //NON-NLS
@@ -151,7 +108,7 @@ class ContactAnalyzer {
             }
 
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0} : {1}", new Object[]{databasePath, e}); //NON-NLS
+            logger.log(Level.WARNING, "Unable to execute contacts SQL query: {1}", new Object[]{e}); //NON-NLS
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Error posting to blackboard", e); //NON-NLS
         } finally {
@@ -165,5 +122,20 @@ class ContactAnalyzer {
                 logger.log(Level.SEVERE, "Error closing database", e); //NON-NLS
             }
         }
+    }
+
+    @Override
+    public String[] getDatabaseNames() {
+        return databaseNames;
+    }
+
+    @Override
+    public boolean parsesDB() {
+        return true;
+    }
+
+    @Override
+    public void findInFile(File file, AbstractFile abstractFile) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

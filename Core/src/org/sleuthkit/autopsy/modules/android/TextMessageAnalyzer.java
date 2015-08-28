@@ -20,64 +20,32 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.MissingResourceException;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- * Finds database with SMS/MMS messages and adds them to blackboard.
- */
-class TextMessageAnalyzer {
+public class TextMessageAnalyzer implements AndroidAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
-    private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
+    private static final Logger logger = Logger.getLogger(GoogleMapLocationAnalyzer.class.getName());
+    private static final String[] databaseNames = {"mmssms.db"};
 
-    public static void findTexts(Content dataSource, FileManager fileManager) {
-        try {
-
-            List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "mmssms.db"); //NON-NLS
-            for (AbstractFile abstractFile : absFiles) {
-                try {
-                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
-                    findTextsInDB(jFile.toString(), abstractFile);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding text messages", e); //NON-NLS
-        }
-    }
-
-    private static void findTextsInDB(String DatabasePath, AbstractFile f) {
-        Connection connection = null;
+    @Override
+    public void findInDB(Connection connection, AbstractFile abstractFile) {
         ResultSet resultSet = null;
         Statement statement = null;
 
-        if (DatabasePath == null || DatabasePath.isEmpty()) {
-            return;
-        }
         try {
-            Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
             statement = connection.createStatement();
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
@@ -100,15 +68,15 @@ class TextMessageAnalyzer {
                 subject = resultSet.getString("subject"); //NON-NLS
                 body = resultSet.getString("body"); //NON-NLS
 
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
+                BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                 if (resultSet.getString("type").equals("1")) { //NON-NLS
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
-                            NbBundle.getMessage(TextMessageAnalyzer.class,
+                            NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
                                     "TextMessageAnalyzer.bbAttribute.incoming")));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, address));
                 } else {
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName,
-                            NbBundle.getMessage(TextMessageAnalyzer.class,
+                            NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
                                     "TextMessageAnalyzer.bbAttribute.outgoing")));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, address));
                 }
@@ -118,11 +86,11 @@ class TextMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
-                        NbBundle.getMessage(TextMessageAnalyzer.class,
+                        NbBundle.getMessage(org.sleuthkit.autopsy.modules.android.TextMessageAnalyzer.class,
                                 "TextMessageAnalyzer.bbAttribute.smsMessage")));
             }
 
-        } catch (Exception e) {
+        } catch (SQLException | NumberFormatException | TskCoreException | MissingResourceException e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         } finally {
             try {
@@ -136,4 +104,20 @@ class TextMessageAnalyzer {
             }
         }
     }
+
+    @Override
+    public String[] getDatabaseNames() {
+        return databaseNames;
+    }
+
+    @Override
+    public boolean parsesDB() {
+        return true;
+    }
+
+    @Override
+    public void findInFile(File file, AbstractFile abstractFile) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

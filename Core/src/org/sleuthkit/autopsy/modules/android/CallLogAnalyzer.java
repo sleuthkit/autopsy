@@ -19,74 +19,41 @@
 package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Locates a variety of different call log databases, parses them, and populates
  * the blackboard.
  */
-class CallLogAnalyzer {
+public class CallLogAnalyzer implements AndroidAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
-    private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
-
+    private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
+    private static final String[] databaseNames = {"logs.db", "contacts.db", "contacts2.db"};
     /**
      * the names of tables that potentially hold call logs in the dbs
      */
     private static final Iterable<String> tableNames = Arrays.asList("calls", "logs"); //NON-NLS
 
-    public static void findCallLogs(Content dataSource, FileManager fileManager) {
+    @Override
+    public void findInDB(Connection connection, AbstractFile abstractFile) {
+
         try {
-            List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "logs.db"); //NON-NLS
-            absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db")); //NON-NLS
-            absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db")); //NON-NLS
-            for (AbstractFile abstractFile : absFiles) {
-                try {
-                    File file = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, file);
-                    findCallLogsInDB(file.toString(), abstractFile);
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error writing temporary call log db to disk", e); //NON-NLS
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding call logs", e); //NON-NLS
-        }
-    }
-
-    private static void findCallLogsInDB(String DatabasePath, AbstractFile f) {
-
-        if (DatabasePath == null || DatabasePath.isEmpty()) {
-            return;
-        }
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
-                Statement statement = connection.createStatement();) {
-
+            Statement statement = connection.createStatement();
             for (String tableName : tableNames) {
                 try (ResultSet resultSet = statement.executeQuery(
                         "SELECT number,date,duration,type, name FROM " + tableName + " ORDER BY date DESC;");) { //NON-NLS
-                    logger.log(Level.INFO, "Reading call log from table {0} in db {1}", new Object[]{tableName, DatabasePath}); //NON-NLS
+                    logger.log(Level.INFO, "Reading call log from table {0}", new Object[]{tableName}); //NON-NLS
                     while (resultSet.next()) {
                         Long date = resultSet.getLong("date") / 1000;
                         final CallDirection direction = CallDirection.fromType(resultSet.getInt("type")); //NON-NLS
@@ -96,27 +63,42 @@ class CallLogAnalyzer {
                         final String name = resultSet.getString("name"); //NON-NLS  // name of person dialed or called. null if unregistered
 
                         try {
-                            BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
-                            if (direction == CallDirection.OUTGOING) {
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
+                            BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
+                            if (direction == CallLogAnalyzer.CallDirection.OUTGOING) {
+                                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), moduleName, number));
                             } else { /// Covers INCOMING and MISSED
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
+                                bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), moduleName, number));
                             }
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration + date));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, directionString));
-                            bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
+                            bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID(), moduleName, date));
+                            bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID(), moduleName, duration + date));
+                            bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION.getTypeID(), moduleName, directionString));
+                            bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex); //NON-NLS
                         }
                     }
                 } catch (SQLException e) {
-                    logger.log(Level.WARNING, "Could not read table {0} in db {1}", new Object[]{tableName, DatabasePath}); //NON-NLS
+                    logger.log(Level.WARNING, "Could not read table {0}", new Object[]{tableName}); //NON-NLS
                 }
             }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + DatabasePath, e); //NON-NLS
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Could not parse call log; error connecting to db", ex); //NON-NLS
         }
+    }
+
+    @Override
+    public String[] getDatabaseNames() {
+        return databaseNames;
+    }
+
+    @Override
+    public boolean parsesDB() {
+        return true;
+    }
+
+    @Override
+    public void findInFile(File file, AbstractFile abstractFile) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static enum CallDirection {

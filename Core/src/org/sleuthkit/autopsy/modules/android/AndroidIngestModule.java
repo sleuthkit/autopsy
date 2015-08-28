@@ -1,4 +1,4 @@
-/*
+                                    /*
  * Autopsy Forensic Browser
  *
  * Copyright 2014 Basis Technology Corp.
@@ -18,37 +18,42 @@
  */
 package org.sleuthkit.autopsy.modules.android;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 class AndroidIngestModule implements DataSourceIngestModule {
 
-    private static final HashMap<Long, Long> fileCountsForIngestJobs = new HashMap<>();
     private IngestJobContext context = null;
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Logger logger = Logger.getLogger(AndroidIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
 
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
+    public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         this.context = context;
     }
 
     @Override
-    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+    public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         services.postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO, AndroidModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
                         "AndroidIngestModule.processing.startedAnalysis")));
@@ -56,85 +61,63 @@ class AndroidIngestModule implements DataSourceIngestModule {
         ArrayList<String> errors = new ArrayList<>();
         progressBar.switchToDeterminate(9);
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        List<AndroidAnalyzer> listOfAndroidAnalyzer = new ArrayList<>();
 
-        try {
-            ContactAnalyzer.findContacts(dataSource, fileManager);
-            progressBar.progress(1);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
+        listOfAndroidAnalyzer.add(new BrowserLocationAnalyzer());
+        listOfAndroidAnalyzer.add(new CacheLocationAnalyzer());
+        listOfAndroidAnalyzer.add(new CallLogAnalyzer());
+        listOfAndroidAnalyzer.add(new ContactAnalyzer());
+        listOfAndroidAnalyzer.add(new GoogleMapLocationAnalyzer());
+        listOfAndroidAnalyzer.add(new TangoMessageAnalyzer());
+        listOfAndroidAnalyzer.add(new TextMessageAnalyzer());
+        listOfAndroidAnalyzer.add(new WWFMessageAnalyzer());
+
+        progressBar.switchToDeterminate(listOfAndroidAnalyzer.size());
+        int i = 0;
+
+        for (AndroidAnalyzer androidAnalyzer : listOfAndroidAnalyzer) {
+            try {
+                List<AbstractFile> listOfDBAbstractFiles = new ArrayList<>();
+                for (String databaseName : androidAnalyzer.getDatabaseNames()) {
+                    listOfDBAbstractFiles.addAll(fileManager.findFiles(dataSource, databaseName));
+                }
+                for (AbstractFile dBAbstractFile : listOfDBAbstractFiles) {
+                    if (dBAbstractFile.getSize() > 0) {
+                        File jFile = new File(Case.getCurrentCase().getTempDirectory(), dBAbstractFile.getName());
+                        ContentUtils.writeToFile(dBAbstractFile, jFile);
+                        try {
+                            if (androidAnalyzer.parsesDB()) {
+                                String databasePath = jFile.toString();
+                                //androidAnalyzer.findInDB(jFile.toString(), dBAbstractFile);
+                                try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
+                                    androidAnalyzer.findInDB(connection, dBAbstractFile);
+                                }
+                            } else {
+                                androidAnalyzer.findInFile(jFile, dBAbstractFile);
+                            }
+                        } catch (Exception ex) {
+                            errors.add("Error while executing " + androidAnalyzer.getClass().getName());
+                        }
+                    }
+                }
+                progressBar.progress(++i);
+                if (context.dataSourceIngestIsCancelled()) {
+                    return IngestModule.ProcessResult.OK;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to find database file ", ex); //NON-NLS
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Error writing file to the disk ", ex); //NON-NLS
             }
-        } catch (Exception e) {
-            errors.add("Error getting Contacts"); //NON-NLS
         }
 
-        try {
-            CallLogAnalyzer.findCallLogs(dataSource, fileManager);
-            progressBar.progress(2);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Call Logs"); //NON-NLS
-        }
+        postFinalMessageToInbox(errors);
 
-        try {
-            TextMessageAnalyzer.findTexts(dataSource, fileManager);
-            progressBar.progress(3);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Text Messages"); //NON-NLS
-        }
+        return IngestModule.ProcessResult.OK;
+    }
 
-        try {
-            TangoMessageAnalyzer.findTangoMessages(dataSource, fileManager);
-            progressBar.progress(4);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Tango Messages"); //NON-NLS
-        }
+    private void postFinalMessageToInbox(List<String> errors) {
 
-        try {
-            WWFMessageAnalyzer.findWWFMessages(dataSource, fileManager);
-            progressBar.progress(5);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Words with Friends Messages"); //NON-NLS
-        }
-
-        try {
-            GoogleMapLocationAnalyzer.findGeoLocations(dataSource, fileManager);
-            progressBar.progress(6);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Google Map Locations"); //NON-NLS
-        }
-
-        try {
-            BrowserLocationAnalyzer.findGeoLocations(dataSource, fileManager);
-            progressBar.progress(7);
-            if (context.dataSourceIngestIsCancelled()) {
-                return IngestModule.ProcessResult.OK;
-            }
-        } catch (Exception e) {
-            errors.add("Error getting Browser Locations"); //NON-NLS
-        }
-
-        try {
-            CacheLocationAnalyzer.findGeoLocations(dataSource, fileManager);
-            progressBar.progress(8);
-        } catch (Exception e) {
-            errors.add("Error getting Cache Locations"); //NON-NLS
-        }
-
-        // create the final message for inbox
         StringBuilder errorMessage = new StringBuilder();
         String errorMsgSubject;
         IngestMessage.MessageType msgLevel = IngestMessage.MessageType.INFO;
@@ -160,7 +143,5 @@ class AndroidIngestModule implements DataSourceIngestModule {
                 NbBundle.getMessage(this.getClass(),
                         "AndroidIngestModule.processing.finishedAnalysis",
                         errorMsgSubject), errorMessage.toString()));
-
-        return IngestModule.ProcessResult.OK;
     }
 }

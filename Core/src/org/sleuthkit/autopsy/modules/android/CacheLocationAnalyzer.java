@@ -20,62 +20,52 @@ package org.sleuthkit.autopsy.modules.android;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.sql.Connection;
+import java.util.MissingResourceException;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Parses cache files that Android maintains for Wifi and cell towers. Adds GPS
  * points to blackboard.
  */
-class CacheLocationAnalyzer {
+class CacheLocationAnalyzer implements AndroidAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CacheLocationAnalyzer.class.getName());
+    private static final String[] databaseNames = {"cache.wifi", "cache.cell"};
 
-    /**
-     * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS
-     * and MAC info from Wifi points.
-     */
-    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
-
-        try {
-            List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
-            abstractFiles.addAll(fileManager.findFiles(dataSource, "cache.wifi"));
-
-            for (AbstractFile abstractFile : abstractFiles) {
-                try {
-                    if (abstractFile.getSize() == 0) {
-                        continue;
-                    }
-                    File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
-
-                    findGeoLocationsInFile(jFile, abstractFile);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing cached Location files", e); //NON-NLS
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error finding cached Location files", e); //NON-NLS
-        }
+    @Override
+    public void findInDB(Connection connection, AbstractFile abstractFile) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private static void findGeoLocationsInFile(File file, AbstractFile f) {
+    @Override
+    public String[] getDatabaseNames() {
+        return databaseNames;
+    }
+
+    private static double toDouble(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getDouble();
+    }
+
+    @Override
+    public boolean parsesDB() {
+        return false;
+    }
+
+    @Override
+    public void findInFile(File file, AbstractFile abstractFile) {
         byte[] bytes; // will temporarily hold bytes to be converted into the correct data types
 
         try {
@@ -107,11 +97,9 @@ class CacheLocationAnalyzer {
                     inputStream.read(bytes);
                     continue;
                 }
-                String accuracy = "" + new BigInteger(bytes).intValue();
 
                 bytes = new byte[4];
                 inputStream.read(bytes);
-                String confidence = "" + new BigInteger(bytes).intValue();
 
                 bytes = new byte[8];
                 inputStream.read(bytes);
@@ -125,7 +113,7 @@ class CacheLocationAnalyzer {
                 inputStream.read(bytes);
                 Long timestamp = new BigInteger(bytes).longValue() / 1000;
 
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
+                BlackboardArtifact bba = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), moduleName, latitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), moduleName, longitude));
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), moduleName, timestamp));
@@ -133,18 +121,11 @@ class CacheLocationAnalyzer {
                         NbBundle.getMessage(CacheLocationAnalyzer.class,
                                 "CacheLocationAnalyzer.bbAttribute.fileLocationHistory",
                                 file.getName())));
-
-                //Not storing these for now.
-                //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy));       
-                //    bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),moduleName, confidence));
             }
 
-        } catch (Exception e) {
+        } catch (IOException | TskCoreException | MissingResourceException e) {
             logger.log(Level.SEVERE, "Error parsing Cached GPS locations to Blackboard", e); //NON-NLS
         }
     }
 
-    private static double toDouble(byte[] bytes) {
-        return ByteBuffer.wrap(bytes).getDouble();
-    }
 }
