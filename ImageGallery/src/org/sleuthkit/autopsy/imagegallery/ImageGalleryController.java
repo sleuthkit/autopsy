@@ -248,6 +248,7 @@ public final class ImageGalleryController {
         return historyManager.getCanRetreat();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void advance(GroupViewState newState, boolean forceShowTree) {
         if (Objects.nonNull(navPanel) && forceShowTree) {
             navPanel.showTree();
@@ -414,7 +415,7 @@ public final class ImageGalleryController {
         dbWorkerThread.addTask(innerTask);
     }
 
-    public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+    synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
 
@@ -776,7 +777,8 @@ public final class ImageGalleryController {
                 + " AND (blackboard_attributes.value_text LIKE 'video/%'"
                 + "     OR blackboard_attributes.value_text LIKE 'image/%'"
                 + "     OR " + MIMETYPE_CLAUSE
-                + "     )";
+                + "     )"
+                + ")";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
