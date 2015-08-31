@@ -62,6 +62,7 @@ public class NextUnseenGroup extends Action {
         });
 
         setEventHandler((ActionEvent t) -> {
+            //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)

@@ -26,7 +26,8 @@ import javafx.collections.FXCollections;
  */
 public class RootFilter extends IntersectionFilter<Filter> {
 
-    private final HideKnownFilter knwonFilter;
+    private final HideKnownFilter knownFilter;
+    private final TagsFilter tagsFilter;
     private final HashHitsFilter hashFilter;
     private final TextFilter textFilter;
     private final TypeFilter typeFilter;
@@ -36,13 +37,20 @@ public class RootFilter extends IntersectionFilter<Filter> {
         return dataSourcesFilter;
     }
 
+    public TagsFilter getTagsFilter() {
+        return tagsFilter;
+    }
+
     public HashHitsFilter getHashHitsFilter() {
         return hashFilter;
     }
 
-    public RootFilter(HideKnownFilter knownFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter) {
-        super(FXCollections.observableArrayList(knownFilter, hashFilter, textFilter, dataSourceFilter, typeFilter));
-        this.knwonFilter = knownFilter;
+    public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter) {
+        super(FXCollections.observableArrayList(knownFilter, tagsFilter, hashFilter, textFilter, dataSourceFilter, typeFilter));
+        setSelected(Boolean.TRUE);
+        setDisabled(false);
+        this.knownFilter = knownFilter;
+        this.tagsFilter = tagsFilter;
         this.hashFilter = hashFilter;
         this.textFilter = textFilter;
         this.typeFilter = typeFilter;
@@ -51,7 +59,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public RootFilter copyOf() {
-        RootFilter filter = new RootFilter(knwonFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
+        RootFilter filter = new RootFilter(knownFilter.copyOf(), tagsFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
         filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
@@ -71,6 +79,6 @@ public class RootFilter extends IntersectionFilter<Filter> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        return hashEqualSubFilters(this, (CompoundFilter<Filter>) obj);
+        return areSubFiltersEqual(this, (CompoundFilter<Filter>) obj);
     }
 }

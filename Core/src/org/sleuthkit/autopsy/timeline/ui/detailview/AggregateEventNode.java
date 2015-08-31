@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.eventbus.Subscribe;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,21 +62,16 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -302,27 +296,8 @@ public class AggregateEventNode extends StackPane {
 
             Map<String, Long> tagCounts = new HashMap<>();
             if (!aggEvent.getEventIDsWithTags().isEmpty()) {
-                try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithTags())) {
+                tagCounts.putAll( eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
 
-                        AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(tle.getFileID());
-                        List<ContentTag> contentTags = sleuthkitCase.getContentTagsByContent(abstractFileById);
-                        for (ContentTag tag : contentTags) {
-                            tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-                        }
-
-                        Long artifactID = tle.getArtifactID();
-                        if (artifactID != 0) {
-                            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(artifactID);
-                            List<BlackboardArtifactTag> artifactTags = sleuthkitCase.getBlackboardArtifactTagsByArtifact(blackboardArtifact);
-                            for (BlackboardArtifactTag tag : artifactTags) {
-                                tagCounts.merge(tag.getName().getDisplayName(), 1l, Long::sum);
-                            }
-                        }
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error getting tag info for event.", ex);
-                }
             }
 
             String hashSetCountsString = hashSetCounts.entrySet().stream()
@@ -375,6 +350,7 @@ public class AggregateEventNode extends StackPane {
     /**
      * @param descrVis the level of description that should be displayed
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = aggEvent.getEventIDs().size();
@@ -469,7 +445,7 @@ public class AggregateEventNode extends StackPane {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
-            RootFilter combinedFilter = eventsModel.filter().get().copyOf();
+            RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
             combinedFilter.getSubFilters().addAll(new TextFilter(aggEvent.getDescription()),
                     new TypeFilter(aggEvent.getType()));
@@ -485,7 +461,7 @@ public class AggregateEventNode extends StackPane {
                         protected List<AggregateEventNode> call() throws Exception {
                             //query for the sub-clusters
                             List<AggregateEvent> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
-                                            eventsModel.eventTypeZoom().get(),
+                                            eventsModel.eventTypeZoomProperty().get(),
                                             combinedFilter,
                                             newDescriptionLOD));
                             //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
@@ -542,32 +518,6 @@ public class AggregateEventNode extends StackPane {
                     chart.selectedNodes.setAll(AggregateEventNode.this);
                 }
             }
-        }
-    }
-
-    synchronized void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        AggregateEvent withTagsRemoved = aggEvent.withTagsRemoved(tagEvent.getEventIDs());
-        if (withTagsRemoved != aggEvent) {
-            aggEvent = withTagsRemoved;
-            tooltip = null;
-            boolean hasTags = aggEvent.getEventIDsWithTags().isEmpty() == false;
-            Platform.runLater(() -> {
-                tagIV.setManaged(hasTags);
-                tagIV.setVisible(hasTags);
-            });
-        }
-    }
-
-    @Subscribe
-    synchronized void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        AggregateEvent withTagsAdded = aggEvent.withTagsAdded(tagEvent.getEventIDs());
-        if (withTagsAdded != aggEvent) {
-            aggEvent = withTagsAdded;
-            tooltip = null;
-            Platform.runLater(() -> {
-                tagIV.setManaged(true);
-                tagIV.setVisible(true);
-            });
         }
     }
 }

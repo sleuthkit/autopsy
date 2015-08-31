@@ -16,17 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events.db;
+package org.sleuthkit.autopsy.timeline.events;
 
 /**
- *
+ * A "local" event published by filteredEventsModel to indicate that the user
+ * requested that the current visualization be refreshed with out changing any
+ * of the parameters ( to include more up to date tag data for example.)
+ * <p>
+ * This event is not intended for use out side of the timeline module.
  */
-public class MultipleTransactionException extends IllegalStateException {
+public class RefreshRequestedEvent {
 
-    private static final long serialVersionUID = 1L;
-    private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "Cannot have more than one open transaction."; // NON-NLS
-
-    public MultipleTransactionException() {
-        super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
-    }
 }
