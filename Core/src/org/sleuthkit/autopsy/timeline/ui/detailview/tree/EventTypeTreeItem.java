@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
 
 class EventTypeTreeItem extends NavTreeItem {
 

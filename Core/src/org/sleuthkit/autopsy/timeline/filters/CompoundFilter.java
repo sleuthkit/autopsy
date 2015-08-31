@@ -78,7 +78,7 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
         }
     }
 
-    static <SubFilterType extends Filter> boolean hashEqualSubFilters(final CompoundFilter<SubFilterType> oneFilter, final CompoundFilter<SubFilterType> otherFilter) {
+    static <SubFilterType extends Filter> boolean areSubFiltersEqual(final CompoundFilter<SubFilterType> oneFilter, final CompoundFilter<SubFilterType> otherFilter) {
         if (oneFilter.getSubFilters().size() != otherFilter.getSubFilters().size()) {
             return false;
         }

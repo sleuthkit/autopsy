@@ -36,7 +36,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
@@ -127,7 +127,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        filteredEvents.getRequestedZoomParamters().addListener(o -> {
+        filteredEvents.zoomParametersProperty().addListener(o -> {
             clearIntervalSelector();
             controller.selectEventIDs(Collections.emptyList());
         });

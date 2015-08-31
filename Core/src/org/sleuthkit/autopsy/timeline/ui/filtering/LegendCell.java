@@ -30,7 +30,7 @@ import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -74,7 +74,7 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
                 rect.setArcWidth(5);
                 rect.setStrokeWidth(3);
                 setLegendColor(filter, rect, this.filteredEvents.getEventTypeZoom());
-                this.filteredEvents.eventTypeZoom().addListener((obs, oldZoomLevel, newZoomLevel) -> {
+                this.filteredEvents.eventTypeZoomProperty().addListener((obs, oldZoomLevel, newZoomLevel) -> {
                     setLegendColor(filter, rect, newZoomLevel);
                 });
 
