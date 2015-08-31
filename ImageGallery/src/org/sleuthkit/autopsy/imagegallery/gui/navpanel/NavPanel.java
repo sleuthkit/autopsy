@@ -55,15 +55,15 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  */
 public class NavPanel extends TabPane {
 
+    @FXML
+    private ComboBox<TreeNodeComparators> sortByBox;
+    @FXML
+    private TabPane navTabPane;
     /**
      * TreeView for folders with hash hits
      */
     @FXML
     private TreeView<TreeNode> hashTree;
-
-    @FXML
-    private TabPane navTabPane;
-
     /**
      * TreeView for all folders
      */
@@ -76,17 +76,14 @@ public class NavPanel extends TabPane {
     @FXML
     private Tab navTab;
 
-    @FXML
-    private ComboBox<TreeNodeComparators> sortByBox;
-
-    /**
-     * contains the 'active tree'
-     */
-    private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
+    private GroupTreeItem hashTreeRoot;
 
     private GroupTreeItem navTreeRoot;
 
-    private GroupTreeItem hashTreeRoot;
+    /**
+     * contains the 'active tree', three in the selected Tab.
+     */
+    private final SimpleObjectProperty<TreeView<TreeNode>> activeTreeProperty = new SimpleObjectProperty<>();
 
     private final ImageGalleryController controller;
 
@@ -118,6 +115,7 @@ public class NavPanel extends TabPane {
         sortByBox.setItems(FXCollections.observableArrayList(FXCollections.observableArrayList(TreeNodeComparators.values())));
         sortByBox.getSelectionModel().select(TreeNodeComparators.HIT_COUNT);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
+            //user action ->jfx thread
             resortHashTree();
         });
 
@@ -143,14 +141,8 @@ public class NavPanel extends TabPane {
         });
 
         controller.getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
-            TreeItem<TreeNode> selectedItem = activeTreeProperty.get().getSelectionModel().getSelectedItem();
-            boolean wasPermuted = false;
+            //analyzed groups shoud only be modified on jfx thread
             while (change.next()) {
-                if (change.wasPermutated()) {
-                    // Handle this afterward
-                    wasPermuted = true;
-                    break;
-                }
                 for (DrawableGroup g : change.getAddedSubList()) {
                     insertIntoNavTree(g);
                     if (g.getHashSetHitsCount() > 0) {
@@ -161,15 +153,6 @@ public class NavPanel extends TabPane {
                     removeFromNavTree(g);
                     removeFromHashTree(g);
                 }
-            }
-
-            if (wasPermuted) {
-                rebuildTrees();
-            }
-            if (selectedItem != null && selectedItem.getValue().getGroup() != null) {
-                Platform.runLater(() -> {
-                    setFocusedGroup(selectedItem.getValue().getGroup());
-                });
             }
         });
 
@@ -208,6 +191,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void resortHashTree() {
         hashTreeRoot.resortChildren(sortByBox.getSelectionModel().getSelectedItem());
     }
@@ -262,16 +246,19 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void insertIntoHashTree(DrawableGroup g) {
         initHashTree();
         hashTreeRoot.insert(groupingToPath(g), g, false);
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void insertIntoNavTree(DrawableGroup g) {
         initNavTree();
         navTreeRoot.insert(groupingToPath(g), g, true);
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void removeFromNavTree(DrawableGroup g) {
         initNavTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(navTreeRoot, g);
@@ -280,6 +267,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     private void removeFromHashTree(DrawableGroup g) {
         initHashTree();
         final GroupTreeItem treeItemForGroup = GroupTreeItem.getTreeItemForGroup(hashTreeRoot, g);
@@ -310,6 +298,7 @@ public class NavPanel extends TabPane {
         }
     }
 
+    @ThreadConfined(type = ThreadType.JFX)
     public void showTree() {
         getSelectionModel().select(navTab);
     }

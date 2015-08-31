@@ -38,7 +38,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -46,7 +45,8 @@ import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/** Singleton to manage creation and access of icons. Keeps a cache in memory of
+/**
+ * Singleton to manage creation and access of icons. Keeps a cache in memory of
  * most recently used icons, and a disk cache of all icons.
  *
  * TODO: this was only a singleton for convenience, convert this to
@@ -60,7 +60,8 @@ public enum ThumbnailCache {
 
     private static final Logger LOGGER = Logger.getLogger(ThumbnailCache.class.getName());
 
-    /** in memory cache. keeps at most 1000 items each for up to 10 minutes.
+    /**
+     * in memory cache. keeps at most 1000 items each for up to 10 minutes.
      * items may be garbage collected if there are no strong references to them.
      */
     private final Cache<Long, Optional<Image>> cache = CacheBuilder.newBuilder()
@@ -72,7 +73,9 @@ public enum ThumbnailCache {
         return instance;
     }
 
-    /** currently desired icon size. is bound in {@link Toolbar} */
+    /**
+     * currently desired icon size. is bound in {@link Toolbar}
+     */
     public final SimpleIntegerProperty iconSize = new SimpleIntegerProperty(200);
 
     /**
@@ -82,7 +85,8 @@ public enum ThumbnailCache {
         cache.invalidateAll();
     }
 
-    /** get the cached thumbnail for the given file or generate a new one if
+    /**
+     * get the cached thumbnail for the given file or generate a new one if
      * needed
      *
      * @param file
@@ -132,16 +136,15 @@ public enum ThumbnailCache {
                 if (cachFile.exists()) {
                     // If a thumbnail file is already saved locally, load it
                     try {
-                        BufferedImage read = ImageIO.read(cachFile);
+                        BufferedImage cachedThumbnail = ImageIO.read(cachFile);
 
-                        if (read.getWidth() < MAX_THUMBNAIL_SIZE) {
-                            return read;
-
+                        if (cachedThumbnail.getWidth() < MAX_THUMBNAIL_SIZE) {
+                            return cachedThumbnail;
                         }
                     } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to parse cache file path..");
+                        LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
                     } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
+                        LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
                     }
                 }
                 return null;
@@ -150,10 +153,6 @@ public enum ThumbnailCache {
             return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
         });
 
-//        } catch (IllegalStateException e) {
-//            LOGGER.log(Level.WARNING, "can't load icon when no case is open");
-//            return Optional.empty();
-//        }
         WritableImage jfxthumbnail;
         if (thumbnail == ImageUtils.getDefaultThumbnail()) {
             // if we go the default icon, ignore it

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Collections2;
-import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,11 +71,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.EventsUnTaggedEvent;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 
 /**
@@ -344,12 +341,9 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
-        if (this.filteredEvents != null) {
-            this.filteredEvents.unRegisterForEvents(this);
-        }
+
         if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
-            filteredEvents.getRequestedZoomParamters().addListener(o -> {
+            filteredEvents.zoomParametersProperty().addListener(o -> {
                 clearGuideLine();
                 clearIntervalSelector();
 
@@ -527,7 +521,7 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
         return nodes;
     }
 
-    private Iterable<AggregateEventNode> getAllNodes() {
+    Iterable<AggregateEventNode> getAllNodes() {
         return getNodes(x -> true);
     }
 
@@ -735,19 +729,5 @@ public final class EventDetailChart extends XYChart<DateTime, AggregateEvent> im
     @Override
     protected void requestChartLayout() {
         super.requestChartLayout();
-    }
-
-    @Subscribe
-    synchronized public void handleEventsUnTagged(EventsUnTaggedEvent tagEvent) {
-        for (AggregateEventNode t : getAllNodes()) {
-            t.handleEventsUnTagged(tagEvent);
-        }
-    }
-
-    @Subscribe
-    synchronized public void handleEventsTagged(EventsTaggedEvent tagEvent) {
-        for (AggregateEventNode t : getAllNodes()) {
-            t.handleEventsTagged(tagEvent);
-        }
     }
 }

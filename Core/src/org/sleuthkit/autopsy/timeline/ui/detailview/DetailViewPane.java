@@ -67,11 +67,12 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
@@ -220,6 +221,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
     }
 
+    @Override
+    public synchronized void setModel(FilteredEventsModel filteredEvents) {
+        super.setModel(filteredEvents);
+    }
+
     private void incrementScrollValue(int factor) {
         vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.getMaxVScroll().get()))));
     }
@@ -272,6 +278,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
      * @return a Series object to contain all the events with the given
      *         EventType
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
         XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
         if (series == null) {
@@ -302,7 +309,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
 
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRange().get());
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
 
@@ -315,9 +322,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     }
                     dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
                     dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
-//                    if (chart == null) {
-//                        initializeClusterChart();
-//                    }
                     vertScrollBar.setValue(0);
                     eventTypeToSeriesMap.clear();
                     dataSets.clear();
@@ -478,4 +482,5 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         }
 
     }
+
 }

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events.db;
+package org.sleuthkit.autopsy.timeline.db;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
@@ -44,27 +45,34 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
-import org.sleuthkit.autopsy.timeline.events.AggregateEvent;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.events.type.ArtifactEventType;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.events.type.FileSystemTypes;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Provides public API (over EventsDB) to access events. In theory this
- * insulates the rest of the timeline module form the details of the db
+ * Provides higher-level public API (over EventsDB) to access events. In theory
+ * this insulates the rest of the timeline module form the details of the db
  * implementation. Since there are no other implementations of the database or
  * clients of this class, and no Java Interface defined yet, in practice this
- * just delegates everything to the eventDB
+ * just delegates everything to the eventDB. Some results are also cached by
+ * this layer.
  *
  * Concurrency Policy:
  *
@@ -94,10 +102,15 @@ public class EventsRepository {
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
+    private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     private final Case autoCase;
 
     public Case getAutoCase() {
         return autoCase;
+    }
+
+    public ObservableList<TagName> getTagNames() {
+        return tagNames;
     }
 
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
@@ -124,7 +137,7 @@ public class EventsRepository {
         this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
         this.eventDB = EventDB.getEventDB(autoCase);
-        populateFilterMaps(autoCase.getSleuthkitCase());
+        populateFilterData(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder()
                 .maximumSize(5000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
@@ -217,6 +230,94 @@ public class EventsRepository {
         return eventDB.getSpanningInterval(eventIDs);
     }
 
+    public boolean hasNewColumns() {
+        return eventDB.hasNewColumns();
+    }
+
+    /**
+     * get a count of tagnames applied to the given event ids as a map from
+     * tagname displayname to count of tag applications
+     *
+     * @param eventIDsWithTags the event ids to get the tag counts map for
+     *
+     * @return a map from tagname displayname to count of applications
+     */
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        return eventDB.getTagCountsByTagName(eventIDsWithTags);
+    }
+
+    /**
+     * use the given SleuthkitCase to update the data used to determine the
+     * available filters.
+     *
+     * @param skCase
+     */
+    synchronized private void populateFilterData(SleuthkitCase skCase) {
+
+        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
+            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
+        }
+        //because there is no way to remove a datasource we only add to this map.
+        for (Long id : eventDB.getDataSourceIDs()) {
+            try {
+                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
+            }
+        }
+
+        try {
+            //should this only be tags applied to files or event bearing artifacts?
+            tagNames.setAll(skCase.getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
+    }
+
+    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) {
+        Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tagID, tagged);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
+        eventCountsCache.invalidateAll();
+        aggregateEventsCache.invalidateAll();
+        idToEventCache.invalidateAll(updatedEventIDs);
+        try {
+            tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
+        }
+    }
+
+    /**
+     * "sync" the given tags filter with the tagnames in use: Disable filters
+     * for tags that are not in use in the case, and add new filters for tags
+     * that don't have them. New filters are selected by default.
+     *
+     * @param tagsFilter the tags filter to modify so it is consistent with the
+     *                   tags in use in the case
+     */
+    public void syncTagsFilter(TagsFilter tagsFilter) {
+        for (TagName t : tagNames) {
+            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
+        }
+        for (TagNameFilter t : tagsFilter.getSubFilters()) {
+            t.setDisabled(tagNames.contains(t.getTagName()) == false);
+        }
+    }
+
     synchronized public void rebuildRepository(Runnable r) {
         if (dbPopulationWorker != null) {
             dbPopulationWorker.cancel(true);
@@ -226,8 +327,110 @@ public class EventsRepository {
         dbPopulationWorker.execute();
     }
 
-    public boolean hasDataSourceInfo() {
-        return eventDB.hasNewColumns();
+    synchronized public void rebuildTags(Runnable r) {
+        if (dbPopulationWorker != null) {
+            dbPopulationWorker.cancel(true);
+
+        }
+        dbPopulationWorker = new RebuildTagsWorker(r);
+        dbPopulationWorker.execute();
+    }
+
+    private class RebuildTagsWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
+
+        private final ProgressWindow progressDialog;
+
+        //TODO: can we avoid this with a state listener?  does it amount to the same thing?
+        //post population operation to execute
+        private final Runnable postPopulationOperation;
+        private final SleuthkitCase skCase;
+        private final TagsManager tagsManager;
+
+        public RebuildTagsWorker(Runnable postPopulationOperation) {
+            progressDialog = new ProgressWindow(null, true, this);
+            progressDialog.setVisible(true);
+
+            skCase = autoCase.getSleuthkitCase();
+            tagsManager = autoCase.getServices().getTagsManager();
+
+            this.postPopulationOperation = postPopulationOperation;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+
+            EventDB.EventTransaction trans = eventDB.beginTransaction();
+            LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
+            eventDB.reInitializeTags();
+
+            LOGGER.log(Level.INFO, "updating content tags"); // NON-NLS
+            List<ContentTag> contentTags = tagsManager.getAllContentTags();
+            int size = contentTags.size();
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    break;
+                }
+                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing file tags", ""));
+                ContentTag contentTag = contentTags.get(i);
+                eventDB.addTag(contentTag.getContent().getId(), null, contentTag);
+            }
+            LOGGER.log(Level.INFO, "updating artifact tags"); // NON-NLS
+            List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
+            size = artifactTags.size();
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    break;
+                }
+                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing result tags", ""));
+                BlackboardArtifactTag artifactTag = artifactTags.get(i);
+                eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
+            }
+
+            LOGGER.log(Level.INFO, "committing tags"); // NON-NLS
+            publish(new ProgressWindow.ProgressUpdate(0, -1, "committing tag changes", ""));
+            if (isCancelled()) {
+                eventDB.rollBackTransaction(trans);
+            } else {
+                eventDB.commitTransaction(trans);
+            }
+
+            populateFilterData(skCase);
+            invalidateCaches();
+
+            return null;
+        }
+
+        /**
+         * handle intermediate 'results': just update progress dialog
+         *
+         * @param chunks
+         */
+        @Override
+        protected void process(List<ProgressWindow.ProgressUpdate> chunks) {
+            super.process(chunks);
+            ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
+            progressDialog.update(chunk);
+        }
+
+        @Override
+        @NbBundle.Messages("msgdlg.tagsproblem.text=There was a problem refreshing the tagged events."
+                + "  Some events may have inacurate tags. See the log for details.")
+        protected void done() {
+            super.done();
+            try {
+                progressDialog.close();
+                get();
+            } catch (CancellationException ex) {
+                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
+            }
+            postPopulationOperation.run();  //execute post db population operation
+        }
     }
 
     private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
@@ -264,7 +467,6 @@ public class EventsRepository {
             List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
 
             final int numFiles = files.size();
-
             publish(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), ""));
 
             //insert file events into db
@@ -291,20 +493,20 @@ public class EventsRepository {
                             String medD = datasourceName + parentPath;
                             final TskData.FileKnown known = f.getKnown();
                             Set<String> hashSets = f.getHashSetNames();
-                            boolean tagged = !tagsManager.getContentTagsByContent(f).isEmpty();
+                            List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tagged, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
                             }
 
                             publish(new ProgressWindow.ProgressUpdate(i, numFiles,
@@ -334,10 +536,10 @@ public class EventsRepository {
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
-                eventDB.commitTransaction(trans, true);
+                eventDB.commitTransaction(trans);
             }
 
-            populateFilterMaps(skCase);
+            populateFilterData(skCase);
             invalidateCaches();
 
             return null;
@@ -364,7 +566,7 @@ public class EventsRepository {
                 progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.INFO, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
@@ -389,64 +591,32 @@ public class EventsRepository {
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
                 final int numArtifacts = blackboardArtifacts.size();
 
-                publish(new ProgressWindow.ProgressUpdate(0, numArtifacts,
-                        Bundle.progressWindow_populatingXevents(type.toString()), ""));
+                for (int i = 0; i < numArtifacts; i++) {
+                    publish(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                            Bundle.progressWindow_populatingXevents(type.getDisplayName()), ""));
 
-                int i = 0;
-                for (final BlackboardArtifact bbart : blackboardArtifacts) {
                     //for each artifact, extract the relevant information for the descriptions
+                    BlackboardArtifact bbart = blackboardArtifacts.get(i);
                     ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.AttributeEventDescription.buildEventDescription(type, bbart);
 
-                    if (eventDescription != null && eventDescription.getTime() > 0L) {  //insert it into the db if time is > 0  => time is legitimate
-                        long datasourceID = skCase.getContentById(bbart.getObjectID()).getDataSource().getId();
-
-                        AbstractFile f = skCase.getAbstractFileById(bbart.getObjectID());
+                    //insert it into the db if time is > 0  => time is legitimate
+                    if (eventDescription != null && eventDescription.getTime() > 0L) {
+                        long objectID = bbart.getObjectID();
+                        AbstractFile f = skCase.getAbstractFileById(objectID);
+                        long datasourceID = f.getDataSource().getId();
+                        long artifactID = bbart.getArtifactID();
                         Set<String> hashSets = f.getHashSetNames();
-                        boolean tagged = tagsManager.getBlackboardArtifactTagsByArtifact(bbart).isEmpty() == false;
+                        List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
+                        String fullDescription = eventDescription.getFullDescription();
+                        String medDescription = eventDescription.getMedDescription();
+                        String shortDescription = eventDescription.getShortDescription();
 
-                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, bbart.getObjectID(), bbart.getArtifactID(), eventDescription.getFullDescription(), eventDescription.getMedDescription(), eventDescription.getShortDescription(), null, hashSets, tagged, trans);
+                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags, trans);
                     }
-
-                    i++;
-                    publish(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            Bundle.progressWindow_populatingXevents(type), ""));
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
             }
         }
-    }
-
-    /**
-     * use the given SleuthkitCase to look up the names for the datasources in
-     * the events table.
-     *
-     * TODO: we could keep a table of id -> name in the eventdb but I am wary of
-     * having too much redundant info.
-     *
-     * @param skCase
-     */
-    synchronized private void populateFilterMaps(SleuthkitCase skCase) {
-
-        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
-            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
-        }
-        //because there is no way to remove a datasource we only add to this map.
-        for (Long id : eventDB.getDataSourceIDs()) {
-            try {
-                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
-            }
-        }
-    }
-
-    synchronized public Set<Long> markEventsTagged(long objID, Long artifactID, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.markEventsTagged(objID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
-            aggregateEventsCache.invalidateAll();
-            idToEventCache.invalidateAll(updatedEventIDs);
-        }
-        return updatedEventIDs;
     }
 }
