@@ -34,7 +34,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -640,7 +639,11 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
-        fileTypes.put(typeName, fileType);
+
+        // remove the existing and add the new modified one.
+        fileTypes.remove(typesList.getSelectedValue());
+        fileTypes.put(typeName + " - " + DatatypeConverter.printHexBinary(signatureBytes) + " - " + Long.toString(offset), fileType);
+
         updateFileTypesListModel();
         typesList.setSelectedValue(fileType.getMimeType(), true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed

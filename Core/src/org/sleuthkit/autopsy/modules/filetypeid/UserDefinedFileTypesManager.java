@@ -182,7 +182,7 @@ final class UserDefinedFileTypesManager {
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         try {
             FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-            fileTypes.put(fileType.getMimeType(), fileType);
+            fileTypes.put(fileType.getMimeType() + " - " + DatatypeConverter.printHexBinary(fileType.getSignature().getSignatureBytes()) + " - " + Long.toString(fileType.getSignature().getOffset()), fileType); // NON-NLS
 
         } catch (UnsupportedEncodingException ex) {
             /**
@@ -227,8 +227,8 @@ final class UserDefinedFileTypesManager {
      * @param fileType The file type to add.
      */
     private void addUserDefinedFileType(FileType fileType) {
-        userDefinedFileTypes.put(fileType.getMimeType(), fileType);
-        fileTypes.put(fileType.getMimeType(), fileType);
+        userDefinedFileTypes.put(fileType.getMimeType() + " - " + DatatypeConverter.printHexBinary(fileType.getSignature().getSignatureBytes()) + " - " + Long.toString(fileType.getSignature().getOffset()), fileType); // NON-NLS
+        fileTypes.put(fileType.getMimeType() + " - " + DatatypeConverter.printHexBinary(fileType.getSignature().getSignatureBytes()) + " - " + Long.toString(fileType.getSignature().getOffset()), fileType); // NON-NLS
     }
 
     /**
