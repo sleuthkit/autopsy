@@ -9,29 +9,30 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.TagName;
 
 /**
- *
+ * Filter to show only events tag with the tagNames of the selected subfilters.
  */
-public class HashHitsFilter extends UnionFilter<HashSetFilter> {
+public class TagsFilter extends UnionFilter<TagNameFilter> {
 
     @Override
-    @NbBundle.Messages("hashHitsFilter.displayName.text=Only Hash Set Hits")
+    @NbBundle.Messages("tagsFilter.displayName.text=Only Events Tagged")
     public String getDisplayName() {
-        return Bundle.hashHitsFilter_displayName_text();
+        return Bundle.tagsFilter_displayName_text();
     }
 
-    public HashHitsFilter() {
+    public TagsFilter() {
         getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
 
     @Override
-    public HashHitsFilter copyOf() {
-        HashHitsFilter filterCopy = new HashHitsFilter();
+    public TagsFilter copyOf() {
+        TagsFilter filterCopy = new TagsFilter();
         filterCopy.setSelected(isSelected());
         //add a copy of each subfilter
-        this.getSubFilters().forEach((HashSetFilter t) -> {
+        this.getSubFilters().forEach((TagNameFilter t) -> {
             filterCopy.addSubFilter(t.copyOf());
         });
         return filterCopy;
@@ -63,7 +64,7 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final HashHitsFilter other = (HashHitsFilter) obj;
+        final TagsFilter other = (TagsFilter) obj;
 
         if (isSelected() != other.isSelected()) {
             return false;
@@ -72,13 +73,21 @@ public class HashHitsFilter extends UnionFilter<HashSetFilter> {
         return areSubFiltersEqual(this, other);
     }
 
-    public void addSubFilter(HashSetFilter hashSetFilter) {
+    public void addSubFilter(TagNameFilter tagFilter) {
+        TagName newFilterTagName = tagFilter.getTagName();
         if (getSubFilters().stream()
-                .map(HashSetFilter::getHashSetID)
-                .filter(t -> t == hashSetFilter.getHashSetID())
+                .map(TagNameFilter::getTagName)
+                .filter(newFilterTagName::equals)
                 .findAny().isPresent() == false) {
-            getSubFilters().add(hashSetFilter);
-            getSubFilters().sort(Comparator.comparing(HashSetFilter::getDisplayName));
+            getSubFilters().add(tagFilter);
         }
+        getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
     }
+
+    public void removeFilterForTag(TagName tagName) {
+        getSubFilters().removeIf(subfilter -> subfilter.getTagName().equals(tagName));
+        getSubFilters().sort(Comparator.comparing(TagNameFilter::getDisplayName));
+    }
+
+ 
 }

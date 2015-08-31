@@ -50,7 +50,7 @@ public class ZoomParams {
         return filter;
     }
 
-    public DescriptionLOD getDescrLOD() {
+    public DescriptionLOD getDescriptionLOD() {
         return descrLOD;
     }
 

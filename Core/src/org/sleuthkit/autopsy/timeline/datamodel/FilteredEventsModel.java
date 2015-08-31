@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
+package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
@@ -38,9 +39,11 @@ import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.events.db.EventsRepository;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
+import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
+import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
@@ -48,13 +51,18 @@ import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
 import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
+import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -83,7 +91,6 @@ public final class FilteredEventsModel {
 
     private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
 
- 
     /**
      * time range that spans the filtered events
      */
@@ -113,40 +120,25 @@ public final class FilteredEventsModel {
     private final EventsRepository repo;
     private final Case autoCase;
 
-    /**
-     * @return the default filter used at startup
-     */
-    public RootFilter getDefaultFilter() {
-        DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
-
-        repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
-            DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
-            dataSourceFilter.setSelected(Boolean.TRUE);
-            dataSourcesFilter.addDataSourceFilter(dataSourceFilter);
-        });
-
-        HashHitsFilter hashHitsFilter = new HashHitsFilter();
-        repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
-            HashSetFilter hashSourceFilter = new HashSetFilter(t.getValue(), t.getKey());
-            hashSourceFilter.setSelected(Boolean.TRUE);
-            hashHitsFilter.addHashSetFilter(hashSourceFilter);
-        });
-        return new RootFilter(new HideKnownFilter(), hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
-    }
-
     public FilteredEventsModel(EventsRepository repo, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.repo = repo;
         this.autoCase = repo.getAutoCase();
         repo.getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = filter().get();
-            rootFilter.getDataSourcesFilter().addDataSourceFilter(dataSourceFilter);
+            RootFilter rootFilter = filterProperty().get();
+            rootFilter.getDataSourcesFilter().addSubFilter(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         repo.getHashSetMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = filter().get();
-            rootFilter.getHashHitsFilter().addHashSetFilter(hashSetFilter);
+            RootFilter rootFilter = filterProperty().get();
+            rootFilter.getHashHitsFilter().addSubFilter(hashSetFilter);
+            requestedFilter.set(rootFilter.copyOf());
+        });
+        repo.getTagNames().addListener((ListChangeListener.Change<? extends TagName> c) -> {
+            RootFilter rootFilter = filterProperty().get();
+            TagsFilter tagsFilter = rootFilter.getTagsFilter();
+            repo.syncTagsFilter(tagsFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
@@ -156,14 +148,14 @@ public final class FilteredEventsModel {
 
             if (zoomParams != null) {
                 if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
-                        || zoomParams.getDescrLOD().equals(requestedLOD.get()) == false
+                        || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
                         || zoomParams.getFilter().equals(requestedFilter.get()) == false
                         || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
 
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter().copyOf());
                     requestedTimeRange.set(zoomParams.getTimeRange());
-                    requestedLOD.set(zoomParams.getDescrLOD());
+                    requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
             }
         });
@@ -171,12 +163,75 @@ public final class FilteredEventsModel {
         requestedZoomParamters.bind(currentStateProperty);
     }
 
-    public Interval getBoundingEventsInterval() {
-        return repo.getBoundingEventsInterval(getRequestedZoomParamters().get().getTimeRange(), getRequestedZoomParamters().get().getFilter());
+    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
+        return requestedZoomParamters.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<ZoomParams> getRequestedZoomParamters() {
-        return requestedZoomParamters.getReadOnlyProperty();
+    /**
+     * @return a read only view of the time range requested via
+     *         {@link #requestTimeRange(org.joda.time.Interval)}
+     */
+    synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
+        if (requestedTimeRange.get() == null) {
+            requestedTimeRange.set(getSpanningInterval());
+        }
+        return requestedTimeRange.getReadOnlyProperty();
+    }
+
+    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLODProperty() {
+        return requestedLOD.getReadOnlyProperty();
+    }
+
+    synchronized public ReadOnlyObjectProperty<RootFilter> filterProperty() {
+        return requestedFilter.getReadOnlyProperty();
+    }
+
+    synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoomProperty() {
+        return requestedTypeZoom.getReadOnlyProperty();
+    }
+
+    synchronized public DescriptionLOD getDescriptionLOD() {
+        return requestedLOD.get();
+    }
+
+    synchronized public RootFilter getFilter() {
+        return requestedFilter.get();
+    }
+
+    synchronized public EventTypeZoomLevel getEventTypeZoom() {
+        return requestedTypeZoom.get();
+    }
+
+    /**
+     * @return the default filter used at startup
+     */
+    public RootFilter getDefaultFilter() {
+        DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
+
+        repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
+            DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
+            dataSourceFilter.setSelected(Boolean.TRUE);
+            dataSourcesFilter.addSubFilter(dataSourceFilter);
+        });
+
+        HashHitsFilter hashHitsFilter = new HashHitsFilter();
+        repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
+            HashSetFilter hashSetFilter = new HashSetFilter(t.getValue(), t.getKey());
+            hashSetFilter.setSelected(Boolean.TRUE);
+            hashHitsFilter.addSubFilter(hashSetFilter);
+        });
+
+        TagsFilter tagsFilter = new TagsFilter();
+        repo.getTagNames().stream().forEach(t -> {
+            TagNameFilter tagNameFilter = new TagNameFilter(t, autoCase);
+            tagNameFilter.setSelected(Boolean.TRUE);
+            tagsFilter.addSubFilter(tagNameFilter);
+        });
+        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+    }
+
+    public Interval getBoundingEventsInterval() {
+        return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter());
     }
 
     public TimeLineEvent getEventById(Long eventID) {
@@ -185,6 +240,18 @@ public final class FilteredEventsModel {
 
     public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
         return repo.getEventsById(eventIDs);
+    }
+
+    /**
+     * get a count of tagnames applied to the given event ids as a map from
+     * tagname displayname to count of tag applications
+     *
+     * @param eventIDsWithTags the event ids to get the tag counts map for
+     *
+     * @return a map from tagname displayname to count of applications
+     */
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+        return repo.getTagCountsByTagName(eventIDsWithTags);
     }
 
     public Set<Long> getEventIDs(Interval timeRange, Filter filter) {
@@ -217,25 +284,6 @@ public final class FilteredEventsModel {
             typeZoom = requestedTypeZoom.get();
         }
         return repo.countEvents(new ZoomParams(timeRange, typeZoom, filter, null));
-    }
-
-    /**
-     * @return a read only view of the time range requested via
-     *         {@link #requestTimeRange(org.joda.time.Interval)}
-     */
-    synchronized public ReadOnlyObjectProperty<Interval> timeRange() {
-        if (requestedTimeRange.get() == null) {
-            requestedTimeRange.set(getSpanningInterval());
-        }
-        return requestedTimeRange.getReadOnlyProperty();
-    }
-
-    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLOD() {
-        return requestedLOD.getReadOnlyProperty();
-    }
-
-    synchronized public ReadOnlyObjectProperty<RootFilter> filter() {
-        return requestedFilter.getReadOnlyProperty();
     }
 
     /**
@@ -303,58 +351,52 @@ public final class FilteredEventsModel {
         return repo.getAggregatedEvents(params);
     }
 
-    synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoom() {
-        return requestedTypeZoom.getReadOnlyProperty();
+    synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
+        ContentTag contentTag = evt.getTag();
+        Content content = contentTag.getContent();
+        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
+        return postTagsUpdated(updatedEventIDs);
     }
 
-    synchronized public EventTypeZoomLevel getEventTypeZoom() {
-        return requestedTypeZoom.get();
+    synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
+        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifact artifact = artifactTag.getArtifact();
+        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
+        return postTagsUpdated(updatedEventIDs);
     }
 
-    synchronized public DescriptionLOD getDescriptionLOD() {
-        return requestedLOD.get();
-    }
-
-    synchronized public void handleTagAdded(BlackBoardArtifactTagAddedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
-        Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), true);
-        if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
-        }
-    }
-
-    synchronized public void handleTagDeleted(BlackBoardArtifactTagDeletedEvent e) {
-        BlackboardArtifact artifact = e.getTag().getArtifact();
-        try {
-            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.markEventsTagged(artifact.getObjectID(), artifact.getArtifactID(), tagged);
-            if (!updatedEventIDs.isEmpty()) {
-                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of attribute.", ex);
-        }
-    }
-
-    synchronized public void handleTagAdded(ContentTagAddedEvent e) {
-        Content content = e.getTag().getContent();
-        Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, true);
-        if (!updatedEventIDs.isEmpty()) {
-            eventbus.post(new EventsTaggedEvent(updatedEventIDs));
-        }
-    }
-
-    synchronized public void handleTagDeleted(ContentTagDeletedEvent e) {
-        Content content = e.getTag().getContent();
+    synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
+        ContentTag contentTag = evt.getTag();
+        Content content = contentTag.getContent();
         try {
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.markEventsTagged(content.getId(), null, tagged);
-            if (!updatedEventIDs.isEmpty()) {
-                eventbus.post(new EventsUnTaggedEvent(updatedEventIDs));
-            }
+            Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, contentTag, tagged);
+            return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
         }
+        return false;
+    }
+
+    synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
+        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifact artifact = artifactTag.getArtifact();
+        try {
+            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+            Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, tagged);
+            return postTagsUpdated(updatedEventIDs);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);
+        }
+        return false;
+    }
+
+    private boolean postTagsUpdated(Set<Long> updatedEventIDs) {
+        boolean tagsUpdated = !updatedEventIDs.isEmpty();
+        if (tagsUpdated) {
+            eventbus.post(new TagsUpdatedEvent(updatedEventIDs));
+        }
+        return tagsUpdated;
     }
 
     synchronized public void registerForEvents(Object o) {
@@ -364,4 +406,9 @@ public final class FilteredEventsModel {
     synchronized public void unRegisterForEvents(Object o) {
         eventbus.unregister(0);
     }
+
+    public void refresh() {
+        eventbus.post(new RefreshRequestedEvent());
+    }
+
 }

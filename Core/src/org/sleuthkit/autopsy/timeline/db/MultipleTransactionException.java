@@ -16,25 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
-
-import java.util.Collections;
-import java.util.Set;
+package org.sleuthkit.autopsy.timeline.db;
 
 /**
- * Posted to eventbus when a tag as been removed from a file artifact that
- * corresponds to an event
+ *
  */
-public class EventsUnTaggedEvent {
+public class MultipleTransactionException extends IllegalStateException {
 
-    private final Set<Long> eventIDs;
+    private static final long serialVersionUID = 1L;
+    private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "Cannot have more than one open transaction."; // NON-NLS
 
-    public Set<Long> getEventIDs() {
-        return Collections.unmodifiableSet(eventIDs);
+    public MultipleTransactionException() {
+        super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
     }
-
-    public EventsUnTaggedEvent(Set<Long> eventIDs) {
-        this.eventIDs = eventIDs;
-    }
-
 }
