@@ -778,7 +778,8 @@ public final class ImageGalleryController {
                 + " AND (blackboard_attributes.value_text LIKE 'video/%'"
                 + "     OR blackboard_attributes.value_text LIKE 'image/%'"
                 + "     OR " + MIMETYPE_CLAUSE
-                + "     )";
+                + "     )"
+                + " )";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("populating analyzed image/video database");
 
