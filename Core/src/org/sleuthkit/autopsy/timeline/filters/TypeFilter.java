@@ -24,8 +24,8 @@ import javafx.collections.FXCollections;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
-import org.sleuthkit.autopsy.timeline.events.type.RootEventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 
 /**
  * Event Type Filter. An instance of TypeFilter is usually a tree that parallels
@@ -133,7 +133,7 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         if (this.eventType != other.eventType) {
             return false;
         }
-        return hashEqualSubFilters(this, other);
+        return areSubFiltersEqual(this, other);
     }
 
     @Override
@@ -142,5 +142,4 @@ public class TypeFilter extends UnionFilter<TypeFilter> {
         hash = 67 * hash + Objects.hashCode(this.eventType);
         return hash;
     }
-
 }

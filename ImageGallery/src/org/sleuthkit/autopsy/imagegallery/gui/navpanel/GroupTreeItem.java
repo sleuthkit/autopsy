@@ -27,6 +27,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 
 /**
@@ -37,18 +39,17 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
  */
 class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeItem> {
 
+    @ThreadConfined(type = ThreadType.JFX)
     static GroupTreeItem getTreeItemForGroup(GroupTreeItem root, DrawableGroup grouping) {
         if (Objects.equals(root.getValue().getGroup(), grouping)) {
             return root;
         } else {
-            synchronized (root.getChildren()) {
-                for (TreeItem<TreeNode> child : root.getChildren()) {
-                    final GroupTreeItem childGTI = (GroupTreeItem) child;
+            for (TreeItem<TreeNode> child : root.getChildren()) {
+                final GroupTreeItem childGTI = (GroupTreeItem) child;
 
-                    GroupTreeItem val = getTreeItemForGroup(childGTI, grouping);
-                    if (val != null) {
-                        return val;
-                    }
+                GroupTreeItem val = getTreeItemForGroup(childGTI, grouping);
+                if (val != null) {
+                    return val;
                 }
             }
         }
@@ -107,11 +108,8 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                     prefixTreeItem = newTreeItem;
                     childMap.put(prefix, prefixTreeItem);
                     Platform.runLater(() -> {
-                        synchronized (getChildren()) {
-                            getChildren().add(newTreeItem);
-                        }
+                        getChildren().add(newTreeItem);
                     });
-
                 }
 
                 // recursively go into the path
@@ -125,14 +123,11 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 childMap.put(path, newTreeItem);
 
                 Platform.runLater(() -> {
-                    synchronized (getChildren()) {
-                        getChildren().add(newTreeItem);
-                        if (comp != null) {
-                            FXCollections.sort(getChildren(), comp);
-                        }
+                    getChildren().add(newTreeItem);
+                    if (comp != null) {
+                        FXCollections.sort(getChildren(), comp);
                     }
                 });
-
             }
         }
     }
@@ -160,11 +155,8 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                     childMap.put(prefix, prefixTreeItem);
 
                     Platform.runLater(() -> {
-                        synchronized (getChildren()) {
-                            getChildren().add(newTreeItem);
-                        }
+                        getChildren().add(newTreeItem);
                     });
-
                 }
 
                 // recursively go into the path
@@ -179,11 +171,9 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
                 childMap.put(path.get(0), newTreeItem);
 
                 Platform.runLater(() -> {
-                    synchronized (getChildren()) {
-                        getChildren().add(newTreeItem);
-                        if (comp != null) {
-                            FXCollections.sort(getChildren(), comp);
-                        }
+                    getChildren().add(newTreeItem);
+                    if (comp != null) {
+                        FXCollections.sort(getChildren(), comp);
                     }
                 });
             }
@@ -195,35 +185,34 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         return comp.compare(this, o);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     GroupTreeItem getTreeItemForPath(List<String> path) {
-        // end of recursion
+
         if (path.isEmpty()) {
+            // end of recursion
             return this;
         } else {
-            synchronized (getChildren()) {
-                String prefix = path.get(0);
+            String prefix = path.get(0);
 
-                GroupTreeItem prefixTreeItem = childMap.get(prefix);
-                if (prefixTreeItem == null) {
-                    // @@@ ERROR;
-                    return null;
-                }
-
-                // recursively go into the path
-                return prefixTreeItem.getTreeItemForPath(path.subList(1, path.size()));
+            GroupTreeItem prefixTreeItem = childMap.get(prefix);
+            if (prefixTreeItem == null) {
+                // @@@ ERROR;
+                return null;
             }
+
+            // recursively go into the path
+            return prefixTreeItem.getTreeItemForPath(path.subList(1, path.size()));
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void removeFromParent() {
         final GroupTreeItem parent = (GroupTreeItem) getParent();
         if (parent != null) {
             parent.childMap.remove(getValue().getPath());
 
             Platform.runLater(() -> {
-                synchronized (parent.getChildren()) {
-                    parent.getChildren().removeAll(Collections.singleton(GroupTreeItem.this));
-                }
+                parent.getChildren().removeAll(Collections.singleton(GroupTreeItem.this));
             });
 
             if (parent.childMap.isEmpty()) {
@@ -232,14 +221,17 @@ class GroupTreeItem extends TreeItem<TreeNode> implements Comparable<GroupTreeIt
         }
     }
 
+    /**
+     * must be performed on fx thread because it manipualtes the tree directly.
+     *
+     * @param newComp
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void resortChildren(TreeNodeComparators newComp) {
         this.comp = newComp;
-        synchronized (getChildren()) {
-            FXCollections.sort(getChildren(), comp);
-        }
+        FXCollections.sort(getChildren(), comp);
         for (GroupTreeItem ti : childMap.values()) {
             ti.resortChildren(comp);
         }
     }
-
 }

@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.timeline;
  * Most implementations should install the relevant listeners in their
  * {@link #setController} and {@link #setModel} methods
  */
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 
 public interface TimeLineView extends TimeLineUI {
 

@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  * The data item for the nav tree. Represents a combination of type and

@@ -23,7 +23,7 @@ import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.events.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 
 /**
  *
@@ -40,12 +40,12 @@ public class ZoomOut extends Action {
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {
-                bind(eventsModel.getRequestedZoomParamters());
+                bind(eventsModel.zoomParametersProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.getRequestedZoomParamters().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
+                return eventsModel.zoomParametersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
             }
         });
         setEventHandler((ActionEvent t) -> {
