@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
@@ -98,7 +98,7 @@ public class EventsRepository {
 
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
+    private final LoadingCache<ZoomParams, List<EventCluster>> aggregateEventsCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
@@ -206,7 +206,7 @@ public class EventsRepository {
 
     }
 
-    synchronized public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
+    synchronized public List<EventCluster> getAggregatedEvents(ZoomParams params) {
         return aggregateEventsCache.getUnchecked(params);
     }
 

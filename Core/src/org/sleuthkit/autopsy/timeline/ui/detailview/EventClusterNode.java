@@ -64,9 +64,11 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -76,11 +78,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents an {@link AggregateEvent} in a {@link EventDetailChart}.
+ * Represents an {@link EventCluster} in a {@link EventDetailChart}.
  */
-public class AggregateEventNode extends StackPane {
+public class EventClusterNode extends StackPane implements DetailViewNode {
 
-    private static final Logger LOGGER = Logger.getLogger(AggregateEventNode.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
 
     private static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");
     private final static Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
@@ -97,9 +99,9 @@ public class AggregateEventNode extends StackPane {
     /**
      * The event this AggregateEventNode represents visually
      */
-    private AggregateEvent aggEvent;
+    private EventCluster aggEvent;
 
-    private final AggregateEventNode parentEventNode;
+    private final EventClusterNode parentEventNode;
 
     /**
      * the region that represents the time span of this node's event
@@ -169,9 +171,9 @@ public class AggregateEventNode extends StackPane {
     private final ImageView hashIV = new ImageView(HASH_PIN);
     private final ImageView tagIV = new ImageView(TAG);
 
-    public AggregateEventNode(final AggregateEvent aggEvent, AggregateEventNode parentEventNode, EventDetailChart chart) {
+    public EventClusterNode(final EventCluster aggEvent, EventClusterNode parentEventNode, EventDetailChart chart) {
         this.aggEvent = aggEvent;
-        descLOD.set(aggEvent.getLOD());
+        descLOD.set(aggEvent.getDescriptionLOD());
         this.parentEventNode = parentEventNode;
         this.chart = chart;
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
@@ -230,7 +232,7 @@ public class AggregateEventNode extends StackPane {
         //setup backgrounds
         final Color evtColor = aggEvent.getType().getColor();
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
-        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+        setBackground(spanFill);
         setCursor(Cursor.HAND);
         spanRegion.setStyle("-fx-border-width:2 0 2 2; -fx-border-radius: 2; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor) + ";"); // NON-NLS
         spanRegion.setBackground(spanFill);
@@ -258,7 +260,7 @@ public class AggregateEventNode extends StackPane {
         setOnMouseClicked(new EventMouseHandler());
 
         plusButton.disableProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
-        minusButton.disableProperty().bind(descLOD.isEqualTo(aggEvent.getLOD()));
+        minusButton.disableProperty().bind(descLOD.isEqualTo(aggEvent.getDescriptionLOD()));
 
         plusButton.setOnMouseClicked(e -> {
             final DescriptionLOD next = descLOD.get().next();
@@ -296,7 +298,7 @@ public class AggregateEventNode extends StackPane {
 
             Map<String, Long> tagCounts = new HashMap<>();
             if (!aggEvent.getEventIDsWithTags().isEmpty()) {
-                tagCounts.putAll( eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
+                tagCounts.putAll(eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
 
             }
 
@@ -315,15 +317,16 @@ public class AggregateEventNode extends StackPane {
                     + (hashSetCountsString.isEmpty() ? "" : "\n\nHash Set Hits\n" + hashSetCountsString)
                     + (tagCountsString.isEmpty() ? "" : "\n\nTags\n" + tagCountsString)
             );
-            Tooltip.install(AggregateEventNode.this, tooltip);
+            Tooltip.install(EventClusterNode.this, tooltip);
         }
     }
 
+    @Override
     public Pane getSubNodePane() {
         return subNodePane;
     }
 
-    synchronized public AggregateEvent getEvent() {
+    synchronized public EventCluster getEvent() {
         return aggEvent;
     }
 
@@ -333,16 +336,23 @@ public class AggregateEventNode extends StackPane {
      *
      * @param w
      */
-    public void setSpanWidth(double w) {
+    private void setSpanWidth(double w) {
         spanRegion.setPrefWidth(w);
         spanRegion.setMaxWidth(w);
         spanRegion.setMinWidth(Math.max(2, w));
+    }
+
+    @Override
+    public void setSpanWidths(List<Double> spanWidths) {
+        setSpanWidth(spanWidths.get(0));
+
     }
 
     /**
      *
      * @param w the maximum width the description label should have
      */
+    @Override
     public void setDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
@@ -351,7 +361,8 @@ public class AggregateEventNode extends StackPane {
      * @param descrVis the level of description that should be displayed
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    synchronized final void setDescriptionVisibility(DescriptionVisibility descrVis) {
+    @Override
+    public final synchronized void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = aggEvent.getEventIDs().size();
 
@@ -381,7 +392,8 @@ public class AggregateEventNode extends StackPane {
      *
      * @param applied true to apply the selection 'effect', false to remove it
      */
-    void applySelectionEffect(final boolean applied) {
+    @Override
+    public void applySelectionEffect(boolean applied) {
         Platform.runLater(() -> {
             if (applied) {
                 setBorder(selectionBorder);
@@ -389,6 +401,11 @@ public class AggregateEventNode extends StackPane {
                 setBorder(null);
             }
         });
+    }
+
+    @Override
+    public String getDescription() {
+        return aggEvent.getDescription();
     }
 
     /**
@@ -441,7 +458,7 @@ public class AggregateEventNode extends StackPane {
      */
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
         getSubNodePane().getChildren().clear();
-        if (newDescriptionLOD == aggEvent.getLOD()) {
+        if (newDescriptionLOD == aggEvent.getDescriptionLOD()) {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
@@ -454,19 +471,19 @@ public class AggregateEventNode extends StackPane {
             final Interval span = aggEvent.getSpan().withEndMillis(aggEvent.getSpan().getEndMillis() + 1000);
 
             //make a task to load the subnodes
-            LoggedTask<List<AggregateEventNode>> loggedTask = new LoggedTask<List<AggregateEventNode>>(
+            LoggedTask<List<EventClusterNode>> loggedTask = new LoggedTask<List<EventClusterNode>>(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
 
                         @Override
-                        protected List<AggregateEventNode> call() throws Exception {
+                        protected List<EventClusterNode> call() throws Exception {
                             //query for the sub-clusters
-                            List<AggregateEvent> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
+                            List<EventCluster> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
                                             eventsModel.eventTypeZoomProperty().get(),
                                             combinedFilter,
                                             newDescriptionLOD));
                             //for each sub cluster make an AggregateEventNode to visually represent it, and set x-position
                             return aggregatedEvents.stream().map(aggEvent -> {
-                                AggregateEventNode subNode = new AggregateEventNode(aggEvent, AggregateEventNode.this, chart);
+                                EventClusterNode subNode = new EventClusterNode(aggEvent, EventClusterNode.this, chart);
                                 subNode.setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(aggEvent.getSpan().getStartMillis())) - getLayoutXCompensation());
                                 return subNode;
                             }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
@@ -494,7 +511,7 @@ public class AggregateEventNode extends StackPane {
     }
 
     /**
-     * event handler used for mouse events on {@link AggregateEventNode}s
+     * event handler used for mouse events on {@link EventClusterNode}s
      */
     private class EventMouseHandler implements EventHandler<MouseEvent> {
 
@@ -503,11 +520,11 @@ public class AggregateEventNode extends StackPane {
             if (t.getButton() == MouseButton.PRIMARY) {
                 t.consume();
                 if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(AggregateEventNode.this) == false) {
-                        chart.selectedNodes.add(AggregateEventNode.this);
+                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
+                        chart.selectedNodes.add(EventClusterNode.this);
                     }
                 } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(AggregateEventNode.this);
+                    chart.selectedNodes.removeAll(EventClusterNode.this);
                 } else if (t.getClickCount() > 1) {
                     final DescriptionLOD next = descLOD.get().next();
                     if (next != null) {
@@ -515,9 +532,34 @@ public class AggregateEventNode extends StackPane {
                         descLOD.set(next);
                     }
                 } else {
-                    chart.selectedNodes.setAll(AggregateEventNode.this);
+                    chart.selectedNodes.setAll(EventClusterNode.this);
                 }
             }
         }
+    }
+
+    @Override
+    public long getStartMillis() {
+        return getEvent().getStartMillis();
+    }
+
+    @Override
+    public long getEndMillis() {
+        return getEvent().getStartMillis();
+    }
+
+    @Override
+    public EventType getType() {
+        return getEvent().getType();
+    }
+
+    @Override
+    public Set<Long> getEventIDs() {
+        return getEvent().getEventIDs();
+    }
+
+    @Override
+    public EventBundle getBundleDescriptor() {
+        return aggEvent;
     }
 }

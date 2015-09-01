@@ -54,7 +54,7 @@ import org.joda.time.Period;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -1031,7 +1031,7 @@ public class EventDB {
     }
 
     /**
-     * get a list of {@link AggregateEvent}s, clustered according to the given
+     * get a list of {@link EventCluster}s, clustered according to the given
      * zoom paramaters.
      *
      * @param params the zoom params that determine the zooming, filtering and
@@ -1041,7 +1041,7 @@ public class EventDB {
      *         the supplied filter, aggregated according to the given event type
      *         and description zoom levels
      */
-    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
+    List<EventCluster> getAggregatedEvents(ZoomParams params) {
         //unpack params
         Interval timeRange = params.getTimeRange();
         RootFilter filter = params.getFilter();
@@ -1073,7 +1073,7 @@ public class EventDB {
                 + "\n ORDER BY min(time)"; // NON-NLS
 
         // perform query and map results to AggregateEvent objects
-        List<AggregateEvent> events = new ArrayList<>();
+        List<EventCluster> events = new ArrayList<>();
         DBLock.lock();
 
         try (Statement createStatement = con.createStatement();
@@ -1103,7 +1103,7 @@ public class EventDB {
      *
      * @throws SQLException
      */
-    private AggregateEvent aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
+    private EventCluster aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
         Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
         String eventIDsString = rs.getString("event_ids");// NON-NLS
         Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
@@ -1128,7 +1128,7 @@ public class EventDB {
             }
         }
 
-        return new AggregateEvent(interval, type, eventIDs, hashHits, tagged,
+        return new EventCluster(interval, type, eventIDs, hashHits, tagged,
                 description, descriptionLOD);
     }
 
@@ -1145,36 +1145,36 @@ public class EventDB {
      *
      * @return
      */
-    static private List<AggregateEvent> mergeAggregateEvents(Period timeUnitLength, List<AggregateEvent> preMergedEvents) {
+    static private List<EventCluster> mergeAggregateEvents(Period timeUnitLength, List<EventCluster> preMergedEvents) {
 
         //effectively map from type to (map from description to events)
-        Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
+        Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
 
-        for (AggregateEvent aggregateEvent : preMergedEvents) {
+        for (EventCluster aggregateEvent : preMergedEvents) {
             typeMap.computeIfAbsent(aggregateEvent.getType(), eventType -> HashMultimap.create())
                     .put(aggregateEvent.getDescription(), aggregateEvent);
         }
         //result list to return
-        ArrayList<AggregateEvent> aggEvents = new ArrayList<>();
+        ArrayList<EventCluster> aggEvents = new ArrayList<>();
 
         //For each (type, description) key, merge agg events
-        for (SetMultimap<String, AggregateEvent> descrMap : typeMap.values()) {
+        for (SetMultimap<String, EventCluster> descrMap : typeMap.values()) {
             //for each description ...
             for (String descr : descrMap.keySet()) {
                 //run through the sorted events, merging together adjacent events
-                Iterator<AggregateEvent> iterator = descrMap.get(descr).stream()
+                Iterator<EventCluster> iterator = descrMap.get(descr).stream()
                         .sorted(Comparator.comparing(event -> event.getSpan().getStartMillis()))
                         .iterator();
-                AggregateEvent current = iterator.next();
+                EventCluster current = iterator.next();
                 while (iterator.hasNext()) {
-                    AggregateEvent next = iterator.next();
+                    EventCluster next = iterator.next();
                     Interval gap = current.getSpan().gap(next.getSpan());
 
                     //if they overlap or gap is less one quarter timeUnitLength
                     //TODO: 1/4 factor is arbitrary. review! -jm
                     if (gap == null || gap.toDuration().getMillis() <= timeUnitLength.toDurationFrom(gap.getStart()).getMillis() / 4) {
                         //merge them
-                        current = AggregateEvent.merge(current, next);
+                        current = EventCluster.merge(current, next);
                     } else {
                         //done merging into current, set next as new current
                         aggEvents.add(current);
