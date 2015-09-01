@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
@@ -33,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
  * designated 'zoom level'.
  */
 @Immutable
-public class AggregateEvent {
+public class EventCluster implements EventBundle {
 
     /**
      * the smallest time interval containing all the aggregated events
@@ -72,7 +73,7 @@ public class AggregateEvent {
      */
     private final Set<Long> hashHits;
 
-    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -88,6 +89,14 @@ public class AggregateEvent {
      */
     public Interval getSpan() {
         return span;
+    }
+
+    public long getStartMillis() {
+        return span.getStartMillis();
+    }
+
+    public long getEndMillis() {
+        return span.getEndMillis();
     }
 
     public Set<Long> getEventIDs() {
@@ -110,7 +119,8 @@ public class AggregateEvent {
         return type;
     }
 
-    public DescriptionLOD getLOD() {
+    @Override
+    public DescriptionLOD getDescriptionLOD() {
         return lod;
     }
 
@@ -123,7 +133,7 @@ public class AggregateEvent {
      * @return a new aggregate event that is the result of merging the given
      *         events
      */
-    public static AggregateEvent merge(AggregateEvent aggEvent1, AggregateEvent ag2) {
+    public static EventCluster merge(EventCluster aggEvent1, EventCluster ag2) {
 
         if (aggEvent1.getType() != ag2.getType()) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different types");
@@ -136,6 +146,14 @@ public class AggregateEvent {
         Sets.SetView<Long> hashHitsUnion = Sets.union(aggEvent1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
         Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
 
-        return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+        return new EventCluster(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+    }
+
+    Range<Long> getRange() {
+        if (getEndMillis() > getStartMillis()) {
+            return Range.closedOpen(getSpan().getStartMillis(), getSpan().getEndMillis());
+        } else {
+            return Range.singleton(getStartMillis());
+        }
     }
 }

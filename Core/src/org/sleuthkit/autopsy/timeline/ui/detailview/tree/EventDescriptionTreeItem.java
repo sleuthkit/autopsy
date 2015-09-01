@@ -20,14 +20,15 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
  *
  */
 class EventDescriptionTreeItem extends NavTreeItem {
 
-    public EventDescriptionTreeItem(AggregateEvent g) {
+    public EventDescriptionTreeItem(EventCluster g) {
         setValue(new NavTreeNode(g.getType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
     }
 
@@ -37,7 +38,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void insert(AggregateEvent g) {
+    public void insert(EventCluster g) {
         NavTreeNode value = getValue();
         if ((value.getType().getBaseType().equals(g.getType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
             throw new IllegalArgumentException();
@@ -52,7 +53,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(AggregateEvent t) {
+    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
         if (getValue().getType().getBaseType() == t.getType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
             return this;
         }

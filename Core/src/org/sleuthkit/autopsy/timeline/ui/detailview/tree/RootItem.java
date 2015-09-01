@@ -24,8 +24,9 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
 
 /**
  *
@@ -56,7 +57,7 @@ class RootItem extends NavTreeItem {
      * @param g Group to add
      */
     @Override
-    public void insert(AggregateEvent g) {
+    public void insert(EventCluster g) {
 
         EventTypeTreeItem treeItem = childMap.get(g.getType().getBaseType());
         if (treeItem == null) {
@@ -85,7 +86,7 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(AggregateEvent t) {
+    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
         for (TreeItem<NavTreeNode> child : getChildren()) {
             final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {

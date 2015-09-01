@@ -20,7 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and
@@ -30,12 +31,12 @@ import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
  */
 abstract class NavTreeItem extends TreeItem<NavTreeNode> {
 
-    abstract void insert(AggregateEvent g);
+    abstract void insert(EventCluster g);
 
     abstract int getCount();
 
     abstract void resort(Comparator<TreeItem<NavTreeNode>> comp);
 
-    abstract TreeItem<NavTreeNode> findTreeItemForEvent(AggregateEvent t);
+    abstract TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t);
 
 }

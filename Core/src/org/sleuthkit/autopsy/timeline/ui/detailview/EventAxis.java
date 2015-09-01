@@ -22,21 +22,21 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass
  * AggregateEvent as the second member of {@link XYChart.Data} objects
  */
-class EventAxis extends Axis<AggregateEvent> {
+class EventAxis extends Axis<EventCluster> {
 
     @Override
-    public double getDisplayPosition(AggregateEvent value) {
+    public double getDisplayPosition(EventCluster value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public AggregateEvent getValueForDisplay(double displayPosition) {
+    public EventCluster getValueForDisplay(double displayPosition) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -46,17 +46,17 @@ class EventAxis extends Axis<AggregateEvent> {
     }
 
     @Override
-    public boolean isValueOnAxis(AggregateEvent value) {
+    public boolean isValueOnAxis(EventCluster value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public double toNumericValue(AggregateEvent value) {
+    public double toNumericValue(EventCluster value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public AggregateEvent toRealValue(double value) {
+    public EventCluster toRealValue(double value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -66,7 +66,7 @@ class EventAxis extends Axis<AggregateEvent> {
     }
 
     @Override
-    protected List<AggregateEvent> calculateTickValues(double length, Object range) {
+    protected List<EventCluster> calculateTickValues(double length, Object range) {
         return Collections.emptyList();
     }
 
@@ -76,7 +76,7 @@ class EventAxis extends Axis<AggregateEvent> {
     }
 
     @Override
-    protected String getTickMarkLabel(AggregateEvent value) {
+    protected String getTickMarkLabel(EventCluster value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
