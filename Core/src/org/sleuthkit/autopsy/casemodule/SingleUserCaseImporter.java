@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -380,11 +383,16 @@ public class SingleUserCaseImporter implements Runnable {
         destination = icd.getSpecificCaseOutputFolder().resolve(AIM_LOG_FILE_NAME);
         if (source.toFile().exists()) {
             FileUtils.copyFile(source.toFile(), destination.toFile());
-
         }
-        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-            out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportedAsMultiUser") + new Date());
-        } catch (IOException e) {
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(destination.toFile(), true);
+                FileLock fileLock = fileOutputStream.getChannel().lock()) {
+            if (fileLock.isValid()) {
+                fileOutputStream.write(String.format("%s %s%s", simpleDateFormat.format((Date.from(Instant.now()).getTime())),
+                        NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportedAsMultiUser"),
+                        SEP).getBytes());
+            }
+        } catch (Exception e) {
             // if unable to log it, no problem
         }
 
