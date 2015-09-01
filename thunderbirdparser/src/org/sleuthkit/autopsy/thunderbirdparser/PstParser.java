@@ -258,9 +258,14 @@ class PstParser {
                 out.write(buffer);
                 count = attachmentStream.read(buffer);
             }
-            byte[] endBuffer = new byte[count];
-            System.arraycopy(buffer, 0, endBuffer, 0, count);
-            out.write(endBuffer);
+            if(count != -1){
+                byte[] endBuffer = new byte[count];
+                System.arraycopy(buffer, 0, endBuffer, 0, count);
+                out.write(endBuffer);
+            }
+            else {
+                System.err.println(attach.toString());
+            }
         }
     }
 
