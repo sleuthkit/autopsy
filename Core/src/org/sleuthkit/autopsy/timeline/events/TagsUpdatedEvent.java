@@ -18,22 +18,26 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-import java.util.Collections;
+import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 
 /**
- * Posted to eventbus when a tag as been added to a file artifact that
- * corresponds to an event
+ * A "local" event published by filteredEventsModel to indicate that events have
+ * been(un)tagged. This event is not intended for use out side of the timeline
+ * module.
  */
-public class EventsTaggedEvent {
+public class TagsUpdatedEvent {
 
-    private final Set<Long> eventIDs;
+    private final Set<Long> updatedEventIDs;
 
-    public EventsTaggedEvent(Set<Long> eventIDs) {
-        this.eventIDs = eventIDs;
+
+    public ImmutableSet<Long> getUpdatedEventIDs() {
+        return ImmutableSet.copyOf(updatedEventIDs);
     }
 
-    public Set<Long> getEventIDs() {
-        return Collections.unmodifiableSet(eventIDs);
+
+    public TagsUpdatedEvent(Set<Long> updatedEventIDs) {
+        this.updatedEventIDs = updatedEventIDs;
+
     }
 }

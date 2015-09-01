@@ -15,10 +15,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class HashSetManager {
 
-    /** The db that initial values are loaded from. */
+    /**
+     * The db that initial values are loaded from.
+     */
     private DrawableDB db = null;
 
-    /** the internal cache from fileID to a set of hashset names. */
+    /**
+     * the internal cache from fileID to a set of hashset names.
+     */
     private final LoadingCache<Long, Set<String>> hashSetCache = CacheBuilder.newBuilder().build(CacheLoader.from(this::getHashSetsForFileHelper));
 
     /**

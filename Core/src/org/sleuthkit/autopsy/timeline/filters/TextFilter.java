@@ -91,5 +91,4 @@ public class TextFilter extends AbstractFilter {
         hash = 29 * hash + Objects.hashCode(this.text.get());
         return hash;
     }
-
 }

@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 enum TreeComparator implements Comparator<TreeItem<NavTreeNode>> {
 

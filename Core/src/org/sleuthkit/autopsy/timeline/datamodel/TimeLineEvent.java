@@ -16,47 +16,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
+package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.ImmutableMap;
 import javax.annotation.Nullable;
-import org.sleuthkit.autopsy.timeline.events.type.EventType;
+import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * A single event.
  */
+@Immutable
 public class TimeLineEvent {
 
-    private final Long eventID;
-
-    private final Long fileID;
-
-    private final Long time;
-
+    private final long eventID;
+    private final long fileID;
     private final Long artifactID;
+    private final long dataSourceID;
 
+    private final long time;
     private final EventType subType;
-
-    private final String fullDescription, medDescription, shortDescription;
+    private final ImmutableMap<DescriptionLOD, String> descriptions;
 
     private final TskData.FileKnown known;
-
     private final boolean hashHit;
     private final boolean tagged;
 
-    public TimeLineEvent(Long eventID, Long objID, @Nullable Long artifactID, Long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
+    public TimeLineEvent(long eventID, long dataSourceID, long objID, @Nullable Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.fileID = objID;
-        this.artifactID = artifactID;
+        this.artifactID = artifactID == 0 ? null : artifactID;
         this.time = time;
         this.subType = type;
+        descriptions = ImmutableMap.<DescriptionLOD, String>of(
+                DescriptionLOD.FULL, fullDescription,
+                DescriptionLOD.MEDIUM, medDescription,
+                DescriptionLOD.SHORT, shortDescription);
 
-        this.fullDescription = fullDescription;
-        this.medDescription = medDescription;
-        this.shortDescription = shortDescription;
         this.known = known;
         this.hashHit = hashHit;
         this.tagged = tagged;
+        this.dataSourceID = dataSourceID;
     }
 
     public boolean isTagged() {
@@ -72,18 +74,18 @@ public class TimeLineEvent {
         return artifactID;
     }
 
-    public Long getEventID() {
+    public long getEventID() {
         return eventID;
     }
 
-    public Long getFileID() {
+    public long getFileID() {
         return fileID;
     }
 
     /**
      * @return the time in seconds from unix epoch
      */
-    public Long getTime() {
+    public long getTime() {
         return time;
     }
 
@@ -92,18 +94,26 @@ public class TimeLineEvent {
     }
 
     public String getFullDescription() {
-        return fullDescription;
+        return getDescription(DescriptionLOD.FULL);
     }
 
     public String getMedDescription() {
-        return medDescription;
+        return getDescription(DescriptionLOD.MEDIUM);
     }
 
     public String getShortDescription() {
-        return shortDescription;
+        return getDescription(DescriptionLOD.SHORT);
     }
 
     public TskData.FileKnown getKnown() {
         return known;
+    }
+
+    public String getDescription(DescriptionLOD lod) {
+        return descriptions.get(lod);
+    }
+
+    public long getDataSourceID() {
+        return dataSourceID;
     }
 }
