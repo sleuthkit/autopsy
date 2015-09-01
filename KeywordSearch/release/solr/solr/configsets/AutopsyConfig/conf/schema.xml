@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Autopsy Keyword Search" version="1.6">
+<schema name="Autopsy Keyword Search" version="1.7">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should
@@ -57,6 +57,7 @@
        1.4: default auto-phrase (QueryParser feature) to off
        1.5: added content_ws field for regular expression friendly indexing 
        1.6: added num_chunks for chunking support
+       1.7 added _version_ field for Solr Cloud
      -->
 
   <types>
@@ -499,6 +500,9 @@
      default: a value that should be used if no value is specified
        when adding a document.
    -->
+
+   <!-- _version_ is required when using a Solr Cloud infrastructure. -->
+   <field name="_version_" type="long" indexed="true" stored="true" /> 
 
    <!-- object id of the file -->
    <field name="id" type="string" indexed="true" stored="true" required="true" /> 
