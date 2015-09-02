@@ -80,7 +80,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Represents an {@link EventCluster} in a {@link EventDetailChart}.
  */
-public class EventClusterNode extends StackPane implements DetailViewNode {
+public class EventClusterNode extends StackPane implements DetailViewNode<EventClusterNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
 
@@ -148,18 +148,23 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
 
     private final Button plusButton = new Button(null, new ImageView(PLUS)) {
         {
-            setMinSize(16, 16);
-            setMaxSize(16, 16);
-            setPrefSize(16, 16);
+            configureLODButton(this);
         }
     };
     private final Button minusButton = new Button(null, new ImageView(MINUS)) {
         {
-            setMinSize(16, 16);
-            setMaxSize(16, 16);
-            setPrefSize(16, 16);
+            configureLODButton(this);
         }
     };
+
+    private static void configureLODButton(Button b) {
+        b.setMinSize(16, 16);
+        b.setMaxSize(16, 16);
+        b.setPrefSize(16, 16);
+        b.setVisible(false);
+        b.setManaged(false);
+    }
+
     private final EventDetailChart chart;
 
     private SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
@@ -196,10 +201,6 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
         hBox.setPadding(new Insets(2, 5, 2, 5));
         hBox.setAlignment(Pos.CENTER_LEFT);
 
-        minusButton.setVisible(false);
-        plusButton.setVisible(false);
-        minusButton.setManaged(false);
-        plusButton.setManaged(false);
         final BorderPane borderPane = new BorderPane(subNodePane, hBox, null, null, null);
         BorderPane.setAlignment(subNodePane, Pos.TOP_LEFT);
         borderPane.setPrefWidth(USE_COMPUTED_SIZE);
@@ -322,8 +323,10 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
     }
 
     @Override
-    public Pane getSubNodePane() {
-        return subNodePane;
+    public List<EventClusterNode> getSubNodes() {
+        return subNodePane.getChildrenUnmodifiable().stream()
+                .map(EventClusterNode.class::cast)
+                .collect(Collectors.toList());
     }
 
     synchronized public EventCluster getEvent() {
@@ -413,7 +416,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
      *
      * @param applied true to apply the highlight 'effect', false to remove it
      */
-    synchronized void applyHighlightEffect(boolean applied) {
+    public synchronized void applyHighlightEffect(boolean applied) {
 
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
@@ -457,7 +460,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
      * @param newDescriptionLOD
      */
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
-        getSubNodePane().getChildren().clear();
+        subNodePane.getChildren().clear();
         if (newDescriptionLOD == aggEvent.getDescriptionLOD()) {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
@@ -494,7 +497,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode {
                             try {
                                 chart.setCursor(Cursor.WAIT);
                                 //assign subNodes and request chart layout
-                                getSubNodePane().getChildren().setAll(get());
+                                subNodePane.getChildren().setAll(get());
                                 setDescriptionVisibility(descrVis);
                                 chart.setRequiresLayout(true);
                                 chart.requestChartLayout();

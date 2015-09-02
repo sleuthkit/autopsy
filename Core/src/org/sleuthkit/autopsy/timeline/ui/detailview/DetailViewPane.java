@@ -30,7 +30,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.Cursor;
@@ -101,7 +100,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of this class and CountsChartPane into
  * {@link AbstractVisualization}
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, DetailViewNode, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, DetailViewNode<?>, EventDetailChart> {
 
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -121,7 +120,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final ObservableList<EventCluster> aggregatedEvents = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    private final ObservableList<EventClusterNode> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<DetailViewNode<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventCluster> getAggregatedEvents() {
         return aggregatedEvents;
@@ -150,7 +149,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.getMaxVScroll()));
         requestLayout();
 
-        highlightedNodes.addListener((ListChangeListener.Change<? extends EventClusterNode> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends DetailViewNode<?>> change) -> {
             while (change.next()) {
                 change.getAddedSubList().forEach(aeNode -> {
                     aeNode.applyHighlightEffect(true);
@@ -167,7 +166,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
         //These scroll related handlers don't affect any other view or the model, so they are handled internally
         //mouse wheel scroll handler
-        this.onScrollProperty().set((EventHandler<ScrollEvent>) (ScrollEvent t) -> {
+        this.onScrollProperty().set((ScrollEvent t) -> {
             vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() - t.getDeltaY() / 200.0)));
         });
 
@@ -213,8 +212,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (EventClusterNode n : chart.getNodes((EventClusterNode t)
-                        -> t.getEvent().getDescription().equals(tn.getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
+                        -> t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -237,8 +236,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (EventClusterNode n : chart.getNodes((EventClusterNode t)
-                        -> t.getEvent().getDescription().equals(tn.getValue().getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
+                        -> t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -358,7 +357,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     @Override
-    protected void applySelectionEffect(DetailViewNode c1, Boolean applied) {
+    protected void applySelectionEffect(DetailViewNode<?> c1, Boolean applied) {
         c1.applySelectionEffect(applied);
     }
 

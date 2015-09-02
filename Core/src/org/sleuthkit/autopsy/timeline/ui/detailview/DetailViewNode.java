@@ -7,22 +7,21 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.List;
 import java.util.Set;
-import javafx.scene.layout.Pane;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  *
  */
-public interface DetailViewNode {
+public interface DetailViewNode<S extends DetailViewNode<S>> {
 
-    long getStartMillis();
+    public long getStartMillis();
 
-    long getEndMillis();
+    public long getEndMillis();
 
     public void setDescriptionVisibility(DescriptionVisibility get);
 
-    public Pane getSubNodePane();
+    public List<S> getSubNodes();
 
     public void setSpanWidths(List<Double> spanWidths);
 
@@ -32,10 +31,16 @@ public interface DetailViewNode {
 
     public Set<Long> getEventIDs();
 
-    public void applySelectionEffect(boolean applied);
-
     public String getDescription();
 
     public EventBundle getBundleDescriptor();
 
+    /**
+     * apply the 'effect' to visually indicate highlighted nodes
+     *
+     * @param applied true to apply the highlight 'effect', false to remove it
+     */
+    void applyHighlightEffect(boolean applied);
+
+    public void applySelectionEffect(boolean applied);
 }
