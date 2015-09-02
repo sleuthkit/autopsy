@@ -497,6 +497,14 @@ class SevenZipExtractor {
                 final long createtime = createTime == null ? 0L : createTime.getTime() / 1000;
                 final long modtime = writeTime == null ? 0L : writeTime.getTime() / 1000;
                 final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
+                
+                if(size != null) {
+                    // unpackedNode.bytesWritten will not be set in
+                    // this case. Use 'size' which has been set
+                    // previously.
+                    unpackedNode.addDerivedInfo(size, !isDir,
+                            0L, createtime, accesstime, modtime, localRelPath);
+                }
 
                 //unpack locally if a file
                 SevenZipExtractor.UnpackStream unpackStream = null;
@@ -510,13 +518,7 @@ class SevenZipExtractor {
                     } finally {
                         if (unpackStream != null) {
                             //record derived data in unode, to be traversed later after unpacking the archive
-                            if (size != null) {
-                                // unpackedNode.bytesWritten will not be set in
-                                // this case. Use 'size' which has been set
-                                // previously.
-                                unpackedNode.addDerivedInfo(size, !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            } else {
+                            if (size == null) {
                                 // since size is unknown, use
                                 // unpackStream.getNumberOfBytesWritten() to get
                                 // the size.
