@@ -499,9 +499,9 @@ class SevenZipExtractor {
                 final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
                 
                 if(size != null) {
-                    // unpackedNode.bytesWritten will not be set in
-                    // this case. Use 'size' which has been set
-                    // previously.
+                    // Since size is known, record the derived data now.
+                    // Directory's have known sizes, so this will be executed
+                    // for them as well.
                     unpackedNode.addDerivedInfo(size, !isDir,
                             0L, createtime, accesstime, modtime, localRelPath);
                 }
@@ -518,13 +518,11 @@ class SevenZipExtractor {
                     } finally {
                         if (unpackStream != null) {
                             //record derived data in unode, to be traversed later after unpacking the archive
-                            if (size == null) {
-                                // since size is unknown, use
-                                // unpackStream.getNumberOfBytesWritten() to get
-                                // the size.
-                                unpackedNode.addDerivedInfo(unpackStream.getNumberOfBytesWritten(), !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            }
+                            // since size is unknown, use
+                            // unpackStream.getNumberOfBytesWritten() to get
+                            // the size.
+                            unpackedNode.addDerivedInfo(unpackStream.getNumberOfBytesWritten(), !isDir,
+                                    0L, createtime, accesstime, modtime, localRelPath);
                             unpackStream.close();
                         }
                     }
