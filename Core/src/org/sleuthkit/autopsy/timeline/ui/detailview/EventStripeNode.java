@@ -18,6 +18,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
@@ -29,7 +30,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
@@ -41,6 +41,7 @@ import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -64,7 +65,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  *
  */
-public class EventStripeNode extends StackPane implements DetailViewNode {
+public class EventStripeNode extends StackPane implements DetailViewNode<EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
 
@@ -94,20 +95,28 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
     private final ImageView tagIV = new ImageView(TAG);
     private final Button plusButton = new Button(null, new ImageView(PLUS)) {
         {
-            setMinSize(16, 16);
-            setMaxSize(16, 16);
-            setPrefSize(16, 16);
+            configureLODButton(this);
         }
     };
     private final Button minusButton = new Button(null, new ImageView(MINUS)) {
         {
-            setMinSize(16, 16);
-            setMaxSize(16, 16);
-            setPrefSize(16, 16);
+            configureLODButton(this);
         }
     };
+
+    private static void configureLODButton(Button b) {
+        b.setMinSize(16, 16);
+        b.setMaxSize(16, 16);
+        b.setPrefSize(16, 16);
+        show(b, false);
+    }
+
+    private static void show(Node b, boolean show) {
+        b.setVisible(show);
+        b.setManaged(show);
+    }
     private DescriptionVisibility descrVis;
-    private final HBox spanRegion = new HBox();
+    private final HBox spansHBox = new HBox();
     /**
      * The IamgeView used to show the icon for this node's event's type
      */
@@ -127,43 +136,36 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
         final Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        final HBox hBox = new HBox(descrLabel, countLabel, spacer, hashIV, tagIV, minusButton, plusButton);
+        final HBox header = new HBox(descrLabel, countLabel, hashIV, tagIV, spacer, minusButton, plusButton);
         if (cluster.getEventIDsWithHashHits().isEmpty()) {
-            hashIV.setManaged(false);
-            hashIV.setVisible(false);
+            show(hashIV, false);
         }
         if (cluster.getEventIDsWithTags().isEmpty()) {
-            tagIV.setManaged(false);
-            tagIV.setVisible(false);
+            show(tagIV, false);
         }
-        hBox.setPrefWidth(USE_COMPUTED_SIZE);
-        hBox.setMinWidth(USE_PREF_SIZE);
-        hBox.setPadding(new Insets(2, 5, 2, 5));
-        hBox.setAlignment(Pos.CENTER_LEFT);
+        header.setMinWidth(USE_PREF_SIZE);
+        header.setPadding(new Insets(2, 5, 2, 5));
+        header.setAlignment(Pos.CENTER_LEFT);
 
-        minusButton.setVisible(false);
-        plusButton.setVisible(false);
-        minusButton.setManaged(false);
-        plusButton.setManaged(false);
-        final BorderPane borderPane = new BorderPane(subNodePane, hBox, null, null, null);
-        BorderPane.setAlignment(subNodePane, Pos.TOP_LEFT);
-        borderPane.setPrefWidth(USE_COMPUTED_SIZE);
+        final VBox internalVBox = new VBox(header, subNodePane);
+        internalVBox.setAlignment(Pos.CENTER_LEFT);
         final Color evtColor = cluster.getType().getColor();
 
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY));
         for (Range<Long> r : cluster.getRanges()) {
-            Region region = new Region();
-            region.setStyle("-fx-border-width:2 1 2 1; -fx-border-radius: 1; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor.deriveColor(0, 1, 1, .3)) + ";"); // NON-NLS
-            region.setBackground(spanFill);
-            spanRegion.getChildren().addAll(region, new Region());
+            Region spanRegion = new Region();
+            spanRegion.setStyle("-fx-border-width:2 1 2 1; -fx-border-radius: 1; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor.deriveColor(0, 1, 1, .3)) + ";"); // NON-NLS
+            spanRegion.setBackground(spanFill);
+            spansHBox.getChildren().addAll(spanRegion, new Region());
         }
-        spanRegion.getChildren().remove(spanRegion.getChildren().size() - 1);
-
-        getChildren().addAll(spanRegion, borderPane);
-        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+        spansHBox.getChildren().remove(spansHBox.getChildren().size() - 1);
+        spansHBox.setMaxWidth(USE_PREF_SIZE);
+        setMaxWidth(USE_PREF_SIZE);
+        getChildren().addAll(spansHBox, internalVBox);
+        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .05), CORNER_RADII, Insets.EMPTY)));
         setAlignment(Pos.TOP_LEFT);
         setMinHeight(24);
-        minWidthProperty().bind(spanRegion.widthProperty());
+        minWidthProperty().bind(spansHBox.widthProperty());
         setPrefHeight(USE_COMPUTED_SIZE);
         setMaxHeight(USE_PREF_SIZE);
 
@@ -189,20 +191,20 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
         setOnMouseEntered((MouseEvent e) -> {
             //defer tooltip creation till needed, this had a surprisingly large impact on speed of loading the chart
 //            installTooltip();
-            spanRegion.setEffect(new DropShadow(10, evtColor));
-            minusButton.setVisible(true);
-            plusButton.setVisible(true);
-            minusButton.setManaged(true);
-            plusButton.setManaged(true);
+            spansHBox.setEffect(new DropShadow(10, evtColor));
+            show(spacer, true);
+            show(minusButton, true);
+            show(plusButton, true);
+
             toFront();
         });
 
         setOnMouseExited((MouseEvent e) -> {
-            spanRegion.setEffect(null);
-            minusButton.setVisible(false);
-            plusButton.setVisible(false);
-            minusButton.setManaged(false);
-            plusButton.setManaged(false);
+            spansHBox.setEffect(null);
+            show(spacer, false);
+            show(minusButton, false);
+            show(plusButton, false);
+
         });
 
         plusButton.disableProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
@@ -232,11 +234,11 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
     @Override
     public void setSpanWidths(List<Double> spanWidths) {
         for (int i = 0; i < spanWidths.size(); i++) {
-            Region get = (Region) spanRegion.getChildren().get(i);
+            Region spanRegion = (Region) spansHBox.getChildren().get(i);
             Double w = spanWidths.get(i);
-            get.setPrefWidth(w);
-            get.setMaxWidth(w);
-            get.setMinWidth(Math.max(2, w));
+            spanRegion.setPrefWidth(w);
+            spanRegion.setMaxWidth(w);
+            spanRegion.setMinWidth(Math.max(2, w));
         }
     }
 
@@ -280,8 +282,10 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
     }
 
     @Override
-    public Pane getSubNodePane() {
-        return subNodePane;
+    public List<EventStripeNode> getSubNodes() {
+        return subNodePane.getChildrenUnmodifiable().stream()
+                .map(EventStripeNode.class::cast)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -339,6 +343,26 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
         });
     }
 
+    /**
+     * apply the 'effect' to visually indicate highlighted nodes
+     *
+     * @param applied true to apply the highlight 'effect', false to remove it
+     */
+    @Override
+    public synchronized void applyHighlightEffect(boolean applied) {
+        if (applied) {
+            descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
+            spanFill = new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
+            spansHBox.setBackground(spanFill);
+            setBackground(new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+        } else {
+            descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
+            spanFill = new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
+            spansHBox.setBackground(spanFill);
+            setBackground(new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+        }
+    }
+
     @Override
     public String getDescription() {
         return cluster.getDescription();
@@ -355,11 +379,14 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
      * @param newDescriptionLOD
      */
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
-        getSubNodePane().getChildren().clear();
+        subNodePane.getChildren().clear();
+        
         if (newDescriptionLOD == cluster.getDescriptionLOD()) {
+            spansHBox.setVisible(true);
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
+            spansHBox.setVisible(false);
             RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
             combinedFilter.getSubFilters().addAll(new TextFilter(cluster.getDescription()),
@@ -402,7 +429,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode {
                             try {
                                 chart.setCursor(Cursor.WAIT);
                                 //assign subNodes and request chart layout
-                                getSubNodePane().getChildren().setAll(get());
+                                subNodePane.getChildren().setAll(get());
                                 setDescriptionVisibility(descrVis);
                                 chart.setRequiresLayout(true);
                                 chart.requestChartLayout();
