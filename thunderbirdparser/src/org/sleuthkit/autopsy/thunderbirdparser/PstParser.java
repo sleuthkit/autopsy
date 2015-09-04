@@ -254,18 +254,19 @@ class PstParser {
             int bufferSize = 8176;
             byte[] buffer = new byte[bufferSize];
             int count = attachmentStream.read(buffer);
+            
+            if(count == -1) {
+                throw new IOException("attachmentStream invalid (read() fails). File "+attach.getLongFilename()+ " skipped");
+            }
+            
             while (count == bufferSize) {
                 out.write(buffer);
                 count = attachmentStream.read(buffer);
             }
-            if(count != -1){
-                byte[] endBuffer = new byte[count];
-                System.arraycopy(buffer, 0, endBuffer, 0, count);
-                out.write(endBuffer);
-            }
-            else {
-                System.err.println(attach.toString());
-            }
+
+            byte[] endBuffer = new byte[count];
+            System.arraycopy(buffer, 0, endBuffer, 0, count);
+            out.write(endBuffer);
         }
     }
 
