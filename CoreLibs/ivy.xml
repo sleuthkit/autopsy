@@ -63,6 +63,7 @@
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-image" rev="3.1.1" />
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.1.1" />
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.1.1" />
-        <dependency org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
+
+        <dependency org="org.apache.curator" name="curator-recipes" rev="2.8.0"/>
     </dependencies>
 </ivy-module>
