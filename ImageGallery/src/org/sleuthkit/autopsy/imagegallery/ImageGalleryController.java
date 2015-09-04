@@ -53,6 +53,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.History;
@@ -584,7 +585,7 @@ public final class ImageGalleryController {
                 try {
                     InnerTask it = workQueue.take();
 
-                    if (it.cancelled == false) {
+                    if (it.isCancelled() == false) {
                         it.run();
                     }
 
@@ -606,7 +607,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static public abstract class InnerTask implements Runnable {
+    static public abstract class InnerTask implements Runnable, Cancellable {
 
         public double getProgress() {
             return progress.get();
@@ -650,13 +651,13 @@ public final class ImageGalleryController {
         protected InnerTask() {
         }
 
-        protected volatile boolean cancelled = false;
-
-        public void cancel() {
+        @Override
+        synchronized public boolean cancel() {
             updateState(Worker.State.CANCELLED);
+            return true;
         }
 
-        protected boolean isCancelled() {
+        synchronized protected boolean isCancelled() {
             return getState() == Worker.State.CANCELLED;
         }
     }
@@ -798,7 +799,7 @@ public final class ImageGalleryController {
                 DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
                 int units = 0;
                 for (final AbstractFile f : files) {
-                    if (cancelled) {
+                    if (isCancelled()) {
                         LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
                         progressHandle.finish();
                         break;
@@ -876,7 +877,7 @@ public final class ImageGalleryController {
         // (name like '.jpg' or name like '.png' ...)
         private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
 
-        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
+        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database", this);
 
         /**
          *
@@ -929,7 +930,7 @@ public final class ImageGalleryController {
                 DrawableDB.DrawableTransaction tr = db.beginTransaction();
                 int units = 0;
                 for (final AbstractFile f : files) {
-                    if (cancelled) {
+                    if (isCancelled()) {
                         LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
                         progressHandle.finish();
                         break;
