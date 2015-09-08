@@ -459,7 +459,7 @@ class SevenZipExtractor {
                     }
                 }
 
-                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + new File(pathInArchive).getName();
+                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName();
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
@@ -510,22 +510,14 @@ class SevenZipExtractor {
                     } finally {
                         if (unpackStream != null) {
                             //record derived data in unode, to be traversed later after unpacking the archive
-                            if (size != null) {
-                                // unpackedNode.bytesWritten will not be set in
-                                // this case. Use 'size' which has been set
-                                // previously.
-                                unpackedNode.addDerivedInfo(size, !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            } else {
-                                // since size is unknown, use
-                                // unpackStream.getNumberOfBytesWritten() to get
-                                // the size.
-                                unpackedNode.addDerivedInfo(unpackStream.getNumberOfBytesWritten(), !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            }
+                            unpackedNode.addDerivedInfo(unpackStream.getNumberOfBytesWritten(), !isDir,
+                                    0L, createtime, accesstime, modtime, localRelPath);
                             unpackStream.close();
                         }
                     }
+                } else {
+                    unpackedNode.addDerivedInfo(size, !isDir,
+                            0L, createtime, accesstime, modtime, localRelPath);
                 }
 
                 //update units for progress bar
