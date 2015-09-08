@@ -146,7 +146,7 @@ class SevenZipExtractor {
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
-     *         supported. Else it returns false.
+     * supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -180,7 +180,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName     the parent archive
+     * @param archiveName the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -279,7 +279,7 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile     file to unpack
+     * @param archiveFile file to unpack
      *
      * @return list of unpacked derived files
      */
@@ -500,9 +500,9 @@ class SevenZipExtractor {
 
                 //unpack locally if a file
                 SevenZipExtractor.UnpackStream unpackStream = null;
-                if (!isDir) {
+                if (!isDir && size != null) {
                     try {
-                        unpackStream = new SevenZipExtractor.UnpackStream(localAbsPath, freeDiskSpace, size == null);
+                        unpackStream = new SevenZipExtractor.KnownSizeUnpack(localAbsPath, size);
                         item.extractSlow(unpackStream);
                     } catch (Exception e) {
                         //could be something unexpected with this file, move on
@@ -510,22 +510,29 @@ class SevenZipExtractor {
                     } finally {
                         if (unpackStream != null) {
                             //record derived data in unode, to be traversed later after unpacking the archive
-                            if (size != null) {
-                                // unpackedNode.bytesWritten will not be set in
-                                // this case. Use 'size' which has been set
-                                // previously.
-                                unpackedNode.addDerivedInfo(size, !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            } else {
-                                // since size is unknown, use
-                                // unpackStream.getNumberOfBytesWritten() to get
-                                // the size.
-                                unpackedNode.addDerivedInfo(unpackStream.getNumberOfBytesWritten(), !isDir,
-                                        0L, createtime, accesstime, modtime, localRelPath);
-                            }
+                            unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
+                                    0L, createtime, accesstime, modtime, localRelPath);
                             unpackStream.close();
                         }
                     }
+                } else if (!isDir && size == null) {
+                    try {
+                        unpackStream = new SevenZipExtractor.UnknownSizeUnpack(localAbsPath, freeDiskSpace);
+                        item.extractSlow(unpackStream);
+                    } catch (Exception e) {
+                        //could be something unexpected with this file, move on
+                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
+                    } finally {
+                        if (unpackStream != null) {
+                            //record derived data in unode, to be traversed later after unpacking the archive
+                            unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
+                                    0L, createtime, accesstime, modtime, localRelPath);
+                            unpackStream.close();
+                        }
+                    }
+                } else { // this is a directory, size is always 0
+                    unpackedNode.addDerivedInfo(0, !isDir,
+                            0L, createtime, accesstime, modtime, localRelPath);
                 }
 
                 //update units for progress bar
@@ -615,18 +622,12 @@ class SevenZipExtractor {
     /**
      * Stream used to unpack the archive to local file
      */
-    private static class UnpackStream implements ISequentialOutStream {
+    private abstract static class UnpackStream implements ISequentialOutStream {
 
-        private OutputStream output;
-        private String localAbsPath;
-        private long freeDiskSpace;
-        private boolean sizeUnknown = false;
-        private boolean outOfSpace = false;
-        private long bytesWritten = 0;
+        protected OutputStream output;
+        protected String localAbsPath;
 
-        UnpackStream(String localAbsPath, long freeDiskSpace, boolean sizeUnknown) {
-            this.sizeUnknown = sizeUnknown;
-            this.freeDiskSpace = freeDiskSpace;
+        UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
             try {
                 output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
@@ -636,34 +637,59 @@ class SevenZipExtractor {
 
         }
 
-        public long getNumberOfBytesWritten() {
+        public abstract long getSize();
+
+        public void close() {
+            if (output != null) {
+                try {
+                    output.flush();
+                    output.close();
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
+                }
+            }
+        }
+    }
+
+    /**
+     * Stream used to unpack the archive of unknown size to local file
+     */
+    private static class UnknownSizeUnpack extends UnpackStream {
+
+        private long freeDiskSpace;
+        private boolean outOfSpace = false;
+        private long bytesWritten = 0;
+
+        UnknownSizeUnpack(String localAbsPath, long freeDiskSpace) {
+            super(localAbsPath);
+            this.freeDiskSpace = freeDiskSpace;
+        }
+
+        @Override
+        public long getSize() {
             return this.bytesWritten;
         }
 
         @Override
         public int write(byte[] bytes) throws SevenZipException {
             try {
-                if (!sizeUnknown) {
+                // If the content size is unknown, cautiously write to disk.
+                // Write only if byte array is less than 80% of the current
+                // free disk space.
+                if (freeDiskSpace == IngestMonitor.DISK_FREE_SPACE_UNKNOWN || bytes.length < 0.8 * freeDiskSpace) {
                     output.write(bytes);
+                    // NOTE: this method is called multiple times for a
+                    // single extractSlow() call. Update bytesWritten and
+                    // freeDiskSpace after every write operation.
+                    this.bytesWritten += bytes.length;
+                    this.freeDiskSpace -= bytes.length;
                 } else {
-                    // If the content size is unknown, cautiously write to disk.
-                    // Write only if byte array is less than 80% of the current
-                    // free disk space.
-                    if (freeDiskSpace == IngestMonitor.DISK_FREE_SPACE_UNKNOWN || bytes.length < 0.8 * freeDiskSpace) {
-                        output.write(bytes);
-                        // NOTE: this method is called multiple times for a
-                        // single extractSlow() call. Update bytesWritten and
-                        // freeDiskSpace after every write operation.
-                        this.bytesWritten += bytes.length;
-                        this.freeDiskSpace -= bytes.length;
-                    } else {
-                        this.outOfSpace = true;
-                        logger.log(Level.INFO, NbBundle.getMessage(
-                                SevenZipExtractor.class,
-                                "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.noSpace.msg"));
-                        throw new SevenZipException(
-                                NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.noSpace.msg"));
-                    }
+                    this.outOfSpace = true;
+                    logger.log(Level.INFO, NbBundle.getMessage(
+                            SevenZipExtractor.class,
+                            "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.noSpace.msg"));
+                    throw new SevenZipException(
+                            NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.noSpace.msg"));
                 }
             } catch (IOException ex) {
                 throw new SevenZipException(
@@ -673,6 +699,7 @@ class SevenZipExtractor {
             return bytes.length;
         }
 
+        @Override
         public void close() {
             if (output != null) {
                 try {
@@ -685,6 +712,36 @@ class SevenZipExtractor {
                     logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
                 }
             }
+        }
+    }
+
+    /**
+     * Stream used to unpack the archive of known size to local file
+     */
+    private static class KnownSizeUnpack extends UnpackStream {
+
+        private long size;
+
+        KnownSizeUnpack(String localAbsPath, long size) {
+            super(localAbsPath);
+            this.size = size;
+        }
+
+        @Override
+        public long getSize() {
+            return this.size;
+        }
+
+        @Override
+        public int write(byte[] bytes) throws SevenZipException {
+            try {
+                output.write(bytes);
+            } catch (IOException ex) {
+                throw new SevenZipException(
+                        NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
+                                localAbsPath), ex);
+            }
+            return bytes.length;
         }
     }
 
@@ -702,8 +759,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         *                      saved to
-         * @param archiveFile   Archive file being extracted
+         * saved to
+         * @param archiveFile Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -962,7 +1019,7 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent   parent archive or null
+         * @param parent parent archive or null
          * @param objectId object id of the new archive
          *
          * @return the archive added
