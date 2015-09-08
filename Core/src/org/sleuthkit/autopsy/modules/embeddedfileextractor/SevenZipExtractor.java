@@ -500,24 +500,12 @@ class SevenZipExtractor {
 
                 //unpack locally if a file
                 SevenZipExtractor.UnpackStream unpackStream = null;
-                if (!isDir && size != null) {
+                if (!isDir) {
                     try {
-                        unpackStream = new SevenZipExtractor.KnownSizeUnpack(localAbsPath, size);
-                        item.extractSlow(unpackStream);
-                    } catch (Exception e) {
-                        //could be something unexpected with this file, move on
-                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
-                    } finally {
-                        if (unpackStream != null) {
-                            //record derived data in unode, to be traversed later after unpacking the archive
-                            unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
-                                    0L, createtime, accesstime, modtime, localRelPath);
-                            unpackStream.close();
-                        }
-                    }
-                } else if (!isDir && size == null) {
-                    try {
-                        unpackStream = new SevenZipExtractor.UnknownSizeUnpack(localAbsPath, freeDiskSpace);
+                        if (size != null)
+                            unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, size);
+                        else
+                            unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
                         item.extractSlow(unpackStream);
                     } catch (Exception e) {
                         //could be something unexpected with this file, move on
@@ -624,8 +612,8 @@ class SevenZipExtractor {
      */
     private abstract static class UnpackStream implements ISequentialOutStream {
 
-        protected OutputStream output;
-        protected String localAbsPath;
+        private OutputStream output;
+        private String localAbsPath;
 
         UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
@@ -638,6 +626,14 @@ class SevenZipExtractor {
         }
 
         public abstract long getSize();
+        
+        OutputStream getOutput() {
+            return output;
+        }
+        
+        String getLocalAbsPath() {
+            return localAbsPath;
+        }
 
         public void close() {
             if (output != null) {
@@ -654,13 +650,13 @@ class SevenZipExtractor {
     /**
      * Stream used to unpack the archive of unknown size to local file
      */
-    private static class UnknownSizeUnpack extends UnpackStream {
+    private static class UnknownSizeUnpackStream extends UnpackStream {
 
         private long freeDiskSpace;
         private boolean outOfSpace = false;
         private long bytesWritten = 0;
 
-        UnknownSizeUnpack(String localAbsPath, long freeDiskSpace) {
+        UnknownSizeUnpackStream(String localAbsPath, long freeDiskSpace) {
             super(localAbsPath);
             this.freeDiskSpace = freeDiskSpace;
         }
@@ -677,7 +673,7 @@ class SevenZipExtractor {
                 // Write only if byte array is less than 80% of the current
                 // free disk space.
                 if (freeDiskSpace == IngestMonitor.DISK_FREE_SPACE_UNKNOWN || bytes.length < 0.8 * freeDiskSpace) {
-                    output.write(bytes);
+                    getOutput().write(bytes);
                     // NOTE: this method is called multiple times for a
                     // single extractSlow() call. Update bytesWritten and
                     // freeDiskSpace after every write operation.
@@ -694,22 +690,22 @@ class SevenZipExtractor {
             } catch (IOException ex) {
                 throw new SevenZipException(
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
-                                localAbsPath), ex);
+                                getLocalAbsPath()), ex);
             }
             return bytes.length;
         }
 
         @Override
         public void close() {
-            if (output != null) {
+            if (getOutput() != null) {
                 try {
-                    output.flush();
-                    output.close();
+                    getOutput().flush();
+                    getOutput().close();
                     if (this.outOfSpace) {
-                        Files.delete(Paths.get(this.localAbsPath));
+                        Files.delete(Paths.get(getLocalAbsPath()));
                     }
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
+                    logger.log(Level.SEVERE, "Error closing unpack stream for file: {0}", getLocalAbsPath()); //NON-NLS
                 }
             }
         }
@@ -718,11 +714,11 @@ class SevenZipExtractor {
     /**
      * Stream used to unpack the archive of known size to local file
      */
-    private static class KnownSizeUnpack extends UnpackStream {
+    private static class KnownSizeUnpackStream extends UnpackStream {
 
         private long size;
 
-        KnownSizeUnpack(String localAbsPath, long size) {
+        KnownSizeUnpackStream(String localAbsPath, long size) {
             super(localAbsPath);
             this.size = size;
         }
@@ -735,11 +731,11 @@ class SevenZipExtractor {
         @Override
         public int write(byte[] bytes) throws SevenZipException {
             try {
-                output.write(bytes);
+                getOutput().write(bytes);
             } catch (IOException ex) {
                 throw new SevenZipException(
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
-                                localAbsPath), ex);
+                                getLocalAbsPath()), ex);
             }
             return bytes.length;
         }
