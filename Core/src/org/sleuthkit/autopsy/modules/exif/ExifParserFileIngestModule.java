@@ -268,18 +268,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
         }
 
-        d = metadata.getFirstDirectoryOfType(CasioType1MakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(CasioType1MakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(CasioType1MakernoteDirectory.TAG_FLASH_MODE) == 0x04) { //0x04 = "Red eye reduction"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
-
         d = metadata.getFirstDirectoryOfType(FujifilmMakernoteDirectory.class);
         if (d != null) {
             if (d.containsTag(FujifilmMakernoteDirectory.TAG_FACES_DETECTED)
@@ -288,71 +276,39 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
         }
 
-        d = metadata.getFirstDirectoryOfType(KodakMakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(KodakMakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(KodakMakernoteDirectory.TAG_FLASH_MODE) == 0x03) { //0x03 = "Red Eye"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                /// move on and check next directory
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
-                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
-                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
-                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
-                return true;
-            }
-        }
+//        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
+//        if (d != null) {
+//            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
+//                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
+//                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
+//                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
+//                return true;
+//            }
+//        }
 
         d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
         if (d != null) {
             if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
-                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) {
+                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) { 
                 return true;
             }
-        }
-
-        d = metadata.getFirstDirectoryOfType(PentaxMakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(PentaxMakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(PentaxMakernoteDirectory.TAG_FLASH_MODE) == 6) { // 6 = Red-eye Reduction
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(SanyoMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO)
-                    && d.getString(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO) != null) {
+            if(d.containsTag(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE)
+                    && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE) != null
+                    && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE).equals("64 0")) { // NON-NLS
                 return true;
-            }
         }
 
-        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
-                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
-                    return true;
-                }
-                if (d.containsTag(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE)
-                        && d.getInt(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE) == 14) { //14 = "Smile shutter"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
+//        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
+//        if (d != null) {
+//            try {
+//                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
+//                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
+//                    return true;
+//                }
+//            } catch (MetadataException ex) {
+//                // move on and check next directory
+//            }
+//        }
 
         return false;
     }
