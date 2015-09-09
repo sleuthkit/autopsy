@@ -113,16 +113,16 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     //// range slider and histogram componenets
     @FXML
-    protected HBox histogramBox;
+    private HBox histogramBox;
 
     @FXML
-    protected StackPane rangeHistogramStack;
+    private StackPane rangeHistogramStack;
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
     //// time range selection components
     @FXML
-    protected MenuButton zoomMenuButton;
+    private MenuButton zoomMenuButton;
 
     @FXML
     private Separator rightSeperator;
@@ -131,26 +131,26 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     private Separator leftSeperator;
 
     @FXML
-    protected Button zoomOutButton;
+    private Button zoomOutButton;
 
     @FXML
-    protected Button zoomInButton;
+    private Button zoomInButton;
 
     @FXML
-    protected LocalDateTimeTextField startPicker;
+    private LocalDateTimeTextField startPicker;
 
     @FXML
-    protected LocalDateTimeTextField endPicker;
+    private LocalDateTimeTextField endPicker;
 
     //// replacemetn axis label componenets
     @FXML
-    protected Pane partPane;
+    private Pane partPane;
 
     @FXML
-    protected Pane contextPane;
+    private Pane contextPane;
 
     @FXML
-    protected Region spacer;
+    private Region spacer;
 
     //// header toolbar componenets
     @FXML
@@ -174,9 +174,9 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NotificationPane notificationPane = new NotificationPane();
 
-    protected TimeLineController controller;
+    private TimeLineController controller;
 
-    protected FilteredEventsModel filteredEvents;
+    private FilteredEventsModel filteredEvents;
 
     private final ChangeListener<Object> rangeSliderListener
             = (observable1, oldValue, newValue) -> {
@@ -361,7 +361,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
     }
 
-    synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+  private  synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {
@@ -549,7 +549,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         @FXML
         private Label noEventsDialogLabel;
 
-        public NoEventsDialog(Runnable closeCallback) {
+        private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
 
