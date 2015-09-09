@@ -244,10 +244,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     /**
      * Checks if this metadata contains any tags related to facial information.
-     * NOTE: Cases with this metadata containing tags like enabled red-eye
-     * reduction settings, portrait settings, etc are also assumed to contain
-     * facial information. The method returns true. The return value of this
-     * method does NOT guarantee actual presence of face.
      *
      * @param metadata the metadata which needs to be parsed for possible facial
      *                 information.
@@ -276,16 +272,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             }
         }
 
-//        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
-//        if (d != null) {
-//            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
-//                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
-//                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
-//                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
-//                return true;
-//            }
-//        }
-
         d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
         if (d != null) {
             if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
@@ -298,18 +284,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 return true;
             }
         }
-
-//        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
-//        if (d != null) {
-//            try {
-//                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
-//                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
-//                    return true;
-//                }
-//            } catch (MetadataException ex) {
-//                // move on and check next directory
-//            }
-//        }
 
         return false;
     }
