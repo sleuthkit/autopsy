@@ -296,6 +296,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE) != null
                     && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE).equals("64 0")) { // NON-NLS
                 return true;
+            }
         }
 
 //        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
