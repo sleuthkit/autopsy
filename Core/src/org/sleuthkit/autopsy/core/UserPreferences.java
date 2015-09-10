@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
@@ -62,9 +63,9 @@ public final class UserPreferences {
      * Reload all preferences from disk. This is only needed if the preferences
      * file is being directly modified on disk while Autopsy is running.
      *
-     * @throws Exception
+     * @throws BackingStoreException
      */
-    public static void reloadFromStorage() throws Exception {
+    public static void reloadFromStorage() throws BackingStoreException {
         preferences.sync();
     }
 
@@ -73,9 +74,9 @@ public final class UserPreferences {
      * preferences files are going to be copied to another location while
      * Autopsy is running.
      *
-     * @throws Exception
+     * @throws BackingStoreException
      */
-    public static void saveToStorage() throws Exception {
+    public static void saveToStorage() throws BackingStoreException {
         preferences.flush();
     }
 
