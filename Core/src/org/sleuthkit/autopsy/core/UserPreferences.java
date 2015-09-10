@@ -57,6 +57,26 @@ public final class UserPreferences {
     // Prevent instantiation.
     private UserPreferences() {
     }
+    
+    /**
+     * Reload all preferences from disk.
+     * This is only needed if the preferences file is being directly modified on disk
+     * while Viking is running.
+     * @throws Exception 
+     */
+    public static void reloadFromStorage() throws Exception {
+        preferences.sync();
+    }
+    
+    /**
+     * Saves the current preferences to storage.
+     * This is only needed if the preferences files are going to be copied
+     * to another location while Viking is running.
+     * @throws Exception 
+     */
+    public static void saveToStorage() throws Exception {
+        preferences.flush();
+    }
 
     public static void addChangeListener(PreferenceChangeListener listener) {
         preferences.addPreferenceChangeListener(listener);
