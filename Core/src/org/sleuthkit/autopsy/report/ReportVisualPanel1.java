@@ -142,13 +142,14 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     }
 
     private void postWarningMessage(ReportModule module) {
+        String moduleClassName = (module != null) ? module.getClass().getSimpleName() : "null"; // NON_NLS
         logger.log(Level.WARNING, "Invalid GeneralReportModule"); // NON_NLS
         services.postMessage(IngestMessage.createWarningMessage(
-                (module != null) ? module.getClass().getSimpleName() : "null", // NON_NLS
+                moduleClassName,
                 NbBundle.getMessage(this.getClass(),
                         "ReportVisualPanel1.invalidModuleWarning"),
                 NbBundle.getMessage(this.getClass(),
-                        "ReportVisualPanel1.ReportVisualPanelWillNotDisplayModule")));
+                        "ReportVisualPanel1.ReportVisualPanelWillNotDisplayModule", moduleClassName)));
     }
 
     @Override
