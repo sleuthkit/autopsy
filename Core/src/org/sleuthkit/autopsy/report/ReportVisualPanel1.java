@@ -35,18 +35,17 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.actions.OpenPythonModulesFolderAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
-import org.sleuthkit.autopsy.report.ReportHTML;
 
 final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
+    private final IngestServices services = IngestServices.getInstance();
     private ReportWizardPanel1 wizPanel;
     private List<ReportModule> modules = new ArrayList<>();
     private List<GeneralReportModule> generalModules = new ArrayList<>();
@@ -68,54 +67,38 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     // Initialize the list of ReportModules
     private void initModules() {
         for (TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
-            if(validModule(module)) {
+            if (validModule(module)) {
                 tableModules.add(module);
                 modules.add(module);
             } else {
-                // log
-                logger.log(Level.WARNING, "Invalid TableReportModule"); // NON_NLS
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.initModules.invalidWarning", module),
-                    NotifyDescriptor.ERROR_MESSAGE));
+                postWarningMessage(module);
             }
         }
 
         for (GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
-            if(validModule(module)) {
+            if (validModule(module)) {
                 generalModules.add(module);
                 modules.add(module);
             } else {
-                // log
-                logger.log(Level.WARNING, "Invalid GeneralReportModule"); // NON_NLS
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.initModules.invalidWarning", module),
-                    NotifyDescriptor.ERROR_MESSAGE));
+                postWarningMessage(module);
             }
         }
 
         for (GeneralReportModule module : JythonModuleLoader.getGeneralReportModules()) {
-            if(validModule(module)) {
+            if (validModule(module)) {
                 generalModules.add(module);
                 modules.add(module);
             } else {
-                //log
-                logger.log(Level.WARNING, "Invalid GeneralReportModule"); // NON_NLS
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.initModules.invalidWarning", module),
-                    NotifyDescriptor.ERROR_MESSAGE));
+                postWarningMessage(module);
             }
         }
 
         for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
-            if(validModule(module)) {
+            if (validModule(module)) {
                 fileModules.add(module);
                 modules.add(module);
             } else {
-                //log
-                logger.log(Level.WARNING, "Invalid FileReportModule"); // NON_NLS
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.initModules.invalidWarning", module),
-                    NotifyDescriptor.ERROR_MESSAGE));
+                postWarningMessage(module);
             }
         }
 
@@ -152,10 +135,20 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         selectedIndex = 0;
         modulesJList.setSelectedIndex(selectedIndex);
     }
-    
+
     // Make sure that the report module has a valid non-null name.
     private boolean validModule(ReportModule module) {
         return module != null && module.getName() != null && !module.getName().isEmpty();
+    }
+
+    private void postWarningMessage(ReportModule module) {
+        logger.log(Level.WARNING, "Invalid GeneralReportModule"); // NON_NLS
+        services.postMessage(IngestMessage.createWarningMessage(
+                (module != null) ? module.getClass().getSimpleName() : "null", // NON_NLS
+                NbBundle.getMessage(this.getClass(),
+                        "ReportVisualPanel1.invalidModuleWarning"),
+                NbBundle.getMessage(this.getClass(),
+                        "ReportVisualPanel1.ReportVisualPanelWillNotDisplayModule")));
     }
 
     @Override
