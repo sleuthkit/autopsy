@@ -45,9 +45,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -77,6 +75,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -158,7 +157,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     /**
      * map from event to node
      */
-    private final Map<EventCluster, EventClusterNode> nodeMap = new HashMap<>();
+    private final Map<EventCluster, EventClusterNode> clusterNodeMap = new HashMap<>();
     private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
     private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
     /**
@@ -168,7 +167,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     private final SimpleBooleanProperty oneEventPerRow = new SimpleBooleanProperty(false);
 
-    private final ObservableMap<DetailViewNode<?>, Line> projectionMap = FXCollections.observableHashMap();
+    private final Map<Range<Long>, Line> projectionMap = new HashMap<>();
 
     /**
      * flag indicating whether this chart actually needs a layout pass
@@ -176,7 +175,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     @GuardedBy(value = "this")
     private boolean requiresLayout = true;
 
-    final ObservableList<DetailViewNode<?>> selectedNodes;
+    final ObservableList<EventBundle> selectedBundles;
 
     /**
      * list of series of data added to this chart TODO: replace this with a map
@@ -206,11 +205,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
     private final SimpleBooleanProperty alternateLayout = new SimpleBooleanProperty(true);
 
-    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<DetailViewNode<?>> selectedNodes) {
+    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundle> selectedNodes) {
         super(dateAxis, verticalAxis);
         dateAxis.setAutoRanging(false);
 
-        //yAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
+        //verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
         verticalAxis.setTickLabelsVisible(false);
         verticalAxis.setTickMarkVisible(false);
 
@@ -224,7 +223,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         //bind listener to events that should trigger layout
         widthProperty().addListener(layoutInvalidationListener);
         heightProperty().addListener(layoutInvalidationListener);
-//        boundsInLocalProperty().addListener(layoutInvalidationListener);
 
         bandByType.addListener(layoutInvalidationListener);
         oneEventPerRow.addListener(layoutInvalidationListener);
@@ -286,34 +284,41 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         setOnMouseReleased(dragHandler);
         setOnMouseDragged(dragHandler);
 
-        projectionMap.addListener((MapChangeListener.Change<? extends DetailViewNode<?>, ? extends Line> change) -> {
-            final Line valueRemoved = change.getValueRemoved();
-            if (valueRemoved != null) {
-                getChartChildren().removeAll(valueRemoved);
-            }
-            final Line valueAdded = change.getValueAdded();
-            if (valueAdded != null) {
-                getChartChildren().add(valueAdded);
-            }
-        });
-
-        this.selectedNodes = selectedNodes;
-        this.selectedNodes.addListener((
-                ListChangeListener.Change<? extends DetailViewNode<?>> c) -> {
+//        projectionMap.addListener((MapChangeListener.Change<? extends DetailViewNode<?>, ? extends Line> change) -> {
+//            final Line valueRemoved = change.getValueRemoved();
+//            if (valueRemoved != null) {
+//                getChartChildren().removeAll(valueRemoved);
+//            }
+//            final Line valueAdded = change.getValueAdded();
+//            if (valueAdded != null) {
+//                getChartChildren().add(valueAdded);
+//            }
+//        });
+        this.selectedBundles = selectedNodes;
+        this.selectedBundles.addListener((
+                ListChangeListener.Change<? extends EventBundle> c) -> {
                     while (c.next()) {
-                        c.getRemoved().forEach((DetailViewNode<?> t) -> {
-                            projectionMap.remove(t);
-                        });
-                        c.getAddedSubList().forEach((DetailViewNode<?> t) -> {
-                            Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(t.getStartMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
-                                    dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(t.getEndMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
-                            );
-                            line.setStroke(t.getType().getColor().deriveColor(0, 1, 1, .5));
-                            line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
-                            line.setStrokeLineCap(StrokeLineCap.ROUND);
-                            projectionMap.put(t, line);
-                        });
+                        c.getRemoved().forEach((EventBundle t) -> {
+                            t.getRanges().forEach((Range<Long> t1) -> {
+                                Line removeAll = projectionMap.remove(t1);
+                                getChartChildren().removeAll(removeAll);
+                            });
 
+                        });
+                        c.getAddedSubList().forEach((EventBundle t) -> {
+
+                            for (Range<Long> r : t.getRanges()) {
+
+                                Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(r.lowerEndpoint(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
+                                        dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(r.upperEndpoint(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
+                                );
+                                line.setStroke(t.getEventType().getColor().deriveColor(0, 1, 1, .5));
+                                line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
+                                line.setStrokeLineCap(StrokeLineCap.ROUND);
+                                projectionMap.put(r, line);
+                                getChartChildren().add(line);
+                            }
+                        });
                     }
 
                     this.controller.selectEventIDs(selectedNodes.stream()
@@ -348,7 +353,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 clearGuideLine();
                 clearIntervalSelector();
 
-                selectedNodes.clear();
+                selectedBundles.clear();
                 projectionMap.clear();
                 controller.selectEventIDs(Collections.emptyList());
             });
@@ -411,7 +416,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     protected synchronized void dataItemAdded(Series<DateTime, EventCluster> series, int i, Data<DateTime, EventCluster> data) {
         final EventCluster aggEvent = data.getYValue();
         if (alternateLayout.get()) {
-            EventStripe eventCluster = stripeDescMap.merge(ImmutablePair.of(aggEvent.getType(), aggEvent.getDescription()),
+            EventStripe eventCluster = stripeDescMap.merge(ImmutablePair.of(aggEvent.getEventType(), aggEvent.getDescription()),
                     new EventStripe(aggEvent),
                     (EventStripe u, EventStripe v) -> {
                         EventStripeNode remove = stripeNodeMap.remove(u);
@@ -425,10 +430,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             stripeNodeMap.put(eventCluster, clusterNode);
             nodeGroup.getChildren().add(clusterNode);
         } else {
-            nodeMap.computeIfAbsent(aggEvent, (EventCluster t) -> {
+            clusterNodeMap.computeIfAbsent(aggEvent, (EventCluster t) -> {
                 EventClusterNode eventNode = new EventClusterNode(aggEvent, null, EventDetailChart.this);
                 eventNode.setLayoutX(getXAxis().getDisplayPosition(new DateTime(aggEvent.getSpan().getStartMillis())));
-                nodeMap.put(aggEvent, eventNode);
+                clusterNodeMap.put(aggEvent, eventNode);
                 nodeGroup.getChildren().add(eventNode);
                 return eventNode;
             });
@@ -444,10 +449,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     @Override
     protected synchronized void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
         EventCluster aggEvent = data.getYValue();
-        Node removedNode = nodeMap.remove(aggEvent);
+        Node removedNode = clusterNodeMap.remove(aggEvent);
         nodeGroup.getChildren().remove(removedNode);
 
-        EventStripe removedCluster = stripeDescMap.remove(ImmutablePair.of(aggEvent.getType(), aggEvent.getDescription()));
+        EventStripe removedCluster = stripeDescMap.remove(ImmutablePair.of(aggEvent.getEventType(), aggEvent.getDescription()));
         removedNode = stripeNodeMap.remove(removedCluster);
         nodeGroup.getChildren().remove(removedNode);
 
@@ -490,7 +495,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     nodes.sort(Comparator.comparing(DetailViewNode<?>::getStartMillis));
                     layoutNodes(nodes, minY, 0);
                 } else {
-                    List<EventClusterNode> nodes = new ArrayList<>(nodeMap.values());
+                    List<EventClusterNode> nodes = new ArrayList<>(clusterNodeMap.values());
                     nodes.sort(Comparator.comparing(DetailViewNode<?>::getStartMillis));
                     layoutNodes(nodes, minY, 0);
                 }
@@ -500,7 +505,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     if (alternateLayout.get() == true) {
                         List<EventStripeNode> nodes = s.getData().stream()
                                 .map(Data::getYValue)
-                                .map(cluster -> stripeDescMap.get(ImmutablePair.of(cluster.getType(), cluster.getDescription())))
+                                .map(cluster -> stripeDescMap.get(ImmutablePair.of(cluster.getEventType(), cluster.getDescription())))
                                 .distinct()
                                 .sorted(Comparator.comparing(EventStripe::getStartMillis))
                                 .map(stripeNodeMap::get)
@@ -509,7 +514,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     } else {
                         List<EventClusterNode> nodes = s.getData().stream()
                                 .map(Data::getYValue)
-                                .map(nodeMap::get)
+                                .map(clusterNodeMap::get)
                                 .filter(Objects::nonNull)
                                 .sorted(Comparator.comparing(EventClusterNode::getStartMillis))
                                 .collect(Collectors.toList());
@@ -553,7 +558,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     Iterable<DetailViewNode<?>> getNodes(Predicate<DetailViewNode<?>> p) {
         Collection<? extends DetailViewNode<?>> values = alternateLayout.get()
                 ? stripeNodeMap.values()
-                : nodeMap.values();
+                : clusterNodeMap.values();
 
         //collapse tree of DetailViewNoeds to list and then filter on given predicate
         return values.stream()
@@ -626,7 +631,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 List<Double> spanWidths = new ArrayList<>();
                 double x = getXAxis().getDisplayPosition(new DateTime(cn.getStartMillis()));;
                 double x2;
-                Iterator<Range<Long>> ranges = cn.getCluster().getRanges().iterator();
+                Iterator<Range<Long>> ranges = cn.getStripe().getRanges().iterator();
                 Range<Long> range = ranges.next();
                 do {
                     x2 = getXAxis().getDisplayPosition(new DateTime(range.upperEndpoint()));
@@ -708,12 +713,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private static final int DEFAULT_ROW_HEIGHT = 24;
 
     private void layoutProjectionMap() {
-        for (final Map.Entry<DetailViewNode<?>, Line> entry : projectionMap.entrySet()) {
-            final DetailViewNode<?> aggNode = entry.getKey();
+        for (final Map.Entry<Range<Long>, Line> entry : projectionMap.entrySet()) {
+            final Range<Long> eventBundle = entry.getKey();
             final Line line = entry.getValue();
 
-            line.setStartX(getParentXForValue(new DateTime(aggNode.getStartMillis(), TimeLineController.getJodaTimeZone())));
-            line.setEndX(getParentXForValue(new DateTime(aggNode.getEndMillis(), TimeLineController.getJodaTimeZone())));
+            line.setStartX(getParentXForValue(new DateTime(eventBundle.lowerEndpoint(), TimeLineController.getJodaTimeZone())));
+            line.setEndX(getParentXForValue(new DateTime(eventBundle.upperEndpoint(), TimeLineController.getJodaTimeZone())));
             line.setStartY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
         }
@@ -790,5 +795,14 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     @Override
     protected void requestChartLayout() {
         super.requestChartLayout();
+    }
+
+    void applySelectionEffect(EventBundle c1, Boolean selected) {
+        if (alternateLayout.get()) {
+            EventStripe eventStripe = stripeDescMap.get(ImmutablePair.of(c1.getEventType(), c1.getDescription()));
+            stripeNodeMap.get(eventStripe).applySelectionEffect(selected);
+        } else {
+            clusterNodeMap.get(c1).applySelectionEffect(selected);
+        }
     }
 }

@@ -115,7 +115,7 @@ public class EventCluster implements EventBundle {
         return description;
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return type;
     }
 
@@ -135,7 +135,7 @@ public class EventCluster implements EventBundle {
      */
     public static EventCluster merge(EventCluster aggEvent1, EventCluster ag2) {
 
-        if (aggEvent1.getType() != ag2.getType()) {
+        if (aggEvent1.getEventType() != ag2.getEventType()) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different types");
         }
 
@@ -146,7 +146,7 @@ public class EventCluster implements EventBundle {
         Sets.SetView<Long> hashHitsUnion = Sets.union(aggEvent1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
         Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
 
-        return new EventCluster(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+        return new EventCluster(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
     }
 
     Range<Long> getRange() {
@@ -156,4 +156,10 @@ public class EventCluster implements EventBundle {
             return Range.singleton(getStartMillis());
         }
     }
+
+    @Override
+    public Iterable<Range<Long>> getRanges() {
+        return Collections.singletonList(getRange());
+    }
+
 }

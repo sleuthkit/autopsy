@@ -75,7 +75,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
     private final static Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
 
     private final Pane subNodePane = new Pane();
-    private final EventStripe cluster;
+    private final EventStripe eventStripe;
     private final EventStripeNode parentNode;
     private final EventDetailChart chart;
     private SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
@@ -124,23 +124,23 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
     private Background spanFill;
     private static final CornerRadii CORNER_RADII = new CornerRadii(3);
 
-    EventStripeNode(EventStripe cluster, EventStripeNode parentNode, EventDetailChart chart) {
+    EventStripeNode(EventStripe eventStripe, EventStripeNode parentNode, EventDetailChart chart) {
         this.chart = chart;
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
 
         this.parentNode = parentNode;
-        this.cluster = cluster;
-        descLOD.set(cluster.getDescriptionLOD());
+        this.eventStripe = eventStripe;
+        descLOD.set(eventStripe.getDescriptionLOD());
 
         final Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         final HBox header = new HBox(descrLabel, countLabel, hashIV, tagIV, spacer, minusButton, plusButton);
-        if (cluster.getEventIDsWithHashHits().isEmpty()) {
+        if (eventStripe.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
-        if (cluster.getEventIDsWithTags().isEmpty()) {
+        if (eventStripe.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
         header.setMinWidth(USE_PREF_SIZE);
@@ -149,10 +149,10 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
 
         final VBox internalVBox = new VBox(header, subNodePane);
         internalVBox.setAlignment(Pos.CENTER_LEFT);
-        final Color evtColor = cluster.getType().getColor();
+        final Color evtColor = eventStripe.getEventType().getColor();
 
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY));
-        for (Range<Long> r : cluster.getRanges()) {
+        for (Range<Long> r : eventStripe.getRanges()) {
             Region spanRegion = new Region();
             spanRegion.setStyle("-fx-border-width:2 1 2 1; -fx-border-radius: 1; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor.deriveColor(0, 1, 1, .3)) + ";"); // NON-NLS
             spanRegion.setBackground(spanFill);
@@ -162,7 +162,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
         spansHBox.setMaxWidth(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
         getChildren().addAll(spansHBox, internalVBox);
-        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .05), CORNER_RADII, Insets.EMPTY)));
+        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         setAlignment(Pos.TOP_LEFT);
         setMinHeight(24);
         minWidthProperty().bind(spansHBox.widthProperty());
@@ -178,7 +178,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
         subNodePane.setPickOnBounds(false);
 
         //setup description label
-        eventTypeImageView.setImage(cluster.getType().getFXImage());
+        eventTypeImageView.setImage(eventStripe.getEventType().getFXImage());
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
@@ -208,7 +208,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
         });
 
         plusButton.disableProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
-        minusButton.disableProperty().bind(descLOD.isEqualTo(cluster.getDescriptionLOD()));
+        minusButton.disableProperty().bind(descLOD.isEqualTo(eventStripe.getDescriptionLOD()));
 
         plusButton.setOnMouseClicked(e -> {
             final DescriptionLOD next = descLOD.get().next();
@@ -228,7 +228,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
 
     @Override
     public long getStartMillis() {
-        return cluster.getStartMillis();
+        return eventStripe.getStartMillis();
     }
 
     @Override
@@ -244,7 +244,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
 
     public void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
-        final int size = cluster.getEventIDs().size();
+        final int size = eventStripe.getEventIDs().size();
 
         switch (descrVis) {
             case COUNT_ONLY:
@@ -257,7 +257,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
                 break;
             default:
             case SHOWN:
-                String description = cluster.getDescription();
+                String description = eventStripe.getDescription();
                 description = parentNode != null
                         ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
                         : description;
@@ -267,8 +267,8 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
         }
     }
 
-    EventStripe getCluster() {
-        return cluster;
+    EventStripe getStripe() {
+        return eventStripe;
     }
 
     @Override
@@ -278,7 +278,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
 
     @Override
     public long getEndMillis() {
-        return cluster.getEndMillis();
+        return eventStripe.getEndMillis();
     }
 
     @Override
@@ -298,11 +298,11 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
             if (t.getButton() == MouseButton.PRIMARY) {
                 t.consume();
                 if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventStripeNode.this) == false) {
-                        chart.selectedNodes.add(EventStripeNode.this);
+                    if (chart.selectedBundles.contains(eventStripe) == false) {
+                        chart.selectedBundles.add(eventStripe);
                     }
                 } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventStripeNode.this);
+                    chart.selectedBundles.removeAll(eventStripe);
                 } else if (t.getClickCount() > 1) {
                     final DescriptionLOD next = descLOD.get().next();
                     if (next != null) {
@@ -310,20 +310,20 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
                         descLOD.set(next);
                     }
                 } else {
-                    chart.selectedNodes.setAll(EventStripeNode.this);
+                    chart.selectedBundles.setAll(eventStripe);
                 }
             }
         }
     }
 
     @Override
-    public EventType getType() {
-        return cluster.getType();
+    public EventType getEventType() {
+        return eventStripe.getEventType();
     }
 
     @Override
     public Set<Long> getEventIDs() {
-        return cluster.getEventIDs();
+        return eventStripe.getEventIDs();
     }
     private static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
 
@@ -352,25 +352,25 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
     public synchronized void applyHighlightEffect(boolean applied) {
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
             spansHBox.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
         } else {
             descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
             spansHBox.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(cluster.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         }
     }
 
     @Override
     public String getDescription() {
-        return cluster.getDescription();
+        return eventStripe.getDescription();
     }
 
     @Override
-    public EventBundle getBundleDescriptor() {
-        return getCluster();
+    public EventBundle getEventBundle() {
+        return getStripe();
     }
 
     /**
@@ -381,7 +381,7 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
         subNodePane.getChildren().clear();
         
-        if (newDescriptionLOD == cluster.getDescriptionLOD()) {
+        if (newDescriptionLOD == eventStripe.getDescriptionLOD()) {
             spansHBox.setVisible(true);
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
@@ -389,11 +389,11 @@ public class EventStripeNode extends StackPane implements DetailViewNode<EventSt
             spansHBox.setVisible(false);
             RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-            combinedFilter.getSubFilters().addAll(new TextFilter(cluster.getDescription()),
-                    new TypeFilter(cluster.getType()));
+            combinedFilter.getSubFilters().addAll(new TextFilter(eventStripe.getDescription()),
+                    new TypeFilter(eventStripe.getEventType()));
 
             //make a new end inclusive span (to 'filter' with)
-            final Interval span = new Interval(cluster.getStartMillis(), cluster.getEndMillis() + 1000);
+            final Interval span = new Interval(eventStripe.getStartMillis(), eventStripe.getEndMillis() + 1000);
 
             //make a task to load the subnodes
             LoggedTask<List<EventStripeNode>> loggedTask = new LoggedTask<List<EventStripeNode>>(
