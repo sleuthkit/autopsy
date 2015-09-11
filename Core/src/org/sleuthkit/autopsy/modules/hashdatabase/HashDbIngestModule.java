@@ -87,8 +87,10 @@ public class HashDbIngestModule implements FileIngestModule {
         updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);
 
         if (refCounter.incrementAndGet(jobId) == 1) {
-            // if first module for this job then post error msgs if needed
+            // safely create a jobs total for this job
+            getTotalsForIngestJobs(jobId);
 
+            // if first module for this job then post error msgs if needed           
             if (knownBadHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
@@ -336,9 +338,10 @@ public class HashDbIngestModule implements FileIngestModule {
 
     private static synchronized void postSummary(long jobId,
             List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
-        IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
+        IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
+        totalsForIngestJobs.remove(jobId);
 
-        if (jobTotals != null && ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty()))) {
+        if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
             StringBuilder detailsSb = new StringBuilder();
             //details
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
