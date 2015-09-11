@@ -338,7 +338,7 @@ public class HashDbIngestModule implements FileIngestModule {
             List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = totalsForIngestJobs.remove(jobId);
 
-        if ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty())) {
+        if (jobTotals != null && ((!knownBadHashSets.isEmpty()) || (!knownHashSets.isEmpty()))) {
             StringBuilder detailsSb = new StringBuilder();
             //details
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
