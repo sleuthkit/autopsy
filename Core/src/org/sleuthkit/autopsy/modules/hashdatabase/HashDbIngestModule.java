@@ -87,10 +87,8 @@ public class HashDbIngestModule implements FileIngestModule {
         updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);
 
         if (refCounter.incrementAndGet(jobId) == 1) {
-            // safely create a jobs total for this job
-            getTotalsForIngestJobs(jobId);
-
-            // if first module for this job then post error msgs if needed           
+            // if first module for this job then post error msgs if needed
+            
             if (knownBadHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
