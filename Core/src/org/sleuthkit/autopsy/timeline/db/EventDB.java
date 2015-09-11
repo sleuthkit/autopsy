@@ -1151,7 +1151,7 @@ public class EventDB {
         Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
 
         for (EventCluster aggregateEvent : preMergedEvents) {
-            typeMap.computeIfAbsent(aggregateEvent.getType(), eventType -> HashMultimap.create())
+            typeMap.computeIfAbsent(aggregateEvent.getEventType(), eventType -> HashMultimap.create())
                     .put(aggregateEvent.getDescription(), aggregateEvent);
         }
         //result list to return

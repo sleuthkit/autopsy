@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 class EventDescriptionTreeItem extends NavTreeItem {
 
     public EventDescriptionTreeItem(EventCluster g) {
-        setValue(new NavTreeNode(g.getType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
+        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
     }
 
     @Override
@@ -40,7 +40,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     @Override
     public void insert(EventCluster g) {
         NavTreeNode value = getValue();
-        if ((value.getType().getBaseType().equals(g.getType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
+        if ((value.getType().getBaseType().equals(g.getEventType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
             throw new IllegalArgumentException();
         }
 
@@ -54,7 +54,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
 
     @Override
     public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-        if (getValue().getType().getBaseType() == t.getType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
+        if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
             return this;
         }
         return null;

@@ -37,7 +37,7 @@ class EventTypeTreeItem extends NavTreeItem {
     private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
 
     EventTypeTreeItem(EventCluster g) {
-        setValue(new NavTreeNode(g.getType().getBaseType(), g.getType().getBaseType().getDisplayName(), 0));
+        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getEventType().getBaseType().getDisplayName(), 0));
     }
 
     @Override
@@ -79,7 +79,7 @@ class EventTypeTreeItem extends NavTreeItem {
 
     @Override
     public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-        if (t.getType().getBaseType() == getValue().getType().getBaseType()) {
+        if (t.getEventType().getBaseType() == getValue().getType().getBaseType()) {
 
             for (TreeItem<NavTreeNode> child : getChildren()) {
                 final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);

@@ -27,13 +27,13 @@ public interface DetailViewNode<S extends DetailViewNode<S>> {
 
     public void setDescriptionWidth(double max);
 
-    public EventType getType();
+    public EventType getEventType();
 
     public Set<Long> getEventIDs();
 
     public String getDescription();
 
-    public EventBundle getBundleDescriptor();
+    public EventBundle getEventBundle();
 
     /**
      * apply the 'effect' to visually indicate highlighted nodes

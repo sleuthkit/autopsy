@@ -63,7 +63,7 @@ public final class EventStripe implements EventBundle {
     public EventStripe(EventCluster aggEvent) {
         spans.add(aggEvent.getRange());
         spanMap.put(aggEvent.getRange(), aggEvent);
-        type = aggEvent.getType();
+        type = aggEvent.getEventType();
         description = aggEvent.getDescription();
         lod = aggEvent.getDescriptionLOD();
         eventIDs.addAll(aggEvent.getEventIDs());
@@ -76,7 +76,7 @@ public final class EventStripe implements EventBundle {
         spans.addAll(v.spans);
         spanMap.putAll(u.spanMap);
         spanMap.putAll(v.spanMap);
-        type = u.getType();
+        type = u.getEventType();
         description = u.getDescription();
         lod = u.getDescriptionLOD();
         eventIDs.addAll(u.getEventIDs());
@@ -96,38 +96,47 @@ public final class EventStripe implements EventBundle {
         return new EventStripe(u, v);
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
-    public EventType getType() {
+    @Override
+    public EventType getEventType() {
         return type;
     }
 
+    @Override
     public DescriptionLOD getDescriptionLOD() {
         return lod;
     }
 
+    @Override
     public Set<Long> getEventIDs() {
         return Collections.unmodifiableSet(eventIDs);
     }
 
+    @Override
     public Set<Long> getEventIDsWithHashHits() {
         return Collections.unmodifiableSet(hashHits);
     }
 
+    @Override
     public Set<Long> getEventIDsWithTags() {
         return Collections.unmodifiableSet(tagged);
     }
 
+    @Override
     public long getStartMillis() {
         return spans.span().lowerEndpoint();
     }
 
+    @Override
     public long getEndMillis() {
         return spans.span().upperEndpoint();
     }
 
+    @Override
     public Iterable<Range<Long>> getRanges() {
         return spans.asRanges();
     }

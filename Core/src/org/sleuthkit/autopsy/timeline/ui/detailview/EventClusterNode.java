@@ -99,7 +99,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     /**
      * The event this AggregateEventNode represents visually
      */
-    private EventCluster aggEvent;
+    private EventCluster eventCluster;
 
     private final EventClusterNode parentEventNode;
 
@@ -177,7 +177,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     private final ImageView tagIV = new ImageView(TAG);
 
     public EventClusterNode(final EventCluster aggEvent, EventClusterNode parentEventNode, EventDetailChart chart) {
-        this.aggEvent = aggEvent;
+        this.eventCluster = aggEvent;
         descLOD.set(aggEvent.getDescriptionLOD());
         this.parentEventNode = parentEventNode;
         this.chart = chart;
@@ -222,7 +222,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
         subNodePane.setPickOnBounds(false);
 
         //setup description label
-        eventTypeImageView.setImage(aggEvent.getType().getFXImage());
+        eventTypeImageView.setImage(aggEvent.getEventType().getFXImage());
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
@@ -231,7 +231,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
         setDescriptionVisibility(chart.getDescrVisibility().get());
 
         //setup backgrounds
-        final Color evtColor = aggEvent.getType().getColor();
+        final Color evtColor = aggEvent.getEventType().getColor();
         spanFill = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
         setBackground(spanFill);
         setCursor(Cursor.HAND);
@@ -283,10 +283,10 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
         //TODO: all this work should probably go on a background thread...
         if (tooltip == null) {
             HashMap<String, Long> hashSetCounts = new HashMap<>();
-            if (!aggEvent.getEventIDsWithHashHits().isEmpty()) {
+            if (!eventCluster.getEventIDsWithHashHits().isEmpty()) {
                 hashSetCounts = new HashMap<>();
                 try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(aggEvent.getEventIDsWithHashHits())) {
+                    for (TimeLineEvent tle : eventsModel.getEventsById(eventCluster.getEventIDsWithHashHits())) {
                         Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
                         for (String hashSetName : hashSetNames) {
                             hashSetCounts.merge(hashSetName, 1L, Long::sum);
@@ -298,8 +298,8 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
             }
 
             Map<String, Long> tagCounts = new HashMap<>();
-            if (!aggEvent.getEventIDsWithTags().isEmpty()) {
-                tagCounts.putAll(eventsModel.getTagCountsByTagName(aggEvent.getEventIDsWithTags()));
+            if (!eventCluster.getEventIDsWithTags().isEmpty()) {
+                tagCounts.putAll(eventsModel.getTagCountsByTagName(eventCluster.getEventIDsWithTags()));
 
             }
 
@@ -312,7 +312,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
 
             tooltip = new Tooltip(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.installTooltip.text",
-                            getEvent().getEventIDs().size(), getEvent().getType(), getEvent().getDescription(),
+                            getEvent().getEventIDs().size(), getEvent().getEventType(), getEvent().getDescription(),
                             getEvent().getSpan().getStart().toString(TimeLineController.getZonedFormatter()),
                             getEvent().getSpan().getEnd().toString(TimeLineController.getZonedFormatter()))
                     + (hashSetCountsString.isEmpty() ? "" : "\n\nHash Set Hits\n" + hashSetCountsString)
@@ -330,7 +330,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     }
 
     synchronized public EventCluster getEvent() {
-        return aggEvent;
+        return eventCluster;
     }
 
     /**
@@ -367,7 +367,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     @Override
     public final synchronized void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
-        final int size = aggEvent.getEventIDs().size();
+        final int size = eventCluster.getEventIDs().size();
 
         switch (descrVis) {
             case COUNT_ONLY:
@@ -380,7 +380,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
                 break;
             default:
             case SHOWN:
-                String description = aggEvent.getDescription();
+                String description = eventCluster.getDescription();
                 description = parentEventNode != null
                         ? "    ..." + StringUtils.substringAfter(description, parentEventNode.getEvent().getDescription())
                         : description;
@@ -408,7 +408,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
 
     @Override
     public String getDescription() {
-        return aggEvent.getDescription();
+        return eventCluster.getDescription();
     }
 
     /**
@@ -420,14 +420,14 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
 
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(eventCluster.getEventType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(eventCluster.getEventType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
         } else {
             descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            spanFill = new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
+            spanFill = new Background(new BackgroundFill(eventCluster.getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY));
             spanRegion.setBackground(spanFill);
-            setBackground(new Background(new BackgroundFill(aggEvent.getType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+            setBackground(new Background(new BackgroundFill(eventCluster.getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
         }
     }
 
@@ -461,17 +461,17 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
      */
     synchronized private void loadSubClusters(DescriptionLOD newDescriptionLOD) {
         subNodePane.getChildren().clear();
-        if (newDescriptionLOD == aggEvent.getDescriptionLOD()) {
+        if (newDescriptionLOD == eventCluster.getDescriptionLOD()) {
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
             RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
             //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-            combinedFilter.getSubFilters().addAll(new TextFilter(aggEvent.getDescription()),
-                    new TypeFilter(aggEvent.getType()));
+            combinedFilter.getSubFilters().addAll(new TextFilter(eventCluster.getDescription()),
+                    new TypeFilter(eventCluster.getEventType()));
 
             //make a new end inclusive span (to 'filter' with)
-            final Interval span = aggEvent.getSpan().withEndMillis(aggEvent.getSpan().getEndMillis() + 1000);
+            final Interval span = eventCluster.getSpan().withEndMillis(eventCluster.getSpan().getEndMillis() + 1000);
 
             //make a task to load the subnodes
             LoggedTask<List<EventClusterNode>> loggedTask = new LoggedTask<List<EventClusterNode>>(
@@ -523,11 +523,11 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
             if (t.getButton() == MouseButton.PRIMARY) {
                 t.consume();
                 if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
-                        chart.selectedNodes.add(EventClusterNode.this);
+                    if (chart.selectedBundles.contains(eventCluster) == false) {
+                        chart.selectedBundles.add(eventCluster);
                     }
                 } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventClusterNode.this);
+                    chart.selectedBundles.removeAll(eventCluster);
                 } else if (t.getClickCount() > 1) {
                     final DescriptionLOD next = descLOD.get().next();
                     if (next != null) {
@@ -535,7 +535,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
                         descLOD.set(next);
                     }
                 } else {
-                    chart.selectedNodes.setAll(EventClusterNode.this);
+                    chart.selectedBundles.setAll(eventCluster);
                 }
             }
         }
@@ -552,8 +552,8 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     }
 
     @Override
-    public EventType getType() {
-        return getEvent().getType();
+    public EventType getEventType() {
+        return getEvent().getEventType();
     }
 
     @Override
@@ -562,7 +562,7 @@ public class EventClusterNode extends StackPane implements DetailViewNode<EventC
     }
 
     @Override
-    public EventBundle getBundleDescriptor() {
-        return aggEvent;
+    public EventBundle getEventBundle() {
+        return eventCluster;
     }
 }

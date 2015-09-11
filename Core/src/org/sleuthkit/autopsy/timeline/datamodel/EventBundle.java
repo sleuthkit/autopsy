@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.Range;
 import java.util.Set;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -18,16 +19,18 @@ public interface EventBundle {
 
     DescriptionLOD getDescriptionLOD();
 
-    long getEndMillis();
-
     Set<Long> getEventIDs();
 
     Set<Long> getEventIDsWithHashHits();
 
     Set<Long> getEventIDsWithTags();
 
+    EventType getEventType();
+
+    long getEndMillis();
+
     long getStartMillis();
 
-    EventType getType();
-    
+    Iterable<Range<Long>> getRanges();
+
 }

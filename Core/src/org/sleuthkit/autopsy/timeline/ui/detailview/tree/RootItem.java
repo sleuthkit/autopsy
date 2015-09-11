@@ -59,11 +59,11 @@ class RootItem extends NavTreeItem {
     @Override
     public void insert(EventCluster g) {
 
-        EventTypeTreeItem treeItem = childMap.get(g.getType().getBaseType());
+        EventTypeTreeItem treeItem = childMap.get(g.getEventType().getBaseType());
         if (treeItem == null) {
             final EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
             newTreeItem.setExpanded(true);
-            childMap.put(g.getType().getBaseType(), newTreeItem);
+            childMap.put(g.getEventType().getBaseType(), newTreeItem);
             newTreeItem.insert(g);
 
             Platform.runLater(() -> {
