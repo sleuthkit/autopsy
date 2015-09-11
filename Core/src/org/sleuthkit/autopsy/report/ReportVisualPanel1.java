@@ -35,6 +35,8 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -127,7 +129,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             }
             indexOfHTMLReportModule++;
         }
-        swap(modules, indexOfHTMLReportModule, 0);
+        //swap(modules, indexOfHTMLReportModule, 0);
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
@@ -138,18 +140,15 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     // Make sure that the report module has a valid non-null name.
     private boolean validModule(ReportModule module) {
-        return module != null && module.getName() != null && !module.getName().isEmpty();
+        return module != null && module.getName() != null && module.getRelativeFilePath() != null;
     }
 
     private void postWarningMessage(ReportModule module) {
         String moduleClassName = (module != null) ? module.getClass().getSimpleName() : "null"; // NON_NLS
         logger.log(Level.WARNING, "Invalid ReportModule"); // NON_NLS
-        services.postMessage(IngestMessage.createWarningMessage(
-                moduleClassName,
-                NbBundle.getMessage(this.getClass(),
-                        "ReportVisualPanel1.invalidModuleWarning"),
-                NbBundle.getMessage(this.getClass(),
-                        "ReportVisualPanel1.ReportVisualPanelWillNotDisplayModule", moduleClassName)));
+        DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.invalidModuleWarning", moduleClassName),
+                NotifyDescriptor.ERROR_MESSAGE));
     }
 
     @Override
