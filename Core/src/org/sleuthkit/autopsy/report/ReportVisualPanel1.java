@@ -129,7 +129,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             }
             indexOfHTMLReportModule++;
         }
-        //swap(modules, indexOfHTMLReportModule, 0);
+        swap(modules, indexOfHTMLReportModule, 0);
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
