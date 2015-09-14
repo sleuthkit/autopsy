@@ -41,9 +41,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewNode;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
 /**
@@ -91,8 +91,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
         });
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
-            detailViewPane.getSelectedNodes().forEach((EventBundle t) -> {
-                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(t));
+            detailViewPane.getSelectedNodes().forEach((DetailViewNode<?> t) -> {
+                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(t.getEventBundle()));
             });
         });
 
@@ -131,7 +131,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            ((RootItem) eventsTree.getRoot()).resort(sortByBox.getSelectionModel().getSelectedItem());
+            ((NavTreeItem) eventsTree.getRoot()).resort(sortByBox.getSelectionModel().getSelectedItem());
         });
         eventsTree.setShowRoot(false);
         eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());

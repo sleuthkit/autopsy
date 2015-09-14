@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
@@ -15,23 +16,13 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
  */
 public interface DetailViewNode<S extends DetailViewNode<S>> {
 
-    public long getStartMillis();
-
-    public long getEndMillis();
-
     public void setDescriptionVisibility(DescriptionVisibility get);
 
-    public List<S> getSubNodes();
+    public List<? extends S> getSubNodes();
 
     public void setSpanWidths(List<Double> spanWidths);
 
     public void setDescriptionWidth(double max);
-
-    public EventType getEventType();
-
-    public Set<Long> getEventIDs();
-
-    public String getDescription();
 
     public EventBundle getEventBundle();
 
@@ -43,4 +34,34 @@ public interface DetailViewNode<S extends DetailViewNode<S>> {
     void applyHighlightEffect(boolean applied);
 
     public void applySelectionEffect(boolean applied);
+
+    default String getDescription() {
+        return getEventBundle().getDescription();
+    }
+
+    default EventType getEventType() {
+        return getEventBundle().getEventType();
+    }
+
+    default Set<Long> getEventIDs() {
+        return getEventBundle().getEventIDs();
+    }
+
+    default public long getStartMillis() {
+        return getEventBundle().getStartMillis();
+    }
+
+    default long getEndMillis() {
+        return getEventBundle().getEndMillis();
+    }
+
+   
+
+    static class StartTimeComparator implements Comparator<DetailViewNode<?>> {
+
+        @Override
+        public int compare(DetailViewNode<?> o1, DetailViewNode<?> o2) {
+            return Long.compare(o1.getStartMillis(), o2.getStartMillis());
+        }
+    }
 }

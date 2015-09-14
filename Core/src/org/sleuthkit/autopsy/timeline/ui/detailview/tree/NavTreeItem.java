@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and

@@ -70,7 +70,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -101,7 +100,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of this class and CountsChartPane into
  * {@link AbstractVisualization}
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundle, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, DetailViewNode<?>, EventDetailChart> {
 
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -358,9 +357,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     @Override
-         protected void applySelectionEffect(EventBundle c1, Boolean selected) {
+    protected void applySelectionEffect(DetailViewNode<?> c1, Boolean selected) {
         chart.applySelectionEffect(c1, selected);
-    
     }
 
     private class DetailViewSettingsPane extends HBox {
