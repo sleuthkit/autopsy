@@ -60,15 +60,15 @@ public final class EventStripe implements EventBundle {
      */
     private final Set<Long> hashHits = new HashSet<>();
 
-    public EventStripe(EventCluster aggEvent) {
-        spans.add(aggEvent.getRange());
-        spanMap.put(aggEvent.getRange(), aggEvent);
-        type = aggEvent.getEventType();
-        description = aggEvent.getDescription();
-        lod = aggEvent.getDescriptionLOD();
-        eventIDs.addAll(aggEvent.getEventIDs());
-        tagged.addAll(aggEvent.getEventIDsWithTags());
-        hashHits.addAll(aggEvent.getEventIDsWithHashHits());
+    public EventStripe(EventCluster cluster) {
+        spans.add(cluster.getRange());
+        spanMap.put(cluster.getRange(), cluster);
+        type = cluster.getEventType();
+        description = cluster.getDescription();
+        lod = cluster.getDescriptionLOD();
+        eventIDs.addAll(cluster.getEventIDs());
+        tagged.addAll(cluster.getEventIDsWithTags());
+        hashHits.addAll(cluster.getEventIDsWithHashHits());
     }
 
     private EventStripe(EventStripe u, EventStripe v) {

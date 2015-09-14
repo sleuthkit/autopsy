@@ -127,26 +127,26 @@ public class EventCluster implements EventBundle {
     /**
      * merge two aggregate events into one new aggregate event.
      *
-     * @param aggEvent1
+     * @param cluster1
      * @param aggEVent2
      *
      * @return a new aggregate event that is the result of merging the given
      *         events
      */
-    public static EventCluster merge(EventCluster aggEvent1, EventCluster ag2) {
+    public static EventCluster merge(EventCluster cluster1, EventCluster cluster2) {
 
-        if (aggEvent1.getEventType() != ag2.getEventType()) {
+        if (cluster1.getEventType() != cluster2.getEventType()) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different types");
         }
 
-        if (!aggEvent1.getDescription().equals(ag2.getDescription())) {
+        if (!cluster1.getDescription().equals(cluster2.getDescription())) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
         }
-        Sets.SetView<Long> idsUnion = Sets.union(aggEvent1.getEventIDs(), ag2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(aggEvent1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
-        Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
+        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
-        return new EventCluster(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
     }
 
     Range<Long> getRange() {
