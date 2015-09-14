@@ -813,14 +813,14 @@ public final class ImageGalleryController {
                         final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
                         if (hasMimeType.isPresent()) {
                             if (hasMimeType.get()) {  // supported mimetype => analyzed
-                                taskDB.updateFile(DrawableFile.create(f, true, taskDB.isVideoFile(f)), tr);
+                                taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 taskDB.removeFile(f.getId(), tr);
                             }
                         } else {
                             if (FileTypeUtils.isDrawable(f)) {
                                 //no mime type but supported =>  add as not analyzed
-                                taskDB.insertFile(DrawableFile.create(f, false, taskDB.isVideoFile(f)), tr);
+                                taskDB.insertFile(DrawableFile.create(f, false, false), tr);
                             } else {
                                 //no mime type, not supported  => remove ( should never get here)
                                 taskDB.removeFile(f.getId(), tr);
@@ -935,7 +935,7 @@ public final class ImageGalleryController {
                         progressHandle.finish();
                         break;
                     }
-                    db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
+                    db.insertFile(DrawableFile.create(f, false, false), tr);
                     units++;
                     progressHandle.progress(f.getName(), units);
                 }
