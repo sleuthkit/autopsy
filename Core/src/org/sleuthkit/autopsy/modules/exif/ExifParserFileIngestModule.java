@@ -22,21 +22,10 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.lang.Rational;
-import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
-import com.drew.metadata.MetadataException;
-import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
-import com.drew.metadata.exif.makernotes.CasioType1MakernoteDirectory;
-import com.drew.metadata.exif.makernotes.FujifilmMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.NikonType2MakernoteDirectory;
-import com.drew.metadata.exif.makernotes.PanasonicMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.PentaxMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.SanyoMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.SonyType1MakernoteDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,7 +67,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
-    private volatile boolean facesDetected = false;
     private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -125,11 +113,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (filesToFire) {
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
                 filesToFire = false;
-            }
-            if (facesDetected) {
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
-                listOfFacesDetectedArtifacts.clear();
-                facesDetected = false;
             }
         }
 
@@ -205,11 +188,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
             }
 
-            if (containsFace(metadata)) {
-                listOfFacesDetectedArtifacts.add(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED));
-                facesDetected = true;
-            }
-
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
@@ -243,6 +221,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
+<<<<<<< HEAD
      * Checks if this metadata contains any tags related to facial information.
      *
      * @param metadata the metadata which needs to be parsed for possible facial
@@ -289,6 +268,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
+=======
+>>>>>>> upstream/develop
      * Checks if should try to attempt to extract exif. Currently checks if JPEG
      * image (by signature)
      *
@@ -318,10 +299,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-            }
-            if (facesDetected) {
-                //send the final new data event
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
             }
         }
     }

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -102,14 +103,18 @@ public class GroupManager {
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
-    /** list of unseen groups */
+    /**
+     * list of unseen groups
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
-    /* --- current grouping/sorting attributes --- */
+    /*
+     * --- current grouping/sorting attributes ---
+     */
     private volatile GroupSortBy sortBy = GroupSortBy.NONE;
 
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
@@ -172,15 +177,17 @@ public class GroupManager {
      * using the current groupBy set for this manager, find groupkeys for all
      * the groups the given file is a part of
      *
-     *
-     *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
      *         file is a part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
-            DrawableFile<?> file = db.getFileFromID(fileID);
-            return getGroupKeysForFile(file);
+            if (nonNull(db)) {
+                DrawableFile<?> file = db.getFileFromID(fileID);
+                return getGroupKeysForFile(file);
+            } else {
+                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID);
+            }
         } catch (TskCoreException ex) {
             Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex);
         }
@@ -191,8 +198,7 @@ public class GroupManager {
      * @param groupKey
      *
      * @return return the DrawableGroup (if it exists) for the given GroupKey,
-     *         or
-     *         null if no group exists for that key.
+     *         or null if no group exists for that key.
      */
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
@@ -239,8 +245,8 @@ public class GroupManager {
     }
 
     /**
-     * 'mark' the given group as seen. This removes it from the queue of
-     * groups to review, and is persisted in the drawable db.
+     * 'mark' the given group as seen. This removes it from the queue of groups
+     * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
@@ -557,10 +563,9 @@ public class GroupManager {
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
         /**
-         * TODO: is there a way to optimize this to avoid quering to db
-         * so much. the problem is that as a new files are analyzed they
-         * might be in new groups( if we are grouping by say make or
-         * model) -jm
+         * TODO: is there a way to optimize this to avoid quering to db so much.
+         * the problem is that as a new files are analyzed they might be in new
+         * groups( if we are grouping by say make or model) -jm
          */
         for (long fileId : updatedFileIDs) {
 
@@ -581,18 +586,22 @@ public class GroupManager {
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 
         if (Objects.nonNull(task) && (task.isCancelled())) {
-            /* if this method call is part of a ReGroupTask and that task is
+            /*
+             * if this method call is part of a ReGroupTask and that task is
              * cancelled, no-op
              *
              * this allows us to stop if a regroup task has been cancelled (e.g.
-             * the user picked a different group by attribute, while the
-             * current task was still running) */
+             * the user picked a different group by attribute, while the current
+             * task was still running)
+             */
 
         } else {         // no task or un-cancelled task
             if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
-                /* for attributes other than path we can't be sure a group is
-                 * fully analyzed because we don't know all the files that
-                 * will be a part of that group,. just show them no matter what. */
+                /*
+                 * for attributes other than path we can't be sure a group is
+                 * fully analyzed because we don't know all the files that will
+                 * be a part of that group,. just show them no matter what.
+                 */
 
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
