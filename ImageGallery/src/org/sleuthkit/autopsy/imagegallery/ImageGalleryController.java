@@ -212,6 +212,7 @@ public final class ImageGalleryController {
         });
 
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
+            //analyzed groups is confined  to JFX thread
             if (Case.isCaseOpen()) {
                 checkForGroups();
             }
@@ -248,13 +249,12 @@ public final class ImageGalleryController {
         return historyManager.getCanRetreat();
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState, boolean forceShowTree) {
         if (Objects.nonNull(navPanel) && forceShowTree) {
             navPanel.showTree();
         }
         historyManager.advance(newState);
-
     }
 
     public GroupViewState advance() {
@@ -274,6 +274,7 @@ public final class ImageGalleryController {
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             if (IngestManager.getInstance().isIngestRunning()) {
@@ -313,6 +314,7 @@ public final class ImageGalleryController {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void clearNotification() {
         //remove the ingest spinner
         if (fullUIStackPane != null) {
@@ -324,6 +326,7 @@ public final class ImageGalleryController {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void replaceNotification(StackPane stackPane, Node newNode) {
         clearNotification();
 
@@ -386,9 +389,7 @@ public final class ImageGalleryController {
         selectionModel.clearSelection();
         setListeningEnabled(false);
         ThumbnailCache.getDefault().clearCache();
-        Platform.runLater(() -> {
-            historyManager.clear();
-        });
+        historyManager.clear();
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
