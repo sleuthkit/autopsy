@@ -140,7 +140,8 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     // Make sure that the report module has a valid non-null name.
     private boolean validModule(ReportModule module) {
-        return module != null && module.getName() != null && module.getRelativeFilePath() != null;
+        return module != null && module.getName() != null && !module.getName().isEmpty() 
+            && module.getRelativeFilePath() != null;
     }
 
     private void postWarningMessage(ReportModule module) {
