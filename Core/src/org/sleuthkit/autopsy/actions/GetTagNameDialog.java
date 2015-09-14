@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -29,7 +30,6 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
@@ -48,15 +48,36 @@ public class GetTagNameDialog extends JDialog {
     private final HashMap<String, TagName> tagNames = new HashMap<>();
     private TagName tagName = null;
 
+    /**
+     * Show the Tag Name Dialog and return the TagName selected by the user. The
+     * dialog will be centered with the main autopsy window as its owner. To set
+     * another window as the owner use {@link #doDialog(java.awt.Window) }
+     *
+     * @return a TagName instance selected by the user, or null if the user
+     *         canceled the dialog.
+     */
     public static TagName doDialog() {
-        GetTagNameDialog dialog = new GetTagNameDialog();
-        return dialog.tagName;
+        return doDialog(WindowManager.getDefault().getMainWindow());
     }
 
-    private GetTagNameDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+    /**
+     * Show the Tag Name Dialog and return the TagName selected by the user.
+     *
+     * @param owner the window that will be the owner of the dialog. The dialog
+     *              will be centered over this window and will block the rest of
+     *              the application.
+     *
+     * @return a TagName instance selected by the user, or null if the user
+     *         canceled the dialog.
+     */
+    public static TagName doDialog(final Window owner) {
+        return new GetTagNameDialog(owner).tagName;
+    }
+
+    private GetTagNameDialog(final Window owner) {
+        super(owner,
                 NbBundle.getMessage(GetTagNameDialog.class, "GetTagNameDialog.createTag"),
-                true);
+                ModalityType.APPLICATION_MODAL);
         setIconImage(ImageUtilities.loadImage(TAG_ICON_PATH));
         initComponents();
 
@@ -68,7 +89,7 @@ public class GetTagNameDialog extends JDialog {
         actionMap.put(cancelName, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose();
+                cancelButtonActionPerformed(e);
             }
         });
 
@@ -97,7 +118,7 @@ public class GetTagNameDialog extends JDialog {
         tagsTable.setRowHeight(tagsTable.getRowHeight() + 5);
 
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        this.setLocationRelativeTo(owner);
         setVisible(true);
     }
 
