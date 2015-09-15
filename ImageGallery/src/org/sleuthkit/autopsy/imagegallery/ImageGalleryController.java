@@ -212,6 +212,7 @@ public final class ImageGalleryController {
         });
 
         groupManager.getAnalyzedGroups().addListener((Observable o) -> {
+            //analyzed groups is confined  to JFX thread
             if (Case.isCaseOpen()) {
                 checkForGroups();
             }
@@ -248,13 +249,12 @@ public final class ImageGalleryController {
         return historyManager.getCanRetreat();
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState, boolean forceShowTree) {
         if (Objects.nonNull(navPanel) && forceShowTree) {
             navPanel.showTree();
         }
         historyManager.advance(newState);
-
     }
 
     public GroupViewState advance() {
@@ -274,6 +274,7 @@ public final class ImageGalleryController {
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             if (IngestManager.getInstance().isIngestRunning()) {
@@ -313,6 +314,7 @@ public final class ImageGalleryController {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void clearNotification() {
         //remove the ingest spinner
         if (fullUIStackPane != null) {
@@ -324,6 +326,7 @@ public final class ImageGalleryController {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void replaceNotification(StackPane stackPane, Node newNode) {
         clearNotification();
 
@@ -386,9 +389,7 @@ public final class ImageGalleryController {
         selectionModel.clearSelection();
         setListeningEnabled(false);
         ThumbnailCache.getDefault().clearCache();
-        Platform.runLater(() -> {
-            historyManager.clear();
-        });
+        historyManager.clear();
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
@@ -812,14 +813,14 @@ public final class ImageGalleryController {
                         final Optional<Boolean> hasMimeType = FileTypeUtils.hasDrawableMimeType(f);
                         if (hasMimeType.isPresent()) {
                             if (hasMimeType.get()) {  // supported mimetype => analyzed
-                                taskDB.updateFile(DrawableFile.create(f, true, taskDB.isVideoFile(f)), tr);
+                                taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                             } else { //unsupported mimtype => analyzed but shouldn't include
                                 taskDB.removeFile(f.getId(), tr);
                             }
                         } else {
                             if (FileTypeUtils.isDrawable(f)) {
                                 //no mime type but supported =>  add as not analyzed
-                                taskDB.insertFile(DrawableFile.create(f, false, taskDB.isVideoFile(f)), tr);
+                                taskDB.insertFile(DrawableFile.create(f, false, false), tr);
                             } else {
                                 //no mime type, not supported  => remove ( should never get here)
                                 taskDB.removeFile(f.getId(), tr);
@@ -934,7 +935,7 @@ public final class ImageGalleryController {
                         progressHandle.finish();
                         break;
                     }
-                    db.insertFile(DrawableFile.create(f, false, db.isVideoFile(f)), tr);
+                    db.insertFile(DrawableFile.create(f, false, false), tr);
                     units++;
                     progressHandle.progress(f.getName(), units);
                 }
