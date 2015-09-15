@@ -1064,9 +1064,12 @@ public class EventDB {
         String timeZone = TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "";  // NON-NLS
         String typeColumn = typeColumnHelper(useSubTypes);
 
-        //compose query string 
+        //compose query string, new-lines only for nicer formatting if printing the entire query
         String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
-                + " group_concat(events.event_id) as event_ids, min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
+                + "\n group_concat(events.event_id) as event_ids,"
+                + "\n group_concat(CASE WHEN hash_hit = 1 THEN event_id ELSE NULL END) as hash_hits,"
+                + "\n group_concat(CASE WHEN tagged = 1 THEN event_id ELSE NULL END) as taggeds,"
+                + "\n min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
                 + "\n FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) // NON-NLS
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
@@ -1074,6 +1077,7 @@ public class EventDB {
 
         // perform query and map results to AggregateEvent objects
         List<AggregateEvent> events = new ArrayList<>();
+
         DBLock.lock();
 
         try (Statement createStatement = con.createStatement();
@@ -1110,23 +1114,8 @@ public class EventDB {
         String description = rs.getString(SQLHelper.getDescriptionColumn(descriptionLOD));
         EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];// NON-NLS
 
-        Set<Long> hashHits = new HashSet<>();
-        String hashHitQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND hash_hit = 1";// NON-NLS
-        try (Statement stmt = con.createStatement();
-                ResultSet hashHitsRS = stmt.executeQuery(hashHitQuery)) {
-            while (hashHitsRS.next()) {
-                hashHits = SQLHelper.unGroupConcat(hashHitsRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
-            }
-        }
-
-        Set<Long> tagged = new HashSet<>();
-        String taggedQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND tagged = 1";// NON-NLS
-        try (Statement stmt = con.createStatement();
-                ResultSet taggedRS = stmt.executeQuery(taggedQuery)) {
-            while (taggedRS.next()) {
-                tagged = SQLHelper.unGroupConcat(taggedRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
-            }
-        }
+        Set<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf);
+        Set<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf);
 
         return new AggregateEvent(interval, type, eventIDs, hashHits, tagged,
                 description, descriptionLOD);
