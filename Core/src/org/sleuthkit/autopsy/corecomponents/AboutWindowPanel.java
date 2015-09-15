@@ -26,7 +26,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;

@@ -103,7 +103,7 @@ public class EventDB {
         }
     }
 
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
+    private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
     static {
         //make sure sqlite driver is loaded, possibly redundant

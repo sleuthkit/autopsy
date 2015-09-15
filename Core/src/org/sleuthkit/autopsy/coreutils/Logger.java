@@ -151,9 +151,9 @@ public final class Logger extends java.util.logging.Logger {
 
     private Logger(String name, String resourceBundleName) {
         super(name, resourceBundleName);
-        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
-            super.addHandler(console);
-        }
+//        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+//            super.addHandler(console);
+//        }
         synchronized (fileHandlerLock) {
             super.setUseParentHandlers(false);
             super.addHandler(userFriendlyLogFile);
