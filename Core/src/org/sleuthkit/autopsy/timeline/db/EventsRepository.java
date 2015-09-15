@@ -149,7 +149,7 @@ public class EventsRepository {
         aggregateEventsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(CacheLoader.from(eventDB::getAggregatedEvents));
+                ).build(CacheLoader.from(eventDB::getClusteredEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
