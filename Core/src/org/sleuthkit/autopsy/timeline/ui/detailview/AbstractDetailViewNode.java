@@ -14,14 +14,17 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -43,6 +46,8 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -66,7 +71,12 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
     static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
     static final CornerRadii CORNER_RADII = new CornerRadii(3);
-    Map<EventType, DropShadow> dropShadowMap = new HashMap<>();
+    /**
+     * the border to apply when this node is 'selected'
+     */
+    static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
+    private static final Logger LOGGER = Logger.getLogger(AbstractDetailViewNode.class
+            .getName());
 
     static void configureLODButton(Button b) {
         b.setMinSize(16, 16);
@@ -74,42 +84,14 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         b.setPrefSize(16, 16);
         show(b, false);
     }
-    /**
-     * the border to apply when this node is 'selected'
-     */
-    static final Border selectionBorder = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
-    final Color evtColor;
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<S> getSubNodes() {
-        return subNodePane.getChildrenUnmodifiable().stream()
-                .map(t -> (S) t)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * apply the 'effect' to visually indicate selection
-     *
-     * @param applied true to apply the selection 'effect', false to remove it
-     */
-    @Override
-    public void applySelectionEffect(boolean applied) {
-        Platform.runLater(() -> {
-            if (applied) {
-                setBorder(selectionBorder);
-            } else {
-                setBorder(null);
-            }
-        });
-    }
 
     static void show(Node b, boolean show) {
         b.setVisible(show);
         b.setManaged(show);
     }
-    final ImageView hashIV = new ImageView(HASH_PIN);
-    final ImageView tagIV = new ImageView(TAG);
+    Map<EventType, DropShadow> dropShadowMap = new HashMap<>();
+    final Color evtColor;
+
     private final S parentNode;
     DescriptionVisibility descrVis;
 
@@ -142,45 +124,16 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     final SleuthkitCase sleuthkitCase;
     final FilteredEventsModel eventsModel;
 
-    final Button plusButton = new Button(null, new ImageView(PLUS)) {
-        {
-            configureLODButton(this);
-        }
+    final Button plusButton;
+    final Button minusButton;
 
-    };
-
-    final Button minusButton = new Button(null, new ImageView(MINUS)) {
-        {
-            configureLODButton(this);
-        }
-    };
-    SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
+    final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
     final HBox header;
 
-    /**
-     *
-     * @param showControls the value of par
-     */
-    void showDescriptionLoDControls(final boolean showControls) {
-        DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(10, eventType.getColor()));
-        getSpanFillNode().setEffect(showControls ? dropShadow : null);
-        show(minusButton, showControls);
-        show(plusButton, showControls);
-    }
     final Region spacer = new Region();
 
-    RootFilter getSubClusterFilter() {
-        RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
-        //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-        combinedFilter.getSubFilters().addAll(new TextFilter(getEventBundle().getDescription()),
-                new TypeFilter(getEventType()));
-        return combinedFilter;
-    }
-
-    abstract Collection<T> makeBundlesFromClusters(List<EventCluster> eventClusters);
-
-    abstract void showSpans(final boolean showSpans);
+    private final CollapseClusterAction collapseClusterAction;
+    private final ExpandClusterAction expandClusterAction;
 
     public AbstractDetailViewNode(EventDetailChart chart, T bundle, S parentEventNode) {
         this.eventBundle = bundle;
@@ -189,21 +142,34 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         descLOD.set(bundle.getDescriptionLOD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
-
+        ImageView hashIV = new ImageView(HASH_PIN);
+        ImageView tagIV = new ImageView(TAG);
         if (eventBundle.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
         if (eventBundle.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
+
+        expandClusterAction = new ExpandClusterAction();
+        plusButton = ActionUtils.createButton(expandClusterAction, ActionUtils.ActionTextBehavior.HIDE);
+        configureLODButton(plusButton);
+
+        collapseClusterAction = new CollapseClusterAction();
+        minusButton = ActionUtils.createButton(collapseClusterAction, ActionUtils.ActionTextBehavior.HIDE);
+        configureLODButton(minusButton);
+
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, /*spacer,*/ minusButton, plusButton);
+        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, /*
+                 * spacer,
+                 */ minusButton, plusButton);
 
         header.setMinWidth(USE_PREF_SIZE);
         header.setPadding(new Insets(2, 5, 2, 5));
         header.setAlignment(Pos.CENTER_LEFT);
         //setup description label
         evtColor = getEventType().getColor();
+
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
@@ -220,7 +186,6 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
         setAlignment(Pos.TOP_LEFT);
         setMinHeight(24);
-      
         setPrefHeight(USE_COMPUTED_SIZE);
         setMaxHeight(USE_PREF_SIZE);
         setOnMouseClicked(new EventMouseHandler());
@@ -238,28 +203,58 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         });
         setCursor(Cursor.HAND);
 
-        plusButton.disableProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
-        minusButton.disableProperty().bind(descLOD.isEqualTo(getEventBundle().getDescriptionLOD()));
-
-        plusButton.setOnMouseClicked(e -> {
-            final DescriptionLOD next = descLOD.get().next();
-            if (next != null) {
-                loadSubClusters(next);
-                descLOD.set(next);
-            }
-        });
-        minusButton.setOnMouseClicked(e -> {
-            final DescriptionLOD previous = descLOD.get().previous();
-            if (previous != null) {
-                loadSubClusters(previous);
-                descLOD.set(previous);
-            }
-        });
-
         setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
 
         setLayoutX(getChart().getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<S> getSubNodes() {
+        return subNodePane.getChildrenUnmodifiable().stream()
+                .map(t -> (S) t)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * apply the 'effect' to visually indicate selection
+     *
+     * @param applied true to apply the selection 'effect', false to remove it
+     */
+    @Override
+    public void applySelectionEffect(boolean applied) {
+        Platform.runLater(() -> {
+            if (applied) {
+                setBorder(selectionBorder);
+            } else {
+                setBorder(null);
+            }
+        });
+    }
+
+    /**
+     *
+     * @param showControls the value of par
+     */
+    void showDescriptionLoDControls(final boolean showControls) {
+        DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
+                eventType -> new DropShadow(10, eventType.getColor()));
+        getSpanFillNode().setEffect(showControls ? dropShadow : null);
+        show(minusButton, showControls);
+        show(plusButton, showControls);
+    }
+
+    RootFilter getSubClusterFilter() {
+        RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
+        //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
+        combinedFilter.getSubFilters().addAll(new TextFilter(getEventBundle().getDescription()),
+                new TypeFilter(getEventType()));
+        return combinedFilter;
+    }
+
+    abstract Collection<T> makeBundlesFromClusters(List<EventCluster> eventClusters);
+
+    abstract void showSpans(final boolean showSpans);
 
     /**
      * @param w the maximum width the description label should have
@@ -307,7 +302,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         return descrLabel;
     }
 
-    public final Label getCountLabel() {
+    final public Label getCountLabel() {
         return countLabel;
     }
 
@@ -327,7 +322,6 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     public DescriptionLOD getDescLOD() {
         return descLOD.get();
     }
-    private static final Logger LOGGER = Logger.getLogger(AbstractDetailViewNode.class.getName());
 
     /**
      * loads sub-clusters at the given Description LOD
@@ -358,7 +352,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                                             eventsModel.eventTypeZoomProperty().get(),
                                             combinedFilter,
                                             newDescriptionLOD));
-                            
+
                             return makeBundlesFromClusters(aggregatedEvents).stream()
                             .map(aggEvent -> {
                                 return getNodeForCluser(aggEvent);
@@ -392,7 +386,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     }
 
     @Override
-    final public void setDescriptionVisibility(DescriptionVisibility descrVis) {
+    public final void setDescriptionVisibility(DescriptionVisibility descrVis) {
         this.descrVis = descrVis;
         final int size = getEventBundle().getEventIDs().size();
 
@@ -417,10 +411,14 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         }
     }
 
+    abstract S getNodeForCluser(T cluster);
+
     /**
      * event handler used for mouse events on {@link AggregateEventNode}s
      */
     private class EventMouseHandler implements EventHandler<MouseEvent> {
+
+        private ContextMenu contextMenu;
 
         @Override
         public void handle(MouseEvent t) {
@@ -442,11 +440,55 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                 } else {
                     chart.selectedNodes.setAll(AbstractDetailViewNode.this);
                 }
+                t.consume();
+            } else if (t.getButton() == MouseButton.SECONDARY) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                if (contextMenu == null) {
+                    contextMenu = new ContextMenu();
+                    contextMenu.setAutoHide(true);
 
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(expandClusterAction));
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(collapseClusterAction));
+
+                    contextMenu.getItems().add(new SeparatorMenuItem());
+                    contextMenu.getItems().addAll(chartContextMenu.getItems());
+                }
+                contextMenu.show(AbstractDetailViewNode.this, t.getScreenX(), t.getScreenY());
+                t.consume();
             }
         }
     }
 
-    abstract S getNodeForCluser(T cluster);
+    private class ExpandClusterAction extends Action {
 
+        public ExpandClusterAction() {
+            super("Expand");
+            setGraphic(new ImageView(PLUS));
+            setEventHandler((ActionEvent t) -> {
+                final DescriptionLOD next = descLOD.get().next();
+                if (next != null) {
+                    loadSubClusters(next);
+                    descLOD.set(next);
+                }
+            });
+            disabledProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
+        }
+    }
+
+    private class CollapseClusterAction extends Action {
+
+        public CollapseClusterAction() {
+            super("Collapse");
+
+            setGraphic(new ImageView(MINUS));
+            setEventHandler((ActionEvent t) -> {
+                final DescriptionLOD previous = descLOD.get().previous();
+                if (previous != null) {
+                    loadSubClusters(previous);
+                    descLOD.set(previous);
+                }
+            });
+            disabledProperty().bind(descLOD.isEqualTo(getEventBundle().getDescriptionLOD()));
+        }
+    }
 }

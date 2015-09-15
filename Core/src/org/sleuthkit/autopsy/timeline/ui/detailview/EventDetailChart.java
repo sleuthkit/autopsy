@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -106,7 +107,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
 
-    // I don't like having these package visible, but it was the easiest way to
     private ContextMenu chartContextMenu;
 
     private TimeLineController controller;
@@ -239,36 +239,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 chartContextMenu.hide();
             }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-
-                chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action(
-                        NbBundle.getMessage(this.getClass(), "EventDetailChart.chartContextMenu.placeMarker.name")) {
-                            {
-                                setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
-                                setEventHandler((ActionEvent t) -> {
-                                    if (guideLine == null) {
-                                        guideLine = new GuideLine(0, 0, 0, getHeight(), dateAxis);
-                                        guideLine.relocate(clickEvent.getX(), 0);
-                                        guideLine.endYProperty().bind(heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
-
-                                        getChartChildren().add(guideLine);
-
-                                        guideLine.setOnMouseClicked((MouseEvent event) -> {
-                                            if (event.getButton() == MouseButton.SECONDARY) {
-                                                clearGuideLine();
-                                                event.consume();
-                                            }
-                                        });
-                                    } else {
-                                        guideLine.relocate(clickEvent.getX(), 0);
-                                    }
-                                });
-                            }
-
-                        }, new ActionGroup(
-                                NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
-                                new Back(controller),
-                                new Forward(controller))));
-                chartContextMenu.setAutoHide(true);
+                getChartContextMenu(clickEvent);
                 chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
             }
@@ -315,6 +286,42 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 });
 
         requestChartLayout();
+    }
+
+    ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+        if (chartContextMenu != null) {
+            chartContextMenu.hide();
+        }
+        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action(
+                NbBundle.getMessage(this.getClass(), "EventDetailChart.chartContextMenu.placeMarker.name")) {
+                    {
+                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
+                        setEventHandler((ActionEvent t) -> {
+                            if (guideLine == null) {
+                                guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
+                                guideLine.relocate(clickEvent.getX(), 0);
+                                guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
+
+                                getChartChildren().add(guideLine);
+
+                                guideLine.setOnMouseClicked((MouseEvent event) -> {
+                                    if (event.getButton() == MouseButton.SECONDARY) {
+                                        clearGuideLine();
+                                        event.consume();
+                                    }
+                                });
+                            } else {
+                                guideLine.relocate(clickEvent.getX(), 0);
+                            }
+                        });
+                    }
+
+                }, new ActionGroup(
+                        NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
+                        new Back(controller),
+                        new Forward(controller))));
+        chartContextMenu.setAutoHide(true);
+        return chartContextMenu;
     }
 
     @Override
@@ -734,13 +741,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     public FilteredEventsModel getFilteredEvents() {
         return filteredEvents;
-    }
-
-    /**
-     * @return the chartContextMenu
-     */
-    public ContextMenu getChartContextMenu() {
-        return chartContextMenu;
     }
 
     Property<Boolean> alternateLayoutProperty() {
