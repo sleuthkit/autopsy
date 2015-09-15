@@ -459,7 +459,7 @@ class SevenZipExtractor {
                     }
                 }
 
-                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + new File(pathInArchive).getName();
+                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName();
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
