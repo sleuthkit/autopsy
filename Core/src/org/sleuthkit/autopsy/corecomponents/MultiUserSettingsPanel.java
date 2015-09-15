@@ -442,6 +442,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 || tbPortNumber.getText().isEmpty()
                 || tbUsername.getText().isEmpty()
                 || tbPassword.getPassword().length == 0
+                || tbIndexingServerHost.getText().isEmpty()
                 || !messageServiceFieldsArePopulated()) {
             // We don't even have everything filled out
             result = false;
