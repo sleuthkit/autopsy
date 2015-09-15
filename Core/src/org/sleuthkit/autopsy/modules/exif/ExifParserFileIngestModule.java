@@ -221,55 +221,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
-<<<<<<< HEAD
-     * Checks if this metadata contains any tags related to facial information.
-     *
-     * @param metadata the metadata which needs to be parsed for possible facial
-     *                 information.
-     *
-     * @return returns true if the metadata contains any tags related to facial
-     *         information.
-     */
-    private boolean containsFace(Metadata metadata) {
-        Directory d = metadata.getFirstDirectoryOfType(CanonMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1)
-                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1) != null) {
-                return true;
-            }
-            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2)
-                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(FujifilmMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(FujifilmMakernoteDirectory.TAG_FACES_DETECTED)
-                    && d.getString(FujifilmMakernoteDirectory.TAG_FACES_DETECTED) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
-                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) { 
-                return true;
-            }
-            if(d.containsTag(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE)
-                    && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE) != null
-                    && d.getString(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE).equals("64 0")) { // NON-NLS
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-=======
->>>>>>> upstream/develop
      * Checks if should try to attempt to extract exif. Currently checks if JPEG
      * image (by signature)
      *
