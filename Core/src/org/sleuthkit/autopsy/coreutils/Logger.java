@@ -130,7 +130,8 @@ public final class Logger extends java.util.logging.Logger {
          * handlers are added before the old handlers so that no messages will
          * be lost, but this makes it possible for log messages to be written
          * via the old handlers if logging calls are interleaved with the
-         * add/remove handler calls.
+         * add/remove handler calls (currently, the base class handlers
+         * collection is a CopyOnWriteArrayList).
          */
         FileHandler newUserFriendlyHandler = createFileHandlerWithoutTraces(directoryPath);
         FileHandler newDeveloperFriendlyHandler = createFileHandlerWithTraces(directoryPath);
@@ -143,7 +144,9 @@ public final class Logger extends java.util.logging.Logger {
 
         /*
          * Close the old file handlers and save references to the new handlers
-         * so they can be added to any new loggers.
+         * so they can be added to any new loggers. This swap is why this method
+         * and the two overloads of getLogger() are synchronized, serializing
+         * access to userFriendlyHandler and developerFriendlyHandler.
          */
         userFriendlyHandler.close();
         userFriendlyHandler = newUserFriendlyHandler;
