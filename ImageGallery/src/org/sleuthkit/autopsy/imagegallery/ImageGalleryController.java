@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -875,7 +875,7 @@ public final class ImageGalleryController {
          * check for supported images
          */
         // (name like '.jpg' or name like '.png' ...)
-        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' or name LIKE '%.") + "') ";
+        private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.") + "') ";
 
         private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
 
@@ -889,29 +889,32 @@ public final class ImageGalleryController {
         }
 
         /**
-         * Copy files from a newly added data source into the DB
+         * Copy files from a newly added data source into the DB. Get all
+         * "drawable" files, based on extension. After ingest we use file type
+         * id module and if necessary jpeg signature matching to add/remove
+         * files
          */
         @Override
         public void run() {
             progressHandle.start();
             updateMessage("prepopulating image/video database");
 
-            /*
-             * Get all "drawable" files, based on extension. After ingest we use
-             * file type id module and if necessary jpeg signature matching to
-             * add/remove files
-             */
-            final List<AbstractFile> files;
             try {
-                List<Long> fsObjIds = new ArrayList<>();
-
-                String fsQuery;
+                String fsQuery = "";
                 if (dataSource instanceof Image) {
-                    Image image = (Image) dataSource;
-                    for (FileSystem fs : image.getFileSystems()) {
-                        fsObjIds.add(fs.getId());
+                    List<FileSystem> fileSystems = ((Image) dataSource).getFileSystems();
+                    if (fileSystems.isEmpty() == false) {
+                        /*
+                         * no filesystems, don't bother with the initial
+                         * population, just catch things on file_done
+                         */
+                        progressHandle.finish();
+                        return;
                     }
-                    fsQuery = "(fs_obj_id = " + StringUtils.join(fsObjIds, " or fs_obj_id = ") + ") ";
+                    String internal = fileSystems.stream()
+                            .map(fileSystem -> String.valueOf(fileSystem.getId()))
+                            .collect(Collectors.joining(" OR fs_obj_id = "));
+                    fsQuery = "(fs_obj_id = " + internal + ") "; //suffix
                 } else {
                     /*
                      * NOTE: Logical files currently (Apr '15) have a null value
@@ -923,7 +926,7 @@ public final class ImageGalleryController {
                     fsQuery = "(fs_obj_id IS NULL) ";
                 }
 
-                files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
+                final List<AbstractFile> files = getSleuthKitCase().findAllFilesWhere(fsQuery + " AND " + DRAWABLE_QUERY);
                 progressHandle.switchToDeterminate(files.size());
 
                 //do in transaction
