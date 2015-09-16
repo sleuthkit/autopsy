@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import org.openide.util.NbBundle;
+import org.python.bouncycastle.util.Arrays;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -48,7 +49,6 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
 
     private MessageDigest messageDigest;
     private boolean verified = false;
-    private boolean skipped = false;
     private String calculatedHash = "";
     private String storedHash = "";
     private IngestJobContext context;
@@ -75,8 +75,10 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         String imgName = dataSource.getName();
+        
+        // Skip non-images
         if (!(dataSource instanceof Image)) {
-            logger.log(Level.INFO, "Skipping disk image image {0}", imgName); //NON-NLS
+            logger.log(Level.INFO, "Skipping non-image {0}", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                             "EwfVerifyIngestModule.process.skipNonEwf",
@@ -95,16 +97,17 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         }
 
-        if ((img.getMd5() != null) && !img.getMd5().isEmpty()) {
-            storedHash = img.getMd5().toLowerCase();
-            logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash}); //NON-NLS
-        } else {
+        // Report an error for null or empty MD5
+        if ((img.getMd5() == null) || img.getMd5().isEmpty()) {
             services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                             "EwfVerifyIngestModule.process.noStoredHash",
                             imgName)));
             return ProcessResult.ERROR;
         }
+        
+        storedHash = img.getMd5().toLowerCase();
+        logger.log(Level.INFO, "Hash value stored in {0}: {1}", new Object[]{imgName, storedHash}); //NON-NLS
 
         logger.log(Level.INFO, "Starting hash verification of {0}", img.getName()); //NON-NLS
         services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
@@ -126,7 +129,8 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         long chunkSize = 64 * img.getSsize();
         chunkSize = (chunkSize == 0) ? DEFAULT_CHUNK_SIZE : chunkSize;
 
-        int totalChunks = (int) Math.ceil(size / chunkSize);
+        // Casting to double to capture decimals
+        int totalChunks = (int) Math.ceil((double)size / (double)chunkSize);
         logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
         int read;
 
@@ -148,7 +152,10 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
-            messageDigest.update(data);
+            
+            // Only update with the read bytes.
+            byte[] subData = Arrays.copyOfRange(data, 0, read);
+            messageDigest.update(subData);
             statusHelper.progress(i);
         }
 
