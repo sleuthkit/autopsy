@@ -57,8 +57,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -246,8 +246,8 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     RootFilter getSubClusterFilter() {
         RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
-        //make a new filter intersecting the global filter with text(description) and type filters to restrict sub-clusters
-        combinedFilter.getSubFilters().addAll(new TextFilter(getEventBundle().getDescription()),
+        //make a new filter intersecting the global filter with description and type filters to restrict sub-clusters
+        combinedFilter.getSubFilters().addAll(new DescriptionFilter(getEventBundle().getDescriptionLOD(), getDescription()),
                 new TypeFilter(getEventType()));
         return combinedFilter;
     }
