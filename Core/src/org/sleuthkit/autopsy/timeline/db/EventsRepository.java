@@ -487,26 +487,28 @@ public class EventsRepository {
                             final String uniquePath = f.getUniquePath();
                             final String parentPath = f.getParentPath();
                             long datasourceID = f.getDataSource().getId();
-                            String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
-                            String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
-                            String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
-                            String medD = datasourceName + parentPath;
+                            String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
+
+                            String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
+                            String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
+                            String medDesc = datasourceName + parentPath;
+
                             final TskData.FileKnown known = f.getKnown();
                             Set<String> hashSets = f.getHashSetNames();
                             List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
 
                             publish(new ProgressWindow.ProgressUpdate(i, numFiles,
