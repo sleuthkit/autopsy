@@ -1065,7 +1065,7 @@ public class EventDB {
         String timeZone = TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "";  // NON-NLS
         String typeColumn = typeColumnHelper(useSubTypes);
 
-        //compose query string, /n only for nicer formatting if printing the entire query
+        //compose query string, new-lines only for nicer formatting if printing the entire query
         String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
                 + "\n group_concat(events.event_id) as event_ids,"
                 + "\n group_concat(CASE WHEN hash_hit = 1 THEN event_id ELSE NULL END) as hash_hits,"
