@@ -98,7 +98,7 @@ public class EventsRepository {
 
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<EventCluster>> aggregateEventsCache;
+    private final LoadingCache<ZoomParams, List<EventCluster>> eventClusterCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
@@ -146,7 +146,7 @@ public class EventsRepository {
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(CacheLoader.from(eventDB::countEventsByType));
-        aggregateEventsCache = CacheBuilder.newBuilder()
+        eventClusterCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
                 ).build(CacheLoader.from(eventDB::getClusteredEvents));
@@ -206,8 +206,8 @@ public class EventsRepository {
 
     }
 
-    synchronized public List<EventCluster> getAggregatedEvents(ZoomParams params) {
-        return aggregateEventsCache.getUnchecked(params);
+    synchronized public List<EventCluster> getEventClusters(ZoomParams params) {
+        return eventClusterCache.getUnchecked(params);
     }
 
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
@@ -218,7 +218,7 @@ public class EventsRepository {
         minCache.invalidateAll();
         maxCache.invalidateAll();
         eventCountsCache.invalidateAll();
-        aggregateEventsCache.invalidateAll();
+        eventClusterCache.invalidateAll();
         idToEventCache.invalidateAll();
     }
 
@@ -292,7 +292,7 @@ public class EventsRepository {
 
     synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
         eventCountsCache.invalidateAll();
-        aggregateEventsCache.invalidateAll();
+        eventClusterCache.invalidateAll();
         idToEventCache.invalidateAll(updatedEventIDs);
         try {
             tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());

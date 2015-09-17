@@ -1,14 +1,29 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -61,6 +76,7 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -89,11 +105,11 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         b.setVisible(show);
         b.setManaged(show);
     }
-    Map<EventType, DropShadow> dropShadowMap = new HashMap<>();
+    private final Map<EventType, DropShadow> dropShadowMap = new HashMap<>();
     final Color evtColor;
 
     private final S parentNode;
-    DescriptionVisibility descrVis;
+    private DescriptionVisibility descrVis;
 
     /**
      * Pane that contains AggregateEventNodes of any 'subevents' if they are
@@ -102,7 +118,11 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
      * //TODO: move more of the control of subnodes/events here and out of
      * EventDetail Chart
      */
-    final Pane subNodePane = new Pane();
+    private final Pane subNodePane = new Pane();
+
+    Pane getSubNodePane() {
+        return subNodePane;
+    }
 
     /**
      * The ImageView used to show the icon for this node's event's type
@@ -121,16 +141,28 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private final T eventBundle;
     private final EventDetailChart chart;
-    final SleuthkitCase sleuthkitCase;
-    final FilteredEventsModel eventsModel;
+    private final SleuthkitCase sleuthkitCase;
 
-    final Button plusButton;
-    final Button minusButton;
+    SleuthkitCase getSleuthkitCase() {
+        return sleuthkitCase;
+    }
 
-    final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
+    FilteredEventsModel getEventsModel() {
+        return eventsModel;
+    }
+    private final FilteredEventsModel eventsModel;
+
+    private final Button plusButton;
+    private final Button minusButton;
+
+    private final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
     final HBox header;
 
-    final Region spacer = new Region();
+    Region getSpacer() {
+        return spacer;
+    }
+
+    private final Region spacer = new Region();
 
     private final CollapseClusterAction collapseClusterAction;
     private final ExpandClusterAction expandClusterAction;
@@ -160,9 +192,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         configureLODButton(minusButton);
 
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, /*
-                 * spacer,
-                 */ minusButton, plusButton);
+        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, minusButton, plusButton);
 
         header.setMinWidth(USE_PREF_SIZE);
         header.setPadding(new Insets(2, 5, 2, 5));
@@ -244,12 +274,17 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         show(plusButton, showControls);
     }
 
+    /**
+     * make a new filter intersecting the global filter with description and
+     * type filters to restrict sub-clusters
+     *
+     */
     RootFilter getSubClusterFilter() {
-        RootFilter combinedFilter = eventsModel.filterProperty().get().copyOf();
-        //make a new filter intersecting the global filter with description and type filters to restrict sub-clusters
-        combinedFilter.getSubFilters().addAll(new DescriptionFilter(getEventBundle().getDescriptionLOD(), getDescription()),
+        RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
+        subClusterFilter.getSubFilters().addAll(
+                new DescriptionFilter(getEventBundle().getDescriptionLOD(), getDescription()),
                 new TypeFilter(getEventType()));
-        return combinedFilter;
+        return subClusterFilter;
     }
 
     abstract Collection<T> makeBundlesFromClusters(List<EventCluster> eventClusters);
@@ -324,59 +359,84 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     }
 
     /**
-     * loads sub-clusters at the given Description LOD
+     * loads sub-bundles at the given Description LOD, continues
      *
-     * @param newDescriptionLOD
+     * @param requestedDescrLoD
+     * @param expand
      */
-    final synchronized void loadSubClusters(DescriptionLOD newDescriptionLOD) {
+    private synchronized void loadSubBundles(DescriptionLOD.RelativeDetail relativeDetail) {
         subNodePane.getChildren().clear();
-        if (newDescriptionLOD == getEventBundle().getDescriptionLOD()) {
+        if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLOD()) {
+            descLOD.set(getEventBundle().getDescriptionLOD());
             showSpans(true);
-            getChart().setRequiresLayout(true);
-            getChart().requestChartLayout();
+            chart.setRequiresLayout(true);
+            chart.requestChartLayout();
         } else {
             showSpans(false);
-            RootFilter combinedFilter = getSubClusterFilter();
 
-            //make a new end inclusive span (to 'filter' with)
-            final Interval span = new Interval(getEventBundle().getStartMillis(), getEventBundle().getEndMillis() + 1000);
+            // make new ZoomParams to query with
+            final RootFilter subClusterFilter = getSubClusterFilter();
+            /*
+             * We need to extend end time because for the query by one second,
+             * because it is treated as an open interval but we want to include
+             * events at exactly the time of the last event in this cluster
+             */
+            final Interval subClusterSpan = new Interval(getEventBundle().getStartMillis(), getEventBundle().getEndMillis() + 1000);
+            final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
+            final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescLOD());
 
-            //make a task to load the subnodes
-            LoggedTask<List<S>> loggedTask = new LoggedTask<List<S>>(
+            LoggedTask<List<S>> loggedTask;
+            loggedTask = new LoggedTask<List<S>>(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
+                        private Collection<T> bundles;
+                        private volatile DescriptionLOD loadedDescriptionLoD = getDescLOD().withRelativeDetail(relativeDetail);
+                        private DescriptionLOD next = loadedDescriptionLoD;
 
                         @Override
                         protected List<S> call() throws Exception {
-                            //query for the sub-clusters
-                            List<EventCluster> aggregatedEvents = eventsModel.getAggregatedEvents(new ZoomParams(span,
-                                            eventsModel.eventTypeZoomProperty().get(),
-                                            combinedFilter,
-                                            newDescriptionLOD));
+                            do {
+                                loadedDescriptionLoD = next;
+                                if (loadedDescriptionLoD == getEventBundle().getDescriptionLOD()) {
+                                    return Collections.emptyList();
+                                }
+                                bundles = loadBundles();
+                                next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
+                            } while (bundles.size() == 1 && nonNull(next));
 
-                            return makeBundlesFromClusters(aggregatedEvents).stream()
-                            .map(aggEvent -> {
-                                return getNodeForCluser(aggEvent);
-                            }).collect(Collectors.toList()); // return list of AggregateEventNodes representing subclusters
+                            // return list of AbstractDetailViewNodes representing sub-bundles
+                            return bundles.stream()
+                            .map(AbstractDetailViewNode.this::getNodeForBundle)
+                            .collect(Collectors.toList());
+                        }
+
+                        private Collection<T> loadBundles() {
+                            return makeBundlesFromClusters(eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)));
                         }
 
                         @Override
                         protected void succeeded() {
+                            chart.setCursor(Cursor.WAIT);
                             try {
-                                getChart().setCursor(Cursor.WAIT);
+                                List<S> subBundleNodes = get();
+                                if (subBundleNodes.isEmpty()) {
+                                    showSpans(true);
+                                } else {
+                                    showSpans(false);
+                                }
+                                descLOD.set(loadedDescriptionLoD);
                                 //assign subNodes and request chart layout
-                                subNodePane.getChildren().setAll(get());
-                                setDescriptionVisibility(descrVis);
-                                getChart().setRequiresLayout(true);
-                                getChart().requestChartLayout();
-                                getChart().setCursor(null);
+                                subNodePane.getChildren().setAll(subBundleNodes);
+                                chart.setRequiresLayout(true);
+                                chart.requestChartLayout();
                             } catch (InterruptedException | ExecutionException ex) {
                                 LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                             }
+                            chart.setCursor(null);
                         }
                     };
 
             //start task
-            getChart().getController().monitorTask(loggedTask);
+            chart.getController().monitorTask(loggedTask);
         }
     }
 
@@ -390,7 +450,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         this.descrVis = descrVis;
         final int size = getEventBundle().getEventIDs().size();
 
-        switch (descrVis) {
+        switch (this.descrVis) {
             case COUNT_ONLY:
                 descrLabel.setText("");
                 countLabel.setText(String.valueOf(size));
@@ -411,7 +471,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         }
     }
 
-    abstract S getNodeForCluser(T cluster);
+    abstract S getNodeForBundle(T bundle);
 
     /**
      * event handler used for mouse events on {@link AggregateEventNode}s
@@ -432,10 +492,10 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                 } else if (t.isShortcutDown()) {
                     chart.selectedNodes.removeAll(AbstractDetailViewNode.this);
                 } else if (t.getClickCount() > 1) {
-                    final DescriptionLOD next = descLOD.get().next();
+                    final DescriptionLOD next = descLOD.get().moreDetailed();
                     if (next != null) {
-                        loadSubClusters(next);
-                        descLOD.set(next);
+                        loadSubBundles(DescriptionLOD.RelativeDetail.MORE);
+
                     }
                 } else {
                     chart.selectedNodes.setAll(AbstractDetailViewNode.this);
@@ -461,14 +521,15 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private class ExpandClusterAction extends Action {
 
-        public ExpandClusterAction() {
+        ExpandClusterAction() {
             super("Expand");
+
             setGraphic(new ImageView(PLUS));
             setEventHandler((ActionEvent t) -> {
-                final DescriptionLOD next = descLOD.get().next();
+                final DescriptionLOD next = descLOD.get().moreDetailed();
                 if (next != null) {
-                    loadSubClusters(next);
-                    descLOD.set(next);
+                    loadSubBundles(DescriptionLOD.RelativeDetail.MORE);
+
                 }
             });
             disabledProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
@@ -477,15 +538,14 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private class CollapseClusterAction extends Action {
 
-        public CollapseClusterAction() {
+        CollapseClusterAction() {
             super("Collapse");
 
             setGraphic(new ImageView(MINUS));
             setEventHandler((ActionEvent t) -> {
-                final DescriptionLOD previous = descLOD.get().previous();
+                final DescriptionLOD previous = descLOD.get().lessDetailed();
                 if (previous != null) {
-                    loadSubClusters(previous);
-                    descLOD.set(previous);
+                    loadSubBundles(DescriptionLOD.RelativeDetail.LESS);
                 }
             });
             disabledProperty().bind(descLOD.isEqualTo(getEventBundle().getDescriptionLOD()));

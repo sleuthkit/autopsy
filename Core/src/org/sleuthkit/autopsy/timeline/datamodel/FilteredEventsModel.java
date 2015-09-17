@@ -337,7 +337,7 @@ public final class FilteredEventsModel {
             zoom = requestedTypeZoom.get();
             lod = requestedLOD.get();
         }
-        return repo.getAggregatedEvents(new ZoomParams(range, zoom, filter, lod));
+        return repo.getEventClusters(new ZoomParams(range, zoom, filter, lod));
     }
 
     /**
@@ -347,8 +347,8 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventCluster> getAggregatedEvents(ZoomParams params) {
-        return repo.getAggregatedEvents(params);
+    public List<EventCluster> getEventClusters(ZoomParams params) {
+        return repo.getEventClusters(params);
     }
 
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {

@@ -66,8 +66,8 @@ public class EventClusterNode extends AbstractDetailViewNode<EventCluster, Event
         minWidthProperty().bind(spanRegion.widthProperty());
         header.setPrefWidth(USE_COMPUTED_SIZE);
 
-        final BorderPane borderPane = new BorderPane(subNodePane, header, null, null, null);
-        BorderPane.setAlignment(subNodePane, Pos.TOP_LEFT);
+        final BorderPane borderPane = new BorderPane(getSubNodePane(), header, null, null, null);
+        BorderPane.setAlignment(getSubNodePane(), Pos.TOP_LEFT);
         borderPane.setPrefWidth(USE_COMPUTED_SIZE);
 
         getChildren().addAll(spanRegion, borderPane);
@@ -86,8 +86,8 @@ public class EventClusterNode extends AbstractDetailViewNode<EventCluster, Event
             if (!getEventCluster().getEventIDsWithHashHits().isEmpty()) {
                 hashSetCounts = new HashMap<>();
                 try {
-                    for (TimeLineEvent tle : eventsModel.getEventsById(getEventCluster().getEventIDsWithHashHits())) {
-                        Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
+                    for (TimeLineEvent tle : getEventsModel().getEventsById(getEventCluster().getEventIDsWithHashHits())) {
+                        Set<String> hashSetNames = getSleuthkitCase().getAbstractFileById(tle.getFileID()).getHashSetNames();
                         for (String hashSetName : hashSetNames) {
                             hashSetCounts.merge(hashSetName, 1L, Long::sum);
                         }
@@ -99,7 +99,7 @@ public class EventClusterNode extends AbstractDetailViewNode<EventCluster, Event
 
             Map<String, Long> tagCounts = new HashMap<>();
             if (!getEventCluster().getEventIDsWithTags().isEmpty()) {
-                tagCounts.putAll(eventsModel.getTagCountsByTagName(getEventCluster().getEventIDsWithTags()));
+                tagCounts.putAll(getEventsModel().getTagCountsByTagName(getEventCluster().getEventIDsWithTags()));
 
             }
 
@@ -174,7 +174,7 @@ public class EventClusterNode extends AbstractDetailViewNode<EventCluster, Event
     }
 
     @Override
-    EventClusterNode getNodeForCluser(EventCluster cluster) {
+    EventClusterNode getNodeForBundle(EventCluster cluster) {
         return new EventClusterNode(cluster, this, getChart());
     }
 
