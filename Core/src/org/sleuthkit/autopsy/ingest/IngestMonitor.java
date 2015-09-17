@@ -80,7 +80,7 @@ public final class IngestMonitor {
      * Stops the ingest timerAction.
      */
     void stop() {
-        if (timer != null) {
+        if (null != timer) {
             timer.stop();
         }
     }
@@ -91,7 +91,7 @@ public final class IngestMonitor {
      * @return True or false
      */
     boolean isRunning() {
-        return timer != null && timer.isRunning();
+        return (null != timer && timer.isRunning());
     }
 
     /**
