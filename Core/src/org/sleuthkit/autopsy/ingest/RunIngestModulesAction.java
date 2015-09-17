@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
+import javax.swing.AbstractAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
@@ -28,14 +28,14 @@ import org.sleuthkit.datamodel.Image;
  * This class is used to add the action to the run ingest modules menu item. 
  * When the image is pressed, it should open the wizard for ingest modules.
  */
-class MenuImageAction implements ActionListener {
+final class RunIngestModulesAction extends AbstractAction {
 
     Image image;
 
     /**
      * the constructor
      */
-    public MenuImageAction(Image image) {
+    public RunIngestModulesAction(Image image) {
         this.image = image;
     }
 

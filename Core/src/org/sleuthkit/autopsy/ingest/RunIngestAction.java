@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,14 +72,14 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
     
     /**
-     * Create a sublist of images updated by UpdateIngestImages
+     * Create a sublist of images updated by RunIngestSubMenu
      * Each has an action to perform Ingest Modules on it.
      *
      * @return the images sublist created.
      */
     @Override
     public JMenuItem getMenuPresenter() {
-        JMenuItem sublist = new UpdateIngestImages();
+        JMenuItem sublist = new RunIngestSubMenu();
         sublist.setVisible(true);
         return sublist;
     }
