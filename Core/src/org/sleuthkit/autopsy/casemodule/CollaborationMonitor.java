@@ -301,7 +301,7 @@ final class CollaborationMonitor {
         /**
          * Finishes the progress bars for all remote tasks.
          */
-        void shutdown() {
+        synchronized void shutdown() {
             finishAllTasks();
         }
 
@@ -351,7 +351,7 @@ final class CollaborationMonitor {
         /**
          * A collection of progress bars for tasks on a collaborating node.
          */
-        class RemoteTasks {
+        private final class RemoteTasks {
 
             private final long MAX_MINUTES_WITHOUT_UPDATE = HEARTBEAT_INTERVAL_MINUTES * MAX_MISSED_HEARTBEATS;
             private Instant lastUpdateTime;
@@ -384,7 +384,7 @@ final class CollaborationMonitor {
              * @param event A collaboration event from the collaborating node
              *              associated with these tasks.
              */
-            void update(CollaborationEvent event) {
+            synchronized void update(CollaborationEvent event) {
                 /**
                  * Update the last update timestamp.
                  */
@@ -429,7 +429,7 @@ final class CollaborationMonitor {
              * Unconditionally finishes the entire set or remote tasks. To be
              * used when a host drops off unexpectedly.
              */
-            void finishAllTasks() {
+            synchronized void finishAllTasks() {
                 taskIdsToProgressBars.values().stream().forEach((progress) -> {
                     progress.finish();
                 });
@@ -443,7 +443,7 @@ final class CollaborationMonitor {
              *
              * @return True or false.
              */
-            boolean isStale() {
+            synchronized boolean isStale() {
                 return Duration.between(lastUpdateTime, Instant.now()).toMinutes() >= MAX_MINUTES_WITHOUT_UPDATE;
             }
         }
