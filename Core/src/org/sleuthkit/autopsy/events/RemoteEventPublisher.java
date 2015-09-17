@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.events;
 
 import java.net.URISyntaxException;
 import java.util.logging.Level;
-import javax.annotation.concurrent.Immutable;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
