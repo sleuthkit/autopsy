@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +32,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Provides thread-safe support for publishing events to registered subscribers
@@ -146,10 +144,10 @@ final class RemoteEventPublisher {
         public void onMessage(Message message) {
 
             /**
-             * TODO! Applications not running interactively also need to receive 
-             * remote events. We need to figure out how to handle case closing 
-             * issue differently. 
-             * 
+             * TODO! Applications not running interactively also need to receive
+             * remote events. We need to figure out how to handle case closing
+             * issue differently.
+             *
              * if (IngestManager.getInstance().isRunningInteractively()) {
              *
              * This is a stop gap measure until a different way of handling the
@@ -159,16 +157,12 @@ final class RemoteEventPublisher {
              * their remote event channels and remote events may be received for
              * a case that is already closed.
              */
-            
-            /** TODO! Remote events may not be related to current case. It can
-             * be a status/priority/UI update.
-            try {
-                Case.getCurrentCase();
-            } catch (IllegalStateException notUsed) {
-                // Case is closed, do not publish the event.
-                return;
-            } **/
-
+            /**
+             * TODO! Remote events may not be related to current case. It can be
+             * a status/priority/UI update. try { Case.getCurrentCase(); } catch
+             * (IllegalStateException notUsed) { // Case is closed, do not
+             * publish the event. return; } *
+             */
             try {
                 if (message instanceof ObjectMessage) {
                     ObjectMessage objectMessage = (ObjectMessage) message;
