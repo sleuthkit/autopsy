@@ -491,6 +491,7 @@ public class EventsRepository {
 
                             String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
                             String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
+                            shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
                             String medDesc = datasourceName + parentPath;
 
                             final TskData.FileKnown known = f.getKnown();
