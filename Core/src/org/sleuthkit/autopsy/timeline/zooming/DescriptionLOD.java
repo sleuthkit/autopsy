@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.zooming;
 import org.openide.util.NbBundle;
 
 /**
- *
+ * Enumeration of all description levels of detail.
  */
 public enum DescriptionLOD {
 
@@ -39,7 +39,7 @@ public enum DescriptionLOD {
         this.displayName = displayName;
     }
 
-    public DescriptionLOD next() {
+    public DescriptionLOD moreDetailed() {
         try {
             return values()[ordinal() + 1];
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -47,11 +47,31 @@ public enum DescriptionLOD {
         }
     }
 
-    public DescriptionLOD previous() {
+    public DescriptionLOD lessDetailed() {
         try {
             return values()[ordinal() - 1];
         } catch (ArrayIndexOutOfBoundsException e) {
             return null;
         }
+    }
+
+    public DescriptionLOD withRelativeDetail(RelativeDetail relativeDetail) {
+        switch (relativeDetail) {
+            case EQUAL:
+                return this;
+            case MORE:
+                return moreDetailed();
+            case LESS:
+                return lessDetailed();
+            default:
+                throw new IllegalArgumentException("Unknown RelativeDetail value " + relativeDetail);
+        }
+    }
+
+    public enum RelativeDetail {
+
+        EQUAL,
+        MORE,
+        LESS;
     }
 }

@@ -18,7 +18,6 @@ import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.VBox;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.AbstractDetailViewNode.show;
@@ -28,14 +27,12 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.AbstractDetailViewNod
  */
 public class EventStripeNode extends AbstractDetailViewNode<EventStripe, EventStripeNode> {
 
-    private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
-
     private final HBox rangesHBox = new HBox();
 
     EventStripeNode(EventStripe eventStripe, EventStripeNode parentNode, EventDetailChart chart) {
         super(chart, eventStripe, parentNode);
         minWidthProperty().bind(rangesHBox.widthProperty());
-        final VBox internalVBox = new VBox(header, subNodePane);
+        final VBox internalVBox = new VBox(header, getSubNodePane());
         internalVBox.setAlignment(Pos.CENTER_LEFT);
 
         for (Range<Long> range : eventStripe.getRanges()) {
@@ -57,7 +54,7 @@ public class EventStripeNode extends AbstractDetailViewNode<EventStripe, EventSt
     @Override
     void showDescriptionLoDControls(final boolean showControls) {
         super.showDescriptionLoDControls(showControls);
-        show(spacer, showControls);
+        show(getSpacer(), showControls);
     }
 
     @Override
@@ -105,8 +102,7 @@ public class EventStripeNode extends AbstractDetailViewNode<EventStripe, EventSt
     }
 
     @Override
-    EventStripeNode getNodeForCluser(EventStripe cluster) {
+    EventStripeNode getNodeForBundle(EventStripe cluster) {
         return new EventStripeNode(cluster, this, getChart());
     }
-
 }
