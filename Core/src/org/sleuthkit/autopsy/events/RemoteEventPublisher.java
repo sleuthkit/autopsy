@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * integrate with the legacy use of JavaBeans PropertyChangeEvents and
  * PropertyChangeListeners as an application event system.
  */
-@Immutable
 final class RemoteEventPublisher {
 
     private static final Logger logger = Logger.getLogger(RemoteEventPublisher.class.getName());
@@ -50,7 +49,7 @@ final class RemoteEventPublisher {
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
-    private MessageConsumer consumer;
+    private final MessageConsumer consumer;
     private final MessageReceiver receiver;
 
     /**
