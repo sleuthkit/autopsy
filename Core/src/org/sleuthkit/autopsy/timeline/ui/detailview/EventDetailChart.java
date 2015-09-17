@@ -299,7 +299,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         setEventHandler((ActionEvent t) -> {
                             if (guideLine == null) {
                                 guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
-                                guideLine.relocate(clickEvent.getX(), 0);
+
+                                guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
                                 guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
 
                                 getChartChildren().add(guideLine);
@@ -311,7 +312,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                                     }
                                 });
                             } else {
-                                guideLine.relocate(clickEvent.getX(), 0);
+                                guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
                             }
                         });
                     }
