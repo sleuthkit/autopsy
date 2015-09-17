@@ -23,10 +23,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.logging.Level;
 import javafx.scene.image.Image;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -57,7 +58,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION),
-            (BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) -> {
+            (artf, attrMap) -> {
                 final BlackboardAttribute latStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
                 final BlackboardAttribute longStart = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
                 final BlackboardAttribute latEnd = attrMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
@@ -129,18 +130,16 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL),
-            (BlackboardArtifact t,
-                    Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> u) -> {
+            (artifact, attributeMap) -> {
                 try {
-                    AbstractFile f = t.getSleuthkitCase().getAbstractFileById(t.getObjectID());
-                    if (f != null) {
-                        return f.getName();
+                    AbstractFile file = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+                    if (file != null) {
+                        return file.getName();
                     }
-                    return " error loading file name"; // NON-NLS
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
-                    return " error loading file name"; // NON-NLS
+                    Logger.getLogger(MiscTypes.class.getName()).log(Level.SEVERE, "Exif event type failed to look up backing file name", ex);
                 }
+                return " error loading file name"; // NON-NLS
             }),
     DEVICES_ATTACHED(NbBundle.getMessage(MiscTypes.class, "MiscTypes.devicesAttached.name"), "usb_devices.png", // NON-NLS
             BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED,
@@ -185,26 +184,41 @@ public enum MiscTypes implements EventType, ArtifactEventType {
 
     private final BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> shortExtractor;
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getFullExtractor() {
         return longExtractor;
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getMedExtractor() {
         return medExtractor;
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     public BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> getShortExtractor() {
         return shortExtractor;
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     public BlackboardAttribute.ATTRIBUTE_TYPE getDateTimeAttrubuteType() {
         return dateTimeAttributeType;
     }
 
+    /**
+     * {@inheritDoc }
+     */
     @Override
     public EventTypeZoomLevel getZoomLevel() {
         return EventTypeZoomLevel.SUB_TYPE;
