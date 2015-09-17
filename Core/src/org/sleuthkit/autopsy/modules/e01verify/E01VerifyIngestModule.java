@@ -134,7 +134,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
         int read;
 
-        byte[] data;
+        byte[] data = new byte[(int) chunkSize];
         statusHelper.switchToDeterminate(totalChunks);
 
         // Read in byte size chunks and update the hash value with the data.
@@ -142,7 +142,6 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             if (context.dataSourceIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
-            data = new byte[(int) chunkSize];
             try {
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
@@ -154,8 +153,12 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             }
             
             // Only update with the read bytes.
-            byte[] subData = Arrays.copyOfRange(data, 0, read);
-            messageDigest.update(subData);
+            if(read == chunkSize) {
+                messageDigest.update(data);
+            } else {
+                byte[] subData = Arrays.copyOfRange(data, 0, read);
+                messageDigest.update(subData);
+            }
             statusHelper.progress(i);
         }
 
