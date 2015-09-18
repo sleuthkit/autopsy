@@ -61,7 +61,7 @@ def cleanup(days, path):
 
 
 def usage():
-    print("USAGE:\n\tpython" + sys.argv[0] + "<number of days> <valid path>")
+    print("USAGE:\n\tpython " + sys.argv[0] + " <number of days> <valid path>")
     exit(1)
 
 if __name__ == "__main__":
