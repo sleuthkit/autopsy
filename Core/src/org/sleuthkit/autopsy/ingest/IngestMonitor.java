@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  * Monitors disk space and memory and cancels ingest if disk space runs low.
@@ -120,34 +121,63 @@ public final class IngestMonitor {
 
         MonitorTimerAction() {
             findRootDirectoryForCurrentCase();
-            Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-                String changed = evt.getPropertyName();
-                Object newValue = evt.getNewValue();
-                if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                    if (newValue != null) {
-                        findRootDirectoryForCurrentCase();
+            Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+                if (evt instanceof AutopsyEvent) {
+                    AutopsyEvent event = (AutopsyEvent) evt;
+                    if (AutopsyEvent.SourceType.LOCAL == event.getSourceType() && event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                        /*
+                         * The new value of the event will be non-null if a new
+                         * case has been opened.
+                         */
+                        if (null != evt.getNewValue()) {
+                            findRootDirectoryForCurrentCase((Case) evt.getNewValue());
+                        }
                     }
-
                 }
             });
         }
 
         /**
          * Determines the root directory of the case folder for the current case
-         * and sets it as the directory to monitor. If there is no current case,
-         * defaults to the root directory.
+         * and sets it as the directory to monitor.
          */
         private void findRootDirectoryForCurrentCase() {
-            root = new File(File.separator);
-            String caseDir = Case.getCurrentCase().getCaseDirectory();
-            File curDir = new File(caseDir);
+            try {
+                Case currentCase = Case.getCurrentCase();
+                findRootDirectoryForCurrentCase(currentCase);
+            } catch (IllegalStateException unused) {
+                /*
+                 * Case.getCurrentCase() throws IllegalStateException when there
+                 * is no case.
+                 */
+                root = new File(File.separator);
+                logMonitoredRootDirectory();
+            }
+        }
+
+        /**
+         * Determines the root directory of the case folder for the current case
+         * and sets it as the directory to monitor.
+         *
+         * @param currentCase The current case.
+         */
+        private void findRootDirectoryForCurrentCase(Case currentCase) {
+            File curDir = new File(currentCase.getCaseDirectory());
             File parentDir = curDir.getParentFile();
             while (null != parentDir) {
                 curDir = parentDir;
                 parentDir = curDir.getParentFile();
             }
             root = curDir;
-            logger.log(Level.INFO, "Monitoring disk space of {0}", curDir.getAbsolutePath()); //NON-NLS
+            logMonitoredRootDirectory();
+        }
+
+        /**
+         * Writes an info message to the Autopsy log identifying the root
+         * directory being monitored.
+         */
+        private void logMonitoredRootDirectory() {
+            logger.log(Level.INFO, "Monitoring disk space of {0}", root.getAbsolutePath()); //NON-NLS
         }
 
         @Override
@@ -164,7 +194,7 @@ public final class IngestMonitor {
 
             if (!enoughDiskSpace()) {
                 /*
-                 * Shut down ingest.
+                 * Shut down ingest by cancelling all ingest jobs.
                  */
                 manager.cancelAllIngestJobs();
                 String diskPath = root.getAbsolutePath();
