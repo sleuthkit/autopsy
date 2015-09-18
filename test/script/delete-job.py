@@ -21,21 +21,31 @@ import sys
 import time
 
 def remove_file(f):
+	"""
+	Remove the given file
+	"""
 	try:
 		if os.path.exists(f):
 			os.remove(f)
-	except IOError:
+	except OSError:
 		print("Unable to delete file: %s", f)
 		return 1
 
 def remove_folder(d):
+	"""
+ 	Remove the given directory
+	"""	
 	try:
 		os.rmdir(d)
-	except IOError:
+	except OSError:
 		print("Unable to delete folder: %s", d)
 		return 1
 
-def delete_files_and_dirs(days, path):
+def cleanup(days, path):
+	"""
+	Remove files from given directory that are older than 
+	the number of given days, then remove empty directories
+	"""	
 	error = 0
 	now = time.time()
 	for root, dirs, files in os.walk(path, topdown=False):
@@ -51,7 +61,7 @@ def delete_files_and_dirs(days, path):
 
 
 def usage():
-    print("USAGE:\n\tpython delete-job.py <number of days> <valid path>")
+    print("USAGE:\n\tpython" + sys.argv[0] + "<number of days> <valid path>")
     exit(1)
 
 if __name__ == "__main__":
@@ -67,5 +77,5 @@ if __name__ == "__main__":
 	if not os.path.exists(path):
 		print("Invalid path.")
 		usage()
-	error = delete_files_and_dirs(days, path)
+	error = cleanup(days, path)
 	exit(error)
