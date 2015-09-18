@@ -33,11 +33,12 @@ def delete_files(days, path):
 						exit(1)
 		for d in dirs:
 			d = os.path.join(root, d)
-			try:
-				os.rmdir(d)
-			except IOError:
-				print("Unable to delete folder: %s", d)
-				exit(1)
+			if not os.listdir(d):
+				try:
+					os.rmdir(d)
+				except IOError:
+					print("Unable to delete folder: %s", d)
+					exit(1)
 
 	exit(0)
 
