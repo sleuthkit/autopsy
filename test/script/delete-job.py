@@ -19,6 +19,15 @@
 import os
 import sys
 
+def delete_files(days, path):
+	now = time.time()
+	for f in listdir(path):
+		f = os.path.join(path, f)
+		if os.stat(f).st_mtime <= now - days * 86400:
+			if os.path.exists(f):
+				os.remove(f)
+	exit(0)
+
 def usage():
     print("USAGE:\npython delete-job.py <number of days> <valid path>")
     exit(1)
@@ -36,3 +45,4 @@ if __name__ == "__main__":
 	if not os.path.exists(path):
 		print("Invalid path.")
 		usage()
+	delete_files(days, path)
