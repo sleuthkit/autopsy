@@ -21,11 +21,24 @@ import sys
 
 def delete_files(days, path):
 	now = time.time()
-	for f in listdir(path):
-		f = os.path.join(path, f)
-		if os.stat(f).st_mtime <= now - days * 86400:
-			if os.path.exists(f):
-				os.remove(f)
+	for root, dirs, files in os.walk(path, topdown=False):
+		for f in files:
+			f = os.path.join(path, f)
+			if os.stat(f).st_mtime <= now - days * 86400:
+				try:
+					if os.path.exists(f):
+						os.remove(f)
+					except IOError:
+						print("Unable to delete folder: %s", d)
+						exit(1)
+		for d in dirs:
+			d = os.path.join(root, d)
+			try:
+				os.rmdir(d)
+			except IOError:
+				print("Unable to delete folder: %s", d)
+				exit(1)
+
 	exit(0)
 
 def usage():
