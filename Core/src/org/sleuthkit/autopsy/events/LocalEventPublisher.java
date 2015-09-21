@@ -19,10 +19,9 @@
 package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -43,15 +42,7 @@ final class LocalEventPublisher {
      * this Autopsy node.
      */
     LocalEventPublisher() {
-        /*
-         * Thread-safety was originally provided through use of a
-         * ConcurrentHashMap as the subscribers by event collection. However,
-         * the semantics of ConcurrentHashMap are such that it was possible for
-         * a subscriber to receive an event after unsubscribing. To eliminate
-         * this possibility, the map was changed to an ordinary map and the
-         * methods of this class were made synchronized instead.
-         */
-        subscribersByEvent = new HashMap<>();
+        subscribersByEvent = new ConcurrentHashMap<>();
     }
 
     /**
@@ -60,7 +51,7 @@ final class LocalEventPublisher {
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             addSubscriber(eventName, subscriber);
         }
@@ -72,10 +63,8 @@ final class LocalEventPublisher {
      * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber to add.
      */
-    synchronized void addSubscriber(String eventName, PropertyChangeListener subscriber) {
-        if (!subscribersByEvent.containsKey(eventName)) {
-            subscribersByEvent.put(eventName, new HashSet<>());
-        }
+    void addSubscriber(String eventName, PropertyChangeListener subscriber) {
+        subscribersByEvent.putIfAbsent(eventName, ConcurrentHashMap.<PropertyChangeListener>newKeySet());
         Set<PropertyChangeListener> subscribers = subscribersByEvent.get(eventName);
         subscribers.add(subscriber);
     }
@@ -86,7 +75,7 @@ final class LocalEventPublisher {
      * @param eventNames The events the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
+    void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         for (String eventName : eventNames) {
             removeSubscriber(eventName, subscriber);
         }
@@ -98,7 +87,7 @@ final class LocalEventPublisher {
      * @param eventNames The event the subscriber is no longer interested in.
      * @param subscriber The subscriber to remove.
      */
-    synchronized void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
+    void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
         Set<PropertyChangeListener> subscribers = subscribersByEvent.getOrDefault(eventName, null);
         if (null != subscribers) {
             subscribers.remove(subscriber);
@@ -111,7 +100,7 @@ final class LocalEventPublisher {
      *
      * @param event The event to be published.
      */
-    synchronized void publish(AutopsyEvent event) {
+    void publish(AutopsyEvent event) {
         Set<PropertyChangeListener> subscribers = subscribersByEvent.getOrDefault(event.getPropertyName(), null);
         if (null != subscribers) {
             for (PropertyChangeListener subscriber : subscribers) {
