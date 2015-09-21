@@ -11,7 +11,7 @@ import org.sleuthkit.autopsy.timeline.filters.Filter;
 /**
  * A TreeItem for a filter.
  */
-public class FilterTreeItem extends TreeItem<Filter> {
+final public class FilterTreeItem extends TreeItem<Filter> {
 
     /**
      * recursively construct a tree of treeitems to parallel the filter tree of
@@ -40,16 +40,16 @@ public class FilterTreeItem extends TreeItem<Filter> {
         });
 
         if (f instanceof CompoundFilter<?>) {
-            CompoundFilter<?> cf = (CompoundFilter<?>) f;
+            CompoundFilter<?> compoundFilter = (CompoundFilter<?>) f;
 
-            for (Filter af : cf.getSubFilters()) {
-                getChildren().add(new FilterTreeItem(af, expansionMap));
+            for (Filter subFilter : compoundFilter.getSubFilters()) {
+                getChildren().add(new FilterTreeItem(subFilter, expansionMap));
             }
 
-            cf.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
+            compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
                 while (c.next()) {
-                    for (Filter af : c.getAddedSubList()) {
-                        getChildren().add(new FilterTreeItem(af, expansionMap));
+                    for (Filter subfFilter : c.getAddedSubList()) {
+                        getChildren().add(new FilterTreeItem(subfFilter, expansionMap));
                     }
                 }
             });

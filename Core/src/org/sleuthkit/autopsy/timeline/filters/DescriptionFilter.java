@@ -5,6 +5,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 public class DescriptionFilter extends AbstractFilter {
@@ -12,15 +13,21 @@ public class DescriptionFilter extends AbstractFilter {
     private final DescriptionLOD descriptionLoD;
 
     private final String description;
+    private final FilterMode filterMode;
 
-    public DescriptionFilter(DescriptionLOD descriptionLoD, String description) {
+    public FilterMode getFilterMode() {
+        return filterMode;
+    }
+
+    public DescriptionFilter(DescriptionLOD descriptionLoD, String description, FilterMode filterMode) {
         this.descriptionLoD = descriptionLoD;
         this.description = description;
+        this.filterMode = filterMode;
     }
 
     @Override
     public DescriptionFilter copyOf() {
-        DescriptionFilter filterCopy = new DescriptionFilter(getDescriptionLoD(), getDescription());
+        DescriptionFilter filterCopy = new DescriptionFilter(getDescriptionLoD(), getDescription(), getFilterMode());
         filterCopy.setSelected(isSelected());
         filterCopy.setDisabled(isDisabled());
         return filterCopy;
@@ -48,6 +55,24 @@ public class DescriptionFilter extends AbstractFilter {
      */
     public String getDescription() {
         return description;
+    }
+
+    public enum FilterMode {
+
+        EXCLUDE,
+        INCLUDE;
+    }
+
+    @Override
+    public boolean test(EventBundle t) {
+        if (filterMode == FilterMode.INCLUDE) {
+            return getDescription().equals(t.getDescription())
+                    && getDescriptionLoD() == t.getDescriptionLOD();
+        } else {
+            return (getDescription().equals(t.getDescription()) == false)
+                    || (getDescriptionLoD() != t.getDescriptionLOD() == false);
+        }
+
     }
 
 }

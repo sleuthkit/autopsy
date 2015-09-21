@@ -85,6 +85,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");
     static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
     static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
+    static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/funnel.png"); // NON-NLS
     static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
     static final CornerRadii CORNER_RADII = new CornerRadii(3);
     /**
@@ -152,6 +153,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     }
     private final FilteredEventsModel eventsModel;
 
+    private final Button hideButton;
     private final Button plusButton;
     private final Button minusButton;
 
@@ -166,6 +168,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private final CollapseClusterAction collapseClusterAction;
     private final ExpandClusterAction expandClusterAction;
+    private final HideClusterAction hideClusterAction;
 
     public AbstractDetailViewNode(EventDetailChart chart, T bundle, S parentEventNode) {
         this.eventBundle = bundle;
@@ -183,6 +186,10 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             show(tagIV, false);
         }
 
+        hideClusterAction = new HideClusterAction();
+        hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
+        configureLODButton(hideButton);
+
         expandClusterAction = new ExpandClusterAction();
         plusButton = ActionUtils.createButton(expandClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLODButton(plusButton);
@@ -192,7 +199,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         configureLODButton(minusButton);
 
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, minusButton, plusButton);
+        header = new HBox(getDescrLabel(), getCountLabel(), hashIV, tagIV, hideButton, minusButton, plusButton);
 
         header.setMinWidth(USE_PREF_SIZE);
         header.setPadding(new Insets(2, 5, 2, 5));
@@ -272,6 +279,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         getSpanFillNode().setEffect(showControls ? dropShadow : null);
         show(minusButton, showControls);
         show(plusButton, showControls);
+        show(hideButton, showControls);
     }
 
     /**
@@ -282,7 +290,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     RootFilter getSubClusterFilter() {
         RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
         subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(getEventBundle().getDescriptionLOD(), getDescription()),
+                new DescriptionFilter(getEventBundle().getDescriptionLOD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
     }
@@ -501,7 +509,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                     chart.selectedNodes.setAll(AbstractDetailViewNode.this);
                 }
                 t.consume();
-            } else if (t.getButton() == MouseButton.SECONDARY) {
+            } else if (t.isPopupTrigger()) {
                 ContextMenu chartContextMenu = chart.getChartContextMenu(t);
                 if (contextMenu == null) {
                     contextMenu = new ContextMenu();
@@ -509,6 +517,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
                     contextMenu.getItems().add(ActionUtils.createMenuItem(expandClusterAction));
                     contextMenu.getItems().add(ActionUtils.createMenuItem(collapseClusterAction));
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(hideClusterAction));
 
                     contextMenu.getItems().add(new SeparatorMenuItem());
                     contextMenu.getItems().addAll(chartContextMenu.getItems());
@@ -549,6 +558,21 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                 }
             });
             disabledProperty().bind(descLOD.isEqualTo(getEventBundle().getDescriptionLOD()));
+        }
+    }
+
+    private class HideClusterAction extends Action {
+
+        HideClusterAction() {
+            super("Hide");
+            setGraphic(new ImageView(HIDE));
+            setEventHandler((ActionEvent t) -> {
+                DescriptionFilter descriptionFilter = new DescriptionFilter(getDescLOD(), getDescription(), DescriptionFilter.FilterMode.EXCLUDE);
+                chart.getFilters().add(descriptionFilter);
+                eventsModel.getFilter().getSubFilters().add(descriptionFilter);
+                chart.setRequiresLayout(true);
+                chart.requestChartLayout();
+            });
         }
     }
 }

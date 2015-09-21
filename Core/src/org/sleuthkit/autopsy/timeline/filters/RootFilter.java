@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 
 /**
@@ -59,7 +61,20 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public RootFilter copyOf() {
+
+        List<Filter> annonymousSubFilters = getSubFilters().stream()
+                .filter(subFilter
+                        -> (subFilter.equals(knownFilter))
+                        && (subFilter.equals(tagsFilter))
+                        && (subFilter.equals(hashFilter))
+                        && (subFilter.equals(typeFilter))
+                        && (subFilter.equals(dataSourcesFilter)))
+                .map(Filter::copyOf)
+                .collect(Collectors.toList());
+
         RootFilter filter = new RootFilter(knownFilter.copyOf(), tagsFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
+        getSubFilters().addAll(annonymousSubFilters);
+
         filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;

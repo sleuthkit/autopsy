@@ -54,7 +54,7 @@ import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_fil
  * This also implements {@link TimeLineView} since it dynamically updates its
  * filters based on the contents of a {@link FilteredEventsModel}
  */
-public class FilterSetPanel extends BorderPane implements TimeLineView {
+final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
     private Button applyButton;
@@ -173,6 +173,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
+        filteredEvents.registerForEvents(this);
         refresh();
         this.filteredEvents.filterProperty().addListener((Observable o) -> {
             refresh();
@@ -181,7 +182,7 @@ public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     private void refresh() {
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap));
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter().copyOf(), expansionMap));
         });
     }
 }
