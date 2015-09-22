@@ -251,7 +251,7 @@ class SevenZipExtractor {
         }
 
         if (detectedFormat == null) {
-            logger.log(Level.WARNING, "Could not detect format for file: " + archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Could not detect format for file: {0}", archiveFile); //NON-NLS
 
             // if we don't have attribute info then use file extension
             String extension = archiveFile.getNameExtension();
@@ -901,7 +901,7 @@ class SevenZipExtractor {
             UnpackedNode(String fileName, UnpackedNode parent) {
                 this.fileName = fileName;
                 this.parent = parent;
-                //this.localRelPath = parent.localRelPath + File.separator + fileName;
+                this.localRelPath = parent.localRelPath + File.separator + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
 

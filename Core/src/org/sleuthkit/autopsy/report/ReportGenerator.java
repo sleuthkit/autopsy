@@ -151,7 +151,7 @@ class ReportGenerator {
                 if (entry.getValue()) {
                     TableReportModule module = entry.getKey();
                     String reportFilePath = module.getRelativeFilePath();
-                    if (reportFilePath != null) {
+                    if (!reportFilePath.isEmpty()) {
                         tableProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     } else {
                         tableProgress.put(module, panel.addReport(module.getName(), null));
@@ -165,7 +165,7 @@ class ReportGenerator {
                 if (entry.getValue()) {
                     GeneralReportModule module = entry.getKey();
                     String reportFilePath = module.getRelativeFilePath();
-                    if (reportFilePath != null) {
+                    if (!reportFilePath.isEmpty()) {
                         generalProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     } else {
                         generalProgress.put(module, panel.addReport(module.getName(), null));
@@ -179,7 +179,7 @@ class ReportGenerator {
                 if (entry.getValue()) {
                     FileReportModule module = entry.getKey();
                     String reportFilePath = module.getRelativeFilePath();
-                    if (reportFilePath != null) {
+                    if (!reportFilePath.isEmpty()) {
                         fileProgress.put(module, panel.addReport(module.getName(), reportPath + reportFilePath));
                     } else {
                         fileProgress.put(module, panel.addReport(module.getName(), null));
