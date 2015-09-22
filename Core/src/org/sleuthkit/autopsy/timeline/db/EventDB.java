@@ -1068,8 +1068,8 @@ public class EventDB {
         //compose query string, new-lines only for nicer formatting if printing the entire query
         String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
                 + "\n group_concat(events.event_id) as event_ids,"
-                + "\n group_concat(CASE WHEN hash_hit = 1 THEN event_id ELSE NULL END) as hash_hits,"
-                + "\n group_concat(CASE WHEN tagged = 1 THEN event_id ELSE NULL END) as taggeds,"
+                + "\n group_concat(CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END) as hash_hits,"
+                + "\n group_concat(CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END) as taggeds,"
                 + "\n min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
                 + "\n FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) // NON-NLS
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
