@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.zooming;
 import java.util.Objects;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 
 /**
@@ -59,7 +58,6 @@ public class ZoomParams {
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
-
     }
 
     public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
@@ -82,7 +80,7 @@ public class ZoomParams {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public boolean hasFilter(Filter filterSet) {
+    public boolean hasFilter(RootFilter filterSet) {
         return this.filter.equals(filterSet);
     }
 

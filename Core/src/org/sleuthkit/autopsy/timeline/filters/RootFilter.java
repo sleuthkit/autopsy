@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 
@@ -61,14 +62,14 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public RootFilter copyOf() {
-
         List<Filter> annonymousSubFilters = getSubFilters().stream()
                 .filter(subFilter
-                        -> (subFilter.equals(knownFilter))
-                        && (subFilter.equals(tagsFilter))
-                        && (subFilter.equals(hashFilter))
-                        && (subFilter.equals(typeFilter))
-                        && (subFilter.equals(dataSourcesFilter)))
+                        -> !(subFilter.equals(knownFilter)
+                        || subFilter.equals(tagsFilter)
+                        || subFilter.equals(hashFilter)
+                        || subFilter.equals(typeFilter)
+                        || subFilter.equals(textFilter)
+                        || subFilter.equals(dataSourcesFilter)))
                 .map(Filter::copyOf)
                 .collect(Collectors.toList());
 
@@ -82,7 +83,14 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public int hashCode() {
-        return 3;
+        int hash = 3;
+        hash = 29 * hash + Objects.hashCode(this.knownFilter);
+        hash = 29 * hash + Objects.hashCode(this.tagsFilter);
+        hash = 29 * hash + Objects.hashCode(this.hashFilter);
+        hash = 29 * hash + Objects.hashCode(this.textFilter);
+        hash = 29 * hash + Objects.hashCode(this.typeFilter);
+        hash = 29 * hash + Objects.hashCode(this.dataSourcesFilter);
+        return hash;
     }
 
     @Override

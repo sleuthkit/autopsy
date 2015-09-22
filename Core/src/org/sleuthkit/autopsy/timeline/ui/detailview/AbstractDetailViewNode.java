@@ -568,8 +568,10 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
                 DescriptionFilter descriptionFilter = new DescriptionFilter(getDescLOD(), getDescription(), DescriptionFilter.FilterMode.EXCLUDE);
-                chart.getFilters().add(descriptionFilter);
-                eventsModel.getFilter().getSubFilters().add(descriptionFilter);
+                chart.getBundleFilters().add(descriptionFilter);
+                RootFilter rootFilter = eventsModel.getFilter();
+                rootFilter.getSubFilters().add(descriptionFilter);
+                chart.getController().pushFilters(rootFilter.copyOf());
                 chart.setRequiresLayout(true);
                 chart.requestChartLayout();
             });

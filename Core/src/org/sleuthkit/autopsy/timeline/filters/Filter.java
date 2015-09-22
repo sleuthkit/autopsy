@@ -18,16 +18,14 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.function.Predicate;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
  * Interface for Filters
  */
-public interface Filter extends Predicate<EventBundle> {
+public interface Filter  {
 
     /**
      * @param filters a set of filters to intersect
@@ -81,7 +79,6 @@ public interface Filter extends Predicate<EventBundle> {
     SimpleBooleanProperty getDisabledProperty();
 
     boolean isDisabled();
-    
-    
-    
+
+ 
 }

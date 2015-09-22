@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -73,6 +71,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
@@ -244,6 +243,10 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         });
     }
 
+    public ObservableList<DescriptionFilter> getBundleFilters() {
+        return chart.getBundleFilters();
+    }
+
     @Override
     protected Boolean isTickBold(DateTime value) {
         return false;
@@ -379,12 +382,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         private RadioButton countsRadio;
 
         @FXML
-        private ResourceBundle resources;
-
-        @FXML
-        private URL location;
-
-        @FXML
         private CheckBox bandByTypeBox;
 
         @FXML
@@ -426,7 +423,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         @FXML
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
-        public DetailViewSettingsPane() {
+        DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 

@@ -1,11 +1,24 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import java.util.Objects;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 public class DescriptionFilter extends AbstractFilter {
@@ -35,7 +48,7 @@ public class DescriptionFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return "description";
+        return getFilterMode().getDisplayName() + " Description";
     }
 
     @Override
@@ -59,20 +72,48 @@ public class DescriptionFilter extends AbstractFilter {
 
     public enum FilterMode {
 
-        EXCLUDE,
-        INCLUDE;
+        EXCLUDE("Exclude"),
+        INCLUDE("Include");
+
+        private final String displayName;
+
+        private FilterMode(String displayName) {
+            this.displayName = displayName;
+        }
+
+        private String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    public boolean test(String t) {
+        return (filterMode == FilterMode.INCLUDE) == getDescription().equals(t);
     }
 
     @Override
-    public boolean test(EventBundle t) {
-        if (filterMode == FilterMode.INCLUDE) {
-            return getDescription().equals(t.getDescription())
-                    && getDescriptionLoD() == t.getDescriptionLOD();
-        } else {
-            return (getDescription().equals(t.getDescription()) == false)
-                    || (getDescriptionLoD() != t.getDescriptionLOD() == false);
-        }
-
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.descriptionLoD);
+        hash = 79 * hash + Objects.hashCode(this.description);
+        hash = 79 * hash + Objects.hashCode(this.filterMode);
+        return hash;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DescriptionFilter other = (DescriptionFilter) obj;
+        if (this.descriptionLoD != other.descriptionLoD) {
+            return false;
+        }
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        return this.filterMode == other.filterMode;
+    }
 }

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import javafx.beans.property.SimpleBooleanProperty;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
  * Base implementation of a {@link Filter}. Implements active property.
@@ -64,10 +63,4 @@ public abstract class AbstractFilter implements Filter {
     public String getStringCheckBox() {
         return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
     }
-
-    @Override
-    public boolean test(EventBundle t) {
-        return true;
-    }
-
 }

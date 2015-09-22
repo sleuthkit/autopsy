@@ -94,4 +94,6 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
         int hash = 7;
         return hash;
     }
+
+   
 }
