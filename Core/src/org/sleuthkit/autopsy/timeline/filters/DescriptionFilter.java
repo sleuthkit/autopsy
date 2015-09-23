@@ -48,7 +48,7 @@ public class DescriptionFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return getFilterMode().getDisplayName() + " Description";
+        return getFilterMode().getDisplayName() + " " + getDescription();
     }
 
     @Override
@@ -84,10 +84,6 @@ public class DescriptionFilter extends AbstractFilter {
         private String getDisplayName() {
             return displayName;
         }
-    }
-
-    public boolean test(String t) {
-        return (filterMode == FilterMode.INCLUDE) == getDescription().equals(t);
     }
 
     @Override

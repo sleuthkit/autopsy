@@ -68,10 +68,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
@@ -243,8 +243,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         });
     }
 
-    public ObservableList<DescriptionFilter> getBundleFilters() {
-        return chart.getBundleFilters();
+    public ObservableList<String> getQuickHideMasks() {
+        return chart.getQuickHideMasks();
     }
 
     @Override
@@ -301,11 +301,12 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                 if (isCancelled()) {
                     return null;
                 }
-                Platform.runLater(() -> {
-                    if (isCancelled() == false) {
+
+                if (isCancelled() == false) {
+                    Platform.runLater(() -> {
                         setCursor(Cursor.WAIT);
-                    }
-                });
+                    });
+                }
 
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
@@ -315,6 +316,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                 final long upperBound = rangeInfo.getUpperBound();
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
+                getQuickHideMasks().clear();
                 aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {
@@ -336,12 +338,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                     updateProgress(i++, size);
                     updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
                     final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(e.getSpan().getStartMillis()), e);
-
-                    Platform.runLater(() -> {
-                        if (isCancelled() == false) {
+                    if (isCancelled() == false) {
+                        Platform.runLater(() -> {
                             getSeries(e.getEventType()).getData().add(xyData);
-                        }
-                    });
+                        });
+                    }
                 }
 
                 Platform.runLater(() -> {
@@ -485,4 +486,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     }
 
+    public EventDetailChart.UnhideBundleAction newUnhideBundleAction(String description) {
+        return chart.new UnhideBundleAction(description);
+    }
+
+    public EventDetailChart.HideBundleAction newHideBundleAction(EventBundle bundle) {
+        return chart.new HideBundleAction(bundle);
+    }
 }

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import java.util.Objects;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;

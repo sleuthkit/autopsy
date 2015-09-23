@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
@@ -69,8 +68,7 @@ class RootItem extends NavTreeItem {
             Platform.runLater(() -> {
                 synchronized (getChildren()) {
                     getChildren().add(newTreeItem);
-
-                    FXCollections.sort(getChildren(), TreeComparator.Type);
+                    getChildren().sort(TreeComparator.Type);
                 }
             });
         } else {

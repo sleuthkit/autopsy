@@ -1076,6 +1076,7 @@ public class EventDB {
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
 
+        System.out.println(query);
         // perform query and map results to AggregateEvent objects
         List<EventCluster> events = new ArrayList<>();
 

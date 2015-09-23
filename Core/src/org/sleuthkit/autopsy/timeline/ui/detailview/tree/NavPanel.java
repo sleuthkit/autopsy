@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Comparator;
 import javafx.application.Platform;
@@ -36,13 +37,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewNode;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
@@ -144,30 +145,35 @@ public class NavPanel extends BorderPane implements TimeLineView {
                 ImageView imageView = new ImageView(item.getType().getFXImage());
 
                 setGraphic(new StackPane(rect, imageView));
-                detailViewPane.getBundleFilters().addListener((Observable observable) -> {
-                    asdasd(item, rect, imageView);
+                detailViewPane.getQuickHideMasks().addListener((Observable observable) -> {
+                    configureHiddenState(item, rect, imageView);
                 });
-                asdasd(item, rect, imageView);
+                configureHiddenState(item, rect, imageView);
 
             } else {
                 setText(null);
                 setTooltip(null);
                 setGraphic(null);
+                setContextMenu(null);
             }
+
         }
 
-        private void asdasd(NavTreeNode item, Rectangle rect, ImageView imageView) {
-            if (detailViewPane.getBundleFilters().stream().allMatch((DescriptionFilter t) -> t.test(item.getDescription())) == false) {
+        private void configureHiddenState(NavTreeNode item, Rectangle rect, ImageView imageView) {
+            if (detailViewPane.getQuickHideMasks().stream().anyMatch(mask -> mask.equals(item.getDescription()))) {
                 setTextFill(Color.gray(0, .6));
                 imageView.setOpacity(.6);
                 rect.setStroke(item.getType().getColor().deriveColor(0, .6, 1, .6));
                 rect.setFill(item.getType().getColor().deriveColor(0, .6, .6, 0.1));
+                setContextMenu(ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideBundleAction(item.getDescription()))));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
                 rect.setStroke(item.getType().getColor());
                 rect.setFill(item.getType().getColor().deriveColor(0, 1, 1, 0.1));
+//                setContextMenu(ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideBundleAction(item.getDescription()))));
             }
         }
     }
+
 }

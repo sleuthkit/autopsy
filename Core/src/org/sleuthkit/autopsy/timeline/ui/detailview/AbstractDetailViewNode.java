@@ -85,7 +85,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
     static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");
     static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
     static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS
-    static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/funnel.png"); // NON-NLS
+
     static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS
     static final CornerRadii CORNER_RADII = new CornerRadii(3);
     /**
@@ -166,9 +166,9 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private final Region spacer = new Region();
 
-    private final CollapseClusterAction collapseClusterAction;
+    private final CollapseBundleAction collapseClusterAction;
     private final ExpandClusterAction expandClusterAction;
-    private final HideClusterAction hideClusterAction;
+    private final EventDetailChart.HideBundleAction hideClusterAction;
 
     public AbstractDetailViewNode(EventDetailChart chart, T bundle, S parentEventNode) {
         this.eventBundle = bundle;
@@ -186,7 +186,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             show(tagIV, false);
         }
 
-        hideClusterAction = new HideClusterAction();
+        hideClusterAction = chart.new HideBundleAction(getEventBundle());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLODButton(hideButton);
 
@@ -194,7 +194,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         plusButton = ActionUtils.createButton(expandClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLODButton(plusButton);
 
-        collapseClusterAction = new CollapseClusterAction();
+        collapseClusterAction = new CollapseBundleAction();
         minusButton = ActionUtils.createButton(collapseClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLODButton(minusButton);
 
@@ -545,9 +545,9 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         }
     }
 
-    private class CollapseClusterAction extends Action {
+    private class CollapseBundleAction extends Action {
 
-        CollapseClusterAction() {
+        CollapseBundleAction() {
             super("Collapse");
 
             setGraphic(new ImageView(MINUS));
@@ -561,20 +561,4 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         }
     }
 
-    private class HideClusterAction extends Action {
-
-        HideClusterAction() {
-            super("Hide");
-            setGraphic(new ImageView(HIDE));
-            setEventHandler((ActionEvent t) -> {
-                DescriptionFilter descriptionFilter = new DescriptionFilter(getDescLOD(), getDescription(), DescriptionFilter.FilterMode.EXCLUDE);
-                chart.getBundleFilters().add(descriptionFilter);
-                RootFilter rootFilter = eventsModel.getFilter();
-                rootFilter.getSubFilters().add(descriptionFilter);
-                chart.getController().pushFilters(rootFilter.copyOf());
-                chart.setRequiresLayout(true);
-                chart.requestChartLayout();
-            });
-        }
-    }
 }

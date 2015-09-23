@@ -89,7 +89,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
         applyButton.setOnAction(e -> {
-            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue().copyOf());
+            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
         });
         applyButton.setText(Bundle.FilterSetPanel_applyButton_text());
         defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
@@ -173,7 +173,6 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
-        filteredEvents.registerForEvents(this);
         refresh();
         this.filteredEvents.filterProperty().addListener((Observable o) -> {
             refresh();
@@ -182,7 +181,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     private void refresh() {
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter().copyOf(), expansionMap));
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter(), expansionMap));
         });
     }
 }

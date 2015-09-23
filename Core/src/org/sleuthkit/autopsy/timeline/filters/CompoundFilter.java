@@ -89,6 +89,4 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
         }
         return true;
     }
-
-    
 }
