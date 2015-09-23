@@ -654,7 +654,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              */
             if (waitingForData && containsReal(delta)) {
                 /* NOTE: setting waitingForData to false will result in tabs not
-                being updated as more data gets added. This included the counter 
+                being updated as more data gets added. This includes the counter 
                 for number of items being displayed */
                 // waitingForData = false;
                 if (SwingUtilities.isEventDispatchThread()) {
