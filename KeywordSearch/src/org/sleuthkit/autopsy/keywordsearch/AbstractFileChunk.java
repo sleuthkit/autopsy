@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 class AbstractFileChunk {
 
-    private int chunkID;
-    private TextExtractor parent;
+    private final int chunkID;
+    private final TextExtractor parent;
 
     AbstractFileChunk(TextExtractor parent, int chunkID) {
         this.parent = parent;
@@ -55,17 +55,44 @@ class AbstractFileChunk {
     }
 
     public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
-        boolean success = true;
-        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), indexCharset);
+        byte[] saitizedContent = sanitize(content);
+        ByteContentStream bcs = new ByteContentStream(saitizedContent, contentSize, parent.getSourceFile(), indexCharset); //Charset.forName("UTF-8"));
         try {
             ingester.ingest(this, bcs, content.length);
-            //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);
         } catch (Exception ingEx) {
-            success = false;
             throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
                     parent.getSourceFile().getId(), chunkID), ingEx);
         }
-        return success;
+        return true;
+    }
+
+    // Given a byte array, filter out all occurances of invalid (illegal) UTF-8
+    // characters and replace them with the question mark character (?)
+    private static byte[] sanitize(byte[] input) {
+        Charset charset = Charset.forName("UTF-8"); // NON-NLS
+        String inputString = new String(input, charset);
+        StringBuilder sanitized = new StringBuilder(inputString.length());
+        char ch;
+        for (int i = 0; i < inputString.length(); i++) {
+            ch = inputString.charAt(i);
+            if (charIsValidUTF8(ch)) {
+                sanitized.append(ch);
+            } else {
+                sanitized.append("?"); // NON-NLS
+            }
+        }
+
+        byte[] output = sanitized.toString().getBytes(charset);
+        return output;
+    }
+
+    // Is the given character a valid UTF-8 character
+    // return true if it is, false otherwise
+    private static boolean charIsValidUTF8(char ch) {
+        return (ch % 0x10000 != 0xffff && // 0xffff - 0x10ffff range step 0x10000
+                ch % 0x10000 != 0xfffe && // 0xfffe - 0x10fffe range
+                (ch <= 0xfdd0 || ch >= 0xfdef) && // 0xfdd0 - 0xfdef
+                (ch > 0x1F || ch == 0x9 || ch == 0xa || ch == 0xd));
     }
 
 }

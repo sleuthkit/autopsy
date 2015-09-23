@@ -103,6 +103,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
+        // TODO: comment mismatch code
         // skip unknown files
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
@@ -116,7 +117,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        // call the archive extractor if archiveextraction flag is set.
+        // call the archive extractor if archiveExtraction flag is set.
         if (this.archivextraction) {
             archiveExtractor.unpack(abstractFile);
         }
