@@ -384,7 +384,7 @@ final class CollaborationMonitor {
              * @param event A collaboration event from the collaborating node
              *              associated with these tasks.
              */
-            synchronized void update(CollaborationEvent event) {
+            void update(CollaborationEvent event) {
                 /**
                  * Update the last update timestamp.
                  */
@@ -417,10 +417,12 @@ final class CollaborationMonitor {
                  * If a task is no longer in the task list from the remote node,
                  * it is finished. Remove the progress bars for finished tasks.
                  */
-                for (Long id : taskIdsToProgressBars.keySet()) {
-                    if (!remoteTasks.containsKey(id)) {
-                        ProgressHandle progress = taskIdsToProgressBars.remove(id);
+                for (Iterator<Map.Entry<Long, ProgressHandle>> iterator = taskIdsToProgressBars.entrySet().iterator(); iterator.hasNext();) {
+                    Map.Entry<Long, ProgressHandle> entry = iterator.next();
+                    if (!remoteTasks.containsKey(entry.getKey())) {
+                        ProgressHandle progress = entry.getValue();
                         progress.finish();
+                        iterator.remove();
                     }
                 }
             }
@@ -429,7 +431,7 @@ final class CollaborationMonitor {
              * Unconditionally finishes the entire set or remote tasks. To be
              * used when a host drops off unexpectedly.
              */
-            synchronized void finishAllTasks() {
+            void finishAllTasks() {
                 taskIdsToProgressBars.values().stream().forEach((progress) -> {
                     progress.finish();
                 });
@@ -443,7 +445,7 @@ final class CollaborationMonitor {
              *
              * @return True or false.
              */
-            synchronized boolean isStale() {
+            boolean isStale() {
                 return Duration.between(lastUpdateTime, Instant.now()).toMinutes() >= MAX_MINUTES_WITHOUT_UPDATE;
             }
         }
