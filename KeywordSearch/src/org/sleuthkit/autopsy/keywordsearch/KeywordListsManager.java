@@ -72,5 +72,12 @@ public class KeywordListsManager extends Observable {
         }
         return names;
     }
+    
+    /**
+     * Force reload of the keyword lists XML file.
+     */
+    public static void reloadKeywordLists(){
+        XmlKeywordSearchList.getCurrent().reload();
+    }    
 
 }
