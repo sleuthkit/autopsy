@@ -68,6 +68,7 @@ public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance;
+    private final Object ingestMessageBoxLock = new Object();
 
     /**
      * The ingest manager maintains a mapping of ingest job IDs to running
@@ -435,7 +436,9 @@ public class IngestManager {
      * display ingest messages.
      */
     void initIngestMessageInbox() {
-        ingestMessageBox = IngestMessageTopComponent.findInstance();
+        synchronized (this.ingestMessageBoxLock) {
+            ingestMessageBox = IngestMessageTopComponent.findInstance();
+        }
     }
 
     /**
@@ -443,30 +446,34 @@ public class IngestManager {
      *
      * @param message The message to be posted.
      */
-    synchronized void postIngestMessage(IngestMessage message) {
-        if (ingestMessageBox != null && this.runInteractively) {
-            if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
-                ingestMessageBox.displayMessage(message);
-            } else {
-                long errorPosts = ingestErrorMessagePosts.incrementAndGet();
-                if (errorPosts <= MAX_ERROR_MESSAGE_POSTS) {
+    void postIngestMessage(IngestMessage message) {
+        synchronized (this.ingestMessageBoxLock) {
+            if (ingestMessageBox != null && this.runInteractively) {
+                if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
                     ingestMessageBox.displayMessage(message);
-                } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
-                    IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.title"),
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
-                    ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);
+                } else {
+                    long errorPosts = ingestErrorMessagePosts.incrementAndGet();
+                    if (errorPosts <= MAX_ERROR_MESSAGE_POSTS) {
+                        ingestMessageBox.displayMessage(message);
+                    } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
+                        IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.title"),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
+                        ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);
+                    }
                 }
             }
         }
     }
 
     private void clearIngestMessageBox() {
-        if (ingestMessageBox != null) {
-            ingestMessageBox.clearMessages();
+        synchronized (this.ingestMessageBoxLock) {
+            if (ingestMessageBox != null) {
+                ingestMessageBox.clearMessages();
+            }
+            ingestErrorMessagePosts.set(0);
         }
-        ingestErrorMessagePosts.set(0);
     }
 
     /**
