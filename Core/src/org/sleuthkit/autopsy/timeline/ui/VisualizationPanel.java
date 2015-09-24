@@ -315,14 +315,14 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(controller.getEventsModel());
-        setViewMode(controller.getViewMode().get());
+        setViewMode(controller.viewModeProperty().get());
         controller.getNeedsHistogramRebuild().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 refreshHistorgram();
             }
         });
 
-        controller.getViewMode().addListener((ObservableValue<? extends VisualizationMode> ov, VisualizationMode t, VisualizationMode t1) -> {
+        controller.viewModeProperty().addListener((ObservableValue<? extends VisualizationMode> ov, VisualizationMode t, VisualizationMode t1) -> {
             setViewMode(t1);
         });
         TimeLineController.getTimeZone().addListener(timeRangeInvalidationListener);
@@ -361,7 +361,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
     }
 
-  private  synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+    private synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {

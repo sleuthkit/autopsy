@@ -243,10 +243,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         });
     }
 
-    public ObservableList<String> getQuickHideMasks() {
-        return chart.getQuickHideMasks();
-    }
-
     @Override
     protected Boolean isTickBold(DateTime value) {
         return false;
@@ -316,7 +312,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                 final long upperBound = rangeInfo.getUpperBound();
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
-                getQuickHideMasks().clear();
+                controller.getQuickHideMasks().clear();
                 aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {

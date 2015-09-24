@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -136,6 +137,12 @@ public class TimeLineController {
 
     private final Case autoCase;
 
+    private final ObservableList<DescriptionFilter> quickHideMasks = FXCollections.observableArrayList();
+
+    public ObservableList<DescriptionFilter> getQuickHideMasks() {
+        return quickHideMasks;
+    }
+
     /**
      * @return the autopsy Case assigned to the controller
      */
@@ -173,7 +180,7 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<VisualizationMode> viewMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
 
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> getViewMode() {
+    synchronized public ReadOnlyObjectProperty<VisualizationMode> viewModeProperty() {
         return viewMode.getReadOnlyProperty();
     }
 
@@ -616,7 +623,6 @@ public class TimeLineController {
 
     synchronized private void advance(ZoomParams newState) {
         historyManager.advance(newState);
-
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {

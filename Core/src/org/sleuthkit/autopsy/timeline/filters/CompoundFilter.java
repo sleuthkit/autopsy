@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.List;
+import java.util.Objects;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -88,5 +89,12 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
             }
         }
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 61 * hash + Objects.hashCode(this.subFilters);
+        return hash;
     }
 }

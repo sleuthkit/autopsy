@@ -65,7 +65,6 @@ public class NavPanel extends BorderPane implements TimeLineView {
     private ComboBox<Comparator<TreeItem<NavTreeNode>>> sortByBox;
 
     public NavPanel() {
-
         FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS
     }
 
@@ -145,7 +144,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
                 ImageView imageView = new ImageView(item.getType().getFXImage());
 
                 setGraphic(new StackPane(rect, imageView));
-                detailViewPane.getQuickHideMasks().addListener((Observable observable) -> {
+                controller.getQuickHideMasks().addListener((Observable observable) -> {
                     configureHiddenState(item, rect, imageView);
                 });
                 configureHiddenState(item, rect, imageView);
@@ -160,7 +159,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         }
 
         private void configureHiddenState(NavTreeNode item, Rectangle rect, ImageView imageView) {
-            if (detailViewPane.getQuickHideMasks().stream().anyMatch(mask -> mask.equals(item.getDescription()))) {
+            if (controller.getQuickHideMasks().stream().anyMatch(mask -> mask.getDescription().equals(item.getDescription()))) {
                 setTextFill(Color.gray(0, .6));
                 imageView.setOpacity(.6);
                 rect.setStroke(item.getType().getColor().deriveColor(0, .6, 1, .6));

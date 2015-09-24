@@ -18,8 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 
@@ -48,8 +47,9 @@ public class RootFilter extends IntersectionFilter<Filter> {
         return hashFilter;
     }
 
-    public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter) {
+    public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter, Set<Filter> annonymousSubFilters) {
         super(FXCollections.observableArrayList(knownFilter, tagsFilter, hashFilter, textFilter, dataSourceFilter, typeFilter));
+        getSubFilters().addAll(annonymousSubFilters);
         setSelected(Boolean.TRUE);
         setDisabled(false);
         this.knownFilter = knownFilter;
@@ -62,7 +62,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public RootFilter copyOf() {
-        List<Filter> annonymousSubFilters = getSubFilters().stream()
+        Set<Filter> annonymousSubFilters = getSubFilters().stream()
                 .filter(subFilter
                         -> !(subFilter.equals(knownFilter)
                         || subFilter.equals(tagsFilter)
@@ -71,11 +71,9 @@ public class RootFilter extends IntersectionFilter<Filter> {
                         || subFilter.equals(textFilter)
                         || subFilter.equals(dataSourcesFilter)))
                 .map(Filter::copyOf)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-        RootFilter filter = new RootFilter(knownFilter.copyOf(), tagsFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf());
-        getSubFilters().addAll(annonymousSubFilters);
-
+        RootFilter filter = new RootFilter(knownFilter.copyOf(), tagsFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf(), annonymousSubFilters);
         filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;
@@ -83,14 +81,7 @@ public class RootFilter extends IntersectionFilter<Filter> {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 29 * hash + Objects.hashCode(this.knownFilter);
-        hash = 29 * hash + Objects.hashCode(this.tagsFilter);
-        hash = 29 * hash + Objects.hashCode(this.hashFilter);
-        hash = 29 * hash + Objects.hashCode(this.textFilter);
-        hash = 29 * hash + Objects.hashCode(this.typeFilter);
-        hash = 29 * hash + Objects.hashCode(this.dataSourcesFilter);
-        return hash;
+        return super.hashCode();
     }
 
     @Override

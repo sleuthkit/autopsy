@@ -157,7 +157,7 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(DescriptionFilter filter) {
-        if (filter.isSelected()) {
+        if (filter.isSelected() && (false == filter.isDisabled())) {
             return "(" + getDescriptionColumn(filter.getDescriptionLoD()) + (filter.getFilterMode() == DescriptionFilter.FilterMode.INCLUDE ? "" : " NOT") + " LIKE '" + filter.getDescription() + "'  )"; // NON-NLS
         } else {
             return "1";

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.util.Deque;
+import java.util.Objects;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -142,7 +144,6 @@ public class History<T> {
      * @throws IllegalArgumentException if newState == null
      */
     synchronized public void advance(T newState) throws IllegalArgumentException {
-
         if (newState != null && Objects.equals(currentState.get(), newState) == false) {
             if (currentState.get() != null) {
                 historyStack.push(currentState.get());

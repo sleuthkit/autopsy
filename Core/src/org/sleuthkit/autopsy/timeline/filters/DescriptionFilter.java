@@ -110,6 +110,10 @@ public class DescriptionFilter extends AbstractFilter {
         if (!Objects.equals(this.description, other.description)) {
             return false;
         }
-        return this.filterMode == other.filterMode;
+        if (this.filterMode != other.filterMode) {
+            return false;
+        }
+        return isSelected() == other.isSelected()
+                && isDisabled() == other.isDisabled();
     }
 }

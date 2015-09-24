@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TreeTableCell;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 
 /**
@@ -32,6 +33,27 @@ class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
 
     private final CheckBox checkBox = new CheckBox();
     private SimpleBooleanProperty activeProperty;
+    private final TimeLineController controller;
+
+    FilterCheckBoxCell(TimeLineController controller) {
+        this.controller = controller;
+
+//        controller.viewModeProperty().addListener((observable, oldVisualizationMode, newVisualizationMode) -> {
+//            AbstractFilter filter = getItem();
+//            switch (newVisualizationMode) {
+//                case COUNTS:
+//                    if (filter instanceof DescriptionFilter) {
+//                        filter.setDisabled(true);
+//                    }
+//                    break;
+//                case DETAIL:
+//                    if (filter instanceof DescriptionFilter) {
+//                        filter.setDisabled(false);
+//                    }
+//                    break;
+//            }
+//        });
+    }
 
     @Override
     protected void updateItem(AbstractFilter item, boolean empty) {

@@ -115,7 +115,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
     synchronized public void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(controller.getEventsModel());
-        descrLODSlider.disableProperty().bind(controller.getViewMode().isEqualTo(VisualizationMode.COUNTS));
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
         Back back = new Back(controller);
         backButton.disableProperty().bind(back.disabledProperty());
         backButton.setOnAction(back);

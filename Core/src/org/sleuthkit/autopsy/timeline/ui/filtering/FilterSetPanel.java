@@ -21,7 +21,10 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
@@ -31,8 +34,11 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -41,6 +47,7 @@ import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -78,7 +85,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
     private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
 
     @FXML
-    @NbBundle.Messages({"FilterSetPanel.applyButton.text=Apply",
+    @NbBundle.Messages({
         "Timeline.ui.filtering.menuItem.all=all",
         "FilterSetPanel.defaultButton.text=Default",
         "Timeline.ui.filtering.menuItem.none=none",
@@ -88,10 +95,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
     void initialize() {
         assert applyButton != null : "fx:id=\"applyButton\" was not injected: check your FXML file 'FilterSetPanel.fxml'."; // NON-NLS
 
-        applyButton.setOnAction(e -> {
-            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
-        });
-        applyButton.setText(Bundle.FilterSetPanel_applyButton_text());
+        ActionUtils.configureButton(new ApplyFiltersAction(), applyButton);
         defaultButton.setText(Bundle.FilterSetPanel_defaultButton_text());
 
         //remove column headers via css.
@@ -148,7 +152,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
-        treeColumn.setCellFactory(col -> new FilterCheckBoxCell());
+        treeColumn.setCellFactory(col -> new FilterCheckBoxCell(controller));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
@@ -168,20 +172,55 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());
+        controller.getQuickHideMasks().addListener((ListChangeListener.Change<? extends DescriptionFilter> c) -> {
+            while (c.next()) {
+                ObservableList<Filter> subFilters = ((RootFilter) filterTreeTable.getRoot().getValue()).getSubFilters();
+                for (Filter f : c.getAddedSubList()) {
+                    if (subFilters.contains(f) == false) {
+                        subFilters.addAll(c.getAddedSubList());
+                    }
+                }
+
+//                ((RootFilter) filterTreeTable.getRoot().getValue()).getSubFilters().forEach(new Consumer<Filter>)
+            }
+        });
+        controller.viewModeProperty().addListener((Observable observable) -> {
+            applyFilters();
+        });
     }
 
     @Override
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
-        refresh();
         this.filteredEvents.filterProperty().addListener((Observable o) -> {
             refresh();
         });
+        refresh();
+
     }
 
     private void refresh() {
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter(), expansionMap));
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter().copyOf(), expansionMap));
         });
     }
+
+    @NbBundle.Messages({"FilterSetPanel.applyButton.text=Apply"})
+    private class ApplyFiltersAction extends Action {
+
+        ApplyFiltersAction() {
+            super(Bundle.FilterSetPanel_applyButton_text());
+            setLongText("(Re)Apply filters");
+            setGraphic(new ImageView(TICK));
+            setEventHandler((ActionEvent t) -> {
+                applyFilters();
+            });
+        }
+    }
+
+    private void applyFilters() {
+        controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
+    }
+
+    private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");
 }
