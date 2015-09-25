@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 class AbstractFileChunk {
 
-    private final int chunkID;
-    private final TextExtractor parent;
+    private int chunkID;
+    private TextExtractor parent;
 
     AbstractFileChunk(TextExtractor parent, int chunkID) {
         this.parent = parent;
