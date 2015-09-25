@@ -165,6 +165,6 @@ public class FileUtil {
     public static String escapeFileName(String fileName) {
         //for now escaping /:"*?<>| (not valid in file name, at least on Windows)
         //with underscores. We are only keeping \ as it could be part of the path.
-        return fileName.replaceAll("[\\/:\"*?<>|]+", "_");
+        return fileName.replaceAll("[/:\"*?<>|]+", "_");
     }
 }
