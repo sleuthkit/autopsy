@@ -45,6 +45,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -407,6 +408,7 @@ class SevenZipExtractor {
                     logger.log(Level.WARNING, msg);
 
                 }
+                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
                 logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
