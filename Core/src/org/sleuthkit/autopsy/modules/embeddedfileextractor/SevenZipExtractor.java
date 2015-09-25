@@ -477,7 +477,7 @@ class SevenZipExtractor {
                             try {
                                 localFile.createNewFile();
                             } catch (IOException e) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: {0}", localFile.getAbsolutePath()); //NON-NLS
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), e); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
@@ -546,7 +546,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
