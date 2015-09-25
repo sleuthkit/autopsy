@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
@@ -28,7 +27,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
  */
 class EventDescriptionTreeItem extends NavTreeItem {
 
-    public EventDescriptionTreeItem(EventCluster g) {
+    EventDescriptionTreeItem(EventBundle g) {
         setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
     }
 
@@ -38,7 +37,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void insert(EventCluster g) {
+    public void insert(EventBundle g) {
         NavTreeNode value = getValue();
         if ((value.getType().getBaseType().equals(g.getEventType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
             throw new IllegalArgumentException();
@@ -54,6 +53,11 @@ class EventDescriptionTreeItem extends NavTreeItem {
 
     @Override
     public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
+//        if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && t.getDescription().startsWith(getValue().getDescription())) {
+//            TreeItem<NavTreeNode> treeItem = new TreeItem<>(new NavTreeNode(t.getEventType(), t.getDescription(), t.getEventIDs().size()));
+//            getChildren().add(treeItem);
+//            return treeItem;
+//        }
         if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
             return this;
         }

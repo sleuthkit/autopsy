@@ -375,7 +375,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 visualization.setController(controller);
                 notificationPane.setContent(visualization);
                 if (visualization instanceof DetailViewPane) {
-                    navPanel.setChart((DetailViewPane) visualization);
+                    navPanel.setDetailViewPane((DetailViewPane) visualization);
                 }
                 visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
                     if (newValue == false) {

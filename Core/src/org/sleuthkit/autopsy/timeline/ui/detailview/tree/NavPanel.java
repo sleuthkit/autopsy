@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -42,7 +41,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewNode;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
@@ -68,11 +67,11 @@ public class NavPanel extends BorderPane implements TimeLineView {
         FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS
     }
 
-    public void setChart(DetailViewPane detailViewPane) {
+    public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
         setRoot();
-        detailViewPane.getAggregatedEvents().addListener((Observable observable) -> {
+        detailViewPane.getEventBundles().addListener((Observable observable) -> {
             setRoot();
         });
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
@@ -86,10 +85,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     private void setRoot() {
         RootItem root = new RootItem();
-        final ObservableList<EventCluster> aggregatedEvents = detailViewPane.getAggregatedEvents();
-
-        for (EventCluster agg : aggregatedEvents) {
-            root.insert(agg);
+        for (EventBundle bundle : detailViewPane.getEventBundles()) {
+            root.insert(bundle);
         }
         Platform.runLater(() -> {
             eventsTree.setRoot(root);

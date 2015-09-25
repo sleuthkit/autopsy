@@ -38,21 +38,6 @@ class FilterCheckBoxCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
     FilterCheckBoxCell(TimeLineController controller) {
         this.controller = controller;
 
-//        controller.viewModeProperty().addListener((observable, oldVisualizationMode, newVisualizationMode) -> {
-//            AbstractFilter filter = getItem();
-//            switch (newVisualizationMode) {
-//                case COUNTS:
-//                    if (filter instanceof DescriptionFilter) {
-//                        filter.setDisabled(true);
-//                    }
-//                    break;
-//                case DETAIL:
-//                    if (filter instanceof DescriptionFilter) {
-//                        filter.setDisabled(false);
-//                    }
-//                    break;
-//            }
-//        });
     }
 
     @Override

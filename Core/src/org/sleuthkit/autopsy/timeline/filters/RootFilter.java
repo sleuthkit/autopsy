@@ -34,6 +34,11 @@ public class RootFilter extends IntersectionFilter<Filter> {
     private final TextFilter textFilter;
     private final TypeFilter typeFilter;
     private final DataSourcesFilter dataSourcesFilter;
+    private final DescriptionsExclusionFilter descriptionsExclusionFilter;
+
+    public DescriptionsExclusionFilter getDescriptionsExclusionfilter() {
+        return descriptionsExclusionFilter;
+    }
 
     public DataSourcesFilter getDataSourcesFilter() {
         return dataSourcesFilter;
@@ -47,17 +52,25 @@ public class RootFilter extends IntersectionFilter<Filter> {
         return hashFilter;
     }
 
-    public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter, Set<Filter> annonymousSubFilters) {
-        super(FXCollections.observableArrayList(knownFilter, tagsFilter, hashFilter, textFilter, dataSourceFilter, typeFilter));
-        getSubFilters().addAll(annonymousSubFilters);
-        setSelected(Boolean.TRUE);
-        setDisabled(false);
+    public RootFilter(HideKnownFilter knownFilter, TagsFilter tagsFilter, HashHitsFilter hashFilter, TextFilter textFilter, TypeFilter typeFilter, DataSourcesFilter dataSourceFilter, DescriptionsExclusionFilter descriptionsExclusionFilter, Set<Filter> annonymousSubFilters) {
+        super(FXCollections.observableArrayList(
+                textFilter,
+                knownFilter,
+                dataSourceFilter, tagsFilter,
+                hashFilter,
+                typeFilter,
+                descriptionsExclusionFilter
+        ));
         this.knownFilter = knownFilter;
         this.tagsFilter = tagsFilter;
         this.hashFilter = hashFilter;
         this.textFilter = textFilter;
         this.typeFilter = typeFilter;
         this.dataSourcesFilter = dataSourceFilter;
+        this.descriptionsExclusionFilter = descriptionsExclusionFilter;
+        getSubFilters().addAll(annonymousSubFilters);
+        setSelected(Boolean.TRUE);
+        setDisabled(false);
     }
 
     @Override
@@ -69,11 +82,20 @@ public class RootFilter extends IntersectionFilter<Filter> {
                         || subFilter.equals(hashFilter)
                         || subFilter.equals(typeFilter)
                         || subFilter.equals(textFilter)
-                        || subFilter.equals(dataSourcesFilter)))
+                        || subFilter.equals(dataSourcesFilter)
+                        || subFilter.equals(descriptionsExclusionFilter)))
                 .map(Filter::copyOf)
                 .collect(Collectors.toSet());
 
-        RootFilter filter = new RootFilter(knownFilter.copyOf(), tagsFilter.copyOf(), hashFilter.copyOf(), textFilter.copyOf(), typeFilter.copyOf(), dataSourcesFilter.copyOf(), annonymousSubFilters);
+        RootFilter filter = new RootFilter(
+                knownFilter.copyOf(),
+                tagsFilter.copyOf(),
+                hashFilter.copyOf(),
+                textFilter.copyOf(),
+                typeFilter.copyOf(),
+                dataSourcesFilter.copyOf(),
+                descriptionsExclusionFilter.copyOf(),
+                annonymousSubFilters);
         filter.setSelected(isSelected());
         filter.setDisabled(isDisabled());
         return filter;

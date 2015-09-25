@@ -49,6 +49,7 @@ final public class FilterTreeItem extends TreeItem<Filter> {
             compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
                 while (c.next()) {
                     for (Filter subfFilter : c.getAddedSubList()) {
+                        setExpanded(true);
                         getChildren().add(new FilterTreeItem(subfFilter, expansionMap));
                     }
                 }

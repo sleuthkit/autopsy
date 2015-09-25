@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
@@ -117,12 +118,12 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final Region region = new Region();
 
-    private final ObservableList<EventCluster> aggregatedEvents = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<EventCluster> eventClusters = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     private final ObservableList<DetailViewNode<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    public ObservableList<EventCluster> getAggregatedEvents() {
-        return aggregatedEvents;
+    public ObservableList<EventBundle> getEventBundles() {
+        return chart.getEventBundles();
     }
 
     public DetailViewPane(Pane partPane, Pane contextPane, Region spacer) {
@@ -313,7 +314,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
                 controller.getQuickHideMasks().clear();
-                aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {
                     if (isCancelled()) {
@@ -325,9 +325,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                     eventTypeToSeriesMap.clear();
                     dataSets.clear();
                 });
-                final int size = aggregatedEvents.size();
+                List<EventCluster> eventClusters = filteredEvents.getEventClusters();
+
+                final int size = eventClusters.size();
                 int i = 0;
-                for (final EventCluster e : aggregatedEvents) {
+                for (final EventCluster e : eventClusters) {
                     if (isCancelled()) {
                         break;
                     }
@@ -346,7 +348,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                     layoutDateLabels();
                     updateProgress(1, 1);
                 });
-                return aggregatedEvents.isEmpty() == false;
+                return chart.getEventBundles().isEmpty() == false;
             }
         };
     }

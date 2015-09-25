@@ -48,12 +48,12 @@ public class DescriptionFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return getFilterMode().getDisplayName() + " " + getDescription();
+        return  getDescriptionLoD().getDisplayName() + ": " + getDescription();
     }
 
     @Override
     public String getHTMLReportString() {
-        return getDescriptionLoD().getDisplayName() + " " + getDisplayName() + " = " + getDescription();
+        return getDisplayName() + getStringCheckBox();
     }
 
     /**

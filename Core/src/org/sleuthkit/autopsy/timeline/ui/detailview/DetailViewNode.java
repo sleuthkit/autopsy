@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import javafx.scene.Node;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -16,15 +17,17 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
  */
 public interface DetailViewNode<S extends DetailViewNode<S>> {
 
-    public void setDescriptionVisibility(DescriptionVisibility get);
+    void setDescriptionVisibility(DescriptionVisibility get);
 
-    public List<? extends S> getSubNodes();
+    List<S> getSubBundleNodes();
 
-    public void setSpanWidths(List<Double> spanWidths);
+    List<Node> getSubNodes();
 
-    public void setDescriptionWidth(double max);
+    void setSpanWidths(List<Double> spanWidths);
 
-    public EventBundle getEventBundle();
+    void setDescriptionWidth(double max);
+
+    EventBundle getEventBundle();
 
     /**
      * apply the 'effect' to visually indicate highlighted nodes
@@ -33,7 +36,7 @@ public interface DetailViewNode<S extends DetailViewNode<S>> {
      */
     void applyHighlightEffect(boolean applied);
 
-    public void applySelectionEffect(boolean applied);
+    void applySelectionEffect(boolean applied);
 
     default String getDescription() {
         return getEventBundle().getDescription();
@@ -47,15 +50,13 @@ public interface DetailViewNode<S extends DetailViewNode<S>> {
         return getEventBundle().getEventIDs();
     }
 
-    default public long getStartMillis() {
+    default long getStartMillis() {
         return getEventBundle().getStartMillis();
     }
 
     default long getEndMillis() {
         return getEventBundle().getEndMillis();
     }
-
-   
 
     static class StartTimeComparator implements Comparator<DetailViewNode<?>> {
 

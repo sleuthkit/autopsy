@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 class EventTypeTreeItem extends NavTreeItem {
@@ -36,7 +35,7 @@ class EventTypeTreeItem extends NavTreeItem {
 
     private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(EventCluster g) {
+    EventTypeTreeItem(EventBundle g) {
         setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getEventType().getBaseType().getDisplayName(), 0));
     }
 
@@ -53,7 +52,7 @@ class EventTypeTreeItem extends NavTreeItem {
      * @param tree True if it is part of a tree (versus a list)
      */
     @Override
-    public void insert(EventCluster g) {
+    public void insert(EventBundle g) {
 
         EventDescriptionTreeItem treeItem = childMap.get(g.getDescription());
         if (treeItem == null) {

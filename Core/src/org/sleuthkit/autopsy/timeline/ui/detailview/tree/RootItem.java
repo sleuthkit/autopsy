@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -56,7 +55,7 @@ class RootItem extends NavTreeItem {
      * @param g Group to add
      */
     @Override
-    public void insert(EventCluster g) {
+    public void insert(EventBundle g) {
 
         EventTypeTreeItem treeItem = childMap.get(g.getEventType().getBaseType());
         if (treeItem == null) {

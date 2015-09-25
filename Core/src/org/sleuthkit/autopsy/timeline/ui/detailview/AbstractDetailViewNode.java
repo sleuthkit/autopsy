@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -80,7 +81,7 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-public abstract class AbstractDetailViewNode< T extends EventBundle, S extends AbstractDetailViewNode<T, S>> extends StackPane implements DetailViewNode<AbstractDetailViewNode<T, S>> {
+public abstract class AbstractDetailViewNode< T extends EventBundle, S extends AbstractDetailViewNode<T, S>> extends StackPane implements DetailViewNode<S> {
 
     static final Image HASH_PIN = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");
     static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS
@@ -247,10 +248,15 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<S> getSubNodes() {
-        return subNodePane.getChildrenUnmodifiable().stream()
+    public List<S> getSubBundleNodes() {
+        return subNodePane.getChildren().stream()
                 .map(t -> (S) t)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ObservableList<Node> getSubNodes() {
+        return subNodePane.getChildren();
     }
 
     /**
@@ -373,7 +379,13 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
      * @param expand
      */
     private synchronized void loadSubBundles(DescriptionLOD.RelativeDetail relativeDetail) {
+        List<S> subBundleNodes = getSubBundleNodes();
+        chart.getEventBundles().removeIf(bundle ->
+                subBundleNodes.stream().anyMatch(subNode ->
+                        bundle.equals(subNode.getEventBundle()))
+        );
         subNodePane.getChildren().clear();
+
         if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLOD()) {
             descLOD.set(getEventBundle().getDescriptionLOD());
             showSpans(true);
@@ -408,6 +420,9 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                                     return Collections.emptyList();
                                 }
                                 bundles = loadBundles();
+                                Platform.runLater(() -> {
+                                    chart.getEventBundles().addAll(bundles);
+                                });
                                 next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
                             } while (bundles.size() == 1 && nonNull(next));
 
@@ -434,6 +449,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                                 descLOD.set(loadedDescriptionLoD);
                                 //assign subNodes and request chart layout
                                 subNodePane.getChildren().setAll(subBundleNodes);
+
                                 chart.setRequiresLayout(true);
                                 chart.requestChartLayout();
                             } catch (InterruptedException | ExecutionException ex) {
