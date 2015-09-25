@@ -63,4 +63,8 @@ public abstract class AbstractFilter implements Filter {
     public String getStringCheckBox() {
         return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
     }
+
+    final boolean isActive() {
+        return isSelected() && (isDisabled() == false);
+    }
 }

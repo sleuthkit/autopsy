@@ -113,7 +113,6 @@ public class DescriptionFilter extends AbstractFilter {
         if (this.filterMode != other.filterMode) {
             return false;
         }
-        return isSelected() == other.isSelected()
-                && isDisabled() == other.isDisabled();
+        return true;
     }
 }

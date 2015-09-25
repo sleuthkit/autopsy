@@ -58,7 +58,7 @@ import org.sleuthkit.datamodel.TskData;
  * Static helper methods for converting between java data model objects and
  * sqlite queries.
  */
-public class SQLHelper {
+class SQLHelper {
 
     static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();

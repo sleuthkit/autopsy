@@ -80,5 +80,5 @@ public interface Filter  {
 
     boolean isDisabled();
 
- 
+
 }

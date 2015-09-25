@@ -177,7 +177,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
                 ObservableList<Filter> subFilters = ((RootFilter) filterTreeTable.getRoot().getValue()).getSubFilters();
                 for (Filter f : c.getAddedSubList()) {
                     if (subFilters.contains(f) == false) {
-                        subFilters.addAll(c.getAddedSubList());
+                        subFilters.addAll(f);
                     }
                 }
 

@@ -84,7 +84,11 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
             return false;
         }
         for (int i = 0; i < oneFilter.getSubFilters().size(); i++) {
-            if (oneFilter.getSubFilters().get(i).equals(otherFilter.getSubFilters().get(i)) == false) {
+            final SubFilterType subFilter = oneFilter.getSubFilters().get(i);
+            final SubFilterType otherSubFilter = otherFilter.getSubFilters().get(i);
+            if (subFilter.equals(otherSubFilter) == false
+                    || subFilter.isDisabled() != otherSubFilter.isDisabled()
+                    || subFilter.isSelected() != otherSubFilter.isSelected()) {
                 return false;
             }
         }
