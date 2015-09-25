@@ -476,8 +476,8 @@ class SevenZipExtractor {
                             localFile.getParentFile().mkdirs();
                             try {
                                 localFile.createNewFile();
-                            } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex); //NON-NLS
+                            } catch (IOException e) {
+                                logger.log(Level.SEVERE, "Error creating extracted file: {0}", localFile.getAbsolutePath()); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
