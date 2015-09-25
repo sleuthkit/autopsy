@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
  * The data item for the nav tree. Represents a combination of type and
@@ -28,11 +29,24 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 @Immutable
 public class NavTreeNode {
 
+    final private DescriptionLOD descriptionLoD;
+
     final private EventType type;
 
     final private String Description;
 
     final private int count;
+
+    public NavTreeNode(EventType type, String Description, DescriptionLOD descriptionLoD, int count) {
+        this.type = type;
+        this.Description = Description;
+        this.descriptionLoD = descriptionLoD;
+        this.count = count;
+    }
+
+    public DescriptionLOD getDescriptionLoD() {
+        return descriptionLoD;
+    }
 
     public EventType getType() {
         return type;
@@ -45,11 +59,4 @@ public class NavTreeNode {
     public int getCount() {
         return count;
     }
-
-    public NavTreeNode(EventType type, String Description, int count) {
-        this.type = type;
-        this.Description = Description;
-        this.count = count;
-    }
-
 }

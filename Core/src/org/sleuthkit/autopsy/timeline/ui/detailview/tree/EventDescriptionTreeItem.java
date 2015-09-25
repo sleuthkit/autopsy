@@ -19,16 +19,26 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
  *
  */
 class EventDescriptionTreeItem extends NavTreeItem {
 
+    /**
+     * maps a description to the child item of this item with that description
+     */
+    private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
+    private final DescriptionLOD descriptionLoD;
+
     EventDescriptionTreeItem(EventBundle g) {
-        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
+        descriptionLoD = g.getDescriptionLOD();
+        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getDescriptionLOD(), g.getEventIDs().size()));
     }
 
     @Override
@@ -39,11 +49,29 @@ class EventDescriptionTreeItem extends NavTreeItem {
     @Override
     public void insert(EventBundle g) {
         NavTreeNode value = getValue();
-        if ((value.getType().getBaseType().equals(g.getEventType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
+        if (value.getType().getBaseType().equals(g.getEventType().getBaseType())
+                && g.getDescription().startsWith(value.getDescription())) {
             throw new IllegalArgumentException();
         }
 
-        setValue(new NavTreeNode(value.getType().getBaseType(), value.getDescription(), value.getCount() + g.getEventIDs().size()));
+        switch (descriptionLoD.getDetailLevelRelativeTo(g.getDescriptionLOD())) {
+            case LESS:
+                EventDescriptionTreeItem get = childMap.get(g.getDescription());
+                if (get == null) {
+                    EventDescriptionTreeItem eventDescriptionTreeItem = new EventDescriptionTreeItem(g);
+                    childMap.put(g.getDescription(), eventDescriptionTreeItem);
+                    getChildren().add(eventDescriptionTreeItem);
+                } else {
+                    get.insert(g);
+                }
+                break;
+            case EQUAL:
+                setValue(new NavTreeNode(value.getType().getBaseType(), value.getDescription(), value.getDescriptionLoD(), value.getCount() + g.getEventIDs().size()));
+                break;
+            case MORE:
+                throw new IllegalArgumentException();
+        }
+
     }
 
     @Override
@@ -53,11 +81,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
 
     @Override
     public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-//        if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && t.getDescription().startsWith(getValue().getDescription())) {
-//            TreeItem<NavTreeNode> treeItem = new TreeItem<>(new NavTreeNode(t.getEventType(), t.getDescription(), t.getEventIDs().size()));
-//            getChildren().add(treeItem);
-//            return treeItem;
-//        }
+
         if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
             return this;
         }

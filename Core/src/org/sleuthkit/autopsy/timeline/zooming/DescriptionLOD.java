@@ -68,6 +68,17 @@ public enum DescriptionLOD {
         }
     }
 
+    public RelativeDetail getDetailLevelRelativeTo(DescriptionLOD other) {
+        int compareTo = this.compareTo(other);
+        if (compareTo < 0) {
+            return RelativeDetail.LESS;
+        } else if (compareTo == 0) {
+            return RelativeDetail.EQUAL;
+        } else {
+            return RelativeDetail.MORE;
+        }
+    }
+
     public enum RelativeDetail {
 
         EQUAL,
