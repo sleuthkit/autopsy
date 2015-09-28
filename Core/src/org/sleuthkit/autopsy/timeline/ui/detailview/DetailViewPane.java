@@ -45,7 +45,6 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.effect.Effect;
@@ -212,8 +211,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
-                        -> t.getDescription().equals(tn.getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
+                         t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -236,8 +235,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
-                        -> t.getDescription().equals(tn.getValue().getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
+                         t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -364,9 +363,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     private class DetailViewSettingsPane extends HBox {
 
         @FXML
-        private ToggleButton testToggle;
-
-        @FXML
         private RadioButton hiddenRadio;
 
         @FXML
@@ -436,10 +432,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            testToggle.selectedProperty().bindBidirectional(chart.alternateLayoutProperty());
-            testToggle.selectedProperty().addListener((Observable observable) -> {
-                filteredEvents.refresh();
-            });
+
             bandByTypeBox.selectedProperty().bindBidirectional(chart.bandByTypeProperty());
             truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
