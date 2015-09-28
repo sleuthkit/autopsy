@@ -99,7 +99,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of this class and CountsChartPane into
  * {@link AbstractVisualization}
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, DetailViewNode<?>, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventStripeNode, EventDetailChart> {
 
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -119,7 +119,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final ObservableList<EventCluster> aggregatedEvents = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    private final ObservableList<DetailViewNode<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<EventStripeNode> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventCluster> getAggregatedEvents() {
         return aggregatedEvents;
@@ -148,7 +148,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.getMaxVScroll()));
         requestLayout();
 
-        highlightedNodes.addListener((ListChangeListener.Change<? extends DetailViewNode<?>> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends EventStripeNode> change) -> {
             while (change.next()) {
                 change.getAddedSubList().forEach(aeNode -> {
                     aeNode.applyHighlightEffect(true);
@@ -211,8 +211,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
-                         t.getDescription().equals(tn.getDescription()))) {
+                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                        t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -235,8 +235,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
-                         t.getDescription().equals(tn.getValue().getDescription()))) {
+                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                        t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -356,7 +356,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     @Override
-    protected void applySelectionEffect(DetailViewNode<?> c1, Boolean selected) {
+    protected void applySelectionEffect(EventStripeNode c1, Boolean selected) {
         chart.applySelectionEffect(c1, selected);
     }
 
@@ -422,7 +422,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         @FXML
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
-        public DetailViewSettingsPane() {
+        DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
