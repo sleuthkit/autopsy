@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -169,7 +168,7 @@ public class EventClusterNode extends AbstractDetailViewNode<EventCluster, Event
     }
 
     @Override
-    Collection<EventCluster> makeBundlesFromClusters(List<EventCluster> eventClusters) {
+    List<EventCluster> makeBundlesFromClusters(List<EventCluster> eventClusters) {
         return eventClusters;
     }
 

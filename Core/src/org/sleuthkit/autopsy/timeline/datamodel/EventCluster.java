@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
@@ -35,6 +37,13 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
  */
 @Immutable
 public class EventCluster implements EventBundle {
+
+    final private EventBundle parent;
+
+    @Override
+    public Optional<EventBundle> getParentBundle() {
+        return Optional.ofNullable(parent);
+    }
 
     /**
      * the smallest time interval containing all the aggregated events
@@ -73,7 +82,7 @@ public class EventCluster implements EventBundle {
      */
     private final Set<Long> hashHits;
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod, EventBundle parent) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -82,6 +91,11 @@ public class EventCluster implements EventBundle {
         this.description = description;
         this.eventIDs = eventIDs;
         this.lod = lod;
+        this.parent = parent;
+    }
+
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
+        this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
     /**
@@ -91,30 +105,37 @@ public class EventCluster implements EventBundle {
         return span;
     }
 
+    @Override
     public long getStartMillis() {
         return span.getStartMillis();
     }
 
+    @Override
     public long getEndMillis() {
         return span.getEndMillis();
     }
 
+    @Override
     public Set<Long> getEventIDs() {
         return Collections.unmodifiableSet(eventIDs);
     }
 
+    @Override
     public Set<Long> getEventIDsWithHashHits() {
         return Collections.unmodifiableSet(hashHits);
     }
 
+    @Override
     public Set<Long> getEventIDsWithTags() {
         return Collections.unmodifiableSet(tagged);
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public EventType getEventType() {
         return type;
     }
@@ -162,4 +183,20 @@ public class EventCluster implements EventBundle {
         return Collections.singletonList(getRange());
     }
 
+    /**
+     * return a new EventCluster identical to this one, except with the given
+     * EventBundle as the parent.
+     *
+     * @param parent
+     *
+     * @return a new EventCluster identical to this one, except with the given
+     *         EventBundle as the parent.
+     */
+    public EventCluster withParent(EventBundle parent) {
+        if (Objects.nonNull(this.parent)) {
+            throw new IllegalStateException("Event Cluster already has a parent!");
+        }
+
+        return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
+    }
 }

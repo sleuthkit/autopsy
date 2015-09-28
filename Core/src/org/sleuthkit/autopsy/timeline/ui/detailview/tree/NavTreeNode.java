@@ -29,11 +29,10 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 @Immutable
 public class NavTreeNode {
 
-    final private DescriptionLOD descriptionLoD;
-
     final private EventType type;
-
     final private String Description;
+    private final DescriptionLOD descriptionLoD;
+
 
     final private int count;
 
@@ -44,7 +43,7 @@ public class NavTreeNode {
         this.count = count;
     }
 
-    public DescriptionLOD getDescriptionLoD() {
+    public DescriptionLOD getDescriptionLod() {
         return descriptionLoD;
     }
 

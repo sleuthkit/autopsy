@@ -137,6 +137,7 @@ public class TimeLineController {
 
     private final Case autoCase;
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<DescriptionFilter> quickHideMasks = FXCollections.observableArrayList();
 
     public ObservableList<DescriptionFilter> getQuickHideMasks() {

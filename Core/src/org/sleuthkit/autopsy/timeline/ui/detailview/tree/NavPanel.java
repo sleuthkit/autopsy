@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Comparator;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tooltip;
@@ -36,8 +36,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -83,14 +85,14 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem();
         for (EventBundle bundle : detailViewPane.getEventBundles()) {
             root.insert(bundle);
         }
-        Platform.runLater(() -> {
-            eventsTree.setRoot(root);
-        });
+        eventsTree.setRoot(root);
+
     }
 
     @Override
@@ -130,8 +132,17 @@ public class NavPanel extends BorderPane implements TimeLineView {
         @Override
         protected void updateItem(NavTreeNode item, boolean empty) {
             super.updateItem(item, empty);
-            if (item != null) {
-                final String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
+            if (item == null || empty) {
+                setText(null);
+                setTooltip(null);
+                setGraphic(null);
+                setContextMenu(null);
+            } else {
+                String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
+                TreeItem<NavTreeNode> parent = getTreeItem().getParent();
+                if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
+                    text = StringUtils.substringAfter(text, parent.getValue().getDescription());
+                }
                 setText(text);
                 setTooltip(new Tooltip(text));
                 Rectangle rect = new Rectangle(24, 24);
@@ -146,28 +157,34 @@ public class NavPanel extends BorderPane implements TimeLineView {
                 });
                 configureHiddenState(item, rect, imageView);
 
-            } else {
-                setText(null);
-                setTooltip(null);
-                setGraphic(null);
-                setContextMenu(null);
             }
 
         }
 
         private void configureHiddenState(NavTreeNode item, Rectangle rect, ImageView imageView) {
+            TreeItem<NavTreeNode> treeItem = getTreeItem();
+            ContextMenu newMenu;
             if (controller.getQuickHideMasks().stream().anyMatch(mask -> mask.getDescription().equals(item.getDescription()))) {
                 setTextFill(Color.gray(0, .6));
                 imageView.setOpacity(.6);
                 rect.setStroke(item.getType().getColor().deriveColor(0, .6, 1, .6));
                 rect.setFill(item.getType().getColor().deriveColor(0, .6, .6, 0.1));
-                setContextMenu(ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideBundleAction(item.getDescription()))));
+                if (treeItem != null) {
+                    treeItem.setExpanded(false);
+                }
+                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLod())));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
                 rect.setStroke(item.getType().getColor());
                 rect.setFill(item.getType().getColor().deriveColor(0, 1, 1, 0.1));
-//                setContextMenu(ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideBundleAction(item.getDescription()))));
+                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLod())));
+            }
+
+            if (treeItem instanceof EventDescriptionTreeItem) {
+                setContextMenu(newMenu);
+            } else {
+                setContextMenu(null);
             }
         }
     }

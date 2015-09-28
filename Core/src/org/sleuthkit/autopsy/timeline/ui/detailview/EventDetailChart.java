@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -512,14 +513,14 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                             .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
                                             .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
 
-                    layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, nodeGroup.getChildren(), 0);
+                    layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, 0);
                     minY = maxY.get();
                 }
             } else {
                 hiddenPartition = nodeMap.values().stream()
                         .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
                                         .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
-                layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, nodeGroup.getChildren(), 0);
+                layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, 0);
             }
             setCursor(null);
             requiresLayout = false;
@@ -537,16 +538,20 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      *
      * @return the double
      */
-    private double layoutNodesHelper(List<AbstractDetailViewNode<?, ?>> hiddenNodes, List<AbstractDetailViewNode<?, ?>> shownNodes, double minY, List<Node> children, final double xOffset) {
+    private double layoutNodesHelper(List<AbstractDetailViewNode<?, ?>> hiddenNodes, List<AbstractDetailViewNode<?, ?>> shownNodes, double minY, final double xOffset) {
 
         hiddenNodes.forEach((AbstractDetailViewNode<?, ?> t) -> {
-            children.remove(t);
+//            children.remove(t);
+            t.setVisible(false);
+            t.setManaged(false);
         });
 
         shownNodes.forEach((AbstractDetailViewNode<?, ?> t) -> {
-            if (false == children.contains(t)) {
-                children.add(t);
-            }
+//            if (false == children.contains(t)) {
+//                children.add(t);
+//            }
+            t.setVisible(true);
+            t.setManaged(true);
         });
 
         shownNodes.sort(Comparator.comparing(DetailViewNode<?>::getStartMillis));
@@ -640,17 +645,13 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             double span = 0;
             @SuppressWarnings("unchecked")
             List<AbstractDetailViewNode<?, ?>> subNodes = (List<AbstractDetailViewNode<?, ?>>) node.getSubBundleNodes();
+            if (subNodes.isEmpty() == false) {
+                Map<Boolean, List<AbstractDetailViewNode<?, ?>>> hiddenPartition = subNodes.stream()
+                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideMasks().stream()
+                                        .anyMatch(mask -> mask.getDescription().equals(testNode.getDescription()))));
 
-            Map<Boolean, List<AbstractDetailViewNode<?, ?>>> hiddenPartition = subNodes.stream()
-                    .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideMasks().stream()
-                                    .anyMatch(mask -> mask.getDescription().equals(testNode.getDescription()))));
-
-            layoutNodesResultHeight = layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, node.getSubNodes(), rawDisplayPosition);
-//            if (subNodes.isEmpty() == false) {
-//                subNodes.sort(new DetailViewNode.StartTimeComparator());
-//              layoutNodes(subNodes, 0, rawDisplayPosition);
-//            }
-
+                layoutNodesResultHeight = layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, rawDisplayPosition);
+            }
             if (alternateLayout.get() == false) {
                 double endX = getXAxis().getDisplayPosition(new DateTime(node.getEndMillis())) - xOffset;
                 span = endX - startX;
@@ -822,32 +823,36 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         c1.applySelectionEffect(selected);
     }
 
-    class HideBundleAction extends Action {
+    class HideDescriptionAction extends Action {
 
         /**
          *
          * @param description the value of description
          */
-        public HideBundleAction(final EventBundle bundle) {
+        HideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
             super("Hide");
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
-                DescriptionFilter descriptionFilter = new DescriptionFilter(bundle.getDescriptionLOD(), bundle.getDescription(), DescriptionFilter.FilterMode.EXCLUDE);
-                getController().getQuickHideMasks().add(descriptionFilter);
+                getController().getQuickHideMasks().add(
+                        new DescriptionFilter(descriptionLoD,
+                                description,
+                                DescriptionFilter.FilterMode.EXCLUDE));
                 setRequiresLayout(true);
                 requestChartLayout();
             });
         }
     }
 
-    class UnhideBundleAction extends Action {
+    class UnhideDescriptionAction extends Action {
 
-        public UnhideBundleAction(String description) {
+        UnhideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
 
             super("Unhide");
             setGraphic(new ImageView(SHOW));
             setEventHandler((ActionEvent t) -> {
-                getController().getQuickHideMasks().removeIf((DescriptionFilter t1) -> t1.getDescription().equals(description));
+                getController().getQuickHideMasks().removeIf(descriptionFilter ->
+                        descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
+                        && descriptionFilter.getDescription().equals(description));
                 setRequiresLayout(true);
                 requestChartLayout();
             });

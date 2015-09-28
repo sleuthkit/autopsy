@@ -13,6 +13,7 @@ import com.google.common.collect.TreeRangeMap;
 import com.google.common.collect.TreeRangeSet;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.python.google.common.base.Objects;
@@ -24,6 +25,13 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
  */
 @Immutable
 public final class EventStripe implements EventBundle {
+
+    final private EventBundle parent;
+
+    @Override
+    public Optional<EventBundle> getParentBundle() {
+        return Optional.ofNullable(parent);
+    }
 
     private final RangeSet<Long> spans = TreeRangeSet.create();
     private final RangeMap<Long, EventCluster> spanMap = TreeRangeMap.create();
@@ -69,6 +77,7 @@ public final class EventStripe implements EventBundle {
         eventIDs.addAll(cluster.getEventIDs());
         tagged.addAll(cluster.getEventIDsWithTags());
         hashHits.addAll(cluster.getEventIDsWithHashHits());
+        parent = cluster.getParentBundle().orElse(null);
     }
 
     private EventStripe(EventStripe u, EventStripe v) {
@@ -85,6 +94,7 @@ public final class EventStripe implements EventBundle {
         tagged.addAll(v.getEventIDsWithTags());
         hashHits.addAll(u.getEventIDsWithHashHits());
         hashHits.addAll(v.getEventIDsWithHashHits());
+        parent = u.getParentBundle().orElse(null);
     }
 
     public static EventStripe merge(EventStripe u, EventStripe v) {
@@ -93,6 +103,7 @@ public final class EventStripe implements EventBundle {
         Preconditions.checkArgument(Objects.equal(u.description, v.description));
         Preconditions.checkArgument(Objects.equal(u.lod, v.lod));
         Preconditions.checkArgument(Objects.equal(u.type, v.type));
+        Preconditions.checkArgument(Objects.equal(u.parent, v.parent));
         return new EventStripe(u, v);
     }
 

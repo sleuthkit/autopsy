@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
@@ -44,36 +44,21 @@ class EventTypeTreeItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    /**
-     * Recursive method to add a grouping at a given path.
-     *
-     * @param path Full path (or subset not yet added) to add
-     * @param g    Group to add
-     * @param tree True if it is part of a tree (versus a list)
-     */
-    @Override
-    public void insert(EventBundle g) {
+    public void insert(Deque<EventBundle> path) {
 
-        EventDescriptionTreeItem treeItem = childMap.get(g.getDescription());
+        EventBundle head = path.removeFirst();
+        EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
         if (treeItem == null) {
-            final EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(g);
-            newTreeItem.setExpanded(true);
-            childMap.put(g.getDescription(), newTreeItem);
-
-            Platform.runLater(() -> {
-                synchronized (getChildren()) {
-                    getChildren().add(newTreeItem);
-                    FXCollections.sort(getChildren(), comparator);
-                }
-            });
-        } else {
-            treeItem.insert(g);
+            treeItem = new EventDescriptionTreeItem(head);
+            treeItem.setExpanded(true);
+            childMap.put(head.getDescription(), treeItem);
+            getChildren().add(treeItem);
+            FXCollections.sort(getChildren(), comparator);
         }
-        Platform.runLater(() -> {
-            NavTreeNode value1 = getValue();
-            setValue(new NavTreeNode(value1.getType().getBaseType(), value1.getType().getBaseType().getDisplayName(),value1.getDescriptionLoD(), childMap.values().stream().mapToInt(EventDescriptionTreeItem::getCount).sum()));
-        });
 
+        if (path.isEmpty() == false) {
+            treeItem.insert(path);
+        }
     }
 
     @Override

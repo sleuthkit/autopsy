@@ -62,6 +62,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
@@ -77,6 +78,7 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
  * FXML Controller class for a {@link EventDetailChart} based implementation of
@@ -212,8 +214,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
-                        -> t.getDescription().equals(tn.getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
+                        t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -236,8 +238,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t)
-                        -> t.getDescription().equals(tn.getValue().getDescription()))) {
+                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
+                        t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -348,7 +350,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                     layoutDateLabels();
                     updateProgress(1, 1);
                 });
-                return chart.getEventBundles().isEmpty() == false;
+                return eventClusters.isEmpty() == false;
             }
         };
     }
@@ -484,11 +486,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     }
 
-    public EventDetailChart.UnhideBundleAction newUnhideBundleAction(String description) {
-        return chart.new UnhideBundleAction(description);
+    public Action newUnhideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+        return chart.new UnhideDescriptionAction(description, descriptionLoD);
     }
 
-    public EventDetailChart.HideBundleAction newHideBundleAction(EventBundle bundle) {
-        return chart.new HideBundleAction(bundle);
+    public Action newHideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+        return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 }

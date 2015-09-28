@@ -19,11 +19,12 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
  *
@@ -34,10 +35,14 @@ class EventDescriptionTreeItem extends NavTreeItem {
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
-    private final DescriptionLOD descriptionLoD;
+    private final EventBundle bundle;
+
+    public EventBundle getEventBundle() {
+        return bundle;
+    }
 
     EventDescriptionTreeItem(EventBundle g) {
-        descriptionLoD = g.getDescriptionLOD();
+        bundle = g;
         setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getDescriptionLOD(), g.getEventIDs().size()));
     }
 
@@ -46,37 +51,25 @@ class EventDescriptionTreeItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    @Override
-    public void insert(EventBundle g) {
-        NavTreeNode value = getValue();
-        if (value.getType().getBaseType().equals(g.getEventType().getBaseType())
-                && g.getDescription().startsWith(value.getDescription())) {
-            throw new IllegalArgumentException();
+    public void insert(Deque<EventBundle> path) {
+        EventBundle head = path.removeFirst();
+        EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
+        if (treeItem == null) {
+            treeItem = new EventDescriptionTreeItem(head);
+            treeItem.setExpanded(true);
+            childMap.put(head.getDescription(), treeItem);
+            getChildren().add(treeItem);
+            FXCollections.sort(getChildren(), TreeComparator.Description);
         }
 
-        switch (descriptionLoD.getDetailLevelRelativeTo(g.getDescriptionLOD())) {
-            case LESS:
-                EventDescriptionTreeItem get = childMap.get(g.getDescription());
-                if (get == null) {
-                    EventDescriptionTreeItem eventDescriptionTreeItem = new EventDescriptionTreeItem(g);
-                    childMap.put(g.getDescription(), eventDescriptionTreeItem);
-                    getChildren().add(eventDescriptionTreeItem);
-                } else {
-                    get.insert(g);
-                }
-                break;
-            case EQUAL:
-                setValue(new NavTreeNode(value.getType().getBaseType(), value.getDescription(), value.getDescriptionLoD(), value.getCount() + g.getEventIDs().size()));
-                break;
-            case MORE:
-                throw new IllegalArgumentException();
+        if (path.isEmpty() == false) {
+            treeItem.insert(path);
         }
-
     }
 
     @Override
     public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        FXCollections.sort(getChildren(), comp);
     }
 
     @Override

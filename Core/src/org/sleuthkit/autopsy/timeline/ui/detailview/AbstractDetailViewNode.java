@@ -169,7 +169,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
 
     private final CollapseBundleAction collapseClusterAction;
     private final ExpandClusterAction expandClusterAction;
-    private final EventDetailChart.HideBundleAction hideClusterAction;
+    private final EventDetailChart.HideDescriptionAction hideClusterAction;
 
     public AbstractDetailViewNode(EventDetailChart chart, T bundle, S parentEventNode) {
         this.eventBundle = bundle;
@@ -187,7 +187,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             show(tagIV, false);
         }
 
-        hideClusterAction = chart.new HideBundleAction(getEventBundle());
+        hideClusterAction = chart.new HideDescriptionAction(getDescription(), bundle.getDescriptionLOD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLODButton(hideButton);
 
@@ -405,15 +405,14 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
             final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescLOD());
 
-            LoggedTask<List<S>> loggedTask;
-            loggedTask = new LoggedTask<List<S>>(
+            LoggedTask<Collection<T>> loggedTask = new LoggedTask<Collection<T>>(
                     NbBundle.getMessage(this.getClass(), "AggregateEventNode.loggedTask.name"), true) {
                         private Collection<T> bundles;
                         private volatile DescriptionLOD loadedDescriptionLoD = getDescLOD().withRelativeDetail(relativeDetail);
                         private DescriptionLOD next = loadedDescriptionLoD;
 
                         @Override
-                        protected List<S> call() throws Exception {
+                        protected Collection<T> call() throws Exception {
                             do {
                                 loadedDescriptionLoD = next;
                                 if (loadedDescriptionLoD == getEventBundle().getDescriptionLOD()) {
@@ -427,20 +426,26 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                             } while (bundles.size() == 1 && nonNull(next));
 
                             // return list of AbstractDetailViewNodes representing sub-bundles
-                            return bundles.stream()
-                            .map(AbstractDetailViewNode.this::getNodeForBundle)
-                            .collect(Collectors.toList());
+                            return bundles;
                         }
 
                         private Collection<T> loadBundles() {
-                            return makeBundlesFromClusters(eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)));
+                            List<EventCluster> eventClusters
+                            = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
+                            .map(cluster -> cluster.withParent(getEventBundle()))
+                            .collect(Collectors.toList());
+
+                            return makeBundlesFromClusters(eventClusters);
                         }
 
                         @Override
                         protected void succeeded() {
                             chart.setCursor(Cursor.WAIT);
                             try {
-                                List<S> subBundleNodes = get();
+                                List<S> subBundleNodes = get().stream()
+                                .map(AbstractDetailViewNode.this::getNodeForBundle)
+                                .collect(Collectors.toList());
+
                                 if (subBundleNodes.isEmpty()) {
                                     showSpans(true);
                                 } else {
@@ -455,7 +460,9 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
                             } catch (InterruptedException | ExecutionException ex) {
                                 LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                             }
-                            chart.setCursor(null);
+
+                            chart.setCursor(
+                                    null);
                         }
                     };
 
@@ -487,7 +494,7 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
             case SHOWN:
                 String description = getEventBundle().getDescription();
                 description = getParentNode() != null
-                        ? "    ..." + StringUtils.substringAfter(description, getParentNode().getDescription())
+                        ? " ... " + StringUtils.substringAfter(description, getParentNode().getDescription())
                         : description;
                 descrLabel.setText(description);
                 countLabel.setText(((size == 1) ? "" : " (" + size + ")")); // NON-NLS
@@ -495,7 +502,8 @@ public abstract class AbstractDetailViewNode< T extends EventBundle, S extends A
         }
     }
 
-    abstract S getNodeForBundle(T bundle);
+    abstract S
+            getNodeForBundle(T bundle);
 
     /**
      * event handler used for mouse events on {@link AggregateEventNode}s

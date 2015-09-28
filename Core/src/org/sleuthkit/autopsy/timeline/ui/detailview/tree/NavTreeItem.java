@@ -30,8 +30,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
  */
 abstract class NavTreeItem extends TreeItem<NavTreeNode> {
 
-    abstract void insert(EventBundle g);
-
+//    abstract void insert(EventBundle g);
     abstract int getCount();
 
     abstract void resort(Comparator<TreeItem<NavTreeNode>> comp);

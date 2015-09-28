@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import javafx.application.Platform;
+import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -54,25 +56,31 @@ class RootItem extends NavTreeItem {
      *
      * @param g Group to add
      */
-    @Override
     public void insert(EventBundle g) {
 
         EventTypeTreeItem treeItem = childMap.get(g.getEventType().getBaseType());
         if (treeItem == null) {
-            final EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
-            newTreeItem.setExpanded(true);
-            childMap.put(g.getEventType().getBaseType(), newTreeItem);
-            newTreeItem.insert(g);
+            treeItem = new EventTypeTreeItem(g);
+            treeItem.setExpanded(true);
+            childMap.put(g.getEventType().getBaseType(), treeItem);
 
-            Platform.runLater(() -> {
-                synchronized (getChildren()) {
-                    getChildren().add(newTreeItem);
-                    getChildren().sort(TreeComparator.Type);
-                }
-            });
-        } else {
-            treeItem.insert(g);
+            getChildren().add(treeItem);
+            getChildren().sort(TreeComparator.Type);
         }
+        treeItem.insert(getTreePath(g));
+    }
+
+    static Deque<EventBundle> getTreePath(EventBundle g) {
+        Deque<EventBundle> path = new ArrayDeque<>();
+        Optional<EventBundle> p = Optional.of(g);
+
+        while (p.isPresent()) {
+            EventBundle parent = p.get();
+            path.addFirst(parent);
+            p = parent.getParentBundle();
+        }
+
+        return path;
     }
 
     @Override

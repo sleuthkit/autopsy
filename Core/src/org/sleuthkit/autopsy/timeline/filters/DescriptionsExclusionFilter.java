@@ -14,18 +14,18 @@ import static org.sleuthkit.autopsy.timeline.filters.CompoundFilter.areSubFilter
  *
  */
 public class DescriptionsExclusionFilter extends IntersectionFilter<DescriptionFilter> {
-
+    
     @Override
     @NbBundle.Messages("descriptionsExclusionFilter.displayName.text=Exclude Descriptions")
     public String getDisplayName() {
         return Bundle.descriptionsExclusionFilter_displayName_text();
     }
-
+    
     public DescriptionsExclusionFilter() {
         getDisabledProperty().bind(Bindings.size(getSubFilters()).lessThan(1));
         setSelected(false);
     }
-
+    
     @Override
     public DescriptionsExclusionFilter copyOf() {
         DescriptionsExclusionFilter filterCopy = new DescriptionsExclusionFilter();
@@ -36,7 +36,7 @@ public class DescriptionsExclusionFilter extends IntersectionFilter<DescriptionF
         });
         return filterCopy;
     }
-
+    
     @Override
     public String getHTMLReportString() {
         //move this logic into SaveSnapshot
@@ -46,12 +46,12 @@ public class DescriptionsExclusionFilter extends IntersectionFilter<DescriptionF
         }
         return string;
     }
-
+    
     @Override
     public int hashCode() {
         return 7;
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -61,18 +61,20 @@ public class DescriptionsExclusionFilter extends IntersectionFilter<DescriptionF
             return false;
         }
         final DescriptionsExclusionFilter other = (DescriptionsExclusionFilter) obj;
-
+        
         if (isSelected() != other.isSelected()) {
             return false;
         }
-
+        
         return areSubFiltersEqual(this, other);
     }
-
-    public void addSubFilter(DescriptionFilter hashSetFilter) {
-        if (getSubFilters().contains(hashSetFilter) == false) {
-            getSubFilters().add(hashSetFilter);
+    
+    public void addSubFilter(DescriptionFilter descriptionFilter) {
+        if (getSubFilters().contains(descriptionFilter) == false) {
+            getSubFilters().add(descriptionFilter);
             getSubFilters().sort(Comparator.comparing(DescriptionFilter::getDisplayName));
+        } else {
+            getSubFilters().filtered(descriptionFilter::equals).get(0).setSelected(descriptionFilter.isSelected());
         }
     }
 }
