@@ -25,7 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
+import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -34,7 +34,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -59,7 +58,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * is obtained from the user-defined types manager.
      */
     private DefaultListModel<String> typesListModel;
-    private Map<String, FileType> fileTypes;
+    private Set<FileType> fileTypes;
 
     /**
      * This panel implements a property change listener that listens to ingest
@@ -227,7 +226,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     ex.getLocalizedMessage(),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.loadFailed.title"),
                     JOptionPane.ERROR_MESSAGE);
-            fileTypes = Collections.emptyMap();
+            fileTypes = Collections.emptySet();
         }
         enableButtons();
     }
@@ -236,7 +235,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * Sets the list model for the file types list component.
      */
     private void updateFileTypesListModel() {
-        ArrayList<String> mimeTypes = new ArrayList<>(fileTypes.keySet());
+        ArrayList<String> mimeTypes = new ArrayList<>(fileTypes.size());
+        for (FileType f : fileTypes) {
+            mimeTypes.add(f.toString());
+        }
         Collections.sort(mimeTypes);
         typesListModel.clear();
         for (String mimeType : mimeTypes) {
@@ -250,7 +252,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private void populateTypeDetailsComponents() {
         String mimeType = typesList.getSelectedValue();
-        FileType fileType = fileTypes.get(mimeType);
+        FileType fileType = null;
+        for (FileType f : fileTypes) {
+            if (f.toString().equals(mimeType)) {
+                fileType = f;
+            }
+        }
         if (null != fileType) {
             mimeTypeTextField.setText(fileType.getMimeType());
             Signature signature = fileType.getSignature();
@@ -558,7 +565,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
         String typeName = typesList.getSelectedValue();
-        fileTypes.remove(typeName);
+        for (FileType f : fileTypes) {
+            if (f.toString().equals(typeName)) {
+                fileTypes.remove(f);
+                break;
+            }
+        }
         updateFileTypesListModel();
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
@@ -640,7 +652,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
-        fileTypes.put(typeName, fileType);
+        fileTypes.add(fileType);
         updateFileTypesListModel();
         typesList.setSelectedValue(fileType.getMimeType(), true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed

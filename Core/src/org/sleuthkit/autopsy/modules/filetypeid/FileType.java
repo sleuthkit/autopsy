@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.Arrays;
 import java.util.logging.Level;
+import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -101,6 +102,11 @@ class FileType {
      */
     String getFilesSetName() {
         return interestingFilesSetName;
+    }
+
+    @Override
+    public String toString() {
+        return mimeType + " - " + signature.toString() + " - " + interestingFilesSetName;
     }
 
     /**
@@ -190,6 +196,10 @@ class FileType {
                 return false;
             }
         }
-    }
 
+        @Override
+        public String toString() {
+            return DatatypeConverter.printHexBinary(signatureBytes) + " - " + Long.toString(offset);
+        }
+    }
 }
