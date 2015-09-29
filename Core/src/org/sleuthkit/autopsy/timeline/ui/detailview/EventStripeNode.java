@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Objects.nonNull;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -69,8 +69,6 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ColorUtilities;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
@@ -89,7 +87,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Node used in {@link EventDetailChart} to represent an EventStripe.
  */
 final public class EventStripeNode extends StackPane {
 
@@ -99,12 +97,11 @@ final public class EventStripeNode extends StackPane {
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png"); // NON-NLS //NOI18N
 
-    private static final CornerRadii CORNER_RADII = new CornerRadii(3);
-
-    /**
-     * the border to apply when this node is selected
-     */
-    private static final Border SELECTION_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII, new BorderWidths(2)));
+    private static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
+    private static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
+    private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
+    private final static Map<EventType, DropShadow> dropShadowMap = new ConcurrentHashMap<>();
+    private static final Border SELECTION_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 
     static void configureLoDButton(Button b) {
         b.setMinSize(16, 16);
@@ -118,52 +115,35 @@ final public class EventStripeNode extends StackPane {
         b.setManaged(show);
     }
 
-    private final HBox rangesHBox = new HBox();
-    private final EventStripe eventStripe;
-    private Tooltip tooltip;
-    private final Map<EventType, DropShadow> dropShadowMap = new HashMap<>();
-    final Color evtColor;
-
-    private final EventStripeNode parentNode;
+    private final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
     private DescriptionVisibility descrVis;
+    private Tooltip tooltip;
 
     /**
-     * Pane that contains AggregateEventNodes of any 'subevents' if they are
+     * Pane that contains EventStripeNodes for any 'subevents' if they are
      * displayed
      *
      * //TODO: move more of the control of subnodes/events here and out of
      * EventDetail Chart
      */
     private final Pane subNodePane = new Pane();
-
-    /**
-     * The ImageView used to show the icon for this node's event's type
-     */
+    private final HBox clustersHBox = new HBox();
     private final ImageView eventTypeImageView = new ImageView();
+    private final Label descrLabel = new Label("", eventTypeImageView);
+    private final Label countLabel = new Label();
+    private final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+    private final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+    private final ImageView hashIV = new ImageView(HASH_PIN);
+    private final ImageView tagIV = new ImageView(TAG);
+    private final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV, minusButton, plusButton);
 
-    /**
-     * The label used to display this node's event's description
-     */
-    final Label descrLabel = new Label();
-
-    /**
-     * The label used to display this node's event count
-     */
-    final Label countLabel = new Label();
-
+    private final Background highlightedBackground;
+    private final Background defaultBackground;
     private final EventDetailChart chart;
     private final SleuthkitCase sleuthkitCase;
-
+    private final EventStripe eventStripe;
+    private final EventStripeNode parentNode;
     private final FilteredEventsModel eventsModel;
-
-    private final Button plusButton;
-    private final Button minusButton;
-
-    private final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
-    final HBox header;
-
-    private final CollapseClusterAction collapseClusterAction;
-    private final ExpandClusterAction expandClusterAction;
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventStripeNode parentEventNode) {
         this.eventStripe = eventStripe;
@@ -172,33 +152,36 @@ final public class EventStripeNode extends StackPane {
         descLOD.set(eventStripe.getDescriptionLOD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
-        ImageView hashIV = new ImageView(HASH_PIN);
-        ImageView tagIV = new ImageView(TAG);
+        final Color evtColor = getEventType().getColor();
+        defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
+        highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
+
+        setBackground(defaultBackground);
+
+        setAlignment(Pos.TOP_LEFT);
+        setMinHeight(24);
+        setPrefHeight(USE_COMPUTED_SIZE);
+        setMaxHeight(USE_PREF_SIZE);
+        setMaxWidth(USE_PREF_SIZE);
+        minWidthProperty().bind(clustersHBox.widthProperty());
+        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventStripe.getStartMillis())) - getLayoutXCompensation());
+
         if (eventStripe.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
         if (eventStripe.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
-
-        expandClusterAction = new ExpandClusterAction();
-        plusButton = ActionUtils.createButton(expandClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(plusButton);
-
-        collapseClusterAction = new CollapseClusterAction();
-        minusButton = ActionUtils.createButton(collapseClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(minusButton);
 
-        header = new HBox(5, descrLabel, countLabel, hashIV, tagIV, minusButton, plusButton);
-
-        header.setMinWidth(USE_PREF_SIZE);
-        header.setPadding(new Insets(2, 5, 2, 5));
-        header.setAlignment(Pos.CENTER_LEFT);
+        //initialize info hbox
+        infoHBox.setMinWidth(USE_PREF_SIZE);
+        infoHBox.setPadding(new Insets(2, 5, 2, 5));
+        infoHBox.setAlignment(Pos.CENTER_LEFT);
         //setup description label
-        evtColor = getEventType().getColor();
 
         eventTypeImageView.setImage(getEventType().getFXImage());
-        descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setMouseTransparent(true);
@@ -211,15 +194,29 @@ final public class EventStripeNode extends StackPane {
         subNodePane.setMaxWidth(USE_PREF_SIZE);
         subNodePane.setPickOnBounds(false);
 
-        setAlignment(Pos.TOP_LEFT);
-        setMinHeight(24);
-        setPrefHeight(USE_COMPUTED_SIZE);
-        setMaxHeight(USE_PREF_SIZE);
-        setOnMouseClicked(new MouseHandler());
+        Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
+        for (Range<Long> range : eventStripe.getRanges()) {
+            Region clusterRegion = new Region();
+            clusterRegion.setBorder(clusterBorder);
+            clusterRegion.setBackground(highlightedBackground);
+            clustersHBox.getChildren().addAll(clusterRegion, new Region());
+        }
+        clustersHBox.getChildren().remove(clustersHBox.getChildren().size() - 1);
+        clustersHBox.setMaxWidth(USE_PREF_SIZE);
+
+        final VBox internalVBox = new VBox(infoHBox, subNodePane);
+        internalVBox.setAlignment(Pos.CENTER_LEFT);
+        getChildren().addAll(clustersHBox, internalVBox);
+
+        setCursor(Cursor.HAND);
+        setOnMouseClicked(new MouseClickHandler());
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            //defer tooltip creation till needed, this had a surprisingly large impact on speed of loading the chart
+            /*
+             * defer tooltip creation till needed, this had a surprisingly large
+             * impact on speed of loading the chart
+             */
             installTooltip();
             showDescriptionLoDControls(true);
             toFront();
@@ -228,26 +225,6 @@ final public class EventStripeNode extends StackPane {
         setOnMouseExited((MouseEvent e) -> {
             showDescriptionLoDControls(false);
         });
-        setCursor(Cursor.HAND);
-
-        setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
-
-        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventStripe.getStartMillis())) - getLayoutXCompensation());
-
-        minWidthProperty().bind(rangesHBox.widthProperty());
-        final VBox internalVBox = new VBox(header, subNodePane);
-        internalVBox.setAlignment(Pos.CENTER_LEFT);
-
-        for (Range<Long> range : eventStripe.getRanges()) {
-            Region rangeRegion = new Region();
-            rangeRegion.setStyle("-fx-border-width:2 1 2 1; -fx-border-radius: 1; -fx-border-color: " + ColorUtilities.getRGBCode(evtColor.deriveColor(0, 1, 1, .3)) + ";"); // NON-NLS
-            rangeRegion.setBackground(new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
-            rangesHBox.getChildren().addAll(rangeRegion, new Region());
-        }
-        rangesHBox.getChildren().remove(rangesHBox.getChildren().size() - 1);
-        rangesHBox.setMaxWidth(USE_PREF_SIZE);
-        setMaxWidth(USE_PREF_SIZE);
-        getChildren().addAll(rangesHBox, internalVBox);
     }
 
     /**
@@ -257,14 +234,14 @@ final public class EventStripeNode extends StackPane {
     void showDescriptionLoDControls(final boolean showControls) {
         DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(10, eventType.getColor()));
-        rangesHBox.setEffect(showControls ? dropShadow : null);
+        clustersHBox.setEffect(showControls ? dropShadow : null);
         show(minusButton, showControls);
         show(plusButton, showControls);
     }
 
     public void setSpanWidths(List<Double> spanWidths) {
         for (int i = 0; i < spanWidths.size(); i++) {
-            Region spanRegion = (Region) rangesHBox.getChildren().get(i);
+            Region spanRegion = (Region) clustersHBox.getChildren().get(i);
             Double w = spanWidths.get(i);
             spanRegion.setPrefWidth(w);
             spanRegion.setMaxWidth(w);
@@ -284,7 +261,6 @@ final public class EventStripeNode extends StackPane {
         "EventStripeNode.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
     synchronized void installTooltip() {
         if (tooltip == null) {
-            setCursor(Cursor.WAIT);
             final Task<String> tooltTipTask = new Task<String>() {
 
                 @Override
@@ -336,18 +312,11 @@ final public class EventStripeNode extends StackPane {
                 }
             };
 
-            tooltTipTask.stateProperty().addListener((Observable observable) -> {
-                if (tooltTipTask.isDone()) {
-                    setCursor(null);
-                }
-            });
-
             chart.getController().monitorTask(tooltTipTask);
         }
     }
 
-    EventStripeNode getNodeForBundle(EventStripe cluster
-    ) {
+    EventStripeNode getNodeForBundle(EventStripe cluster) {
         return new EventStripeNode(chart, cluster, this);
     }
 
@@ -407,12 +376,10 @@ final public class EventStripeNode extends StackPane {
     public synchronized void applyHighlightEffect(boolean applied) {
         if (applied) {
             descrLabel.setStyle("-fx-font-weight: bold;"); // NON-NLS
-            rangesHBox.setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .3), CORNER_RADII, Insets.EMPTY)));
-            setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .2), CORNER_RADII, Insets.EMPTY)));
+            setBackground(highlightedBackground);
         } else {
             descrLabel.setStyle("-fx-font-weight: normal;"); // NON-NLS
-            rangesHBox.setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
-            setBackground(new Background(new BackgroundFill(getEventType().getColor().deriveColor(0, 1, 1, .1), CORNER_RADII, Insets.EMPTY)));
+            setBackground(defaultBackground);
         }
     }
 
@@ -431,11 +398,11 @@ final public class EventStripeNode extends StackPane {
         subNodePane.getChildren().clear();
         if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLOD()) {
             descLOD.set(eventStripe.getDescriptionLOD());
-            rangesHBox.setVisible(true);
+            clustersHBox.setVisible(true);
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
-            rangesHBox.setVisible(false);
+            clustersHBox.setVisible(false);
 
             // make new ZoomParams to query with
             final RootFilter subClusterFilter = getSubClusterFilter();
@@ -448,57 +415,61 @@ final public class EventStripeNode extends StackPane {
             final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
             final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-            LoggedTask<Set<EventStripeNode>> loggedTask = new LoggedTask<Set<EventStripeNode>>(
-                    EventStripeNode_loggedTask_name(), true) {
-                        private Collection<EventStripe> bundles;
-                        private volatile DescriptionLOD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
-                        private DescriptionLOD next = loadedDescriptionLoD;
+            Task<Set<EventStripeNode>> loggedTask = new Task<Set<EventStripeNode>>() {
 
-                        @Override
-                        protected Set<EventStripeNode> call() throws Exception {
-                            do {
-                                loadedDescriptionLoD = next;
-                                if (loadedDescriptionLoD == eventStripe.getDescriptionLOD()) {
-                                    return Collections.emptySet();
-                                }
-                                bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
+                private volatile DescriptionLOD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
+
+                {
+                    updateTitle(EventStripeNode_loggedTask_name());
+                }
+
+                @Override
+                protected Set<EventStripeNode> call() throws Exception {
+                    Collection<EventStripe> bundles;
+                    DescriptionLOD next = loadedDescriptionLoD;
+                    do {
+                        loadedDescriptionLoD = next;
+                        if (loadedDescriptionLoD == eventStripe.getDescriptionLOD()) {
+                            return Collections.emptySet();
+                        }
+                        bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
                                 .collect(Collectors.toMap(
                                                 EventCluster::getDescription, //key
                                                 EventStripe::new, //value
                                                 EventStripe::merge) //merge method
                                 ).values();
-                                next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
-                            } while (bundles.size() == 1 && nonNull(next));
+                        next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
+                    } while (bundles.size() == 1 && nonNull(next));
 
-                            // return list of AbstractEventStripeNodes representing sub-bundles
-                            return bundles.stream()
+                    // return list of AbstractEventStripeNodes representing sub-bundles
+                    return bundles.stream()
                             .map(EventStripeNode.this::getNodeForBundle)
                             .collect(Collectors.toSet());
-                        }
+                }
 
-                        @Override
-                        protected void succeeded() {
-                            chart.setCursor(Cursor.WAIT);
-                            try {
-                                Set<EventStripeNode> subBundleNodes = get();
-                                if (subBundleNodes.isEmpty()) {
-                                    rangesHBox.setVisible(true);
-                                } else {
-                                    rangesHBox.setVisible(false);
-                                }
-                                descLOD.set(loadedDescriptionLoD);
-                                //assign subNodes and request chart layout
-                                subNodePane.getChildren().setAll(subBundleNodes);
-                                chart.setRequiresLayout(true);
-                                chart.requestChartLayout();
-                            } catch (InterruptedException | ExecutionException ex) {
-                                LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
-                            }
-                            chart.setCursor(null);
+                @Override
+                protected void succeeded() {
+                    chart.setCursor(Cursor.WAIT);
+                    try {
+                        Set<EventStripeNode> subBundleNodes = get();
+                        if (subBundleNodes.isEmpty()) {
+                            clustersHBox.setVisible(true);
+                        } else {
+                            clustersHBox.setVisible(false);
                         }
-                    };
+                        descLOD.set(loadedDescriptionLoD);
+                        //assign subNodes and request chart layout
+                        subNodePane.getChildren().setAll(subBundleNodes);
+                        chart.setRequiresLayout(true);
+                        chart.requestChartLayout();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
+                    }
+                    chart.setCursor(null);
+                }
+            };
 
-            //start task
+//start task
             chart.getController().monitorTask(loggedTask);
         }
     }
@@ -539,13 +510,12 @@ final public class EventStripeNode extends StackPane {
 
     Set<Long> getEventsIDs() {
         return eventStripe.getEventIDs();
-
     }
 
     /**
      * event handler used for mouse events on {@link EventStripeNode}s
      */
-    private class MouseHandler implements EventHandler<MouseEvent> {
+    private class MouseClickHandler implements EventHandler<MouseEvent> {
 
         private ContextMenu contextMenu;
 
@@ -576,8 +546,8 @@ final public class EventStripeNode extends StackPane {
                     contextMenu = new ContextMenu();
                     contextMenu.setAutoHide(true);
 
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(expandClusterAction));
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(collapseClusterAction));
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
 
                     contextMenu.getItems().add(new SeparatorMenuItem());
                     contextMenu.getItems().addAll(chartContextMenu.getItems());
