@@ -45,7 +45,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
@@ -77,6 +76,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.EventDetailChart_chartContextMenu_placeMarker_name;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.EventDetailChart_contextMenu_zoomHistory_name;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -94,26 +95,16 @@ import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
  */
 public final class EventDetailChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
 
+    private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true);
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
-
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
-
-    /**
-     * true == layout each event type in its own band, false == mix all the
-     * events together during layout
-     */
-    private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
+    private static final int DEFAULT_ROW_HEIGHT = 24;
 
     private ContextMenu chartContextMenu;
 
     private TimeLineController controller;
 
     private FilteredEventsModel filteredEvents;
-
-    /**
-     * how much detail of the description to show in the ui
-     */
-    private final SimpleObjectProperty<DescriptionVisibility> descrVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
 
     /**
      * a user position-able vertical line to help the compare events
@@ -130,36 +121,17 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     /**
      * listener that triggers layout pass
      */
-    private final InvalidationListener layoutInvalidationListener = (
-            Observable o) -> {
-                synchronized (EventDetailChart.this) {
-                    requiresLayout = true;
-                    requestChartLayout();
-                }
-            };
+    private final InvalidationListener layoutInvalidationListener = (Observable o) -> {
+        synchronized (EventDetailChart.this) {
+            requiresLayout = true;
+            requestChartLayout();
+        }
+    };
 
     /**
      * the maximum y value used so far during the most recent layout pass
      */
     private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
-
-    /**
-     * the group that all event nodes are added to. This facilitates scrolling
-     * by allowing a single translation of this group.
-     */
-    private final Group nodeGroup = new Group();
-
-    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
-    private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
-    /**
-     * true == enforce that no two events can share the same 'row', leading to
-     * sparser but possibly clearer layout. false == put unrelated events in the
-     * same 'row', creating a denser more compact layout
-     */
-    private final SimpleBooleanProperty oneEventPerRow = new SimpleBooleanProperty(false);
-
-    private final Map<Range<Long>, Line> projectionMap = new HashMap<>();
-
     /**
      * flag indicating whether this chart actually needs a layout pass
      */
@@ -167,6 +139,14 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private boolean requiresLayout = true;
 
     final ObservableList<EventStripeNode> selectedNodes;
+    /**
+     * the group that all event nodes are added to. This facilitates scrolling
+     * by allowing a single translation of this group.
+     */
+    private final Group nodeGroup = new Group();
+    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
+    private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
+    private final Map<Range<Long>, Line> projectionMap = new HashMap<>();
 
     /**
      * list of series of data added to this chart TODO: replace this with a map
@@ -180,6 +160,23 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 final List<String> collect = EventType.allTypes.stream().map(EventType::getDisplayName).collect(Collectors.toList());
                 return Integer.compare(collect.indexOf(s1.getName()), collect.indexOf(s2.getName()));
             });
+    /**
+     * true == layout each event type in its own band, false == mix all the
+     * events together during layout
+     */
+    private final SimpleBooleanProperty bandByType = new SimpleBooleanProperty(false);
+    /**
+     * true == enforce that no two events can share the same 'row', leading to
+     * sparser but possibly clearer layout. false == put unrelated events in the
+     * same 'row', creating a denser more compact layout
+     */
+    private final SimpleBooleanProperty oneEventPerRow = new SimpleBooleanProperty(false);
+
+    /**
+     * how much detail of the description to show in the ui
+     */
+    private final SimpleObjectProperty<DescriptionVisibility> descrVisibility
+            = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
 
     /**
      * true == truncate all the labels to the greater of the size of their
@@ -199,7 +196,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         super(dateAxis, verticalAxis);
         dateAxis.setAutoRanging(false);
 
-        //verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
+        verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
         verticalAxis.setTickLabelsVisible(false);
         verticalAxis.setTickMarkVisible(false);
 
@@ -210,17 +207,17 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         //all nodes are added to nodeGroup to facilitate scrolling rather than to getPlotChildren() directly
         getPlotChildren().add(nodeGroup);
 
-        //bind listener to events that should trigger layout
+        //add listener for events that should trigger layout
         widthProperty().addListener(layoutInvalidationListener);
         heightProperty().addListener(layoutInvalidationListener);
-
         bandByType.addListener(layoutInvalidationListener);
         oneEventPerRow.addListener(layoutInvalidationListener);
         truncateAll.addListener(layoutInvalidationListener);
         truncateWidth.addListener(layoutInvalidationListener);
         descrVisibility.addListener(layoutInvalidationListener);
 
-        //this is needed to allow non circular binding of the guideline and timerangRect heights to the height of the chart
+        //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
+        //TODO: seems like a hack, can we remove? -jm
         boundsInLocalProperty().addListener((Observable observable) -> {
             setPrefHeight(boundsInLocalProperty().get().getHeight());
         });
@@ -280,37 +277,18 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         requestChartLayout();
     }
 
+    TimeLineController getController() {
+        return controller;
+    }
+
+    @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker",
+        "EventDetailChart.contextMenu.zoomHistory.name=Zoom History"})
     ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
-        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new Action(
-                NbBundle.getMessage(this.getClass(), "EventDetailChart.chartContextMenu.placeMarker.name")) {
-                    {
-                        setGraphic(new ImageView(new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true))); // NON-NLS
-                        setEventHandler((ActionEvent t) -> {
-                            if (guideLine == null) {
-                                guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
-
-                                guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                                guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
-
-                                getChartChildren().add(guideLine);
-
-                                guideLine.setOnMouseClicked((MouseEvent event) -> {
-                                    if (event.getButton() == MouseButton.SECONDARY) {
-                                        clearGuideLine();
-                                        event.consume();
-                                    }
-                                });
-                            } else {
-                                guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                            }
-                        });
-                    }
-
-                }, new ActionGroup(
-                        NbBundle.getMessage(this.getClass(), "EventDetailChart.contextMenu.zoomHistory.name"),
+        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
+                new ActionGroup(EventDetailChart_contextMenu_zoomHistory_name(),
                         new Back(controller),
                         new Forward(controller))));
         chartContextMenu.setAutoHide(true);
@@ -383,21 +361,20 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         getChartChildren().add(getIntervalSelector());
     }
 
-    public synchronized SimpleBooleanProperty oneEventPerRowProperty() {
+    SimpleBooleanProperty oneEventPerRowProperty() {
         return oneEventPerRow;
     }
 
-    public synchronized SimpleBooleanProperty truncateAllProperty() {
+    SimpleDoubleProperty getTruncateWidth() {
+        return truncateWidth;
+    }
+
+    SimpleBooleanProperty truncateAllProperty() {
         return truncateAll;
     }
 
-    synchronized void setEventOnePerRow(Boolean t1) {
-        oneEventPerRow.set(t1);
-    }
-
-    synchronized void setTruncateAll(Boolean t1) {
-        truncateAll.set(t1);
-
+    SimpleObjectProperty< DescriptionVisibility> descrVisibilityProperty() {
+        return descrVisibility;
     }
 
     @Override
@@ -414,9 +391,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     return EventStripe.merge(u, v);
                 }
         );
-        EventStripeNode clusterNode = new EventStripeNode(EventDetailChart.this, eventStripe, null);
-        stripeNodeMap.put(eventStripe, clusterNode);
-        nodeGroup.getChildren().add(clusterNode);
+        EventStripeNode stripeNode = new EventStripeNode(EventDetailChart.this, eventStripe, null);
+        stripeNodeMap.put(eventStripe, stripeNode);
+        nodeGroup.getChildren().add(stripeNode);
+        data.setNode(stripeNode);
     }
 
     @Override
@@ -429,11 +407,22 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     protected synchronized void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
         EventCluster eventCluster = data.getYValue();
 
-        EventStripe removedCluster = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
-        EventStripeNode removedNode = stripeNodeMap.remove(removedCluster);
+        EventStripe removedStripe = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
+        EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
         nodeGroup.getChildren().remove(removedNode);
-
         data.setNode(null);
+    }
+
+    synchronized void setRequiresLayout(boolean b) {
+        requiresLayout = true;
+    }
+
+    /**
+     * make this accessible to {@link EventStripeNode}
+     */
+    @Override
+    protected void requestChartLayout() {
+        super.requestChartLayout();
     }
 
     @Override
@@ -507,11 +496,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         requiresLayout = true;
     }
 
-    synchronized SimpleObjectProperty< DescriptionVisibility> getDescrVisibility() {
-        return descrVisibility;
-    }
-
-    synchronized ReadOnlyDoubleProperty getMaxVScroll() {
+    ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
     }
 
@@ -523,7 +508,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 .filter(p).collect(Collectors.toList());
     }
 
-    public static Stream<EventStripeNode> flatten(EventStripeNode node) {
+    private static Stream<EventStripeNode> flatten(EventStripeNode node) {
         return Stream.concat(
                 Stream.of(node),
                 node.getSubNodes().stream().flatMap(EventDetailChart::flatten));
@@ -533,14 +518,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return getNodes(x -> true);
     }
 
-    synchronized SimpleDoubleProperty
-            getTruncateWidth() {
-        return truncateWidth;
-    }
-
-    synchronized void
-            setVScroll(double d
-            ) {
+    synchronized void setVScroll(double d) {
         final double h = maxY.get() - (getHeight() * .9);
         nodeGroup.setTranslateY(-d * h);
     }
@@ -666,41 +644,26 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return localMax - minY;
     }
 
-    private static final int DEFAULT_ROW_HEIGHT = 24;
-
     private void layoutProjectionMap() {
         for (final Map.Entry<Range<Long>, Line> entry : projectionMap.entrySet()) {
-            final Range<Long> eventBundle = entry.getKey();
+            final Range<Long> range = entry.getKey();
             final Line line = entry.getValue();
 
-            line.setStartX(getParentXForValue(new DateTime(eventBundle.lowerEndpoint(), TimeLineController.getJodaTimeZone())));
-            line.setEndX(getParentXForValue(new DateTime(eventBundle.upperEndpoint(), TimeLineController.getJodaTimeZone())));
+            line.setStartX(getParentXForEpochMillis(range.lowerEndpoint()));
+            line.setEndX(getParentXForEpochMillis(range.upperEndpoint()));
             line.setStartY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
         }
     }
 
-    private double getParentXForValue(DateTime dt) {
-        return getXAxis().localToParent(getXAxis().getDisplayPosition(dt), 0).getX();
+    private double getParentXForEpochMillis(Long epochMillis) {
+        DateTime dateTime = new DateTime(epochMillis, TimeLineController.getJodaTimeZone());
+        return getXAxis().localToParent(getXAxis().getDisplayPosition(dateTime), 0).getX();
     }
 
-    /**
-     * @return the controller
-     */
-    public TimeLineController getController() {
-        return controller;
-    }
+    static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
-    /**
-     * @return the filteredEvents
-     */
-    public FilteredEventsModel getFilteredEvents() {
-        return filteredEvents;
-    }
-
-    private class DetailIntervalSelector extends IntervalSelector<DateTime> {
-
-        public DetailIntervalSelector(double x, double height, Axis<DateTime> axis, TimeLineController controller) {
+        DetailIntervalSelector(double x, double height, Axis<DateTime> axis, TimeLineController controller) {
             super(x, height, axis, controller);
         }
 
@@ -718,18 +681,30 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         protected DateTime parseDateTime(DateTime date) {
             return date;
         }
-
     }
 
-    synchronized void setRequiresLayout(boolean b) {
-        requiresLayout = true;
-    }
+    private class PlaceMarkerAction extends Action {
 
-    /**
-     * make this accessible to AggregateEventNode
-     */
-    @Override
-    protected void requestChartLayout() {
-        super.requestChartLayout();
+        PlaceMarkerAction(MouseEvent clickEvent) {
+            super(EventDetailChart_chartContextMenu_placeMarker_name());
+
+            setGraphic(new ImageView(MARKER)); // NON-NLS
+            setEventHandler(actionEvent -> {
+                if (guideLine == null) {
+                    guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
+                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                    guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
+                    getChartChildren().add(guideLine);
+                    guideLine.setOnMouseClicked(mouseEvent -> {
+                        if (mouseEvent.getButton() == MouseButton.SECONDARY) {
+                            clearGuideLine();
+                            mouseEvent.consume();
+                        }
+                    });
+                } else {
+                    guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
+                }
+            });
+        }
     }
 }

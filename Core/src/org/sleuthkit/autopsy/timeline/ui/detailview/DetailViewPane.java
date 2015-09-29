@@ -145,7 +145,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
         dateAxis.setAutoRanging(false);
         region.minHeightProperty().bind(dateAxis.heightProperty());
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.getMaxVScroll()));
+        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.maxVScrollProperty()));
         requestLayout();
 
         highlightedNodes.addListener((ListChangeListener.Change<? extends EventStripeNode> change) -> {
@@ -226,7 +226,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     private void incrementScrollValue(int factor) {
-        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.getMaxVScroll().get()))));
+        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<NavTreeNode>> selectionModel) {
@@ -448,11 +448,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
             descrVisibility.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
                 if (newToggle == countsRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.COUNT_ONLY);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
                 } else if (newToggle == showRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.SHOWN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
                 } else if (newToggle == hiddenRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.HIDDEN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
                 }
             });
 
