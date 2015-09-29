@@ -172,11 +172,6 @@ class TestRunner(object):
             time.sleep(10)
             TestRunner._cleanup(test_data)
 
-
-        # This code was causing errors with paths, so its disabled
-        #if test_config.jenkins:
-        #    copyErrorFiles(Errors.errors_out, test_config)
-
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass
         else:
@@ -326,35 +321,35 @@ class TestRunner(object):
         Copies the test-generated database and html report files into the gold directory.
         """
         test_config = test_data.main_config
-        # Errors to print
+        image_name = test_data.image_name
         errors = []
-        # Delete the current gold standards
-        gold_dir = test_config.img_gold
-        clear_dir(test_config.img_gold)
-        tmpdir = make_path(gold_dir, test_data.image_name)
+
+        gold_dir = test_config.gold
+        image_dir = make_path(gold_dir, image_name)
+        clear_dir(image_dir)
+
         dbinpth = test_data.get_db_path(DBType.OUTPUT)
-        dboutpth = make_path(tmpdir, DB_FILENAME)
-        dataoutpth = make_path(tmpdir, test_data.image_name + "BlackboardDump.txt")
+        dboutpth = make_path(image_dir, DB_FILENAME)
+        dataoutpth = make_path(gold_dir, image_name + "-BlackboardDump.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
-        dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
-        if not os.path.exists(test_config.img_gold):
-            os.makedirs(test_config.img_gold)
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
+        dbdumpoutpth = make_path(gold_dir, image_name + "-DBDump.txt")
+        error_pth = make_path(gold_dir, image_name + "-Exceptions.txt")
+
+        # Copy files to gold
         try:
             shutil.copy(dbinpth, dboutpth)
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
-            shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"Exceptions.txt")
+            shutil.copy(dbdumpinpth, dbdumpoutpth)          
             shutil.copy(test_data.common_log_path, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
             print(str(e))
             print(traceback.format_exc())
+
         # Rebuild the HTML report
         output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
-        gold_html_report_dir = make_path(tmpdir, "Report")
+        gold_html_report_dir = make_path(image_dir, "Report")
 
         try:
             shutil.copytree(output_html_report_dir, gold_html_report_dir)
@@ -364,29 +359,28 @@ class TestRunner(object):
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
             print(traceback.format_exc())
+
         # Rebuild the Run time report
         if(test_data.main_config.timing):
             file = open(test_data.get_run_time_path(DBType.GOLD), "w")
             file.writelines(test_data.total_ingest_time)
             file.close()
-        oldcwd = os.getcwd()
-        zpdir = gold_dir
-        os.chdir(zpdir)
-        os.chdir("..")
-        img_gold = "tmp"
-        img_archive = make_path(test_data.image_name + "-archive.zip")
+
+        # Create the zip for the image
+        img_archive = make_path(gold_dir, image_name + "-archive.zip")
         comprssr = zipfile.ZipFile(img_archive, 'w', compression=zipfile.ZIP_DEFLATED)
-        TestRunner.zipdir(img_gold, comprssr)
+        TestRunner.zipdir(image_dir, comprssr)
         comprssr.close()
-        os.chdir(oldcwd)
-        del_dir(test_config.img_gold)
+        del_dir(image_dir)
         okay = "Successfully rebuilt all gold standards."
         print_report(errors, "REBUILDING", okay)
 
     def zipdir(path, zip):
-        for root, dirs, files in os.walk(path):
+        fix_path = path.replace("\\","/")
+        for root, dirs, files in os.walk(fix_path):
             for file in files:
-                zip.write(os.path.join(root, file))
+                relpath = os.path.relpath(os.path.join(root, file), os.path.join(fix_path, '..'))
+                zip.write(os.path.join(root, file), relpath)
 
     def _run_ant(test_data):
         """Construct and run the ant build command for the given TestData.
@@ -404,7 +398,6 @@ class TestRunner(object):
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
-    #   case.ant.append(case.build_path)
         test_data.ant.append(os.path.join("..","..","Testing","build.xml"))
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
