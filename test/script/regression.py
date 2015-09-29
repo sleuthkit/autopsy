@@ -462,7 +462,7 @@ class TestData(object):
         ant: a listof_String, the ant command for this TestData
         image_file: a pathto_Image, the image for this TestData
         image: a String, the image file's name
-        image_name: a String, the image file's name with a trailing (0)
+        image_name: a String, the image file's name
         output_path: pathto_Dir, the output directory for this TestData
         autopsy_data_file: a pathto_File, the IMAGE_NAMEAutopsy_data.txt file
         warning_log: a pathto_File, the AutopsyLogs.txt file
@@ -508,7 +508,7 @@ class TestData(object):
         self.image_file = str(image)
         # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
-        self.image_name = self.image + "(0)"
+        self.image_name = self.image
         # Directory structure and files
         self.output_path = make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
@@ -1148,7 +1148,7 @@ class Reports(object):
             links = []
             for full_name in full_image_names:
                 name = get_image_name(full_name)
-                links.append("<a href='#" + name + "(0)'>" + name + "</a>")
+                links.append("<a href='#" + name + "'>" + name + "</a>")
             html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
 
     def _generate_csv(csv_path, test_data):
