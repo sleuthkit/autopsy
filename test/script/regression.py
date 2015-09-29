@@ -506,7 +506,6 @@ class TestData(object):
         self.main_config = main_config
         self.ant = []
         self.image_file = str(image)
-        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
         self.image_name = self.image
         # Directory structure and files
