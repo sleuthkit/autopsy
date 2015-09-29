@@ -150,11 +150,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
         highlightedNodes.addListener((ListChangeListener.Change<? extends EventStripeNode> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(true);
+                change.getAddedSubList().forEach(node -> {
+                    node.applyHighlightEffect(true);
                 });
-                change.getRemoved().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(false);
+                change.getRemoved().forEach(node -> {
+                    node.applyHighlightEffect(false);
                 });
             }
         });
@@ -357,7 +357,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     @Override
     protected void applySelectionEffect(EventStripeNode c1, Boolean selected) {
-        chart.applySelectionEffect(c1, selected);
+        c1.applySelectionEffect(selected);
     }
 
     private class DetailViewSettingsPane extends HBox {
@@ -478,7 +478,5 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
         }
-
     }
-
 }

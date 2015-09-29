@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
-import org.joda.time.DateTime;
 import org.python.google.common.base.Objects;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -141,13 +140,4 @@ public final class EventStripe implements EventBundle {
     public Iterable<Range<Long>> getRanges() {
         return spans.asRanges();
     }
-
-    public DateTime getEnd() {
-        return spanMap.get(getStartMillis()).getSpan().getStart();
-    }
-
-    public DateTime getStart() {
-        return spanMap.get(getEndMillis()).getSpan().getStart();
-    }
-
 }

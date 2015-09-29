@@ -732,8 +732,4 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     protected void requestChartLayout() {
         super.requestChartLayout();
     }
-
-    void applySelectionEffect(EventStripeNode c1, Boolean selected) {
-        c1.applySelectionEffect(selected);
-    }
 }
