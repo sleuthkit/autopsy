@@ -1249,8 +1249,12 @@ class Reports(object):
         Args:
             test_data: the TestData
         """
+        directory = "time_output"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         filename = test_data.image + "_time.txt"
-        new_file = open(filename, "w")
+        path_to_file = os.path.join(directory, filename)
+        new_file = open(path_to_file, "w")
         new_file.write(test_data.total_ingest_time)
         new_file.close()
         shutil.copy(new_file.name, test_data.main_config.input_dir)
