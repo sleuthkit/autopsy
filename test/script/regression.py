@@ -240,7 +240,6 @@ class TestRunner(object):
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed)
-        #    test_data.run_time_passed not considered for test_data.overall_passed
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
@@ -285,7 +284,7 @@ class TestRunner(object):
         time.sleep(2)
 
     def _handle_solr(test_data):
-        """Clean up SOLR index if in keep mode (-k).
+        """Clean up SOLR index if not in keep mode (-k).
 
         Args:
             test_data: the TestData
