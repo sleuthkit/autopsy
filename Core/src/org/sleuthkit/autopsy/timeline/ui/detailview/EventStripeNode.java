@@ -145,6 +145,7 @@ final public class EventStripeNode extends StackPane {
     private final EventStripe eventStripe;
     private final EventStripeNode parentNode;
     private final FilteredEventsModel eventsModel;
+    private final Button hideButton;
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventStripeNode parentEventNode) {
         this.eventStripe = eventStripe;
@@ -173,10 +174,16 @@ final public class EventStripeNode extends StackPane {
         if (eventStripe.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
+
+        EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventStripe.getDescriptionLOD());
+        hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
+        configureLoDButton(hideButton);
         configureLoDButton(plusButton);
         configureLoDButton(minusButton);
 
         //initialize info hbox
+        infoHBox.getChildren().add(4, hideButton);
+
         infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
         infoHBox.setAlignment(Pos.CENTER_LEFT);
@@ -234,6 +241,7 @@ final public class EventStripeNode extends StackPane {
         clustersHBox.setEffect(showControls ? dropShadow : null);
         show(minusButton, showControls);
         show(plusButton, showControls);
+        show(hideButton, showControls);
     }
 
     public void setSpanWidths(List<Double> spanWidths) {
@@ -402,6 +410,10 @@ final public class EventStripeNode extends StackPane {
      */
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     private synchronized void loadSubBundles(DescriptionLOD.RelativeDetail relativeDetail) {
+        chart.getEventBundles().removeIf(bundle ->
+                getSubNodes().stream().anyMatch(subNode ->
+                        bundle.equals(subNode.getEventStripe()))
+        );
         subNodePane.getChildren().clear();
         if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLOD()) {
             descLOD.set(eventStripe.getDescriptionLOD());
@@ -422,7 +434,7 @@ final public class EventStripeNode extends StackPane {
             final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
             final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-            Task<Set<EventStripeNode>> loggedTask = new Task<Set<EventStripeNode>>() {
+            Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
 
                 private volatile DescriptionLOD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
@@ -431,7 +443,7 @@ final public class EventStripeNode extends StackPane {
                 }
 
                 @Override
-                protected Set<EventStripeNode> call() throws Exception {
+                protected Collection<EventStripe> call() throws Exception {
                     Collection<EventStripe> bundles;
                     DescriptionLOD next = loadedDescriptionLoD;
                     do {
@@ -440,6 +452,7 @@ final public class EventStripeNode extends StackPane {
                             return Collections.emptySet();
                         }
                         bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
+                                .map(cluster -> cluster.withParent(getEventStripe()))
                                 .collect(Collectors.toMap(
                                                 EventCluster::getDescription, //key
                                                 EventStripe::new, //value
@@ -449,24 +462,28 @@ final public class EventStripeNode extends StackPane {
                     } while (bundles.size() == 1 && nonNull(next));
 
                     // return list of AbstractEventStripeNodes representing sub-bundles
-                    return bundles.stream()
-                            .map(EventStripeNode.this::getNodeForBundle)
-                            .collect(Collectors.toSet());
+                    return bundles;
+
                 }
 
                 @Override
                 protected void succeeded() {
                     chart.setCursor(Cursor.WAIT);
                     try {
-                        Set<EventStripeNode> subBundleNodes = get();
-                        if (subBundleNodes.isEmpty()) {
+                        Collection<EventStripe> bundles = get();
+
+                        if (bundles.isEmpty()) {
                             clustersHBox.setVisible(true);
                         } else {
                             clustersHBox.setVisible(false);
+                            chart.getEventBundles().addAll(bundles);
+                            subNodePane.getChildren().setAll(bundles.stream()
+                                    .map(EventStripeNode.this::getNodeForBundle)
+                                    .collect(Collectors.toSet()));
                         }
                         descLOD.set(loadedDescriptionLoD);
                         //assign subNodes and request chart layout
-                        subNodePane.getChildren().setAll(subBundleNodes);
+
                         chart.setRequiresLayout(true);
                         chart.requestChartLayout();
                     } catch (InterruptedException | ExecutionException ex) {
