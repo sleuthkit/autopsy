@@ -99,7 +99,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of this class and CountsChartPane into
  * {@link AbstractVisualization}
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, DetailViewNode<?>, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventStripeNode, EventDetailChart> {
 
     private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
 
@@ -119,7 +119,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final ObservableList<EventCluster> aggregatedEvents = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    private final ObservableList<DetailViewNode<?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<EventStripeNode> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventCluster> getAggregatedEvents() {
         return aggregatedEvents;
@@ -145,16 +145,16 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
         dateAxis.setAutoRanging(false);
         region.minHeightProperty().bind(dateAxis.heightProperty());
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.getMaxVScroll()));
+        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.maxVScrollProperty()));
         requestLayout();
 
-        highlightedNodes.addListener((ListChangeListener.Change<? extends DetailViewNode<?>> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends EventStripeNode> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(true);
+                change.getAddedSubList().forEach(node -> {
+                    node.applyHighlightEffect(true);
                 });
-                change.getRemoved().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(false);
+                change.getRemoved().forEach(node -> {
+                    node.applyHighlightEffect(false);
                 });
             }
         });
@@ -211,8 +211,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
-                         t.getDescription().equals(tn.getDescription()))) {
+                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                        t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -226,7 +226,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     private void incrementScrollValue(int factor) {
-        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.getMaxVScroll().get()))));
+        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<NavTreeNode>> selectionModel) {
@@ -235,8 +235,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
             for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (DetailViewNode<?> n : chart.getNodes((DetailViewNode<?> t) ->
-                         t.getDescription().equals(tn.getValue().getDescription()))) {
+                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                        t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -356,8 +356,8 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     @Override
-    protected void applySelectionEffect(DetailViewNode<?> c1, Boolean selected) {
-        chart.applySelectionEffect(c1, selected);
+    protected void applySelectionEffect(EventStripeNode c1, Boolean selected) {
+        c1.applySelectionEffect(selected);
     }
 
     private class DetailViewSettingsPane extends HBox {
@@ -422,7 +422,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         @FXML
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
-        public DetailViewSettingsPane() {
+        DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
@@ -448,11 +448,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
             descrVisibility.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
                 if (newToggle == countsRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.COUNT_ONLY);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
                 } else if (newToggle == showRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.SHOWN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
                 } else if (newToggle == hiddenRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.HIDDEN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
                 }
             });
 
@@ -478,7 +478,5 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
         }
-
     }
-
 }
