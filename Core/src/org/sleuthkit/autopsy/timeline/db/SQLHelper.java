@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
@@ -105,10 +106,20 @@ public class SQLHelper {
         return getSQLWhere((IntersectionFilter) filter);
     }
 
+    /**
+     * NOTE: I don't like this if-else instance of chain, but I can't decide
+     * what to do instead -jm
+     *
+     * @param filter
+     *
+     * @return
+     */
     private static String getSQLWhere(Filter filter) {
         String result = "";
         if (filter == null) {
             return "1";
+        } else if (filter instanceof DescriptionFilter) {
+            result = getSQLWhere((DescriptionFilter) filter);
         } else if (filter instanceof TagsFilter) {
             result = getSQLWhere((TagsFilter) filter);
         } else if (filter instanceof HashHitsFilter) {
@@ -130,7 +141,7 @@ public class SQLHelper {
         } else if (filter instanceof UnionFilter) {
             result = getSQLWhere((UnionFilter) filter);
         } else {
-            return "1";
+            throw new IllegalArgumentException("getSQLWhere not defined for " + filter.getClass().getCanonicalName());
         }
         result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result;
         result = StringUtils.deleteWhitespace(result).equals("()") ? "1" : result;
@@ -140,6 +151,14 @@ public class SQLHelper {
     private static String getSQLWhere(HideKnownFilter filter) {
         if (filter.isSelected()) {
             return "(known_state IS NOT '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')"; // NON-NLS
+        } else {
+            return "1";
+        }
+    }
+
+    private static String getSQLWhere(DescriptionFilter filter) {
+        if (filter.isSelected()) {
+            return "(" + getDescriptionColumn(filter.getDescriptionLoD()) + " LIKE '" + filter.getDescription() + "')"; // NON-NLS
         } else {
             return "1";
         }
