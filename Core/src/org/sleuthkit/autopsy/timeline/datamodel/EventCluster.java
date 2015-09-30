@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
@@ -33,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
  * designated 'zoom level'.
  */
 @Immutable
-public class AggregateEvent {
+public class EventCluster implements EventBundle {
 
     /**
      * the smallest time interval containing all the aggregated events
@@ -72,7 +73,7 @@ public class AggregateEvent {
      */
     private final Set<Long> hashHits;
 
-    public AggregateEvent(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -88,6 +89,14 @@ public class AggregateEvent {
      */
     public Interval getSpan() {
         return span;
+    }
+
+    public long getStartMillis() {
+        return span.getStartMillis();
+    }
+
+    public long getEndMillis() {
+        return span.getEndMillis();
     }
 
     public Set<Long> getEventIDs() {
@@ -106,36 +115,51 @@ public class AggregateEvent {
         return description;
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return type;
     }
 
-    public DescriptionLOD getLOD() {
+    @Override
+    public DescriptionLOD getDescriptionLOD() {
         return lod;
     }
 
     /**
      * merge two aggregate events into one new aggregate event.
      *
-     * @param aggEvent1
+     * @param cluster1
      * @param aggEVent2
      *
      * @return a new aggregate event that is the result of merging the given
      *         events
      */
-    public static AggregateEvent merge(AggregateEvent aggEvent1, AggregateEvent ag2) {
+    public static EventCluster merge(EventCluster cluster1, EventCluster cluster2) {
 
-        if (aggEvent1.getType() != ag2.getType()) {
+        if (cluster1.getEventType() != cluster2.getEventType()) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different types");
         }
 
-        if (!aggEvent1.getDescription().equals(ag2.getDescription())) {
+        if (!cluster1.getDescription().equals(cluster2.getDescription())) {
             throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
         }
-        Sets.SetView<Long> idsUnion = Sets.union(aggEvent1.getEventIDs(), ag2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(aggEvent1.getEventIDsWithHashHits(), ag2.getEventIDsWithHashHits());
-        Sets.SetView<Long> taggedUnion = Sets.union(aggEvent1.getEventIDsWithTags(), ag2.getEventIDsWithTags());
+        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
-        return new AggregateEvent(IntervalUtils.span(aggEvent1.span, ag2.span), aggEvent1.getType(), idsUnion, hashHitsUnion, taggedUnion, aggEvent1.getDescription(), aggEvent1.lod);
+        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
     }
+
+    Range<Long> getRange() {
+        if (getEndMillis() > getStartMillis()) {
+            return Range.closedOpen(getSpan().getStartMillis(), getSpan().getEndMillis());
+        } else {
+            return Range.singleton(getStartMillis());
+        }
+    }
+
+    @Override
+    public Iterable<Range<Long>> getRanges() {
+        return Collections.singletonList(getRange());
+    }
+
 }

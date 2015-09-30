@@ -45,6 +45,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -407,6 +408,7 @@ class SevenZipExtractor {
                     logger.log(Level.WARNING, msg);
 
                 }
+                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
                 logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
@@ -476,8 +478,8 @@ class SevenZipExtractor {
                             localFile.getParentFile().mkdirs();
                             try {
                                 localFile.createNewFile();
-                            } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex); //NON-NLS
+                            } catch (IOException e) {
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), e); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
@@ -546,7 +548,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
