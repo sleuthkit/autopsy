@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionsExclusionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
@@ -230,7 +229,7 @@ public final class FilteredEventsModel {
             tagNameFilter.setSelected(Boolean.TRUE);
             tagsFilter.addSubFilter(tagNameFilter);
         });
-        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, new DescriptionsExclusionFilter(), Collections.emptySet());
+        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
     }
 
     public Interval getBoundingEventsInterval() {

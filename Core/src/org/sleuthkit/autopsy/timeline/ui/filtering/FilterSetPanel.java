@@ -21,12 +21,14 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
@@ -47,7 +49,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionsExclusionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
@@ -77,6 +78,9 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
     private TreeTableColumn<AbstractFilter, AbstractFilter> legendColumn;
+
+    @FXML
+    private ListView<DescriptionFilter> hiddenDescriptionsListView;
 
     private FilteredEventsModel filteredEvents;
 
@@ -165,6 +169,22 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         expansionMap.put(new TypeFilter(RootEventType.getInstance()).getDisplayName(), true);
     }
 
+    static class ListCellImpl extends ListCell<DescriptionFilter> {
+
+        @Override
+        protected void updateItem(DescriptionFilter item, boolean empty) {
+            super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
+            if (item == null || empty) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                setGraphic(new CheckBox());
+                setText(item.getDisplayName());
+            }
+        }
+
+    }
+
     @Override
     public void setController(TimeLineController timeLineController) {
         this.controller = timeLineController;
@@ -172,17 +192,20 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());
-        controller.getQuickHideMasks().addListener((ListChangeListener.Change<? extends DescriptionFilter> c) -> {
-            while (c.next()) {
-                DescriptionsExclusionFilter descriptionExclusionFilter = ((RootFilter) filterTreeTable.getRoot().getValue()).getDescriptionsExclusionfilter();
 
-                for (DescriptionFilter filter : c.getAddedSubList()) {
-                    descriptionExclusionFilter.setSelected(true);
-                    descriptionExclusionFilter.addSubFilter(filter);
-                }
-            }
-        });
+        hiddenDescriptionsListView.setItems(controller.getQuickHideMasks());
+        hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> new ListCellImpl());
 
+//        .addListener((ListChangeListener.Change<? extends DescriptionFilter> c) -> {
+//            while (c.next()) {
+//                DescriptionsExclusionFilter descriptionExclusionFilter = ((RootFilter) filterTreeTable.getRoot().getValue()).getDescriptionsExclusionfilter();
+//
+//                for (DescriptionFilter filter : c.getAddedSubList()) {
+//                    descriptionExclusionFilter.setSelected(true);
+//                    descriptionExclusionFilter.addSubFilter(filter);
+//                }
+//            }
+//        });
         controller.viewModeProperty().addListener(observable -> {
             applyFilters();
         });
@@ -192,13 +215,13 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> {
-            applyFilters(); 
+            applyFilters();
         });
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable) -> {
-            applyFilters();  
+            applyFilters();
         });
         this.filteredEvents.timeRangeProperty().addListener((Observable observable) -> {
-            applyFilters();  
+            applyFilters();
         });
         this.filteredEvents.filterProperty().addListener((Observable o) -> {
             refresh();
@@ -230,7 +253,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         Platform.runLater(() -> {
             controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
         });
-        
+
     }
 
     private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");

@@ -26,13 +26,23 @@
 </items>
 </ToolBar>
 </top>
-<center><TreeTableView fx:id="filterTreeTable" editable="true" minWidth="-Infinity" showRoot="false" BorderPane.alignment="CENTER">
-  <columns>
-    <TreeTableColumn fx:id="treeColumn" minWidth="100.0" prefWidth="200.0" sortable="false" />
-    <TreeTableColumn fx:id="legendColumn" editable="false" minWidth="50.0" prefWidth="50.0" sortable="false" />
-  </columns>
-<columnResizePolicy>
-<TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-</columnResizePolicy>
-</TreeTableView>
+<center>
+      <SplitPane dividerPositions="0.5" orientation="VERTICAL">
+         <items>
+            <TreeTableView fx:id="filterTreeTable" editable="true" minHeight="50.0" showRoot="false" BorderPane.alignment="CENTER">
+        <columns>
+          <TreeTableColumn fx:id="treeColumn" minWidth="100.0" prefWidth="200.0" sortable="false" />
+          <TreeTableColumn fx:id="legendColumn" editable="false" minWidth="50.0" prefWidth="50.0" sortable="false" />
+        </columns>
+      <columnResizePolicy>
+      <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+      </columnResizePolicy>
+      </TreeTableView>
+            <TitledPane animated="false" collapsible="false" minHeight="50.0" text="Hidden Descriptions">
+               <content>
+                  <ListView fx:id="hiddenDescriptionsListView" />
+               </content>
+            </TitledPane>
+         </items>
+      </SplitPane>
 </center></fx:root>
