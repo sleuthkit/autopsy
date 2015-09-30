@@ -156,7 +156,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
-        treeColumn.setCellFactory(col -> new FilterCheckBoxCell(controller));
+        treeColumn.setCellFactory(col -> new FilterCheckBoxCellFactory().forTreeTable(col));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
@@ -194,18 +194,18 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         this.setModel(timeLineController.getEventsModel());
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideMasks());
-        hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> new ListCellImpl());
+        hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> {
+            final ListCell<DescriptionFilter> forList = new FilterCheckBoxCellFactory<DescriptionFilter>().forList();
+            forList.setContextMenu(new ContextMenu(new MenuItem("unhide and remove from list") {
+                {
+                    setOnAction((ActionEvent event) -> {
+                        controller.getQuickHideMasks().remove(forList.getItem());
+                    });
+                }
+            }));
+            return forList;
+        });
 
-//        .addListener((ListChangeListener.Change<? extends DescriptionFilter> c) -> {
-//            while (c.next()) {
-//                DescriptionsExclusionFilter descriptionExclusionFilter = ((RootFilter) filterTreeTable.getRoot().getValue()).getDescriptionsExclusionfilter();
-//
-//                for (DescriptionFilter filter : c.getAddedSubList()) {
-//                    descriptionExclusionFilter.setSelected(true);
-//                    descriptionExclusionFilter.addSubFilter(filter);
-//                }
-//            }
-//        });
         controller.viewModeProperty().addListener(observable -> {
             applyFilters();
         });

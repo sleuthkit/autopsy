@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
@@ -325,6 +326,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(this.controller.getEventsModel());
+        getController().getQuickHideMasks().addListener(layoutInvalidationListener);
     }
 
     @Override
@@ -477,6 +479,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 for (Series<DateTime, EventCluster> series : sortedSeriesList) {
                     hiddenPartition = series.getData().stream().map(Data::getNode).map(EventStripeNode.class::cast)
                             .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
+                                            .filter(AbstractFilter::isActive)
                                             .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
 
                     layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, 0);
@@ -485,6 +488,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             } else {
                 hiddenPartition = stripeNodeMap.values().stream()
                         .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
+                                        .filter(AbstractFilter::isActive)
                                         .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
                 layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, 0);
             }
@@ -779,20 +783,15 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     class HideDescriptionAction extends Action {
 
-        /**
-         *
-         * @param description the value of description
-         */
         HideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
             super("Hide");
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
-                getController().getQuickHideMasks().add(
-                        new DescriptionFilter(descriptionLoD,
-                                description,
-                                DescriptionFilter.FilterMode.EXCLUDE));
-                setRequiresLayout(true);
-                requestChartLayout();
+                DescriptionFilter descriptionFilter = new DescriptionFilter(descriptionLoD,
+                        description,
+                        DescriptionFilter.FilterMode.EXCLUDE);
+                descriptionFilter.selectedProperty().addListener(layoutInvalidationListener);
+                getController().getQuickHideMasks().add(descriptionFilter);
             });
         }
     }
@@ -807,8 +806,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 getController().getQuickHideMasks().removeIf(descriptionFilter ->
                         descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
                         && descriptionFilter.getDescription().equals(description));
-                setRequiresLayout(true);
-                requestChartLayout();
             });
         }
     }
