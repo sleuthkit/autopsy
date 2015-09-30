@@ -32,9 +32,13 @@
                 <package>com.google.common.base</package>
                 <package>com.google.common.cache</package>
                 <package>com.google.common.collect</package>
+                <package>com.google.common.escape</package>
                 <package>com.google.common.eventbus</package>
+                <package>com.google.common.html</package>
                 <package>com.google.common.io</package>
+                <package>com.google.common.reflect</package>
                 <package>com.google.common.util.concurrent</package>
+                <package>com.google.common.xml</package>
                 <package>com.google.gson</package>
                 <package>com.google.gson.annotations</package>
                 <package>com.google.gson.reflect</package>

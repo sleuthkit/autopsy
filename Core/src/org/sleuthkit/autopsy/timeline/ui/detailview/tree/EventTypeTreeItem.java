@@ -45,7 +45,6 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     public void insert(Deque<EventBundle> path) {
-
         EventBundle head = path.removeFirst();
         EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
         if (treeItem == null) {
@@ -62,11 +61,11 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
         if (t.getEventType().getBaseType() == getValue().getType().getBaseType()) {
 
             for (TreeItem<NavTreeNode> child : getChildren()) {
-                final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+                final NavTreeItem findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }

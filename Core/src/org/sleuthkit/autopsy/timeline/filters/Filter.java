@@ -25,7 +25,7 @@ import javafx.collections.ObservableList;
 /**
  * Interface for Filters
  */
-public interface Filter  {
+public interface Filter {
 
     /**
      * @param filters a set of filters to intersect
@@ -79,6 +79,4 @@ public interface Filter  {
     SimpleBooleanProperty getDisabledProperty();
 
     boolean isDisabled();
-
-
 }

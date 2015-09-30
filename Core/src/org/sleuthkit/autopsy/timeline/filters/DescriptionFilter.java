@@ -24,7 +24,6 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 public class DescriptionFilter extends AbstractFilter {
 
     private final DescriptionLOD descriptionLoD;
-
     private final String description;
     private final FilterMode filterMode;
 
@@ -48,7 +47,7 @@ public class DescriptionFilter extends AbstractFilter {
 
     @Override
     public String getDisplayName() {
-        return  getDescriptionLoD().getDisplayName() + ": " + getDescription();
+        return getDescriptionLoD().getDisplayName() + ": " + getDescription();
     }
 
     @Override

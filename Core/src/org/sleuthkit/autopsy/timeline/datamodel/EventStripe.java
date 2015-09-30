@@ -21,50 +21,55 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
- *
+ * A 'collection' of {@link EventCluster}s, all having the same type,
+ * description, and zoom levels.
  */
 @Immutable
 public final class EventStripe implements EventBundle {
 
-    final private EventBundle parent;
-
-    @Override
-    public Optional<EventBundle> getParentBundle() {
-        return Optional.ofNullable(parent);
+    public static EventStripe merge(EventStripe u, EventStripe v) {
+        Preconditions.checkNotNull(u);
+        Preconditions.checkNotNull(v);
+        Preconditions.checkArgument(Objects.equal(u.description, v.description));
+        Preconditions.checkArgument(Objects.equal(u.lod, v.lod));
+        Preconditions.checkArgument(Objects.equal(u.type, v.type));
+        Preconditions.checkArgument(Objects.equal(u.parent, v.parent));
+        return new EventStripe(u, v);
     }
+
+    private final EventBundle parent;
 
     private final RangeSet<Long> spans = TreeRangeSet.create();
     private final RangeMap<Long, EventCluster> spanMap = TreeRangeMap.create();
 
     /**
-     * the type of all the aggregted events
+     * the type of all the events
      */
     private final EventType type;
 
     /**
-     * the common description of all the aggregated events
+     * the common description of all the events
      */
     private final String description;
 
     /**
-     * the description level of detail that the events were aggregated at.
+     * the description level of detail that the events were clustered at.
      */
     private final DescriptionLOD lod;
 
     /**
-     * the set of ids of the aggregated events
+     * the set of ids of the events
      */
     private final Set<Long> eventIDs = new HashSet<>();
 
     /**
-     * the ids of the subset of aggregated events that have at least one tag
-     * applied to them
+     * the ids of the subset of events that have at least one tag applied to
+     * them
      */
     private final Set<Long> tagged = new HashSet<>();
 
     /**
-     * the ids of the subset of aggregated events that have at least one hash
-     * set hit
+     * the ids of the subset of events that have at least one hash set hit
      */
     private final Set<Long> hashHits = new HashSet<>();
 
@@ -97,14 +102,9 @@ public final class EventStripe implements EventBundle {
         parent = u.getParentBundle().orElse(null);
     }
 
-    public static EventStripe merge(EventStripe u, EventStripe v) {
-        Preconditions.checkNotNull(u);
-        Preconditions.checkNotNull(v);
-        Preconditions.checkArgument(Objects.equal(u.description, v.description));
-        Preconditions.checkArgument(Objects.equal(u.lod, v.lod));
-        Preconditions.checkArgument(Objects.equal(u.type, v.type));
-        Preconditions.checkArgument(Objects.equal(u.parent, v.parent));
-        return new EventStripe(u, v);
+    @Override
+    public Optional<EventBundle> getParentBundle() {
+        return Optional.ofNullable(parent);
     }
 
     @Override

@@ -31,54 +31,73 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
 /**
- * Represents a set of other (TimeLineEvent) events aggregated together. All the
+ * Represents a set of other (TimeLineEvent) events clustered together. All the
  * sub events should have the same type and matching descriptions at the
- * designated 'zoom level'.
+ * designated 'zoom level', and be 'close together' in time.
  */
 @Immutable
 public class EventCluster implements EventBundle {
 
-    final private EventBundle parent;
+    /**
+     * merge two aggregate events into one new aggregate event.
+     *
+     * @param cluster1
+     * @param cluster2
+     *
+     * @return a new aggregate event that is the result of merging the given
+     *         events
+     */
+    public static EventCluster merge(EventCluster cluster1, EventCluster cluster2) {
+        if (cluster1.getEventType() != cluster2.getEventType()) {
+            throw new IllegalArgumentException("event clusters are not compatible: they have different types");
+        }
 
-    @Override
-    public Optional<EventBundle> getParentBundle() {
-        return Optional.ofNullable(parent);
+        if (!cluster1.getDescription().equals(cluster2.getDescription())) {
+            throw new IllegalArgumentException("event clusters are not compatible: they have different descriptions");
+        }
+        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+
+        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
     }
 
+    final private EventBundle parent;
+
     /**
-     * the smallest time interval containing all the aggregated events
+     * the smallest time interval containing all the clustered events
      */
     final private Interval span;
 
     /**
-     * the type of all the aggregted events
+     * the type of all the clustered events
      */
     final private EventType type;
 
     /**
-     * the common description of all the aggregated events
+     * the common description of all the clustered events
      */
     final private String description;
 
     /**
-     * the description level of detail that the events were aggregated at.
+     * the description level of detail that the events were clustered at.
      */
     private final DescriptionLOD lod;
 
     /**
-     * the set of ids of the aggregated events
+     * the set of ids of the clustered events
      */
     final private Set<Long> eventIDs;
 
     /**
-     * the ids of the subset of aggregated events that have at least one tag
+     * the ids of the subset of clustered events that have at least one tag
      * applied to them
      */
     private final Set<Long> tagged;
 
     /**
-     * the ids of the subset of aggregated events that have at least one hash
-     * set hit
+     * the ids of the subset of clustered events that have at least one hash set
+     * hit
      */
     private final Set<Long> hashHits;
 
@@ -98,9 +117,11 @@ public class EventCluster implements EventBundle {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
-    /**
-     * @return the actual interval from the first event to the last event
-     */
+    @Override
+    public Optional<EventBundle> getParentBundle() {
+        return Optional.ofNullable(parent);
+    }
+
     public Interval getSpan() {
         return span;
     }
@@ -145,31 +166,6 @@ public class EventCluster implements EventBundle {
         return lod;
     }
 
-    /**
-     * merge two aggregate events into one new aggregate event.
-     *
-     * @param cluster1
-     * @param aggEVent2
-     *
-     * @return a new aggregate event that is the result of merging the given
-     *         events
-     */
-    public static EventCluster merge(EventCluster cluster1, EventCluster cluster2) {
-
-        if (cluster1.getEventType() != cluster2.getEventType()) {
-            throw new IllegalArgumentException("aggregate events are not compatible they have different types");
-        }
-
-        if (!cluster1.getDescription().equals(cluster2.getDescription())) {
-            throw new IllegalArgumentException("aggregate events are not compatible they have different descriptions");
-        }
-        Sets.SetView<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Sets.SetView<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Sets.SetView<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
-
-        return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
-    }
-
     Range<Long> getRange() {
         if (getEndMillis() > getStartMillis()) {
             return Range.closedOpen(getSpan().getStartMillis(), getSpan().getEndMillis());
@@ -196,7 +192,6 @@ public class EventCluster implements EventBundle {
         if (Objects.nonNull(this.parent)) {
             throw new IllegalStateException("Event Cluster already has a parent!");
         }
-
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
 }

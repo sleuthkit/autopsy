@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewNode;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
 public class NavPanel extends BorderPane implements TimeLineView {
@@ -78,8 +77,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
         });
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
-            detailViewPane.getSelectedNodes().forEach((DetailViewNode<?> t) -> {
-                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(t.getEventBundle()));
+            detailViewPane.getSelectedNodes().forEach(eventStripeNode -> {
+                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(eventStripeNode.getEventStripe()));
             });
         });
 
@@ -188,5 +187,4 @@ public class NavPanel extends BorderPane implements TimeLineView {
             }
         }
     }
-
 }

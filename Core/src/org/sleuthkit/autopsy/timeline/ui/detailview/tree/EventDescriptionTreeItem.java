@@ -73,7 +73,7 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
 
         if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
             return this;

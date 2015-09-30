@@ -58,15 +58,14 @@ class RootItem extends NavTreeItem {
      */
     public void insert(EventBundle g) {
 
-        EventTypeTreeItem treeItem = childMap.get(g.getEventType().getBaseType());
-        if (treeItem == null) {
-            treeItem = new EventTypeTreeItem(g);
-            treeItem.setExpanded(true);
-            childMap.put(g.getEventType().getBaseType(), treeItem);
-
-            getChildren().add(treeItem);
-            getChildren().sort(TreeComparator.Type);
-        }
+        EventTypeTreeItem treeItem = childMap.computeIfAbsent(g.getEventType().getBaseType(),
+                baseType -> {
+                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
+                    newTreeItem.setExpanded(true);
+                    getChildren().add(newTreeItem);
+                    getChildren().sort(TreeComparator.Type);
+                    return newTreeItem;
+                });
         treeItem.insert(getTreePath(g));
     }
 
@@ -91,9 +90,9 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
         for (TreeItem<NavTreeNode> child : getChildren()) {
-            final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+            final NavTreeItem findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
             }
