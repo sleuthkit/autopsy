@@ -81,10 +81,6 @@ BACKUP_DB_FILENAME = "autopsy_backup.db"
 # Folder name for gold standard database testing
 AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
-# TODO: Double check this purpose statement
-# The filename of the log to store error messages
-COMMON_LOG = "Exceptions.txt"
-
 Day = 0
 
 
@@ -228,6 +224,7 @@ class TestRunner(object):
 
         # Unzip the gold file
         TestRunner._extract_gold(test_data)
+        TestRunner._move_txt_files(test_data)
 
         # Look for core exceptions
         # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
@@ -264,7 +261,7 @@ class TestRunner(object):
 
 
     def _extract_gold(test_data):
-        """Extract gold archive file to output/gold/tmp/
+        """Extract gold archive file to output/gold/
 
         Args:
             test_data: the TestData
@@ -272,6 +269,20 @@ class TestRunner(object):
         extrctr = zipfile.ZipFile(test_data.gold_archive, 'r', compression=zipfile.ZIP_DEFLATED)
         extrctr.extractall(test_data.main_config.gold)
         extrctr.close
+        time.sleep(2)
+
+    def _move_txt_files(test_data):
+        """copies gold txt files to output/gold/
+
+        Args:
+            test_data: the TestData
+        """
+        gold_dir = test_data.main_config.gold
+        for file in os.listdir(gold_dir):
+            if file.startswith(test_data.image_name) and file.endswith(".txt"):
+                src = os.path.join(gold_dir, file)
+                dst = os.path.join(gold_dir, test_data.image_name)
+                shutil.copy(src, dst)
         time.sleep(2)
 
     def _handle_solr(test_data):
@@ -514,10 +525,10 @@ class TestData(object):
         self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
         self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
         self.test_dbdump = make_path(self.output_path, self.image_name +
-        "DBDump.txt")
-        self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
+        "-DBDump.txt")
+        self.common_log_path = make_local_path(self.output_path, self.image_name + "-Exceptions.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
-        self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
+        self.gold_data_dir = make_path(self.main_config.gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
         self.image_name + "-archive.zip")
         self.logs_dir = make_path(self.output_path, "logs")
@@ -591,7 +602,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "BlackboardDump.txt")
+        return self._get_path_to_file(file_type, "-BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
         """Get the path to the Exceptions (SortedErrors) file that corresponds to the given
@@ -600,7 +611,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "Exceptions.txt")
+        return self._get_path_to_file(file_type, "-Exceptions.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
@@ -608,12 +619,12 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "DBDump.txt")
+        return self._get_path_to_file(file_type, "-DBDump.txt")
 
     def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return self._get_path_to_file(file_type, "Time.txt")
+        return self._get_path_to_file(file_type, "-Time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -671,7 +682,6 @@ class TestConfiguration(object):
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")
-        self.img_gold = make_path(self.gold, 'tmp')
         # Logs:
         self.csv = ""
         self.global_csv = ""
@@ -697,8 +707,6 @@ class TestConfiguration(object):
         else:
             self.images.append(self.args.single_file)
         self._init_logs()
-        #self._init_imgs()
-        #self._init_build_info()
 
 
     def _load_config_file(self, config_file):
@@ -722,7 +730,6 @@ class TestConfiguration(object):
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-                self.img_gold = make_path(self.gold, 'tmp')
             if parsed_config.getElementsByTagName("jenkins"):
                 self.jenkins = True
                 if parsed_config.getElementsByTagName("diffdir"):
