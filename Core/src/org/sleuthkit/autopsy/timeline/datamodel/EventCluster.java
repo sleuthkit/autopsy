@@ -162,7 +162,7 @@ public class EventCluster implements EventBundle {
     }
 
     @Override
-    public DescriptionLOD getDescriptionLOD() {
+    public DescriptionLOD getDescriptionLoD() {
         return lod;
     }
 
@@ -194,4 +194,6 @@ public class EventCluster implements EventBundle {
         }
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
+
+   
 }

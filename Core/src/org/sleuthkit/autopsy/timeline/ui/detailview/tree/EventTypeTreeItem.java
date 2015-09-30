@@ -33,14 +33,14 @@ class EventTypeTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
 
-    private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
+    private final Comparator<TreeItem<EventBundle>> comparator = TreeComparator.Description;
 
     EventTypeTreeItem(EventBundle g) {
-        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getEventType().getBaseType().getDisplayName(), g.getDescriptionLOD(), 0));
+        setValue(g);
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
@@ -62,10 +62,10 @@ class EventTypeTreeItem extends NavTreeItem {
 
     @Override
     public NavTreeItem findTreeItemForEvent(EventBundle t) {
-        if (t.getEventType().getBaseType() == getValue().getType().getBaseType()) {
+        if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
-            for (TreeItem<NavTreeNode> child : getChildren()) {
-                final NavTreeItem findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+            for (EventDescriptionTreeItem child : childMap.values()) {
+                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }
@@ -75,7 +75,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
         FXCollections.sort(getChildren(), comp);
     }
 }

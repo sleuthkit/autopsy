@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
-import org.sleuthkit.autopsy.coreutils.AbstractFXCellFactory;
+import org.sleuthkit.autopsy.timeline.ui.AbstractFXCellFactory;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 
 class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCellFactory<X, X> {
@@ -26,6 +26,7 @@ class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCell
         if (disabledProperty != null) {
             checkBox.disableProperty().unbindBidirectional(disabledProperty);
         }
+
         if (item == null) {
             cell.setText(null);
             cell.setGraphic(null);
@@ -38,5 +39,4 @@ class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCell
             cell.setGraphic(checkBox);
         }
     }
-
 }

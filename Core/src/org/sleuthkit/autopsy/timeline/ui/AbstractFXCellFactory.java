@@ -10,7 +10,7 @@
  * terms are defined in DAR and ASPR * 7-104.9(a).
  * *************************************************************************
  */
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.timeline.ui;
 
 import java.util.function.Supplier;
 import javafx.scene.control.IndexedCell;

@@ -151,7 +151,7 @@ final public class EventStripeNode extends StackPane {
         this.eventStripe = eventStripe;
         this.parentNode = parentEventNode;
         this.chart = chart;
-        descLOD.set(eventStripe.getDescriptionLOD());
+        descLOD.set(eventStripe.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
         final Color evtColor = getEventType().getColor();
@@ -175,7 +175,7 @@ final public class EventStripeNode extends StackPane {
             show(tagIV, false);
         }
 
-        EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventStripe.getDescriptionLOD());
+        EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventStripe.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(hideButton);
         configureLoDButton(plusButton);
@@ -362,7 +362,7 @@ final public class EventStripeNode extends StackPane {
     RootFilter getSubClusterFilter() {
         RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
         subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(eventStripe.getDescriptionLOD(), eventStripe.getDescription(), DescriptionFilter.FilterMode.INCLUDE),
+                new DescriptionFilter(eventStripe.getDescriptionLoD(), eventStripe.getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
     }
@@ -415,8 +415,8 @@ final public class EventStripeNode extends StackPane {
                         bundle.equals(subNode.getEventStripe()))
         );
         subNodePane.getChildren().clear();
-        if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLOD()) {
-            descLOD.set(eventStripe.getDescriptionLOD());
+        if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLoD()) {
+            descLOD.set(eventStripe.getDescriptionLoD());
             clustersHBox.setVisible(true);
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
@@ -448,7 +448,7 @@ final public class EventStripeNode extends StackPane {
                     DescriptionLOD next = loadedDescriptionLoD;
                     do {
                         loadedDescriptionLoD = next;
-                        if (loadedDescriptionLoD == eventStripe.getDescriptionLOD()) {
+                        if (loadedDescriptionLoD == eventStripe.getDescriptionLoD()) {
                             return Collections.emptySet();
                         }
                         bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
@@ -609,7 +609,7 @@ final public class EventStripeNode extends StackPane {
                     loadSubBundles(DescriptionLOD.RelativeDetail.LESS);
                 }
             });
-            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(eventStripe) && descLOD.get() == eventStripe.getDescriptionLOD(), descLOD));
+            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(eventStripe) && descLOD.get() == eventStripe.getDescriptionLoD(), descLOD));
         }
     }
 }

@@ -78,7 +78,7 @@ public final class EventStripe implements EventBundle {
         spanMap.put(cluster.getRange(), cluster);
         type = cluster.getEventType();
         description = cluster.getDescription();
-        lod = cluster.getDescriptionLOD();
+        lod = cluster.getDescriptionLoD();
         eventIDs.addAll(cluster.getEventIDs());
         tagged.addAll(cluster.getEventIDsWithTags());
         hashHits.addAll(cluster.getEventIDsWithHashHits());
@@ -92,7 +92,7 @@ public final class EventStripe implements EventBundle {
         spanMap.putAll(v.spanMap);
         type = u.getEventType();
         description = u.getDescription();
-        lod = u.getDescriptionLOD();
+        lod = u.getDescriptionLoD();
         eventIDs.addAll(u.getEventIDs());
         eventIDs.addAll(v.getEventIDs());
         tagged.addAll(u.getEventIDsWithTags());
@@ -118,7 +118,7 @@ public final class EventStripe implements EventBundle {
     }
 
     @Override
-    public DescriptionLOD getDescriptionLOD() {
+    public DescriptionLOD getDescriptionLoD() {
         return lod;
     }
 

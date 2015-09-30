@@ -31,9 +31,10 @@ public interface EventBundle {
 
     String getDescription();
 
-    DescriptionLOD getDescriptionLOD();
+    DescriptionLOD getDescriptionLoD();
 
     Set<Long> getEventIDs();
+
 
     Set<Long> getEventIDsWithHashHits();
 
@@ -48,4 +49,8 @@ public interface EventBundle {
     Iterable<Range<Long>> getRanges();
 
     Optional<EventBundle> getParentBundle();
+
+    default  long getCount() {
+        return getEventIDs().size();
+    }
 }

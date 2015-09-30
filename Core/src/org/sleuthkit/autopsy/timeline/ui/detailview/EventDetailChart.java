@@ -787,11 +787,20 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             super("Hide");
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
-                DescriptionFilter descriptionFilter = new DescriptionFilter(descriptionLoD,
+                final DescriptionFilter testFilter = new DescriptionFilter(
+                        descriptionLoD,
                         description,
                         DescriptionFilter.FilterMode.EXCLUDE);
-                descriptionFilter.selectedProperty().addListener(layoutInvalidationListener);
-                getController().getQuickHideMasks().add(descriptionFilter);
+
+                DescriptionFilter descriptionFilter = getController().getQuickHideMasks().stream()
+                        .filter(testFilter::equals)
+                        .findFirst().orElseGet(() -> {
+                            testFilter.selectedProperty().addListener(layoutInvalidationListener);
+                            getController().getQuickHideMasks().add(testFilter);
+                            return testFilter;
+                        });
+                descriptionFilter.setSelected(true);
+
             });
         }
     }
@@ -802,11 +811,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
             super("Unhide");
             setGraphic(new ImageView(SHOW));
-            setEventHandler((ActionEvent t) -> {
-                getController().getQuickHideMasks().removeIf(descriptionFilter ->
-                        descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
-                        && descriptionFilter.getDescription().equals(description));
-            });
+            setEventHandler((ActionEvent t) ->
+                    getController().getQuickHideMasks().stream()
+                    .filter(descriptionFilter -> descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
+                            && descriptionFilter.getDescription().equals(description))
+                    .forEach(descriptionfilter -> descriptionfilter.setSelected(false))
+            );
         }
     }
 }

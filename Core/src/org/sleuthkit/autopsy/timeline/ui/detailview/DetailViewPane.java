@@ -74,7 +74,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
-import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 
@@ -94,7 +93,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private MultipleSelectionModel<TreeItem<NavTreeNode>> treeSelectionModel;
+    private MultipleSelectionModel<TreeItem<EventBundle>> treeSelectionModel;
 
     //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();
@@ -220,12 +219,12 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<NavTreeNode>> selectionModel) {
+    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
-            for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
+            for (TreeItem<EventBundle> tn : treeSelectionModel.getSelectedItems()) {
 
                 for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
                         t.getDescription().equals(tn.getValue().getDescription()))) {
@@ -304,7 +303,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
                 final long upperBound = rangeInfo.getUpperBound();
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
-                controller.getQuickHideMasks().clear();
 
                 Platform.runLater(() -> {
                     if (isCancelled()) {

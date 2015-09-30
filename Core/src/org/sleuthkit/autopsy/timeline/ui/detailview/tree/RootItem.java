@@ -47,7 +47,7 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
@@ -83,16 +83,14 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
-        childMap.values().forEach((ti) -> {
-            ti.resort(comp);
-        });
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
+        childMap.values().forEach(ti -> ti.resort(comp));
     }
 
     @Override
     public NavTreeItem findTreeItemForEvent(EventBundle t) {
-        for (TreeItem<NavTreeNode> child : getChildren()) {
-            final NavTreeItem findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+        for (EventTypeTreeItem child : childMap.values()) {
+            final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
             }

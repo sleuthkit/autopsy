@@ -20,8 +20,12 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
@@ -45,8 +49,15 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
+/**
+ * Shows all {@link  EventBundles} from the assigned {@link DetailViewPane} in a
+ * tree organized by type and then description. Hidden bundles are shown grayed
+ * out. Right clicking on a item in the tree shows a context menu to show/hide
+ * it.
+ */
 public class NavPanel extends BorderPane implements TimeLineView {
 
     private TimeLineController controller;
@@ -56,32 +67,38 @@ public class NavPanel extends BorderPane implements TimeLineView {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView< NavTreeNode> eventsTree;
+    private TreeView<EventBundle> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
 
     @FXML
-    private ComboBox<Comparator<TreeItem<NavTreeNode>>> sortByBox;
+    private ComboBox<Comparator<TreeItem<EventBundle>>> sortByBox;
 
     public NavPanel() {
-        FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS
+        FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS 
     }
 
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
-        setRoot();
+
         detailViewPane.getEventBundles().addListener((Observable observable) -> {
             setRoot();
         });
+        setRoot();
+
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
             detailViewPane.getSelectedNodes().forEach(eventStripeNode -> {
-                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(eventStripeNode.getEventStripe()));
+                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventStripeNode.getEventStripe()));
             });
         });
 
+    }
+
+    private NavTreeItem getRoot() {
+        return (NavTreeItem) eventsTree.getRoot();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -113,78 +130,105 @@ public class NavPanel extends BorderPane implements TimeLineView {
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            ((NavTreeItem) eventsTree.getRoot()).resort(sortByBox.getSelectionModel().getSelectedItem());
+            getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
         });
         eventsTree.setShowRoot(false);
-        eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());
+        eventsTree.setCellFactory((TreeView<EventBundle> p) -> new EventBundleTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         eventsTreeLabel.setText(NbBundle.getMessage(this.getClass(), "NavPanel.eventsTreeLabel.text"));
     }
 
     /**
-     * A tree cell to display {@link NavTreeNode}s. Shows the description, and
+     * A tree cell to display {@link EventBundle}s. Shows the description, and
      * count, as well a a "legend icon" for the event type.
      */
-    private class EventTreeCell extends TreeCell<NavTreeNode> {
+    private class EventBundleTreeCell extends TreeCell<EventBundle> {
+
+        private static final double HIDDEN_MULTIPLIER = .6;
+        private final Rectangle rect = new Rectangle(24, 24);
+        private final ImageView imageView = new ImageView();
+        private InvalidationListener filterStateChangeListener;
+
+        EventBundleTreeCell() {
+            rect.setArcHeight(5);
+            rect.setArcWidth(5);
+            rect.setStrokeWidth(2);
+        }
 
         @Override
-        protected void updateItem(NavTreeNode item, boolean empty) {
+        protected void updateItem(EventBundle item, boolean empty) {
             super.updateItem(item, empty);
             if (item == null || empty) {
                 setText(null);
                 setTooltip(null);
                 setGraphic(null);
                 setContextMenu(null);
+                deRegisterListeners(controller.getQuickHideMasks());
             } else {
+                filterStateChangeListener = (filterState) -> updateHiddenState(item);
+                controller.getQuickHideMasks().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
+                    while (listChange.next()) {
+                        deRegisterListeners(listChange.getRemoved());
+                        registerListeners(listChange.getAddedSubList(), item);
+                    }
+                    updateHiddenState(item);
+                });
+                registerListeners(controller.getQuickHideMasks(), item);
                 String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                TreeItem<NavTreeNode> parent = getTreeItem().getParent();
+                TreeItem<EventBundle> parent = getTreeItem().getParent();
                 if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
                     text = StringUtils.substringAfter(text, parent.getValue().getDescription());
                 }
                 setText(text);
                 setTooltip(new Tooltip(text));
-                Rectangle rect = new Rectangle(24, 24);
-                rect.setArcHeight(5);
-                rect.setArcWidth(5);
-                rect.setStrokeWidth(2);
-                ImageView imageView = new ImageView(item.getType().getFXImage());
-
+                imageView.setImage(item.getEventType().getFXImage());
                 setGraphic(new StackPane(rect, imageView));
-                controller.getQuickHideMasks().addListener((Observable observable) -> {
-                    configureHiddenState(item, rect, imageView);
-                });
-                configureHiddenState(item, rect, imageView);
-
+                updateHiddenState(item);
             }
-
         }
 
-        private void configureHiddenState(NavTreeNode item, Rectangle rect, ImageView imageView) {
-            TreeItem<NavTreeNode> treeItem = getTreeItem();
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, EventBundle item) {
+            for (DescriptionFilter filter : filters) {
+                if (filter.getDescription().equals(item.getDescription())) {
+                    filter.activeProperty().addListener(filterStateChangeListener);
+                }
+            }
+        }
+
+        private void deRegisterListeners(Collection<? extends DescriptionFilter> filters) {
+            if (Objects.nonNull(filterStateChangeListener)) {
+                for (DescriptionFilter filter : filters) {
+                    filter.activeProperty().removeListener(filterStateChangeListener);
+                }
+            }
+        }
+
+        private void updateHiddenState(EventBundle item) {
+            TreeItem<EventBundle> treeItem = getTreeItem();
             ContextMenu newMenu;
-            if (controller.getQuickHideMasks().stream().anyMatch(mask -> mask.getDescription().equals(item.getDescription()))) {
-                setTextFill(Color.gray(0, .6));
-                imageView.setOpacity(.6);
-                rect.setStroke(item.getType().getColor().deriveColor(0, .6, 1, .6));
-                rect.setFill(item.getType().getColor().deriveColor(0, .6, .6, 0.1));
+            if (controller.getQuickHideMasks().stream().anyMatch((mask) -> mask.isActive() && mask.getDescription().equals(item.getDescription()))) {
                 if (treeItem != null) {
                     treeItem.setExpanded(false);
                 }
-                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLod())));
+                setTextFill(Color.gray(0, HIDDEN_MULTIPLIER));
+                imageView.setOpacity(HIDDEN_MULTIPLIER);
+                rect.setStroke(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
+                rect.setFill(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
+                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
-                rect.setStroke(item.getType().getColor());
-                rect.setFill(item.getType().getColor().deriveColor(0, 1, 1, 0.1));
-                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLod())));
+                rect.setStroke(item.getEventType().getColor());
+                rect.setFill(item.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
+                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD())));
             }
-
             if (treeItem instanceof EventDescriptionTreeItem) {
                 setContextMenu(newMenu);
             } else {
                 setContextMenu(null);
             }
         }
+
     }
 }

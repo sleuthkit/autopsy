@@ -31,6 +31,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
@@ -44,6 +46,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
+import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -81,12 +84,17 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
     @FXML
     private ListView<DescriptionFilter> hiddenDescriptionsListView;
+    @FXML
+    private TitledPane hiddenDescriptionsPane;
+    @FXML
+    private SplitPane splitPane;
 
     private FilteredEventsModel filteredEvents;
 
     private TimeLineController controller;
 
     private final ObservableMap<String, Boolean> expansionMap = FXCollections.observableHashMap();
+    private double position;
 
     @FXML
     @NbBundle.Messages({
@@ -196,22 +204,59 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         hiddenDescriptionsListView.setItems(controller.getQuickHideMasks());
         hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> {
             final ListCell<DescriptionFilter> forList = new FilterCheckBoxCellFactory<DescriptionFilter>().forList();
-            forList.setContextMenu(new ContextMenu(new MenuItem("unhide and remove from list") {
-                {
-                    setOnAction((ActionEvent event) -> {
-                        controller.getQuickHideMasks().remove(forList.getItem());
-                    });
+
+            forList.itemProperty().addListener((Observable observable) -> {
+                if (forList.getItem() == null) {
+                    forList.setContextMenu(null);
+                } else {
+                    forList.setContextMenu(new ContextMenu(new MenuItem() {
+                        {
+                            forList.getItem().selectedProperty().addListener((observable, wasSelected, isSelected) -> {
+                                configureText(isSelected);
+                            });
+
+                            configureText(forList.getItem().selectedProperty().get());
+                            setOnAction((ActionEvent event) -> {
+                                controller.getQuickHideMasks().remove(forList.getItem());
+                            });
+                        }
+
+                        private void configureText(Boolean newValue) {
+                            if (newValue) {
+                                setText("Unhide and remove from list");
+                            } else {
+                                setText("Remove from list");
+                            }
+                        }
+                    }));
                 }
-            }));
+            });
+
             return forList;
         });
 
+//        hiddenDescriptionsPane.setContent(null);
         controller.viewModeProperty().addListener(observable -> {
             applyFilters();
+            if (controller.viewModeProperty().get() == VisualizationMode.COUNTS) {
+                position = splitPane.getDividerPositions()[0];
+                splitPane.setDividerPositions(1);
+                hiddenDescriptionsPane.setExpanded(false);
+                hiddenDescriptionsPane.setCollapsible(false);
+                hiddenDescriptionsPane.setDisable(true);
+            } else {
+                splitPane.setDividerPositions(position);
+                hiddenDescriptionsPane.setDisable(false);
+                hiddenDescriptionsPane.setCollapsible(true);
+                hiddenDescriptionsPane.setExpanded(true);
+                hiddenDescriptionsPane.setCollapsible(false);
+                
+            }
         });
     }
 
     @Override
+
     public void setModel(FilteredEventsModel filteredEvents) {
         this.filteredEvents = filteredEvents;
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> {

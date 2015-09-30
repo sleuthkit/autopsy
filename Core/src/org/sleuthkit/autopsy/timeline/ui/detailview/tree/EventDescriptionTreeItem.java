@@ -43,11 +43,11 @@ class EventDescriptionTreeItem extends NavTreeItem {
 
     EventDescriptionTreeItem(EventBundle g) {
         bundle = g;
-        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getDescriptionLOD(), g.getEventIDs().size()));
+        setValue(g);
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
@@ -68,15 +68,23 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
         FXCollections.sort(getChildren(), comp);
     }
 
     @Override
     public NavTreeItem findTreeItemForEvent(EventBundle t) {
 
-        if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
+        if (getValue().getEventType() == t.getEventType()
+                && getValue().getDescription().equals(t.getDescription())) {
             return this;
+        } else {
+            for (EventDescriptionTreeItem child : childMap.values()) {
+                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                if (findTreeItemForEvent != null) {
+                    return findTreeItemForEvent;
+                }
+            }
         }
         return null;
     }

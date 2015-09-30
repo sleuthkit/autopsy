@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import org.controlsfx.control.*?>
 <?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -27,7 +28,7 @@
 </ToolBar>
 </top>
 <center>
-      <SplitPane dividerPositions="0.5" orientation="VERTICAL">
+      <SplitPane fx:id="splitPane" dividerPositions="0.5" orientation="VERTICAL">
          <items>
             <TreeTableView fx:id="filterTreeTable" editable="true" minHeight="50.0" showRoot="false" BorderPane.alignment="CENTER">
         <columns>
@@ -38,7 +39,7 @@
       <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
       </columnResizePolicy>
       </TreeTableView>
-            <TitledPane animated="false" collapsible="false" minHeight="50.0" text="Hidden Descriptions">
+            <TitledPane fx:id="hiddenDescriptionsPane" collapsible="false" disable="true" expanded="false" minHeight="25.0" text="Hidden Descriptions">
                <content>
                   <ListView fx:id="hiddenDescriptionsListView" />
                </content>
