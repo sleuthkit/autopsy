@@ -77,7 +77,6 @@ DB_FILENAME = "autopsy.db"
 # Backup database filename
 BACKUP_DB_FILENAME = "autopsy_backup.db"
 
-# TODO: Double check this purpose statement
 # Folder name for gold standard database testing
 AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
@@ -90,7 +89,7 @@ def usage():
 	print ("-l PATH path to config file")
 	print ("-u Ignore unallocated space")
 	print ("-k Do not delete SOLR index")
-	print("-o PATH path to output folder for Diff files")
+	print ("-o PATH path to output folder for Diff files")
 	print ("-v verbose mode")
 	print ("-e ARG Enable exception mode with given string")
 	print ("-h help")
@@ -1074,12 +1073,6 @@ class Reports(object):
             info += "<tr><td>Out Of Disk Space:\
                              <p style='font-size: 11px;'>(will skew other test results)</p></td>"
             info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
-#            info += "<tr><td>TSK Objects Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
-#            info += "<tr><td>Artifacts Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
-#            info += "<tr><td>Attributes Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
             info += "</table>\
                     </div>"
             # For all the general print statements in the test_config
@@ -1136,8 +1129,8 @@ class Reports(object):
             html_log: a pathto_File, the global HTML log
         """
         with open(html_log, "a") as html:
-            head = "</body></html>"
-            html.write(head)
+            foot = "</body></html>"
+            html.write(foot)
 
     def html_add_images(html_log, full_image_names):
         """Add all the image names to the HTML log.
@@ -1188,12 +1181,7 @@ class Reports(object):
             vars.append( str(test_data.indexed_files) )
             vars.append( str(test_data.indexed_chunks) )
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
-#            vars.append( str(test_data.db_diff_results.output_artifacts) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
-#            vars.append( test_data.db_diff_results.get_artifact_comparison() )
-#            vars.append( test_data.db_diff_results.get_attribute_comparison() )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
             vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
@@ -1228,12 +1216,7 @@ class Reports(object):
             titles.append("Indexed Files Count")
             titles.append("Indexed File Chunks Count")
             titles.append("Out Of Disk Space")
-#            titles.append("Tsk Objects Count")
-#            titles.append("Artifacts Count")
-#            titles.append("Attributes Count")
             titles.append("Gold Database Name")
-#            titles.append("Artifacts Comparison")
-#            titles.append("Attributes Comparison")
             titles.append("Gold Report Name")
             titles.append("Report Comparison")
             titles.append("Ant Command Line")
