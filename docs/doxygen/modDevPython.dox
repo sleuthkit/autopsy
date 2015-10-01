@@ -29,7 +29,7 @@ To install NetBeans' plug-in:
 -# Download and install the Jython 2.7 installer (http://www.jython.org/downloads.html).
 -# Download NetBeans Python plug-in zip file (http://plugins.netbeans.org/plugin/56795/python4netbeans802).
 -# Unpack the content (.nbm files) of the zip file to the desired location.
--# In NetBeans go to Tools->Plugins->Download->Add Plugins, then choose extracted .nbm files.
+-# In NetBeans go to Tools->Plugins. In Download tab, click on Add Plugins, then choose extracted .nbm files.
 -# Setup Jython path from Tools->Python Platform, click on new, then choose Jython.exe (usually in C:/Program files/Jython2.7/bin/)
 
 To install IntelliJ IDEA + Python plug-in:
