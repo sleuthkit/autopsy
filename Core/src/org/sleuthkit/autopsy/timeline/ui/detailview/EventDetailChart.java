@@ -730,9 +730,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return alternateLayout;
     }
 
-    void applySelectionEffect(DetailViewNode<?> c1, Boolean selected) {
-        c1.applySelectionEffect(selected);
-    }
+  
 
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
