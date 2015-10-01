@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -105,7 +105,7 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper< DescriptionLOD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLOD.SHORT);
+    private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
@@ -180,7 +180,7 @@ public final class FilteredEventsModel {
         return requestedTimeRange.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLODProperty() {
+    synchronized public ReadOnlyObjectProperty<DescriptionLoD> descriptionLODProperty() {
         return requestedLOD.getReadOnlyProperty();
     }
 
@@ -192,7 +192,7 @@ public final class FilteredEventsModel {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
-    synchronized public DescriptionLOD getDescriptionLOD() {
+    synchronized public DescriptionLoD getDescriptionLOD() {
         return requestedLOD.get();
     }
 
@@ -322,17 +322,15 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @param aggregation
      *
-     * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation
-     *         to control the grouping of events
+     * @return a list of event clusters at the requested zoom levels that are
+     *         within the requested time range and pass the requested filter
      */
     public List<EventCluster> getEventClusters() {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
-        final DescriptionLOD lod;
+        final DescriptionLoD lod;
         synchronized (this) {
             range = requestedTimeRange.get();
             filter = requestedFilter.get();

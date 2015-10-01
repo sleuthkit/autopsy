@@ -201,7 +201,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
         this.setModel(timeLineController.getEventsModel());
 
-        hiddenDescriptionsListView.setItems(controller.getQuickHideMasks());
+        hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> {
             final ListCell<DescriptionFilter> forList = new FilterCheckBoxCellFactory<DescriptionFilter>().forList();
 
@@ -217,7 +217,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
                             configureText(forList.getItem().selectedProperty().get());
                             setOnAction((ActionEvent event) -> {
-                                controller.getQuickHideMasks().remove(forList.getItem());
+                                controller.getQuickHideFilters().remove(forList.getItem());
                             });
                         }
 

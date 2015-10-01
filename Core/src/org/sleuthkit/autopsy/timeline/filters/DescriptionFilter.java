@@ -19,11 +19,11 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 public class DescriptionFilter extends AbstractFilter {
 
-    private final DescriptionLOD descriptionLoD;
+    private final DescriptionLoD descriptionLoD;
     private final String description;
     private final FilterMode filterMode;
 
@@ -31,7 +31,7 @@ public class DescriptionFilter extends AbstractFilter {
         return filterMode;
     }
 
-    public DescriptionFilter(DescriptionLOD descriptionLoD, String description, FilterMode filterMode) {
+    public DescriptionFilter(DescriptionLoD descriptionLoD, String description, FilterMode filterMode) {
         this.descriptionLoD = descriptionLoD;
         this.description = description;
         this.filterMode = filterMode;
@@ -58,7 +58,7 @@ public class DescriptionFilter extends AbstractFilter {
     /**
      * @return the descriptionLoD
      */
-    public DescriptionLOD getDescriptionLoD() {
+    public DescriptionLoD getDescriptionLoD() {
         return descriptionLoD;
     }
 

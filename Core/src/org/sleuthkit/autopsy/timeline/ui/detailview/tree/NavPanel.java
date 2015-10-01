@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
@@ -164,17 +165,17 @@ public class NavPanel extends BorderPane implements TimeLineView {
                 setTooltip(null);
                 setGraphic(null);
                 setContextMenu(null);
-                deRegisterListeners(controller.getQuickHideMasks());
+                deRegisterListeners(controller.getQuickHideFilters());
             } else {
                 filterStateChangeListener = (filterState) -> updateHiddenState(item);
-                controller.getQuickHideMasks().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
+                controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
                     while (listChange.next()) {
                         deRegisterListeners(listChange.getRemoved());
                         registerListeners(listChange.getAddedSubList(), item);
                     }
                     updateHiddenState(item);
                 });
-                registerListeners(controller.getQuickHideMasks(), item);
+                registerListeners(controller.getQuickHideFilters(), item);
                 String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
                 TreeItem<EventBundle> parent = getTreeItem().getParent();
                 if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
@@ -207,7 +208,9 @@ public class NavPanel extends BorderPane implements TimeLineView {
         private void updateHiddenState(EventBundle item) {
             TreeItem<EventBundle> treeItem = getTreeItem();
             ContextMenu newMenu;
-            if (controller.getQuickHideMasks().stream().anyMatch((mask) -> mask.isActive() && mask.getDescription().equals(item.getDescription()))) {
+            if (controller.getQuickHideFilters().stream().
+                    filter(AbstractFilter::isActive)
+                    .anyMatch(filter -> filter.getDescription().equals(item.getDescription()))) {
                 if (treeItem != null) {
                     treeItem.setExpanded(false);
                 }

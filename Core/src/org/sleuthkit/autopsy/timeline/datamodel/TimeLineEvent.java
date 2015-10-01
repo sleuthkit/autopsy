@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -38,7 +38,7 @@ public class TimeLineEvent {
 
     private final long time;
     private final EventType subType;
-    private final ImmutableMap<DescriptionLOD, String> descriptions;
+    private final ImmutableMap<DescriptionLoD, String> descriptions;
 
     private final TskData.FileKnown known;
     private final boolean hashHit;
@@ -50,10 +50,9 @@ public class TimeLineEvent {
         this.artifactID = artifactID == 0 ? null : artifactID;
         this.time = time;
         this.subType = type;
-        descriptions = ImmutableMap.<DescriptionLOD, String>of(
-                DescriptionLOD.FULL, fullDescription,
-                DescriptionLOD.MEDIUM, medDescription,
-                DescriptionLOD.SHORT, shortDescription);
+        descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
+                DescriptionLoD.MEDIUM, medDescription,
+                DescriptionLoD.SHORT, shortDescription);
 
         this.known = known;
         this.hashHit = hashHit;
@@ -94,22 +93,22 @@ public class TimeLineEvent {
     }
 
     public String getFullDescription() {
-        return getDescription(DescriptionLOD.FULL);
+        return getDescription(DescriptionLoD.FULL);
     }
 
     public String getMedDescription() {
-        return getDescription(DescriptionLOD.MEDIUM);
+        return getDescription(DescriptionLoD.MEDIUM);
     }
 
     public String getShortDescription() {
-        return getDescription(DescriptionLOD.SHORT);
+        return getDescription(DescriptionLoD.SHORT);
     }
 
     public TskData.FileKnown getKnown() {
         return known;
     }
 
-    public String getDescription(DescriptionLOD lod) {
+    public String getDescription(DescriptionLoD lod) {
         return descriptions.get(lod);
     }
 

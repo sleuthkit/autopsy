@@ -35,7 +35,7 @@ public class ZoomParams {
 
     private final RootFilter filter;
 
-    private final DescriptionLOD descrLOD;
+    private final DescriptionLoD descrLOD;
 
     public Interval getTimeRange() {
         return timeRange;
@@ -49,11 +49,11 @@ public class ZoomParams {
         return filter;
     }
 
-    public DescriptionLOD getDescriptionLOD() {
+    public DescriptionLoD getDescriptionLOD() {
         return descrLOD;
     }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilter filter, DescriptionLOD descrLOD) {
+    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilter filter, DescriptionLoD descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
@@ -72,7 +72,7 @@ public class ZoomParams {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withDescrLOD(DescriptionLOD descrLOD) {
+    public ZoomParams withDescrLOD(DescriptionLoD descrLOD) {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
@@ -92,7 +92,7 @@ public class ZoomParams {
         return this.timeRange == null ? false : this.timeRange.equals(timeRange);
     }
 
-    public boolean hasDescrLOD(DescriptionLOD newLOD) {
+    public boolean hasDescrLOD(DescriptionLoD newLOD) {
         return this.descrLOD.equals(newLOD);
     }
 

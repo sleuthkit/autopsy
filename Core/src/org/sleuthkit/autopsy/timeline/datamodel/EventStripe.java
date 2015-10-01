@@ -18,7 +18,7 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.python.google.common.base.Objects;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
@@ -55,7 +55,7 @@ public final class EventStripe implements EventBundle {
     /**
      * the description level of detail that the events were clustered at.
      */
-    private final DescriptionLOD lod;
+    private final DescriptionLoD lod;
 
     /**
      * the set of ids of the events
@@ -118,7 +118,7 @@ public final class EventStripe implements EventBundle {
     }
 
     @Override
-    public DescriptionLOD getDescriptionLoD() {
+    public DescriptionLoD getDescriptionLoD() {
         return lod;
     }
 

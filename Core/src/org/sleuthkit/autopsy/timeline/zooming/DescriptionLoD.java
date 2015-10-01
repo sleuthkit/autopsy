@@ -23,11 +23,11 @@ import org.openide.util.NbBundle;
 /**
  * Enumeration of all description levels of detail.
  */
-public enum DescriptionLOD {
+public enum DescriptionLoD {
 
-    SHORT(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.short")),
-    MEDIUM(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.medium")),
-    FULL(NbBundle.getMessage(DescriptionLOD.class, "DescriptionLOD.full"));
+    SHORT(NbBundle.getMessage(DescriptionLoD.class, "DescriptionLOD.short")),
+    MEDIUM(NbBundle.getMessage(DescriptionLoD.class, "DescriptionLOD.medium")),
+    FULL(NbBundle.getMessage(DescriptionLoD.class, "DescriptionLOD.full"));
 
     private final String displayName;
 
@@ -35,11 +35,11 @@ public enum DescriptionLOD {
         return displayName;
     }
 
-    private DescriptionLOD(String displayName) {
+    private DescriptionLoD(String displayName) {
         this.displayName = displayName;
     }
 
-    public DescriptionLOD moreDetailed() {
+    public DescriptionLoD moreDetailed() {
         try {
             return values()[ordinal() + 1];
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -47,7 +47,7 @@ public enum DescriptionLOD {
         }
     }
 
-    public DescriptionLOD lessDetailed() {
+    public DescriptionLoD lessDetailed() {
         try {
             return values()[ordinal() - 1];
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -55,7 +55,7 @@ public enum DescriptionLOD {
         }
     }
 
-    public DescriptionLOD withRelativeDetail(RelativeDetail relativeDetail) {
+    public DescriptionLoD withRelativeDetail(RelativeDetail relativeDetail) {
         switch (relativeDetail) {
             case EQUAL:
                 return this;
@@ -68,7 +68,7 @@ public enum DescriptionLOD {
         }
     }
 
-    public RelativeDetail getDetailLevelRelativeTo(DescriptionLOD other) {
+    public RelativeDetail getDetailLevelRelativeTo(DescriptionLoD other) {
         int compareTo = this.compareTo(other);
         if (compareTo < 0) {
             return RelativeDetail.LESS;

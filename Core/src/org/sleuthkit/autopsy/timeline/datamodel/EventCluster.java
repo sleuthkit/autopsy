@@ -28,7 +28,7 @@ import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * Represents a set of other (TimeLineEvent) events clustered together. All the
@@ -39,13 +39,13 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
 public class EventCluster implements EventBundle {
 
     /**
-     * merge two aggregate events into one new aggregate event.
+     * merge two event clusters into one new event cluster.
      *
      * @param cluster1
      * @param cluster2
      *
-     * @return a new aggregate event that is the result of merging the given
-     *         events
+     * @return a new event cluster that is the result of merging the given
+     *         events clusters
      */
     public static EventCluster merge(EventCluster cluster1, EventCluster cluster2) {
         if (cluster1.getEventType() != cluster2.getEventType()) {
@@ -82,7 +82,7 @@ public class EventCluster implements EventBundle {
     /**
      * the description level of detail that the events were clustered at.
      */
-    private final DescriptionLOD lod;
+    private final DescriptionLoD lod;
 
     /**
      * the set of ids of the clustered events
@@ -101,7 +101,7 @@ public class EventCluster implements EventBundle {
      */
     private final Set<Long> hashHits;
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod, EventBundle parent) {
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventBundle parent) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -113,7 +113,7 @@ public class EventCluster implements EventBundle {
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLOD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
@@ -162,7 +162,7 @@ public class EventCluster implements EventBundle {
     }
 
     @Override
-    public DescriptionLOD getDescriptionLoD() {
+    public DescriptionLoD getDescriptionLoD() {
         return lod;
     }
 
@@ -195,5 +195,4 @@ public class EventCluster implements EventBundle {
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
 
-   
 }

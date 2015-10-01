@@ -29,13 +29,18 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.google.common.annotations</package>
                 <package>com.google.common.base</package>
                 <package>com.google.common.cache</package>
                 <package>com.google.common.collect</package>
                 <package>com.google.common.escape</package>
                 <package>com.google.common.eventbus</package>
+                <package>com.google.common.hash</package>
                 <package>com.google.common.html</package>
                 <package>com.google.common.io</package>
+                <package>com.google.common.math</package>
+                <package>com.google.common.net</package>
+                <package>com.google.common.primitives</package>
                 <package>com.google.common.reflect</package>
                 <package>com.google.common.util.concurrent</package>
                 <package>com.google.common.xml</package>

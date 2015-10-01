@@ -80,7 +80,7 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -138,10 +138,10 @@ public class TimeLineController {
     private final Case autoCase;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<DescriptionFilter> quickHideMasks = FXCollections.observableArrayList();
+    private final ObservableList<DescriptionFilter> quickHideMaskFilters = FXCollections.observableArrayList();
 
-    public ObservableList<DescriptionFilter> getQuickHideMasks() {
-        return quickHideMasks;
+    public ObservableList<DescriptionFilter> getQuickHideFilters() {
+        return quickHideMaskFilters;
     }
 
     /**
@@ -264,7 +264,7 @@ public class TimeLineController {
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
                 filteredEvents.filterProperty().get(),
-                DescriptionLOD.SHORT);
+                DescriptionLoD.SHORT);
         historyManager.advance(InitialZoomState);
     }
 
@@ -564,12 +564,12 @@ public class TimeLineController {
     @NbBundle.Messages({"# {0} - the number of events",
         "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
         + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
-    synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
+    synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
-        if (newLOD == DescriptionLOD.FULL && count > 10_000) {
+        if (newLOD == DescriptionLoD.FULL && count > 10_000) {
             String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,

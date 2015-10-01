@@ -82,7 +82,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * Custom implementation of {@link XYChart} to graph events on a horizontal
@@ -326,7 +326,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(this.controller.getEventsModel());
-        getController().getQuickHideMasks().addListener(layoutInvalidationListener);
+        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
     }
 
     @Override
@@ -478,18 +478,18 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 double minY = 0;
                 for (Series<DateTime, EventCluster> series : sortedSeriesList) {
                     hiddenPartition = series.getData().stream().map(Data::getNode).map(EventStripeNode.class::cast)
-                            .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
+                            .collect(Collectors.partitioningBy(node -> getController().getQuickHideFilters().stream()
                                             .filter(AbstractFilter::isActive)
-                                            .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
+                                            .anyMatch(filter -> filter.getDescription().equals(node.getDescription()))));
 
                     layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, 0);
                     minY = maxY.get();
                 }
             } else {
                 hiddenPartition = stripeNodeMap.values().stream()
-                        .collect(Collectors.partitioningBy(node -> getController().getQuickHideMasks().stream()
+                        .collect(Collectors.partitioningBy(node -> getController().getQuickHideFilters().stream()
                                         .filter(AbstractFilter::isActive)
-                                        .anyMatch(mask -> mask.getDescription().equals(node.getDescription()))));
+                                        .anyMatch(filter -> filter.getDescription().equals(node.getDescription()))));
                 layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, 0);
             }
             setCursor(null);
@@ -607,8 +607,9 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             List<EventStripeNode> subNodes = stripeNode.getSubNodes();
             if (subNodes.isEmpty() == false) {
                 Map<Boolean, List<EventStripeNode>> hiddenPartition = subNodes.stream()
-                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideMasks().stream()
-                                        .anyMatch(mask -> mask.getDescription().equals(testNode.getDescription()))));
+                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideFilters().stream()
+                                        .filter(AbstractFilter::isActive)
+                                        .anyMatch(filter -> filter.getDescription().equals(testNode.getDescription()))));
 
                 layoutNodesResultHeight = layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, rawDisplayPosition);
             }
@@ -730,8 +731,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return alternateLayout;
     }
 
-  
-
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
         DetailIntervalSelector(double x, double height, Axis<DateTime> axis, TimeLineController controller) {
@@ -781,7 +780,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     class HideDescriptionAction extends Action {
 
-        HideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+        HideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
             super("Hide");
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
@@ -790,11 +789,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         description,
                         DescriptionFilter.FilterMode.EXCLUDE);
 
-                DescriptionFilter descriptionFilter = getController().getQuickHideMasks().stream()
+                DescriptionFilter descriptionFilter = getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
                             testFilter.selectedProperty().addListener(layoutInvalidationListener);
-                            getController().getQuickHideMasks().add(testFilter);
+                            getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });
                 descriptionFilter.setSelected(true);
@@ -805,12 +804,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     class UnhideDescriptionAction extends Action {
 
-        UnhideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+        UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
 
             super("Unhide");
             setGraphic(new ImageView(SHOW));
             setEventHandler((ActionEvent t) ->
-                    getController().getQuickHideMasks().stream()
+                    getController().getQuickHideFilters().stream()
                     .filter(descriptionFilter -> descriptionFilter.getDescriptionLoD().equals(descriptionLoD)
                             && descriptionFilter.getDescription().equals(description))
                     .forEach(descriptionfilter -> descriptionfilter.setSelected(false))

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -79,4 +80,8 @@ public interface Filter {
     SimpleBooleanProperty getDisabledProperty();
 
     boolean isDisabled();
+
+    boolean isActive();
+
+    BooleanBinding activeProperty();
 }

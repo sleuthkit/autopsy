@@ -22,7 +22,7 @@ import com.google.common.collect.Range;
 import java.util.Optional;
 import java.util.Set;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  *
@@ -31,7 +31,7 @@ public interface EventBundle {
 
     String getDescription();
 
-    DescriptionLOD getDescriptionLoD();
+    DescriptionLoD getDescriptionLoD();
 
     Set<Long> getEventIDs();
 

@@ -75,7 +75,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * Controller class for a {@link EventDetailChart} based implementation of a
@@ -468,11 +468,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         }
     }
 
-    public Action newUnhideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new UnhideDescriptionAction(description, descriptionLoD);
     }
 
-    public Action newHideDescriptionAction(String description, DescriptionLOD descriptionLoD) {
+    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 }
