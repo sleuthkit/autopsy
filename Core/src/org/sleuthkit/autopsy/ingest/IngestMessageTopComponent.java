@@ -186,12 +186,6 @@ final class IngestMessageTopComponent extends TopComponent {
         return TopComponent.PERSISTENCE_ALWAYS;
     }
 
-    @Override
-    public java.awt.Image getIcon() {
-        return ImageUtilities.loadImage(
-                "org/sleuthkit/autopsy/ingest/eye-icon.png"); //NON-NLS
-    }
-
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
         // http://wiki.apidesign.org/wiki/PropertyFiles
