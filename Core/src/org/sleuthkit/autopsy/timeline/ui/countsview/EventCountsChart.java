@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.MissingResourceException;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -44,9 +45,9 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * Customized {@link StackedBarChart<String, Number>} used to display the event
  * counts in {@link CountsViewPane}
  */
-class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
+final class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
 
-    private ContextMenu contextMenu;
+    private ContextMenu chartContextMenu;
 
     private TimeLineController controller;
 
@@ -58,6 +59,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
      * by padding the end with one 'period'
      */
     private RangeDivisionInfo rangeInfo;
+    private final ChartDragHandler<String, EventCountsChart> dragHandler;
 
     EventCountsChart(CategoryAxis dateAxis, NumberAxis countAxis) {
         super(dateAxis, countAxis);
@@ -81,15 +83,19 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         setTitle(null);
 
         //use one handler with an if chain because it maintains state
-        ChartDragHandler<String, EventCountsChart> dragHandler = new ChartDragHandler<>(this, getXAxis());
+        dragHandler = new ChartDragHandler<>(this, getXAxis());
         setOnMousePressed(dragHandler);
         setOnMouseReleased(dragHandler);
         setOnMouseDragged(dragHandler);
+        setOnMouseMoved(dragHandler);
 
         setOnMouseClicked((MouseEvent clickEvent) -> {
-            contextMenu.hide();
+            if (chartContextMenu != null) {
+                chartContextMenu.hide();
+            }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                contextMenu.show(EventCountsChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
+                getChartContextMenu(clickEvent);
+                chartContextMenu.show(EventCountsChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
             }
         });
@@ -101,17 +107,34 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         intervalSelector = null;
     }
 
+    @NbBundle.Messages({"EventCountsChart.contextMenu.zoomHistory.name=Zoom History"})
+    ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+        if (chartContextMenu != null) {
+            chartContextMenu.hide();
+        }
+
+        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(
+//                new Action("Select Interval") {
+//            {
+//                setEventHandler((ActionEvent t) -> {
+//                    dragHandler.setRequireDrag(false);
+//                    dragHandler.handle(clickEvent.copyFor(clickEvent.getSource(), clickEvent.getTarget(), MouseEvent.MOUSE_DRAGGED));
+//                });
+//            }
+//
+//        },
+                new ActionGroup(
+                Bundle.EventCountsChart_contextMenu_zoomHistory_name(),
+                new Back(controller),
+                new Forward(controller))));
+        chartContextMenu.setAutoHide(true);
+        return chartContextMenu;
+    }
+
     @Override
-    public final synchronized void setController(TimeLineController controller) {
+    public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(this.controller.getEventsModel());
-        //we have defered creating context menu until control is available
-        contextMenu = ActionUtils.createContextMenu(
-                Arrays.asList(new ActionGroup(
-                                NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
-                                new Back(controller),
-                                new Forward(controller))));
-        contextMenu.setAutoHide(true);
     }
 
     @Override
@@ -145,7 +168,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
      * @return the context menu for this chart
      */
     ContextMenu getContextMenu() {
-        return contextMenu;
+        return chartContextMenu;
     }
 
     void setRangeInfo(RangeDivisionInfo rangeInfo) {
@@ -177,7 +200,7 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
      */
     private class CountsIntervalSelector extends IntervalSelector<String> {
 
-        public CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
+        CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
             super(x, height, axis, controller);
         }
 

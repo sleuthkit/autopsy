@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui;
 
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
@@ -69,7 +70,7 @@ public interface TimeLineChart<X> extends TimeLineView {
      * @param <X> the type of values along the horizontal axis
      * @param <Y> the type of chart this is a drag handler for
      */
-    class ChartDragHandler<X, Y extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+    static class ChartDragHandler<X, Y extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
 
         private final Y chart;
 
@@ -77,46 +78,80 @@ public interface TimeLineChart<X> extends TimeLineView {
 
         private double startX;  //hanlder mainstains position of drag start
 
+        private boolean requireDrag = true;
+
+        public boolean isRequireDrag() {
+            return requireDrag;
+        }
+
+        public void setRequireDrag(boolean requireDrag) {
+            this.requireDrag = requireDrag;
+        }
+
         public ChartDragHandler(Y chart, Axis<X> dateAxis) {
             this.chart = chart;
             this.dateAxis = dateAxis;
         }
 
         @Override
-        public void handle(MouseEvent t) {
-            if (t.getButton() == MouseButton.SECONDARY) {
-
-                if (t.getEventType() == MouseEvent.MOUSE_PRESSED) {
-                    //caputure  x-position, incase we are repositioning existing selector
-                    startX = t.getX();
-                    chart.setCursor(Cursor.E_RESIZE);
-                } else if (t.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-                    if (chart.getIntervalSelector() == null) {
-                        //make new interval selector
-                        chart.setIntervalSelector(chart.newIntervalSelector(t.getX(), dateAxis));
-                        chart.getIntervalSelector().heightProperty().bind(chart.heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
-                        chart.getIntervalSelector().addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
-                            if (event.getButton() == MouseButton.SECONDARY) {
-                                chart.clearIntervalSelector();
-                                event.consume();
-                            }
-                        });
-                        startX = t.getX();
-                    } else {
-                        //resize/position existing selector
-                        if (t.getX() > startX) {
-                            chart.getIntervalSelector().setX(startX);
-                            chart.getIntervalSelector().setWidth(t.getX() - startX);
-                        } else {
-                            chart.getIntervalSelector().setX(t.getX());
-                            chart.getIntervalSelector().setWidth(startX - t.getX());
+        public void handle(MouseEvent mouseEvent) {
+            EventType<? extends MouseEvent> mouseEventType = mouseEvent.getEventType();
+            if (mouseEventType == MouseEvent.MOUSE_PRESSED) {
+                //caputure  x-position, incase we are repositioning existing selector
+                startX = mouseEvent.getX();
+//                chart.setCursor(Cursor.H_RESIZE);
+            } else if ((mouseEventType == MouseEvent.MOUSE_DRAGGED)
+                    || mouseEventType == MouseEvent.MOUSE_MOVED && (requireDrag == false)) {
+                if (chart.getIntervalSelector() == null) {
+                    //make new interval selector
+                    chart.setIntervalSelector(chart.newIntervalSelector(mouseEvent.getX(), dateAxis));
+                    chart.getIntervalSelector().heightProperty().bind(chart.heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
+ IntervalSelector<? extends X> intervalSelector = chart.getIntervalSelector();
+                if (intervalSelector != null) {
+                    intervalSelector.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+                        if (event.getButton() == MouseButton.SECONDARY) {
+                            chart.clearIntervalSelector();
+                            event.consume();
                         }
-                    }
-                } else if (t.getEventType() == MouseEvent.MOUSE_RELEASED) {
-                    chart.setCursor(Cursor.DEFAULT);
+                    });
                 }
-                t.consume();
+                    startX = mouseEvent.getX();
+                } else {
+                    //resize/position existing selector
+                    if (mouseEvent.getX() > startX) {
+                        chart.getIntervalSelector().setX(startX);
+                        chart.getIntervalSelector().setWidth(mouseEvent.getX() - startX);
+                    } else {
+                        chart.getIntervalSelector().setX(mouseEvent.getX());
+                        chart.getIntervalSelector().setWidth(startX - mouseEvent.getX());
+                    }
+                }
+            } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
+//                chart.setCursor(Cursor.DEFAULT);
+                requireDrag = true;
+                IntervalSelector<? extends X> intervalSelector = chart.getIntervalSelector();
+                if (intervalSelector != null) {
+                    intervalSelector.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+                        if (event.getButton() == MouseButton.SECONDARY) {
+                            chart.clearIntervalSelector();
+                            event.consume();
+                        }
+                    });
+                }
+            } else if (mouseEventType == MouseEvent.MOUSE_CLICKED) {
+//                chart.setCursor(Cursor.DEFAULT);
+                requireDrag = true;
+                IntervalSelector<? extends X> intervalSelector = chart.getIntervalSelector();
+                if (intervalSelector != null) {
+                    intervalSelector.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+                        if (event.getButton() == MouseButton.SECONDARY) {
+                            chart.clearIntervalSelector();
+                            event.consume();
+                        }
+                    });
+                }
             }
+//            mouseEvent.consume();
         }
     }
 
@@ -140,15 +175,12 @@ public interface TimeLineChart<X> extends TimeLineView {
          */
         private final Axis<X> dateAxis;
 
-        protected Tooltip tooltip;
+        private Tooltip tooltip;
 
         /////////drag state
         private DragPosition dragPosition;
-
         private double startLeft;
-
         private double startX;
-
         private double startWidth;
         /////////end drag state
 
@@ -179,7 +211,8 @@ public interface TimeLineChart<X> extends TimeLineView {
                 Point2D localMouse = sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
                 final double diffX = getX() - localMouse.getX();
                 if (Math.abs(diffX) <= HALF_STROKE || Math.abs(diffX + getWidth()) <= HALF_STROKE) {
-                    setCursor(Cursor.E_RESIZE);
+                    //if the mouse is over the stroke, show the resize cursor
+                    setCursor(Cursor.H_RESIZE);
                 } else {
                     setCursor(Cursor.HAND);
                 }
@@ -221,9 +254,7 @@ public interface TimeLineChart<X> extends TimeLineView {
                         //convert to DateTimes, using max/min if null(off axis)
                         DateTime start = parseDateTime(getSpanStart());
                         DateTime end = parseDateTime(getSpanEnd());
-
                         Interval i = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
-
                         controller.pushTimeRange(i);
                     }
                 }
@@ -258,13 +289,15 @@ public interface TimeLineChart<X> extends TimeLineView {
          */
         protected abstract DateTime parseDateTime(X date);
 
+        @NbBundle.Messages({"# {0} - start timestamp",
+            "# {1} - end timestamp",
+            "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}\nRight-click to clear."})
         private void setTooltip() {
             final X start = getSpanStart();
             final X end = getSpanEnd();
             Tooltip.uninstall(this, tooltip);
             tooltip = new Tooltip(
-                    NbBundle.getMessage(TimeLineChart.class, "Timeline.ui.TimeLineChart.tooltip.text", formatSpan(start),
-                            formatSpan(end)));
+                    Bundle.Timeline_ui_TimeLineChart_tooltip_text(formatSpan(start), formatSpan(end)));
             Tooltip.install(this, tooltip);
         }
 
@@ -290,7 +323,9 @@ public interface TimeLineChart<X> extends TimeLineView {
          */
         private enum DragPosition {
 
-            LEFT, CENTER, RIGHT
+            LEFT,
+            CENTER,
+            RIGHT
         }
     }
 }
