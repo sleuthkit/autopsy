@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -146,7 +147,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
-                if (!kwsService.canConnectToRemoteSolrServer()) {
+                if (!kwsService.canConnectToRemoteSolrServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort())) {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     logger.log(Level.SEVERE, msg);
                     String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.verifyConnection");

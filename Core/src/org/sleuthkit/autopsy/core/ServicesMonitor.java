@@ -277,7 +277,7 @@ public class ServicesMonitor {
     private void checkKeywordSearchServerConnectionStatus() {
         try {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            if (kwsService != null && kwsService.canConnectToRemoteSolrServer()) {
+            if (kwsService != null && kwsService.canConnectToRemoteSolrServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort())) {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");

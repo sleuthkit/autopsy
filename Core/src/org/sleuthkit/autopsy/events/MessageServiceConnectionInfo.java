@@ -24,7 +24,6 @@ import javax.annotation.concurrent.Immutable;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Connection info for a Java Message Service (JMS) provider. Thread-safe.
@@ -112,7 +111,7 @@ public final class MessageServiceConnectionInfo {
     public boolean canConnect() {
         try {
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getUserName(), getPassword(), getURI());
-            Connection connection = connectionFactory.createConnection();
+            Connection connection = connectionFactory.createConnection(getUserName(), getPassword());
             connection.start();
             connection.close();
             return true;
