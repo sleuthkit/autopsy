@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.collect.Range;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -145,16 +144,16 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     @GuardedBy(value = "this")
     private boolean requiresLayout = true;
 
-    final ObservableList<EventStripeNode> selectedNodes;
+    final ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes;
     /**
      * the group that all event nodes are added to. This facilitates scrolling
      * by allowing a single translation of this group.
      */
     private final Group nodeGroup = new Group();
-    private final ObservableList<EventBundle> bundles = FXCollections.observableArrayList();
+    private final ObservableList<EventBundle<?>> bundles = FXCollections.observableArrayList();
     private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
     private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
-    private final Map<Range<Long>, Line> projectionMap = new HashMap<>();
+    private final Map<EventCluster, Line> projectionMap = new HashMap<>();
 
     /**
      * list of series of data added to this chart
@@ -202,7 +201,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
     private final SimpleBooleanProperty alternateLayout = new SimpleBooleanProperty(true);
 
-    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventStripeNode> selectedNodes) {
+    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
         dateAxis.setAutoRanging(false);
 
@@ -255,24 +254,24 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
         this.selectedNodes = selectedNodes;
         this.selectedNodes.addListener((
-                ListChangeListener.Change<? extends EventStripeNode> c) -> {
-                    while (c.next()) {
-                        c.getRemoved().forEach((EventStripeNode t) -> {
-                            t.getEventStripe().getRanges().forEach((Range<Long> t1) -> {
+                ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
+                    while (change.next()) {
+                        change.getRemoved().forEach((EventBundleNodeBase<?, ?, ?> removedNode) -> {
+                            removedNode.getEventBundle().getClusters().forEach(cluster -> {
 
-                                Line removedLine = projectionMap.remove(t1);
+                                Line removedLine = projectionMap.remove(cluster);
                                 getChartChildren().removeAll(removedLine);
                             });
 
                         });
-                        c.getAddedSubList().forEach((EventStripeNode t) -> {
+                        change.getAddedSubList().forEach((EventBundleNodeBase<?, ?, ?> addedNode) -> {
 
-                            for (Range<Long> range : t.getEventStripe().getRanges()) {
+                            for (EventCluster range : addedNode.getEventBundle().getClusters()) {
 
-                                Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.lowerEndpoint(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
-                                        dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.upperEndpoint(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
+                                Line line = new Line(dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.getStartMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET,
+                                        dateAxis.localToParent(dateAxis.getDisplayPosition(new DateTime(range.getEndMillis(), TimeLineController.getJodaTimeZone())), 0).getX(), dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET
                                 );
-                                line.setStroke(t.getEventType().getColor().deriveColor(0, 1, 1, .5));
+                                line.setStroke(addedNode.getEventType().getColor().deriveColor(0, 1, 1, .5));
                                 line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
                                 line.setStrokeLineCap(StrokeLineCap.ROUND);
                                 projectionMap.put(range, line);
@@ -289,7 +288,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         requestChartLayout();
     }
 
-    ObservableList<EventBundle> getEventBundles() {
+    ObservableList<EventBundle<?>> getEventBundles() {
         return bundles;
     }
 
@@ -400,7 +399,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         final EventCluster eventCluster = data.getYValue();
         bundles.add(eventCluster);
         EventStripe eventStripe = stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
-                new EventStripe(eventCluster),
+                new EventStripe(eventCluster, null),
                 (EventStripe u, EventStripe v) -> {
                     EventStripeNode remove = stripeNodeMap.remove(u);
                     nodeGroup.getChildren().remove(remove);
@@ -482,7 +481,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                                             .filter(AbstractFilter::isActive)
                                             .anyMatch(filter -> filter.getDescription().equals(node.getDescription()))));
 
-                    layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, 0);
+                    layoutStripeNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, 0);
                     minY = maxY.get();
                 }
             } else {
@@ -490,7 +489,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         .collect(Collectors.partitioningBy(node -> getController().getQuickHideFilters().stream()
                                         .filter(AbstractFilter::isActive)
                                         .anyMatch(filter -> filter.getDescription().equals(node.getDescription()))));
-                layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, 0);
+                layoutStripeNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), 0, 0);
             }
             setCursor(null);
             requiresLayout = false;
@@ -508,7 +507,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      *
      * @return the double
      */
-    private double layoutNodesHelper(List<EventStripeNode> hiddenNodes, List<EventStripeNode> shownNodes, double minY, final double xOffset) {
+    private double layoutStripeNodesHelper(List<EventStripeNode> hiddenNodes, List<EventStripeNode> shownNodes, double minY, final double xOffset) {
 
         hiddenNodes.forEach((EventStripeNode t) -> {
 //            children.remove(t);
@@ -525,7 +524,37 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         });
 
         shownNodes.sort(Comparator.comparing(EventStripeNode::getStartMillis));
-        return layoutNodes(shownNodes, minY, xOffset);
+        return layoutStripeNodes(shownNodes, minY, xOffset);
+    }
+
+    /**
+     *
+     * @param hiddenNodes the value of hiddenNodes
+     * @param shownNodes  the value of shownNodes
+     * @param minY        the value of minY
+     * @param children    the value of children
+     * @param xOffset     the value of xOffset
+     *
+     * @return the double
+     */
+    private double layoutClusterNodesHelper(List<EventClusterNode> hiddenNodes, List<EventClusterNode> shownNodes, double minY, final double xOffset) {
+
+        hiddenNodes.forEach((EventClusterNode t) -> {
+//            children.remove(t);
+            t.setVisible(false);
+            t.setManaged(false);
+        });
+
+        shownNodes.forEach((EventClusterNode t) -> {
+//            if (false == children.contains(t)) {
+//                children.add(t);
+//            }
+            t.setVisible(true);
+            t.setManaged(true);
+        });
+
+        shownNodes.sort(Comparator.comparing(EventClusterNode::getStartMillis));
+        return layoutClusterNodes(shownNodes, minY, xOffset);
     }
 
     @Override
@@ -549,24 +578,35 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
     }
+    Function<EventClusterNode, Stream<EventBundleNodeBase<?, ?, ?>>> clusterFlattener =
+            new Function<EventClusterNode, Stream<EventBundleNodeBase<?, ?, ?>>>() {
+                @Override
+                public Stream<EventBundleNodeBase<?, ?, ?>> apply(EventClusterNode node) {
+                    return Stream.concat(
+                            Stream.of(node),
+                            node.getSubNodes().stream().flatMap(stripeFlattener::apply));
+                }
+            };
 
-    Iterable<EventStripeNode> getNodes(Predicate<EventStripeNode> p) {
-        Function<EventStripeNode, Stream<EventStripeNode>> flattener =
-                new Function<EventStripeNode, Stream<EventStripeNode>>() {
-                    @Override
-                    public Stream<EventStripeNode> apply(EventStripeNode node) {
-                        return Stream.concat(
-                                Stream.of(node),
-                                node.getSubNodes().stream().flatMap(this::apply));
-                    }
-                };
+    Function<EventStripeNode, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
+            new Function<EventStripeNode, Stream<EventBundleNodeBase<?, ?, ?>>>() {
+
+                @Override
+                public Stream<EventBundleNodeBase<?, ?, ?>> apply(EventStripeNode node) {
+                    return Stream.concat(
+                            Stream.of(node),
+                            node.getSubNodes().stream().flatMap(clusterFlattener::apply));
+                }
+            };
+
+    Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
 
         return stripeNodeMap.values().stream()
-                .flatMap(flattener)
+                .flatMap(stripeFlattener)
                 .filter(p).collect(Collectors.toList());
     }
 
-    Iterable<EventStripeNode> getAllNodes() {
+    Iterable<EventBundleNodeBase<?, ?, ?>> getAllNodes() {
         return getNodes(x -> true);
     }
 
@@ -587,12 +627,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * @param nodes
      * @param minY
      */
-    private synchronized double layoutNodes(final Collection< EventStripeNode> nodes, final double minY, final double xOffset) {
-        //hash map from y value to right most occupied x value.  This tells you for a given 'row' what is the first avaialable slot
+    private synchronized double layoutStripeNodes(final Collection< EventStripeNode> nodes, final double minY, final double xOffset) {
+        //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
         Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
-        //for each node lay size it and position it in first available slot
-
+        //for each node size it and position it in first available slot
         for (EventStripeNode stripeNode : nodes) {
 
             stripeNode.setDescriptionVisibility(descrVisibility.get());
@@ -601,37 +640,26 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             //position of start and end according to range of axis
             double startX = rawDisplayPosition - xOffset;
             double layoutNodesResultHeight = 0;
-
             double span = 0;
-
-            List<EventStripeNode> subNodes = stripeNode.getSubNodes();
-            if (subNodes.isEmpty() == false) {
-                Map<Boolean, List<EventStripeNode>> hiddenPartition = subNodes.stream()
-                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideFilters().stream()
-                                        .filter(AbstractFilter::isActive)
-                                        .anyMatch(filter -> filter.getDescription().equals(testNode.getDescription()))));
-
-                layoutNodesResultHeight = layoutNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, rawDisplayPosition);
-            }
 
             List<Double> spanWidths = new ArrayList<>();
             double x = getXAxis().getDisplayPosition(new DateTime(stripeNode.getStartMillis()));;
             double x2;
-            Iterator<Range<Long>> ranges = stripeNode.getEventStripe().getRanges().iterator();
-            Range<Long> range = ranges.next();
+            Iterator<EventCluster> ranges = stripeNode.getEventStripe().getClusters().iterator();
+            EventCluster cluster = ranges.next();
             do {
-                x2 = getXAxis().getDisplayPosition(new DateTime(range.upperEndpoint()));
+                x2 = getXAxis().getDisplayPosition(new DateTime(cluster.getEndMillis()));
                 double clusterSpan = x2 - x;
                 span += clusterSpan;
                 spanWidths.add(clusterSpan);
                 if (ranges.hasNext()) {
-                    range = ranges.next();
-                    x = getXAxis().getDisplayPosition(new DateTime(range.lowerEndpoint()));
+                    cluster = ranges.next();
+                    x = getXAxis().getDisplayPosition(new DateTime(cluster.getStartMillis()));
                     double gapSpan = x - x2;
                     span += gapSpan;
                     spanWidths.add(gapSpan);
                     if (ranges.hasNext() == false) {
-                        x2 = getXAxis().getDisplayPosition(new DateTime(range.upperEndpoint()));
+                        x2 = getXAxis().getDisplayPosition(new DateTime(cluster.getEndMillis()));
                         clusterSpan = x2 - x;
                         span += clusterSpan;
                         spanWidths.add(clusterSpan);
@@ -647,6 +675,15 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             } else { //else set it unbounded
                 stripeNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
             }
+            List<EventClusterNode> subNodes = stripeNode.getSubNodes();
+            if (subNodes.isEmpty() == false) {
+                Map<Boolean, List<EventClusterNode>> hiddenPartition = subNodes.stream()
+                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideFilters().stream()
+                                        .filter(AbstractFilter::isActive)
+                                        .anyMatch(filter -> filter.getDescription().equals(testNode.getDescription()))));
+
+                layoutNodesResultHeight = layoutClusterNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, rawDisplayPosition);
+            }
 
             stripeNode.autosize(); //compute size of tlNode based on constraints and event data
 
@@ -654,10 +691,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             double xRight = startX + stripeNode.getWidth();
 
             //get the height of the node
-            final double h = layoutNodesResultHeight == 0 ? stripeNode.getHeight() : layoutNodesResultHeight + DEFAULT_ROW_HEIGHT;
+            final double h = layoutNodesResultHeight == 0 ? stripeNode.getHeight() : layoutNodesResultHeight ;
+            
             //initial test position
             double yPos = minY;
-
             double yPos2 = yPos + h;
 
             if (oneEventPerRow.get()) {
@@ -665,8 +702,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 yPos = (localMax + 2);
                 yPos2 = yPos + h;
 
-            } else {//else
-
+            } else {
                 boolean overlapping = true;
                 while (overlapping) {
                     //loop through y values looking for available slot.
@@ -702,13 +738,135 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return localMax - minY;
     }
 
+    /**
+     * layout the nodes in the given list, starting form the given minimum y
+     * coordinate.
+     *
+     * @param nodes
+     * @param minY
+     */
+    private synchronized double layoutClusterNodes(final Collection< EventClusterNode> nodes, final double minY, final double xOffset) {
+        //hash map from y value to right most occupied x value.  This tells you for a given 'row' what is the first avaialable slot
+        Map<Integer, Double> maxXatY = new HashMap<>();
+        double localMax = minY;
+        //for each node lay size it and position it in first available slot
+
+        for (EventClusterNode clusterNode : nodes) {
+
+            clusterNode.setDescriptionVisibility(descrVisibility.get());
+            double rawDisplayPosition = getXAxis().getDisplayPosition(new DateTime(clusterNode.getStartMillis()));
+
+            //position of start and end according to range of axis
+            double startX = rawDisplayPosition - xOffset;
+            double layoutNodesResultHeight = 0;
+
+            double span = 0;
+
+            List<Double> spanWidths = new ArrayList<>();
+            double x = getXAxis().getDisplayPosition(new DateTime(clusterNode.getStartMillis()));;
+            double x2;
+            Iterator<EventCluster> ranges = clusterNode.getEventCluster().getClusters().iterator();
+            EventCluster range = ranges.next();
+            do {
+                x2 = getXAxis().getDisplayPosition(new DateTime(range.getEndMillis()));
+                double clusterSpan = x2 - x;
+                span += clusterSpan;
+                spanWidths.add(clusterSpan);
+                if (ranges.hasNext()) {
+                    range = ranges.next();
+                    x = getXAxis().getDisplayPosition(new DateTime(range.getStartMillis()));
+                    double gapSpan = x - x2;
+                    span += gapSpan;
+                    spanWidths.add(gapSpan);
+                    if (ranges.hasNext() == false) {
+                        x2 = getXAxis().getDisplayPosition(new DateTime(range.getEndMillis()));
+                        clusterSpan = x2 - x;
+                        span += clusterSpan;
+                        spanWidths.add(clusterSpan);
+                    }
+                }
+
+            } while (ranges.hasNext());
+
+            clusterNode.setSpanWidths(spanWidths);
+
+            if (truncateAll.get()) { //if truncate option is selected limit width of description label
+                clusterNode.setDescriptionWidth(Math.max(span, truncateWidth.get()));
+            } else { //else set it unbounded
+                clusterNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());
+            }
+
+            List<EventStripeNode> subNodes = clusterNode.getSubNodes();
+            if (subNodes.isEmpty() == false) {
+                Map<Boolean, List<EventStripeNode>> hiddenPartition = subNodes.stream()
+                        .collect(Collectors.partitioningBy(testNode -> getController().getQuickHideFilters().stream()
+                                        .filter(AbstractFilter::isActive)
+                                        .anyMatch(filter -> filter.getDescription().equals(testNode.getDescription()))));
+
+                layoutNodesResultHeight = layoutStripeNodesHelper(hiddenPartition.get(true), hiddenPartition.get(false), minY, rawDisplayPosition);
+            }
+
+            clusterNode.autosize(); //compute size of tlNode based on constraints and event data
+
+            //get position of right edge of node ( influenced by description label)
+            double xRight = startX + clusterNode.getWidth();
+
+            //get the height of the node
+            final double h = layoutNodesResultHeight == 0 ? clusterNode.getHeight() : layoutNodesResultHeight ;
+            //initial test position
+            double yPos = minY;
+
+            double yPos2 = yPos + h;
+
+            if (oneEventPerRow.get()) {
+                // if onePerRow, just put it at end
+                yPos = (localMax + 2);
+                yPos2 = yPos + h;
+
+            } else {//else
+
+                boolean overlapping = true;
+                while (overlapping) {
+                    //loop through y values looking for available slot.
+
+                    overlapping = false;
+                    //check each pixel from top to bottom.
+                    for (double y = yPos2; y >= yPos; y--) {
+                        final Double maxX = maxXatY.get((int) y);
+                        if (maxX != null && maxX >= startX - 4) {
+                            //if that pixel is already used
+                            //jump top to this y value and repeat until free slot is found.
+                            overlapping = true;
+                            yPos = y + 4;
+                            yPos2 = yPos + h;
+                            break;
+                        }
+                    }
+                }
+                //mark used y values
+                for (double y = yPos; y <= yPos2; y++) {
+                    maxXatY.put((int) y, xRight);
+                }
+            }
+            localMax = Math.max(yPos2, localMax);
+
+            Timeline tm = new Timeline(new KeyFrame(Duration.seconds(1.0),
+                    new KeyValue(clusterNode.layoutXProperty(), startX),
+                    new KeyValue(clusterNode.layoutYProperty(), yPos)));
+
+            tm.play();
+        }
+        maxY.set(Math.max(maxY.get(), localMax));
+        return localMax - minY;
+    }
+
     private void layoutProjectionMap() {
-        for (final Map.Entry<Range<Long>, Line> entry : projectionMap.entrySet()) {
-            final Range<Long> range = entry.getKey();
+        for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {
+            final EventCluster cluster = entry.getKey();
             final Line line = entry.getValue();
 
-            line.setStartX(getParentXForEpochMillis(range.lowerEndpoint()));
-            line.setEndX(getParentXForEpochMillis(range.upperEndpoint()));
+            line.setStartX(getParentXForEpochMillis(cluster.getStartMillis()));
+            line.setEndX(getParentXForEpochMillis(cluster.getEndMillis()));
 
             line.setStartY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
