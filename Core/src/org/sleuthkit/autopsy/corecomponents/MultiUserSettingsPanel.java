@@ -41,8 +41,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MultiUserSettingsPanel.class.getName());
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
-    // private final ImageIcon untestedIcon;
-
+    
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
      *
@@ -475,16 +474,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
         lbTestSolr.setIcon(null);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            if (kwsService != null && kwsService.canConnectToRemoteSolrServer(tbSolrHostname.getText(), tbSolrPort.getText())) {
-                lbTestSolr.setIcon(goodIcon);
-            } else {
-                lbTestSolr.setIcon(badIcon);
-            }
-        } catch (Exception ex) {
+        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+        if (kwsService != null && kwsService.canConnectToRemoteSolrServer(tbSolrHostname.getText(), tbSolrPort.getText())) {
+            lbTestSolr.setIcon(goodIcon);
+        } else {
             lbTestSolr.setIcon(badIcon);
-            logger.log(Level.INFO, "Could not connect to Solr"); //NON-NLS
         }
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnTestSolrActionPerformed
