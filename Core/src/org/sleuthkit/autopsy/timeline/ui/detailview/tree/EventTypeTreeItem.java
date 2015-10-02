@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 class EventTypeTreeItem extends NavTreeItem {
 
@@ -35,8 +36,8 @@ class EventTypeTreeItem extends NavTreeItem {
 
     private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(AggregateEvent g) {
-        setValue(new NavTreeNode(g.getType().getBaseType(), g.getType().getBaseType().getDisplayName(), 0));
+    EventTypeTreeItem(EventCluster g) {
+        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getEventType().getBaseType().getDisplayName(), 0));
     }
 
     @Override
@@ -52,7 +53,7 @@ class EventTypeTreeItem extends NavTreeItem {
      * @param tree True if it is part of a tree (versus a list)
      */
     @Override
-    public void insert(AggregateEvent g) {
+    public void insert(EventCluster g) {
 
         EventDescriptionTreeItem treeItem = childMap.get(g.getDescription());
         if (treeItem == null) {
@@ -77,8 +78,8 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(AggregateEvent t) {
-        if (t.getType().getBaseType() == getValue().getType().getBaseType()) {
+    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
+        if (t.getEventType().getBaseType() == getValue().getType().getBaseType()) {
 
             for (TreeItem<NavTreeNode> child : getChildren()) {
                 final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
