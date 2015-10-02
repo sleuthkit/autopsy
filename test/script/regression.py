@@ -1249,11 +1249,12 @@ class Reports(object):
         Args:
             test_data: the TestData
         """
-        filename = make_path(test_config.output_path, test_data.image + "_time.txt")
-        new_file = open(filename, "w")
+        filename = test_data.image + "_time.txt"
+        filepath = make_path(test_data.output_path, filename)
+        new_file = open(filepath, "w")
         new_file.write(test_data.total_ingest_time)
         new_file.close()
-        shutil.copy(new_file.name, test_data.main_config.input_dir)
+        shutil.copy(new_file.name, make_path(test_data.main_config.input_dir, filename))
 
     def _get_num_memory_errors(type, test_data):
         """Get the number of OutOfMemory errors and Exceptions.
