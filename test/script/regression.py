@@ -633,7 +633,7 @@ class TestData(object):
         """
         full_filename = self.image_name + file_name
         if(file_type == DBType.GOLD):
-            return make_path(self.gold_data_dir, full_filename)
+            return make_path(self.main_config.gold, full_filename)
         else:
             return make_path(self.output_path, full_filename)
 
@@ -1293,7 +1293,6 @@ class Logs(object):
                 log.close()
             common_log.write("\n")
             common_log.close()
-            print(test_data.common_log_path)
             srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
             subprocess.call(srtcmdlst)
         except (OSError, IOError) as e:
