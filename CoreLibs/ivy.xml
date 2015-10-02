@@ -65,5 +65,9 @@
         <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.1.1" />
 
         <dependency org="org.apache.curator" name="curator-recipes" rev="2.8.0"/>
+        <dependency conf="autopsy_core->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy_core->*" org="org.apache.solr" name="solr-cell" rev="4.9.1"/>
+        <dependency conf="autopsy_core->*" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
+
     </dependencies>
 </ivy-module>

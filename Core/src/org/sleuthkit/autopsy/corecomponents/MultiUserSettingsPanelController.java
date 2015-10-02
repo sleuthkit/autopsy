@@ -87,7 +87,7 @@ public final class MultiUserSettingsPanelController extends OptionsPanelControll
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         /**
-         * Note the NetBeans Framework does not appear to call this at all We
+         * Note the NetBeans Framework does not appear to call this at all. We
          * are using NetBeans 7.3.1 Build 201306052037. Perhaps in a future
          * version of the Framework this will be resolved, but for now, simply
          * don't unregister anything and add one time only in the
