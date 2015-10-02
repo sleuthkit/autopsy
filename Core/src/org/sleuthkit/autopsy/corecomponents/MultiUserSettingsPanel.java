@@ -428,8 +428,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (!cbEnableMultiUser.isSelected()) {
             tbOops.setText("");
             bnTestDatabase.setEnabled(false);
+            lbTestDatabase.setIcon(null);
             bnTestSolr.setEnabled(false);
+            lbTestSolr.setIcon(null);
             bnTestMessageService.setEnabled(false);
+            lbTestMessageService.setIcon(null);
         }
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
         controller.changed();
