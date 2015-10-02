@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -156,21 +155,41 @@ public class SolrSearchService implements KeywordSearchService {
         }
     }
 
+    /**
+     * Checks if we can communicate with Solr using the passed-in host and port.
+     * Closes the connection upon exit.
+     *
+     * @param host the remote hostname or IP address of the Solr server
+     * @param port the remote port for Solr
+     *
+     * @return true if communication with Solr is functional, false otherwise
+     */
     @Override
-    public boolean canConnectToRemoteSolrServer() {
-        try {
-            String host = UserPreferences.getIndexingServerHost();
-            String port = UserPreferences.getIndexingServerPort();
-            if (host.isEmpty() || port.isEmpty()) {
-                return false;
-            }
-            HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
-            KeywordSearch.getServer().connectToSolrServer(solrServer);
-        } catch (SolrServerException | IOException ex) {
+    public boolean canConnectToRemoteSolrServer(String host, String port) {
+        if (host.isEmpty() || port.isEmpty()) {
             return false;
         }
 
-        return true;
+        try {
+            // if the port value is invalid, return false
+            Integer.parseInt(port);
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+
+        HttpSolrServer solrServer = null;
+        try {
+            solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
+            return true; // if we get here, it's at least up and responding
+        } catch (SolrServerException | IOException ignore) {
+        } finally {
+            if (solrServer != null) {
+                solrServer.shutdown();
+            }
+        }
+
+        return false;
     }
 
     @Override

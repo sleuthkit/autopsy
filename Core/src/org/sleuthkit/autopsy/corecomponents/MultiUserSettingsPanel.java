@@ -5,7 +5,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import org.sleuthkit.autopsy.coreutils.SolrServiceConnectionTester;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,8 +18,11 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 
 public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
@@ -67,21 +69,20 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         configureTextPrompts(textPrompts);
 
         /* Set each textbox with a "statusIcon" property enabling the 
-        DocumentListeners to know which icon to erase when changes are made */
-        
+         DocumentListeners to know which icon to erase when changes are made */
         tbDbHostname.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbPort.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbPassword.getDocument().putProperty("statusIcon", lbTestDatabase);
-        
+
         tbSolrHostname.getDocument().putProperty("statusIcon", lbTestSolr);
         tbSolrPort.getDocument().putProperty("statusIcon", lbTestSolr);
-        
+
         tbMsgHost.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgPort.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgUsername.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgPassword.getDocument().putProperty("statusIcon", lbTestMessageService);
-        
+
         /// Register for notifications when the text boxes get updated.
         textBoxChangedListener = new TextBoxChangedListener();
         textBoxes.add(tbDbHostname);
@@ -94,7 +95,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textBoxes.add(tbMsgPassword);
         textBoxes.add(tbSolrHostname);
         textBoxes.add(tbSolrPort);
-        
+
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
@@ -474,10 +475,16 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
         lbTestSolr.setIcon(null);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        if (SolrServiceConnectionTester.canConnect(tbSolrHostname.getText(), tbSolrPort.getText())) {
-            lbTestSolr.setIcon(goodIcon);
-        } else {
+        try {
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            if (kwsService != null && kwsService.canConnectToRemoteSolrServer(tbSolrHostname.getText(), tbSolrPort.getText())) {
+                lbTestSolr.setIcon(goodIcon);
+            } else {
+                lbTestSolr.setIcon(badIcon);
+            }
+        } catch (Exception ex) {
             lbTestSolr.setIcon(badIcon);
+            logger.log(Level.INFO, "Could not connect to Solr"); //NON-NLS
         }
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnTestSolrActionPerformed

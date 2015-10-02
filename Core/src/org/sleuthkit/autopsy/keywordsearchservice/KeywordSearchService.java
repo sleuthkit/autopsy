@@ -40,7 +40,11 @@ public interface KeywordSearchService extends Closeable {
     /**
      * Are we able to connect to the remote Solr server.
      *
+     * @param host the hostname or IP address of the server
+     * @param port the port to connect to
+     *
      * @return true if we can connect, otherwise false
      */
-    public boolean canConnectToRemoteSolrServer();
+    public boolean canConnectToRemoteSolrServer(String host, String port);
+
 }
