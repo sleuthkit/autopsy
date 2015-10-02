@@ -1249,7 +1249,7 @@ class Reports(object):
         Args:
             test_data: the TestData
         """
-        filename = make_path(test_config.gold, test_data.image + "_time.txt")
+        filename = make_path(test_config.output_path, test_data.image + "_time.txt")
         new_file = open(filename, "w")
         new_file.write(test_data.total_ingest_time)
         new_file.close()
