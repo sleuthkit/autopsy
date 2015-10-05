@@ -168,14 +168,6 @@ public class EventCluster implements EventBundle<EventStripe> {
         return lod;
     }
 
-//    Range<Long> getRange() {
-//        if (getEndMillis() > getStartMillis()) {
-//            return Range.closedOpen(getSpan().getStartMillis(), getSpan().getEndMillis());
-//        } else {
-//            return Range.singleton(getStartMillis());
-//        }
-//    }
-
     /**
      * return a new EventCluster identical to this one, except with the given
      * EventBundle as the parent.

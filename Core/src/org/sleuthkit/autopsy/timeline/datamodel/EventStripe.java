@@ -107,7 +107,7 @@ public final class EventStripe implements EventBundle<EventCluster> {
         tagged.addAll(v.getEventIDsWithTags());
         hashHits.addAll(u.getEventIDsWithHashHits());
         hashHits.addAll(v.getEventIDsWithHashHits());
-        parent = u.getParentBundle().orElse(null);
+        parent = u.getParentBundle().orElse(v.getParentBundle().orElse(null));
     }
 
     @Override
