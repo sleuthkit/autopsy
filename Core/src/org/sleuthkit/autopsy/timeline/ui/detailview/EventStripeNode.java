@@ -52,6 +52,7 @@ import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -59,9 +60,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -110,7 +108,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
-
+        setBackground(defaultBackground);
         minWidthProperty().bind(subNodePane.widthProperty());
 
         if (eventStripe.getEventIDsWithHashHits().isEmpty()) {
@@ -120,9 +118,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
             show(tagIV, false);
         }
 
-        infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV/*
-         * , minusButton, plusButton
-         */);
+        infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
         //initialize info hbox
         infoHBox.getChildren().add(4, hideButton);
@@ -137,25 +133,17 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setMouseTransparent(true);
 
-        //set up subnode pane sizing contraints
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMinHeight(USE_PREF_SIZE);
-        subNodePane.setMinWidth(USE_PREF_SIZE);
-        subNodePane.setMaxHeight(USE_PREF_SIZE);
-        subNodePane.setMaxWidth(USE_PREF_SIZE);
 //        subNodePane.setPickOnBounds(false);
-
+        setAlignment(Pos.TOP_LEFT);
+        infoHBox.setAlignment(Pos.TOP_LEFT);
         for (EventCluster cluster : eventStripe.getClusters()) {
             EventClusterNode clusterNode = new EventClusterNode(chart, cluster, this);
             subNodes.add(clusterNode);
-            subNodePane.getChildren().addAll(clusterNode, new Region());
+            subNodePane.getChildren().addAll(clusterNode);
         }
-        subNodePane.getChildren().remove(subNodePane.getChildren().size() - 1);
-//        clustersHBox.setMaxWidth(USE_PREF_SIZE);
 
-        getChildren().addAll( infoHBox,subNodePane);
+        getChildren().addAll(subNodePane, infoHBox);
 
-//        setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
 
         //set up mouse hover effect and tooltip
@@ -166,7 +154,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
              */
             installTooltip();
             showDescriptionLoDControls(true);
-            toFront();
+//            toFront();
         });
 
         setOnMouseExited((MouseEvent e) -> {
@@ -271,19 +259,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     }
 
     /**
-     * make a new filter intersecting the global filter with description and
-     * type filters to restrict sub-clusters
-     *
-     */
-    RootFilter getSubClusterFilter() {
-        RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
-        subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(getEventStripe().getDescriptionLoD(), getEventStripe().getDescription(), DescriptionFilter.FilterMode.INCLUDE),
-                new TypeFilter(getEventType()));
-        return subClusterFilter;
-    }
-
-    /**
      * @param w the maximum width the description label should have
      */
     public void setDescriptionWidth(double w) {
@@ -377,5 +352,19 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
                 t.consume();
             }
         }
+    }
+
+    @Override
+    void layoutChildren(double xOffset) {
+        super.layoutChildren();
+        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
+        //position of start and end according to range of axis
+        double startX = chartX - xOffset;
+
+        setLayoutX(startX);
+
+        chart.layoutStripes(subNodes, 0, chartX);
+
+        autosize();//compute size of tlNode based on constraints and event data
     }
 }

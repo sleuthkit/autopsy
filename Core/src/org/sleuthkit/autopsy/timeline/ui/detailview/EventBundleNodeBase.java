@@ -18,7 +18,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  *
  */
-public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, ParentBundleType extends EventBundle<?>, ParentNodeType extends EventBundleNodeBase<ParentBundleType, BundleType, ?>> extends VBox {
+public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentType>, ParentType extends EventBundle<BundleType>, ParentNodeType extends EventBundleNodeBase<ParentType, BundleType, ?>> extends StackPane {
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
@@ -48,8 +48,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, Par
     final Background highlightedBackground;
     final Background defaultBackground;
     final Color evtColor;
-//    final Button plusButton = ActionUtils.createButton(new EventStripeNode.ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-//    final Button minusButton = ActionUtils.createButton(new EventStripeNode.CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
     final Button hideButton;
     final List<ParentNodeType> subNodes = new ArrayList<>();
     final Pane subNodePane = new Pane();
@@ -66,12 +64,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, Par
         defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
         highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
 
-        setBackground(defaultBackground);
         EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(hideButton);
-//        configureLoDButton(plusButton);
-//        configureLoDButton(minusButton);
 
         setAlignment(Pos.TOP_LEFT);
         setMinHeight(24);
@@ -79,6 +74,14 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, Par
         setMaxHeight(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
         setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
+
+        //set up subnode pane sizing contraints
+        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
+        subNodePane.setMinHeight(24);
+        subNodePane.setMaxHeight(USE_PREF_SIZE);
+        subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
+        subNodePane.setMinWidth(USE_PREF_SIZE);
+        subNodePane.setMaxWidth(USE_PREF_SIZE);
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -92,22 +95,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, Par
     final double getLayoutXCompensation() {
         return (parentNode != null ? parentNode.getLayoutXCompensation() : 0)
                 + getBoundsInParent().getMinX();
-    }
-
-    final EventType getEventType() {
-        return getEventBundle().getEventType();
-    }
-
-    final String getDescription() {
-        return getEventBundle().getDescription();
-    }
-
-    final long getStartMillis() {
-        return getEventBundle().getStartMillis();
-    }
-
-    final Set<Long> getEventsIDs() {
-        return getEventBundle().getEventIDs();
     }
 
     abstract void installTooltip();
@@ -127,4 +114,26 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<?>, Par
     }
 
     abstract void setDescriptionVisibility(DescriptionVisibility get);
+
+    final EventType getEventType() {
+        return getEventBundle().getEventType();
+    }
+
+    final String getDescription() {
+        return getEventBundle().getDescription();
+    }
+
+    final long getStartMillis() {
+        return getEventBundle().getStartMillis();
+    }
+
+    final long getEndMillis() {
+        return getEventBundle().getEndMillis();
+    }
+
+    final Set<Long> getEventsIDs() {
+        return getEventBundle().getEventIDs();
+    }
+
+    abstract void layoutChildren(double xOffset);
 }

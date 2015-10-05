@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 /**
  *
  */
-public interface EventBundle<T extends EventBundle<?>> {
+public interface EventBundle<ParentType extends EventBundle<?>> {
 
     String getDescription();
 
@@ -45,7 +45,7 @@ public interface EventBundle<T extends EventBundle<?>> {
 
     long getStartMillis();
 
-    Optional<T> getParentBundle();
+    Optional<ParentType> getParentBundle();
 
     default long getCount() {
         return getEventIDs().size();
