@@ -221,9 +221,8 @@ class TestRunner(object):
             logres?
         """
 
-        # Unzip the gold file
-        TestRunner._extract_gold(test_data)
-        TestRunner._move_txt_files(test_data)
+        # Setup the gold file
+        TestRunner._setup_gold(test_data)
 
         # Look for core exceptions
         # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
@@ -258,8 +257,9 @@ class TestRunner(object):
         return logres
 
 
-    def _extract_gold(test_data):
+    def _setup_gold(test_data):
         """Extract gold archive file to output/gold/
+        and then copies gold txt files to the same location.
 
         Args:
             test_data: the TestData
@@ -269,12 +269,6 @@ class TestRunner(object):
         extrctr.close
         time.sleep(2)
 
-    def _move_txt_files(test_data):
-        """copies gold txt files to output/gold/
-
-        Args:
-            test_data: the TestData
-        """
         gold_dir = test_data.main_config.gold
         for file in os.listdir(gold_dir):
             if file.startswith(test_data.image_name) and file.endswith(".txt"):
