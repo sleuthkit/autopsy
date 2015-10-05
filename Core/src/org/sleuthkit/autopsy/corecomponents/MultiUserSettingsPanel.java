@@ -59,7 +59,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbDbPort));
         textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbDbUsername));
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
-        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHost));
+        textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
         textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbMsgUsername));
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbMsgPassword));
@@ -77,7 +77,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbSolrHostname.getDocument().putProperty("statusIcon", lbTestSolr);
         tbSolrPort.getDocument().putProperty("statusIcon", lbTestSolr);
 
-        tbMsgHost.getDocument().putProperty("statusIcon", lbTestMessageService);
+        tbMsgHostname.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgPort.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgUsername.getDocument().putProperty("statusIcon", lbTestMessageService);
         tbMsgPassword.getDocument().putProperty("statusIcon", lbTestMessageService);
@@ -88,7 +88,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textBoxes.add(tbDbPort);
         textBoxes.add(tbDbUsername);
         textBoxes.add(tbDbPassword);
-        textBoxes.add(tbMsgHost);
+        textBoxes.add(tbMsgHostname);
         textBoxes.add(tbMsgPort);
         textBoxes.add(tbMsgUsername);
         textBoxes.add(tbMsgPassword);
@@ -156,7 +156,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestSolr = new javax.swing.JLabel();
         pnMessagingSettings = new javax.swing.JPanel();
         lbMessageServiceSettings = new javax.swing.JLabel();
-        tbMsgHost = new javax.swing.JTextField();
+        tbMsgHostname = new javax.swing.JTextField();
         tbMsgUsername = new javax.swing.JTextField();
         tbMsgPort = new javax.swing.JTextField();
         tbMsgPassword = new javax.swing.JPasswordField();
@@ -220,10 +220,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseSettingsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDatabaseSettings)
+                .addGroup(pnDatabaseSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(bnTestDatabase)
-                    .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbDatabaseSettings))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(tbDbHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -277,9 +277,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnSolrSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lbSolrSettings)
-                        .addComponent(bnTestSolr))
+                    .addGroup(pnSolrSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(bnTestSolr, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(lbSolrSettings))
                     .addComponent(lbTestSolr, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbSolrHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -293,9 +293,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbMessageServiceSettings.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbMessageServiceSettings, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMessageServiceSettings.text")); // NOI18N
 
-        tbMsgHost.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        tbMsgHost.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHost.text")); // NOI18N
-        tbMsgHost.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHost.toolTipText")); // NOI18N
+        tbMsgHostname.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tbMsgHostname.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.text")); // NOI18N
+        tbMsgHostname.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgHostname.toolTipText")); // NOI18N
 
         tbMsgUsername.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         tbMsgUsername.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.text")); // NOI18N
@@ -325,7 +325,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tbMsgHost)
+                    .addComponent(tbMsgHostname)
                     .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                         .addComponent(lbMessageServiceSettings)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 229, Short.MAX_VALUE)
@@ -342,12 +342,12 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnMessagingSettingsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lbMessageServiceSettings)
-                        .addComponent(bnTestMessageService))
+                    .addGroup(pnMessagingSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(bnTestMessageService, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(lbMessageServiceSettings))
                     .addComponent(lbTestMessageService, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tbMsgHost, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tbMsgHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbMsgPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -461,7 +461,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         MessageServiceConnectionInfo messagingConnectionInfo = new MessageServiceConnectionInfo(
                 this.tbMsgUsername.getText(),
                 new String(this.tbMsgPassword.getPassword()),
-                this.tbMsgHost.getText(),
+                this.tbMsgHostname.getText(),
                 this.tbMsgPort.getText());
         if (messagingConnectionInfo.canConnect()) {
             lbTestMessageService.setIcon(goodIcon);
@@ -491,7 +491,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbDbPassword.setText(dbInfo.getPassword());
 
         MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-        tbMsgHost.setText(msgServiceInfo.getHost().trim());
+        tbMsgHostname.setText(msgServiceInfo.getHost().trim());
         tbMsgPort.setText(msgServiceInfo.getPort().trim());
         tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
         tbMsgPassword.setText(msgServiceInfo.getPassword());
@@ -548,7 +548,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        return !tbMsgHost.getText().isEmpty()
+        return !tbMsgHostname.getText().isEmpty()
                 && !tbMsgPort.getText().isEmpty()
                 && !tbMsgUsername.getText().isEmpty()
                 && tbMsgPassword.getPassword().length != 0;
@@ -575,7 +575,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()),
-                tbMsgHost.getText().trim(),
+                tbMsgHostname.getText().trim(),
                 tbMsgPort.getText().trim());
         UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
 
@@ -713,7 +713,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPasswordField tbDbPassword;
     private javax.swing.JTextField tbDbPort;
     private javax.swing.JTextField tbDbUsername;
-    private javax.swing.JTextField tbMsgHost;
+    private javax.swing.JTextField tbMsgHostname;
     private javax.swing.JPasswordField tbMsgPassword;
     private javax.swing.JTextField tbMsgPort;
     private javax.swing.JTextField tbMsgUsername;
