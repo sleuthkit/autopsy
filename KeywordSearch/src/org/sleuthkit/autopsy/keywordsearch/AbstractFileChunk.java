@@ -66,8 +66,10 @@ class AbstractFileChunk {
         return true;
     }
 
-    // Given a byte array, filter out all occurances of invalid (illegal) UTF-8
-    // characters and replace them with the question mark character (?)
+    // Given a byte array, filter out all occurances non-characters 
+    // http://unicode.org/cldr/utility/list-unicodeset.jsp?a=[:Noncharacter_Code_Point=True:]
+    // and non-printable control characters except tabulator, new line and carriage return
+    // and replace them with the question mark character (?)
     private static byte[] sanitize(byte[] input) {
         Charset charset = Charset.forName("UTF-8"); // NON-NLS
         String inputString = new String(input, charset);
