@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportWizardAction")
@@ -80,7 +80,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 Case newCase = (Case) evt.getNewValue();
-                setEnabled(newCase != null && IngestManager.getInstance().isRunningInteractively());
+                setEnabled(newCase != null && RuntimeProperties.coreComponentsAreActive());
             }
         });
 

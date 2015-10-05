@@ -31,8 +31,8 @@ import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -746,7 +746,7 @@ class XMLCaseManagement implements CaseConfigFileInterface {
         if (!rootName.equals(TOP_ROOT_NAME)) {
             // throw an error ...
             clear();
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            if (RuntimeProperties.coreComponentsAreActive()) {
 
                 JOptionPane.showMessageDialog(caller,
                         NbBundle.getMessage(this.getClass(),

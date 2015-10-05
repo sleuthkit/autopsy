@@ -45,6 +45,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -146,13 +147,6 @@ public class IngestManager {
      * and off to support an orderly shut down of the application.
      */
     private volatile boolean jobCreationIsEnabled;
-
-    /**
-     * The ingest manager can be directed to forgo use of message boxes, the
-     * ingest message box, NetBeans progress handles, etc. Running interactively
-     * is the default.
-     */
-    private volatile boolean runInteractively;
 
     /**
      * Ingest manager subscribes to service outage notifications. If key
@@ -260,7 +254,6 @@ public class IngestManager {
      * runs.
      */
     private IngestManager() {
-        this.runInteractively = true;
         this.ingestModuleRunTimes = new ConcurrentHashMap<>();
         this.ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
         this.ingestErrorMessagePosts = new AtomicLong(0L);
@@ -351,7 +344,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
 
                     // display notification if running interactively
-                    if (isIngestRunning() && isRunningInteractively()) {
+                    if (isIngestRunning() && RuntimeProperties.coreComponentsAreActive()) {
                         EventQueue.invokeLater(new Runnable() {
                             @Override
                             public void run() {
@@ -408,29 +401,6 @@ public class IngestManager {
     }
 
     /**
-     * The ingest manager can be directed to forgo use of message boxes, the
-     * ingest message box, NetBeans progress handles, etc. Running interactively
-     * is the default.
-     *
-     * @param runInteractively whether or not to this ingest manager should run
-     *                         ingest interactively.
-     */
-    public void setRunInteractively(boolean runInteractively) {
-        this.runInteractively = runInteractively;
-    }
-
-    /**
-     * The ingest manager can be directed to forgo use of message boxes, the
-     * ingest message box, NetBeans progress handles, etc. Running interactively
-     * is the default.
-     *
-     * @return true if running interactively, false otherwise.
-     */
-    public boolean isRunningInteractively() {
-        return this.runInteractively;
-    }
-
-    /**
      * Called by the custom installer for this package once the window system is
      * initialized, allowing the ingest manager to get the top component used to
      * display ingest messages.
@@ -448,7 +418,7 @@ public class IngestManager {
      */
     void postIngestMessage(IngestMessage message) {
         synchronized (this.ingestMessageBoxLock) {
-            if (ingestMessageBox != null && this.runInteractively) {
+            if (ingestMessageBox != null && RuntimeProperties.coreComponentsAreActive()) {
                 if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
                     ingestMessageBox.displayMessage(message);
                 } else {
@@ -495,7 +465,7 @@ public class IngestManager {
      */
     public synchronized void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 long taskId = nextThreadId.incrementAndGet();
                 Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobTask(taskId, job));
@@ -514,7 +484,7 @@ public class IngestManager {
      */
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 if (this.startIngestJob(job)) {
                     return job;
@@ -537,7 +507,7 @@ public class IngestManager {
             /**
              * TODO: This is not really reliable.
              */
-            if (runInteractively && jobsById.size() == 1) {
+            if (RuntimeProperties.coreComponentsAreActive() && jobsById.size() == 1) {
                 clearIngestMessageBox();
             }
 
@@ -546,7 +516,7 @@ public class IngestManager {
                 try {
                     if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                         // display notification if running interactively
-                        if (isRunningInteractively()) {
+                        if (RuntimeProperties.coreComponentsAreActive()) {
                             EventQueue.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
@@ -588,7 +558,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, String.format("Error starting %s ingest module", error.getModuleDisplayName()), error.getModuleError()); //NON-NLS
                 }
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
-                if (this.runInteractively) {
+                if (RuntimeProperties.coreComponentsAreActive()) {
                     EventQueue.invokeLater(new Runnable() {
 
                         @Override
@@ -958,7 +928,7 @@ public class IngestManager {
                     return null;
                 }
 
-                if (runInteractively) {
+                if (RuntimeProperties.coreComponentsAreActive()) {
                     final String displayName = NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.displayName");
                     this.progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                         @Override

@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -552,7 +552,7 @@ public class Case {
             /**
              * Do things that require a UI.
              */
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            if (RuntimeProperties.coreComponentsAreActive()) {
                 /**
                  * If the case database was upgraded for a new schema, notify
                  * the user.
@@ -1529,7 +1529,7 @@ public class Case {
             Case.clearTempFolder();
             checkSubFolders(toChangeTo);
 
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
                 SwingUtilities.invokeLater(() -> {
                     CallableSystemAction.get(AddImageAction.class).setEnabled(true);
@@ -1551,7 +1551,7 @@ public class Case {
                 }
             }
 
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            if (RuntimeProperties.coreComponentsAreActive()) {
                 SwingUtilities.invokeLater(() -> {
                     updateMainWindowTitle(currentCase.name);
                 });
@@ -1563,7 +1563,7 @@ public class Case {
             }
 
         } else { // case is closed
-            if (IngestManager.getInstance().isRunningInteractively()) {
+            if (RuntimeProperties.coreComponentsAreActive()) {
 
                 SwingUtilities.invokeLater(() -> {
                     // close all top components first

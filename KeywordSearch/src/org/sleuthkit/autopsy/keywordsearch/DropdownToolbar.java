@@ -34,7 +34,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
  * Keyword search tool bar (in upper right, by default) with drop down panels
@@ -223,7 +223,7 @@ class DropdownToolbar extends javax.swing.JPanel {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 dropPanel.resetSearchBox();
-                setFields(null != evt.getNewValue() && IngestManager.getInstance().isRunningInteractively());
+                setFields(null != evt.getNewValue() && RuntimeProperties.coreComponentsAreActive());
             } else if (changed.equals(Server.CORE_EVT)) {
                 final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
                 switch (state) {

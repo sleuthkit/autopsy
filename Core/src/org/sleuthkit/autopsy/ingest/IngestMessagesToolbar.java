@@ -30,6 +30,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
  * Tool bar for an ingest messages button that allows a user to open the ingest
@@ -129,7 +130,7 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
 
         Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                setEnabled(evt.getNewValue() != null && IngestManager.getInstance().isRunningInteractively());
+                setEnabled(evt.getNewValue() != null && RuntimeProperties.coreComponentsAreActive());
             }
         });
     }
