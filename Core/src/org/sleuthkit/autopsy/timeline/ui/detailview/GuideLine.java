@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import javafx.scene.Cursor;
+import javafx.scene.chart.Axis;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -32,7 +33,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
  */
 class GuideLine extends Line {
 
-    private final DateAxis dateAxis;
+    private final Axis<DateTime> dateAxis;
 
     private double startLayoutX;
 
@@ -40,7 +41,7 @@ class GuideLine extends Line {
 
     private double dragStartX = 0;
 
-    GuideLine(double startX, double startY, double endX, double endY, DateAxis axis) {
+    GuideLine(double startX, double startY, double endX, double endY, Axis<DateTime> axis) {
         super(startX, startY, endX, endY);
         dateAxis = axis;
         setCursor(Cursor.E_RESIZE);
