@@ -50,9 +50,9 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -108,7 +108,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
-        setBackground(defaultBackground);
+       
         minWidthProperty().bind(subNodePane.widthProperty());
 
         if (eventStripe.getEventIDsWithHashHits().isEmpty()) {
@@ -117,14 +117,14 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         if (eventStripe.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
-
+        setMinHeight(24);
         infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
         //initialize info hbox
         infoHBox.getChildren().add(4, hideButton);
         infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
-        infoHBox.setAlignment(Pos.CENTER_LEFT);
+        infoHBox.setAlignment(Pos.TOP_LEFT);
         infoHBox.setPickOnBounds(false);
         //setup description label
 
@@ -134,15 +134,14 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         descrLabel.setMouseTransparent(true);
 
 //        subNodePane.setPickOnBounds(false);
-        setAlignment(Pos.TOP_LEFT);
-        infoHBox.setAlignment(Pos.TOP_LEFT);
+        setAlignment(subNodePane, Pos.BOTTOM_LEFT);
         for (EventCluster cluster : eventStripe.getClusters()) {
             EventClusterNode clusterNode = new EventClusterNode(chart, cluster, this);
             subNodes.add(clusterNode);
             subNodePane.getChildren().addAll(clusterNode);
         }
 
-        getChildren().addAll(subNodePane, infoHBox);
+        getChildren().addAll(new VBox(infoHBox, subNodePane));
 
         setOnMouseClicked(new MouseClickHandler());
 
@@ -167,8 +166,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(10, eventType.getColor()));
         subNodePane.setEffect(showControls ? dropShadow : null);
-//        show(minusButton, showControls);
-//        show(plusButton, showControls);
         show(hideButton, showControls);
     }
 
@@ -187,13 +184,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         return getEventBundle();
     }
 
-//    Collection<EventStripe> makeBundlesFromClusters(List<EventCluster> eventClusters) {
-//        return eventClusters.stream().collect(
-//                Collectors.toMap((eventCluster) -> eventCluster.getDescription(), //key
-//                        (eventCluster) -> new EventStripe(eventCluster,this), //value
-//                        EventStripe::merge)//merge method
-//        ).values();
-//    }
     @NbBundle.Messages({"# {0} - counts",
         "# {1} - event type",
         "# {2} - description",
@@ -354,17 +344,5 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         }
     }
 
-    @Override
-    void layoutChildren(double xOffset) {
-        super.layoutChildren();
-        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        //position of start and end according to range of axis
-        double startX = chartX - xOffset;
-
-        setLayoutX(startX);
-
-        chart.layoutStripes(subNodes, 0, chartX);
-
-        autosize();//compute size of tlNode based on constraints and event data
-    }
+  
 }

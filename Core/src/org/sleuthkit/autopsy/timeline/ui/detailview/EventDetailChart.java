@@ -60,7 +60,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
-import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
@@ -127,7 +126,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     private final InvalidationListener layoutInvalidationListener = (Observable o) -> {
         synchronized (EventDetailChart.this) {
-            requiresLayout = true;
+
             requestChartLayout();
         }
     };
@@ -136,11 +135,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * the maximum y value used so far during the most recent layout pass
      */
     private final ReadOnlyDoubleWrapper maxY = new ReadOnlyDoubleWrapper(0.0);
-    /**
-     * flag indicating whether this chart actually needs a layout pass
-     */
-    @GuardedBy(value = "this")
-    private boolean requiresLayout = true;
 
     final ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes;
     /**
@@ -427,10 +421,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         data.setNode(null);
     }
 
-    synchronized void setRequiresLayout(boolean b) {
-        requiresLayout = true;
-    }
-
     /**
      * make this accessible to {@link EventStripeNode}
      */
@@ -462,30 +452,29 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     @Override
     protected synchronized void layoutPlotChildren() {
-        if (requiresLayout) {
-            setCursor(Cursor.WAIT);
 
-            //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
-            maxY.set(0);
-            List<EventStripeNode> stripeNodes;
-            if (bandByType.get()) {
-                for (Series<DateTime, EventCluster> series : sortedSeriesList) {
-                    stripeNodes = series.getData().stream()
-                            .map(data -> (EventStripeNode) data.getNode())
-                            .sorted(Comparator.comparing(EventStripeNode::getStartMillis)).
-                            collect(Collectors.toList());
-                    maxY.set(maxY.get() + layoutStripes(stripeNodes, maxY.get(), 0));
+        setCursor(Cursor.WAIT);
 
-                }
-            } else {
-                stripeNodes = stripeNodeMap.values().stream()
-                        .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
-                        .collect(Collectors.toList());
-                maxY.set(layoutStripes(stripeNodes, 0, 0));
+        //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
+        maxY.set(0);
+        List<EventStripeNode> stripeNodes;
+        if (bandByType.get()) {
+            for (Series<DateTime, EventCluster> series : sortedSeriesList) {
+                stripeNodes = series.getData().stream()
+                        .map(data -> (EventStripeNode) data.getNode())
+                        .sorted(Comparator.comparing(EventStripeNode::getStartMillis)).
+                        collect(Collectors.toList());
+                maxY.set(maxY.get() + layoutEventBundleNodes(stripeNodes, maxY.get(), 0));
+
             }
-            setCursor(null);
-            requiresLayout = false;
+        } else {
+            stripeNodes = stripeNodeMap.values().stream()
+                    .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
+                    .collect(Collectors.toList());
+            maxY.set(layoutEventBundleNodes(stripeNodes, 0, 0));
         }
+        setCursor(null);
+
         layoutProjectionMap();
     }
 
@@ -495,7 +484,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             dataItemAdded(series, j, series.getData().get(j));
         }
         seriesList.add(series);
-        requiresLayout = true;
+        requestLayout();
     }
 
     @Override
@@ -504,7 +493,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             dataItemRemoved(series.getData().get(j), series);
         }
         seriesList.remove(series);
-        requiresLayout = true;
+        requestLayout();
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {
@@ -560,27 +549,27 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * @param nodes
      * @param minY
      */
-    synchronized double layoutStripes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY, final double xOffset) {
+    synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY, final double xOffset) {
         final Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
         //for each node size it and position it in first available slot
-        for (EventBundleNodeBase<?, ?, ?> stripeNode : nodes) {
+        for (EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
             boolean quickHide = getController().getQuickHideFilters().stream()
                     .filter(AbstractFilter::isActive)
-                    .anyMatch(filter -> filter.getDescription().equals(stripeNode.getDescription()));
+                    .anyMatch(filter -> filter.getDescription().equals(bundleNode.getDescription()));
             if (quickHide) {
-                stripeNode.setVisible(false);
-                stripeNode.setManaged(false);
+                bundleNode.setVisible(false);
+                bundleNode.setManaged(false);
             } else {
-                stripeNode.setVisible(true);
-                stripeNode.setManaged(true);
-                stripeNode.setDescriptionVisibility(descrVisibility.get());
-                stripeNode.layoutChildren(xOffset);
-                double xLeft = getXAxis().getDisplayPosition(new DateTime(stripeNode.getStartMillis())) - xOffset;
-                double xRight = xLeft + stripeNode.getBoundsInParent().getWidth();
+                bundleNode.setVisible(true);
+                bundleNode.setManaged(true);
+                bundleNode.setDescriptionVisibility(descrVisibility.get());
+                bundleNode.layoutChildren(xOffset);
+                double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - xOffset;
+                double xRight = xLeft + bundleNode.getBoundsInParent().getWidth();
 
                 //get the height of the node
-                final double h = stripeNode.getBoundsInParent().getHeight();
+                final double h = bundleNode.getBoundsInParent().getHeight();
 
                 //initial test position
                 double yTop = minY;
@@ -615,9 +604,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 }
                 localMax = Math.max(yBottom, localMax);
 
-                Timeline tm = new Timeline(new KeyFrame(Duration.seconds(1.0),
-                        new KeyValue(stripeNode.layoutXProperty(), xLeft),
-                        new KeyValue(stripeNode.layoutYProperty(), yTop)));
+//                bundleNode.relocate(xLeft, yTop);
+                Timeline tm = new Timeline(new KeyFrame(Duration.seconds(.5),
+                        new KeyValue(bundleNode.layoutXProperty(), xLeft),
+                        new KeyValue(bundleNode.layoutYProperty(), yTop)));
 
                 tm.play();
             }
