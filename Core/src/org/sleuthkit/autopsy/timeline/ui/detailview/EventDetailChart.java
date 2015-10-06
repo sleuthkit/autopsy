@@ -125,10 +125,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * listener that triggers layout pass
      */
     private final InvalidationListener layoutInvalidationListener = (Observable o) -> {
-        synchronized (EventDetailChart.this) {
-
-            requestChartLayout();
-        }
+        requestChartLayout();
     };
 
     /**
@@ -564,7 +561,13 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setVisible(true);
                 bundleNode.setManaged(true);
                 bundleNode.setDescriptionVisibility(descrVisibility.get());
+
                 bundleNode.layoutChildren(xOffset);
+                if (truncateAll.get()) { //if truncate option is selected limit width of description label		
+                    bundleNode.setDescriptionWidth(truncateWidth.get());
+                } else { //else set it unbounded		
+                    bundleNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());		
+                }
                 double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - xOffset;
                 double xRight = xLeft + bundleNode.getBoundsInParent().getWidth();
 

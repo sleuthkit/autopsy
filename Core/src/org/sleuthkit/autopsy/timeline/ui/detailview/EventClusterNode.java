@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -82,7 +81,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
-       
+
         clusterRegion.setBorder(clusterBorder);
         clusterRegion.setBackground(defaultBackground);
         clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
@@ -125,6 +124,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         getChildren().addAll(vBox);
     }
 
+    
+
     void showDescriptionLoDControls(final boolean showControls) {
         show(plusButton, showControls);
         show(minusButton, showControls);
@@ -145,10 +146,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    void setSpanWidths(List<Double> spanWidths) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
+    @Override
     void setDescriptionWidth(double max) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
