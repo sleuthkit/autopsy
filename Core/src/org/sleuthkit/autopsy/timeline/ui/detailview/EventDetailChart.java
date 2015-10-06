@@ -467,7 +467,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
             //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
             maxY.set(0);
-            List<EventBundleNodeBase> stripeNodes;
+            List<EventStripeNode> stripeNodes;
             if (bandByType.get()) {
                 for (Series<DateTime, EventCluster> series : sortedSeriesList) {
                     stripeNodes = series.getData().stream()
@@ -510,6 +510,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
     }
+
     Function<EventClusterNode, Stream<EventBundleNodeBase<?, ?, ?>>> clusterFlattener =
             new Function<EventClusterNode, Stream<EventBundleNodeBase<?, ?, ?>>>() {
                 @Override
@@ -559,11 +560,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * @param nodes
      * @param minY
      */
-    synchronized double layoutStripes(final Collection<? extends EventBundleNodeBase> nodes, final double minY, final double xOffset) {
+    synchronized double layoutStripes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY, final double xOffset) {
         final Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
         //for each node size it and position it in first available slot
-        for (EventBundleNodeBase stripeNode : nodes) {
+        for (EventBundleNodeBase<?, ?, ?> stripeNode : nodes) {
             boolean quickHide = getController().getQuickHideFilters().stream()
                     .filter(AbstractFilter::isActive)
                     .anyMatch(filter -> filter.getDescription().equals(stripeNode.getDescription()));

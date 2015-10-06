@@ -51,24 +51,24 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 /**
  *
  */
-public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
-    
+final public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
+
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
-    
+
     private final Region clusterRegion = new Region();
-    
+
     final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
     final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-    
+
     public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
-        
+
         clusterRegion.setBorder(clusterBorder);
         clusterRegion.setBackground(defaultBackground);
         clusterRegion.setMaxWidth(USE_PREF_SIZE);
-        clusterRegion.setMinWidth(USE_PREF_SIZE);
+        clusterRegion.setMinWidth(1);
         setMinHeight(24);
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
@@ -83,48 +83,48 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
             showDescriptionLoDControls(true);
 //            toFront();
         });
-        
+
         setOnMouseExited((MouseEvent e) -> {
             showDescriptionLoDControls(false);
         });
-        
+
         configureLoDButton(plusButton);
         configureLoDButton(minusButton);
         HBox buttonBar = new HBox(5, plusButton, minusButton);
         buttonBar.setMaxWidth(USE_PREF_SIZE);
         buttonBar.setAlignment(Pos.BOTTOM_LEFT);
-        
+
         getChildren().addAll(clusterRegion, subNodePane, buttonBar);
     }
-    
+
     void showDescriptionLoDControls(final boolean showControls) {
         show(minusButton, showControls);
         show(plusButton, showControls);
     }
-    
+
     @Override
-    final void installTooltip() {
-        
+    void installTooltip() {
+
     }
-    
+
     @Override
     void applySelectionEffect(boolean selected) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     @Override
     void applyHighlightEffect(boolean applied) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     void setSpanWidths(List<Double> spanWidths) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     void setDescriptionWidth(double max) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     @Override
     void setDescriptionVisibility(DescriptionVisibility get) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -134,12 +134,12 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
      * event handler used for mouse events on {@link EventStripeNode}s
      */
     private class MouseClickHandler implements EventHandler<MouseEvent> {
-        
+
         private ContextMenu contextMenu;
-        
+
         @Override
         public void handle(MouseEvent t) {
-            
+
             if (t.getButton() == MouseButton.PRIMARY) {
                 t.consume();
                 if (t.isShiftDown()) {
@@ -152,7 +152,7 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
                     final DescriptionLoD next = descLOD.get().moreDetailed();
                     if (next != null) {
                         loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-                        
+
                     }
                 } else {
                     chart.selectedNodes.setAll(EventClusterNode.this);
@@ -163,10 +163,10 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
                 if (contextMenu == null) {
                     contextMenu = new ContextMenu();
                     contextMenu.setAutoHide(true);
-                    
+
                     contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
                     contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
-                    
+
                     contextMenu.getItems().add(new SeparatorMenuItem());
                     contextMenu.getItems().addAll(chartContextMenu.getItems());
                 }
@@ -207,15 +207,15 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
             final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
             final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
             final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
-            
+
             Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
-                
+
                 private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
-                
+
                 {
                     updateTitle(Bundle.EventStripeNode_loggedTask_name());
                 }
-                
+
                 @Override
                 protected Collection<EventStripe> call() throws Exception {
                     Collection<EventStripe> bundles;
@@ -235,15 +235,15 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
 
                     // return list of AbstractEventStripeNodes representing sub-bundles
                     return bundles;
-                    
+
                 }
-                
+
                 @Override
                 protected void succeeded() {
                     chart.setCursor(Cursor.WAIT);
                     try {
                         Collection<EventStripe> bundles = get();
-                        
+
                         if (bundles.isEmpty()) {
                         } else {
                             chart.getEventBundles().addAll(bundles);
@@ -268,38 +268,38 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
             chart.getController().monitorTask(loggedTask);
         }
     }
-    
+
     EventStripeNode getSubNodeForBundle(EventStripe stripe) {
         return new EventStripeNode(chart, stripe, this);
     }
-    
+
     private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
 
     private class ExpandClusterAction extends Action {
-        
+
         @NbBundle.Messages("ExpandClusterAction.text=Expand")
         ExpandClusterAction() {
             super(Bundle.ExpandClusterAction_text());
-            
+
             setGraphic(new ImageView(PLUS));
             setEventHandler((ActionEvent t) -> {
                 final DescriptionLoD next = descLOD.get().moreDetailed();
                 if (next != null) {
                     loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-                    
+
                 }
             });
             disabledProperty().bind(descLOD.isEqualTo(DescriptionLoD.FULL));
         }
     }
-    
+
     private class CollapseClusterAction extends Action {
-        
+
         @NbBundle.Messages("CollapseClusterAction.text=Collapse")
         CollapseClusterAction() {
             super(Bundle.CollapseClusterAction_text());
-            
+
             setGraphic(new ImageView(MINUS));
             setEventHandler((ActionEvent t) -> {
                 final DescriptionLoD previous = descLOD.get().lessDetailed();
@@ -310,11 +310,11 @@ public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStr
             disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
         }
     }
-    
+
     EventCluster getEventCluster() {
         return getEventBundle();
     }
-    
+
     @Override
     protected void layoutChildren(double xOffset) {
         super.layoutChildren(); //To change body of generated methods, choose Tools | Templates.
