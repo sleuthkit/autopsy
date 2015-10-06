@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -722,10 +723,10 @@ public final class DrawableDB {
      * clause
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     *                       files (do not begin the WHERE clause with the word WHERE!)
+     *                       files (do not begin the WHERE clause with the word
+     *                       WHERE!)
      *
-     * @return a list of file ids each of which satisfy the given WHERE
-     *         clause
+     * @return a list of file ids each of which satisfy the given WHERE clause
      *
      * @throws TskCoreException
      */
@@ -766,7 +767,8 @@ public final class DrawableDB {
      * Return the number of files matching the given clause.
      *
      * @param sqlWhereClause a SQL where clause appropriate for the desired
-     *                       files (do not begin the WHERE clause with the word WHERE!)
+     *                       files (do not begin the WHERE clause with the word
+     *                       WHERE!)
      *
      * @return Number of files matching the given where clause
      *
@@ -1002,9 +1004,11 @@ public final class DrawableDB {
         try {
             PreparedStatement statement = null;
 
-            /* I hate this! not flexible/generic/maintainable we could have the
+            /*
+             * I hate this! not flexible/generic/maintainable we could have the
              * DrawableAttribute provide/create/configure the correct statement
-             * but they shouldn't be coupled like that -jm */
+             * but they shouldn't be coupled like that -jm
+             */
             switch (key.getAttribute().attrName) {
                 case CATEGORY:
                     return getFilesWithCategory((Category) key.getValue());
@@ -1202,12 +1206,14 @@ public final class DrawableDB {
      */
     public long getCategoryCount(Category cat) {
         try {
-            return tskCase.getContentTagsByTagName(controller.getTagsManager().getTagName(cat)).stream()
-                    .map(ContentTag::getContent)
-                    .map(Content::getId)
-                    .filter(this::isInDB)
-                    .count();
-
+            TagName tagName = controller.getTagsManager().getTagName(cat);
+            if (nonNull(tagName)) {
+                return tskCase.getContentTagsByTagName(tagName).stream()
+                        .map(ContentTag::getContent)
+                        .map(Content::getId)
+                        .filter(this::isInDB)
+                        .count();
+            }
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.WARNING, "Case closed while getting files");
         } catch (TskCoreException ex1) {

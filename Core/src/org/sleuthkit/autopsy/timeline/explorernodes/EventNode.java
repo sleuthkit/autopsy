@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import javafx.beans.Observable;
 import javax.swing.Action;
 import org.joda.time.DateTime;
@@ -29,8 +30,8 @@ import org.joda.time.DateTimeZone;
 import org.openide.nodes.Children;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -45,6 +46,8 @@ import org.sleuthkit.datamodel.Content;
  * * Explorer Node for {@link TimeLineEvent}s.
  */
 class EventNode extends DisplayableItemNode {
+
+    private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
     private final TimeLineEvent e;
 
@@ -75,7 +78,7 @@ class EventNode extends DisplayableItemNode {
             try {
                 timePropery.setValue(getDateTimeString());
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "unexpected error setting date/time property on EventNode explorer node", ex);
             }
         });
 
@@ -105,7 +108,7 @@ class EventNode extends DisplayableItemNode {
         final List<Action> factoryActions = DataModelActionsFactory.getActions(content, artifact != null);
 
         actionsList.addAll(factoryActions);
-        return actionsList.toArray(new Action[0]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     @Override
@@ -118,7 +121,11 @@ class EventNode extends DisplayableItemNode {
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
-    class TimeProperty extends PropertySupport.ReadWrite<String> {
+    /**
+     * We use TimeProperty instead of a normal NodeProperty to correctly display
+     * the date/time when the user changes the timezone setting.
+     */
+    private class TimeProperty extends PropertySupport.ReadWrite<String> {
 
         private String value;
 
@@ -127,7 +134,7 @@ class EventNode extends DisplayableItemNode {
             return false;
         }
 
-        public TimeProperty(String name, String displayName, String shortDescription, String value) {
+        TimeProperty(String name, String displayName, String shortDescription, String value) {
             super(name, String.class, displayName, shortDescription);
             setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button NON-NLS
             this.value = value;

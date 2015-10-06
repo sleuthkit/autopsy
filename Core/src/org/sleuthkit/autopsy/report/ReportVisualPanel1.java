@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -34,11 +35,12 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
-import org.sleuthkit.autopsy.report.ReportHTML;
 
 final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
@@ -64,23 +66,39 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     // Initialize the list of ReportModules
     private void initModules() {
         for (TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
-            tableModules.add(module);
-            modules.add(module);
+            if (moduleIsValid(module)) {
+                tableModules.add(module);
+                modules.add(module);
+            } else {
+                popupWarning(module);
+            }
         }
 
         for (GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
-            generalModules.add(module);
-            modules.add(module);
+            if (moduleIsValid(module)) {
+                generalModules.add(module);
+                modules.add(module);
+            } else {
+                popupWarning(module);
+            }
         }
 
         for (GeneralReportModule module : JythonModuleLoader.getGeneralReportModules()) {
-            generalModules.add(module);
-            modules.add(module);
+            if (moduleIsValid(module)) {
+                generalModules.add(module);
+                modules.add(module);
+            } else {
+                popupWarning(module);
+            }
         }
 
         for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
-            fileModules.add(module);
-            modules.add(module);
+            if (moduleIsValid(module)) {
+                fileModules.add(module);
+                modules.add(module);
+            } else {
+                popupWarning(module);
+            }
         }
 
         Collections.sort(modules, new Comparator<ReportModule>() {
@@ -115,6 +133,20 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
         selectedIndex = 0;
         modulesJList.setSelectedIndex(selectedIndex);
+    }
+
+    // Make sure that the report module has a valid non-null name.
+    private boolean moduleIsValid(ReportModule module) {
+        return module.getName() != null && !module.getName().isEmpty() 
+            && module.getRelativeFilePath() != null;
+    }
+
+    private void popupWarning(ReportModule module) {
+        String moduleClassName = module.getClass().getSimpleName();
+        logger.log(Level.WARNING, "Invalid ReportModule: {0}", moduleClassName); // NON_NLS
+        DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
+                NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.invalidModuleWarning", moduleClassName),
+                NotifyDescriptor.ERROR_MESSAGE));
     }
 
     @Override

@@ -166,6 +166,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     void reset(HashLookupModuleSettings newSettings) {
         initializeHashSetModels(newSettings);
+        alwaysCalcHashesCheckbox.setSelected(newSettings.shouldCalculateHashes());
         knownHashSetsTableModel.fireTableDataChanged();
         knownBadHashSetsTableModel.fireTableDataChanged();
     }

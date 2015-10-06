@@ -54,7 +54,7 @@ import org.joda.time.Period;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -413,10 +413,7 @@ public class EventDB {
         try (ResultSet rs = getDataSourceIDsStmt.executeQuery()) {
             while (rs.next()) {
                 long datasourceID = rs.getLong("datasource_id");
-                //this relies on the fact that no tskObj has ID 0 but 0 is the default value for the datasource_id column in the events table.
-                if (datasourceID != 0) {
-                    hashSet.add(datasourceID);
-                }
+                hashSet.add(datasourceID);
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get MAX time.", ex); // NON-NLS
@@ -583,6 +580,10 @@ public class EventDB {
 
             initializeTagsTable();
 
+            createIndex("events", Arrays.asList("datasource_id"));
+            createIndex("events", Arrays.asList("event_id", "hash_hit"));
+            createIndex("events", Arrays.asList("event_id", "tagged"));
+            createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("artifact_id"));
             createIndex("events", Arrays.asList("time"));
@@ -595,7 +596,7 @@ public class EventDB {
                         "INSERT INTO events (datasource_id,file_id ,artifact_id, time, sub_type, base_type, full_description, med_description, short_description, known_state, hash_hit, tagged) " // NON-NLS
                         + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"); // NON-NLS
                 getHashSetNamesStmt = prepareStatement("SELECT hash_set_id, hash_set_name FROM hash_sets"); // NON-NLS
-                getDataSourceIDsStmt = prepareStatement("SELECT DISTINCT datasource_id FROM events"); // NON-NLS
+                getDataSourceIDsStmt = prepareStatement("SELECT DISTINCT datasource_id FROM events WHERE datasource_id != 0"); // NON-NLS
                 getMaxTimeStmt = prepareStatement("SELECT Max(time) AS max FROM events"); // NON-NLS
                 getMinTimeStmt = prepareStatement("SELECT Min(time) AS min FROM events"); // NON-NLS
                 getEventByIDStmt = prepareStatement("SELECT * FROM events WHERE event_id =  ?"); // NON-NLS
@@ -1031,7 +1032,7 @@ public class EventDB {
     }
 
     /**
-     * get a list of {@link AggregateEvent}s, clustered according to the given
+     * get a list of {@link EventCluster}s, clustered according to the given
      * zoom paramaters.
      *
      * @param params the zoom params that determine the zooming, filtering and
@@ -1041,7 +1042,7 @@ public class EventDB {
      *         the supplied filter, aggregated according to the given event type
      *         and description zoom levels
      */
-    List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
+    List<EventCluster> getClusteredEvents(ZoomParams params) {
         //unpack params
         Interval timeRange = params.getTimeRange();
         RootFilter filter = params.getFilter();
@@ -1064,22 +1065,26 @@ public class EventDB {
         String timeZone = TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "";  // NON-NLS
         String typeColumn = typeColumnHelper(useSubTypes);
 
-        //compose query string 
+        //compose query string, new-lines only for nicer formatting if printing the entire query
         String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
-                + " group_concat(events.event_id) as event_ids, min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
+                + "\n group_concat(events.event_id) as event_ids,"
+                + "\n group_concat(CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END) as hash_hits,"
+                + "\n group_concat(CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END) as taggeds,"
+                + "\n min(time), max(time),  " + typeColumn + ", " + descriptionColumn // NON-NLS
                 + "\n FROM events" + useHashHitTablesHelper(filter) + useTagTablesHelper(filter) // NON-NLS
                 + "\n WHERE time >= " + start + " AND time < " + end + " AND " + SQLHelper.getSQLWhere(filter) // NON-NLS
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
 
         // perform query and map results to AggregateEvent objects
-        List<AggregateEvent> events = new ArrayList<>();
+        List<EventCluster> events = new ArrayList<>();
+
         DBLock.lock();
 
         try (Statement createStatement = con.createStatement();
                 ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {
-                events.add(aggregateEventHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
+                events.add(eventClusterHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get aggregate events with query: " + query, ex); // NON-NLS
@@ -1087,11 +1092,11 @@ public class EventDB {
             DBLock.unlock();
         }
 
-        return mergeAggregateEvents(rangeInfo.getPeriodSize().getPeriod(), events);
+        return mergeEventClusters(rangeInfo.getPeriodSize().getPeriod(), events);
     }
 
     /**
-     * map a single row in a ResultSet to an AggregateEvent
+     * map a single row in a ResultSet to an EventCluster
      *
      * @param rs             the result set whose current row should be mapped
      * @param useSubTypes    use the sub_type column if true, else use the
@@ -1103,32 +1108,17 @@ public class EventDB {
      *
      * @throws SQLException
      */
-    private AggregateEvent aggregateEventHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
+    private EventCluster eventClusterHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
         Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
         String eventIDsString = rs.getString("event_ids");// NON-NLS
         Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);
         String description = rs.getString(SQLHelper.getDescriptionColumn(descriptionLOD));
         EventType type = useSubTypes ? RootEventType.allTypes.get(rs.getInt("sub_type")) : BaseTypes.values()[rs.getInt("base_type")];// NON-NLS
 
-        Set<Long> hashHits = new HashSet<>();
-        String hashHitQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND hash_hit = 1";// NON-NLS
-        try (Statement stmt = con.createStatement();
-                ResultSet hashHitsRS = stmt.executeQuery(hashHitQuery)) {
-            while (hashHitsRS.next()) {
-                hashHits = SQLHelper.unGroupConcat(hashHitsRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
-            }
-        }
+        Set<Long> hashHits = SQLHelper.unGroupConcat(rs.getString("hash_hits"), Long::valueOf);
+        Set<Long> tagged = SQLHelper.unGroupConcat(rs.getString("taggeds"), Long::valueOf);
 
-        Set<Long> tagged = new HashSet<>();
-        String taggedQuery = "SELECT group_concat(event_id) FROM events WHERE event_id IN (" + eventIDsString + ")  AND tagged = 1";// NON-NLS
-        try (Statement stmt = con.createStatement();
-                ResultSet taggedRS = stmt.executeQuery(taggedQuery)) {
-            while (taggedRS.next()) {
-                tagged = SQLHelper.unGroupConcat(taggedRS.getString("group_concat(event_id)"), Long::valueOf);// NON-NLS
-            }
-        }
-
-        return new AggregateEvent(interval, type, eventIDs, hashHits, tagged,
+        return new EventCluster(interval, type, eventIDs, hashHits, tagged,
                 description, descriptionLOD);
     }
 
@@ -1145,36 +1135,36 @@ public class EventDB {
      *
      * @return
      */
-    static private List<AggregateEvent> mergeAggregateEvents(Period timeUnitLength, List<AggregateEvent> preMergedEvents) {
+    static private List<EventCluster> mergeEventClusters(Period timeUnitLength, List<EventCluster> preMergedEvents) {
 
         //effectively map from type to (map from description to events)
-        Map<EventType, SetMultimap< String, AggregateEvent>> typeMap = new HashMap<>();
+        Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
 
-        for (AggregateEvent aggregateEvent : preMergedEvents) {
-            typeMap.computeIfAbsent(aggregateEvent.getType(), eventType -> HashMultimap.create())
+        for (EventCluster aggregateEvent : preMergedEvents) {
+            typeMap.computeIfAbsent(aggregateEvent.getEventType(), eventType -> HashMultimap.create())
                     .put(aggregateEvent.getDescription(), aggregateEvent);
         }
         //result list to return
-        ArrayList<AggregateEvent> aggEvents = new ArrayList<>();
+        ArrayList<EventCluster> aggEvents = new ArrayList<>();
 
         //For each (type, description) key, merge agg events
-        for (SetMultimap<String, AggregateEvent> descrMap : typeMap.values()) {
+        for (SetMultimap<String, EventCluster> descrMap : typeMap.values()) {
             //for each description ...
             for (String descr : descrMap.keySet()) {
                 //run through the sorted events, merging together adjacent events
-                Iterator<AggregateEvent> iterator = descrMap.get(descr).stream()
+                Iterator<EventCluster> iterator = descrMap.get(descr).stream()
                         .sorted(Comparator.comparing(event -> event.getSpan().getStartMillis()))
                         .iterator();
-                AggregateEvent current = iterator.next();
+                EventCluster current = iterator.next();
                 while (iterator.hasNext()) {
-                    AggregateEvent next = iterator.next();
+                    EventCluster next = iterator.next();
                     Interval gap = current.getSpan().gap(next.getSpan());
 
                     //if they overlap or gap is less one quarter timeUnitLength
                     //TODO: 1/4 factor is arbitrary. review! -jm
                     if (gap == null || gap.toDuration().getMillis() <= timeUnitLength.toDurationFrom(gap.getStart()).getMillis() / 4) {
                         //merge them
-                        current = AggregateEvent.merge(current, next);
+                        current = EventCluster.merge(current, next);
                     } else {
                         //done merging into current, set next as new current
                         aggEvents.add(current);

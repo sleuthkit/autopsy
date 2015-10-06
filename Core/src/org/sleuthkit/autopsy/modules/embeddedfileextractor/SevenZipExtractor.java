@@ -45,6 +45,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -251,7 +252,7 @@ class SevenZipExtractor {
         }
 
         if (detectedFormat == null) {
-            logger.log(Level.WARNING, "Could not detect format for file: " + archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Could not detect format for file: {0}", archiveFile); //NON-NLS
 
             // if we don't have attribute info then use file extension
             String extension = archiveFile.getNameExtension();
@@ -407,6 +408,7 @@ class SevenZipExtractor {
                     logger.log(Level.WARNING, msg);
 
                 }
+                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
                 logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
@@ -476,8 +478,8 @@ class SevenZipExtractor {
                             localFile.getParentFile().mkdirs();
                             try {
                                 localFile.createNewFile();
-                            } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), ex); //NON-NLS
+                            } catch (IOException e) {
+                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), e); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
@@ -546,7 +548,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: " + archiveFile, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
@@ -901,7 +903,7 @@ class SevenZipExtractor {
             UnpackedNode(String fileName, UnpackedNode parent) {
                 this.fileName = fileName;
                 this.parent = parent;
-                //this.localRelPath = parent.localRelPath + File.separator + fileName;
+                this.localRelPath = parent.localRelPath + File.separator + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
 

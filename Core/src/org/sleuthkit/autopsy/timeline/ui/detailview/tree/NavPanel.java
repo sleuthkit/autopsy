@@ -41,9 +41,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.ui.detailview.AggregateEventNode;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
 /**
@@ -91,8 +90,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
         });
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
-            detailViewPane.getSelectedNodes().forEach((AggregateEventNode t) -> {
-                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(t.getEvent()));
+            detailViewPane.getSelectedNodes().forEach(eventStripeNode -> {
+                eventsTree.getSelectionModel().select(((NavTreeItem) eventsTree.getRoot()).findTreeItemForEvent(eventStripeNode.getEventStripe()));
             });
         });
 
@@ -100,10 +99,10 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     private void setRoot() {
         RootItem root = new RootItem();
-        final ObservableList<AggregateEvent> aggregatedEvents = detailViewPane.getAggregatedEvents();
+        final ObservableList<EventCluster> aggregatedEvents = detailViewPane.getAggregatedEvents();
 
         synchronized (aggregatedEvents) {
-            for (AggregateEvent agg : aggregatedEvents) {
+            for (EventCluster agg : aggregatedEvents) {
                 root.insert(agg);
             }
         }
@@ -131,7 +130,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            ((RootItem) eventsTree.getRoot()).resort(sortByBox.getSelectionModel().getSelectedItem());
+            ((NavTreeItem) eventsTree.getRoot()).resort(sortByBox.getSelectionModel().getSelectedItem());
         });
         eventsTree.setShowRoot(false);
         eventsTree.setCellFactory((TreeView<NavTreeNode> p) -> new EventTreeCell());

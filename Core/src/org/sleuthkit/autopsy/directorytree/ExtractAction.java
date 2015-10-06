@@ -24,8 +24,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
@@ -101,7 +99,7 @@ public final class ExtractAction extends AbstractAction {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
-        fileChooser.setSelectedFile(new File(selectedFile.getName().replace(':', '_')));
+        fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
@@ -136,7 +134,7 @@ public final class ExtractAction extends AbstractAction {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             for (AbstractFile source : selectedFiles) {
                 // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
-                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + source.getName().replace(':', '_'))));
+                fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
             runExtractionTasks(e, fileExtractionTasks);
         }

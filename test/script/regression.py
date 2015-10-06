@@ -77,13 +77,8 @@ DB_FILENAME = "autopsy.db"
 # Backup database filename
 BACKUP_DB_FILENAME = "autopsy_backup.db"
 
-# TODO: Double check this purpose statement
 # Folder name for gold standard database testing
 AUTOPSY_TEST_CASE = "AutopsyTestCase"
-
-# TODO: Double check this purpose statement
-# The filename of the log to store error messages
-COMMON_LOG = "Exceptions.txt"
 
 Day = 0
 
@@ -94,7 +89,7 @@ def usage():
 	print ("-l PATH path to config file")
 	print ("-u Ignore unallocated space")
 	print ("-k Do not delete SOLR index")
-	print("-o PATH path to output folder for Diff files")
+	print ("-o PATH path to output folder for Diff files")
 	print ("-v verbose mode")
 	print ("-e ARG Enable exception mode with given string")
 	print ("-h help")
@@ -172,11 +167,6 @@ class TestRunner(object):
             time.sleep(10)
             TestRunner._cleanup(test_data)
 
-
-        # This code was causing errors with paths, so its disabled
-        #if test_config.jenkins:
-        #    copyErrorFiles(Errors.errors_out, test_config)
-
         if all([ test_data.overall_passed for test_data in test_data_list ]):
             pass
         else:
@@ -231,8 +221,8 @@ class TestRunner(object):
             logres?
         """
 
-        # Unzip the gold file
-        TestRunner._extract_gold(test_data)
+        # Setup the gold file
+        TestRunner._setup_gold(test_data)
 
         # Look for core exceptions
         # @@@ Should be moved to TestResultsDiffer, but it didn't know about logres -- need to look into that
@@ -249,7 +239,6 @@ class TestRunner(object):
             print("Run time test passed: ", test_data.run_time_passed)
             test_data.overall_passed = (test_data.html_report_passed and
             test_data.errors_diff_passed and test_data.db_diff_passed)
-        #    test_data.run_time_passed not considered for test_data.overall_passed
         # otherwise, do the usual
         else:
             test_data.overall_passed = (test_data.html_report_passed and
@@ -268,8 +257,9 @@ class TestRunner(object):
         return logres
 
 
-    def _extract_gold(test_data):
-        """Extract gold archive file to output/gold/tmp/
+    def _setup_gold(test_data):
+        """Extract gold archive file to output/gold/
+        and then copies gold txt files to the same location.
 
         Args:
             test_data: the TestData
@@ -279,8 +269,16 @@ class TestRunner(object):
         extrctr.close
         time.sleep(2)
 
+        gold_dir = test_data.main_config.gold
+        for file in os.listdir(gold_dir):
+            if file.startswith(test_data.image_name) and file.endswith(".txt"):
+                src = os.path.join(gold_dir, file)
+                dst = os.path.join(gold_dir, test_data.image_name)
+                shutil.copy(src, dst)
+        time.sleep(2)
+
     def _handle_solr(test_data):
-        """Clean up SOLR index if in keep mode (-k).
+        """Clean up SOLR index if not in keep mode (-k).
 
         Args:
             test_data: the TestData
@@ -326,35 +324,35 @@ class TestRunner(object):
         Copies the test-generated database and html report files into the gold directory.
         """
         test_config = test_data.main_config
-        # Errors to print
+        image_name = test_data.image_name
         errors = []
-        # Delete the current gold standards
-        gold_dir = test_config.img_gold
-        clear_dir(test_config.img_gold)
-        tmpdir = make_path(gold_dir, test_data.image_name)
+
+        gold_dir = test_config.gold
+        image_dir = make_path(gold_dir, image_name)
+        clear_dir(image_dir)
+
         dbinpth = test_data.get_db_path(DBType.OUTPUT)
-        dboutpth = make_path(tmpdir, DB_FILENAME)
-        dataoutpth = make_path(tmpdir, test_data.image_name + "BlackboardDump.txt")
+        dboutpth = make_path(image_dir, DB_FILENAME)
+        dataoutpth = make_path(gold_dir, image_name + "-BlackboardDump.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
-        dbdumpoutpth = make_path(tmpdir, test_data.image_name + "DBDump.txt")
-        if not os.path.exists(test_config.img_gold):
-            os.makedirs(test_config.img_gold)
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
+        dbdumpoutpth = make_path(gold_dir, image_name + "-DBDump.txt")
+        error_pth = make_path(gold_dir, image_name + "-Exceptions.txt")
+
+        # Copy files to gold
         try:
             shutil.copy(dbinpth, dboutpth)
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
-            shutil.copy(dbdumpinpth, dbdumpoutpth)
-            error_pth = make_path(tmpdir, test_data.image_name+"Exceptions.txt")
+            shutil.copy(dbdumpinpth, dbdumpoutpth)          
             shutil.copy(test_data.common_log_path, error_pth)
         except IOError as e:
             Errors.print_error(str(e))
             print(str(e))
             print(traceback.format_exc())
+
         # Rebuild the HTML report
         output_html_report_dir = test_data.get_html_report_path(DBType.OUTPUT)
-        gold_html_report_dir = make_path(tmpdir, "Report")
+        gold_html_report_dir = make_path(image_dir, "Report")
 
         try:
             shutil.copytree(output_html_report_dir, gold_html_report_dir)
@@ -364,29 +362,28 @@ class TestRunner(object):
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
             print(traceback.format_exc())
+
         # Rebuild the Run time report
         if(test_data.main_config.timing):
             file = open(test_data.get_run_time_path(DBType.GOLD), "w")
             file.writelines(test_data.total_ingest_time)
             file.close()
-        oldcwd = os.getcwd()
-        zpdir = gold_dir
-        os.chdir(zpdir)
-        os.chdir("..")
-        img_gold = "tmp"
-        img_archive = make_path(test_data.image_name + "-archive.zip")
+
+        # Create the zip for the image
+        img_archive = make_path(gold_dir, image_name + "-archive.zip")
         comprssr = zipfile.ZipFile(img_archive, 'w', compression=zipfile.ZIP_DEFLATED)
-        TestRunner.zipdir(img_gold, comprssr)
+        TestRunner.zipdir(image_dir, comprssr)
         comprssr.close()
-        os.chdir(oldcwd)
-        del_dir(test_config.img_gold)
+        del_dir(image_dir)
         okay = "Successfully rebuilt all gold standards."
         print_report(errors, "REBUILDING", okay)
 
     def zipdir(path, zip):
-        for root, dirs, files in os.walk(path):
+        fix_path = path.replace("\\","/")
+        for root, dirs, files in os.walk(fix_path):
             for file in files:
-                zip.write(os.path.join(root, file))
+                relpath = os.path.relpath(os.path.join(root, file), os.path.join(fix_path, '..'))
+                zip.write(os.path.join(root, file), relpath)
 
     def _run_ant(test_data):
         """Construct and run the ant build command for the given TestData.
@@ -404,7 +401,6 @@ class TestRunner(object):
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
-    #   case.ant.append(case.build_path)
         test_data.ant.append(os.path.join("..","..","Testing","build.xml"))
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
@@ -469,7 +465,7 @@ class TestData(object):
         ant: a listof_String, the ant command for this TestData
         image_file: a pathto_Image, the image for this TestData
         image: a String, the image file's name
-        image_name: a String, the image file's name with a trailing (0)
+        image_name: a String, the image file's name
         output_path: pathto_Dir, the output directory for this TestData
         autopsy_data_file: a pathto_File, the IMAGE_NAMEAutopsy_data.txt file
         warning_log: a pathto_File, the AutopsyLogs.txt file
@@ -513,19 +509,18 @@ class TestData(object):
         self.main_config = main_config
         self.ant = []
         self.image_file = str(image)
-        # TODO: This 0 should be be refactored out, but it will require rebuilding and changing of outputs.
         self.image = get_image_name(self.image_file)
-        self.image_name = self.image + "(0)"
+        self.image_name = self.image
         # Directory structure and files
         self.output_path = make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
         self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
         self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
         self.test_dbdump = make_path(self.output_path, self.image_name +
-        "DBDump.txt")
-        self.common_log_path = make_local_path(self.output_path, self.image_name + COMMON_LOG)
+        "-DBDump.txt")
+        self.common_log_path = make_local_path(self.output_path, self.image_name + "-Exceptions.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
-        self.gold_data_dir = make_path(self.main_config.img_gold, self.image_name)
+        self.gold_data_dir = make_path(self.main_config.gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
         self.image_name + "-archive.zip")
         self.logs_dir = make_path(self.output_path, "logs")
@@ -599,7 +594,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "BlackboardDump.txt")
+        return self._get_path_to_file(file_type, "-BlackboardDump.txt")
 
     def get_sorted_errors_path(self, file_type):
         """Get the path to the Exceptions (SortedErrors) file that corresponds to the given
@@ -608,7 +603,7 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "Exceptions.txt")
+        return self._get_path_to_file(file_type, "-Exceptions.txt")
 
     def get_db_dump_path(self, file_type):
         """Get the path to the DBDump file that corresponds to the given DBType.
@@ -616,12 +611,12 @@ class TestData(object):
         Args:
             file_type: the DBType of the path to be generated
         """
-        return self._get_path_to_file(file_type, "DBDump.txt")
+        return self._get_path_to_file(file_type, "-DBDump.txt")
 
     def get_run_time_path(self, file_type):
         """Get the path to the run time storage file."
         """
-        return self._get_path_to_file(file_type, "Time.txt")
+        return self._get_path_to_file(file_type, "-Time.txt")
 
     def _get_path_to_file(self, file_type, file_name):
         """Get the path to the specified file with the specified type.
@@ -632,7 +627,7 @@ class TestData(object):
         """
         full_filename = self.image_name + file_name
         if(file_type == DBType.GOLD):
-            return make_path(self.gold_data_dir, full_filename)
+            return make_path(self.main_config.gold, full_filename)
         else:
             return make_path(self.output_path, full_filename)
 
@@ -679,7 +674,6 @@ class TestConfiguration(object):
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")
-        self.img_gold = make_path(self.gold, 'tmp')
         # Logs:
         self.csv = ""
         self.global_csv = ""
@@ -705,8 +699,6 @@ class TestConfiguration(object):
         else:
             self.images.append(self.args.single_file)
         self._init_logs()
-        #self._init_imgs()
-        #self._init_build_info()
 
 
     def _load_config_file(self, config_file):
@@ -730,7 +722,6 @@ class TestConfiguration(object):
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-                self.img_gold = make_path(self.gold, 'tmp')
             if parsed_config.getElementsByTagName("jenkins"):
                 self.jenkins = True
                 if parsed_config.getElementsByTagName("diffdir"):
@@ -1075,12 +1066,6 @@ class Reports(object):
             info += "<tr><td>Out Of Disk Space:\
                              <p style='font-size: 11px;'>(will skew other test results)</p></td>"
             info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) + "</td></tr>"
-#            info += "<tr><td>TSK Objects Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_objs) + "</td></tr>"
-#            info += "<tr><td>Artifacts Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_artifacts)+ "</td></tr>"
-#            info += "<tr><td>Attributes Count:</td>"
-#            info += "<td>" + str(test_data.db_diff_results.output_attrs) + "</td></tr>"
             info += "</table>\
                     </div>"
             # For all the general print statements in the test_config
@@ -1137,8 +1122,8 @@ class Reports(object):
             html_log: a pathto_File, the global HTML log
         """
         with open(html_log, "a") as html:
-            head = "</body></html>"
-            html.write(head)
+            foot = "</body></html>"
+            html.write(foot)
 
     def html_add_images(html_log, full_image_names):
         """Add all the image names to the HTML log.
@@ -1155,7 +1140,7 @@ class Reports(object):
             links = []
             for full_name in full_image_names:
                 name = get_image_name(full_name)
-                links.append("<a href='#" + name + "(0)'>" + name + "</a>")
+                links.append("<a href='#" + name + "'>" + name + "</a>")
             html.write("<p align='center'>" + (" | ".join(links)) + "</p>")
 
     def _generate_csv(csv_path, test_data):
@@ -1189,12 +1174,7 @@ class Reports(object):
             vars.append( str(test_data.indexed_files) )
             vars.append( str(test_data.indexed_chunks) )
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
-#            vars.append( str(test_data.db_diff_results.output_artifacts) )
-#            vars.append( str(test_data.db_diff_results.output_objs) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
-#            vars.append( test_data.db_diff_results.get_artifact_comparison() )
-#            vars.append( test_data.db_diff_results.get_attribute_comparison() )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
             vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
@@ -1229,12 +1209,7 @@ class Reports(object):
             titles.append("Indexed Files Count")
             titles.append("Indexed File Chunks Count")
             titles.append("Out Of Disk Space")
-#            titles.append("Tsk Objects Count")
-#            titles.append("Artifacts Count")
-#            titles.append("Attributes Count")
             titles.append("Gold Database Name")
-#            titles.append("Artifacts Comparison")
-#            titles.append("Attributes Comparison")
             titles.append("Gold Report Name")
             titles.append("Report Comparison")
             titles.append("Ant Command Line")
@@ -1312,7 +1287,6 @@ class Logs(object):
                 log.close()
             common_log.write("\n")
             common_log.close()
-            print(test_data.common_log_path)
             srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
             subprocess.call(srtcmdlst)
         except (OSError, IOError) as e:
