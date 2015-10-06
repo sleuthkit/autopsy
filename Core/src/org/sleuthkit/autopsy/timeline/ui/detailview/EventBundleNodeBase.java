@@ -141,7 +141,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         //position of start and end according to range of axis
         chart.layoutEventBundleNodes(subNodes, 0, chartX);
-
         return chartX;
     }
+
+    /**
+     * @param w the maximum width the description label should have
+     */
+    abstract void setDescriptionWidth(double w);
 }

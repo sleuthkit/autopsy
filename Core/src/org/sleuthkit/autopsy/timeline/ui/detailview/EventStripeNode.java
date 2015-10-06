@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +47,6 @@ import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -169,16 +167,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         show(hideButton, showControls);
     }
 
-    public void setSpanWidths(List<Double> spanWidths) {
-        for (int i = 0; i < spanWidths.size(); i++) {
-            Region spanRegion = (Region) subNodePane.getChildren().get(i);
-
-            Double w = spanWidths.get(i);
-            spanRegion.setPrefWidth(w);
-            spanRegion.setMaxWidth(w);
-            spanRegion.setMinWidth(Math.max(2, w));
-        }
-    }
+   
 
     public EventStripe getEventStripe() {
         return getEventBundle();
