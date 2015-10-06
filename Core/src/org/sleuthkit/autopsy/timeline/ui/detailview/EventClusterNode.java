@@ -1,12 +1,26 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-15 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
@@ -16,10 +30,12 @@ import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -31,6 +47,8 @@ import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -64,11 +82,15 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
-
+       
         clusterRegion.setBorder(clusterBorder);
         clusterRegion.setBackground(defaultBackground);
+        clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
+        clusterRegion.setMinHeight(24);
+//        clusterRegion.prefHeightProperty().bind(subNodePane.prefHeightProperty().add(24));
         clusterRegion.setMaxWidth(USE_PREF_SIZE);
         clusterRegion.setMinWidth(1);
+
         setMinHeight(24);
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
@@ -81,25 +103,31 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
              */
             installTooltip();
             showDescriptionLoDControls(true);
-//            toFront();
+            chart.requestChartLayout();
         });
-
-        setOnMouseExited((MouseEvent e) -> {
+        setOnMouseExited((MouseEvent event) -> {
             showDescriptionLoDControls(false);
+            chart.requestChartLayout();
         });
-
         configureLoDButton(plusButton);
         configureLoDButton(minusButton);
-        HBox buttonBar = new HBox(5, plusButton, minusButton);
+
+        setAlignment(Pos.CENTER_LEFT);
+        HBox buttonBar = new HBox(5, minusButton, plusButton);
         buttonBar.setMaxWidth(USE_PREF_SIZE);
         buttonBar.setAlignment(Pos.BOTTOM_LEFT);
-
-        getChildren().addAll(clusterRegion, subNodePane, buttonBar);
+        Label label = new Label(Long.toString(getEventBundle().getCount()));
+        label.setPadding(new Insets(0, 3, 0, 5));
+        StackPane stackPane = new StackPane(clusterRegion, label, subNodePane);
+        stackPane.setAlignment(Pos.CENTER_LEFT);
+        setAlignment(stackPane, Pos.TOP_LEFT);
+        VBox vBox = new VBox(stackPane, buttonBar);
+        getChildren().addAll(vBox);
     }
 
     void showDescriptionLoDControls(final boolean showControls) {
-        show(minusButton, showControls);
         show(plusButton, showControls);
+        show(minusButton, showControls);
     }
 
     @Override
@@ -192,7 +220,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         subNodes.clear();
         if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLoD()) {
             descLOD.set(getEventBundle().getDescriptionLoD());
-            chart.setRequiresLayout(true);
             chart.requestChartLayout();
         } else {
             /*
@@ -248,8 +275,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         } else {
                             chart.getEventBundles().addAll(bundles);
                             subNodes.addAll(bundles.stream()
-                                    .map(EventClusterNode.this::getSubNodeForBundle)
-                                    .collect(Collectors.toSet()));
+                                    .map(EventClusterNode.this::createStripeNode)
+                                    .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
+                                    .collect(Collectors.toList()));
                             subNodePane.getChildren().addAll(subNodes);
                         }
                         descLOD.set(loadedDescriptionLoD);
@@ -258,8 +286,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                     } catch (InterruptedException | ExecutionException ex) {
                         LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                     }
-                    chart.setRequiresLayout(true);
-                    chart.requestChartLayout();
+                    chart.requestLayout();
                     chart.setCursor(null);
                 }
             };
@@ -269,7 +296,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         }
     }
 
-    EventStripeNode getSubNodeForBundle(EventStripe stripe) {
+    private EventStripeNode createStripeNode(EventStripe stripe) {
         return new EventStripeNode(chart, stripe, this);
     }
 
@@ -316,17 +343,11 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    protected void layoutChildren(double xOffset) {
-        super.layoutChildren(); //To change body of generated methods, choose Tools | Templates.
-        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        double startX = chartX - xOffset;
+    double layoutChildren(double xOffset) {
+        double chartX = super.layoutChildren(xOffset); //To change body of generated methods, choose Tools | Templates.
         double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
-
-        //position of start and end according to range of axis
-        setLayoutX(startX);
         clusterRegion.setPrefWidth(w);
-        chart.layoutStripes(subNodes, 0, chartX);
-        autosize();
+        return chartX;
     }
 
     /**

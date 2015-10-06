@@ -68,6 +68,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(hideButton);
 
+        setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
         setMinHeight(24);
         setPrefHeight(USE_COMPUTED_SIZE);
@@ -135,5 +136,12 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         return getEventBundle().getEventIDs();
     }
 
-    abstract void layoutChildren(double xOffset);
+    double layoutChildren(double xOffset) {
+        super.layoutChildren();
+        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
+        //position of start and end according to range of axis
+        chart.layoutEventBundleNodes(subNodes, 0, chartX);
+
+        return chartX;
+    }
 }
