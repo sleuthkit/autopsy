@@ -77,17 +77,18 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
      * (or if this is the first problem encountered), a warning will be shown to
      * the user.
      *
-     * @param newProblems the newProblems to set
-     * @param ex          the exception for this error
+     * @param newProblems  the newProblems to set
+     * @param context      The context in which the error occurred.
+     * @param errorMessage A description of the error that occurred.
      */
-    private void addProblems(long newProblems, Exception ex) {
+    private void addProblems(long newProblems, String context, String errorMessage) {
         this.newProblems += newProblems;
         this.totalProblems += newProblems;
 
         long currentTimeStamp = System.currentTimeMillis();
         if ((currentTimeStamp - lastReportedDate) > milliSecondsBetweenReports) {
             this.lastReportedDate = currentTimeStamp;
-            MessageNotifyUtil.Notify.error(message, ex.getMessage() + " "
+            MessageNotifyUtil.Notify.error(message, context + ", " + errorMessage + " "
                     + this.newProblems + " "
                     + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.NewIssues")
                     + " " + this.totalProblems + " "
@@ -98,7 +99,7 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
     }
 
     @Override
-    public void receiveError(Exception ex) {
-        addProblems(1, ex);
+    public void receiveError(String context, String errorMessage) {
+        addProblems(1, context, errorMessage);
     }
 }
