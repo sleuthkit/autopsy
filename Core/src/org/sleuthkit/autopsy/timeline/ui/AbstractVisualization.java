@@ -304,7 +304,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
             //x-positions (pixels) of the current branch and leaf labels
             double leafLabelX = 0;
 
-            if (dateTime.branch.equals("")) {
+            if (dateTime.branch.isEmpty()) {
                 //if there is only one part to the date (ie only year), just add a label for each tick
                 for (Axis.TickMark<X> t : tickMarks) {
                     assignLeafLabel(new TwoPartDateTime(getTickMarkLabel(t.getValue())).leaf,

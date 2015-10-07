@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 
 /**
@@ -28,9 +30,10 @@ public abstract class AbstractFilter implements Filter {
 
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(true);
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
+    private final BooleanBinding activeProperty = Bindings.and(selected, disabled.not());
 
     @Override
-    public SimpleBooleanProperty getSelectedProperty() {
+    public SimpleBooleanProperty selectedProperty() {
         return selected;
     }
 
@@ -64,4 +67,11 @@ public abstract class AbstractFilter implements Filter {
         return "[" + (isSelected() ? "x" : " ") + "]"; // NON-NLS
     }
 
+    public final boolean isActive() {
+        return activeProperty.get();
+    }
+
+    public final BooleanBinding activeProperty() {
+        return activeProperty;
+    }
 }

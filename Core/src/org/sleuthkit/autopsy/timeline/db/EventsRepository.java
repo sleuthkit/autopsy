@@ -622,4 +622,9 @@ public class EventsRepository {
             }
         }
     }
+
+    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
+        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
+
+    }
 }

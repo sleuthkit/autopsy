@@ -33,4 +33,6 @@ abstract public class UnionFilter<SubFilterType extends Filter> extends Compound
     public UnionFilter() {
         super(FXCollections.<SubFilterType>observableArrayList());
     }
+
+ 
 }
