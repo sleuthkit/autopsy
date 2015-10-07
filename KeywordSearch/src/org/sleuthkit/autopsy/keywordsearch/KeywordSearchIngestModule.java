@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -147,10 +148,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
-                if (!kwsService.canConnectToRemoteSolrServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort())) {
+                try {
+                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort());
+                } catch (NumberFormatException | IOException | TskCoreException ex) {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                    logger.log(Level.SEVERE, msg);
-                    String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.verifyConnection");
+                    String details = kwsService.getUserWarning(ex, UserPreferences.getIndexingServerHost());
+                    logger.log(Level.SEVERE, "{0}: {1}", new Object[]{msg, details});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                     throw new IngestModuleException(msg);
                 }

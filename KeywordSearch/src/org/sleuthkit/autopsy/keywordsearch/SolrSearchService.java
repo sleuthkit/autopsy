@@ -33,6 +33,9 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.openide.util.NbBundle;
+import java.net.InetAddress;
+import java.util.MissingResourceException;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
@@ -40,6 +43,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
+
+    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occured when talking to server";
+    private static final String SERVER_REFUSED_CONNECTION = "server refused connection";
+    private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
@@ -157,39 +164,75 @@ public class SolrSearchService implements KeywordSearchService {
 
     /**
      * Checks if we can communicate with Solr using the passed-in host and port.
-     * Closes the connection upon exit.
+     * Closes the connection upon exit. Throws if it cannot communicate with
+     * Solr.
      *
      * @param host the remote hostname or IP address of the Solr server
      * @param port the remote port for Solr
      *
-     * @return true if communication with Solr is functional, false otherwise
+     * @throws java.io.IOException
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     @Override
-    public boolean canConnectToRemoteSolrServer(String host, String port) {
-        if (host.isEmpty() || port.isEmpty()) {
-            return false;
-        }
-
+    public void tryConnect(String host, String port) throws NumberFormatException, IOException, TskCoreException {
         try {
-            // if the port value is invalid, return false
+            if (host == null || host.isEmpty()) {
+                throw new TskCoreException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
+            } else if (port == null || port.isEmpty()) {
+                throw new TskCoreException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingPort")); //NON-NLS
+            }
+            // if the port value is invalid, throw
             Integer.parseInt(port);
-        } catch (NumberFormatException ex) {
-            return false;
-        }
-
-        HttpSolrServer solrServer = null;
-        try {
-            solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
+            HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
             KeywordSearch.getServer().connectToSolrServer(solrServer);
-            return true; // if we get here, it's at least up and responding
-        } catch (SolrServerException | IOException ignore) {
-        } finally {
-            if (solrServer != null) {
+            if (null != solrServer) {
                 solrServer.shutdown();
             }
+        } catch (SolrServerException ex) {
+            throw new IOException(ex);
         }
+    }
 
-        return false;
+    /**
+     * This method handles exceptions from the connection tester, tryConnect(),
+     * returning the appropriate user-facing text for the exception received.
+     *
+     * @param ex        the exception that was returned
+     * @param ipAddress the IP address to connect to
+     *
+     * @return returns the String message to show the user
+     */
+    @Override
+    public String getUserWarning(Exception ex, String ipAddress) {
+
+        String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+        if (ex instanceof IOException) {
+            String message = ex.getCause().getMessage().toLowerCase();
+            if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
+                try {
+                    if (InetAddress.getByName(ipAddress).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
+                        // if we can reach the host, then it's probably port problem
+                        result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
+                    } else {
+                        result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+                    }
+                } catch (IOException | MissingResourceException any) {
+                    // it may be anything
+                    result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+                }
+            } else if (message.startsWith(BAD_IP_ADDRESS_FORMAT)) {
+                result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Hostname"); //NON-NLS
+            }
+        } else if (ex instanceof SolrServerException) {
+            result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+        } else if (ex instanceof NumberFormatException) {
+            result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
+        } else if (ex instanceof TskCoreException) {
+            result = ex.getMessage();
+        } else {
+            result = ex.getMessage();
+        }
+        return result;
     }
 
     @Override
