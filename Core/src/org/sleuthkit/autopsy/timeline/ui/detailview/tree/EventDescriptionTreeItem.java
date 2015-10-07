@@ -19,8 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 /**
@@ -28,34 +31,60 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
  */
 class EventDescriptionTreeItem extends NavTreeItem {
 
-    public EventDescriptionTreeItem(EventCluster g) {
-        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getDescription(), g.getEventIDs().size()));
+    /**
+     * maps a description to the child item of this item with that description
+     */
+    private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
+    private final EventBundle bundle;
+
+    public EventBundle getEventBundle() {
+        return bundle;
+    }
+
+    EventDescriptionTreeItem(EventBundle g) {
+        bundle = g;
+        setValue(g);
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
-    @Override
-    public void insert(EventCluster g) {
-        NavTreeNode value = getValue();
-        if ((value.getType().getBaseType().equals(g.getEventType().getBaseType()) == false) || ((value.getDescription().equals(g.getDescription()) == false))) {
-            throw new IllegalArgumentException();
+    public void insert(Deque<EventBundle> path) {
+        EventBundle head = path.removeFirst();
+        EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
+        if (treeItem == null) {
+            treeItem = new EventDescriptionTreeItem(head);
+            treeItem.setExpanded(true);
+            childMap.put(head.getDescription(), treeItem);
+            getChildren().add(treeItem);
+            FXCollections.sort(getChildren(), TreeComparator.Description);
         }
 
-        setValue(new NavTreeNode(value.getType().getBaseType(), value.getDescription(), value.getCount() + g.getEventIDs().size()));
+        if (path.isEmpty() == false) {
+            treeItem.insert(path);
+        }
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
+        FXCollections.sort(getChildren(), comp);
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-        if (getValue().getType().getBaseType() == t.getEventType().getBaseType() && getValue().getDescription().equals(t.getDescription())) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
+
+        if (getValue().getEventType() == t.getEventType()
+                && getValue().getDescription().equals(t.getDescription())) {
             return this;
+        } else {
+            for (EventDescriptionTreeItem child : childMap.values()) {
+                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
+                if (findTreeItemForEvent != null) {
+                    return findTreeItemForEvent;
+                }
+            }
         }
         return null;
     }

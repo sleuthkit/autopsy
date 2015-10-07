@@ -64,7 +64,7 @@ import static org.sleuthkit.autopsy.timeline.db.SQLHelper.useTagTablesHelper;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -1053,7 +1053,7 @@ public class EventDB {
         //unpack params
         Interval timeRange = params.getTimeRange();
         RootFilter filter = params.getFilter();
-        DescriptionLOD descriptionLOD = params.getDescriptionLOD();
+        DescriptionLoD descriptionLOD = params.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 
         //ensure length of querried interval is not 0
@@ -1083,6 +1083,7 @@ public class EventDB {
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
 
+        System.out.println(query);
         // perform query and map results to AggregateEvent objects
         List<EventCluster> events = new ArrayList<>();
 
@@ -1115,7 +1116,7 @@ public class EventDB {
      *
      * @throws SQLException
      */
-    private EventCluster eventClusterHelper(ResultSet rs, boolean useSubTypes, DescriptionLOD descriptionLOD, TagsFilter filter) throws SQLException {
+    private EventCluster eventClusterHelper(ResultSet rs, boolean useSubTypes, DescriptionLoD descriptionLOD, TagsFilter filter) throws SQLException {
         Interval interval = new Interval(rs.getLong("min(time)") * 1000, rs.getLong("max(time)") * 1000, TimeLineController.getJodaTimeZone());// NON-NLS
         String eventIDsString = rs.getString("event_ids");// NON-NLS
         Set<Long> eventIDs = SQLHelper.unGroupConcat(eventIDsString, Long::valueOf);

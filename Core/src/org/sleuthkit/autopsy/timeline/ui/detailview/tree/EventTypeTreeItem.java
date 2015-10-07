@@ -19,12 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 
 class EventTypeTreeItem extends NavTreeItem {
@@ -34,55 +33,39 @@ class EventTypeTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
 
-    private final Comparator<TreeItem<NavTreeNode>> comparator = TreeComparator.Description;
+    private final Comparator<TreeItem<EventBundle>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(EventCluster g) {
-        setValue(new NavTreeNode(g.getEventType().getBaseType(), g.getEventType().getBaseType().getDisplayName(), 0));
+    EventTypeTreeItem(EventBundle g) {
+        setValue(g);
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
-    /**
-     * Recursive method to add a grouping at a given path.
-     *
-     * @param path Full path (or subset not yet added) to add
-     * @param g    Group to add
-     * @param tree True if it is part of a tree (versus a list)
-     */
-    @Override
-    public void insert(EventCluster g) {
-
-        EventDescriptionTreeItem treeItem = childMap.get(g.getDescription());
+    public void insert(Deque<EventBundle> path) {
+        EventBundle head = path.removeFirst();
+        EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
         if (treeItem == null) {
-            final EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(g);
-            newTreeItem.setExpanded(true);
-            childMap.put(g.getDescription(), newTreeItem);
-
-            Platform.runLater(() -> {
-                synchronized (getChildren()) {
-                    getChildren().add(newTreeItem);
-                    FXCollections.sort(getChildren(), comparator);
-                }
-            });
-        } else {
-            treeItem.insert(g);
+            treeItem = new EventDescriptionTreeItem(head);
+            treeItem.setExpanded(true);
+            childMap.put(head.getDescription(), treeItem);
+            getChildren().add(treeItem);
+            FXCollections.sort(getChildren(), comparator);
         }
-        Platform.runLater(() -> {
-            NavTreeNode value1 = getValue();
-            setValue(new NavTreeNode(value1.getType().getBaseType(), value1.getType().getBaseType().getDisplayName(), childMap.values().stream().mapToInt(EventDescriptionTreeItem::getCount).sum()));
-        });
 
+        if (path.isEmpty() == false) {
+            treeItem.insert(path);
+        }
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-        if (t.getEventType().getBaseType() == getValue().getType().getBaseType()) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
+        if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
-            for (TreeItem<NavTreeNode> child : getChildren()) {
-                final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+            for (EventDescriptionTreeItem child : childMap.values()) {
+                final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
                 if (findTreeItemForEvent != null) {
                     return findTreeItemForEvent;
                 }
@@ -92,7 +75,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
         FXCollections.sort(getChildren(), comp);
     }
 }
