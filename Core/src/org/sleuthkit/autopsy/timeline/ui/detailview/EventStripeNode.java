@@ -106,7 +106,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
-       
+
         minWidthProperty().bind(subNodePane.widthProperty());
 
         if (eventStripe.getEventIDsWithHashHits().isEmpty()) {
@@ -146,28 +146,30 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
             /*
+             * w
              * defer tooltip creation till needed, this had a surprisingly large
              * impact on speed of loading the chart
              */
             installTooltip();
-            showDescriptionLoDControls(true);
+            showHoverControls(true);
 //            toFront();
         });
 
         setOnMouseExited((MouseEvent e) -> {
-            showDescriptionLoDControls(false);
+            showHoverControls(false);
         });
 
     }
 
-    void showDescriptionLoDControls(final boolean showControls) {
+    @Override
+    void showHoverControls(final boolean showControls) {
+        super.showHoverControls(showControls);
         DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(10, eventType.getColor()));
         subNodePane.setEffect(showControls ? dropShadow : null);
         show(hideButton, showControls);
-    }
 
-   
+    }
 
     public EventStripe getEventStripe() {
         return getEventBundle();
@@ -333,5 +335,4 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         }
     }
 
-  
 }

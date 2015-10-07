@@ -580,7 +580,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
                 if (oneEventPerRow.get()) {
                     // if onePerRow, just put it at end
-                    yTop = (localMax + 2);
+                    yTop = (localMax + MINIMUM_GAP);
                     yBottom = yTop + h;
                 } else {
                     boolean overlapping = true;
@@ -590,11 +590,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         //check each pixel from bottom to top.
                         for (double y = yBottom; y >= yTop; y--) {
                             final Double maxX = maxXatY.get((int) y);
-                            if (maxX != null && maxX >= xLeft - 4) {
+                            if (maxX != null && maxX >= xLeft - MINIMUM_GAP) {
                                 //if that pixel is already used
                                 //jump top to this y value and repeat until free slot is found.
                                 overlapping = true;
-                                yTop = y + 4;
+                                yTop = y + MINIMUM_GAP;
                                 yBottom = yTop + h;
                                 break;
                             }
@@ -607,7 +607,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 }
                 localMax = Math.max(yBottom, localMax);
 
-//                bundleNode.relocate(xLeft, yTop);
                 Timeline tm = new Timeline(new KeyFrame(Duration.seconds(.5),
                         new KeyValue(bundleNode.layoutXProperty(), xLeft),
                         new KeyValue(bundleNode.layoutYProperty(), yTop)));
@@ -617,6 +616,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         }
         return localMax;
     }
+    private static final int MINIMUM_GAP = 4;
 
     private void layoutProjectionMap() {
         for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {

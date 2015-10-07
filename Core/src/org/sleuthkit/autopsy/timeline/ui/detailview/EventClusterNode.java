@@ -86,7 +86,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         clusterRegion.setBackground(defaultBackground);
         clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
         clusterRegion.setMinHeight(24);
-//        clusterRegion.prefHeightProperty().bind(subNodePane.prefHeightProperty().add(24));
         clusterRegion.setMaxWidth(USE_PREF_SIZE);
         clusterRegion.setMinWidth(1);
 
@@ -101,11 +100,11 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
              * impact on speed of loading the chart
              */
             installTooltip();
-            showDescriptionLoDControls(true);
+            showHoverControls(true);
             chart.requestChartLayout();
         });
         setOnMouseExited((MouseEvent event) -> {
-            showDescriptionLoDControls(false);
+            showHoverControls(false);
             chart.requestChartLayout();
         });
         configureLoDButton(plusButton);
@@ -124,11 +123,12 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         getChildren().addAll(vBox);
     }
 
-    
-
-    void showDescriptionLoDControls(final boolean showControls) {
+    @Override
+    void showHoverControls(final boolean showControls) {
+        super.showHoverControls(showControls);
         show(plusButton, showControls);
         show(minusButton, showControls);
+
     }
 
     @Override
@@ -145,7 +145,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     void applyHighlightEffect(boolean applied) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
 
     @Override
     void setDescriptionWidth(double max) {

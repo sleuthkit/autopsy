@@ -116,6 +116,12 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     abstract void setDescriptionVisibility(DescriptionVisibility get);
 
+    void showHoverControls(final boolean showControls) {
+        if (showControls && parentNode != null) {
+            parentNode.showHoverControls(false);
+        }
+    }
+
     final EventType getEventType() {
         return getEventBundle().getEventType();
     }
