@@ -29,12 +29,10 @@ import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -59,8 +57,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventStripeNode.configureLoDButton;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.EventStripeNode.show;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.configureLoDButton;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -72,6 +70,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
+    private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
+    private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
     private final Region clusterRegion = new Region();
@@ -93,20 +93,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
 
-        //set up mouse hover effect and tooltip
-        setOnMouseEntered((MouseEvent e) -> {
-            /*
-             * defer tooltip creation till needed, this had a surprisingly large
-             * impact on speed of loading the chart
-             */
-            installTooltip();
-            showHoverControls(true);
-            chart.requestChartLayout();
-        });
-        setOnMouseExited((MouseEvent event) -> {
-            showHoverControls(false);
-            chart.requestChartLayout();
-        });
         configureLoDButton(plusButton);
         configureLoDButton(minusButton);
 
@@ -114,9 +100,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         HBox buttonBar = new HBox(5, minusButton, plusButton);
         buttonBar.setMaxWidth(USE_PREF_SIZE);
         buttonBar.setAlignment(Pos.BOTTOM_LEFT);
-        Label label = new Label(Long.toString(getEventBundle().getCount()));
-        label.setPadding(new Insets(0, 3, 0, 5));
-        StackPane stackPane = new StackPane(clusterRegion, label, subNodePane);
+        StackPane stackPane = new StackPane(clusterRegion, infoHBox, subNodePane);
         stackPane.setAlignment(Pos.CENTER_LEFT);
         setAlignment(stackPane, Pos.TOP_LEFT);
         VBox vBox = new VBox(stackPane, buttonBar);
@@ -128,17 +112,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         super.showHoverControls(showControls);
         show(plusButton, showControls);
         show(minusButton, showControls);
-
-    }
-
-    @Override
-    void installTooltip() {
-
-    }
-
-    @Override
-    void applySelectionEffect(boolean selected) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -152,53 +125,27 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    void setDescriptionVisibility(DescriptionVisibility get) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    public void setDescriptionVisibility(DescriptionVisibility descrVis) {
+        final int size = getEventBundle().getEventIDs().size();
 
-    /**
-     * event handler used for mouse events on {@link EventStripeNode}s
-     */
-    private class MouseClickHandler implements EventHandler<MouseEvent> {
-
-        private ContextMenu contextMenu;
-
-        @Override
-        public void handle(MouseEvent t) {
-
-            if (t.getButton() == MouseButton.PRIMARY) {
-                t.consume();
-                if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
-                        chart.selectedNodes.add(EventClusterNode.this);
-                    }
-                } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventClusterNode.this);
-                } else if (t.getClickCount() > 1) {
-                    final DescriptionLoD next = descLOD.get().moreDetailed();
-                    if (next != null) {
-                        loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-
-                    }
-                } else {
-                    chart.selectedNodes.setAll(EventClusterNode.this);
-                }
-                t.consume();
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
-                if (contextMenu == null) {
-                    contextMenu = new ContextMenu();
-                    contextMenu.setAutoHide(true);
-
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
-
-                    contextMenu.getItems().add(new SeparatorMenuItem());
-                    contextMenu.getItems().addAll(chartContextMenu.getItems());
-                }
-                contextMenu.show(EventClusterNode.this, t.getScreenX(), t.getScreenY());
-                t.consume();
-            }
+        switch (descrVis) {
+            case HIDDEN:
+                countLabel.setText("");
+                descrLabel.setText("");
+                break;
+            case COUNT_ONLY:
+                descrLabel.setText("");
+                countLabel.setText(String.valueOf(size));
+                break;
+            default:
+            case SHOWN:
+//                String description = getEventStripe().getDescription();
+//                description = parentNode != null
+//                        ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
+//                        : description;
+//                descrLabel.setText(description);
+                countLabel.setText(String.valueOf(size));
+                break;
         }
     }
 
@@ -217,6 +164,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         subNodePane.getChildren().clear();
         subNodes.clear();
         if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLoD()) {
+            countLabel.setVisible(true);
             descLOD.set(getEventBundle().getDescriptionLoD());
             chart.requestChartLayout();
         } else {
@@ -270,7 +218,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         Collection<EventStripe> bundles = get();
 
                         if (bundles.isEmpty()) {
+                            countLabel.setVisible(true);
                         } else {
+                            countLabel.setVisible(false);
                             chart.getEventBundles().addAll(bundles);
                             subNodes.addAll(bundles.stream()
                                     .map(EventClusterNode.this::createStripeNode)
@@ -298,44 +248,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         return new EventStripeNode(chart, stripe, this);
     }
 
-    private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
-    private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
-
-    private class ExpandClusterAction extends Action {
-
-        @NbBundle.Messages("ExpandClusterAction.text=Expand")
-        ExpandClusterAction() {
-            super(Bundle.ExpandClusterAction_text());
-
-            setGraphic(new ImageView(PLUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD next = descLOD.get().moreDetailed();
-                if (next != null) {
-                    loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-
-                }
-            });
-            disabledProperty().bind(descLOD.isEqualTo(DescriptionLoD.FULL));
-        }
-    }
-
-    private class CollapseClusterAction extends Action {
-
-        @NbBundle.Messages("CollapseClusterAction.text=Collapse")
-        CollapseClusterAction() {
-            super(Bundle.CollapseClusterAction_text());
-
-            setGraphic(new ImageView(MINUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD previous = descLOD.get().lessDetailed();
-                if (previous != null) {
-                    loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
-                }
-            });
-            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
-        }
-    }
-
     EventCluster getEventCluster() {
         return getEventBundle();
     }
@@ -359,5 +271,85 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 new DescriptionFilter(getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
+    }
+
+    /**
+     * event handler used for mouse events on {@link EventStripeNode}s
+     */
+    private class MouseClickHandler implements EventHandler<MouseEvent> {
+
+        private ContextMenu contextMenu;
+
+        @Override
+        public void handle(MouseEvent t) {
+
+            if (t.getButton() == MouseButton.PRIMARY) {
+                t.consume();
+                if (t.isShiftDown()) {
+                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
+                        chart.selectedNodes.add(EventClusterNode.this);
+                    }
+                } else if (t.isShortcutDown()) {
+                    chart.selectedNodes.removeAll(EventClusterNode.this);
+                } else if (t.getClickCount() > 1) {
+                    final DescriptionLoD next = descLOD.get().moreDetailed();
+                    if (next != null) {
+                        loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
+                    }
+                } else {
+                    chart.selectedNodes.setAll(EventClusterNode.this);
+                }
+                t.consume();
+            } else if (t.getButton() == MouseButton.SECONDARY) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                if (contextMenu == null) {
+                    contextMenu = new ContextMenu();
+                    contextMenu.setAutoHide(true);
+
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
+                    contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
+
+                    contextMenu.getItems().add(new SeparatorMenuItem());
+                    contextMenu.getItems().addAll(chartContextMenu.getItems());
+                }
+                contextMenu.show(EventClusterNode.this, t.getScreenX(), t.getScreenY());
+                t.consume();
+            }
+        }
+    }
+
+    private class ExpandClusterAction extends Action {
+
+        @NbBundle.Messages(value = "ExpandClusterAction.text=Expand")
+        ExpandClusterAction() {
+            super(Bundle.ExpandClusterAction_text());
+
+            setGraphic(new ImageView(PLUS));
+            setEventHandler((ActionEvent t) -> {
+                final DescriptionLoD next = descLOD.get().moreDetailed();
+                if (next != null) {
+                    loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
+
+                }
+            });
+            disabledProperty().bind(descLOD.isEqualTo(DescriptionLoD.FULL));
+        }
+    }
+
+    private class CollapseClusterAction extends Action {
+
+        @NbBundle.Messages(value = "CollapseClusterAction.text=Collapse")
+        CollapseClusterAction() {
+            super(Bundle.CollapseClusterAction_text());
+
+            setGraphic(new ImageView(MINUS));
+            setEventHandler((ActionEvent t) -> {
+                final DescriptionLoD previous = descLOD.get().lessDetailed();
+                if (previous != null) {
+                    loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
+                }
+            });
+            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
+        }
     }
 }

@@ -269,7 +269,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     }
 
                     this.controller.selectEventIDs(selectedNodes.stream()
-                            .flatMap(detailNode -> detailNode.getEventsIDs().stream())
+                            .flatMap(detailNode -> detailNode.getEventIDs().stream())
                             .collect(Collectors.toList()));
                 });
 
@@ -427,45 +427,24 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     }
 
     @Override
-    protected void layoutChildren() {
-        super.layoutChildren();
-
-    }
-
-    /**
-     * Layout the nodes representing events via the following algorithm.
-     *
-     * we start with a list of nodes (each representing an event) - sort the
-     * list of nodes by span start time of the underlying event - initialize
-     * empty map (maxXatY) from y-position to max used x-value - for each node:
-     * -- autosize the node (based on text label) -- get the event's start and
-     * end positions from the dateaxis -- size the capsule representing event
-     * duration -- starting from the top of the chart: --- (1)check if maxXatY
-     * is to the left of the start position: -------if maxXatY less than start
-     * position , good, put the current node here, mark end position as maxXatY,
-     * go to next node -------if maxXatY greater than start position, increment
-     * y position, do -------------check(1) again until maxXatY less than start
-     * position
-     */
-    @Override
     protected synchronized void layoutPlotChildren() {
 
         setCursor(Cursor.WAIT);
 
-        //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
         maxY.set(0);
-        List<EventStripeNode> stripeNodes;
-        if (bandByType.get()) {
-            for (Series<DateTime, EventCluster> series : sortedSeriesList) {
-                stripeNodes = series.getData().stream()
-                        .map(data -> (EventStripeNode) data.getNode())
-                        .sorted(Comparator.comparing(EventStripeNode::getStartMillis)).
-                        collect(Collectors.toList());
-                maxY.set(maxY.get() + layoutEventBundleNodes(stripeNodes, maxY.get(), 0));
 
-            }
+        if (bandByType.get()) {
+            stripeNodeMap.values().stream()
+                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
+                    .forEach(inputNodes -> {
+                        List<EventStripeNode> stripeNodes = inputNodes.stream()
+                        .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
+                        .collect(Collectors.toList());
+
+                        maxY.set(maxY.get() + layoutEventBundleNodes(stripeNodes, maxY.get(), 0));
+                    });
         } else {
-            stripeNodes = stripeNodeMap.values().stream()
+            List<EventStripeNode> stripeNodes = stripeNodeMap.values().stream()
                     .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
                     .collect(Collectors.toList());
             maxY.set(layoutEventBundleNodes(stripeNodes, 0, 0));
@@ -543,10 +522,26 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * layout the nodes in the given list, starting form the given minimum y
      * coordinate.
      *
+     *
+     * Layout the nodes representing events via the following algorithm.
+     *
+     * we start with a list of nodes (each representing an event) - sort the
+     * list of nodes by span start time of the underlying event - initialize
+     * empty map (maxXatY) from y-position to max used x-value - for each node:
+     * -- autosize the node (based on text label) -- get the event's start and
+     * end positions from the dateaxis -- size the capsule representing event
+     * duration -- starting from the top of the chart: --- (1)check if maxXatY
+     * is to the left of the start position: -------if maxXatY less than start
+     * position , good, put the current node here, mark end position as maxXatY,
+     * go to next node -------if maxXatY greater than start position, increment
+     * y position, do -------------check(1) again until maxXatY less than start
+     * position
+     *
      * @param nodes
      * @param minY
      */
     synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY, final double xOffset) {
+        //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
         final Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
         //for each node size it and position it in first available slot
@@ -562,18 +557,16 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setManaged(true);
                 bundleNode.setDescriptionVisibility(descrVisibility.get());
 
-                bundleNode.layoutChildren(xOffset);
                 if (truncateAll.get()) { //if truncate option is selected limit width of description label		
                     bundleNode.setDescriptionWidth(truncateWidth.get());
                 } else { //else set it unbounded		
                     bundleNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());		
                 }
+                bundleNode.layoutChildren(xOffset);
+
                 double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - xOffset;
                 double xRight = xLeft + bundleNode.getBoundsInParent().getWidth();
-
-                //get the height of the node
                 final double h = bundleNode.getBoundsInParent().getHeight();
-
                 //initial test position
                 double yTop = minY;
                 double yBottom = yTop + h;
@@ -614,7 +607,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 tm.play();
             }
         }
-        return localMax;
+        return localMax - minY;
     }
     private static final int MINIMUM_GAP = 4;
 
