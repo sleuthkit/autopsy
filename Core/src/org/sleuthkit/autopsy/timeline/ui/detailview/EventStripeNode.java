@@ -31,6 +31,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.action.ActionUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.configureLoDButton;
@@ -40,6 +41,7 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.c
  */
 final public class EventStripeNode extends EventBundleNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
+    private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
     final Button hideButton;
     /**
      * Pane that contains EventStripeNodes for any 'subevents' if they are
@@ -54,7 +56,8 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
 
-        minWidthProperty().bind(subNodePane.widthProperty());
+        setMinHeight(42);
+//        minWidthProperty().bind(subNodePane.widthProperty());
 
         EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
