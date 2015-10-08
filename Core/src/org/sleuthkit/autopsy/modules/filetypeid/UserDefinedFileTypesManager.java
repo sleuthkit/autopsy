@@ -180,17 +180,17 @@ final class UserDefinedFileTypesManager {
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
-        try {
-            FileType fileType = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-            fileTypes.put(fileType.getMimeType(), fileType);
+        byte[] byteArray = null;
+        FileType fileType = null;
+        // Add rule for xml
+        byteArray = DatatypeConverter.parseHexBinary("3C3F786D6C");
+        fileType = new FileType("text/xml", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+        fileTypes.put(fileType.getMimeType(), fileType);
 
-        } catch (UnsupportedEncodingException ex) {
-            /**
-             * Using an all-or-none policy.
-             */
-            fileTypes.clear();
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.loadFileTypes.errorMessage");
-        }
+        // Add rule for aiff
+        byteArray = DatatypeConverter.parseHexBinary("464F524D00");
+        fileType = new FileType("audio/x-aiff", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+        fileTypes.put(fileType.getMimeType(), fileType);
     }
 
     /**
