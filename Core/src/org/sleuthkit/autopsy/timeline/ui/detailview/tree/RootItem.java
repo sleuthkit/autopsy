@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
+import java.util.Optional;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -47,7 +47,7 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         return getValue().getCount();
     }
 
@@ -56,39 +56,41 @@ class RootItem extends NavTreeItem {
      *
      * @param g Group to add
      */
-    @Override
-    public void insert(EventCluster g) {
+    public void insert(EventBundle g) {
 
-        EventTypeTreeItem treeItem = childMap.get(g.getEventType().getBaseType());
-        if (treeItem == null) {
-            final EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
-            newTreeItem.setExpanded(true);
-            childMap.put(g.getEventType().getBaseType(), newTreeItem);
-            newTreeItem.insert(g);
-
-            Platform.runLater(() -> {
-                synchronized (getChildren()) {
+        EventTypeTreeItem treeItem = childMap.computeIfAbsent(g.getEventType().getBaseType(),
+                baseType -> {
+                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
+                    newTreeItem.setExpanded(true);
                     getChildren().add(newTreeItem);
+                    getChildren().sort(TreeComparator.Type);
+                    return newTreeItem;
+                });
+        treeItem.insert(getTreePath(g));
+    }
 
-                    FXCollections.sort(getChildren(), TreeComparator.Type);
-                }
-            });
-        } else {
-            treeItem.insert(g);
+    static Deque<EventBundle> getTreePath(EventBundle g) {
+        Deque<EventBundle> path = new ArrayDeque<>();
+        Optional<EventBundle> p = Optional.of(g);
+
+        while (p.isPresent()) {
+            EventBundle parent = p.get();
+            path.addFirst(parent);
+            p = parent.getParentBundle();
         }
+
+        return path;
     }
 
     @Override
-    public void resort(Comparator<TreeItem<NavTreeNode>> comp) {
-        childMap.values().forEach((ti) -> {
-            ti.resort(comp);
-        });
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
+        childMap.values().forEach(ti -> ti.resort(comp));
     }
 
     @Override
-    public TreeItem<NavTreeNode> findTreeItemForEvent(EventBundle t) {
-        for (TreeItem<NavTreeNode> child : getChildren()) {
-            final TreeItem<NavTreeNode> findTreeItemForEvent = ((NavTreeItem) child).findTreeItemForEvent(t);
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
+        for (EventTypeTreeItem child : childMap.values()) {
+            final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
             }

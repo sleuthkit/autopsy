@@ -88,10 +88,4 @@ public class IntersectionFilter<S extends Filter> extends CompoundFilter<S> {
         }
         return true;
     }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        return hash;
-    }
 }
