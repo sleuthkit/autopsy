@@ -79,6 +79,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
 
+        setMinHeight(21);
+
         clusterRegion.setBorder(clusterBorder);
         clusterRegion.setBackground(defaultBackground);
         clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
@@ -242,11 +244,12 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    double layoutChildren(double xOffset) {
+    protected void layoutChildren() {
+        super.layoutChildren();
         double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
         clusterRegion.setPrefWidth(w);
-        return super.layoutChildren(xOffset);
+
     }
 
     /**

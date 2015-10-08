@@ -42,6 +42,7 @@ import javafx.scene.paint.Color;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -182,7 +183,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         "# {3} - start date/time",
         "# {4} - end date/time",
         "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
-    final synchronized void installTooltip() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void installTooltip() {
         if (tooltip == null) {
             final Task<String> tooltTipTask = new Task<String>() {
 
@@ -225,10 +227,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 protected void succeeded() {
                     super.succeeded();
                     try {
-                        if (tooltip != null) {
-                            tooltip.hide();
-                        }
-                        Tooltip.uninstall(EventBundleNodeBase.this, tooltip);
                         tooltip = new Tooltip(get());
                         tooltip.setAutoHide(true);
                         Tooltip.install(EventBundleNodeBase.this, tooltip);
@@ -270,7 +268,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     void showHoverControls(final boolean showControls) {
         DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(10, eventType.getColor()));
-//        subNodePane.setEffect(showControls ? dropShadow : null);
         setEffect(showControls ? dropShadow : null);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
@@ -297,12 +294,12 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         return getEventBundle().getEventIDs();
     }
 
-    double layoutChildren(double xOffset) {
+    @Override
+    protected void layoutChildren() {
         double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         //position of start and end according to range of axis
         chart.layoutEventBundleNodes(subNodes, 0, chartX);
         super.layoutChildren();
-        return getHeight();
     }
 
     /**

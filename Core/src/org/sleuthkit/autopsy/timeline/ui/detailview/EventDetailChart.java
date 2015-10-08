@@ -101,7 +101,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true);
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
-   private static final int MINIMUM_GAP = 4;
+    private static final int MINIMUM_GAP = 4;
     private ContextMenu chartContextMenu;
 
     private TimeLineController controller;
@@ -271,8 +271,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                             .flatMap(detailNode -> detailNode.getEventIDs().stream())
                             .collect(Collectors.toList()));
                 });
-
-        requestChartLayout();
     }
 
     ObservableList<EventBundle<?>> getEventBundles() {
@@ -399,6 +397,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         stripeNodeMap.put(eventStripe, stripeNode);
         nodeGroup.getChildren().add(stripeNode);
         data.setNode(stripeNode);
+        layoutPlotChildren();
     }
 
     @Override
@@ -540,7 +539,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         final Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
         //for each node size it and position it in first available slot
-        for (EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
+        for (final EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
             boolean quickHide = getController().getQuickHideFilters().stream()
                     .filter(AbstractFilter::isActive)
                     .anyMatch(filter -> filter.getDescription().equals(bundleNode.getDescription()));
@@ -550,19 +549,16 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             } else {
                 bundleNode.setVisible(true);
                 bundleNode.setManaged(true);
-
                 bundleNode.setDescriptionVisibility(descrVisibility.get());
+                bundleNode.setDescriptionWidth(truncateAll.get()
+                        ? truncateWidth.get()
+                        : USE_PREF_SIZE);
+                bundleNode.layout();
+                double h = bundleNode.getBoundsInLocal().getHeight();
+                System.out.println(h + " " + bundleNode.getClass().getName());
 
-                if (truncateAll.get()) { //if truncate option is selected limit width of description label		
-                    bundleNode.setDescriptionWidth(truncateWidth.get());
-                } else { //else set it unbounded		
-                    bundleNode.setDescriptionWidth(USE_PREF_SIZE);//20 + new Text(tlNode.getDisplayedDescription()).getLayoutBounds().getWidth());		
-                }
-                double h = bundleNode.layoutChildren(xOffset);
-                System.out.println(h);
                 double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - xOffset;
-                double xRight = xLeft + bundleNode.getBoundsInParent().getWidth();
-//                final double h = bundleNode.getBoundsInParent().getHeight();
+                double xRight = xLeft + bundleNode.getBoundsInLocal().getWidth();
                 //initial test position
                 double yTop = minY;
                 double yBottom = yTop + h;
@@ -596,17 +592,18 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 }
                 localMax = Math.max(yBottom, localMax);
 
+//                bundleNode.relocate(xLeft, yTop);
                 new Timeline(
-                        new KeyFrame(Duration.seconds(.5),
+                        new KeyFrame(Duration.seconds(1),
                                 new KeyValue(bundleNode.layoutXProperty(), xLeft),
                                 new KeyValue(bundleNode.layoutYProperty(), yTop)
                         )
                 ).play();
+
             }
         }
         return localMax - minY;
     }
- 
 
     private void layoutProjectionMap() {
         for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {
