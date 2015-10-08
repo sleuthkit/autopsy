@@ -185,7 +185,7 @@ final class UserDefinedFileTypesManager {
             fileTypes.put(fileTypeXml.getMimeType(), fileTypeXml);
             
             byte[] gzip = DatatypeConverter.parseHexBinary("1F8B08");                 
-            FileType fileTypeGzip = new FileType("application/gzip", new Signature(gzip, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            FileType fileTypeGzip = new FileType("application/x-gzip", new Signature(gzip, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
             fileTypes.put(fileTypeGzip.getMimeType(), fileTypeGzip);
             
         } catch (UnsupportedEncodingException ex) {
