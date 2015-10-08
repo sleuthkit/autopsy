@@ -31,7 +31,6 @@
                 <package>com.apple.eio</package>
                 <package>com.google.common.annotations</package>
                 <package>com.google.common.base</package>
-                <package>com.google.common.base.internal</package>
                 <package>com.google.common.cache</package>
                 <package>com.google.common.collect</package>
                 <package>com.google.common.escape</package>

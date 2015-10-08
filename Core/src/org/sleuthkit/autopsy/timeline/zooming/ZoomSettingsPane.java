@@ -97,7 +97,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         typeZoomSlider.setMin(1);
         typeZoomSlider.setMax(2);
         typeZoomSlider.setLabelFormatter(new TypeZoomConverter());
-        descrLODSlider.setMax(DescriptionLOD.values().length - 1);
+        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
         descrLODSlider.setLabelFormatter(new DescrLODConverter());
         descrLODLabel.setText(
                 NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.descrLODLabel.text"));
@@ -115,7 +115,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
     synchronized public void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(controller.getEventsModel());
-        descrLODSlider.disableProperty().bind(controller.getViewMode().isEqualTo(VisualizationMode.COUNTS));
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
         Back back = new Back(controller);
         backButton.disableProperty().bind(back.disabledProperty());
         backButton.setOnAction(back);
@@ -154,7 +154,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
         initializeSlider(descrLODSlider,
                 () -> {
-                    DescriptionLOD newLOD = DescriptionLOD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
+                    DescriptionLoD newLOD = DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
                     if (controller.pushDescrLOD(newLOD) == false) {
                         descrLODSlider.setValue(new DescrLODConverter().fromString(filteredEvents.getDescriptionLOD().toString()));
                     }
@@ -244,12 +244,12 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
         @Override
         public String toString(Double object) {
-            return DescriptionLOD.values()[object.intValue()].getDisplayName();
+            return DescriptionLoD.values()[object.intValue()].getDisplayName();
         }
 
         @Override
         public Double fromString(String string) {
-            return new Integer(DescriptionLOD.valueOf(string).ordinal()).doubleValue();
+            return new Integer(DescriptionLoD.valueOf(string).ordinal()).doubleValue();
         }
     }
 }

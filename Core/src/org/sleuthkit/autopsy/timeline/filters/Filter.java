@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.filters;
 
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -66,7 +67,7 @@ public interface Filter {
 
     void setSelected(Boolean act);
 
-    SimpleBooleanProperty getSelectedProperty();
+    SimpleBooleanProperty selectedProperty();
 
     /*
      * TODO: disabled state only affects the state of the checkboxes in the ui
@@ -79,6 +80,8 @@ public interface Filter {
     SimpleBooleanProperty getDisabledProperty();
 
     boolean isDisabled();
-    
-    
+
+    boolean isActive();
+
+    BooleanBinding activeProperty();
 }

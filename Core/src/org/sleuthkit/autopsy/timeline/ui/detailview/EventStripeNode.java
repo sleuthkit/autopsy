@@ -1,4 +1,5 @@
 /*
+
  * Autopsy Forensic Browser
  *
  * Copyright 2015 Basis Technology Corp.
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -79,8 +81,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.EventStripeNode_loggedTask_name;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -115,7 +116,7 @@ final public class EventStripeNode extends StackPane {
         b.setManaged(show);
     }
 
-    private final SimpleObjectProperty<DescriptionLOD> descLOD = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
     private DescriptionVisibility descrVis;
     private Tooltip tooltip;
 
@@ -144,12 +145,13 @@ final public class EventStripeNode extends StackPane {
     private final EventStripe eventStripe;
     private final EventStripeNode parentNode;
     private final FilteredEventsModel eventsModel;
+    private final Button hideButton;
 
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventStripeNode parentEventNode) {
         this.eventStripe = eventStripe;
         this.parentNode = parentEventNode;
         this.chart = chart;
-        descLOD.set(eventStripe.getDescriptionLOD());
+        descLOD.set(eventStripe.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
         final Color evtColor = getEventType().getColor();
@@ -172,10 +174,16 @@ final public class EventStripeNode extends StackPane {
         if (eventStripe.getEventIDsWithTags().isEmpty()) {
             show(tagIV, false);
         }
+
+        EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventStripe.getDescriptionLoD());
+        hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
+        configureLoDButton(hideButton);
         configureLoDButton(plusButton);
         configureLoDButton(minusButton);
 
         //initialize info hbox
+        infoHBox.getChildren().add(4, hideButton);
+
         infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
         infoHBox.setAlignment(Pos.CENTER_LEFT);
@@ -227,21 +235,19 @@ final public class EventStripeNode extends StackPane {
         });
     }
 
-    /**
-     *
-     * @param showControls the value of par
-     */
     void showDescriptionLoDControls(final boolean showControls) {
         DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(10, eventType.getColor()));
         clustersHBox.setEffect(showControls ? dropShadow : null);
         show(minusButton, showControls);
         show(plusButton, showControls);
+        show(hideButton, showControls);
     }
 
     public void setSpanWidths(List<Double> spanWidths) {
         for (int i = 0; i < spanWidths.size(); i++) {
             Region spanRegion = (Region) clustersHBox.getChildren().get(i);
+
             Double w = spanWidths.get(i);
             spanRegion.setPrefWidth(w);
             spanRegion.setMaxWidth(w);
@@ -249,8 +255,17 @@ final public class EventStripeNode extends StackPane {
         }
     }
 
-    EventStripe getStripe() {
+    public EventStripe getEventStripe() {
         return eventStripe;
+    }
+
+    Collection<EventStripe> makeBundlesFromClusters(List<EventCluster> eventClusters) {
+        return eventClusters.stream().collect(
+                Collectors.toMap(
+                        EventCluster::getDescription, //key
+                        EventStripe::new, //value
+                        EventStripe::merge)//merge method
+        ).values();
     }
 
     @NbBundle.Messages({"# {0} - counts",
@@ -266,10 +281,10 @@ final public class EventStripeNode extends StackPane {
                 @Override
                 protected String call() throws Exception {
                     HashMap<String, Long> hashSetCounts = new HashMap<>();
-                    if (!getStripe().getEventIDsWithHashHits().isEmpty()) {
+                    if (!eventStripe.getEventIDsWithHashHits().isEmpty()) {
                         hashSetCounts = new HashMap<>();
                         try {
-                            for (TimeLineEvent tle : eventsModel.getEventsById(getStripe().getEventIDsWithHashHits())) {
+                            for (TimeLineEvent tle : eventsModel.getEventsById(eventStripe.getEventIDsWithHashHits())) {
                                 Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
                                 for (String hashSetName : hashSetNames) {
                                     hashSetCounts.merge(hashSetName, 1L, Long::sum);
@@ -347,7 +362,7 @@ final public class EventStripeNode extends StackPane {
     RootFilter getSubClusterFilter() {
         RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
         subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(eventStripe.getDescriptionLOD(), eventStripe.getDescription()),
+                new DescriptionFilter(eventStripe.getDescriptionLoD(), eventStripe.getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
     }
@@ -383,7 +398,7 @@ final public class EventStripeNode extends StackPane {
         }
     }
 
-    private DescriptionLOD getDescriptionLoD() {
+    private DescriptionLoD getDescriptionLoD() {
         return descLOD.get();
     }
 
@@ -394,10 +409,14 @@ final public class EventStripeNode extends StackPane {
      * @param expand
      */
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
-    private synchronized void loadSubBundles(DescriptionLOD.RelativeDetail relativeDetail) {
+    private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
+        chart.getEventBundles().removeIf(bundle ->
+                getSubNodes().stream().anyMatch(subNode ->
+                        bundle.equals(subNode.getEventStripe()))
+        );
         subNodePane.getChildren().clear();
-        if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLOD()) {
-            descLOD.set(eventStripe.getDescriptionLOD());
+        if (descLOD.get().withRelativeDetail(relativeDetail) == eventStripe.getDescriptionLoD()) {
+            descLOD.set(eventStripe.getDescriptionLoD());
             clustersHBox.setVisible(true);
             chart.setRequiresLayout(true);
             chart.requestChartLayout();
@@ -415,24 +434,25 @@ final public class EventStripeNode extends StackPane {
             final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
             final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-            Task<Set<EventStripeNode>> loggedTask = new Task<Set<EventStripeNode>>() {
+            Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
 
-                private volatile DescriptionLOD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
+                private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
                 {
-                    updateTitle(EventStripeNode_loggedTask_name());
+                    updateTitle(Bundle.EventStripeNode_loggedTask_name());
                 }
 
                 @Override
-                protected Set<EventStripeNode> call() throws Exception {
+                protected Collection<EventStripe> call() throws Exception {
                     Collection<EventStripe> bundles;
-                    DescriptionLOD next = loadedDescriptionLoD;
+                    DescriptionLoD next = loadedDescriptionLoD;
                     do {
                         loadedDescriptionLoD = next;
-                        if (loadedDescriptionLoD == eventStripe.getDescriptionLOD()) {
+                        if (loadedDescriptionLoD == eventStripe.getDescriptionLoD()) {
                             return Collections.emptySet();
                         }
                         bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
+                                .map(cluster -> cluster.withParent(getEventStripe()))
                                 .collect(Collectors.toMap(
                                                 EventCluster::getDescription, //key
                                                 EventStripe::new, //value
@@ -442,24 +462,28 @@ final public class EventStripeNode extends StackPane {
                     } while (bundles.size() == 1 && nonNull(next));
 
                     // return list of AbstractEventStripeNodes representing sub-bundles
-                    return bundles.stream()
-                            .map(EventStripeNode.this::getNodeForBundle)
-                            .collect(Collectors.toSet());
+                    return bundles;
+
                 }
 
                 @Override
                 protected void succeeded() {
                     chart.setCursor(Cursor.WAIT);
                     try {
-                        Set<EventStripeNode> subBundleNodes = get();
-                        if (subBundleNodes.isEmpty()) {
+                        Collection<EventStripe> bundles = get();
+
+                        if (bundles.isEmpty()) {
                             clustersHBox.setVisible(true);
                         } else {
                             clustersHBox.setVisible(false);
+                            chart.getEventBundles().addAll(bundles);
+                            subNodePane.getChildren().setAll(bundles.stream()
+                                    .map(EventStripeNode.this::getNodeForBundle)
+                                    .collect(Collectors.toSet()));
                         }
                         descLOD.set(loadedDescriptionLoD);
                         //assign subNodes and request chart layout
-                        subNodePane.getChildren().setAll(subBundleNodes);
+
                         chart.setRequiresLayout(true);
                         chart.requestChartLayout();
                     } catch (InterruptedException | ExecutionException ex) {
@@ -504,10 +528,6 @@ final public class EventStripeNode extends StackPane {
         }
     }
 
-    public EventStripe getEventStripe() {
-        return eventStripe;
-    }
-
     Set<Long> getEventsIDs() {
         return eventStripe.getEventIDs();
     }
@@ -531,9 +551,9 @@ final public class EventStripeNode extends StackPane {
                 } else if (t.isShortcutDown()) {
                     chart.selectedNodes.removeAll(EventStripeNode.this);
                 } else if (t.getClickCount() > 1) {
-                    final DescriptionLOD next = descLOD.get().moreDetailed();
+                    final DescriptionLoD next = descLOD.get().moreDetailed();
                     if (next != null) {
-                        loadSubBundles(DescriptionLOD.RelativeDetail.MORE);
+                        loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
 
                     }
                 } else {
@@ -566,13 +586,13 @@ final public class EventStripeNode extends StackPane {
 
             setGraphic(new ImageView(PLUS));
             setEventHandler((ActionEvent t) -> {
-                final DescriptionLOD next = descLOD.get().moreDetailed();
+                final DescriptionLoD next = descLOD.get().moreDetailed();
                 if (next != null) {
-                    loadSubBundles(DescriptionLOD.RelativeDetail.MORE);
+                    loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
 
                 }
             });
-            disabledProperty().bind(descLOD.isEqualTo(DescriptionLOD.FULL));
+            disabledProperty().bind(descLOD.isEqualTo(DescriptionLoD.FULL));
         }
     }
 
@@ -584,12 +604,12 @@ final public class EventStripeNode extends StackPane {
 
             setGraphic(new ImageView(MINUS));
             setEventHandler((ActionEvent t) -> {
-                final DescriptionLOD previous = descLOD.get().lessDetailed();
+                final DescriptionLoD previous = descLOD.get().lessDetailed();
                 if (previous != null) {
-                    loadSubBundles(DescriptionLOD.RelativeDetail.LESS);
+                    loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
                 }
             });
-            disabledProperty().bind(descLOD.isEqualTo(eventStripe.getDescriptionLOD()));
+            disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(eventStripe) && descLOD.get() == eventStripe.getDescriptionLoD(), descLOD));
         }
     }
 }
