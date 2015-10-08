@@ -56,7 +56,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
  * Utilities for working with Images and creating thumbnails. Reuses thumbnails
  * by storing them in the case's cache directory.
  */

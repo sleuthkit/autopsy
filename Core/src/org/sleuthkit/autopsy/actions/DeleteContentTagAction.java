@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,19 +57,23 @@ public class DeleteContentTagAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
-        for (ContentTag tag : selectedTags) {
-            try {
-                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "DeleteContentTagAction.unableToDelTag.msg",
-                                tag.getName()),
-                        NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
-                        JOptionPane.ERROR_MESSAGE);
+        final Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
+        new Thread(() -> {
+            for (ContentTag tag : selectedTags) {
+                try {
+                    Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteContentTagAction.unableToDelTag.msg",
+                                        tag.getName()),
+                                NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                    });
+                }
             }
-        }
+        }).start();
     }
 }

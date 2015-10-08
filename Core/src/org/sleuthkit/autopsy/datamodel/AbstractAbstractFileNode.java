@@ -18,12 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import org.openide.nodes.Children;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -41,7 +47,52 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
+        String name = abstractFile.getName();
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex > 0) {
+            String ext = name.substring(dotIndex).toLowerCase();
+
+            // If this is an archive file we will listen for ingest events
+            // that will notify us when new content has been identified.
+            for (String s : FileTypeExtensions.getArchiveExtensions()) {
+                if (ext.equals(s)) {
+                    IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                }
+            }
+        }
+
     }
+
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+
+        // Is this a content changed event?
+        if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            if ((evt.getOldValue() instanceof ModuleContentEvent) == false) {
+                return;
+            }
+            ModuleContentEvent moduleContentEvent = (ModuleContentEvent) evt.getOldValue();
+            if ((moduleContentEvent.getSource() instanceof Content) == false) {
+                return;
+            }
+            Content newContent = (Content) moduleContentEvent.getSource();
+
+            // Does the event indicate that content has been added to *this* file?
+            if (getContent().getId() == newContent.getId()) {
+                // If so, refresh our children.
+                try {
+                    Children parentsChildren = getParentNode().getChildren();
+                    if (parentsChildren != null) {
+                        ((ContentChildren) parentsChildren).refreshChildren();
+                        parentsChildren.getNodesCount();
+                    }
+                } catch (NullPointerException ex) {
+                    // Skip
+                }
+
+            }
+        }
+    };
 
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum AbstractFilePropertyType {

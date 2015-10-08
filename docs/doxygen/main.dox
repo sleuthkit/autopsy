@@ -18,6 +18,7 @@ If you want to write modules, then these pages are for you:
  - \subpage mod_content_page
  - \subpage mod_result_page
 - \subpage adv_dev_page
+- \subpage query_database_page
 - \subpage mod_mobile_page
 
 These pages are more detailed if you want to modify Autopsy code instead of writing add-on modules. 

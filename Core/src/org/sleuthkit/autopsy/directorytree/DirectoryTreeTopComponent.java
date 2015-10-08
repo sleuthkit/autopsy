@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,13 +27,13 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -49,8 +49,10 @@ import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -83,21 +85,14 @@ import org.sleuthkit.datamodel.TskException;
 // Registered as a service provider for DataExplorer in layer.xml
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
-    private transient ExplorerManager em = new ExplorerManager();
+    private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
             "DirectoryTreeTopComponent.title.text"));
-    private LinkedList<String[]> backList;
-    private LinkedList<String[]> forwardList;
-    /**
-     * path to the icon used by the component and its open action
-     */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
+    private final LinkedList<String[]> backList;
+    private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
-    private PropertyChangeSupport pcs;
-    // for error handling
-    private JPanel caller;
-    private String className = this.getClass().toString();
+    private final PropertyChangeSupport pcs;
     private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private RootContentChildren contentChildren;
 
@@ -143,7 +138,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
-        Case.addPropertyChangeListener(this);
+        Case.addEventSubscriber(new HashSet<>(Arrays.asList(Case.Events.CURRENT_CASE.toString(), Case.Events.DATA_SOURCE_ADDED.toString())), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
         IngestManager.getInstance().addIngestModuleEventListener(this);
@@ -529,70 +524,71 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        String changed = evt.getPropertyName();
-        Object oldValue = evt.getOldValue();
-        Object newValue = evt.getNewValue();
+        if (RuntimeProperties.coreComponentsAreActive()) {
+            String changed = evt.getPropertyName();
+            if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
+                // When a case is closed, the old value of this property is the 
+                // closed Case object and the new value is null. When a case is 
+                // opened, the old value is null and the new value is the new Case
+                // object.
+                // @@@ This needs to be revisited. Perhaps case closed and case
+                // opened events instead of property change events would be a better
+                // solution. Either way, more probably needs to be done to clean up
+                // data model objects when a case is closed.
+                if (evt.getOldValue() != null && evt.getNewValue() == null) {
+                    // The current case has been closed. Reset the ExplorerManager.
+                    SwingUtilities.invokeLater(() -> {
+                        Node emptyNode = new AbstractNode(Children.LEAF);
+                        em.setRootContext(emptyNode);
+                    });
+                } else if (evt.getNewValue() != null) {
+                    // A new case has been opened. Reset the ExplorerManager. 
+                    Case newCase = (Case) evt.getNewValue();
+                    final String newCaseName = newCase.getName();
+                    SwingUtilities.invokeLater(() -> {
+                        em.getRootContext().setName(newCaseName);
+                        em.getRootContext().setDisplayName(newCaseName);
 
-        // change in the case name
-        if (changed.equals(Case.Events.NAME.toString())) {
-            // set the main title of the window
-            String oldCaseName = oldValue.toString();
-            String newCaseName = newValue.toString();
-
-            // update the case name
-            if ((!oldCaseName.equals("")) && (!newCaseName.equals(""))) {
-                // change the root name and display name
-                em.getRootContext().setName(newCaseName);
-                em.getRootContext().setDisplayName(newCaseName);
-            }
-        } // changed current case
-        else if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-            // When a case is closed, the old value of this property is the 
-            // closed Case object and the new value is null. When a case is 
-            // opened, the old value is null and the new value is the new Case
-            // object.
-            // @@@ This needs to be revisited. Perhaps case closed and case
-            // opened events instead of property change events would be a better
-            // solution. Either way, more probably needs to be done to clean up
-            // data model objects when a case is closed.
-            if (oldValue != null && newValue == null) {
-                // The current case has been closed. Reset the ExplorerManager.
-                Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode);
-            } else if (newValue != null) {
-                // A new case has been opened. Reset the forward and back 
-                // buttons. Note that a call to CoreComponentControl.openCoreWindows()
-                // by the new Case object will lead to a componentOpened() call
-                // that will repopulate the tree.
-                // @@@ The repopulation of the tree in this fashion also merits
-                // reconsideration.
-                resetHistory();
-            }
-        } // if the image is added to the case
-        else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-            // we don't need to do anything in here. 
-            // DataSourcesNode is listening for these events and updates itself
-        } // change in node selection
-        else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-            respondSelection((Node[]) oldValue, (Node[]) newValue);
-        } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            // nothing to do here.
-            // all nodes should be listening for these events and update accordingly.
-        } else if (changed.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || changed.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshDataSourceTree();
+                        // Reset the forward and back
+                        // buttons. Note that a call to CoreComponentControl.openCoreWindows()
+                        // by the new Case object will lead to a componentOpened() call
+                        // that will repopulate the tree.
+                        // @@@ The repopulation of the tree in this fashion also merits
+                        // reconsideration.
+                        resetHistory();
+                    });
                 }
-            });
-        } else if (changed.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    refreshDataSourceTree();
+            } // if the image is added to the case
+            else if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case currentCase = Case.getCurrentCase();
+                    // We only need to trigger openCoreWindows() when the
+                    // first data source is added.
+                    if (currentCase.getDataSources().size() == 1) {
+                        SwingUtilities.invokeLater(() -> {
+                            CoreComponentControl.openCoreWindows();
+                        });
+                    }
+                } catch (IllegalStateException | TskCoreException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
                 }
-            });
+            } // change in node selection
+            else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                SwingUtilities.invokeLater(() -> {
+                    respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
+                });
+            } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                // nothing to do here.
+                // all nodes should be listening for these events and update accordingly.
+            }
         }
     }
 
@@ -773,7 +769,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node imagesNode = imagesNodeOrig.getNode();
 
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();
+        RootContentChildren contentRootChildren = (RootContentChildren) imagesNode.getChildren();
         contentRootChildren.refreshContentKeys();
 
         //final TreeView tree = getTree();
@@ -782,56 +778,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     }
 
-    /**
-     * Refreshes the nodes in the tree to reflect updates in the database should
-     * be called in the gui thread
-     */
-//    public void refreshResultsTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
-//        //save current selection
-//        Node selectedNode = getSelectedNode();
-//        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-//
-//        //TODO: instead, we should choose a specific key to refresh? Maybe?
-//        //contentChildren.refreshKeys();
-//
-//        Children dirChilds = em.getRootContext().getChildren();
-//
-//        Node results = dirChilds.findChild(ResultsNode.NAME);
-//        if (results == null) {
-//            logger.log(Level.SEVERE, "Cannot find Results filter node, won't refresh the bb tree"); //NON-NLS
-//            return;
-//        }
-//        
-//        OriginalNode original = results.getLookup().lookup(OriginalNode.class);
-//        ResultsNode resultsNode = (ResultsNode) original.getNode();
-//        RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
-//        resultsNodeChilds.refreshKeys(types);
-//
-//        
-//        final TreeView tree = getTree();
-//        // @@@ tree.expandNode(results);
-//
-//        Children resultsChilds = results.getChildren();
-//        if (resultsChilds == null) { 
-//            return;
-//        }
-//
-//        Node childNode = resultsChilds.findChild(KeywordHits.NAME);
-//        if (childNode == null) { 
-//            return;
-//        }
-//        // @@@tree.expandNode(childNode);
-//
-//        childNode = resultsChilds.findChild(ExtractedContent.NAME);
-//        if (childNode == null) {
-//            return;
-//        }
-//        tree.expandNode(childNode);
-//
-//        //restores selection if it was under the Results node
-//        //@@@ setSelectedNode(selectedPath, ResultsNode.NAME);
-//        
-//    }
     /**
      * Set the selected node using a path to a previously selected node.
      *
@@ -1002,10 +948,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
-//    private class HistoryManager<T> {
-//        private Stack<T> past, future;
-//
-//    }
     @Override
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);

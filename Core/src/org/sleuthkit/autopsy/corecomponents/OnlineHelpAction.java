@@ -35,7 +35,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Implements a hyperlink to the Online Documentation.

@@ -171,7 +171,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * is the given file a video we can display?
+     * Is the given file a video we can display?
      *
      * @param file
      *
@@ -185,14 +185,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * is the given file an image that we can display?
+     * Is the given file an image that we can display?
      *
      * @param file
      *
      * @return True if an image file that can be displayed
      */
     private boolean isImageSupported(AbstractFile file) {
-
         if (null == file || file.getSize() == 0) {
             return false;
         }

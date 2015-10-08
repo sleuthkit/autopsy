@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,14 +43,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 
 /**
  * GlobalEditListPanel widget to manage keywords in lists
  */
 class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
-    private static Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private KeywordList currentKeywordList;
 
@@ -129,10 +128,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                if (changed.equals(IngestJobEvent.STARTED.toString())
-                        || changed.equals(IngestJobEvent.COMPLETED.toString())
-                        || changed.equals(IngestJobEvent.CANCELLED.toString())) {
+                Object source = evt.getSource();
+                if (source instanceof String && ((String) source).equals("LOCAL")) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {

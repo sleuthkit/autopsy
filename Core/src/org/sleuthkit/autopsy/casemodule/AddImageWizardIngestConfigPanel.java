@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +25,13 @@ import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private IngestJobSettingsPanel ingestJobSettingsPanel;
+    private final IngestJobSettingsPanel ingestJobSettingsPanel;
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -220,13 +220,14 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * DataSourceProcessor
      */
     private void startDataSourceProcessing(WizardDescriptor settings) {
+        final UUID dataSourceId = UUID.randomUUID();
 
         // Add a cleanup task to interrupt the background process if the
         // wizard exits while the background process is running.
         cleanupTask = addImageAction.new CleanupTask() {
             @Override
             void cleanup() throws Exception {
-                cancelDataSourceProcessing();
+                cancelDataSourceProcessing(dataSourceId);
             }
         };
 
@@ -235,10 +236,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         // get the selected DSProcessor
         dsProcessor = dataSourcePanel.getComponent().getCurrentDSProcessor();
 
+        new Thread(() -> {
+            Case.getCurrentCase().notifyAddingNewDataSource(dataSourceId);
+        }).start();
         DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
             @Override
             public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-                dataSourceProcessorDone(result, errList, contents);
+                dataSourceProcessorDone(dataSourceId, result, errList, contents);
             }
 
         };
@@ -253,7 +257,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     /*
      * Cancels the data source processing - in case the users presses 'Cancel'
      */
-    private void cancelDataSourceProcessing() {
+    private void cancelDataSourceProcessing(UUID dataSourceId) {
+        new Thread(() -> {
+            Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
+        }).start();
         dsProcessor.cancel();
     }
 
@@ -261,8 +268,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Callback for the data source processor. Invoked by the DSP on the EDT
      * thread, when it finishes processing the data source.
      */
-    private void dataSourceProcessorDone(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-
+    private void dataSourceProcessorDone(UUID dataSourceId, DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
         // disable the cleanup task
         cleanupTask.disable();
 
@@ -301,10 +307,13 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         newContents.addAll(contents);
 
         //notify the UI of the new content added to the case
-        if (!newContents.isEmpty()) {
-
-            Case.getCurrentCase().notifyNewDataSource(newContents.get(0));
-        }
+        new Thread(() -> {
+            if (!newContents.isEmpty()) {
+                Case.getCurrentCase().notifyNewDataSource(newContents.get(0), dataSourceId);
+            } else {
+                Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
+            }
+        }).start();
 
         // Start ingest if we can
         progressPanel.setStateStarted();

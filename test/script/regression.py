@@ -1789,10 +1789,13 @@ def search_logs(string, test_data):
     results = []
     for file in os.listdir(logs_path):
         log = codecs.open(make_path(logs_path, file), "r", "utf_8")
-        for line in log:
-            if string in line:
-                results.append(line)
-        log.close()
+        try:
+            for line in log:
+                if string in line:
+                    results.append(line)
+            log.close()
+        except UnicodeDecodeError:
+            pass
     return results
 
 
@@ -1811,10 +1814,13 @@ def search_log(log, string, test_data):
     try:
         results = []
         log = codecs.open(logs_path, "r", "utf_8")
-        for line in log:
-            if string in line:
-                results.append(line)
-        log.close()
+        try:
+            for line in log:
+                if string in line:
+                    results.append(line)
+            log.close()
+        except UnicodeDecodeError:
+            pass
         if results:
             return results
     except:
@@ -1840,10 +1846,13 @@ def search_log_set(type, string, test_data):
     for file in os.listdir(logs_path):
         if type in file:
             log = codecs.open(make_path(logs_path, file), "r", "utf_8")
-            for line in log:
-                if string in line:
-                    results.append(line)
-            log.close()
+            try:
+                for line in log:
+                    if string in line:
+                        results.append(line)
+                log.close()
+            except UnicodeDecodeError:
+                pass
     return results
 
 

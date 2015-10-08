@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -119,7 +120,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 + "-" + String.valueOf(abstractFile.getId());
         File file = new File(fileName);
 
-        if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
+        long freeSpace = services.getFreeDiskSpace();
+        if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
@@ -202,7 +204,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 + "-" + String.valueOf(abstractFile.getId());
         File file = new File(fileName);
 
-        if (abstractFile.getSize() >= services.getFreeDiskSpace()) {
+        long freeSpace = services.getFreeDiskSpace();
+        if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
             logger.log(Level.WARNING, "Not enough disk space to write file to disk."); //NON-NLS
             postErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg",
@@ -254,7 +257,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     public static String getModuleOutputPath() {
-        String outDir = Case.getCurrentCase().getModulesOutputDirAbsPath() + File.separator
+        String outDir = Case.getCurrentCase().getModuleDirectory() + File.separator
                 + EmailParserModuleFactory.getModuleName();
         File dir = new File(outDir);
         if (dir.exists() == false) {
@@ -264,7 +267,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     public static String getRelModuleOutputPath() {
-        return Case.getModulesOutputDirRelPath() + File.separator
+        return Case.getCurrentCase().getModuleOutputDirectoryRelativePath() + File.separator
                 + EmailParserModuleFactory.getModuleName();
     }
 

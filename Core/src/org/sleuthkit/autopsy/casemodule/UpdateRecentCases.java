@@ -33,8 +33,10 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
     int length;
     static boolean hasRecentCase = false;
 
-    /** the constructor */
-    UpdateRecentCases(){
+    /**
+     * the constructor
+     */
+    UpdateRecentCases() {
         // display last 5 cases.
         length = RecentCases.LENGTH - 1;
     }

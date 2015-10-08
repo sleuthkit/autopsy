@@ -15,6 +15,7 @@ The following topics are available here:
 - \subpage installation_page
 - \subpage quick_start_guide "Quick Start Guide"
 - \subpage workflow_page 
+- \subpage multiuser_page
 - Cases and Adding Data Sources
  - \subpage cases_page
  - \subpage ds_page

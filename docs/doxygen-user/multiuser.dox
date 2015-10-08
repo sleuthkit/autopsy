@@ -1,0 +1,40 @@
+/*! \page multiuser_page Multi-User Collaboration
+
+\section creating_multi_user_cases Multi-user cases
+The collaborative Multi-user capabilities enable Autopsy cases to be opened by multiple reviewers at the same time allowing simultaneous case review with multiple reviewers.
+
+
+When creating a case, users are now presented with a choice of Single-user or Multi-user as shown in the screenshot below.
+\image html case-newcase.PNG
+
+Single-user functions the same as always, with a back end SQLite database and a machine-local version of Solr. 
+
+Multi-user allows multiple computers to open the same case at the same time. In order to accomplish this, some setup needs to take place. To use a Multi-user setup, one must install PostgreSQL, Solr, and ActiveMQ (see \subpage installation_page) on machines connected to the network, and properly configure Autopsy to interact with these services. This configuration is done in the Multi-user options panel, discussed below.
+<br><br>
+
+\section multi_user_options Multi-user options panel
+<br>
+As shown in the screenshot below, all three services need configuration of IP addresses and ports, and two of them need user names and passwords. Enter the correct information into the dialog and press okay. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+<br>
+\image html multiuser_settings.PNG
+
+<br>
+<br>
+Other Multi-user Information
+=======
+ - When using a case in collaborative Multi-user mode, other nodes could be running data ingest. While this is happening, you will see a progress bar labelled with the hostname of the machine performing the ingest on the bottom right of Autopsy. The progress bar will continue to move back and forth until ingest has been completed or cancelled. You can still run ingest on your local machine while this is ongoing. This is shown in the screenshot below.
+
+\image html othernodeingesting.PNG
+<br>
+ - When issues occur, there is an information "bubble" on the bottom right of the screen. It has an "i" inside a circle, with the color of the circle changed based upon the message. It uses red for bad and blue for good. See the screenshot below.
+
+\image html messagebubbles.PNG
+<br>
+
+ - Clicking on the information "bubble" brings up the list of prior notifications that have not been dismissed by clicking on the "x". As you can see in the screenshot below, the network cable was unplugged from the machine and it lost all connection to the three services. When the cable was reconnected, it found the services again.
+\image html messagebubblesbigger.PNG
+
+<br>
+ - While using collaborative Multi-user mode, it is important that UNC paths are used to specifiy drive names. Drive mapping will work, but it is sometimes difficult to get all the machines participating in a case to map to the same drive letters for the same resources. It is much simpler to use fully-specified UNC paths in the form of <i>\\\\hostname\\sharename\\folder</i>.
+
+*/

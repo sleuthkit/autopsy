@@ -72,7 +72,7 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public final class DrawableDB {
 
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
+    private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed";
@@ -205,27 +205,27 @@ public final class DrawableDB {
                     "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) "
                     + "VALUES (?,?,?,?,?,?,?,?)");
 
-            removeFileStmt = prepareStatement("delete from drawable_files where obj_id = ?");
+            removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?");
 
-            pathGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  path  = ? ", DrawableAttribute.PATH);
-            nameGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  name  = ? ", DrawableAttribute.NAME);
-            created_timeGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  created_time  = ? ", DrawableAttribute.CREATED_TIME);
-            modified_timeGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  modified_time  = ? ", DrawableAttribute.MODIFIED_TIME);
-            makeGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  make  = ? ", DrawableAttribute.MAKE);
-            modelGroupStmt = prepareStatement("select obj_id , analyzed from drawable_files where  model  = ? ", DrawableAttribute.MODEL);
-            analyzedGroupStmt = prepareStatement("Select obj_id , analyzed from drawable_files where analyzed = ?", DrawableAttribute.ANALYZED);
-            hashSetGroupStmt = prepareStatement("select drawable_files.obj_id as obj_id, analyzed from drawable_files ,  hash_sets , hash_set_hits  where drawable_files.obj_id = hash_set_hits.obj_id and hash_sets.hash_set_id = hash_set_hits.hash_set_id and hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
+            pathGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? ", DrawableAttribute.PATH);
+            nameGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  name  = ? ", DrawableAttribute.NAME);
+            created_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE created_time  = ? ", DrawableAttribute.CREATED_TIME);
+            modified_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  modified_time  = ? ", DrawableAttribute.MODIFIED_TIME);
+            makeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE make  = ? ", DrawableAttribute.MAKE);
+            modelGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE model  = ? ", DrawableAttribute.MODEL);
+            analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED);
+            hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET);
 
             updateGroupStmt = prepareStatement("insert or replace into groups (seen, value, attribute) values( ?, ? , ?)");
             insertGroupStmt = prepareStatement("insert or ignore into groups (value, attribute) values (?,?)");
 
-            groupSeenQueryStmt = prepareStatement("select seen from groups where value = ? and attribute = ?");
+            groupSeenQueryStmt = prepareStatement("SELECT seen FROM groups WHERE value = ? AND attribute = ?");
 
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets");
-            insertHashSetStmt = prepareStatement("insert or ignore into hash_sets (hash_set_name)  values (?)");
-            selectHashSetStmt = prepareStatement("select hash_set_id from hash_sets where hash_set_name = ?");
+            insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)");
+            selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?");
 
-            insertHashHitStmt = prepareStatement("insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)");
+            insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)");
 
             for (Category cat : Category.values()) {
                 insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY);
@@ -647,7 +647,7 @@ public final class DrawableDB {
     public Boolean isFileAnalyzed(long fileId) {
         dbReadLock();
         try (Statement stmt = con.createStatement();
-                ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileId)) {
+                ResultSet analyzedQuery = stmt.executeQuery("SELECT analyzed FROM drawable_files WHERE obj_id = " + fileId)) {
             while (analyzedQuery.next()) {
                 return analyzedQuery.getBoolean(ANALYZED);
             }
@@ -665,7 +665,7 @@ public final class DrawableDB {
         dbReadLock();
         try (Statement stmt = con.createStatement();
                 //Can't make this a preprared statement because of the IN ( ... )
-                ResultSet analyzedQuery = stmt.executeQuery("select count(analyzed) as analyzed from drawable_files where analyzed = 1 and obj_id in (" + StringUtils.join(fileIds, ", ") + ")")) {
+                ResultSet analyzedQuery = stmt.executeQuery("SELECT COUNT(analyzed) AS analyzed FROM drawable_files WHERE analyzed = 1 AND obj_id IN (" + StringUtils.join(fileIds, ", ") + ")")) {
             while (analyzedQuery.next()) {
                 return analyzedQuery.getInt(ANALYZED) == fileIds.size();
             }
@@ -687,7 +687,7 @@ public final class DrawableDB {
                 // In testing, this method appears to be a lot faster than doing one large select statement
                 for (Long fileID : fileIDsInGroup) {
                     Statement stmt = con.createStatement();
-                    ResultSet analyzedQuery = stmt.executeQuery("select analyzed from drawable_files where obj_id = " + fileID);
+                    ResultSet analyzedQuery = stmt.executeQuery("SELECT analyzed FROM drawable_files WHERE obj_id = " + fileID);
                     while (analyzedQuery.next()) {
                         if (analyzedQuery.getInt(ANALYZED) == 0) {
                             return false;
@@ -863,15 +863,15 @@ public final class DrawableDB {
             default:
                 dbReadLock();
                 //TODO: convert this to prepared statement 
-                StringBuilder query = new StringBuilder("select " + groupBy.attrName.toString() + ", count(*) from drawable_files group by " + groupBy.attrName.toString());
+                StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files GROUP BY " + groupBy.attrName.toString());
 
                 String orderByClause = "";
                 switch (sortBy) {
                     case GROUP_BY_VALUE:
-                        orderByClause = " order by " + groupBy.attrName.toString();
+                        orderByClause = " ORDER BY " + groupBy.attrName.toString();
                         break;
                     case FILE_COUNT:
-                        orderByClause = " order by count(*)";
+                        orderByClause = " ORDER BY COUNT(*)";
                         break;
                     case NONE:
 //                    case PRIORITY:
@@ -1063,7 +1063,7 @@ public final class DrawableDB {
     public int countAllFiles() {
         int result = -1;
         dbReadLock();
-        try (ResultSet rs = con.createStatement().executeQuery("select count(*) as COUNT from drawable_files")) {
+        try (ResultSet rs = con.createStatement().executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files")) {
             while (rs.next()) {
 
                 result = rs.getInt("COUNT");

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 
@@ -72,7 +72,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public String getPredicate() throws FilterValidationException {
-        String addQuery = "1";
+        String query = "NULL";
         DateSearchPanel panel = this.getComponent();
 
         // first, get the selected timeZone from the dropdown list
@@ -92,7 +92,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             startDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
             startDate.setTime(temp); // convert to GMT
         } catch (ParseException ex) {
-            // for now, no need to show the error message to the user her
+            // for now, no need to show the error message to the user here
         }
         if (!startDateValue.equals("")) {
             if (startDate != null) {
@@ -120,6 +120,13 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             }
         }
 
+        // If they put the dates in backwards, help them out.
+        if (fromDate > toDate) {
+            long temp = toDate;
+            toDate = fromDate;
+            fromDate = temp;
+        }
+
         final boolean modifiedChecked = panel.getModifiedCheckBox().isSelected();
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
@@ -127,30 +134,27 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
-            String subQuery = "0";
-
             if (modifiedChecked) {
-                subQuery += " or mtime between " + fromDate + " and " + toDate; //NON-NLS
+                query += " OR (mtime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (changedChecked) {
-                subQuery += " or ctime between " + fromDate + " and " + toDate; //NON-NLS
+                query += " OR (ctime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (accessedChecked) {
-                subQuery += " or atime between " + fromDate + " and " + toDate; //NON-NLS
+                query += " OR (atime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
             if (createdChecked) {
-                subQuery += " or crtime between " + fromDate + " and " + toDate; //NON-NLS
+                query += " OR (crtime BETWEEN " + fromDate + " AND " + toDate + ")"; //NON-NLS
             }
 
-            addQuery += " and (" + subQuery + ")"; //NON-NLS
         } else {
             throw new FilterValidationException(NONE_SELECTED_MESSAGE);
         }
 
-        return addQuery;
+        return query;
 
     }
 
@@ -160,7 +164,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     private static List<String> createTimeZoneList() {
 
-        List<String> timeZones = new ArrayList<String>();
+        List<String> timeZones = new ArrayList<>();
 
         if (Case.existsCurrentCase()) {
             // get the latest case
@@ -237,25 +241,33 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
-
-            if (changed.equals(Case.Events.CURRENT_CASE.toString().toString())) {
-                // create or open a case
-                if (newValue != null) {
-                    DateSearchFilter.this.updateTimeZoneList();
-                }
-            }
-
-            // if the image is added to the case
-            if (changed.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
-            }
-
-            // if the image is removed from the case
-            if (changed.equals(Case.Events.DATA_SOURCE_DELETED.toString())) {
-                DateSearchFilter.this.updateTimeZoneList();
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    Object newValue = evt.getNewValue();
+                    if (null != newValue) {
+                        /**
+                         * Opening a new case.
+                         */
+                        SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    }
+                    break;
+                case DATA_SOURCE_ADDED:
+                case DATA_SOURCE_DELETED:
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                    break;
             }
         }
     }
