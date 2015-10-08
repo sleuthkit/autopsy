@@ -39,6 +39,7 @@ import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
@@ -112,7 +113,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         get();
                         CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
                         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-                        if ((currentCaseType == CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && info.canConnect())) {
+                        if ((currentCaseType == CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && SleuthkitCase.tryConnectOld(info.getHost(), info.getPort(), info.getUserName(), info.getPassword(), info.getDbType()))) {
                             AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                             addImageAction.actionPerformed(null);
                         } else {
