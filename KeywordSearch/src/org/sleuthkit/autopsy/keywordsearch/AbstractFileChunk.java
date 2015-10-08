@@ -56,7 +56,7 @@ class AbstractFileChunk {
 
     public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
         byte[] saitizedContent = sanitize(content);
-        ByteContentStream bcs = new ByteContentStream(saitizedContent, contentSize, parent.getSourceFile(), indexCharset); //Charset.forName("UTF-8"));
+        ByteContentStream bcs = new ByteContentStream(saitizedContent, contentSize, parent.getSourceFile(), indexCharset);
         try {
             ingester.ingest(this, bcs, content.length);
         } catch (Exception ingEx) {
