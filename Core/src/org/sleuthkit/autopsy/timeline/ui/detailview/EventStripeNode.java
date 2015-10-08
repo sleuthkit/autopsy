@@ -40,8 +40,6 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.c
  */
 final public class EventStripeNode extends EventBundleNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
-    
-
     final Button hideButton;
     /**
      * Pane that contains EventStripeNodes for any 'subevents' if they are
@@ -57,13 +55,12 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         super(chart, eventStripe, parentNode);
 
         minWidthProperty().bind(subNodePane.widthProperty());
-        setMinHeight(24);
 
         EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(hideButton);
 
-        infoHBox.getChildren().add(4, hideButton);
+        infoHBox.getChildren().add(hideButton);
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
@@ -91,14 +88,14 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     public EventStripe getEventStripe() {
         return getEventBundle();
     }
+
     /**
      * @param w the maximum width the description label should have
      */
+    @Override
     public void setDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
-
-   
 
     /**
      * apply the 'effect' to visually indicate highlighted nodes

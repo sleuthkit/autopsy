@@ -124,7 +124,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
-        setMinHeight(24);
+//        setMinHeight(24);
         setPrefHeight(USE_COMPUTED_SIZE);
         setMaxHeight(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
@@ -132,13 +132,14 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         //initialize info hbox
         infoHBox.setMinWidth(USE_PREF_SIZE);
+        infoHBox.setMaxWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
         infoHBox.setAlignment(Pos.TOP_LEFT);
         infoHBox.setPickOnBounds(true);
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMinHeight(24);
+//        subNodePane.setMinHeight(24);
         subNodePane.setMaxHeight(USE_PREF_SIZE);
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
@@ -152,14 +153,13 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
              */
             installTooltip();
             showHoverControls(true);
-            chart.requestChartLayout();
+            toFront();
         });
         setOnMouseExited((MouseEvent event) -> {
             showHoverControls(false);
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             }
-            chart.requestChartLayout();
         });
     }
 
@@ -302,7 +302,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         //position of start and end according to range of axis
         chart.layoutEventBundleNodes(subNodes, 0, chartX);
         super.layoutChildren();
-        return chartX;
+        return getHeight();
     }
 
     /**

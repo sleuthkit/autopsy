@@ -42,10 +42,7 @@ import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -85,11 +82,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         clusterRegion.setBorder(clusterBorder);
         clusterRegion.setBackground(defaultBackground);
         clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
-        clusterRegion.setMinHeight(24);
         clusterRegion.setMaxWidth(USE_PREF_SIZE);
         clusterRegion.setMinWidth(1);
 
-        setMinHeight(24);
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
 
@@ -97,14 +92,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         configureLoDButton(minusButton);
 
         setAlignment(Pos.CENTER_LEFT);
-        HBox buttonBar = new HBox(5, minusButton, plusButton);
-        buttonBar.setMaxWidth(USE_PREF_SIZE);
-        buttonBar.setAlignment(Pos.BOTTOM_LEFT);
-        StackPane stackPane = new StackPane(clusterRegion, infoHBox, subNodePane);
-        stackPane.setAlignment(Pos.CENTER_LEFT);
-        setAlignment(stackPane, Pos.TOP_LEFT);
-        VBox vBox = new VBox(stackPane, buttonBar);
-        getChildren().addAll(vBox);
+        infoHBox.getChildren().addAll(minusButton, plusButton);
+        getChildren().addAll(clusterRegion, subNodePane, infoHBox);
     }
 
     @Override
@@ -234,12 +223,12 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                     } catch (InterruptedException | ExecutionException ex) {
                         LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                     }
-                    chart.requestLayout();
+                    chart.requestChartLayout();
                     chart.setCursor(null);
                 }
             };
 
-//start task
+            //start task
             chart.getController().monitorTask(loggedTask);
         }
     }
@@ -254,10 +243,10 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     @Override
     double layoutChildren(double xOffset) {
-        double chartX = super.layoutChildren(xOffset); //To change body of generated methods, choose Tools | Templates.
+        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
         clusterRegion.setPrefWidth(w);
-        return chartX;
+        return super.layoutChildren(xOffset);
     }
 
     /**
