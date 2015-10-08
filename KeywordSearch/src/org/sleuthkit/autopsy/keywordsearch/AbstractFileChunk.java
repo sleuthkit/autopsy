@@ -77,7 +77,7 @@ class AbstractFileChunk {
         char ch;
         for (int i = 0; i < inputString.length(); i++) {
             ch = inputString.charAt(i);
-            if (charIsValidUTF8(ch)) {
+            if (charIsValidSolrUTF8(ch)) {
                 sanitized.append(ch);
             } else {
                 sanitized.append("?"); // NON-NLS
@@ -90,7 +90,7 @@ class AbstractFileChunk {
 
     // Is the given character a valid UTF-8 character
     // return true if it is, false otherwise
-    private static boolean charIsValidUTF8(char ch) {
+    private static boolean charIsValidSolrUTF8(char ch) {
         return (ch % 0x10000 != 0xffff && // 0xffff - 0x10ffff range step 0x10000
                 ch % 0x10000 != 0xfffe && // 0xfffe - 0x10fffe range
                 (ch <= 0xfdd0 || ch >= 0xfdef) && // 0xfdd0 - 0xfdef
