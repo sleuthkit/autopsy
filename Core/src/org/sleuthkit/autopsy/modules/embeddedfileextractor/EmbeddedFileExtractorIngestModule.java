@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -103,8 +102,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        // TODO: comment mismatch code
-        // skip unknown files
+        // skip known files
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
