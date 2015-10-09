@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DeleteContentTagAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
             "DeleteContentTagAction.deleteTags");
 
