@@ -79,7 +79,7 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
             }
         }).start();
     }
-    
+
     /**
      * Deprecated, use actionPerformed() instead.
      *
@@ -94,14 +94,14 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
 
     /**
      * Deprecated, does nothing. The TagManager methods to create, update or
-     * delete tags now do notify the case that there is a tag change. The case
-     * then publishes an event that triggers a refresh of the tags sub-tree in
-     * the tree view.
+     * delete tags now notify the case that there is a tag change. The case then
+     * publishes an event that triggers a refresh of the tags sub-tree in the
+     * tree view.
      *
      * @deprecated
      */
     @Deprecated
     protected void refreshDirectoryTree() {
     }
-    
+
 }
