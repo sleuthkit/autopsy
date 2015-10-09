@@ -543,9 +543,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(rulePathFilterRegexCheckBox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.rulePathFilterRegexCheckBox.text")); // NOI18N
         rulePathFilterRegexCheckBox.setEnabled(false);
 
+        jTextArea1.setEditable(false);
         jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
         jTextArea1.setColumns(20);
-        jTextArea1.setFont(jTextArea1.getFont().deriveFont(Font.PLAIN, 11)); // NON-NLS
+        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(3);
         jTextArea1.setText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.jTextArea1.text")); // NOI18N

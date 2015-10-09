@@ -209,9 +209,8 @@
     <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-        <!-- workaround to bug in Solr 4.0 to set LimitTokenCountFilterFactory maxTokenCount, might change to single attribute in future -->
         <!-- 200000 token limit ensures we are indexing entire 1MB chunk of meaningful tokens, increase the limit for larger chunks -->
-        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="val" val="200000"/>
+        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
       </analyzer>
     </fieldType>
 	
@@ -223,8 +222,7 @@
     <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <!-- workaround to bug in Solr 4.0 to set LimitTokenCountFilterFactory maxTokenCount, might change to single attribute in future -->
-        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="val" val="200000"/>
+        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" enablePositionIncrements="true" />
         <!-- in this example, we will only use synonyms at query time
         <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
@@ -233,8 +231,7 @@
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <!-- workaround to bug in Solr 4.0 to set LimitTokenCountFilterFactory maxTokenCount, might change to single attribute in future -->
-        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="val" val="200000"/>
+        <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" enablePositionIncrements="true" />
         <!--<filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>-->
         <filter class="solr.LowerCaseFilterFactory"/>

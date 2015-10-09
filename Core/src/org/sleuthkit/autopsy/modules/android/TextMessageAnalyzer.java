@@ -84,7 +84,7 @@ class TextMessageAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select address,date,read,type,subject,body FROM sms;"); //NON-NLS
+                    "SELECT address,date,read,type,subject,body FROM sms;"); //NON-NLS
 
             String address; // may be phone number, or other addresses
 

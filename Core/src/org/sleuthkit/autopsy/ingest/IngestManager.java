@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,13 +22,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -36,15 +37,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.events.AutopsyEventException;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.ingest.events.BlackboardPostEvent;
+import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -56,6 +69,7 @@ public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance;
+    private final Object ingestMessageBoxLock = new Object();
 
     /**
      * The ingest manager maintains a mapping of ingest job IDs to running
@@ -92,15 +106,17 @@ public class IngestManager {
     private int numberOfFileIngestThreads;
     private final ExecutorService fileIngestThreadPool;
 
-    /**
-     * The ingest manager uses the property change feature from Java Beans as an
-     * event publishing mechanism. There are two kinds of events, ingest job
-     * events and ingest module events. Property changes are fired by ingest
-     * event publishers on a pool thread.
-     */
-    private final PropertyChangeSupport ingestJobEventPublisher;
-    private final PropertyChangeSupport ingestModuleEventPublisher;
-    private final ExecutorService fireIngestEventsThreadPool;
+    private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events";
+    private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events";
+    private static final Set<String> jobEventNames = Stream.of(IngestJobEvent.values())
+            .map(IngestJobEvent::toString)
+            .collect(Collectors.toSet());
+    private static final Set<String> moduleEventNames = Stream.of(IngestModuleEvent.values())
+            .map(IngestModuleEvent::toString)
+            .collect(Collectors.toSet());
+    private AutopsyEventPublisher jobEventPublisher;
+    private AutopsyEventPublisher moduleEventPublisher;
+    private final ExecutorService eventPublishingExecutor;
 
     /**
      * The ingest manager uses an ingest monitor to determine when system
@@ -133,11 +149,10 @@ public class IngestManager {
     private volatile boolean jobCreationIsEnabled;
 
     /**
-     * The ingest manager can be directed to forgo use of message boxes, the
-     * ingest message box, NetBeans progress handles, etc. Running interactively
-     * is the default.
+     * Ingest manager subscribes to service outage notifications. If key
+     * services are down, ingest manager cancels all ingest jobs in progress.
      */
-    private volatile boolean runInteractively;
+    private final ServicesMonitor servicesMonitor;
 
     /**
      * Ingest job events.
@@ -162,6 +177,24 @@ public class IngestManager {
          * and the new value is set to null.
          */
         CANCELLED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is started. Both the old and new values of
+         * the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent to
+         * access event data.
+         */
+        DATA_SOURCE_ANALYSIS_STARTED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is completed. Both the old and new values
+         * of the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent
+         * to access event data.
+         */
+        DATA_SOURCE_ANALYSIS_COMPLETED,
     };
 
     /**
@@ -221,19 +254,21 @@ public class IngestManager {
      * runs.
      */
     private IngestManager() {
-        this.runInteractively = true;
         this.ingestModuleRunTimes = new ConcurrentHashMap<>();
         this.ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
         this.ingestErrorMessagePosts = new AtomicLong(0L);
         this.ingestMonitor = new IngestMonitor();
-        this.ingestModuleEventPublisher = new PropertyChangeSupport(IngestManager.class);
-        this.fireIngestEventsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
-        this.ingestJobEventPublisher = new PropertyChangeSupport(IngestManager.class);
+        this.eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
+        this.jobEventPublisher = new AutopsyEventPublisher();
+        this.moduleEventPublisher = new AutopsyEventPublisher();
         this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
         this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
         this.nextThreadId = new AtomicLong(0L);
         this.jobsById = new ConcurrentHashMap<>();
         this.ingestJobStarters = new ConcurrentHashMap<>();
+
+        this.servicesMonitor = ServicesMonitor.getInstance();
+        subscribeToServiceMonitorEvents();
 
         this.startDataSourceIngestThread();
 
@@ -254,7 +289,7 @@ public class IngestManager {
      */
     private void startDataSourceIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        dataSourceIngestThreadPool.submit(new IngestTaskExecuter(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        dataSourceIngestThreadPool.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
@@ -264,46 +299,105 @@ public class IngestManager {
      */
     private void startFileIngestThread() {
         long threadId = nextThreadId.incrementAndGet();
-        fileIngestThreadPool.submit(new IngestTaskExecuter(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
+        fileIngestThreadPool.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
+    /**
+     * Subscribes this ingest manager to local and remote case-related events.
+     */
     private void subscribeToCaseEvents() {
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
-                if (event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    if (event.getNewValue() != null) {
-                        handleCaseOpened();
-                    } else {
-                        handleCaseClosed();
-                    }
+                if (event.getNewValue() != null) {
+                    handleCaseOpened();
+                } else {
+                    handleCaseClosed();
                 }
             }
         });
     }
 
+    /**
+     * Subscribe ingest manager to service monitor events. Cancels ingest if one
+     * of services it's subscribed to goes down.
+     */
+    private void subscribeToServiceMonitorEvents() {
+        PropertyChangeListener propChangeListener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+
+                    // check whether a milti-user case is currently being processed
+                    try {
+                        if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                            return;
+                        }
+                    } catch (IllegalStateException ignore) {
+                        // thorown by Case.getCurrentCase() when no case is open
+                        return;
+                    }
+
+                    // one of the services we subscribed to went down                    
+                    String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
+                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
+
+                    // display notification if running interactively
+                    if (isIngestRunning() && RuntimeProperties.coreComponentsAreActive()) {
+                        EventQueue.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JOptionPane.showMessageDialog(null,
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                    }
+
+                    // cancel ingest if running
+                    cancelAllIngestJobs();
+                }
+            }
+        };
+
+        // subscribe to services of interest
+        Set<String> servicesList = new HashSet<>();
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
+        this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
+    }
+
     synchronized void handleCaseOpened() {
         this.jobCreationIsEnabled = true;
         clearIngestMessageBox();
+        try {
+            /**
+             * Use the text index name as the remote event channel name prefix
+             * since it is unique, the same as the case database name for a
+             * multiuser case, and is readily available through the
+             * Case.getTextIndexName() API.
+             */
+            Case openedCase = Case.getCurrentCase();
+            String channelPrefix = openedCase.getTextIndexName();
+            if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
+                jobEventPublisher.openRemoteEventChannel(String.format(JOB_EVENT_CHANNEL_NAME, channelPrefix));
+                moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));
+            }
+        } catch (IllegalStateException | AutopsyEventException ex) {
+            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
+                    NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.ErrMsg"));
+        }
     }
 
     synchronized void handleCaseClosed() {
+        jobEventPublisher.closeRemoteEventChannel();
+        moduleEventPublisher.closeRemoteEventChannel();
         this.jobCreationIsEnabled = false;
         cancelAllIngestJobs();
         clearIngestMessageBox();
-    }
-
-    /**
-     * The ingest manager can be directed to forgo use of message boxes, the
-     * ingest message box, NetBeans progress handles, etc. Running interactively
-     * is the default.
-     *
-     * @param runInteractively whether or not to this ingest manager should run
-     *                         ingest interactively.
-     */
-    public synchronized void setRunInteractively(boolean runInteractively) {
-        this.runInteractively = runInteractively;
     }
 
     /**
@@ -312,7 +406,9 @@ public class IngestManager {
      * display ingest messages.
      */
     void initIngestMessageInbox() {
-        ingestMessageBox = IngestMessageTopComponent.findInstance();
+        synchronized (this.ingestMessageBoxLock) {
+            ingestMessageBox = IngestMessageTopComponent.findInstance();
+        }
     }
 
     /**
@@ -320,30 +416,34 @@ public class IngestManager {
      *
      * @param message The message to be posted.
      */
-    synchronized void postIngestMessage(IngestMessage message) {
-        if (ingestMessageBox != null && this.runInteractively) {
-            if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
-                ingestMessageBox.displayMessage(message);
-            } else {
-                long errorPosts = ingestErrorMessagePosts.incrementAndGet();
-                if (errorPosts <= MAX_ERROR_MESSAGE_POSTS) {
+    void postIngestMessage(IngestMessage message) {
+        synchronized (this.ingestMessageBoxLock) {
+            if (ingestMessageBox != null && RuntimeProperties.coreComponentsAreActive()) {
+                if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
                     ingestMessageBox.displayMessage(message);
-                } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
-                    IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.title"),
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
-                            NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
-                    ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);
+                } else {
+                    long errorPosts = ingestErrorMessagePosts.incrementAndGet();
+                    if (errorPosts <= MAX_ERROR_MESSAGE_POSTS) {
+                        ingestMessageBox.displayMessage(message);
+                    } else if (errorPosts == MAX_ERROR_MESSAGE_POSTS + 1) {
+                        IngestMessage errorMessageLimitReachedMessage = IngestMessage.createErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.title"),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.subject"),
+                                NbBundle.getMessage(this.getClass(), "IngestManager.IngestMessage.ErrorMessageLimitReached.msg", MAX_ERROR_MESSAGE_POSTS));
+                        ingestMessageBox.displayMessage(errorMessageLimitReachedMessage);
+                    }
                 }
             }
         }
     }
 
     private void clearIngestMessageBox() {
-        if (ingestMessageBox != null) {
-            ingestMessageBox.clearMessages();
+        synchronized (this.ingestMessageBoxLock) {
+            if (ingestMessageBox != null) {
+                ingestMessageBox.clearMessages();
+            }
+            ingestErrorMessagePosts.set(0);
         }
-        ingestErrorMessagePosts.set(0);
     }
 
     /**
@@ -365,10 +465,10 @@ public class IngestManager {
      */
     public synchronized void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 long taskId = nextThreadId.incrementAndGet();
-                Future<Void> task = startIngestJobsThreadPool.submit(new IngestJobStarter(taskId, job));
+                Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobTask(taskId, job));
                 ingestJobStarters.put(taskId, task);
             }
         }
@@ -384,7 +484,7 @@ public class IngestManager {
      */
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, this.runInteractively);
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
             if (job.hasIngestPipeline()) {
                 if (this.startIngestJob(job)) {
                     return job;
@@ -407,8 +507,33 @@ public class IngestManager {
             /**
              * TODO: This is not really reliable.
              */
-            if (runInteractively && jobsById.size() == 1) {
+            if (RuntimeProperties.coreComponentsAreActive() && jobsById.size() == 1) {
                 clearIngestMessageBox();
+            }
+
+            // multi-user cases must have multi-user database service running            
+            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+                try {
+                    if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                        // display notification if running interactively
+                        if (RuntimeProperties.coreComponentsAreActive()) {
+                            EventQueue.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
+                                    JOptionPane.showMessageDialog(null,
+                                            NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                            NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                            JOptionPane.ERROR_MESSAGE);
+                                }
+                            });
+                        }
+                        // abort ingest
+                        return false;
+                    }
+                } catch (ServicesMonitor.ServicesMonitorException ignore) {
+                    return false;
+                }
             }
 
             if (!ingestMonitor.isRunning()) {
@@ -433,7 +558,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, String.format("Error starting %s ingest module", error.getModuleDisplayName()), error.getModuleError()); //NON-NLS
                 }
                 IngestManager.logger.log(Level.INFO, "Ingest job {0} could not be started", job.getId()); //NON-NLS
-                if (this.runInteractively) {
+                if (RuntimeProperties.coreComponentsAreActive()) {
                     EventQueue.invokeLater(new Runnable() {
 
                         @Override
@@ -510,7 +635,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to register.
      */
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
-        ingestJobEventPublisher.addPropertyChangeListener(listener);
+        jobEventPublisher.addSubscriber(jobEventNames, listener);
     }
 
     /**
@@ -519,7 +644,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to unregister.
      */
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
-        ingestJobEventPublisher.removePropertyChangeListener(listener);
+        jobEventPublisher.removeSubscriber(jobEventNames, listener);
     }
 
     /**
@@ -528,7 +653,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to register.
      */
     public void addIngestModuleEventListener(final PropertyChangeListener listener) {
-        ingestModuleEventPublisher.addPropertyChangeListener(listener);
+        moduleEventPublisher.addSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -537,7 +662,7 @@ public class IngestManager {
      * @param listener The PropertyChangeListener to unregister.
      */
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
-        ingestModuleEventPublisher.removePropertyChangeListener(listener);
+        moduleEventPublisher.removeSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -550,8 +675,8 @@ public class IngestManager {
      */
     @Deprecated
     public static void addPropertyChangeListener(final PropertyChangeListener listener) {
-        instance.ingestJobEventPublisher.addPropertyChangeListener(listener);
-        instance.ingestModuleEventPublisher.addPropertyChangeListener(listener);
+        instance.jobEventPublisher.addSubscriber(jobEventNames, listener);
+        instance.moduleEventPublisher.addSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -564,8 +689,8 @@ public class IngestManager {
      */
     @Deprecated
     public static void removePropertyChangeListener(final PropertyChangeListener listener) {
-        instance.ingestJobEventPublisher.removePropertyChangeListener(listener);
-        instance.ingestModuleEventPublisher.removePropertyChangeListener(listener);
+        instance.jobEventPublisher.removeSubscriber(jobEventNames, listener);
+        instance.moduleEventPublisher.removeSubscriber(moduleEventNames, listener);
     }
 
     /**
@@ -574,7 +699,8 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobStarted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestJobEventPublisher, IngestJobEvent.STARTED, ingestJobId, null));
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.STARTED.toString(), ingestJobId, null);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
     /**
@@ -583,7 +709,8 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCompleted(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestJobEventPublisher, IngestJobEvent.COMPLETED, ingestJobId, null));
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.COMPLETED.toString(), ingestJobId, null);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
     /**
@@ -592,7 +719,44 @@ public class IngestManager {
      * @param ingestJobId The ingest job id.
      */
     void fireIngestJobCancelled(long ingestJobId) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestJobEventPublisher, IngestJobEvent.CANCELLED, ingestJobId, null));
+        AutopsyEvent event = new AutopsyEvent(IngestJobEvent.CANCELLED.toString(), ingestJobId, null);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source started.
+     *
+     * @param ingestJobId           The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource            The data source.
+     */
+    void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source finished.
+     *
+     * @param ingestJobId           The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource            The data source.
+     */
+    void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
+    }
+
+    /**
+     * Fire an ingest event signifying analysis of a data source was canceled.
+     *
+     * @param ingestJobId           The ingest job id.
+     * @param dataSourceIngestJobId The data source ingest job id.
+     * @param dataSource            The data source.
+     */
+    void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
+        eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
     /**
@@ -601,7 +765,8 @@ public class IngestManager {
      * @param file The file that is completed.
      */
     void fireFileIngestDone(AbstractFile file) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.FILE_DONE, file.getId(), file));
+        AutopsyEvent event = new FileAnalyzedEvent(file);
+        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
     /**
@@ -610,7 +775,8 @@ public class IngestManager {
      * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.DATA_ADDED, moduleDataEvent, null));
+        AutopsyEvent event = new BlackboardPostEvent(moduleDataEvent);
+        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
     /**
@@ -621,7 +787,8 @@ public class IngestManager {
      *                        content.
      */
     void fireIngestModuleContentEvent(ModuleContentEvent moduleContentEvent) {
-        fireIngestEventsThreadPool.submit(new IngestEventPublisher(ingestModuleEventPublisher, IngestModuleEvent.CONTENT_CHANGED, moduleContentEvent, null));
+        AutopsyEvent event = new ContentChangedEvent(moduleContentEvent);
+        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
     /**
@@ -742,13 +909,13 @@ public class IngestManager {
     /**
      * Creates and starts an ingest job for a collection of data sources.
      */
-    private final class IngestJobStarter implements Callable<Void> {
+    private final class StartIngestJobTask implements Callable<Void> {
 
         private final long threadId;
         private final IngestJob job;
         private ProgressHandle progress;
 
-        IngestJobStarter(long threadId, IngestJob job) {
+        StartIngestJobTask(long threadId, IngestJob job) {
             this.threadId = threadId;
             this.job = job;
         }
@@ -761,7 +928,7 @@ public class IngestManager {
                     return null;
                 }
 
-                if (runInteractively) {
+                if (RuntimeProperties.coreComponentsAreActive()) {
                     final String displayName = NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.displayName");
                     this.progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
                         @Override
@@ -791,14 +958,14 @@ public class IngestManager {
     }
 
     /**
-     * A consumer for an ingest task queue.
+     * Executes ingest jobs by acting as a consumer for an ingest tasks queue.
      */
-    private final class IngestTaskExecuter implements Runnable {
+    private final class ExecuteIngestJobsTask implements Runnable {
 
         private final long threadId;
         private final IngestTaskQueue tasks;
 
-        IngestTaskExecuter(long threadId, IngestTaskQueue tasks) {
+        ExecuteIngestJobsTask(long threadId, IngestTaskQueue tasks) {
             this.threadId = threadId;
             this.tasks = tasks;
         }
@@ -820,43 +987,33 @@ public class IngestManager {
     }
 
     /**
-     * Fires ingest events to ingest manager property change listeners.
+     * Publishes ingest events to both local and remote subscribers.
      */
-    private static final class IngestEventPublisher implements Runnable {
+    private static final class PublishEventTask implements Runnable {
 
-        private final PropertyChangeSupport publisher;
-        private final IngestJobEvent jobEvent;
-        private final IngestModuleEvent moduleEvent;
-        private final Object oldValue;
-        private final Object newValue;
+        private final AutopsyEvent event;
+        private final AutopsyEventPublisher publisher;
 
-        IngestEventPublisher(PropertyChangeSupport publisher, IngestJobEvent event, Object oldValue, Object newValue) {
+        /**
+         * Constructs an object that publishes ingest events to both local and
+         * remote subscribers.
+         *
+         * @param event     The event to publish.
+         * @param publisher The event publisher.
+         */
+        PublishEventTask(AutopsyEvent event, AutopsyEventPublisher publisher) {
+            this.event = event;
             this.publisher = publisher;
-            this.jobEvent = event;
-            this.moduleEvent = null;
-            this.oldValue = oldValue;
-            this.newValue = newValue;
         }
 
-        IngestEventPublisher(PropertyChangeSupport publisher, IngestModuleEvent event, Object oldValue, Object newValue) {
-            this.publisher = publisher;
-            this.jobEvent = null;
-            this.moduleEvent = event;
-            this.oldValue = oldValue;
-            this.newValue = newValue;
-        }
-
+        /**
+         * @inheritDoc
+         */
         @Override
         public void run() {
-            try {
-                publisher.firePropertyChange((jobEvent != null ? jobEvent.toString() : moduleEvent.toString()), oldValue, newValue);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Ingest manager listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr"),
-                        NbBundle.getMessage(IngestManager.class, "IngestManager.moduleErr.errListenToUpdates.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
+            publisher.publish(event);
         }
+
     }
 
     static final class IngestThreadActivitySnapshot {

@@ -578,6 +578,5 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 }
             }
         }
-
     }
 }

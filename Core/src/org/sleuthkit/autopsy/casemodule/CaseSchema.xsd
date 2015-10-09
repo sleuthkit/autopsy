@@ -12,6 +12,12 @@
 
 <xs:element name="Examiner" type="String" nillable="true"/>
 
+<xs:element name="CaseType" type="String" nillable="false"/>
+
+<xs:element name="DatabaseName" type="String" nillable="false"/>
+
+<xs:element name="TextIndexName" type="String" nillable="true"/>
+
 <xs:attribute name="Relative" type="xs:boolean"/>
 
 <xs:element name="CreatedDate" >
@@ -92,6 +98,11 @@
             <xs:element ref="LogFolder"/>
             <xs:element ref="TempFolder"/>
             <xs:element ref="CacheFolder"/>
+            <xs:sequence minOccurs="0" maxOccurs="1">
+                <xs:element ref="CaseType"/>
+                <xs:element ref="DatabaseName"/>
+                <xs:element ref="TextIndexName"/>
+            </xs:sequence>
         </xs:sequence>
     </xs:complexType>
 </xs:element>

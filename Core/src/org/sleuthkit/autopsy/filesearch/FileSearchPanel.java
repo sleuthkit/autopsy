@@ -63,6 +63,7 @@ class FileSearchPanel extends javax.swing.JPanel {
     private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
+    private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
 
     /**
      * Creates new form FileSearchPanel
@@ -151,7 +152,6 @@ class FileSearchPanel extends javax.swing.JPanel {
                 List<AbstractFile> contentList = null;
                 try {
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                    //ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     contentList = tskDb.findAllFilesWhere(this.getQuery());
 
                 } catch (TskCoreException ex) {
@@ -212,13 +212,24 @@ class FileSearchPanel extends javax.swing.JPanel {
      */
     private String getQuery() throws FilterValidationException {
 
-        //String query = "select " + tempQuery + " from tsk_files where 1";
-        String query = " 1";
-
+        //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
+        String query = "";
+        int i = 0;
         for (FileSearchFilter f : this.getEnabledFilters()) {
-            query += " and (" + f.getPredicate() + ")"; //NON-NLS
+            String result = f.getPredicate();
+            if (!result.isEmpty()) {
+                if (i > 0) {
+                    query += " AND (" + result + ")"; //NON-NLS
+                } else {
+                    query += " (" + result + ")"; //NON-NLS
+                }
+                ++i;
+            }
         }
 
+        if (query.isEmpty()) {
+            throw new FilterValidationException(EMPTY_WHERE_CLAUSE);
+        }
         return query;
     }
 

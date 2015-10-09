@@ -1,0 +1,104 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2015 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.casemodule;
+
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.SleuthkitCase;
+
+/**
+ * This class enables capturing errors and batching them for reporting on a
+ * no-more-than-x number of seconds basis. When created, you specify what type
+ * of error it will be batching, and the minimum time between user
+ * notifications. When the time between notifications has expired, the next
+ * error encountered will cause a report to be shown to the user.
+ */
+class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
+
+    private static volatile IntervalErrorReportData instance;
+    private long newProblems;
+    private long totalProblems;
+    private long lastReportedDate;
+    private final int milliSecondsBetweenReports;
+    private final String message;
+
+    /**
+     * Create a new IntervalErrorReprotData instance.
+     *
+     * @param secondsBetweenReports Minimum number of seconds between reports.
+     *                              It will not warn more frequently than this.
+     * @param message               The message that will be shown when warning
+     *                              the user
+     */
+    private IntervalErrorReportData(int secondsBetweenReports, String message) {
+        this.newProblems = 0;
+        this.totalProblems = 0;
+        this.lastReportedDate = 0; // arm the first warning by choosing zero
+        this.milliSecondsBetweenReports = secondsBetweenReports * 1000;  // convert to milliseconds
+        this.message = message;
+        SleuthkitCase.addErrorObserver(this);
+    }
+
+    /**
+     * Returns the singleton instance of this object
+     *
+     * @return the singleton instance of this object
+     */
+    public static IntervalErrorReportData getInstance() {
+        if (instance == null) {
+            synchronized (IntervalErrorReportData.class) {
+                if (instance == null) {
+                    instance = new IntervalErrorReportData(60, // No less than 60 seconds between warnings for errors
+                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
+                }
+            }
+        }
+        return instance;
+    }
+
+    /**
+     * Call this to add problems to the class. When the time threshold is met
+     * (or if this is the first problem encountered), a warning will be shown to
+     * the user.
+     *
+     * @param newProblems the newProblems to set
+     * @param ex          the exception for this error
+     */
+    private void addProblems(long newProblems, Exception ex) {
+        this.newProblems += newProblems;
+        this.totalProblems += newProblems;
+
+        long currentTimeStamp = System.currentTimeMillis();
+        if ((currentTimeStamp - lastReportedDate) > milliSecondsBetweenReports) {
+            this.lastReportedDate = currentTimeStamp;
+            MessageNotifyUtil.Notify.error(message, ex.getMessage() + " "
+                    + this.newProblems + " "
+                    + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.NewIssues")
+                    + " " + this.totalProblems + " "
+                    + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.TotalIssues")
+                    + ".");
+            this.newProblems = 0;
+        }
+    }
+
+    @Override
+    public void receiveError(Exception ex) {
+        addProblems(1, ex);
+    }
+}

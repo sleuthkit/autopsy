@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -78,7 +77,7 @@ class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
 
     //TODO add a generic query to SleuthkitCase
     private String createMaxQuery(String attr) {
-        return "SELECT MAX(" + attr + ") from tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000; //NON-NLS
+        return "SELECT MAX(" + attr + ") FROM tsk_files WHERE " + attr + " < " + System.currentTimeMillis() / 1000; //NON-NLS
     }
 
     @SuppressWarnings("deprecation")
@@ -87,6 +86,7 @@ class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter> {
 
         try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
+            resultSet.next();
             result = resultSet.getLong(1);
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get recent files results: ", ex); //NON-NLS

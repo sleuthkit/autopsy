@@ -34,11 +34,13 @@ import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -352,25 +354,25 @@ public final class FilteredEventsModel {
     }
 
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
-        ContentTag contentTag = evt.getTag();
+        ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
         Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
-        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
         Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
-        ContentTag contentTag = evt.getTag();
-        Content content = contentTag.getContent();
+        DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         try {
+            Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, contentTag, tagged);
+            Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
@@ -379,11 +381,11 @@ public final class FilteredEventsModel {
     }
 
     synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
-        BlackboardArtifactTag artifactTag = evt.getTag();
-        BlackboardArtifact artifact = artifactTag.getArtifact();
+        DeletedBlackboardArtifactTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         try {
+            BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, tagged);
+            Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);

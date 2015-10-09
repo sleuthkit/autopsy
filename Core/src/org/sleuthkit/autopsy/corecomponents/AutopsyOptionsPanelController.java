@@ -30,7 +30,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_General",
-        iconBase = "org/sleuthkit/autopsy/corecomponents/checkbox.png",
+        iconBase = "org/sleuthkit/autopsy/corecomponents/checkbox32.png",
         position = 1,
         keywords = "#OptionsCategory_Keywords_General",
         keywordsCategory = "General")

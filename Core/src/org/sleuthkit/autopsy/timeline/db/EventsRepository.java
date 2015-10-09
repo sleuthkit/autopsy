@@ -282,8 +282,8 @@ public class EventsRepository {
         return updatedEventIDs;
     }
 
-    synchronized public Set<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tagID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
