@@ -253,13 +253,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private final XMLCaseManagement xmlcm;
     private final SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
-    volatile private static Case currentCase = null;
+    private static Case currentCase = null;
     private final CaseType caseType;
     private final Services services;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
-    private static String HostName;
     private final static String CACHE_FOLDER = "Cache"; //NON-NLS
     private final static String EXPORT_FOLDER = "Export"; //NON-NLS
     private final static String LOG_FOLDER = "Log"; //NON-NLS
@@ -374,12 +373,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
     
     @Override
     public void receiveError(String context, String errorMessage) {
-        /* NOTE: We are accessing currentCase.tskErrorReporter from two different threads.
-         * This is ok as long as we only read the value of currentCase.tskErrorReporter
-         * because both currentCase and tskErrorReporter are declared as volatile.
+        /* NOTE: We are accessing tskErrorReporter from two different threads.
+         * This is ok as long as we only read the value of tskErrorReporter
+         * because tskErrorReporter is declared as volatile.
          */
-        if (null != currentCase && null != currentCase.tskErrorReporter) {
-            currentCase.tskErrorReporter.addProblems(context, errorMessage);
+        if (null != tskErrorReporter) {
+            tskErrorReporter.addProblems(context, errorMessage);
         }
     }
 
