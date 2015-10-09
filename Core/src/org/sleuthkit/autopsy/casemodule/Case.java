@@ -653,13 +653,13 @@ public class Case {
      * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      *
-     * @deprecated Use notifyNewDataSource() instead.
+     * @deprecated Use notifyNewDataSourceAdded() instead.
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
         try {
             Image newDataSource = db.getImageById(imgId);
-            notifyNewDataSource(newDataSource, UUID.randomUUID());
+            notifyDataSourceAdded(newDataSource, UUID.randomUUID());
             return newDataSource;
         } catch (Exception ex) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
@@ -672,11 +672,11 @@ public class Case {
      *
      * @param newDataSource new data source added
      *
-     * @deprecated Use notifyNewDataSource() instead.
+     * @deprecated Use notifyDataSource() instead.
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
-        notifyNewDataSource(newDataSource, UUID.randomUUID());
+        notifyDataSourceAdded(newDataSource, UUID.randomUUID());
     }
 
     /**
@@ -689,7 +689,7 @@ public class Case {
      *                     should be used to call notifyNewDataSource() after
      *                     the data source is added.
      */
-    public void notifyAddingNewDataSource(UUID dataSourceId) {
+    public void notifyAddingDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceEvent(dataSourceId));
     }
 
@@ -701,7 +701,7 @@ public class Case {
      *
      * @param dataSourceId A unique identifier for the data source.
      */
-    public void notifyFailedAddingNewDataSource(UUID dataSourceId) {
+    public void notifyFailedAddingDataSource(UUID dataSourceId) {
         eventPublisher.publish(new AddingDataSourceFailedEvent(dataSourceId));
     }
 
@@ -717,7 +717,7 @@ public class Case {
      *                      notifyAddingNewDataSource() when the process of
      *                      adding the data source began.
      */
-    public void notifyNewDataSource(Content newDataSource, UUID dataSourceId) {
+    public void notifyDataSourceAdded(Content newDataSource, UUID dataSourceId) {
         eventPublisher.publish(new DataSourceAddedEvent(newDataSource, dataSourceId));
     }
 
