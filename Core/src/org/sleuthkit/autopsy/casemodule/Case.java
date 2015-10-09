@@ -86,12 +86,12 @@ import org.sleuthkit.datamodel.TskException;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-public class Case {
+public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-    private IntervalErrorReportData tskErrorReporter = null;
+    volatile private IntervalErrorReportData tskErrorReporter = null;
     private static final int MIN_SECONDS_BETWEEN_ERROR_REPORTS = 60; // No less than 60 seconds between warnings for errors
     private static final int MAX_SANITIZED_NAME_LENGTH = 47;
 
@@ -369,6 +369,17 @@ public class Case {
 
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
+        }
+    }
+    
+    @Override
+    public void receiveError(String context, String errorMessage) {
+        /* NOTE: We are accessing currentCase.tskErrorReporter from two different threads.
+         * This is ok as long as we only read the value of currentCase.tskErrorReporter
+         * because currentCase.tskErrorReporter is declared as volatile.
+         */
+        if (null != currentCase.tskErrorReporter) {
+            currentCase.tskErrorReporter.addProblems(context, errorMessage);
         }
     }
 
