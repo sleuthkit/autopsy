@@ -23,9 +23,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -124,7 +126,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * listener that triggers layout pass
      */
     private final InvalidationListener layoutInvalidationListener = (Observable o) -> {
-        requestChartLayout();
+        layoutPlotChildren();
     };
 
     /**
@@ -206,8 +208,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         getPlotChildren().add(nodeGroup);
 
         //add listener for events that should trigger layout
-        widthProperty().addListener(layoutInvalidationListener);
-        heightProperty().addListener(layoutInvalidationListener);
         bandByType.addListener(layoutInvalidationListener);
         oneEventPerRow.addListener(layoutInvalidationListener);
         truncateAll.addListener(layoutInvalidationListener);
@@ -414,14 +414,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
         nodeGroup.getChildren().remove(removedNode);
         data.setNode(null);
-    }
-
-    /**
-     * make this accessible to {@link EventStripeNode}
-     */
-    @Override
-    protected void requestChartLayout() {
-        super.requestChartLayout();
+        layoutPlotChildren();
     }
 
     @Override
@@ -436,14 +429,18 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
                         .collect(Collectors.toList());
 
-                        maxY.set(maxY.get() + layoutEventBundleNodes(stripeNodes, maxY.get(), 0));
+                        maxY.set(maxY.get() + layoutEventBundleNodes(stripeNodes, maxY.get()));
                     });
         } else {
             List<EventStripeNode> stripeNodes = stripeNodeMap.values().stream()
                     .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
                     .collect(Collectors.toList());
-            maxY.set(layoutEventBundleNodes(stripeNodes, 0, 0));
+            maxY.set(layoutEventBundleNodes(stripeNodes, 0));
         }
+        
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(.5), keys.toArray(new KeyValue[keys.size()])));
+        timeline.play();
+        keys.clear();
         layoutProjectionMap();
         setCursor(null);
     }
@@ -454,7 +451,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             dataItemAdded(series, j, series.getData().get(j));
         }
         seriesList.add(series);
-        requestLayout();
+
     }
 
     @Override
@@ -463,7 +460,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             dataItemRemoved(series.getData().get(j), series);
         }
         seriesList.remove(series);
-        requestLayout();
+
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {
@@ -534,7 +531,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * @param nodes
      * @param minY
      */
-    synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY, final double xOffset) {
+    synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
         //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
         final Map<Integer, Double> maxXatY = new HashMap<>();
         double localMax = minY;
@@ -553,12 +550,14 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setDescriptionWidth(truncateAll.get()
                         ? truncateWidth.get()
                         : USE_PREF_SIZE);
-                bundleNode.layout();
+                bundleNode.layoutChildren();
                 double h = bundleNode.getBoundsInLocal().getHeight();
-                System.out.println(h + " " + bundleNode.getClass().getName());
+                double w = bundleNode.getBoundsInLocal().getWidth();
 
-                double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - xOffset;
-                double xRight = xLeft + bundleNode.getBoundsInLocal().getWidth();
+                double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - bundleNode.getLayoutXCompensation();
+
+                System.out.println(h + " x " + w + " " + bundleNode.getClass().getName());
+                double xRight = xLeft + w;
                 //initial test position
                 double yTop = minY;
                 double yBottom = yTop + h;
@@ -587,23 +586,21 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     }
                     //mark used y values
                     for (double y = yTop; y <= yBottom; y++) {
-                        maxXatY.put((int) y, xRight);
+                        maxXatY.put((int) Math.floor(y), xRight);
                     }
                 }
                 localMax = Math.max(yBottom, localMax);
 
 //                bundleNode.relocate(xLeft, yTop);
-                new Timeline(
-                        new KeyFrame(Duration.seconds(1),
-                                new KeyValue(bundleNode.layoutXProperty(), xLeft),
-                                new KeyValue(bundleNode.layoutYProperty(), yTop)
-                        )
-                ).play();
-
+                keys.add(
+                        new KeyValue(bundleNode.layoutXProperty(), xLeft));
+                keys.add(new KeyValue(bundleNode.layoutYProperty(), yTop));
             }
         }
         return localMax - minY;
     }
+
+    HashSet<KeyValue> keys = new HashSet<>();
 
     private void layoutProjectionMap() {
         for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {
@@ -654,6 +651,26 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         protected DateTime parseDateTime(DateTime date) {
             return date;
         }
+    }
+
+    private static class LayoutResult {
+
+        private final double height;
+        private final Set<KeyValue> keys;
+
+        LayoutResult(double height, Set<KeyValue> keys) {
+            this.height = height;
+            this.keys = keys;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+
+        public Set<KeyValue> getKeys() {
+            return Collections.unmodifiableSet(keys);
+        }
+
     }
 
     private class PlaceMarkerAction extends Action {

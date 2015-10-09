@@ -56,7 +56,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
 
-        setMinHeight(42);
+        setMinHeight(48);
 //        minWidthProperty().bind(subNodePane.widthProperty());
 
         EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
@@ -152,7 +152,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         public void handle(MouseEvent t) {
 
             if (t.getButton() == MouseButton.PRIMARY) {
-                t.consume();
+             
                 if (t.isShiftDown()) {
                     if (chart.selectedNodes.contains(EventStripeNode.this) == false) {
                         chart.selectedNodes.add(EventStripeNode.this);
