@@ -181,10 +181,10 @@ public final class UserPreferences {
      * @param info An object encapsulating the message service info.
      */
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
-        preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
-        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
         preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
         preferences.put(MESSAGE_SERVICE_PORT, info.getPort());
+        preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
     }
 
     /**
@@ -193,10 +193,11 @@ public final class UserPreferences {
      * @return An object encapsulating the message service info.
      */
     public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() {
-        return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
-                preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
+        return new MessageServiceConnectionInfo(
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
-                preferences.get(MESSAGE_SERVICE_PORT, "61616"));
+                preferences.get(MESSAGE_SERVICE_PORT, "61616"),
+                preferences.get(MESSAGE_SERVICE_USER, ""),
+                preferences.get(MESSAGE_SERVICE_PASSWORD, ""));
     }
 
     /**
