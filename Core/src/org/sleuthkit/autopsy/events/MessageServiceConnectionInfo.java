@@ -39,6 +39,7 @@ public final class MessageServiceConnectionInfo {
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
     private static final String CONNECTION_TIMED_OUT = "connection timed out";
     private static final String CONNECTION_REFUSED = "connection refused";
+    private static final String PASSWORD_OR_USERNAME_BAD = "user name [";
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
     private final String userName;
     private final String password;
@@ -161,6 +162,9 @@ public final class MessageServiceConnectionInfo {
                 } else if (msg.toLowerCase().startsWith(CONNECTION_REFUSED)) {
                     // The port seems bad
                     result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Port"); //NON-NLS
+                } else if (msg.toLowerCase().startsWith(PASSWORD_OR_USERNAME_BAD)) {
+                    // The username or password seems bad
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.UsernameAndPassword"); //NON-NLS
                 } else {
                     // Could be either hostname or port number
                     result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort"); //NON-NLS
