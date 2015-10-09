@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
 
-    private static volatile IntervalErrorReportData instance;
+    private final Case currentCase;
     private long newProblems;
     private long totalProblems;
     private long lastReportedDate;
@@ -41,35 +41,28 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
     /**
      * Create a new IntervalErrorReprotData instance.
      *
+     * @param currentCase           Case for which TSK errors should be tracked
+     *                              and displayed.
      * @param secondsBetweenReports Minimum number of seconds between reports.
      *                              It will not warn more frequently than this.
      * @param message               The message that will be shown when warning
      *                              the user
      */
-    private IntervalErrorReportData(int secondsBetweenReports, String message) {
+    public IntervalErrorReportData(Case currentCase, int secondsBetweenReports, String message) {
         this.newProblems = 0;
         this.totalProblems = 0;
         this.lastReportedDate = 0; // arm the first warning by choosing zero
         this.milliSecondsBetweenReports = secondsBetweenReports * 1000;  // convert to milliseconds
         this.message = message;
-        SleuthkitCase.addErrorObserver(this);
+        this.currentCase = currentCase;
+        this.currentCase.getSleuthkitCase().addErrorObserver(this); // it's ok to use "this" at the end of the constructor
     }
-
+    
     /**
-     * Returns the singleton instance of this object
-     *
-     * @return the singleton instance of this object
+     * Shuts down this IntervalErrorReprotData instance.
      */
-    public static IntervalErrorReportData getInstance() {
-        if (instance == null) {
-            synchronized (IntervalErrorReportData.class) {
-                if (instance == null) {
-                    instance = new IntervalErrorReportData(60, // No less than 60 seconds between warnings for errors
-                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
-                }
-            }
-        }
-        return instance;
+    public void shutdown() {
+        this.currentCase.getSleuthkitCase().removeErrorObserver(this);
     }
 
     /**

@@ -91,7 +91,8 @@ public class Case {
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-    private static IntervalErrorReportData tskErrorReporter = null;
+    private IntervalErrorReportData tskErrorReporter = null;
+    private static final int MIN_SECONDS_BETWEEN_ERROR_REPORTS = 60; // No less than 60 seconds between warnings for errors
     private static final int MAX_SANITIZED_NAME_LENGTH = 47;
 
     /**
@@ -317,13 +318,15 @@ public class Case {
      *
      */
     private static void changeCase(Case newCase) {
-        // force static initialization of error reporter
-        tskErrorReporter = IntervalErrorReportData.getInstance();
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
         if (oldCase != null) {
-            doCaseChange(null); //closes windows, etc            
+            doCaseChange(null); //closes windows, etc   
+            if (null != oldCase.tskErrorReporter) {
+                oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
+                oldCase.tskErrorReporter = null;
+            }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
                 if (null != oldCase.collaborationMonitor) {
@@ -336,6 +339,13 @@ public class Case {
         if (newCase != null) {
             currentCase = newCase;
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
+            // sanity check
+            if (null != currentCase.tskErrorReporter) {
+                currentCase.tskErrorReporter.shutdown();
+            }
+            // start listening for TSK errors for the new case
+            currentCase.tskErrorReporter = new IntervalErrorReportData(currentCase, MIN_SECONDS_BETWEEN_ERROR_REPORTS,
+                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
                 RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
