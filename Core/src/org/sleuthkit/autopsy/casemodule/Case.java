@@ -646,14 +646,16 @@ public class Case {
     }
 
     /**
-     * Adds the image to the current case after it has been added to the DB
+     * Adds the image to the current case after it has been added to the DB.
      * Sends out event and reopens windows if needed.
      *
      * @param imgPaths the paths of the image that being added
      * @param imgId    the ID of the image that being added
      * @param timeZone the timeZone of the image where it's added
      *
-     * @deprecated Use notifyNewDataSourceAdded() instead.
+     * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
+     * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
@@ -667,12 +669,14 @@ public class Case {
     }
 
     /**
-     * Finishes adding new local data source to the case Sends out event and
-     * reopens windows if needed.
+     * Finishes adding new local data source to the case. Sends out event and
+     * reopens windows if needed. 
      *
      * @param newDataSource new data source added
      *
-     * @deprecated Use notifyDataSource() instead.
+     * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
+     * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
