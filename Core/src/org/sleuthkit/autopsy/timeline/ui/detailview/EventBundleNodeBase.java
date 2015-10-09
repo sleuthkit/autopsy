@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -23,6 +24,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -65,8 +67,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
 
-    private static final Border SELECTION_BORDER = new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
-    private static final Map<EventType, DropShadow> dropShadowMap = new ConcurrentHashMap<>();
+    private final Border SELECTION_BORDER;
+    private static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
 
     static void configureLoDButton(Button b) {
         b.setMinSize(16, 16);
@@ -115,7 +117,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         evtColor = getEventType().getColor();
         defaultBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1, 1, .1), CORNER_RADII_3, Insets.EMPTY));
         highlightedBackground = new Background(new BackgroundFill(evtColor.deriveColor(0, 1.1, 1.1, .3), CORNER_RADII_3, Insets.EMPTY));
-
+        SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
         if (eventBundle.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
         }
@@ -125,8 +127,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
-//        setMinHeight(24);
+
         setPrefHeight(USE_COMPUTED_SIZE);
+        heightProperty().addListener((Observable observable) -> {
+            chart.layoutPlotChildren();
+        });
         setMaxHeight(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
         setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
@@ -140,7 +145,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-//        subNodePane.setMinHeight(24);
         subNodePane.setMaxHeight(USE_PREF_SIZE);
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
@@ -173,8 +177,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     }
 
     final double getLayoutXCompensation() {
-        return (parentNode != null ? parentNode.getLayoutXCompensation() : 0)
-                + getBoundsInParent().getMinX();
+        return parentNode != null
+                ? chart.getXAxis().getDisplayPosition(new DateTime(parentNode.getStartMillis()))
+                : 0;
     }
 
     @NbBundle.Messages({"# {0} - counts",
@@ -266,8 +271,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     abstract void setDescriptionVisibility(DescriptionVisibility get);
 
     void showHoverControls(final boolean showControls) {
-        DropShadow dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(10, eventType.getColor()));
+        Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
+                eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
         if (parentNode != null) {
             parentNode.showHoverControls(false);
@@ -296,9 +301,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     @Override
     protected void layoutChildren() {
-        double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        //position of start and end according to range of axis
-        chart.layoutEventBundleNodes(subNodes, 0, chartX);
+        chart.layoutEventBundleNodes(subNodes, 0);
         super.layoutChildren();
     }
 

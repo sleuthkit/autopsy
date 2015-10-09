@@ -42,7 +42,6 @@ import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.Region;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -71,21 +70,18 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
-    private final Region clusterRegion = new Region();
-
     final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
     final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
 
     public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
+        setMinHeight(24);
 
-        setMinHeight(21);
-
-        clusterRegion.setBorder(clusterBorder);
-        clusterRegion.setBackground(defaultBackground);
-        clusterRegion.setMaxHeight(USE_COMPUTED_SIZE);
-        clusterRegion.setMaxWidth(USE_PREF_SIZE);
-        clusterRegion.setMinWidth(1);
+        subNodePane.setBorder(clusterBorder);
+        subNodePane.setBackground(defaultBackground);
+        subNodePane.setMaxHeight(USE_COMPUTED_SIZE);
+        subNodePane.setMaxWidth(USE_PREF_SIZE);
+        subNodePane.setMinWidth(1);
 
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
@@ -95,7 +91,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
         setAlignment(Pos.CENTER_LEFT);
         infoHBox.getChildren().addAll(minusButton, plusButton);
-        getChildren().addAll(clusterRegion, subNodePane, infoHBox);
+        getChildren().addAll(subNodePane,  infoHBox);
     }
 
     @Override
@@ -157,11 +153,10 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLoD()) {
             countLabel.setVisible(true);
             descLOD.set(getEventBundle().getDescriptionLoD());
-            chart.requestChartLayout();
+            chart.layoutPlotChildren();
         } else {
             /*
              * make new ZoomParams to query with
-             *
              *
              * We need to extend end time because for the query by one second,
              * because it is treated as an open interval but we want to include
@@ -225,7 +220,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                     } catch (InterruptedException | ExecutionException ex) {
                         LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                     }
-                    chart.requestChartLayout();
+                    chart.layoutPlotChildren();
                     chart.setCursor(null);
                 }
             };
@@ -245,11 +240,11 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     @Override
     protected void layoutChildren() {
-        super.layoutChildren();
         double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
-        clusterRegion.setPrefWidth(w);
-
+        subNodePane.setPrefWidth(w);
+        subNodePane.setMinWidth(Math.max(1, w));
+        super.layoutChildren();
     }
 
     /**
@@ -276,7 +271,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         public void handle(MouseEvent t) {
 
             if (t.getButton() == MouseButton.PRIMARY) {
-                t.consume();
+
                 if (t.isShiftDown()) {
                     if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
                         chart.selectedNodes.add(EventClusterNode.this);
