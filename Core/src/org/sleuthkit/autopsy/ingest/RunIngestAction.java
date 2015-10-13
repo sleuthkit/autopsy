@@ -34,10 +34,13 @@ import org.openide.util.actions.Presenter;
         id = "org.sleuthkit.autopsy.ingest.RunIngestAction"
 )
 @ActionRegistration(
-        displayName = "#CTL_RunIngestAction"
+        displayName = "#CTL_RunIngestAction",
+        lazy = true
 )
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
+
+    private static final long serialVersionUID = 1L;
 
     static public RunIngestAction getInstance() {
         return new RunIngestAction();
