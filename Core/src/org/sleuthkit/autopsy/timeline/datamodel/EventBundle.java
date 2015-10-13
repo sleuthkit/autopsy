@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- *
+ * A interface for groups of events that share some attributes in common.
  */
 public interface EventBundle<ParentType extends EventBundle<?>> {
 

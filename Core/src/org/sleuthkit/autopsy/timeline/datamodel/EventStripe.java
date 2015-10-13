@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
- * description, and zoom levels.
+ * description, and zoom levels, but not necessarily close together in time.
  */
 @Immutable
 public final class EventStripe implements EventBundle<EventCluster> {
