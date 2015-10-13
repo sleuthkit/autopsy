@@ -164,7 +164,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
-        treeColumn.setCellFactory(col -> new FilterCheckBoxCellFactory().forTreeTable(col));
+        treeColumn.setCellFactory(col -> new FilterCheckBoxCellFactory<>().forTreeTable(col));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
