@@ -91,6 +91,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  */
 public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
 
+    
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
@@ -475,4 +476,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
+
+  
 }
