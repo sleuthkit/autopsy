@@ -18,12 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Range;
+import com.google.common.collect.TreeRangeMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -437,10 +438,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     .collect(Collectors.toList());
             maxY.set(layoutEventBundleNodes(stripeNodes, 0));
         }
-        
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(.5), keys.toArray(new KeyValue[keys.size()])));
-        timeline.play();
-        keys.clear();
         layoutProjectionMap();
         setCursor(null);
     }
@@ -532,8 +529,11 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * @param minY
      */
     synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
-        //hash map from y value to right most occupied x value.  This tells you for a given 'pixel row' what is the first avaialable slot
-        final Map<Integer, Double> maxXatY = new HashMap<>();
+        /*
+         * map from y value (ranges) to right most occupied x value.
+         */
+        TreeRangeMap<Double, Double> treeRangeMap = TreeRangeMap.create();
+
         double localMax = minY;
         //for each node size it and position it in first available slot
         for (final EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
@@ -550,13 +550,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setDescriptionWidth(truncateAll.get()
                         ? truncateWidth.get()
                         : USE_PREF_SIZE);
-                bundleNode.layoutChildren();
+                bundleNode.layout();
                 double h = bundleNode.getBoundsInLocal().getHeight();
                 double w = bundleNode.getBoundsInLocal().getWidth();
-
                 double xLeft = getXAxis().getDisplayPosition(new DateTime(bundleNode.getStartMillis())) - bundleNode.getLayoutXCompensation();
-
-                System.out.println(h + " x " + w + " " + bundleNode.getClass().getName());
                 double xRight = xLeft + w;
                 //initial test position
                 double yTop = minY;
@@ -573,7 +570,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                         overlapping = false;
                         //check each pixel from bottom to top.
                         for (double y = yBottom; y >= yTop; y--) {
-                            final Double maxX = maxXatY.get((int) y);
+                            final Double maxX = treeRangeMap.get(y);
                             if (maxX != null && maxX >= xLeft - MINIMUM_GAP) {
                                 //if that pixel is already used
                                 //jump top to this y value and repeat until free slot is found.
@@ -584,23 +581,25 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                             }
                         }
                     }
-                    //mark used y values
-                    for (double y = yTop; y <= yBottom; y++) {
-                        maxXatY.put((int) Math.floor(y), xRight);
-                    }
+                    treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
                 }
                 localMax = Math.max(yBottom, localMax);
 
-//                bundleNode.relocate(xLeft, yTop);
-                keys.add(
-                        new KeyValue(bundleNode.layoutXProperty(), xLeft));
-                keys.add(new KeyValue(bundleNode.layoutYProperty(), yTop));
+                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
+                        new KeyValue(bundleNode.layoutXProperty(), xLeft),
+                        new KeyValue(bundleNode.layoutYProperty(), yTop)));
+                timeline.setOnFinished(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent event) {
+                        requestChartLayout();
+                    }
+                });
+                timeline.play();
+
             }
         }
         return localMax - minY;
     }
-
-    HashSet<KeyValue> keys = new HashSet<>();
 
     private void layoutProjectionMap() {
         for (final Map.Entry<EventCluster, Line> entry : projectionMap.entrySet()) {
