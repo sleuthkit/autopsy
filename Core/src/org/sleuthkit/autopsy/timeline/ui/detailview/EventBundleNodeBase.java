@@ -98,7 +98,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     protected final EventDetailChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility= new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
     protected final BundleType eventBundle;
 
     protected final ParentNodeType parentNode;
@@ -181,7 +181,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 parentNode.showHoverControls(true);
             }
         });
-        
+
         setDescriptionVisibility(DescriptionVisibility.SHOWN);
         descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
             setDescriptionVisibility(newValue);
@@ -331,7 +331,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     abstract void setDescriptionWidth(double w);
 
     void setDescriptionVisibilityLevel(DescriptionVisibility get) {
-      descVisibility.set(get);
+        descVisibility.set(get);
     }
 
 }
