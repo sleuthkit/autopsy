@@ -42,6 +42,7 @@ import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -92,6 +93,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         setAlignment(Pos.CENTER_LEFT);
         infoHBox.getChildren().addAll(minusButton, plusButton);
         getChildren().addAll(subNodePane, infoHBox);
+
     }
 
     @Override
@@ -144,84 +146,80 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         );
         subNodePane.getChildren().clear();
         subNodes.clear();
-        if (descLOD.get().withRelativeDetail(relativeDetail) == getEventBundle().getDescriptionLoD()) {
-            countLabel.setVisible(true);
-            descLOD.set(getEventBundle().getDescriptionLoD());
-            chart.layoutPlotChildren();
-        } else {
-            /*
-             * make new ZoomParams to query with
-             *
-             * We need to extend end time because for the query by one second,
-             * because it is treated as an open interval but we want to include
-             * events at exactly the time of the last event in this cluster
-             */
-            final RootFilter subClusterFilter = getSubClusterFilter();
-            final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-            final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
-            final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-            Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
+        /*
+         * make new ZoomParams to query with
+         *
+         * We need to extend end time because for the query by one second,
+         * because it is treated as an open interval but we want to include
+         * events at exactly the time of the last event in this cluster
+         */
+        final RootFilter subClusterFilter = getSubClusterFilter();
+        final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
+        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
+        final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-                private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
+        Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
 
-                {
-                    updateTitle(Bundle.EventStripeNode_loggedTask_name());
-                }
+            private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
-                @Override
-                protected Collection<EventStripe> call() throws Exception {
-                    Collection<EventStripe> bundles;
-                    DescriptionLoD next = loadedDescriptionLoD;
-                    do {
-                        loadedDescriptionLoD = next;
-                        if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
-                            return Collections.emptySet();
-                        }
-                        bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
-                                .collect(Collectors.toMap((eventCluster) -> eventCluster.getDescription(), //key
-                                                (eventCluster) -> new EventStripe(eventCluster, getEventCluster()), //value
-                                                EventStripe::merge) //merge method
-                                ).values();
-                        next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
-                    } while (bundles.size() == 1 && nonNull(next));
+            {
+                updateTitle(Bundle.EventStripeNode_loggedTask_name());
+            }
 
-                    // return list of AbstractEventStripeNodes representing sub-bundles
-                    return bundles;
-
-                }
-
-                @Override
-                protected void succeeded() {
-                    chart.setCursor(Cursor.WAIT);
-                    try {
-                        Collection<EventStripe> bundles = get();
-
-                        if (bundles.isEmpty()) {
-                            countLabel.setVisible(true);
-                        } else {
-                            countLabel.setVisible(false);
-                            chart.getEventBundles().addAll(bundles);
-                            subNodes.addAll(bundles.stream()
-                                    .map(EventClusterNode.this::createStripeNode)
-                                    .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
-                                    .collect(Collectors.toList()));
-                            subNodePane.getChildren().addAll(subNodes);
-                        }
-                        descLOD.set(loadedDescriptionLoD);
-                        //assign subNodes and request chart layout
-
-                    } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
+            @Override
+            protected Collection<EventStripe> call() throws Exception {
+                Collection<EventStripe> bundles;
+                DescriptionLoD next = loadedDescriptionLoD;
+                do {
+                    loadedDescriptionLoD = next;
+                    if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
+                        return Collections.emptySet();
                     }
-                    chart.layoutPlotChildren();
-                    chart.setCursor(null);
-                }
-            };
+                    bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
+                            .collect(Collectors.toMap((eventCluster) -> eventCluster.getDescription(), //key
+                                            (eventCluster) -> new EventStripe(eventCluster, getEventCluster()), //value
+                                            EventStripe::merge) //merge method
+                            ).values();
+                    next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
+                } while (bundles.size() == 1 && nonNull(next));
 
-            //start task
-            chart.getController().monitorTask(loggedTask);
-        }
+                // return list of AbstractEventStripeNodes representing sub-bundles
+                return bundles;
+
+            }
+
+            @Override
+            protected void succeeded() {
+                chart.setCursor(Cursor.WAIT);
+                try {
+                    Collection<EventStripe> bundles = get();
+
+                    if (bundles.isEmpty()) {
+                        getChildren().setAll(subNodePane, infoHBox);
+                        descLOD.set(getEventBundle().getDescriptionLoD());
+                    } else {
+                        chart.getEventBundles().addAll(bundles);
+                        subNodes.addAll(bundles.stream()
+                                .map(EventClusterNode.this::createStripeNode)
+                                .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
+                                .collect(Collectors.toList()));
+                        subNodePane.getChildren().addAll(subNodes);
+                        getChildren().setAll(new VBox(infoHBox, subNodePane));
+                        descLOD.set(loadedDescriptionLoD);
+                    }
+
+                    //assign subNodes and request chart layout
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
+                }
+                chart.layoutPlotChildren();
+                chart.setCursor(null);
+            }
+        };
+
+        //start task
+        chart.getController().monitorTask(loggedTask);
     }
 
     private EventStripeNode createStripeNode(EventStripe stripe) {
@@ -249,7 +247,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     RootFilter getSubClusterFilter() {
         RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
         subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
+                new DescriptionFilter(getEventBundle().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         return subClusterFilter;
     }

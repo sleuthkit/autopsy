@@ -57,7 +57,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         super(chart, eventStripe, parentNode);
 
         setMinHeight(48);
-//        minWidthProperty().bind(subNodePane.widthProperty());
 
         EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
@@ -70,7 +69,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
 
-//        subNodePane.setPickOnBounds(false);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
         for (EventCluster cluster : eventStripe.getClusters()) {
             EventClusterNode clusterNode = new EventClusterNode(chart, cluster, this);
