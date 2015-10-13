@@ -44,7 +44,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Call getMenuPresenters to create images sublist
+     * @inheritDoc
      */
     @Override
     public void performAction() {
@@ -52,9 +52,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the name of this action. This may be presented as an item in a menu.
-     *
-     * @return actionName
+     * @inheritDoc
      */
     @Override
     public String getName() {
@@ -62,9 +60,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
-     *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @inheritDoc
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -72,10 +68,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Create a sublist of images updated by RunIngestSubMenu Each has an action
-     * to perform Ingest Modules on it.
-     *
-     * @return the images sublist created.
+     * @inheritDoc
      */
     @Override
     public JMenuItem getMenuPresenter() {
@@ -85,9 +78,10 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * This method does nothing, use performAction instead.
+     * @inheritDoc
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        performAction();
     }
 }
