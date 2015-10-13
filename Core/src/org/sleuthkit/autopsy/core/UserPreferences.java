@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -129,25 +133,36 @@ public final class UserPreferences {
     }
 
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
-        DbType dbType;
         try {
-            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
-        } catch (Exception ex) {
-            dbType = DbType.SQLITE;
+            DbType dbType;
+            try {
+                dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
+            } catch (Exception ex) {
+                dbType = DbType.SQLITE;
+            }
+            String text = TextConverter.deconvert(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
+            return new CaseDbConnectionInfo(
+                    preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
+                    preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
+                    preferences.get(EXTERNAL_DATABASE_USER, ""),
+                    TextConverter.deconvert(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
+                    dbType);
+        } catch (GeneralSecurityException | IOException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        return new CaseDbConnectionInfo(
-                preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
-                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
-                preferences.get(EXTERNAL_DATABASE_USER, ""),
-                preferences.get(EXTERNAL_DATABASE_PASSWORD, ""),
-                dbType);
+        return null;
     }
 
     public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) {
         preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
-        preferences.put(EXTERNAL_DATABASE_PASSWORD, connectionInfo.getPassword());
+        try {
+            String password = TextConverter.convert(connectionInfo.getPassword());
+            preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convert(connectionInfo.getPassword()));
+        } catch (GeneralSecurityException | UnsupportedEncodingException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
