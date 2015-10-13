@@ -70,10 +70,10 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     /**
-     * Create a sublist of images updated by RunIngestSubMenu
-     * Each has an action to perform Ingest Modules on it.
+     * Create a sublist of images updated by RunIngestSubMenu Each has an action
+     * to perform Ingest Modules on it.
      *
      * @return the images sublist created.
      */
@@ -83,7 +83,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         sublist.setVisible(true);
         return sublist;
     }
-    
+
     /**
      * This method does nothing, use performAction instead.
      */
