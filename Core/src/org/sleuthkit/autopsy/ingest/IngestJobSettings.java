@@ -145,6 +145,15 @@ public class IngestJobSettings {
     void setProcessUnallocatedSpace(boolean processUnallocatedSpace) {
         this.processUnallocatedSpace = processUnallocatedSpace;
     }
+    
+    /**
+     * Returns the path to the ingest module settings folder.
+     * 
+     * @return path to the module settings folder
+     */
+    public Path getSavedModuleSettingsFolder(){
+        return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, context);
+    }
 
     /**
      * Creates the folder for saving the individual ingest module settings part
@@ -152,7 +161,7 @@ public class IngestJobSettings {
      */
     private void createSavedModuleSettingsFolder() {
         try {
-            Path folder = Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, context);
+            Path folder = getSavedModuleSettingsFolder();
             Files.createDirectories(folder);
             this.moduleSettingsFolderPath = folder.toAbsolutePath().toString();
         } catch (IOException | SecurityException ex) {

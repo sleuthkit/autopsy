@@ -103,7 +103,7 @@ public class EventDB {
         }
     }
 
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
+    private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(EventDB.class.getName());
 
     static {
         //make sure sqlite driver is loaded, possibly redundant
@@ -158,7 +158,8 @@ public class EventDB {
     private PreparedStatement dropHashSetsTableStmt;
     private PreparedStatement dropTagsTableStmt;
     private PreparedStatement dropDBInfoTableStmt;
-    private PreparedStatement selectEventIDsFromOBjectAndArtifactStmt;
+    private PreparedStatement selectNonArtifactEventIDsByObjectIDStmt;
+    private PreparedStatement selectEventIDsBYObjectAndArtifactIDStmt;
 
     private final Set<PreparedStatement> preparedStatements = new HashSet<>();
 
@@ -613,7 +614,8 @@ public class EventDB {
                 dropHashSetsTableStmt = prepareStatement("DROP TABLE IF EXISTS hash_sets");
                 dropTagsTableStmt = prepareStatement("DROP TABLE IF EXISTS tags");
                 dropDBInfoTableStmt = prepareStatement("DROP TABLE IF EXISTS db_ino");
-                selectEventIDsFromOBjectAndArtifactStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS ?");
+                selectNonArtifactEventIDsByObjectIDStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS NULL");
+                selectEventIDsBYObjectAndArtifactIDStmt = prepareStatement("SELECT event_id FROM events WHERE file_id == ? AND artifact_id = ?");
             } catch (SQLException sQLException) {
                 LOGGER.log(Level.SEVERE, "failed to prepareStatment", sQLException); // NON-NLS
             }
@@ -851,16 +853,15 @@ public class EventDB {
      *
      * @return the event ids that match the object/artifact pair
      */
-    Set<Long> deleteTag(long objectID, @Nullable Long artifactID, Tag tag, boolean stillTagged) {
+    Set<Long> deleteTag(long objectID, @Nullable Long artifactID, long tagID, boolean stillTagged) {
         DBLock.lock();
         try {
             //"DELETE FROM tags WHERE tag_id = ?
             deleteTagStmt.clearParameters();
-            deleteTagStmt.setLong(1, tag.getId());
+            deleteTagStmt.setLong(1, tagID);
             deleteTagStmt.executeUpdate();
 
-            Set<Long> eventIDs = markEventsTagged(objectID, artifactID, stillTagged);
-            return eventIDs;
+            return markEventsTagged(objectID, artifactID, stillTagged);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "failed to add tag to event", ex); // NON-NLS
         } finally {
@@ -890,23 +891,29 @@ public class EventDB {
      *                      (un)taggedS
      */
     private Set<Long> markEventsTagged(long objectID, @Nullable Long artifactID, boolean tagged) throws SQLException {
-        //first select the  matching event ids
-        selectEventIDsFromOBjectAndArtifactStmt.clearParameters();
-        selectEventIDsFromOBjectAndArtifactStmt.setLong(1, objectID);
+
+        PreparedStatement selectStmt;
         if (Objects.isNull(artifactID)) {
-            selectEventIDsFromOBjectAndArtifactStmt.setNull(2, Types.NULL);
+            //"SELECT event_id FROM events WHERE file_id == ? AND artifact_id IS NULL"
+            selectNonArtifactEventIDsByObjectIDStmt.clearParameters();
+            selectNonArtifactEventIDsByObjectIDStmt.setLong(1, objectID);
+            selectStmt = selectNonArtifactEventIDsByObjectIDStmt;
         } else {
-            selectEventIDsFromOBjectAndArtifactStmt.setLong(2, artifactID);
+            //"SELECT event_id FROM events WHERE file_id == ? AND artifact_id = ?"
+            selectEventIDsBYObjectAndArtifactIDStmt.clearParameters();
+            selectEventIDsBYObjectAndArtifactIDStmt.setLong(1, objectID);
+            selectEventIDsBYObjectAndArtifactIDStmt.setLong(2, artifactID);
+            selectStmt = selectEventIDsBYObjectAndArtifactIDStmt;
         }
 
         HashSet<Long> eventIDs = new HashSet<>();
-        try (ResultSet executeQuery = selectEventIDsFromOBjectAndArtifactStmt.executeQuery();) {
+        try (ResultSet executeQuery = selectStmt.executeQuery();) {
             while (executeQuery.next()) {
                 eventIDs.add(executeQuery.getLong("event_id"));
             }
         }
 
-        //then update tagged state for all event with selected ids
+        //update tagged state for all event with selected ids
         try (Statement updateStatement = con.createStatement();) {
             updateStatement.executeUpdate("UPDATE events SET tagged = " + (tagged ? 1 : 0)
                     + " WHERE event_id IN (" + StringUtils.join(eventIDs, ",") + ")");

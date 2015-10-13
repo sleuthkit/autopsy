@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,11 +67,11 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -447,7 +447,6 @@ public class TimeLineController {
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
-
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
@@ -818,6 +817,21 @@ public class TimeLineController {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /**
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
+             */
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
+                return;
+            }
+
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
@@ -873,6 +887,7 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
+
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);

@@ -87,7 +87,7 @@ class ReportBodyFile implements GeneralReportModule {
                     + " AND name != '.' AND name != '..'"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.loading"));
-            List<FsContent> fs = skCase.findFilesWhere(query);
+            List<AbstractFile> fs = skCase.findAllFilesWhere(query);
 
             // Check if ingest has finished
             String ingestwarning = "";
@@ -105,7 +105,7 @@ class ReportBodyFile implements GeneralReportModule {
                 out.write(ingestwarning);
                 // Loop files and write info to report
                 int count = 0;
-                for (FsContent file : fs) {
+                for (AbstractFile file : fs) {
                     if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                         break;
                     }
@@ -166,7 +166,7 @@ class ReportBodyFile implements GeneralReportModule {
                     logger.log(Level.SEVERE, errorMessage, ex);
                 }
             }
-            progressPanel.complete();
+            progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
         }

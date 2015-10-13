@@ -59,8 +59,7 @@ public class DataSourcesNode extends DisplayableItemNode {
     /*
      * Custom Keys implementation that listens for new data sources being added.
      */
-    // @@@ This can become private once DirectoryTree doesn't want to refresh the entire tree
-    public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
+    private static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 

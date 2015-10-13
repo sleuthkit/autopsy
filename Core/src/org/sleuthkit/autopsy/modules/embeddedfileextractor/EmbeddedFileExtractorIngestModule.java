@@ -69,8 +69,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
 
         final Case currentCase = Case.getCurrentCase();
 
-        moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-        moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+        moduleDirRelative = currentCase.getModuleOutputDirectoryRelativePath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
+        moduleDirAbsolute = currentCase.getModuleDirectory() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
 
         // initialize the folder where the embedded files are extracted.
         File extractionDirectory = new File(moduleDirAbsolute);

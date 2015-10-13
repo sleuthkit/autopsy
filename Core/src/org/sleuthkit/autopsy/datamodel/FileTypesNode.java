@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -152,15 +152,24 @@ public class FileTypesNode extends DisplayableItemNode {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-
-                    // new file was added
-                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        update();
-                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                        update();
-                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        update();
+                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
+                            || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        /**
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {

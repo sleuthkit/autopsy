@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,32 +98,34 @@ final class DataSourceIngestPipeline {
      */
     synchronized List<IngestModuleError> process(DataSourceIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
-        Content dataSource = task.getDataSource();
-        for (PipelineModule module : modules) {
-            try {
-                this.currentModule = module;
-                String displayName = NbBundle.getMessage(this.getClass(),
-                        "IngestJob.progress.dataSourceIngest.displayName",
-                        module.getDisplayName(), dataSource.getName());
-                this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
-                this.job.switchDataSourceIngestProgressBarToIndeterminate();
-                DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
-                module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
-                logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                String msg = ex.getMessage();
-                // Jython run-time errors don't seem to have a message, but have details in toString.
-                if (msg == null) {
-                    msg = ex.toString();
+        if (!this.job.isCancelled()) {
+            Content dataSource = task.getDataSource();
+            for (PipelineModule module : modules) {
+                try {
+                    this.currentModule = module;
+                    String displayName = NbBundle.getMessage(this.getClass(),
+                            "IngestJob.progress.dataSourceIngest.displayName",
+                            module.getDisplayName(), dataSource.getName());
+                    this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
+                    this.job.switchDataSourceIngestProgressBarToIndeterminate();
+                    DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
+                    module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
+                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getDataSource().getId()});
+                } catch (Throwable ex) { // Catch-all exception firewall
+                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                    String msg = ex.getMessage();
+                    // Jython run-time errors don't seem to have a message, but have details in toString.
+                    if (msg == null) {
+                        msg = ex.toString();
+                    }
+                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
                 }
-                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
-            }
-            if (this.job.isCancelled()) {
-                break;
-            } else if (this.job.currentDataSourceIngestModuleIsCancelled()) {
-                this.job.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
+                if (this.job.isCancelled()) {
+                    break;
+                } else if (this.job.currentDataSourceIngestModuleIsCancelled()) {
+                    this.job.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
+                }
             }
         }
         this.currentModule = null;

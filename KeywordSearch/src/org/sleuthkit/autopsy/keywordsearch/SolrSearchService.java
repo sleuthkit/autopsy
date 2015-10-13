@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.util.HashMap;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -53,8 +55,11 @@ public class SolrSearchService implements KeywordSearchService {
             return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        if (currentCase == null) {
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCase();
+        } catch (IllegalStateException ignore) {
+            // thorown by Case.getCurrentCase() if currentCase is null
             return;
         }
 
@@ -103,7 +108,8 @@ public class SolrSearchService implements KeywordSearchService {
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), abstractFile));
+
+                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
             } else {
                 artifactContents.append(attribute.getDisplayString());
             }
@@ -147,6 +153,43 @@ public class SolrSearchService implements KeywordSearchService {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
         }
+    }
+
+    /**
+     * Checks if we can communicate with Solr using the passed-in host and port.
+     * Closes the connection upon exit.
+     *
+     * @param host the remote hostname or IP address of the Solr server
+     * @param port the remote port for Solr
+     *
+     * @return true if communication with Solr is functional, false otherwise
+     */
+    @Override
+    public boolean canConnectToRemoteSolrServer(String host, String port) {
+        if (host.isEmpty() || port.isEmpty()) {
+            return false;
+        }
+
+        try {
+            // if the port value is invalid, return false
+            Integer.parseInt(port);
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+
+        HttpSolrServer solrServer = null;
+        try {
+            solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS;
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
+            return true; // if we get here, it's at least up and responding
+        } catch (SolrServerException | IOException ignore) {
+        } finally {
+            if (solrServer != null) {
+                solrServer.shutdown();
+            }
+        }
+
+        return false;
     }
 
     @Override

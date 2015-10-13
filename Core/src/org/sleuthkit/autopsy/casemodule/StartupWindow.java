@@ -59,6 +59,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         welcomeWindow = new CueBannerPanel();
 
@@ -80,6 +81,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     @Override
     public void open() {
         welcomeWindow.refresh();
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -35,6 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DeleteContentTagAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
             "DeleteContentTagAction.deleteTags");
 
@@ -56,19 +58,48 @@ public class DeleteContentTagAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
-        for (ContentTag tag : selectedTags) {
-            try {
-                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "DeleteContentTagAction.unableToDelTag.msg",
-                                tag.getName()),
-                        NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
-                        JOptionPane.ERROR_MESSAGE);
+        final Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
+        new Thread(() -> {
+            for (ContentTag tag : selectedTags) {
+                try {
+                    Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteContentTagAction.unableToDelTag.msg",
+                                        tag.getName()),
+                                NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                    });
+                }
             }
-        }
+        }).start();
     }
+
+    /**
+     * Deprecated, use actionPerformed() instead.
+     *
+     * @param event The event associated with the action.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void doAction(ActionEvent event) {
+        actionPerformed(event);
+    }
+
+    /**
+     * Deprecated, does nothing. The TagManager methods to create, update or
+     * delete tags now notify the case that there is a tag change. The case then
+     * publishes an event that triggers a refresh of the tags sub-tree in the
+     * tree view.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void refreshDirectoryTree() {
+    }
+
 }

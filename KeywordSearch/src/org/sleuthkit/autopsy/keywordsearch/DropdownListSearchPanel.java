@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
 
 /**
  * Viewer panel widget for keyword lists that is used in the ingest config and
@@ -50,8 +49,8 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
     private static final Logger logger = Logger.getLogger(DropdownListSearchPanel.class.getName());
     private static DropdownListSearchPanel instance;
     private XmlKeywordSearchList loader;
-    private KeywordListsTableModel listsTableModel;
-    private KeywordsTableModel keywordsTableModel;
+    private final KeywordListsTableModel listsTableModel;
+    private final KeywordsTableModel keywordsTableModel;
     private ActionListener searchAddListener;
     private boolean ingestRunning;
 
@@ -119,10 +118,8 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                if (changed.equals(IngestJobEvent.STARTED.toString())
-                        || changed.equals(IngestJobEvent.COMPLETED.toString())
-                        || changed.equals(IngestJobEvent.CANCELLED.toString())) {
+                Object source = evt.getSource();
+                if (source instanceof String && ((String) source).equals("LOCAL")) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {

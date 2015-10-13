@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 
@@ -30,6 +31,7 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
 
     private final IngestJobContext context;
     private TimedProcessTerminator timedTerminator;
+    private ProcTerminationCode terminationCode;
 
     /**
      * Constructs a process terminator for a data source ingest module.
@@ -38,6 +40,7 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
      */
     public DataSourceIngestModuleProcessTerminator(IngestJobContext context) {
         this.context = context;
+        this.terminationCode = ProcTerminationCode.NONE;
     }
 
     /**
@@ -52,16 +55,45 @@ public final class DataSourceIngestModuleProcessTerminator implements ProcessTer
     }
 
     /**
+     * Constructs a process terminator for a data source ingest module. Adds
+     * ability to use global process termination time out.
+     *
+     * @param context          The ingest job context for the ingest module.
+     * @param useGlobalTimeOut Flag whether to use global process termination
+     *                         timeout.
+     */
+    public DataSourceIngestModuleProcessTerminator(IngestJobContext context, boolean useGlobalTimeOut) {
+        this(context);
+        if (useGlobalTimeOut) {
+            this.timedTerminator = new ExecUtil.TimedProcessTerminator();
+        }
+    }
+
+    /**
      * @inheritDoc
      */
     @Override
     public boolean shouldTerminateProcess() {
 
         if (this.context.dataSourceIngestIsCancelled()) {
+            this.terminationCode = ProcTerminationCode.CANCELATION;
             return true;
         }
 
-        return this.timedTerminator != null ? this.timedTerminator.shouldTerminateProcess() : false;
+        if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
+            this.terminationCode = ProcTerminationCode.TIME_OUT;
+            return true;
+        }
+
+        return false;
     }
 
+    /**
+     * Returns process termination code.
+     *
+     * @return ProcTerminationCode Process termination code.
+     */
+    public ProcTerminationCode getTerminationCode() {
+        return this.terminationCode;
+    }
 }

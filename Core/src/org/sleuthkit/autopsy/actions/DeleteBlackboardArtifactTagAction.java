@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DeleteBlackboardArtifactTagAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteBlackboardArtifactTagAction.class,
             "DeleteBlackboardArtifactTagAction.deleteTags");
 
@@ -57,20 +59,49 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
-        for (BlackboardArtifactTag tag : selectedTags) {
-            try {
-                Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
-            } catch (TskCoreException ex) {
-                Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
-                                tag.getName()),
-                        NbBundle.getMessage(this.getClass(),
-                                "DeleteBlackboardArtifactTagAction.tagDelErr"),
-                        JOptionPane.ERROR_MESSAGE);
+        final Collection<? extends BlackboardArtifactTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
+        new Thread(() -> {
+            for (BlackboardArtifactTag tag : selectedTags) {
+                try {
+                    Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteBlackboardArtifactTagAction.unableToDelTag.msg",
+                                        tag.getName()),
+                                NbBundle.getMessage(this.getClass(),
+                                        "DeleteBlackboardArtifactTagAction.tagDelErr"),
+                                JOptionPane.ERROR_MESSAGE);
+                    });
+                }
             }
-        }
+        }).start();
     }
+
+    /**
+     * Deprecated, use actionPerformed() instead.
+     *
+     * @param event The event associated with the action.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void doAction(ActionEvent event) {
+        actionPerformed(event);
+    }
+
+    /**
+     * Deprecated, does nothing. The TagManager methods to create, update or
+     * delete tags now notify the case that there is a tag change. The case then
+     * publishes an event that triggers a refresh of the tags sub-tree in the
+     * tree view.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void refreshDirectoryTree() {
+    }
+
 }
