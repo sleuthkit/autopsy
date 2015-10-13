@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DeleteBlackboardArtifactTagAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteBlackboardArtifactTagAction.class,
             "DeleteBlackboardArtifactTagAction.deleteTags");
 
@@ -78,4 +79,29 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
             }
         }).start();
     }
+
+    /**
+     * Deprecated, use actionPerformed() instead.
+     *
+     * @param event The event associated with the action.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void doAction(ActionEvent event) {
+        actionPerformed(event);
+    }
+
+    /**
+     * Deprecated, does nothing. The TagManager methods to create, update or
+     * delete tags now notify the case that there is a tag change. The case then
+     * publishes an event that triggers a refresh of the tags sub-tree in the
+     * tree view.
+     *
+     * @deprecated
+     */
+    @Deprecated
+    protected void refreshDirectoryTree() {
+    }
+
 }

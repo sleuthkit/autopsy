@@ -237,7 +237,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         dsProcessor = dataSourcePanel.getComponent().getCurrentDSProcessor();
 
         new Thread(() -> {
-            Case.getCurrentCase().notifyAddingNewDataSource(dataSourceId);
+            Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
         }).start();
         DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
             @Override
@@ -259,7 +259,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     private void cancelDataSourceProcessing(UUID dataSourceId) {
         new Thread(() -> {
-            Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
+            Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
         }).start();
         dsProcessor.cancel();
     }
@@ -309,9 +309,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         //notify the UI of the new content added to the case
         new Thread(() -> {
             if (!newContents.isEmpty()) {
-                Case.getCurrentCase().notifyNewDataSource(newContents.get(0), dataSourceId);
+                Case.getCurrentCase().notifyDataSourceAdded(newContents.get(0), dataSourceId);
             } else {
-                Case.getCurrentCase().notifyFailedAddingNewDataSource(dataSourceId);
+                Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
             }
         }).start();
 

@@ -139,9 +139,6 @@ public class ImageUtils {
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
 
-    private ImageUtils() {
-    }
-
     public static List<String> getSupportedImageExtensions() {
         return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);
     }
