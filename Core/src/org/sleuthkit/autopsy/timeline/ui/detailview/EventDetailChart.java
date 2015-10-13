@@ -498,7 +498,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setVisible(true);
                 bundleNode.setManaged(true);
                 //apply advanced layout description visibility options
-                bundleNode.setDescriptionVisibility(descrVisibility.get());
+                bundleNode.setDescriptionVisibilityLevel(descrVisibility.get());
                 bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
 
                 //do recursive layout

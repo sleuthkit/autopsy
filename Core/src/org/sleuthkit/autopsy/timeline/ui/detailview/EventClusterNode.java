@@ -91,7 +91,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
         setAlignment(Pos.CENTER_LEFT);
         infoHBox.getChildren().addAll(minusButton, plusButton);
-        getChildren().addAll(subNodePane,  infoHBox);
+        getChildren().addAll(subNodePane, infoHBox);
     }
 
     @Override
@@ -114,7 +114,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @Override
     public void setDescriptionVisibility(DescriptionVisibility descrVis) {
         final int size = getEventBundle().getEventIDs().size();
-
         switch (descrVis) {
             case HIDDEN:
                 countLabel.setText("");
@@ -126,11 +125,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 break;
             default:
             case SHOWN:
-//                String description = getEventStripe().getDescription();
-//                description = parentNode != null
-//                        ? "    ..." + StringUtils.substringAfter(description, parentNode.getDescription())
-//                        : description;
-//                descrLabel.setText(description);
                 countLabel.setText(String.valueOf(size));
                 break;
         }

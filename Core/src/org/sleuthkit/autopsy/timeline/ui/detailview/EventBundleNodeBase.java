@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -97,6 +98,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     protected final EventDetailChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility= new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
     protected final BundleType eventBundle;
 
     protected final ParentNodeType parentNode;
@@ -178,6 +180,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             }
+        });
+        
+        setDescriptionVisibility(DescriptionVisibility.SHOWN);
+        descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
+            setDescriptionVisibility(newValue);
         });
     }
 
@@ -322,5 +329,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
      * @param w the maximum width the description label should have
      */
     abstract void setDescriptionWidth(double w);
+
+    void setDescriptionVisibilityLevel(DescriptionVisibility get) {
+      descVisibility.set(get);
+    }
 
 }
