@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.jms.JMSException;

@@ -18,23 +18,22 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.GeneralSecurityException;
 import java.util.Base64;
-
+import java.util.logging.Level;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Provides ability to convert text to hex text.
  */
 class TextConverter {
     
+    private static final Logger logger = Logger.getLogger(TextConverter.class.getName());
     private static final char[] TMP = "dontlookhere".toCharArray();
     private static final byte[] SALT = {
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
@@ -55,6 +54,7 @@ class TextConverter {
             pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
             return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Error converting text to hex text", ex); //NON-NLS
             throw new IllegalArgumentException(
                     NbBundle.getMessage(TextConverter.class, "TextConverter.convert.exception.txt"));
         }
@@ -78,6 +78,7 @@ class TextConverter {
             pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
             return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Error converting hex text to text", ex); //NON-NLS
             throw new IllegalArgumentException(
                     NbBundle.getMessage(TextConverter.class, "TextConverter.convertFromHex.exception.txt"));
         }            
