@@ -89,11 +89,12 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventStripeNode, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
 
+    
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private MultipleSelectionModel<TreeItem<EventBundle>> treeSelectionModel;
+    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
 
     //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();
@@ -107,9 +108,9 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
 
     private final Region region = new Region();
 
-    private final ObservableList<EventStripeNode> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    public ObservableList<EventBundle> getEventBundles() {
+    public ObservableList<EventBundle<?>> getEventBundles() {
         return chart.getEventBundles();
     }
 
@@ -136,7 +137,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.maxVScrollProperty()));
         requestLayout();
 
-        highlightedNodes.addListener((ListChangeListener.Change<? extends EventStripeNode> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
 
             while (change.next()) {
                 change.getAddedSubList().forEach(node -> {
@@ -201,7 +202,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
 
-                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
                         t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -219,14 +220,14 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle>> selectionModel) {
+    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle<?>>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
-            for (TreeItem<EventBundle> tn : treeSelectionModel.getSelectedItems()) {
+            for (TreeItem<EventBundle<?>> tn : treeSelectionModel.getSelectedItems()) {
 
-                for (EventStripeNode n : chart.getNodes((EventStripeNode t) ->
+                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
                         t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
@@ -351,7 +352,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     }
 
     @Override
-    protected void applySelectionEffect(EventStripeNode c1, Boolean selected) {
+    protected void applySelectionEffect(EventBundleNodeBase<?, ?, ?> c1, Boolean selected) {
         c1.applySelectionEffect(selected);
     }
 
@@ -475,4 +476,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
+
+  
 }
