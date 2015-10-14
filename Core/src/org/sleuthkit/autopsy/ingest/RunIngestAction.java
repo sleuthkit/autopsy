@@ -35,7 +35,7 @@ import org.openide.util.actions.Presenter;
 )
 @ActionRegistration(
         displayName = "#CTL_RunIngestAction",
-        lazy = true
+        lazy = false
 )
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
