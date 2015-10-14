@@ -182,11 +182,12 @@ final class UserDefinedFileTypesManager {
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
         byte[] byteArray;
         FileType fileType;
+        
         // Add rule for xml
         byteArray = DatatypeConverter.parseHexBinary("3C3F786D6C");
         fileType = new FileType("text/xml", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
         fileTypes.put(fileType.getMimeType(), fileType);
-        
+               
         // Add rule for .wk1
         byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000");
         fileType = new FileType("application/x-123", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
@@ -204,7 +205,7 @@ final class UserDefinedFileTypesManager {
         
         // Add rule for .dcx image
         byteArray = DatatypeConverter.parseHexBinary("B168DE3A");
-        fileType = new FileType("image/x-dcx", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("image/x-dcx", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
         fileTypes.put(fileType.getMimeType(), fileType);
         
         // Add rule for .ics image
@@ -214,7 +215,17 @@ final class UserDefinedFileTypesManager {
         
         // Add rule for .pict image
         byteArray = DatatypeConverter.parseHexBinary("001102FF");
-        fileType = new FileType("image/x-pict", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+        fileType = new FileType("image/x-pict", new Signature(byteArray, 522L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+        fileTypes.put(fileType.getMimeType(), fileType);
+        
+                // Add rule for .pam
+        byteArray = DatatypeConverter.parseHexBinary("P7");
+        fileType = new FileType("image/x-portable-arbitrarymap", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+        fileTypes.put(fileType.getMimeType(), fileType);
+        
+        // Add rule for .pfm
+        byteArray = DatatypeConverter.parseHexBinary("PF");
+        fileType = new FileType("image/x-portable-floatmap", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
         fileTypes.put(fileType.getMimeType(), fileType);
     }
 
