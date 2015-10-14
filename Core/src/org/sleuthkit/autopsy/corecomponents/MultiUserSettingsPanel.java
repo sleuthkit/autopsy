@@ -18,15 +18,13 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.sql.SQLException;
-import java.util.MissingResourceException;
-import javax.jms.JMSException;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -40,6 +38,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
+    private static final int DEFAULT_MESSAGE_SERVICE_PORT = 61616;
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -57,7 +56,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         initComponents();
         controller = theController;
         setSize(555, 600);
-        
+
         /**
          * Add text prompts to all of the text fields.
          */
@@ -477,16 +476,19 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestDbWarning.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            SleuthkitCase.tryConnect(this.tbDbHostname.getText().trim(),
+            CaseDbConnectionInfo info = new CaseDbConnectionInfo(
+                    this.tbDbHostname.getText().trim(),
                     this.tbDbPort.getText().trim(),
                     this.tbDbUsername.getText().trim(),
                     new String(this.tbDbPassword.getPassword()),
                     DbType.POSTGRESQL);
+
+            SleuthkitCase.tryConnect(info);
             lbTestDatabase.setIcon(goodIcon);
             lbTestDbWarning.setText("");
-        } catch (ClassNotFoundException | SQLException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             lbTestDatabase.setIcon(badIcon);
-            lbTestDbWarning.setText(SleuthkitCase.getUserWarning(ex, this.tbDbHostname.getText().trim()));
+            lbTestDbWarning.setText(ex.getMessage());
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
@@ -496,18 +498,28 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestMessageService.setIcon(null);
         lbTestMessageWarning.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        int port;
+        try {
+            port = Integer.parseInt(this.tbMsgPort.getText().trim());
+        } catch (NumberFormatException ex) {
+            lbTestMessageService.setIcon(badIcon);
+            lbTestMessageWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
+            return;
+        }
+
         MessageServiceConnectionInfo info = new MessageServiceConnectionInfo(
                 this.tbMsgHostname.getText().trim(),
-                this.tbMsgPort.getText().trim(),
+                port,
                 this.tbMsgUsername.getText().trim(),
                 new String(this.tbMsgPassword.getPassword()));
         try {
             info.tryConnect();
             lbTestMessageService.setIcon(goodIcon);
             lbTestMessageWarning.setText("");
-        } catch (JMSException | URISyntaxException | TskCoreException ex) {
+        } catch (MessageServiceException ex) {
             lbTestMessageService.setIcon(badIcon);
-            lbTestMessageWarning.setText(info.getUserWarning(ex, tbMsgHostname.getText().trim()));
+            lbTestMessageWarning.setText(ex.getMessage());
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
@@ -521,16 +533,20 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
             if (kwsService != null) {
-                kwsService.tryConnect(tbSolrHostname.getText().trim(), tbSolrPort.getText().trim());
+                int port = Integer.parseInt(tbSolrPort.getText().trim());
+                kwsService.tryConnect(tbSolrHostname.getText().trim(), port);
                 lbTestSolr.setIcon(goodIcon);
                 lbTestSolrWarning.setText("");
             } else {
                 lbTestSolr.setIcon(badIcon);
                 lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.KeywordSearchNull"));
             }
-        } catch (NumberFormatException | IOException | TskCoreException | MissingResourceException ex) {
+        } catch (NumberFormatException ex) {
             lbTestSolr.setIcon(badIcon);
-            lbTestSolrWarning.setText(kwsService.getUserWarning(ex, tbSolrHostname.getText().trim()));
+            lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
+        } catch (KeywordSearchServiceException ex) {
+            lbTestSolr.setIcon(badIcon);
+            lbTestSolrWarning.setText(ex.getMessage());
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
@@ -552,7 +568,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
         tbMsgHostname.setText(msgServiceInfo.getHost().trim());
-        tbMsgPort.setText(msgServiceInfo.getPort().trim());
+        tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
         tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
         tbMsgPassword.setText(msgServiceInfo.getPassword());
 
@@ -632,9 +648,16 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         UserPreferences.setDatabaseConnectionInfo(info);
 
+        int port = 0;
+        try {
+            port = Integer.parseInt(this.tbMsgPort.getText().trim());
+        } catch (NumberFormatException ex) {
+            logger.log(Level.SEVERE, "Bad port setting", ex);
+        }
+
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
                 tbMsgHostname.getText().trim(),
-                tbMsgPort.getText().trim(),
+                port,
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()));
 

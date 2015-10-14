@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearchservice;
 
 import java.io.Closeable;
-import java.io.IOException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -39,26 +38,15 @@ public interface KeywordSearchService extends Closeable {
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
 
     /**
-     * Checks if we can communicate with Solr using the passed-in host and port.
-     * Closes the connection upon exit. Throws if it cannot communicate with
-     * Solr.
+     * Checks if we can communicate with the KeywordSearchService using the
+     * passed-in host and port. Closes the connection upon exit. Throws if it
+     * cannot communicate.
      *
-     * @param host the remote hostname or IP address of the Solr server
-     * @param port the remote port for Solr
+     * @param host the remote hostname or IP address of the server
+     * @param port the remote port of the server
      *
-     * @throws java.io.IOException
-     * @throws org.sleuthkit.datamodel.TskCoreException
+     * @throws KeywordSearchServiceException
      */
-    public void tryConnect(String host, String port) throws NumberFormatException, IOException, TskCoreException;
+    public void tryConnect(String host, int port) throws KeywordSearchServiceException;
 
-    /**
-     * This method handles exceptions from the connection tester, tryConnect(),
-     * returning the appropriate user-facing text for the exception received.
-     *
-     * @param ex        the exception that was returned
-     * @param ipAddress the IP address to connect to
-     *
-     * @return returns the String message to show the user
-     */
-    public String getUserWarning(Exception ex, String ipAddress);
-}
+    }

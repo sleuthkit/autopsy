@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Immutable
 public final class MessageServiceConnectionInfo {
 
+    // Note the Strings below require the Exceptions to be in English.
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
     private static final String CONNECTION_TIMED_OUT = "connection timed out";
     private static final String CONNECTION_REFUSED = "connection refused";
@@ -44,7 +45,7 @@ public final class MessageServiceConnectionInfo {
     private final String userName;
     private final String password;
     private final String host;
-    private final String port;
+    private final int port;
 
     /**
      * Constructs an object containing connection info for a Java Message
@@ -57,7 +58,7 @@ public final class MessageServiceConnectionInfo {
      * @param password The password to use for a message service connection.
      *
      */
-    public MessageServiceConnectionInfo(String host, String port, String userName, String password) {
+    public MessageServiceConnectionInfo(String host, int port, String userName, String password) {
         this.host = host;
         this.port = port;
         this.userName = userName;
@@ -95,9 +96,9 @@ public final class MessageServiceConnectionInfo {
     /**
      * Gets the port number to use for a message service connection.
      *
-     * @return The port as a string.
+     * @return The port as an int.
      */
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
@@ -109,46 +110,45 @@ public final class MessageServiceConnectionInfo {
      * @throws URISyntaxException if the connection info is not for a valid TCP
      *                            URI.
      */
-    public URI getURI() throws URISyntaxException {
-        return new URI(String.format(MESSAGE_SERVICE_URI, host, port));
+    URI getURI() throws URISyntaxException {
+        return new URI(String.format(MESSAGE_SERVICE_URI, getHost(), Integer.toString(getPort())));
     }
 
     /**
-     * Verifies connection to messaging service.
+     * Verifies connection to messaging service. Throws if we cannot communicate
+     * with messaging service.
      *
-     * @return throws if we cannot communicate with ActiveMQ.
-     *
-     * @throws java.net.URISyntaxException
-     * @throws javax.jms.JMSException
+     * @throws org.sleuthkit.autopsy.events.MessageServiceException
      */
-    public void tryConnect() throws URISyntaxException, JMSException, TskCoreException {
+    public void tryConnect() throws MessageServiceException {
         if (host == null || host.isEmpty()) {
-            throw new TskCoreException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingHostname")); //NON-NLS
-        } else if (port == null || port.isEmpty()) {
-            throw new TskCoreException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingPort")); //NON-NLS
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingHostname")); //NON-NLS
         } else if (userName == null || userName.isEmpty()) {
-            throw new TskCoreException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingUsername")); //NON-NLS
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingUsername")); //NON-NLS
         } else if (password == null || password.isEmpty()) {
-            throw new TskCoreException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingPassword")); //NON-NLS
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingPassword")); //NON-NLS
         }
-
-        URI uri = new URI(String.format(MESSAGE_SERVICE_URI, getHost(), getPort()));
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getUserName(), getPassword(), uri);
-        Connection connection = connectionFactory.createConnection(getUserName(), getPassword());
-        connection.start();
-        connection.close();
+        try {
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getUserName(), getPassword(), getURI());
+            Connection connection = connectionFactory.createConnection(getUserName(), getPassword());
+            connection.start();
+            connection.close();
+        } catch (URISyntaxException | JMSException ex) {
+            throw new MessageServiceException(getUserWarning(ex, host));
+        }
     }
 
     /**
      * This method handles exceptions from the ActiveMQ tester, returning the
-     * appropriate text for the exception received.
+     * appropriate text for the exception received. This method expects the
+     * Exceptions to be in English and compares against English text.
      *
      * @param ex        the Exception to analyze
      * @param ipAddress the IP address to check against
      *
      * @return returns the String message to show the user
      */
-    public String getUserWarning(Exception ex, String ipAddress) {
+    String getUserWarning(Exception ex, String ipAddress) {
         String result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Everything"); //NON-NLS
 
         if (ex instanceof JMSException) {

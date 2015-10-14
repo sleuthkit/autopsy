@@ -27,7 +27,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
-import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Multi_User_Settings",

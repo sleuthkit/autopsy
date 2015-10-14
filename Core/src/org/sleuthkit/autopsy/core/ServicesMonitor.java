@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.core;
 import org.sleuthkit.autopsy.core.events.ServiceEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -36,9 +35,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
-import java.net.URISyntaxException;
-import java.sql.SQLException;
-import javax.jms.JMSException;
+import org.sleuthkit.autopsy.events.MessageServiceException;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -243,10 +241,10 @@ public class ServicesMonitor {
     private void checkDatabaseConnectionStatus() {
         CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
         try {
-            SleuthkitCase.tryConnect(info.getHost(), info.getPort(), info.getUserName(), info.getPassword(), info.getDbType());
+            SleuthkitCase.tryConnect(info);
             setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
-        } catch (ClassNotFoundException | SQLException | TskCoreException ex) {
-            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), SleuthkitCase.getUserWarning(ex, info.getHost()));
+        } catch (TskCoreException ex) {
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), ex.getMessage());
         }
     }
 
@@ -257,14 +255,19 @@ public class ServicesMonitor {
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
             if (kwsService != null) {
-                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort());
+                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
+                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
                         NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.KeywordSearchNull"));
             }
-        } catch (NumberFormatException | IOException | TskCoreException ex) {
-            String rootCause = kwsService.getUserWarning(ex, UserPreferences.getIndexingServerHost());
+        } catch (NumberFormatException ex) {
+            String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
+        } catch (KeywordSearchServiceException ex) {
+            String rootCause = ex.getMessage();
             logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
             setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
         }
@@ -278,8 +281,8 @@ public class ServicesMonitor {
         try {
             info.tryConnect();
             setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
-        } catch (URISyntaxException | JMSException | TskCoreException ex) {
-            String rootCause = info.getUserWarning(ex, info.getHost());
+        } catch (MessageServiceException ex) {
+            String rootCause = ex.getMessage();
             logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
             setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), rootCause);
         }
@@ -379,6 +382,7 @@ public class ServicesMonitor {
      * Exception thrown when service status query results in an error.
      */
     public class ServicesMonitorException extends Exception {
+
         private static final long serialVersionUID = 1L;
 
         public ServicesMonitorException(String message) {
