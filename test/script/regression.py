@@ -93,8 +93,6 @@ def usage():
 	print ("-v verbose mode")
 	print ("-e ARG Enable exception mode with given string")
 	print ("-h help")
-	print ("-fr Do not download new images each time")
-
 
 #----------------------#
 #        Main          #
@@ -108,19 +106,6 @@ def main():
         return
     test_config = TestConfiguration(args)
 
-    # Download images unless they asked not to
-    if(not args.fr):
-        antin = ["ant"]
-        antin.append("-f")
-        antin.append(os.path.join("..","..","build.xml"))
-        antin.append("test-download-imgs")
-        if SYS is OS.CYGWIN:
-            subprocess.call(antin)
-        elif SYS is OS.WIN:
-            theproc = subprocess.Popen(antin, shell = True, stdout=subprocess.PIPE)
-            theproc.communicate()
-
-    # Otherwise test away!
     TestRunner.run_tests(test_config)
 
 
@@ -1666,7 +1651,6 @@ class Args(object):
         self.verbose = False
         self.exception = False
         self.exception_string = ""
-        self.fr = False
         self.copy_diff_files = False
         self.diff_files_output_folder = ""
 
@@ -1721,9 +1705,6 @@ class Args(object):
             elif arg == "-h" or arg == "--help":
                 usage()
                 return False
-            elif arg == "-fr" or arg == "--forcerun":
-                print("Not downloading new images")
-                self.fr = True
             elif arg == "-o" or arg == "--output":
                 try:
                     arg = sys.argv.pop(0)
