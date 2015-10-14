@@ -9,7 +9,7 @@
     
     <!-- Note that these values are also defined in platform.xml and those values are used to download the
       correct version of the platform.  These are used for other reasons.  We should merge the two. -->
-    <property name="netbeans-plat-version" value="7.3" />
+    <property name="netbeans-plat-version" value="8.0.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
 
     <!-- Determine platform and include specific file -->
