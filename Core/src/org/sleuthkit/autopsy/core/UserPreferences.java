@@ -140,12 +140,12 @@ public final class UserPreferences {
             } catch (Exception ex) {
                 dbType = DbType.SQLITE;
             }
-            String text = TextConverter.deconvert(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
+            String text = TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
             return new CaseDbConnectionInfo(
                     preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
                     preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
                     preferences.get(EXTERNAL_DATABASE_USER, ""),
-                    TextConverter.deconvert(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
+                    TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
                     dbType);
         } catch (GeneralSecurityException | IOException ex) {
             Exceptions.printStackTrace(ex);
@@ -158,8 +158,8 @@ public final class UserPreferences {
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
         try {
-            String password = TextConverter.convert(connectionInfo.getPassword());
-            preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convert(connectionInfo.getPassword()));
+            String password = TextConverter.convertTextToHexText(connectionInfo.getPassword());
+            preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
         } catch (GeneralSecurityException | UnsupportedEncodingException ex) {
             Exceptions.printStackTrace(ex);
         }

@@ -28,7 +28,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * Provides ability to convert text to hex text.
@@ -41,21 +40,18 @@ class TextConverter {
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
     };
 
-    /*static void main(String[] args) throws Exception {
-        String originalPassword = "secret";
-        System.out.println("Original password: " + originalPassword);
-        String encryptedPassword = convert(originalPassword);
-        System.out.println("Encrypted password: " + encryptedPassword);
-        String decryptedPassword = deconvert(encryptedPassword);
-        System.out.println("Decrypted password: " + decryptedPassword);
-    }*/
-
-    static String convert(String property) throws GeneralSecurityException, UnsupportedEncodingException {
+    /**
+     * Convert text to hex text.
+     * @param property Input text string.
+     * @return Converted hex string.
+     * @throws GeneralSecurityException
+     * @throws UnsupportedEncodingException 
+     */
+    static String convertTextToHexText(String property) throws GeneralSecurityException, UnsupportedEncodingException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
         SecretKey key = keyFactory.generateSecret(new PBEKeySpec(LOOK_AWAY));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        //return toHexString(pbeCipher.doFinal(property.getBytes("UTF-8")));
         return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
     }
 
@@ -63,20 +59,18 @@ class TextConverter {
         return Base64.getEncoder().encodeToString(bytes);
     }
 
-    private static String toHexString(byte[] array) {
-        return DatatypeConverter.printHexBinary(array);
-    }
-
-    private static byte[] toByteArray(String s) {
-        return DatatypeConverter.parseHexBinary(s);
-    }
-
-    static String deconvert(String property) throws GeneralSecurityException, IOException {
+    /**
+     * Convert hex text back to text.
+     * @param property Input hex text string.
+     * @return Converted text string.
+     * @throws GeneralSecurityException
+     * @throws IOException 
+     */
+    static String convertHexTextToText(String property) throws GeneralSecurityException, IOException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
         SecretKey key = keyFactory.generateSecret(new PBEKeySpec(LOOK_AWAY));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        //return new String(pbeCipher.doFinal(toByteArray(property)), "UTF-8");
         return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
     }
 
