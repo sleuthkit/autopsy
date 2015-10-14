@@ -20,18 +20,17 @@ package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * This class enables capturing errors and batching them for reporting on a
- * no-more-than-x number of seconds basis. When created, you specify what type
- * of error it will be batching, and the minimum time between user
- * notifications. When the time between notifications has expired, the next
- * error encountered will cause a report to be shown to the user.
+ * no-more-than-x number of seconds basis. When created, you specify the minimum
+ * time between user notifications. When the time between notifications has
+ * expired, the next error encountered will cause a report to be shown to the
+ * user.
  */
-class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
+class IntervalErrorReportData {
 
-    private static volatile IntervalErrorReportData instance;
+    private final Case currentCase;
     private long newProblems;
     private long totalProblems;
     private long lastReportedDate;
@@ -39,37 +38,31 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
     private final String message;
 
     /**
-     * Create a new IntervalErrorReprotData instance.
+     * Create a new IntervalErrorReprotData instance and subscribe for TSK error
+     * notifications for the current case.
      *
+     * @param currentCase           Case for which TSK errors should be tracked
+     *                              and displayed.
      * @param secondsBetweenReports Minimum number of seconds between reports.
      *                              It will not warn more frequently than this.
      * @param message               The message that will be shown when warning
      *                              the user
      */
-    private IntervalErrorReportData(int secondsBetweenReports, String message) {
+    IntervalErrorReportData(Case currentCase, int secondsBetweenReports, String message) {
         this.newProblems = 0;
         this.totalProblems = 0;
         this.lastReportedDate = 0; // arm the first warning by choosing zero
         this.milliSecondsBetweenReports = secondsBetweenReports * 1000;  // convert to milliseconds
         this.message = message;
-        SleuthkitCase.addErrorObserver(this);
+        this.currentCase = currentCase;
+        this.currentCase.getSleuthkitCase().addErrorObserver(this.currentCase);
     }
-
+    
     /**
-     * Returns the singleton instance of this object
-     *
-     * @return the singleton instance of this object
+     * Un-subscribe from TSK error notifications for current case.
      */
-    public static IntervalErrorReportData getInstance() {
-        if (instance == null) {
-            synchronized (IntervalErrorReportData.class) {
-                if (instance == null) {
-                    instance = new IntervalErrorReportData(60, // No less than 60 seconds between warnings for errors
-                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
-                }
-            }
-        }
-        return instance;
+    void shutdown() {
+        this.currentCase.getSleuthkitCase().removeErrorObserver(this.currentCase);
     }
 
     /**
@@ -77,17 +70,17 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
      * (or if this is the first problem encountered), a warning will be shown to
      * the user.
      *
-     * @param newProblems the newProblems to set
-     * @param ex          the exception for this error
+     * @param context      The context in which the error occurred.
+     * @param errorMessage A description of the error that occurred.
      */
-    private void addProblems(long newProblems, Exception ex) {
-        this.newProblems += newProblems;
+    void addProblems(String context, String errorMessage) {
+        this.newProblems += 1;
         this.totalProblems += newProblems;
 
         long currentTimeStamp = System.currentTimeMillis();
         if ((currentTimeStamp - lastReportedDate) > milliSecondsBetweenReports) {
             this.lastReportedDate = currentTimeStamp;
-            MessageNotifyUtil.Notify.error(message, ex.getMessage() + " "
+            MessageNotifyUtil.Notify.error(message, context + ", " + errorMessage + " "
                     + this.newProblems + " "
                     + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.NewIssues")
                     + " " + this.totalProblems + " "
@@ -95,10 +88,5 @@ class IntervalErrorReportData implements SleuthkitCase.ErrorObserver {
                     + ".");
             this.newProblems = 0;
         }
-    }
-
-    @Override
-    public void receiveError(Exception ex) {
-        addProblems(1, ex);
     }
 }
