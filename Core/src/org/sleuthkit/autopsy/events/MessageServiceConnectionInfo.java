@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.MissingResourceException;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Connection info for a Java Message Service (JMS) provider. Thread-safe.
@@ -36,7 +35,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Immutable
 public final class MessageServiceConnectionInfo {
 
-    // Note the Strings below require the Exceptions to be in English.
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
     private static final String CONNECTION_TIMED_OUT = "connection timed out";
     private static final String CONNECTION_REFUSED = "connection refused";
@@ -118,6 +116,11 @@ public final class MessageServiceConnectionInfo {
      * Verifies connection to messaging service. Throws if we cannot communicate
      * with messaging service.
      *
+     * When issues occur, it attempts to diagnose them by looking at the
+     * exception messages, returning the appropriate user-facing text for the
+     * exception received. This method expects the Exceptions messages to be in
+     * English and compares against English text.
+     *
      * @throws org.sleuthkit.autopsy.events.MessageServiceException
      */
     public void tryConnect() throws MessageServiceException {
@@ -133,25 +136,11 @@ public final class MessageServiceConnectionInfo {
             Connection connection = connectionFactory.createConnection(getUserName(), getPassword());
             connection.start();
             connection.close();
-        } catch (URISyntaxException | JMSException ex) {
-            throw new MessageServiceException(getUserWarning(ex, host));
-        }
-    }
-
-    /**
-     * This method handles exceptions from the ActiveMQ tester, returning the
-     * appropriate text for the exception received. This method expects the
-     * Exceptions to be in English and compares against English text.
-     *
-     * @param ex        the Exception to analyze
-     * @param ipAddress the IP address to check against
-     *
-     * @return returns the String message to show the user
-     */
-    String getUserWarning(Exception ex, String ipAddress) {
-        String result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Everything"); //NON-NLS
-
-        if (ex instanceof JMSException) {
+        } catch (URISyntaxException ex) {
+            // The hostname or port seems bad
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort")); //NON-NLS
+        } catch (JMSException ex) {
+            String result;
             Throwable cause = ex.getCause();
             if (cause != null) {
                 // there is more information from another exception
@@ -172,7 +161,7 @@ public final class MessageServiceConnectionInfo {
             } else {
                 // there is no more information from another exception
                 try {
-                    if (InetAddress.getByName(ipAddress).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
+                    if (InetAddress.getByName(getHost()).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
                         // if we can reach the host, then it's probably a port problem
                         result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Port"); //NON-NLS
                     } else {
@@ -183,12 +172,7 @@ public final class MessageServiceConnectionInfo {
                     result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Everything"); //NON-NLS
                 }
             }
-        } else if (ex instanceof URISyntaxException) {
-            // The hostname or port seems bad
-            result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort"); //NON-NLS
-        } else if (ex instanceof TskCoreException) {
-            result = ex.getMessage();
+            throw new MessageServiceException(result);
         }
-        return result;
     }
 }

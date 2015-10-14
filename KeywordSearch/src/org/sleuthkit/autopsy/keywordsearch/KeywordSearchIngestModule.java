@@ -155,7 +155,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     // if there is an error parsing the port number
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     String details = NbBundle.getMessage(this.getClass(), "SolrConnectionCheck.Port");
-                    logger.log(Level.SEVERE, "{0}: {1}", new Object[]{msg, details});
+                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                     throw new IngestModuleException(msg);
                 }
@@ -164,7 +164,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 } catch (KeywordSearchServiceException ex) {
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
                     String details = ex.getMessage();
-                    logger.log(Level.SEVERE, "{0}: {1}", new Object[]{msg, details});
+                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                     throw new IngestModuleException(msg);
                 }

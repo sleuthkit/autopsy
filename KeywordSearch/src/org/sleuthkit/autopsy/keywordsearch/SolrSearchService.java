@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
 
-    // Note the Strings below require the Exceptions to be in English.
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occured when talking to server";
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection";
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
@@ -169,6 +168,11 @@ public class SolrSearchService implements KeywordSearchService {
      * Closes the connection upon exit. Throws if it cannot communicate with
      * Solr.
      *
+     * When issues occur, it attempts to diagnose them by looking at the
+     * exception messages, returning the appropriate user-facing text for the
+     * exception received. This method expects the Exceptions messages to be in
+     * English and compares against English text.
+     *
      * @param host the remote hostname or IP address of the Solr server
      * @param port the remote port for Solr
      *
@@ -177,39 +181,21 @@ public class SolrSearchService implements KeywordSearchService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
+        HttpSolrServer solrServer = null;
         try {
             if (host == null || host.isEmpty()) {
                 throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
             }
-            HttpSolrServer solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS;
+            solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS;
             KeywordSearch.getServer().connectToSolrServer(solrServer);
-            if (null != solrServer) {
-                solrServer.shutdown();
-            }
-        } catch (SolrServerException | IOException | IllegalArgumentException ex) {
-            throw new KeywordSearchServiceException(getUserWarning(ex, host), ex);
-        }
-    }
-
-    /**
-     * This method handles exceptions from the connection tester, tryConnect(),
-     * returning the appropriate user-facing text for the exception received.
-     * This method expects the Exceptions to be in English and compares against
-     * English text.
-     *
-     * @param ex        the exception that was returned
-     * @param ipAddress the IP address to connect to
-     *
-     * @return returns the String message to show the user
-     */
-    String getUserWarning(Exception ex, String ipAddress) {
-
-        String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
-        if (ex instanceof IOException) {
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS
+        } catch (IOException ex) {
+            String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
                 try {
-                    if (InetAddress.getByName(ipAddress).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
+                    if (InetAddress.getByName(host).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
                         // if we can reach the host, then it's probably port problem
                         result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
                     } else {
@@ -222,18 +208,16 @@ public class SolrSearchService implements KeywordSearchService {
             } else if (message.startsWith(BAD_IP_ADDRESS_FORMAT)) {
                 result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Hostname"); //NON-NLS
             }
-        } else if (ex instanceof SolrServerException) {
-            result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
-        } else if (ex instanceof NumberFormatException) {
-            result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
-        } else if (ex instanceof TskCoreException) {
-            result = ex.getMessage();
-        } else if (ex instanceof IllegalArgumentException) {
-            result = ex.getMessage();
-        } else {
-            result = ex.getMessage();
+            throw new KeywordSearchServiceException(result);
+        } catch (NumberFormatException ex) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port")); //NON-NLS
+        } catch (IllegalArgumentException ex) {
+            throw new KeywordSearchServiceException(ex.getMessage());
+        } finally {
+            if (null != solrServer) {
+                solrServer.shutdown();
+            }
         }
-        return result;
     }
 
     @Override
