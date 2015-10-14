@@ -25,7 +25,6 @@ import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -66,6 +65,8 @@ import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_fil
  * filters based on the contents of a {@link FilteredEventsModel}
  */
 final public class FilterSetPanel extends BorderPane implements TimeLineView {
+
+    private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");
 
     @FXML
     private Button applyButton;
@@ -164,7 +165,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
         //configure tree column to show name of filter and checkbox
         treeColumn.setCellValueFactory(param -> param.getValue().valueProperty());
-        treeColumn.setCellFactory(col -> new FilterCheckBoxCellFactory().forTreeTable(col));
+        treeColumn.setCellFactory(col -> new FilterCheckBoxCellFactory<>().forTreeTable(col));
 
         //configure legend column to show legend (or othe supplamantal ui, eg, text field for text filter)
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
@@ -175,22 +176,6 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
     public FilterSetPanel() {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
         expansionMap.put(new TypeFilter(RootEventType.getInstance()).getDisplayName(), true);
-    }
-
-    static class ListCellImpl extends ListCell<DescriptionFilter> {
-
-        @Override
-        protected void updateItem(DescriptionFilter item, boolean empty) {
-            super.updateItem(item, empty); //To change body of generated methods, choose Tools | Templates.
-            if (item == null || empty) {
-                setText(null);
-                setGraphic(null);
-            } else {
-                setGraphic(new CheckBox());
-                setText(item.getDisplayName());
-            }
-        }
-
     }
 
     @Override
@@ -235,7 +220,6 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
             return forList;
         });
 
-//        hiddenDescriptionsPane.setContent(null);
         controller.viewModeProperty().addListener(observable -> {
             applyFilters();
             if (controller.viewModeProperty().get() == VisualizationMode.COUNTS) {
@@ -250,7 +234,7 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
                 hiddenDescriptionsPane.setCollapsible(true);
                 hiddenDescriptionsPane.setExpanded(true);
                 hiddenDescriptionsPane.setCollapsible(false);
-                
+
             }
         });
     }
@@ -298,8 +282,5 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         Platform.runLater(() -> {
             controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
         });
-
     }
-
-    private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");
 }
