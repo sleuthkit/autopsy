@@ -140,7 +140,6 @@ public final class UserPreferences {
         } catch (Exception ex) {
             dbType = DbType.SQLITE;
         }
-        String text = TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
         return new CaseDbConnectionInfo(
                 preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
                 preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
@@ -161,7 +160,6 @@ public final class UserPreferences {
         preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
-        String password = TextConverter.convertTextToHexText(connectionInfo.getPassword());
         preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
         preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
