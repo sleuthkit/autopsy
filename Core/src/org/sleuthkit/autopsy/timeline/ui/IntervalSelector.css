@@ -1,0 +1,13 @@
+.intervalSelector{
+    -fx-background-color: rgba(0,0,255,.5);
+    -fx-border-color: rgba(0,0,255,.5);
+    -fx-border-width: 3;
+}
+
+.closeButton:hover{
+    -fx-opacity: 1;
+}
+
+.zoomButton:hover{
+    -fx-opacity: 1;
+}

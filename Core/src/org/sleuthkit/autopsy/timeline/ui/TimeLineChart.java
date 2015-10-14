@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
@@ -30,8 +31,15 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
 import org.joda.time.DateTime;
@@ -48,9 +56,9 @@ import org.sleuthkit.autopsy.timeline.actions.Forward;
  * @param <X> the type of values along the horizontal axis
  */
 public interface TimeLineChart<X> extends TimeLineView {
-    
+
     IntervalSelector<? extends X> getIntervalSelector();
-    
+
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
 
     /**
@@ -78,28 +86,28 @@ public interface TimeLineChart<X> extends TimeLineView {
      * @param <Y> the type of chart this is a drag handler for
      */
     static class ChartDragHandler<X, Y extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
-        
+
         private final Y chart;
-        
+
         private final Axis<X> dateAxis;
-        
+
         private double startX;  //hanlder mainstains position of drag start
 
         private boolean requireDrag = true;
-        
+
         public boolean isRequireDrag() {
             return requireDrag;
         }
-        
+
         public void setRequireDrag(boolean requireDrag) {
             this.requireDrag = requireDrag;
         }
-        
+
         public ChartDragHandler(Y chart, Axis<X> dateAxis) {
             this.chart = chart;
             this.dateAxis = dateAxis;
         }
-        
+
         @Override
         public void handle(MouseEvent mouseEvent) {
             EventType<? extends MouseEvent> mouseEventType = mouseEvent.getEventType();
@@ -113,7 +121,7 @@ public interface TimeLineChart<X> extends TimeLineView {
                 if (chart.getIntervalSelector() == null) {
                     //make new interval selector
                     chart.setIntervalSelector(chart.newIntervalSelector(mouseEvent.getX(), dateAxis));
-                    chart.getIntervalSelector().heightProperty().bind(chart.heightProperty().subtract(dateAxis.heightProperty().subtract(dateAxis.tickLengthProperty())));
+                    chart.getIntervalSelector().prefHeightProperty().bind(chart.heightProperty());
                     IntervalSelector<? extends X> intervalSelector = chart.getIntervalSelector();
                     if (intervalSelector != null) {
                         intervalSelector.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
@@ -127,11 +135,11 @@ public interface TimeLineChart<X> extends TimeLineView {
                 } else {
                     //resize/position existing selector
                     if (mouseEvent.getX() > startX) {
-                        chart.getIntervalSelector().setX(startX);
-                        chart.getIntervalSelector().setWidth(mouseEvent.getX() - startX);
+//                        chart.getIntervalSelector().relocate(startX, 0);
+                        chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
                     } else {
-                        chart.getIntervalSelector().setX(mouseEvent.getX());
-                        chart.getIntervalSelector().setWidth(startX - mouseEvent.getX());
+                        chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
+                        chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
                     }
                 }
                 mouseEvent.consume();
@@ -146,12 +154,17 @@ public interface TimeLineChart<X> extends TimeLineView {
                 chart.setOnMouseMoved(null);
                 mouseEvent.consume();
             }
-            
+
+            if (chart.getIntervalSelector() != null) {
+                chart.getIntervalSelector().autosize();
+                System.out.println(chart.getIntervalSelector().getBoundsInLocal());
+
+            }
         }
     }
-    
+
     public static class StartIntervalSelectionAction extends Action {
-        
+
         private static final Image SELECT_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/select.png", 16, 16, true, true, true);
 
         /**
@@ -167,7 +180,7 @@ public interface TimeLineChart<X> extends TimeLineView {
             });
         }
     }
-    
+
     @NbBundle.Messages({"TimeLineChart.zoomHistoryActionGroup.name=Zoom History"})
     static ActionGroup newZoomHistoyActionGroup(TimeLineController controller) {
         return new ActionGroup(Bundle.TimeLineChart_zoomHistoryActionGroup_name(),
@@ -175,179 +188,4 @@ public interface TimeLineChart<X> extends TimeLineView {
                 new Forward(controller));
     }
 
-    /**
-     * Visually represents a 'selected' time range, and allows mouse
-     * interactions with it.
-     *
-     * @param <X> the type of values along the x axis this is a selector for
-     *
-     * This abstract class requires concrete implementations to implement hook
-     * methods to handle formating and date 'lookup' of the generic x-axis type
-     */
-    static abstract class IntervalSelector<X> extends Rectangle {
-        
-        private static final double STROKE_WIDTH = 3;
-        
-        private static final double HALF_STROKE = STROKE_WIDTH / 2;
-
-        /**
-         * the Axis this is a selector over
-         */
-        private final Axis<X> dateAxis;
-        
-        private Tooltip tooltip;
-
-        /////////drag state
-        private DragPosition dragPosition;
-        private double startLeft;
-        private double startX;
-        private double startWidth;
-        /////////end drag state
-
-        /**
-         *
-         * @param x          the initial x position of this selector
-         * @param height     the initial height of this selector
-         * @param axis       the {@link Axis<X>} this is a selector over
-         * @param controller the controller to invoke when this selector is
-         *                   double clicked
-         */
-        public IntervalSelector(double x, double height, Axis<X> axis, TimeLineController controller) {
-            super(x, 0, x, height);
-            dateAxis = axis;
-            setStroke(Color.BLUE);
-            setStrokeWidth(STROKE_WIDTH);
-            setFill(Color.BLUE.deriveColor(0, 1, 1, 0.5));
-            setOpacity(0.5);
-            widthProperty().addListener(o -> {
-                setTooltip();
-            });
-            xProperty().addListener(o -> {
-                setTooltip();
-            });
-            setTooltip();
-            
-            setOnMouseMoved((MouseEvent event) -> {
-                Point2D localMouse = sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
-                final double diffX = getX() - localMouse.getX();
-                if (Math.abs(diffX) <= HALF_STROKE || Math.abs(diffX + getWidth()) <= HALF_STROKE) {
-                    //if the mouse is over the stroke, show the resize cursor
-                    setCursor(Cursor.H_RESIZE);
-                } else {
-                    setCursor(Cursor.HAND);
-                }
-            });
-            setOnMousePressed((MouseEvent event) -> {
-                Point2D localMouse = sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
-                final double diffX = getX() - localMouse.getX();
-                startX = event.getX();
-                startWidth = getWidth();
-                startLeft = getX();
-                if (Math.abs(diffX) <= HALF_STROKE) {
-                    dragPosition = IntervalSelector.DragPosition.LEFT;
-                } else if (Math.abs(diffX + getWidth()) <= HALF_STROKE) {
-                    dragPosition = IntervalSelector.DragPosition.RIGHT;
-                } else {
-                    dragPosition = IntervalSelector.DragPosition.CENTER;
-                }
-            });
-            setOnMouseDragged((MouseEvent event) -> {
-                double dX = event.getX() - startX;
-                switch (dragPosition) {
-                    case CENTER:
-                        setX(startLeft + dX);
-                        break;
-                    case LEFT:
-                        setX(startLeft + dX);
-                        setWidth(startWidth - dX);
-                        break;
-                    case RIGHT:
-                        setWidth(startWidth + dX);
-                        break;
-                }
-                event.consume();
-            });
-            //have to add handler rather than use convenience methods so that charts can listen for dismisal click
-            addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-                
-                public void handle(MouseEvent event) {
-                    if (event.getClickCount() >= 2) {
-                        //convert to DateTimes, using max/min if null(off axis)
-                        DateTime start = parseDateTime(getSpanStart());
-                        DateTime end = parseDateTime(getSpanEnd());
-                        Interval i = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
-                        controller.pushTimeRange(i);
-                        event.consume();
-                    }
-                }
-            });
-        }
-
-        /**
-         *
-         * @param i the interval represented by this selector
-         *
-         * @return a modified version of {@code i} adjusted to suite the needs
-         *         of the concrete implementation
-         */
-        protected abstract Interval adjustInterval(Interval i);
-
-        /**
-         * format a string representation of the given x-axis value to use in
-         * the tooltip
-         *
-         * @param date a x-axis value of type X
-         *
-         * @return a string representation of the given x-axis value
-         */
-        protected abstract String formatSpan(final X date);
-
-        /**
-         * parse an x-axis value to a {@link DateTime}
-         *
-         * @param date a x-axis value of type X
-         *
-         * @return a {@link DateTime} corresponding to the given x-axis value
-         */
-        protected abstract DateTime parseDateTime(X date);
-        
-        @NbBundle.Messages({"# {0} - start timestamp",
-            "# {1} - end timestamp",
-            "Timeline.ui.TimeLineChart.tooltip.text=Double-click to zoom into range:\n{0} to {1}\nRight-click to clear."})
-        private void setTooltip() {
-            final X start = getSpanStart();
-            final X end = getSpanEnd();
-            Tooltip.uninstall(this, tooltip);
-            tooltip = new Tooltip(
-                    Bundle.Timeline_ui_TimeLineChart_tooltip_text(formatSpan(start), formatSpan(end)));
-            Tooltip.install(this, tooltip);
-        }
-
-        /**
-         * @return the value along the x-axis corresponding to the left edge of
-         *         the selector
-         */
-        public X getSpanEnd() {
-            return dateAxis.getValueForDisplay(dateAxis.parentToLocal(getBoundsInParent().getMaxX(), 0).getX());
-        }
-
-        /**
-         * @return the value along the x-axis corresponding to the right edge of
-         *         the selector
-         */
-        public X getSpanStart() {
-            return dateAxis.getValueForDisplay(dateAxis.parentToLocal(getBoundsInParent().getMinX(), 0).getX());
-        }
-
-        /**
-         * enum to represent whether the drag is a left/right-edge modification
-         * or a horizontal slide triggered by dragging the center
-         */
-        private enum DragPosition {
-            
-            LEFT,
-            CENTER,
-            RIGHT
-        }
-    }
 }
