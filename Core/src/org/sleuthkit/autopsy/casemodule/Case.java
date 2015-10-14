@@ -86,12 +86,13 @@ import org.sleuthkit.datamodel.TskException;
  * open at a time. Use getCurrentCase() to retrieve the object for the current
  * case.
  */
-public class Case {
+public class Case implements SleuthkitCase.ErrorObserver {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events";
     private static String appName = null;
-    private static IntervalErrorReportData tskErrorReporter = null;
+    volatile private IntervalErrorReportData tskErrorReporter = null;
+    private static final int MIN_SECONDS_BETWEEN_ERROR_REPORTS = 60; // No less than 60 seconds between warnings for errors
     private static final int MAX_SANITIZED_NAME_LENGTH = 47;
 
     /**
@@ -258,7 +259,6 @@ public class Case {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     static final String CASE_EXTENSION = "aut"; //NON-NLS
     static final String CASE_DOT_EXTENSION = "." + CASE_EXTENSION;
-    private static String HostName;
     private final static String CACHE_FOLDER = "Cache"; //NON-NLS
     private final static String EXPORT_FOLDER = "Export"; //NON-NLS
     private final static String LOG_FOLDER = "Log"; //NON-NLS
@@ -317,13 +317,15 @@ public class Case {
      *
      */
     private static void changeCase(Case newCase) {
-        // force static initialization of error reporter
-        tskErrorReporter = IntervalErrorReportData.getInstance();
         // close the existing case
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
         if (oldCase != null) {
-            doCaseChange(null); //closes windows, etc            
+            doCaseChange(null); //closes windows, etc   
+            if (null != oldCase.tskErrorReporter) {
+                oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
+                oldCase.tskErrorReporter = null;
+            }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), oldCase, null));
             if (CaseType.MULTI_USER_CASE == oldCase.getCaseType()) {
                 if (null != oldCase.collaborationMonitor) {
@@ -336,6 +338,13 @@ public class Case {
         if (newCase != null) {
             currentCase = newCase;
             Logger.setLogDirectory(currentCase.getLogDirectoryPath());
+            // sanity check
+            if (null != currentCase.tskErrorReporter) {
+                currentCase.tskErrorReporter.shutdown();
+            }
+            // start listening for TSK errors for the new case
+            currentCase.tskErrorReporter = new IntervalErrorReportData(currentCase, MIN_SECONDS_BETWEEN_ERROR_REPORTS,
+                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
                 RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
@@ -359,6 +368,17 @@ public class Case {
 
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
+        }
+    }
+    
+    @Override
+    public void receiveError(String context, String errorMessage) {
+        /* NOTE: We are accessing tskErrorReporter from two different threads.
+         * This is ok as long as we only read the value of tskErrorReporter
+         * because tskErrorReporter is declared as volatile.
+         */
+        if (null != tskErrorReporter) {
+            tskErrorReporter.addProblems(context, errorMessage);
         }
     }
 
