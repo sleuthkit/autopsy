@@ -186,7 +186,7 @@ public class SolrSearchService implements KeywordSearchService {
             if (null != solrServer) {
                 solrServer.shutdown();
             }
-        } catch (SolrServerException | IOException ex) {
+        } catch (SolrServerException | IOException | IllegalArgumentException ex) {
             throw new KeywordSearchServiceException(getUserWarning(ex, host), ex);
         }
     }
@@ -227,6 +227,8 @@ public class SolrSearchService implements KeywordSearchService {
         } else if (ex instanceof NumberFormatException) {
             result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
         } else if (ex instanceof TskCoreException) {
+            result = ex.getMessage();
+        } else if (ex instanceof IllegalArgumentException) {
             result = ex.getMessage();
         } else {
             result = ex.getMessage();
