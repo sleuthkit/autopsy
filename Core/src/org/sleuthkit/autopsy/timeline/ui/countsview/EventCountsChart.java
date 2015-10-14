@@ -29,14 +29,11 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.util.StringConverter;
-import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
@@ -87,7 +84,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setOnMousePressed(dragHandler);
         setOnMouseReleased(dragHandler);
         setOnMouseDragged(dragHandler);
-        setOnMouseMoved(dragHandler);
 
         setOnMouseClicked((MouseEvent clickEvent) -> {
             if (chartContextMenu != null) {
@@ -95,6 +91,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
                 getChartContextMenu(clickEvent);
+                setOnMouseMoved(dragHandler);
                 chartContextMenu.show(EventCountsChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
             }
@@ -113,20 +110,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             chartContextMenu.hide();
         }
 
-        chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(
-//                new Action("Select Interval") {
-//            {
-//                setEventHandler((ActionEvent t) -> {
-//                    dragHandler.setRequireDrag(false);
-//                    dragHandler.handle(clickEvent.copyFor(clickEvent.getSource(), clickEvent.getTarget(), MouseEvent.MOUSE_DRAGGED));
-//                });
-//            }
-//
-//        },
-                new ActionGroup(
-                Bundle.EventCountsChart_contextMenu_zoomHistory_name(),
-                new Back(controller),
-                new Forward(controller))));
+        chartContextMenu = ActionUtils.createContextMenu(
+                Arrays.asList(
+                        new StartIntervalSelectionAction(clickEvent, dragHandler),
+                        TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
     }
@@ -226,4 +213,5 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             return date == null ? new DateTime(rangeInfo.getLowerBound()) : rangeInfo.getTickFormatter().parseDateTime(date);
         }
     }
+
 }

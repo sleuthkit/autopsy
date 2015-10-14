@@ -62,14 +62,11 @@ import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
@@ -182,6 +179,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * via slider if truncateAll is true
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
+    private final ChartDragHandler<DateTime, EventDetailChart> dragHandler;
 
     EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
@@ -211,22 +209,23 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             setPrefHeight(boundsInLocalProperty().get().getHeight());
         });
 
-        ///////set up mouse listeners
+        //use one handler with an if chain because it maintains state
+        dragHandler = new ChartDragHandler<>(this, getXAxis());
+        setOnMousePressed(dragHandler);
+        setOnMouseReleased(dragHandler);
+        setOnMouseDragged(dragHandler);
+
         setOnMouseClicked((MouseEvent clickEvent) -> {
             if (chartContextMenu != null) {
                 chartContextMenu.hide();
             }
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
                 getChartContextMenu(clickEvent);
+                setOnMouseMoved(dragHandler);
                 chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
                 clickEvent.consume();
             }
         });
-        //use one handler with an if chain because it maintains state
-        final ChartDragHandler<DateTime, EventDetailChart> dragHandler = new ChartDragHandler<>(this, getXAxis());
-        setOnMousePressed(dragHandler);
-        setOnMouseReleased(dragHandler);
-        setOnMouseDragged(dragHandler);
 
         this.selectedNodes = selectedNodes;
         this.selectedNodes.addListener(new SelectionChangeHandler());
@@ -240,17 +239,14 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return controller;
     }
 
-    @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker",
-        "EventDetailChart.contextMenu.zoomHistory.name=Zoom History"})
     ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
 
         chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
-                new ActionGroup(Bundle.EventDetailChart_contextMenu_zoomHistory_name(),
-                        new Back(controller),
-                        new Forward(controller))));
+//                new StartIntervalSelectionAction(clickEvent, dragHandler),
+                TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
     }
@@ -608,6 +604,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     private class PlaceMarkerAction extends Action {
 
+        @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker"})
         PlaceMarkerAction(MouseEvent clickEvent) {
             super(Bundle.EventDetailChart_chartContextMenu_placeMarker_name());
 

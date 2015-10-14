@@ -534,7 +534,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
             scaleLabel.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.scaleLabel.text"));
         }
 
-        public CountsViewSettingsPane() {
+        CountsViewSettingsPane() {
             FXMLConstructor.construct(this, "CountsViewSettingsPane.fxml"); // NON-NLS
         }
     }
