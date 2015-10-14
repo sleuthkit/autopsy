@@ -18,8 +18,12 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
+import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -484,17 +488,25 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnTestSolrActionPerformed
 
     void load() {
-        CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-        tbDbHostname.setText(dbInfo.getHost().trim());
-        tbDbPort.setText(dbInfo.getPort().trim());
-        tbDbUsername.setText(dbInfo.getUserName().trim());
-        tbDbPassword.setText(dbInfo.getPassword());
+        try {
+            CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
+            tbDbHostname.setText(dbInfo.getHost().trim());
+            tbDbPort.setText(dbInfo.getPort().trim());
+            tbDbUsername.setText(dbInfo.getUserName().trim());
+            tbDbPassword.setText(dbInfo.getPassword());
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
-        MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-        tbMsgHostname.setText(msgServiceInfo.getHost().trim());
-        tbMsgPort.setText(msgServiceInfo.getPort().trim());
-        tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
-        tbMsgPassword.setText(msgServiceInfo.getPassword());
+        try {
+            MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
+            tbMsgHostname.setText(msgServiceInfo.getHost().trim());
+            tbMsgPort.setText(msgServiceInfo.getPort().trim());
+            tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
+            tbMsgPassword.setText(msgServiceInfo.getPassword());
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
         String indexingServerHost = UserPreferences.getIndexingServerHost().trim();
         if (!indexingServerHost.isEmpty()) {
@@ -570,14 +582,22 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 new String(tbDbPassword.getPassword()),
                 dbType);
 
-        UserPreferences.setDatabaseConnectionInfo(info);
+        try {
+            UserPreferences.setDatabaseConnectionInfo(info);
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()),
                 tbMsgHostname.getText().trim(),
                 tbMsgPort.getText().trim());
-        UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+        try {
+            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
+        }
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));

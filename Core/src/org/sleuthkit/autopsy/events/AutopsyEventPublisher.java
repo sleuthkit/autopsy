@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.events;
 
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.jms.JMSException;
@@ -68,6 +70,10 @@ public final class AutopsyEventPublisher {
             remotePublisher = new RemoteEventPublisher(channelName, localPublisher, UserPreferences.getMessageServiceConnectionInfo());
         } catch (URISyntaxException | JMSException ex) {
             String message = "Failed to open remote event channel"; //NON-NLS
+            logger.log(Level.SEVERE, message, ex);
+            throw new AutopsyEventException(message, ex);
+        } catch (IllegalArgumentException ex) {
+            String message = "Error accessing messaging service connection info"; //NON-NLS
             logger.log(Level.SEVERE, message, ex);
             throw new AutopsyEventException(message, ex);
         }

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -455,6 +456,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            throw new CaseActionException(
+                    NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
 
         /**
@@ -566,7 +571,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 if (!UserPreferences.getIsMultiUserModeEnabled()) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
-                db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                try {
+                    db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                } catch (IllegalArgumentException ex) {
+                    logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+                    throw new CaseActionException(
+                            NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+                }
             }
 
             /**

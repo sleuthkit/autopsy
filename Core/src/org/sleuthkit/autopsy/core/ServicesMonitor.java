@@ -266,6 +266,8 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
             }
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception  while checking database connection status", ex); //NON-NLS
         }
@@ -297,6 +299,8 @@ public class ServicesMonitor {
             } else {
                 setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
             }
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Exception  while checking messaging server connection status", ex); //NON-NLS
         }

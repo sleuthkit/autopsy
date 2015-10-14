@@ -28,13 +28,14 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import org.openide.util.NbBundle;
 
 /**
  * Provides ability to convert text to hex text.
  */
 class TextConverter {
     
-    private static final char[] LOOK_AWAY = "dontlookhere".toCharArray();
+    private static final char[] TMP = "dontlookhere".toCharArray();
     private static final byte[] SALT = {
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
@@ -44,15 +45,19 @@ class TextConverter {
      * Convert text to hex text.
      * @param property Input text string.
      * @return Converted hex string.
-     * @throws GeneralSecurityException
-     * @throws UnsupportedEncodingException 
+     * @throws IllegalArgumentException
      */
-    static String convertTextToHexText(String property) throws GeneralSecurityException, UnsupportedEncodingException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(LOOK_AWAY));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+    static String convertTextToHexText(String property) throws IllegalArgumentException {
+        try {
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+            Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+            pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+            return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(TextConverter.class, "TextConverter.convert.exception.txt"));
+        }
     }
 
     private static String base64Encode(byte[] bytes) {
@@ -63,15 +68,19 @@ class TextConverter {
      * Convert hex text back to text.
      * @param property Input hex text string.
      * @return Converted text string.
-     * @throws GeneralSecurityException
-     * @throws IOException 
+     * @throws IllegalArgumentException
      */
-    static String convertHexTextToText(String property) throws GeneralSecurityException, IOException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(LOOK_AWAY));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+    static String convertHexTextToText(String property) throws IllegalArgumentException {
+        try {
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+            Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+            pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+            return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(
+                    NbBundle.getMessage(TextConverter.class, "TextConverter.convertFromHex.exception.txt"));
+        }            
     }
 
     private static byte[] base64Decode(String property) {
