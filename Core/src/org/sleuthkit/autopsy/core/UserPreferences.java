@@ -25,7 +25,6 @@ import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -132,37 +131,40 @@ public final class UserPreferences {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
-    public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
+    /**
+     * Reads persisted case database connection info.
+     * @return An object encapsulating the database connection info.
+     * @throws GeneralSecurityException
+     * @throws IOException 
+     */
+    public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws GeneralSecurityException, IOException {
+        DbType dbType;
         try {
-            DbType dbType;
-            try {
-                dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
-            } catch (Exception ex) {
-                dbType = DbType.SQLITE;
-            }
-            String text = TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
-            return new CaseDbConnectionInfo(
-                    preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
-                    preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
-                    preferences.get(EXTERNAL_DATABASE_USER, ""),
-                    TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
-                    dbType);
-        } catch (GeneralSecurityException | IOException ex) {
-            Exceptions.printStackTrace(ex);
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
+        } catch (Exception ex) {
+            dbType = DbType.SQLITE;
         }
-        return null;
+        String text = TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, ""));
+        return new CaseDbConnectionInfo(
+                preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
+                preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
+                preferences.get(EXTERNAL_DATABASE_USER, ""),
+                TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
+                dbType);
     }
 
-    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) {
+    /**
+     * Persists case database connection info.
+     * @param connectionInfo An object encapsulating the database connection info.
+     * @throws GeneralSecurityException
+     * @throws UnsupportedEncodingException 
+     */
+    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws GeneralSecurityException, UnsupportedEncodingException {
         preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
-        try {
-            String password = TextConverter.convertTextToHexText(connectionInfo.getPassword());
-            preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
-        } catch (GeneralSecurityException | UnsupportedEncodingException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        String password = TextConverter.convertTextToHexText(connectionInfo.getPassword());
+        preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
         preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
@@ -194,10 +196,12 @@ public final class UserPreferences {
      * Persists message service connection info.
      *
      * @param info An object encapsulating the message service info.
+     * @throws java.security.GeneralSecurityException
+     * @throws java.io.UnsupportedEncodingException
      */
-    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
+    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws GeneralSecurityException, UnsupportedEncodingException {
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
-        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, TextConverter.convertTextToHexText(info.getPassword()));
         preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
         preferences.put(MESSAGE_SERVICE_PORT, info.getPort());
     }
@@ -206,10 +210,12 @@ public final class UserPreferences {
      * Reads persisted message service connection info.
      *
      * @return An object encapsulating the message service info.
+     * @throws java.security.GeneralSecurityException
+     * @throws java.io.IOException
      */
-    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() {
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws GeneralSecurityException, IOException {
         return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
-                preferences.get(MESSAGE_SERVICE_PASSWORD, ""),
+                TextConverter.convertHexTextToText(preferences.get(MESSAGE_SERVICE_PASSWORD, "")),
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
                 preferences.get(MESSAGE_SERVICE_PORT, "61616"));
     }
