@@ -243,30 +243,4 @@
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
         <antcall target="build-installer-${os.family}" />
     </target>
-    
-    <property name="test-input" location="Test/input"/>
-    <target name="test-download-imgs" description="Get test images and store them in the path represented by the test-input variable.">
-         <available file="${test-input}/nps-2008-jean.E01" property="img-present-1"/>
-         <available file="${test-input}/nps-2008-jean.E02" property="img-present-2"/>
-         <if>
-             <equals arg1="${img-present-1}" arg2="true"/>
-             <then>
-                <echo message = "nps-2008-jean.E01 already present."/>
-             </then>
-             <else>
-                <mkdir dir="${test-input}" />
-                <get src="http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E01" dest="${test-input}"/>                
-             </else>
-         </if>
-         <if>
-             <equals arg1="${img-present-2}" arg2="true"/>
-             <then>
-                <echo message = "nps-2008-jean.E02 already present."/>
-             </then>
-             <else>
-                <mkdir dir="${test-input}" />
-                <get src="http://digitalcorpora.org/corp/nps/drives/nps-2008-jean/nps-2008-jean.E02" dest="${test-input}"/>                
-             </else>
-         </if>
-    </target>
 </project>
