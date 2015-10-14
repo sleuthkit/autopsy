@@ -26,6 +26,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 
 /**
@@ -174,5 +176,6 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
     @Override
     public void validate() throws WizardValidationException {
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     }
 }
