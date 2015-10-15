@@ -182,10 +182,10 @@ public class SolrSearchService implements KeywordSearchService {
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
         HttpSolrServer solrServer = null;
+        if (host == null || host.isEmpty()) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
+        }
         try {
-            if (host == null || host.isEmpty()) {
-                throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
-            }
             solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS;
             KeywordSearch.getServer().connectToSolrServer(solrServer);
         } catch (SolrServerException ex) {
