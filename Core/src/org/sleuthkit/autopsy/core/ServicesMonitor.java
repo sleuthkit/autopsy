@@ -242,7 +242,7 @@ public class ServicesMonitor {
         CaseDbConnectionInfo info;
         try {
             info = UserPreferences.getDatabaseConnectionInfo();
-        } catch (TextConverterException ex) {
+        } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
             setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "Error accessing case database connection info");
             return;
@@ -287,7 +287,7 @@ public class ServicesMonitor {
         MessageServiceConnectionInfo info;
         try {
             info = UserPreferences.getMessageServiceConnectionInfo();
-        } catch (TextConverterException ex) {
+        } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
             setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "Error accessing messaging service connection info");
             return;

@@ -22,14 +22,14 @@ package org.sleuthkit.autopsy.core;
  * Exception thrown when text conversion (such as from text to hex text or vice versa) resulted in
  * an error
  */
-public class TextConverterException extends Exception {
+public class UserPreferencesException extends Exception {
     private static final long serialVersionUID = 1L;
     
-    public TextConverterException(String message) {
+    public UserPreferencesException(String message) {
         super(message);
     }
 
-    public TextConverterException(String message, Throwable cause) {
+    public UserPreferencesException(String message, Throwable cause) {
         super(message, cause);
     }    
 }
