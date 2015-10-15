@@ -77,8 +77,43 @@ To install ActiveMQ, perform the following steps:
 <br>
 6.	Move the <i>apache-activemq-5.11.1</i> folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.11.1</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
 7.	Install ActiveMQ as a service by navigating to the folder <i>apache-activemq-5.11.1-bin\\apache-activemq-5.11.1\\bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
-8.  Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
-9.  ActiveMQ should now be fully installed and configured. You can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default username is _admin_ and the default password is _admin_. If you can see a page that looks like the following, it is ready to function.
+8.  If you desire authentication for your ActiveMQ server(a good idea), the following directions allow you to set up credentials: 
+    + Copy the file _groups.properties_ from the _authentication_ folder of the install package to <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf"</i>, overwriting the existing file.
+    + Copy the file _users.properties_ from the _authentication_ folder of the install package to <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf"</i>, overwriting the existing file.
+    + Copy and paste the text from the file _add_to_activemq_xml.txt_ from the _authentication_ folder of the install package to the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i>, inserting the text at the line shown in yellow in the screenshot below.
+    <br>
+    <br>
+    \image html insertTextHere.PNG
+    <br>
+    <br>
+    After insertion, the file should look like the screenshot below, with the inserted portion highlighted in yellow. This is where you can change the username and password for your ActiveMQ setup.
+    <br>
+    <br>
+    \image html insertedText.PNG
+    <br>
+    <br>
+    To add a new user or change the password:
+        + Stop the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Stop the service_ link.
+    <br>
+    <br>
+    \image html StopActiveMQService.PNG
+    <br>
+    <br>
+        + Edit <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i> adding the desired line. Both _username_ and _password_ are case sensitive. You will very likely want to keep your new users in the _users_ group.
+    <br>
+    <br>
+    \image html newUserAndPassword.PNG
+    <br>
+    <br>
+        + Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
+    <br>
+    <br>
+    \image html StartActiveMQService.PNG
+    <br>
+    <br>
+
+9.  If not already started, start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
+10. ActiveMQ should now be fully installed and configured. You can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default username is _admin_ and the default password is _admin_. You can change these passwords by editing the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i> on the ActiveMQ server as discussed above. If you can see a page that looks like the following, it is ready to function.
 <br><br>
 \image html activemq.PNG
 <br>
