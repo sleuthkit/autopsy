@@ -50,12 +50,14 @@ class AbstractFileChunk {
      *
      * @return
      */
-    public String getIdString() {
+    String getIdString() {
         return Server.getChunkIdString(this.parent.getSourceFile().getId(), this.chunkID);
     }
 
-    public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
-        byte[] saitizedContent = sanitize(content);
+    void index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
+        // We are currently only passing utf-8 as indexCharset. If other charsets were to be used in the future, 
+        // this might need to be changed to accommodate.
+        byte[] saitizedContent = sanitize(content, indexCharset);
         ByteContentStream bcs = new ByteContentStream(saitizedContent, contentSize, parent.getSourceFile(), indexCharset);
         try {
             ingester.ingest(this, bcs, content.length);
@@ -63,16 +65,14 @@ class AbstractFileChunk {
             throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
                     parent.getSourceFile().getId(), chunkID), ingEx);
         }
-        return true;
     }
 
     // Given a byte array, filter out all occurances non-characters 
     // http://unicode.org/cldr/utility/list-unicodeset.jsp?a=[:Noncharacter_Code_Point=True:]
     // and non-printable control characters except tabulator, new line and carriage return
     // and replace them with the character (^)
-    private static byte[] sanitize(byte[] input) {
-        Charset charset = Charset.forName("UTF-8"); // NON-NLS
-        String inputString = new String(input, charset);
+    private static byte[] sanitize(byte[] input, Charset indexCharset) {
+        String inputString = new String(input, indexCharset);
         StringBuilder sanitized = new StringBuilder(inputString.length());
         char ch;
         for (int i = 0; i < inputString.length(); i++) {
@@ -84,7 +84,7 @@ class AbstractFileChunk {
             }
         }
 
-        byte[] output = sanitized.toString().getBytes(charset);
+        byte[] output = sanitized.toString().getBytes(indexCharset);
         return output;
     }
 
