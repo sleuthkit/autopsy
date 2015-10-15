@@ -34,6 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
+import org.sleuthkit.autopsy.events.MessageServiceException;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class periodically checks availability of collaboration resources -
@@ -149,28 +155,8 @@ public class ServicesMonitor {
      * @param status  Updated status for the service.
      * @param details Details of the event.
      *
-     * @throws
-     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException Thrown
-     *                                                                   if
-     *                                                                   either
-     *                                                                   of
-     *                                                                   input
-     *                                                                   parameters
-     *                                                                   is
-     *                                                                   null.
      */
-    public void setServiceStatus(String service, String status, String details) throws ServicesMonitorException {
-
-        if (service == null) {
-            logger.log(Level.SEVERE, "Call to setServiceStatus() with null service name"); //NON-NLS
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
-        }
-
-        if (status == null || details == null) {
-            logger.log(Level.SEVERE, "Call to setServiceStatus() with null status or details"); //NON-NLS
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullStatusOrDetails.excepton.txt"));
-        }
-
+    public void setServiceStatus(String service, String status, String details) {
         // if the status update is for an existing service who's status hasn't changed - do nothing.       
         if (statusByService.containsKey(service) && status.equals(statusByService.get(service))) {
             return;
@@ -211,15 +197,8 @@ public class ServicesMonitor {
      *
      * @return ServiceStatus Status for the service.
      *
-     * @throws
-     * org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException Thrown
-     *                                                                   if
-     *                                                                   service
-     *                                                                   name is
-     *                                                                   null or
-     *                                                                   service
-     *                                                                   doesn't
-     *                                                                   exist.
+     * @throws ServicesMonitorException If service name is null or service
+     *                                  doesn't exist.
      */
     public String getServiceStatus(String service) throws ServicesMonitorException {
 
@@ -260,16 +239,19 @@ public class ServicesMonitor {
      * Performs case database service availability status check.
      */
     private void checkDatabaseConnectionStatus() {
+        CaseDbConnectionInfo info;
         try {
-            if (UserPreferences.getDatabaseConnectionInfo().canConnect()) {
-                setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
-            } else {
-                setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "");
-            }
+            info = UserPreferences.getDatabaseConnectionInfo();
         } catch (IllegalArgumentException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception  while checking database connection status", ex); //NON-NLS
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "Error accessing case database connection info");
+            return;
+        }
+        try {
+            SleuthkitCase.tryConnect(info);
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
+        } catch (TskCoreException ex) {
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), ex.getMessage());
         }
     }
 
@@ -277,15 +259,24 @@ public class ServicesMonitor {
      * Performs keyword search service availability status check.
      */
     private void checkKeywordSearchServerConnectionStatus() {
+        KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
-            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            if (kwsService != null && kwsService.canConnectToRemoteSolrServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort())) {
+            if (kwsService != null) {
+                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
+                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
             } else {
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), "");
+                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.KeywordSearchNull"));
             }
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception  while checking keyword search server connection status", ex); //NON-NLS
+        } catch (NumberFormatException ex) {
+            String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
+        } catch (KeywordSearchServiceException ex) {
+            String rootCause = ex.getMessage();
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
         }
     }
 
@@ -293,16 +284,22 @@ public class ServicesMonitor {
      * Performs messaging service availability status check.
      */
     private void checkMessagingServerConnectionStatus() {
+        MessageServiceConnectionInfo info;
         try {
-            if (UserPreferences.getMessageServiceConnectionInfo().canConnect()) {
-                setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
-            } else {
-                setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "");
-            }
+            info = UserPreferences.getMessageServiceConnectionInfo();
         } catch (IllegalArgumentException ex) {
             logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception  while checking messaging server connection status", ex); //NON-NLS
+            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "Error accessing messaging service connection info");
+            return;
+        }
+
+        try {
+            info.tryConnect();
+            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");
+        } catch (MessageServiceException ex) {
+            String rootCause = ex.getMessage();
+            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), rootCause);
         }
     }
 
@@ -400,6 +397,8 @@ public class ServicesMonitor {
      * Exception thrown when service status query results in an error.
      */
     public class ServicesMonitorException extends Exception {
+
+        private static final long serialVersionUID = 1L;
 
         public ServicesMonitorException(String message) {
             super(message);

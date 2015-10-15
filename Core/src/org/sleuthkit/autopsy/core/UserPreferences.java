@@ -54,6 +54,8 @@ public final class UserPreferences {
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS     
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS  
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
+    private static final String DEFAULT_PORT_STRING = "61616";
+    private static final int DEFAULT_PORT_INT = 61616;
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -136,7 +138,7 @@ public final class UserPreferences {
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws IllegalArgumentException {
         DbType dbType;
         try {
-            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "SQLITE"));
+            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL"));
         } catch (Exception ex) {
             dbType = DbType.SQLITE;
         }
@@ -195,10 +197,10 @@ public final class UserPreferences {
      * @throws IllegalArgumentException
      */
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws IllegalArgumentException {
+        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
+        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
         preferences.put(MESSAGE_SERVICE_PASSWORD, TextConverter.convertTextToHexText(info.getPassword()));
-        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
-        preferences.put(MESSAGE_SERVICE_PORT, info.getPort());
     }
 
     /**
@@ -208,10 +210,19 @@ public final class UserPreferences {
      * @throws IllegalArgumentException
      */
     public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws IllegalArgumentException {
-        return new MessageServiceConnectionInfo(preferences.get(MESSAGE_SERVICE_USER, ""),
-                TextConverter.convertHexTextToText(preferences.get(MESSAGE_SERVICE_PASSWORD, "")),
+        int port;
+        try {
+            port = Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, DEFAULT_PORT_STRING));
+        } catch (NumberFormatException ex) {
+            // if there is an error parsing the port number, use the default port number
+            port = DEFAULT_PORT_INT;
+        }
+
+        return new MessageServiceConnectionInfo(
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
-                preferences.get(MESSAGE_SERVICE_PORT, "61616"));
+                port,
+                preferences.get(MESSAGE_SERVICE_USER, ""),
+                TextConverter.convertHexTextToText(preferences.get(MESSAGE_SERVICE_PASSWORD, "")));
     }
 
     /**
