@@ -18,16 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.Chart;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -75,23 +71,13 @@ public interface TimeLineChart<X> extends TimeLineView {
 
         private final Y chart;
 
-        private final Axis<X> dateAxis;
+        private final Axis<X> xAxis;
 
         private double startX;  //hanlder mainstains position of drag start
 
-        private boolean requireDrag = true;
-
-        public boolean isRequireDrag() {
-            return requireDrag;
-        }
-
-        public void setRequireDrag(boolean requireDrag) {
-            this.requireDrag = requireDrag;
-        }
-
         public ChartDragHandler(Y chart, Axis<X> dateAxis) {
             this.chart = chart;
-            this.dateAxis = dateAxis;
+            this.xAxis = dateAxis;
         }
 
         @Override
@@ -101,8 +87,7 @@ public interface TimeLineChart<X> extends TimeLineView {
                 //caputure  x-position, incase we are repositioning existing selector
                 startX = mouseEvent.getX();
                 chart.setCursor(Cursor.H_RESIZE);
-            } else if ((mouseEventType == MouseEvent.MOUSE_DRAGGED)
-                    || mouseEventType == MouseEvent.MOUSE_MOVED && (requireDrag == false)) {
+            } else if (mouseEventType == MouseEvent.MOUSE_DRAGGED) {
                 if (chart.getIntervalSelector() == null) {
                     //make new interval selector
                     chart.setIntervalSelector(chart.newIntervalSelector());
@@ -122,31 +107,9 @@ public interface TimeLineChart<X> extends TimeLineView {
                 chart.getIntervalSelector().autosize();
             } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
                 chart.setCursor(Cursor.DEFAULT);
-                requireDrag = true;
-                chart.setOnMouseMoved(null);
             } else if (mouseEventType == MouseEvent.MOUSE_CLICKED) {
                 chart.setCursor(Cursor.DEFAULT);
-                requireDrag = true;
-                chart.setOnMouseMoved(null);
             }
-        }
-    }
-
-    public static class StartIntervalSelectionAction extends Action {
-
-        private static final Image SELECT_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/select.png", 16, 16, true, true, true);
-
-        /**
-         * @param clickEvent  the value of clickEvent
-         * @param dragHandler the value of dragHandler
-         */
-        public StartIntervalSelectionAction(MouseEvent clickEvent, final ChartDragHandler<?, ?> dragHandler) {
-            super("Select Interval");
-            setGraphic(new ImageView(SELECT_ICON));
-            setEventHandler((ActionEvent t) -> {
-                dragHandler.setRequireDrag(false);
-                dragHandler.handle(clickEvent.copyFor(clickEvent.getSource(), clickEvent.getTarget(), MouseEvent.MOUSE_DRAGGED));
-            });
         }
     }
 
@@ -156,5 +119,4 @@ public interface TimeLineChart<X> extends TimeLineView {
                 new Back(controller),
                 new Forward(controller));
     }
-
 }

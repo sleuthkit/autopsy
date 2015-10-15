@@ -5,7 +5,6 @@
 }
 
 .closeButton{
-    -fx-background-color: transparent;
 }
 
 .closeButton:hover{

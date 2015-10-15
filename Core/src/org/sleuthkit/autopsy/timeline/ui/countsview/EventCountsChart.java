@@ -112,7 +112,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
 
         chartContextMenu = ActionUtils.createContextMenu(
                 Arrays.asList(
-                        new StartIntervalSelectionAction(clickEvent, dragHandler),
                         TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;

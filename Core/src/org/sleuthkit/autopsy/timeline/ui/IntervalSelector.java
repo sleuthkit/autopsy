@@ -18,9 +18,14 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import javafx.beans.Observable;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -65,6 +70,8 @@ public abstract class IntervalSelector<X> extends BorderPane {
     private double startLeft;
     private double startDragX;
     private double startWidth;
+
+    private BooleanProperty isDragging = new SimpleBooleanProperty(false);
     /////////end drag state
     private final TimeLineController controller;
 
@@ -79,6 +86,9 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
     @FXML
     private Button zoomButton;
+
+    @FXML
+    private BorderPane bottomBorder;
 
     public IntervalSelector(TimeLineChart<X> chart) {
         this.chart = chart;
@@ -98,10 +108,21 @@ public abstract class IntervalSelector<X> extends BorderPane {
         setMaxWidth(USE_PREF_SIZE);
         setMinWidth(USE_PREF_SIZE);
 
-        closeButton.visibleProperty().bind(hoverProperty());
-        zoomButton.visibleProperty().bind(hoverProperty());
+        BooleanBinding showingControls = hoverProperty().and(isDragging.not());
+        closeButton.visibleProperty().bind(showingControls);
+        closeButton.managedProperty().bind(showingControls);
+        zoomButton.visibleProperty().bind(showingControls);
+        zoomButton.managedProperty().bind(showingControls);
 
-        widthProperty().addListener((o) -> this.updateStartAndEnd());
+        widthProperty().addListener((Observable o) -> {
+            IntervalSelector.this.updateStartAndEnd();
+            if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth()) {
+                this.setCenter(zoomButton);
+            } else {
+                bottomBorder.setCenter(zoomButton);
+            }
+            BorderPane.setAlignment(zoomButton, Pos.BOTTOM_CENTER);
+        });
         layoutXProperty().addListener((o) -> this.updateStartAndEnd());
         updateStartAndEnd();
 
@@ -116,57 +137,85 @@ public abstract class IntervalSelector<X> extends BorderPane {
                 setCursor(Cursor.HAND);
             }
             event.consume();
-        });
+        }
+        );
 
-        setOnMousePressed((MouseEvent event) -> {
-            Point2D parentMouse = getParent().sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
-            final double diffX = getLayoutX() - parentMouse.getX();
-            startDragX = event.getScreenX();
-            startWidth = getWidth();
-            startLeft = getLayoutX();
-            if (Math.abs(diffX) <= HALF_STROKE) {
-                dragPosition = IntervalSelector.DragPosition.LEFT;
-            } else if (Math.abs(diffX + getWidth()) <= HALF_STROKE) {
-                dragPosition = IntervalSelector.DragPosition.RIGHT;
-            } else {
-                dragPosition = IntervalSelector.DragPosition.CENTER;
-            }
-            event.consume();
-        });
-        setOnMouseDragged((MouseEvent event) -> {
-            double dX = event.getScreenX() - startDragX;
-            switch (dragPosition) {
-                case CENTER:
-                    setLayoutX(startLeft + dX);
-                    break;
-                case LEFT:
-                    setLayoutX(startLeft + dX);
-                    setPrefWidth(startWidth - dX);
-                    autosize();
-                    break;
-                case RIGHT:
-                    setPrefWidth(startWidth + dX);
-                    autosize();
-                    break;
-            }
-            event.consume();
-            System.out.println(dX);
-        });
+        setOnMousePressed(
+                (MouseEvent event) -> {
+                    Point2D parentMouse = getParent().sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
+                    final double diffX = getLayoutX() - parentMouse.getX();
+                    startDragX = event.getScreenX();
+                    startWidth = getWidth();
+                    startLeft = getLayoutX();
+                    if (Math.abs(diffX) <= HALF_STROKE) {
+                        dragPosition = IntervalSelector.DragPosition.LEFT;
+                    } else if (Math.abs(diffX + getWidth()) <= HALF_STROKE) {
+                        dragPosition = IntervalSelector.DragPosition.RIGHT;
+                    } else {
+                        dragPosition = IntervalSelector.DragPosition.CENTER;
+                    }
+                    event.consume();
+                }
+        );
 
-        ActionUtils.configureButton(new ZoomToSelectedIntervalAction(), zoomButton);
-        ActionUtils.configureButton(new ClearSelectedIntervalAction(), closeButton);
+        setOnMouseReleased(
+                (MouseEvent event) -> {
+                    isDragging.set(false);
+                }
+        );
+        setOnMouseDragged(
+                (MouseEvent event) -> {
+                    isDragging.set(true);
+                    double dX = event.getScreenX() - startDragX;
+                    switch (dragPosition) {
+                        case CENTER:
+                            setLayoutX(startLeft + dX);
+                            break;
+                        case LEFT:
+                            if (dX > startWidth) {
+                                startDragX = event.getScreenX();
+                                startWidth = 0;
+                                dragPosition = DragPosition.RIGHT;
+                            } else {
+                                setLayoutX(startLeft + dX);
+                                setPrefWidth(startWidth - dX);
+                                autosize();
+                            }
+                            break;
+                        case RIGHT:
+                            Point2D parentMouse = getParent().sceneToLocal(new Point2D(event.getSceneX(), event.getSceneY()));
+                            if (parentMouse.getX() < startLeft) {
+                                dragPosition = DragPosition.LEFT;
+                                startDragX = event.getScreenX();
+                                startWidth = 0;
+                            } else {
+                                setPrefWidth(startWidth + dX);
+                                autosize();
+                            }
+                            break;
+                    }
+                    event.consume();
+                }
+        );
+
+        ActionUtils.configureButton(
+                new ZoomToSelectedIntervalAction(), zoomButton);
+        ActionUtils.configureButton(
+                new ClearSelectedIntervalAction(), closeButton);
 
         //have to add handler rather than use convenience methods so that charts can listen for dismisal click
-        setOnMouseClicked((MouseEvent event) -> {
-            if (event.getButton() == MouseButton.SECONDARY) {
-                chart.clearIntervalSelector();
-                event.consume();
-            }
-            if (event.getClickCount() >= 2) {
-                zoomToSelectedInterval();
-                event.consume();
-            }
-        });
+        setOnMouseClicked(
+                (MouseEvent event) -> {
+                    if (event.getButton() == MouseButton.SECONDARY) {
+                        chart.clearIntervalSelector();
+                        event.consume();
+                    }
+                    if (event.getClickCount() >= 2) {
+                        zoomToSelectedInterval();
+                        event.consume();
+                    }
+                }
+        );
     }
 
     private void zoomToSelectedInterval() {

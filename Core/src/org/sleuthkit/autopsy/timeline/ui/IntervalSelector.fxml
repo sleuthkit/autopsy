@@ -8,7 +8,7 @@
 
 <fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" styleClass="intervalSelector" stylesheets="@IntervalSelector.css" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
    <top>
-      <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="24.0" prefWidth="24.0" styleClass="closeButton" BorderPane.alignment="CENTER_RIGHT">
+      <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="16.0" prefWidth="16.0" styleClass="closeButton" BorderPane.alignment="CENTER_RIGHT">
          <graphic>
             <ImageView opacity="0.5" pickOnBounds="true" preserveRatio="true">
                <image>
@@ -22,11 +22,25 @@
       <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
    </padding>
    <bottom>
-      <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-         <children>
-            <Label fx:id="startLabel" text="Label" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Button fx:id="zoomButton" mnemonicParsing="false" opacity="0.66" styleClass="zoomButton" text="Zoom">
+      <BorderPane fx:id="bottomBorder" minHeight="32.0" BorderPane.alignment="BOTTOM_LEFT">
+         <left>
+            <HBox alignment="BOTTOM_LEFT" BorderPane.alignment="BOTTOM_LEFT">
+               <children>
+                  <Label fx:id="startLabel" alignment="BOTTOM_LEFT" minWidth="0.0" text="Label" />
+                  <Region HBox.hgrow="ALWAYS" />
+               </children>
+            </HBox>
+         </left>
+         <right>
+            <HBox alignment="BOTTOM_RIGHT" BorderPane.alignment="CENTER">
+               <children>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="endLabel" minWidth="0.0" text="Label" />
+               </children>
+            </HBox>
+         </right>
+         <center>
+            <Button fx:id="zoomButton" alignment="CENTER" mnemonicParsing="false" opacity="0.66" styleClass="zoomButton" text="Zoom" BorderPane.alignment="CENTER">
                <graphic>
                   <ImageView pickOnBounds="true" preserveRatio="true">
                      <image>
@@ -35,9 +49,7 @@
                   </ImageView>
                </graphic>
             </Button>
-            <Region layoutX="38.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
-            <Label fx:id="endLabel" text="Label" />
-         </children>
-      </HBox>
+         </center>
+      </BorderPane>
    </bottom>
 </fx:root>
