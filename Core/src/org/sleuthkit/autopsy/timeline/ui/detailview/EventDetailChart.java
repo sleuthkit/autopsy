@@ -236,7 +236,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return bundles;
     }
 
-    TimeLineController getController() {
+    @Override
+    public TimeLineController getController() {
         return controller;
     }
 
@@ -246,7 +247,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         }
 
         chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
-//                new StartIntervalSelectionAction(clickEvent, dragHandler),
+                //                new StartIntervalSelectionAction(clickEvent, dragHandler),
                 TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
@@ -287,8 +288,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     }
 
     @Override
-    public IntervalSelector<DateTime> newIntervalSelector(double x, Axis<DateTime> axis) {
-        return new DetailIntervalSelector(x, getHeight() - axis.getHeight() - axis.getTickLength(), axis, controller);
+    public IntervalSelector<DateTime> newIntervalSelector() {
+        return new DetailIntervalSelector(this);
     }
 
     synchronized void setBandByType(Boolean t1) {
@@ -583,8 +584,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
-        DetailIntervalSelector(double x, double height, Axis<DateTime> axis, TimeLineController controller) {
-            super(x, height, axis, controller);
+        DetailIntervalSelector(EventDetailChart chart) {
+            super(chart);
         }
 
         @Override

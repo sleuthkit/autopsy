@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,29 +21,14 @@ package org.sleuthkit.autopsy.timeline.ui;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.Chart;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
@@ -65,18 +50,19 @@ public interface TimeLineChart<X> extends TimeLineView {
      * derived classes should implement this so as to supply an appropriate
      * subclass of {@link IntervalSelector}
      *
-     * @param x    the initial x position of the new interval selector
-     * @param axis the axis the new interval selector will be over
-     *
      * @return a new interval selector
      */
-    IntervalSelector<X> newIntervalSelector(double x, Axis<X> axis);
+    IntervalSelector<X> newIntervalSelector();
 
     /**
      * clear any references to previous interval selectors , including removing
      * the interval selector from the ui / scene-graph
      */
     void clearIntervalSelector();
+
+    public Axis<X> getXAxis();
+
+    public TimeLineController getController();
 
     /**
      * drag handler class used by {@link TimeLineChart}s to create
@@ -115,50 +101,33 @@ public interface TimeLineChart<X> extends TimeLineView {
                 //caputure  x-position, incase we are repositioning existing selector
                 startX = mouseEvent.getX();
                 chart.setCursor(Cursor.H_RESIZE);
-                mouseEvent.consume();
             } else if ((mouseEventType == MouseEvent.MOUSE_DRAGGED)
                     || mouseEventType == MouseEvent.MOUSE_MOVED && (requireDrag == false)) {
                 if (chart.getIntervalSelector() == null) {
                     //make new interval selector
-                    chart.setIntervalSelector(chart.newIntervalSelector(mouseEvent.getX(), dateAxis));
+                    chart.setIntervalSelector(chart.newIntervalSelector());
                     chart.getIntervalSelector().prefHeightProperty().bind(chart.heightProperty());
-                    IntervalSelector<? extends X> intervalSelector = chart.getIntervalSelector();
-                    if (intervalSelector != null) {
-                        intervalSelector.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
-                            if (event.getButton() == MouseButton.SECONDARY) {
-                                chart.clearIntervalSelector();
-                                event.consume();
-                            }
-                        });
-                    }
                     startX = mouseEvent.getX();
+                    chart.getIntervalSelector().relocate(startX, 0);
                 } else {
                     //resize/position existing selector
                     if (mouseEvent.getX() > startX) {
-//                        chart.getIntervalSelector().relocate(startX, 0);
+                        chart.getIntervalSelector().relocate(startX, 0);
                         chart.getIntervalSelector().setPrefWidth(mouseEvent.getX() - startX);
                     } else {
                         chart.getIntervalSelector().relocate(mouseEvent.getX(), 0);
                         chart.getIntervalSelector().setPrefWidth(startX - mouseEvent.getX());
                     }
                 }
-                mouseEvent.consume();
+                chart.getIntervalSelector().autosize();
             } else if (mouseEventType == MouseEvent.MOUSE_RELEASED) {
                 chart.setCursor(Cursor.DEFAULT);
                 requireDrag = true;
                 chart.setOnMouseMoved(null);
-                mouseEvent.consume();
             } else if (mouseEventType == MouseEvent.MOUSE_CLICKED) {
                 chart.setCursor(Cursor.DEFAULT);
                 requireDrag = true;
                 chart.setOnMouseMoved(null);
-                mouseEvent.consume();
-            }
-
-            if (chart.getIntervalSelector() != null) {
-                chart.getIntervalSelector().autosize();
-                System.out.println(chart.getIntervalSelector().getBoundsInLocal());
-
             }
         }
     }

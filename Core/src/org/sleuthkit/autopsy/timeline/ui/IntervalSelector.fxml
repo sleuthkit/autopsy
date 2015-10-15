@@ -7,18 +7,12 @@
 <?import javafx.scene.layout.*?>
 
 <fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" styleClass="intervalSelector" stylesheets="@IntervalSelector.css" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
-   <left>
-      <Label fx:id="startLabel" text="Label" BorderPane.alignment="CENTER" />
-   </left>
-   <right>
-      <Label fx:id="endLabel" text="Label" BorderPane.alignment="CENTER" />
-   </right>
    <top>
-      <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="24.0" prefWidth="24.0" styleClass="closebutton" BorderPane.alignment="CENTER_RIGHT">
+      <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="24.0" prefWidth="24.0" styleClass="closeButton" BorderPane.alignment="CENTER_RIGHT">
          <graphic>
             <ImageView opacity="0.5" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../images/cross-circle.png" />
+                  <Image url="@../images/cross-script.png" />
                </image>
             </ImageView>
          </graphic>
@@ -27,15 +21,23 @@
    <padding>
       <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
    </padding>
-   <center>
-      <Button fx:id="zoomButton" mnemonicParsing="false" opacity="0.5" styleClass="zoomButton" text="Zoom" BorderPane.alignment="CENTER">
-         <graphic>
-            <ImageView pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@../images/magnifier-zoom-fit.png" />
-               </image>
-            </ImageView>
-         </graphic>
-      </Button>
-   </center>
+   <bottom>
+      <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+         <children>
+            <Label fx:id="startLabel" text="Label" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="zoomButton" mnemonicParsing="false" opacity="0.66" styleClass="zoomButton" text="Zoom">
+               <graphic>
+                  <ImageView pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/magnifier-zoom-fit.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+            <Region layoutX="38.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
+            <Label fx:id="endLabel" text="Label" />
+         </children>
+      </HBox>
+   </bottom>
 </fx:root>

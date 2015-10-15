@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.ui.countsview;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.MissingResourceException;
-import javafx.scene.chart.Axis;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
@@ -120,6 +119,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
+    public TimeLineController getController() {
+        return controller;
+    }
+
+    @Override
     public synchronized void setController(TimeLineController controller) {
         this.controller = controller;
         setModel(this.controller.getEventsModel());
@@ -145,8 +149,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
-    public CountsIntervalSelector newIntervalSelector(double x, Axis<String> dateAxis) {
-        return new CountsIntervalSelector(x, getHeight() - dateAxis.getHeight() - dateAxis.getTickLength(), dateAxis, controller);
+    public CountsIntervalSelector newIntervalSelector() {
+        return new CountsIntervalSelector(this);
     }
 
     /**
@@ -186,10 +190,13 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * Interval Selector for the counts chart, adjusts interval based on
      * rangeInfo to include final period
      */
-    private class CountsIntervalSelector extends IntervalSelector<String> {
+    static private class CountsIntervalSelector extends IntervalSelector<String> {
 
-        CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
-            super(x, height, axis, controller);
+        private final EventCountsChart countsChart;
+
+        CountsIntervalSelector(EventCountsChart chart) {
+            super(chart);
+            this.countsChart = chart;
         }
 
         @Override
@@ -206,12 +213,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());
             final DateTime upperDate = new DateTime(upperBound, TimeLineController.getJodaTimeZone());
             //add extra block to end that gets cut of by conversion from string/category.
-            return new Interval(lowerDate, upperDate.plus(rangeInfo.getPeriodSize().getPeriod()));
+            return new Interval(lowerDate, upperDate.plus(countsChart.rangeInfo.getPeriodSize().getPeriod()));
         }
 
         @Override
         protected DateTime parseDateTime(String date) {
-            return date == null ? new DateTime(rangeInfo.getLowerBound()) : rangeInfo.getTickFormatter().parseDateTime(date);
+            return date == null ? new DateTime(countsChart.rangeInfo.getLowerBound()) : countsChart.rangeInfo.getTickFormatter().parseDateTime(date);
         }
     }
 

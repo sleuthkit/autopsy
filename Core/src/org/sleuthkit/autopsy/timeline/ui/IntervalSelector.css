@@ -1,7 +1,11 @@
 .intervalSelector{
-    -fx-background-color: rgba(0,0,255,.5);
-    -fx-border-color: rgba(0,0,255,.5);
-    -fx-border-width: 3;
+    -fx-background-color: rgba(0,0,255,.25);
+    -fx-border-color: rgba(0,0,255,.25);
+    -fx-border-width: 0 3 0 3;
+}
+
+.closeButton{
+    -fx-background-color: transparent;
 }
 
 .closeButton:hover{
