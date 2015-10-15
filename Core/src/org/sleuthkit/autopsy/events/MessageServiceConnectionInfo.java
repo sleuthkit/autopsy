@@ -24,6 +24,10 @@ import javax.annotation.concurrent.Immutable;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.MissingResourceException;
+import org.openide.util.NbBundle;
 
 /**
  * Connection info for a Java Message Service (JMS) provider. Thread-safe.
@@ -32,26 +36,31 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 public final class MessageServiceConnectionInfo {
 
     private static final String MESSAGE_SERVICE_URI = "tcp://%s:%s?wireFormat.maxInactivityDuration=0";
+    private static final String CONNECTION_TIMED_OUT = "connection timed out";
+    private static final String CONNECTION_REFUSED = "connection refused";
+    private static final String PASSWORD_OR_USERNAME_BAD = "user name [";
+    private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
     private final String userName;
     private final String password;
     private final String host;
-    private final String port;
+    private final int port;
 
     /**
      * Constructs an object containing connection info for a Java Message
      * Service (JMS) provider.
      *
-     * @param userName The user name to use for a message service connection.
-     * @param password The password to use for a message service connection.
      * @param host     The host to use for a message service connection. May be
      *                 a host name or an IP address.
      * @param port     The port number to use for a message service connection.
+     * @param userName The user name to use for a message service connection.
+     * @param password The password to use for a message service connection.
+     *
      */
-    public MessageServiceConnectionInfo(String userName, String password, String host, String port) {
-        this.userName = userName;
-        this.password = password;
+    public MessageServiceConnectionInfo(String host, int port, String userName, String password) {
         this.host = host;
         this.port = port;
+        this.userName = userName;
+        this.password = password;
     }
 
     /**
@@ -85,9 +94,9 @@ public final class MessageServiceConnectionInfo {
     /**
      * Gets the port number to use for a message service connection.
      *
-     * @return The port as a string.
+     * @return The port as an int.
      */
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
@@ -99,24 +108,71 @@ public final class MessageServiceConnectionInfo {
      * @throws URISyntaxException if the connection info is not for a valid TCP
      *                            URI.
      */
-    public URI getURI() throws URISyntaxException {
-        return new URI(String.format(MESSAGE_SERVICE_URI, host, port));
+    URI getURI() throws URISyntaxException {
+        return new URI(String.format(MESSAGE_SERVICE_URI, getHost(), Integer.toString(getPort())));
     }
 
     /**
-     * Verifies connection to messaging service.
+     * Verifies connection to messaging service. Throws if we cannot communicate
+     * with messaging service.
      *
-     * @return True if connection can be established, false otherwise.
+     * When issues occur, it attempts to diagnose them by looking at the
+     * exception messages, returning the appropriate user-facing text for the
+     * exception received. This method expects the Exceptions messages to be in
+     * English and compares against English text.
+     *
+     * @throws org.sleuthkit.autopsy.events.MessageServiceException
      */
-    public boolean canConnect() {
+    public void tryConnect() throws MessageServiceException {
+        if (host == null || host.isEmpty()) {
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingHostname")); //NON-NLS
+        } else if (userName == null || userName.isEmpty()) {
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingUsername")); //NON-NLS
+        } else if (password == null || password.isEmpty()) {
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingPassword")); //NON-NLS
+        }
         try {
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(getUserName(), getPassword(), getURI());
             Connection connection = connectionFactory.createConnection(getUserName(), getPassword());
             connection.start();
             connection.close();
-            return true;
-        } catch (URISyntaxException | JMSException ex) {
-            return false;
+        } catch (URISyntaxException ex) {
+            // The hostname or port seems bad
+            throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort")); //NON-NLS
+        } catch (JMSException ex) {
+            String result;
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                // there is more information from another exception
+                String msg = cause.getMessage();
+                if (msg.startsWith(CONNECTION_TIMED_OUT)) {
+                    // The hostname or IP address seems bad
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Hostname"); //NON-NLS
+                } else if (msg.toLowerCase().startsWith(CONNECTION_REFUSED)) {
+                    // The port seems bad
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Port"); //NON-NLS
+                } else if (msg.toLowerCase().startsWith(PASSWORD_OR_USERNAME_BAD)) {
+                    // The username or password seems bad
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.UsernameAndPassword"); //NON-NLS
+                } else {
+                    // Could be either hostname or port number
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort"); //NON-NLS
+                }
+            } else {
+                // there is no more information from another exception
+                try {
+                    if (InetAddress.getByName(getHost()).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
+                        // if we can reach the host, then it's probably a port problem
+                        result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Port"); //NON-NLS
+                    } else {
+                        result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Hostname"); //NON-NLS
+                    }
+                } catch (IOException | MissingResourceException any) {
+                    // it may be anything
+                    result = NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.ConnectionCheck.Everything"); //NON-NLS
+                }
+            }
+            throw new MessageServiceException(result);
         }
     }
 }
