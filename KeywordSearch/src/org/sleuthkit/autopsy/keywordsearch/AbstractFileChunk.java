@@ -50,22 +50,51 @@ class AbstractFileChunk {
      *
      * @return
      */
-    public String getIdString() {
+    String getIdString() {
         return Server.getChunkIdString(this.parent.getSourceFile().getId(), this.chunkID);
     }
 
-    public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
-        boolean success = true;
-        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), indexCharset);
+    void index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
+        // We are currently only passing utf-8 as indexCharset. If other charsets were to be used in the future, 
+        // this might need to be changed to accommodate.
+        byte[] saitizedContent = sanitize(content, indexCharset);
+        ByteContentStream bcs = new ByteContentStream(saitizedContent, contentSize, parent.getSourceFile(), indexCharset);
         try {
             ingester.ingest(this, bcs, content.length);
-            //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);
         } catch (Exception ingEx) {
-            success = false;
             throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
                     parent.getSourceFile().getId(), chunkID), ingEx);
         }
-        return success;
+    }
+
+    // Given a byte array, filter out all occurances non-characters 
+    // http://unicode.org/cldr/utility/list-unicodeset.jsp?a=[:Noncharacter_Code_Point=True:]
+    // and non-printable control characters except tabulator, new line and carriage return
+    // and replace them with the character (^)
+    private static byte[] sanitize(byte[] input, Charset indexCharset) {
+        String inputString = new String(input, indexCharset);
+        StringBuilder sanitized = new StringBuilder(inputString.length());
+        char ch;
+        for (int i = 0; i < inputString.length(); i++) {
+            ch = inputString.charAt(i);
+            if (charIsValidSolrUTF8(ch)) {
+                sanitized.append(ch);
+            } else {
+                sanitized.append('^'); // NON-NLS
+            }
+        }
+
+        byte[] output = sanitized.toString().getBytes(indexCharset);
+        return output;
+    }
+
+    // Is the given character a valid UTF-8 character
+    // return true if it is, false otherwise
+    private static boolean charIsValidSolrUTF8(char ch) {
+        return (ch % 0x10000 != 0xffff && // 0xffff - 0x10ffff range step 0x10000
+                ch % 0x10000 != 0xfffe && // 0xfffe - 0x10fffe range
+                (ch <= 0xfdd0 || ch >= 0xfdef) && // 0xfdd0 - 0xfdef
+                (ch > 0x1F || ch == 0x9 || ch == 0xa || ch == 0xd));
     }
 
 }
