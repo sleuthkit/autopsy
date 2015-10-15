@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.core.TextConverterException;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -566,7 +567,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             tbDbPort.setText(dbInfo.getPort().trim());
             tbDbUsername.setText(dbInfo.getUserName().trim());
             tbDbPassword.setText(dbInfo.getPassword());
-        } catch (IllegalArgumentException ex) {
+        } catch (TextConverterException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
         }
 
@@ -576,7 +577,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
            tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
             tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
             tbMsgPassword.setText(msgServiceInfo.getPassword());
-        } catch (IllegalArgumentException ex) {
+        } catch (TextConverterException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
         }
 
@@ -656,7 +657,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         try {
             UserPreferences.setDatabaseConnectionInfo(info);
-        } catch (IllegalArgumentException ex) {
+        } catch (TextConverterException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
         }
 
@@ -675,7 +676,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         try {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
-        } catch (IllegalArgumentException ex) {
+        } catch (TextConverterException ex) {
             logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
         }
 

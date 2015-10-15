@@ -133,9 +133,9 @@ public final class UserPreferences {
     /**
      * Reads persisted case database connection info.
      * @return An object encapsulating the database connection info.
-     * @throws IllegalArgumentException
+     * @throws org.sleuthkit.autopsy.core.TextConverterException
      */
-    public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws IllegalArgumentException {
+    public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws TextConverterException {
         DbType dbType;
         try {
             dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL"));
@@ -155,10 +155,9 @@ public final class UserPreferences {
      *
      * @param connectionInfo An object encapsulating the database connection
      *                       info.
-     *
-     * @throws IllegalArgumentException
+     * @throws org.sleuthkit.autopsy.core.TextConverterException
      */
-    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws IllegalArgumentException {
+    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws TextConverterException {
         preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
@@ -194,9 +193,9 @@ public final class UserPreferences {
      * Persists message service connection info.
      *
      * @param info An object encapsulating the message service info.
-     * @throws IllegalArgumentException
+     * @throws org.sleuthkit.autopsy.core.TextConverterException
      */
-    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws IllegalArgumentException {
+    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws TextConverterException {
         preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
         preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
@@ -207,9 +206,9 @@ public final class UserPreferences {
      * Reads persisted message service connection info.
      *
      * @return An object encapsulating the message service info.
-     * @throws IllegalArgumentException
+     * @throws org.sleuthkit.autopsy.core.TextConverterException
      */
-    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws IllegalArgumentException {
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws TextConverterException {
         int port;
         try {
             port = Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, DEFAULT_PORT_STRING));
