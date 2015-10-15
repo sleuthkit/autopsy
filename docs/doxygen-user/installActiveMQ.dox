@@ -1,0 +1,107 @@
+/*! \page install_activemq Install and Configure ActiveMQ
+To install ActiveMQ, perform the following steps:
+1.	You need a 32-bit or 64-bit version of the Java Runtime Environment (JRE) installed, depending upon the version of Autopsy you have installed. You can test this by running _where java_ from the command line. If you see output like the yellow results below, you have a JRE.
+<br><br>
+\image html wherejava.PNG
+<br><br>   
+You can test if you have a 32-bit or 64-bit JRE installed via the following:
+    - _java -d32 -version_ &nbsp;&nbsp;&nbsp; for a 32-bit JRE
+    - _java -d64 -version_ &nbsp;&nbsp;&nbsp; for a 64-bit JRE
+<br><br>
+The screenshot below shows that there is a no 32-bit JRE on this machine, and there is a 64-bit JRE.
+<br><br>
+\image html JRE_bitness.PNG
+<br><br>
+If you do not have a JRE installed, proceed to step 2. If you have a JRE installed, proceed to step 3.
+<br><br>
+2.	Install the appropriate 32 or 64-bit version of the JRE, depending upon the version of Autopsy you have installed. Download one from: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. If you installed 32-bit Autopsy, be sure to select a package that has "x86" in the name. If you installed 64-bit Autopsy, be sure to select a package that has "x64" in the name. Follow the installation prompts to install the JRE.
+3.	Download ActiveMQ-5.11.1 from: http://activemq.apache.org/activemq-5111-release.html
+4.	Extract the files in the archive
+5.	Edit <i>apache-activemq-5.11.1\\conf\\activemq.xml</i> to add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
+<br><br>
+\image html maxinactivityduration.PNG
+<br><br>
+6.	Move the <i>apache-activemq-5.11.1</i> folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.11.1</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
+7.	Install ActiveMQ as a service by navigating to the folder <i>apache-activemq-5.11.1-bin\\apache-activemq-5.11.1\\bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
+8.  If you desire authentication for your ActiveMQ server (a good idea), the following directions allow you to set up credentials: 
+    + Copy and paste the following text to the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\groups.properties"</i>, overwriting the text highlighted in yellow in the screenshot below:
+            
+            admins=system,sslclient,client,broker1,broker2
+            tempDestinationAdmins=system,user,sslclient,client,broker1,broker2
+            users=system,user,sslclient,client,broker1,broker2
+            guests=guest
+            
+    <br><br>
+    \image html groups.properties.before.PNG
+    <br><br>
+    When complete, the file should look like this:
+    <br><br>
+    \image html groups.properties.after.PNG
+    <br><br>    
+    
+    + Copy and paste the following text to the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\users.properties"</i>, overwriting the text highlighted in yellow in the screenshot below:
+            
+            system=manager
+            user=password
+            guest=password
+            sslclient=CN=localhost, OU=activemq.org, O=activemq.org, L=LA, ST=CA, C=US
+            
+    <br><br>
+    \image html users.properties.before.PNG
+    <br><br>    
+    When complete, the file should look like this:
+    <br><br>
+    \image html users.properties.after.PNG
+    <br><br>        
+    
+    + Copy and paste the following text to the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i>, inserting the text at the line shown in yellow in the screenshot below.
+            
+            <plugins>
+            <jaasAuthenticationPlugin configuration="activemq-domain" />
+                <simpleAuthenticationPlugin>
+                    <users>
+                        <authenticationUser username="system" password="manager" groups="users,admins"/>
+                        <authenticationUser username="user" password="password" groups="users"/>
+                        <authenticationUser username="guest" password="password" groups="guests"/>
+                    </users>
+                </simpleAuthenticationPlugin>
+            </plugins>
+            
+    <br><br>
+    \image html insertTextHere.PNG
+    <br><br>
+    After insertion, the file should look like the screenshot below, with the inserted portion highlighted in yellow. This is where you can change the username and password for your ActiveMQ setup.
+    <br><br>
+    \image html insertedText.PNG
+    <br><br>
+    To add a new user or change the password:
+        + Stop the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Stop the service_ link.
+    <br>
+    <br>
+    \image html StopActiveMQService.PNG
+    <br>
+    <br>
+        + Edit <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i> adding the desired line. Both _username_ and _password_ are case sensitive. You will very likely want to keep your new users in the _users_ group.
+    <br>
+    <br>
+    \image html newUserAndPassword.PNG
+    <br>
+    <br>
+        + Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
+    <br>
+    <br>
+    \image html StartActiveMQService.PNG
+    <br>
+    <br>
+
+9.  If not already started, start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
+10. ActiveMQ should now be fully installed and configured. You can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_. You can change these passwords by editing the file <i>"C:\Program Files\apache-activemq-5.11.1-bin\apache-activemq-5.11.1\conf\activemq.xml"</i> on the ActiveMQ server as discussed above. If you can see a page that looks like the following, it is ready to function.
+<br><br>
+\image html activemq.PNG
+<br>
+<br>
+	If you do not see a screen like the above screenshot and you have double checked that the ActiveMQ service is running, contact your network administrator. For the ActiveMQ service to be accessible by network clients you may need to configure your Windows firewall (and any other 3rd party firewall in use) to allow communication.
+<br><br>
+
+
+*/
