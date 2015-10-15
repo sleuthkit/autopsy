@@ -401,6 +401,18 @@ public class IngestManager {
     }
 
     /**
+     * Deprecated, use RuntimeProperties.setCoreComponentsActive instead.
+     *
+     * @param runInteractively True or false
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public synchronized void setRunInteractively(boolean runInteractively) {
+        RuntimeProperties.setCoreComponentsActive(runInteractively);
+    }
+
+    /**
      * Called by the custom installer for this package once the window system is
      * initialized, allowing the ingest manager to get the top component used to
      * display ingest messages.

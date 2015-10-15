@@ -34,17 +34,20 @@ import org.openide.util.actions.Presenter;
         id = "org.sleuthkit.autopsy.ingest.RunIngestAction"
 )
 @ActionRegistration(
-        displayName = "#CTL_RunIngestAction"
+        displayName = "#CTL_RunIngestAction",
+        lazy = false
 )
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
+
+    private static final long serialVersionUID = 1L;
 
     static public RunIngestAction getInstance() {
         return new RunIngestAction();
     }
 
     /**
-     * Call getMenuPresenters to create images sublist
+     * @inheritDoc
      */
     @Override
     public void performAction() {
@@ -52,9 +55,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the name of this action. This may be presented as an item in a menu.
-     *
-     * @return actionName
+     * @inheritDoc
      */
     @Override
     public String getName() {
@@ -62,20 +63,15 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
-     *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @inheritDoc
      */
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     /**
-     * Create a sublist of images updated by RunIngestSubMenu
-     * Each has an action to perform Ingest Modules on it.
-     *
-     * @return the images sublist created.
+     * @inheritDoc
      */
     @Override
     public JMenuItem getMenuPresenter() {
@@ -83,11 +79,12 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         sublist.setVisible(true);
         return sublist;
     }
-    
+
     /**
-     * This method does nothing, use performAction instead.
+     * @inheritDoc
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        performAction();
     }
 }
