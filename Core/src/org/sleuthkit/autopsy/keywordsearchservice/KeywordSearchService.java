@@ -38,13 +38,15 @@ public interface KeywordSearchService extends Closeable {
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
 
     /**
-     * Are we able to connect to the remote Solr server.
+     * Checks if we can communicate with the KeywordSearchService using the
+     * passed-in host and port. Closes the connection upon exit. Throws if it
+     * cannot communicate.
      *
-     * @param host the hostname or IP address of the server
-     * @param port the port to connect to
+     * @param host the remote hostname or IP address of the server
+     * @param port the remote port of the server
      *
-     * @return true if we can connect, otherwise false
+     * @throws KeywordSearchServiceException
      */
-    public boolean canConnectToRemoteSolrServer(String host, String port);
+    public void tryConnect(String host, int port) throws KeywordSearchServiceException;
 
-}
+    }
