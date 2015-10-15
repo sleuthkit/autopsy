@@ -574,7 +574,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         try {
             MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
             tbMsgHostname.setText(msgServiceInfo.getHost().trim());
-           tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
+            tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
             tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
             tbMsgPassword.setText(msgServiceInfo.getPassword());
         } catch (UserPreferencesException ex) {
