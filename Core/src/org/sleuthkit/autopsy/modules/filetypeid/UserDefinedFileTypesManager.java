@@ -187,6 +187,11 @@ final class UserDefinedFileTypesManager {
         byteArray = DatatypeConverter.parseHexBinary("3C3F786D6C");
         fileType = new FileType("text/xml", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
         fileTypes.put(fileType.getMimeType(), fileType);
+        
+        // Add rule for gzip
+        byteArray = DatatypeConverter.parseHexBinary("1F8B08");                 
+        fileType = new FileType("application/x-gzip", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileTypes.put(fileType.getMimeType(), fileType);
                
         // Add rule for .wk1
         byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000");

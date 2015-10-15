@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeEvent;
@@ -33,7 +31,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -70,6 +69,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     @Override
     public AddImageWizardChooseDataSourceVisual getComponent() {
         if (component == null) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             component = new AddImageWizardChooseDataSourceVisual(this);
         }
         component.addPropertyChangeListener(this);

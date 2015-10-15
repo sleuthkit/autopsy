@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -147,10 +148,23 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
-                if (!kwsService.canConnectToRemoteSolrServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort())) {
+                int port;
+                try {
+                    port = Integer.parseInt(UserPreferences.getIndexingServerPort());
+                } catch (NumberFormatException ex) {
+                    // if there is an error parsing the port number
                     String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
-                    logger.log(Level.SEVERE, msg);
-                    String details = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.verifyConnection");
+                    String details = NbBundle.getMessage(this.getClass(), "SolrConnectionCheck.Port");
+                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
+                    services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
+                    throw new IngestModuleException(msg);
+                }
+                try {
+                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                } catch (KeywordSearchServiceException ex) {
+                    String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");
+                    String details = ex.getMessage();
+                    logger.log(Level.SEVERE, "{0}: {1} {2}", new Object[]{msg, details, ex.toString()});
                     services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(), msg, details));
                     throw new IngestModuleException(msg);
                 }
