@@ -94,7 +94,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class EventDetailChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
+public final class EventDetailsChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
 
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
@@ -103,6 +103,10 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
     private ContextMenu chartContextMenu;
+
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
 
     private TimeLineController controller;
 
@@ -182,9 +186,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      * via slider if truncateAll is true
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
-    private final ChartDragHandler<DateTime, EventDetailChart> dragHandler;
 
-    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
         Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
 
@@ -214,23 +217,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             setPrefHeight(boundsInLocalProperty().get().getHeight());
         });
 
-        //use one handler with an if chain because it maintains state
-        dragHandler = new ChartDragHandler<>(this, getXAxis());
-        setOnMousePressed(dragHandler);
-        setOnMouseReleased(dragHandler);
-        setOnMouseDragged(dragHandler);
+        ChartDragHandler<DateTime, EventDetailsChart> chartDragHandler = new ChartDragHandler<>(this);
+        setOnMousePressed(chartDragHandler);
+        setOnMouseReleased(chartDragHandler);
+        setOnMouseDragged(chartDragHandler);
 
-        setOnMouseClicked((MouseEvent clickEvent) -> {
-            if (chartContextMenu != null) {
-                chartContextMenu.hide();
-            }
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                getChartContextMenu(clickEvent);
-                setOnMouseMoved(dragHandler);
-                chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
-            }
-        });
+        setOnMouseClicked(new MouseClickedHandler<>(this));
 
         this.selectedNodes = selectedNodes;
         this.selectedNodes.addListener(new SelectionChangeHandler());
@@ -245,7 +237,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return controller;
     }
 
-    ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
@@ -302,12 +295,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     /**
      * get the DateTime along the x-axis that corresponds to the given
-     * x-coordinate in the coordinate system of this {@link EventDetailChart}
+     * x-coordinate in the coordinate system of this {@link EventDetailsChart}
      *
-     * @param x a x-coordinate in the space of this {@link EventDetailChart}
+     * @param x a x-coordinate in the space of this {@link EventDetailsChart}
      *
      * @return the DateTime along the x-axis corresponding to the given x value
-     *         (in the space of this {@link EventDetailChart}
+     *         (in the space of this {@link EventDetailsChart}
      */
     public DateTime getDateTimeForPosition(double x) {
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
@@ -354,7 +347,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     return EventStripe.merge(u, v);
                 }
         );
-        EventStripeNode stripeNode = new EventStripeNode(EventDetailChart.this, eventStripe, null);
+        EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
         stripeNodeMap.put(eventStripe, stripeNode);
         nodeGroup.getChildren().add(stripeNode);
         data.setNode(stripeNode);
@@ -588,7 +581,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
-        DetailIntervalSelector(EventDetailChart chart) {
+        DetailIntervalSelector(EventDetailsChart chart) {
             super(chart);
         }
 
@@ -667,7 +660,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     }
                 });
             }
-            EventDetailChart.this.controller.selectEventIDs(selectedNodes.stream()
+            EventDetailsChart.this.controller.selectEventIDs(selectedNodes.stream()
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
                     .collect(Collectors.toList()));
         }
@@ -711,4 +704,5 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             );
         }
     }
+
 }

@@ -137,10 +137,19 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
 
+    /**
+     * status is a string that will be displayed in the status bar as a kind of
+     * user hint/information when it is not empty
+     *
+     * @return the status property
+     */
     public ReadOnlyStringProperty getStatusProperty() {
         return status.getReadOnlyProperty();
     }
 
+    public void setStatus(String string) {
+        status.set(string);
+    }
     private final Case autoCase;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -817,10 +826,6 @@ public class TimeLineController {
                 Bundle.Timeline_initTimeline_confDlg_genBeforeIngest_msg(),
                 Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-    }
-
-    public void setStatus(String string) {
-        status.set(string);
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {

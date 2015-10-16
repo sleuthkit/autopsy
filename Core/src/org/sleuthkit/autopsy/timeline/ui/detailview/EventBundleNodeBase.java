@@ -97,7 +97,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         b.setManaged(show);
     }
 
-    protected final EventDetailChart chart;
+    protected final EventDetailsChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
     final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
     protected final BundleType eventBundle;
@@ -122,7 +122,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     private final Tooltip tooltip = new Tooltip("loading...");
 
-    public EventBundleNodeBase(EventDetailChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+    public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         this.eventBundle = eventBundle;
         this.parentNode = parentNode;
         this.chart = chart;
@@ -189,9 +189,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         });
 
         descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
-            setDescriptionVisibility(newValue);
+            setDescriptionVisibiltiyImpl(newValue);
         });
-        setDescriptionVisibility(DescriptionVisibility.SHOWN);
+        setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
 
     }
 

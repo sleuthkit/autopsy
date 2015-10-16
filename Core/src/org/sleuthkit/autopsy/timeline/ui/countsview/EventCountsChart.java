@@ -25,7 +25,6 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.util.StringConverter;
 import org.controlsfx.control.action.ActionUtils;
@@ -46,6 +45,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
 
     private ContextMenu chartContextMenu;
 
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
+
     private TimeLineController controller;
 
     private IntervalSelector<? extends String> intervalSelector;
@@ -56,7 +59,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * by padding the end with one 'period'
      */
     private RangeDivisionInfo rangeInfo;
-    private final ChartDragHandler<String, EventCountsChart> dragHandler;
 
     EventCountsChart(CategoryAxis dateAxis, NumberAxis countAxis) {
         super(dateAxis, countAxis);
@@ -79,25 +81,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setAnimated(true);
         setTitle(null);
 
-        //use one handler with an if chain because it maintains state
-        dragHandler = new ChartDragHandler<>(this, getXAxis());
-        setOnMousePressed(dragHandler);
-        setOnMouseReleased(dragHandler);
-        setOnMouseDragged(dragHandler);
+        ChartDragHandler<String, EventCountsChart> chartDragHandler = new ChartDragHandler<>(this);
+        setOnMousePressed(chartDragHandler);
+        setOnMouseReleased(chartDragHandler);
+        setOnMouseDragged(chartDragHandler);
 
-        setOnMouseClicked((MouseEvent clickEvent) -> {
-            if (chartContextMenu != null) {
-                chartContextMenu.hide();
-            }
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                getChartContextMenu(clickEvent);
-                setOnMouseMoved(dragHandler);
-                chartContextMenu.show(EventCountsChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
-            }
-        });
-        
-      
+        setOnMouseClicked(new MouseClickedHandler<>(this));
     }
 
     @Override
@@ -106,8 +95,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         intervalSelector = null;
     }
 
-    @NbBundle.Messages({"EventCountsChart.contextMenu.zoomHistory.name=Zoom History"})
-    ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }

@@ -23,6 +23,8 @@ import javafx.event.EventType;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.Chart;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import org.controlsfx.control.action.ActionGroup;
 import org.openide.util.NbBundle;
@@ -60,6 +62,10 @@ public interface TimeLineChart<X> extends TimeLineView {
 
     public TimeLineController getController();
 
+    ContextMenu getChartContextMenu();
+
+    ContextMenu getChartContextMenu(MouseEvent m);
+
     /**
      * drag handler class used by {@link TimeLineChart}s to create
      * {@link IntervalSelector}s
@@ -71,13 +77,10 @@ public interface TimeLineChart<X> extends TimeLineView {
 
         private final Y chart;
 
-        private final Axis<X> xAxis;
-
         private double startX;  //hanlder mainstains position of drag start
 
-        public ChartDragHandler(Y chart, Axis<X> dateAxis) {
+        public ChartDragHandler(Y chart) {
             this.chart = chart;
-            this.xAxis = dateAxis;
         }
 
         @Override
@@ -109,6 +112,29 @@ public interface TimeLineChart<X> extends TimeLineView {
                 chart.setCursor(Cursor.DEFAULT);
             } else if (mouseEventType == MouseEvent.MOUSE_CLICKED) {
                 chart.setCursor(Cursor.DEFAULT);
+            }
+        }
+
+    }
+
+    static class MouseClickedHandler<X, C extends Chart & TimeLineChart<X>> implements EventHandler<MouseEvent> {
+
+        private final C chart;
+
+        public MouseClickedHandler(C chart) {
+            this.chart = chart;
+        }
+
+        @Override
+        public void handle(MouseEvent clickEvent) {
+            if (chart.getChartContextMenu() != null) {
+                chart.getChartContextMenu().hide();
+            }
+            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
+                chart.getChartContextMenu(clickEvent);
+                chart.setOnMouseMoved(this);
+                chart.getChartContextMenu().show(chart, clickEvent.getScreenX(), clickEvent.getScreenY());
+                clickEvent.consume();
             }
         }
     }

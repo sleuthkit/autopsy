@@ -79,11 +79,11 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
 
     @NbBundle.Messages("AbstractVisualization.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
     private static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Drag_Tooltip_text());
+    private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
 
     public static Tooltip getDragTooltip() {
         return DRAG_TOOLTIP;
     }
-
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
     protected final ObservableList<BarChart.Series<X, Y>> dataSets = FXCollections.<BarChart.Series<X, Y>>observableArrayList();
@@ -204,7 +204,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
                     try {
                         this.hasEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(AbstractVisualizationPane.class.getName()).log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N
+                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N
                     }
                     break;
             }
@@ -247,6 +247,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
             update();
         });
 
+        //show tooltip text in status bar
         hoverProperty().addListener((observable, oldActivated, newActivated) -> {
             if (newActivated) {
                 controller.setStatus(DRAG_TOOLTIP.getText());
