@@ -73,7 +73,7 @@ import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -97,7 +97,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * TODO: refactor common code out of this class and ClusterChartPane into
  * AbstractChartView
  */
-public class CountsViewPane extends AbstractVisualization<String, Number, Node, EventCountsChart> {
+public class CountsViewPane extends AbstractVisualizationPane<String, Number, Node, EventCountsChart> {
 
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
 
@@ -213,17 +213,17 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
                                     node.setStyle("-fx-border-width: 2; -fx-border-color: " + ColorUtilities.getRGBCode(et.getSuperType().getColor()) + "; -fx-bar-fill: " + ColorUtilities.getRGBCode(et.getColor())); // NON-NLS
                                     node.setCursor(Cursor.HAND);
 
+                                    final Tooltip tooltip = new Tooltip(
+                                            NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
+                                                    count,
+                                                    et.getDisplayName(),
+                                                    dateString,
+                                                    interval.getEnd().toString(
+                                                            rangeInfo.getTickFormatter())));
+                                    tooltip.setGraphic(new ImageView(et.getFXImage()));
+                                    Tooltip.install(node, tooltip);
+
                                     node.setOnMouseEntered((MouseEvent event) -> {
-                                        //defer tooltip creation till needed, this had a surprisingly large impact on speed of loading the chart
-                                        final Tooltip tooltip = new Tooltip(
-                                                NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
-                                                        count,
-                                                        et.getDisplayName(),
-                                                        dateString,
-                                                        interval.getEnd().toString(
-                                                                rangeInfo.getTickFormatter())));
-                                        tooltip.setGraphic(new ImageView(et.getFXImage()));
-                                        Tooltip.install(node, tooltip);
                                         node.setEffect(new DropShadow(10, et.getColor()));
                                     });
                                     node.setOnMouseExited((MouseEvent event) -> {
@@ -285,6 +285,7 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
+        Tooltip.install(chart, DRAG_TOOLTIP);
 
         settingsNodes = new ArrayList<>(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
@@ -310,9 +311,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         });
     }
 
- 
-
-    
     @Override
     protected NumberAxis getYAxis() {
         return countAxis;

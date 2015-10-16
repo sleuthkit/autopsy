@@ -90,10 +90,10 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A Container for an {@link AbstractVisualization}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstractVisualization},
+ * A Container for an {@link AbstractVisualizationPane}, has a toolbar on top to
+ * hold settings widgets supplied by contained {@link AbstractVisualizationPane},
  * and the histogram / timeselection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractVisualization}
+ * replacement axis to contained {@link AbstractVisualizationPane}
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
@@ -109,7 +109,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NavPanel navPanel;
 
-    private AbstractVisualization<?, ?, ?, ?> visualization;
+    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
 
     //// range slider and histogram componenets
     @FXML
@@ -361,7 +361,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
     }
 
-    private synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+    private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {

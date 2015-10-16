@@ -119,7 +119,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final ImageView tagIV = new ImageView(TAG);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
-    private Tooltip tooltip;
+    private final Tooltip tooltip = new Tooltip("loading...");
 
     public EventBundleNodeBase(EventDetailChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         this.eventBundle = eventBundle;
@@ -156,7 +156,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         infoHBox.setMaxWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
         infoHBox.setAlignment(Pos.TOP_LEFT);
-        infoHBox.setPickOnBounds(true);
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
@@ -164,6 +163,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
+
+        Tooltip.install(this, this.tooltip);
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
@@ -174,12 +175,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             installTooltip();
             showHoverControls(true);
             toFront();
-        });
-        setOnMouseExited((MouseEvent event) -> {
-            showHoverControls(false);
-            if (parentNode != null) {
-                parentNode.showHoverControls(true);
-            }
+
         });
 
         setDescriptionVisibility(DescriptionVisibility.SHOWN);
@@ -210,8 +206,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void installTooltip() {
-        if (tooltip == null) {
+        if (tooltip.getText().equalsIgnoreCase("loading...")) {
             final Task<String> tooltTipTask = new Task<String>() {
+                {
+                    updateTitle("loading tooltip");
+                }
 
                 @Override
                 protected String call() throws Exception {
@@ -252,13 +251,10 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 protected void succeeded() {
                     super.succeeded();
                     try {
-                        tooltip = new Tooltip(get());
-                        tooltip.setAutoHide(true);
-                        Tooltip.install(EventBundleNodeBase.this, tooltip);
+                        tooltip.setText(get());
+                        tooltip.setGraphic(null);
                     } catch (InterruptedException | ExecutionException ex) {
                         LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex);
-                        Tooltip.uninstall(EventBundleNodeBase.this, tooltip);
-                        tooltip = null;
                     }
                 }
             };
@@ -294,7 +290,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
+        enableTooltip(showControls);
         if (parentNode != null) {
+            parentNode.enableTooltip(false);
             parentNode.showHoverControls(false);
         }
     }
@@ -332,6 +330,14 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     void setDescriptionVisibilityLevel(DescriptionVisibility get) {
         descVisibility.set(get);
+    }
+
+    void enableTooltip(boolean b) {
+        if (b) {
+            Tooltip.install(this, tooltip);
+        } else {
+            Tooltip.uninstall(this, tooltip);
+        }
     }
 
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,6 +96,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 clickEvent.consume();
             }
         });
+        
+      
     }
 
     @Override

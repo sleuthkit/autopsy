@@ -73,7 +73,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -89,9 +89,8 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
 
-    
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
@@ -121,6 +120,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         chart.setData(dataSets);
         setCenter(chart);
 
+//        Tooltip.install(chart, DRAG_TOOLTIP);
         chart.setPrefHeight(USE_COMPUTED_SIZE);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
@@ -477,5 +477,4 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 
-  
 }
