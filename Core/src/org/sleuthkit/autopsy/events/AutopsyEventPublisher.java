@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.jms.JMSException;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -68,6 +69,10 @@ public final class AutopsyEventPublisher {
             remotePublisher = new RemoteEventPublisher(channelName, localPublisher, UserPreferences.getMessageServiceConnectionInfo());
         } catch (URISyntaxException | JMSException ex) {
             String message = "Failed to open remote event channel"; //NON-NLS
+            logger.log(Level.SEVERE, message, ex);
+            throw new AutopsyEventException(message, ex);
+        } catch (UserPreferencesException ex) {
+            String message = "Error accessing messaging service connection info"; //NON-NLS
             logger.log(Level.SEVERE, message, ex);
             throw new AutopsyEventException(message, ex);
         }

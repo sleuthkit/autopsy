@@ -47,7 +47,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -1391,6 +1390,8 @@ public class SingleUserCaseImporter implements Runnable {
         JTextArea jta = new JTextArea(casesThatWillBeProcessed.toString() + SEP + casesThatWillNotBeProcessed.toString());
         jta.setEditable(false);
         JScrollPane jsp = new JScrollPane(jta) {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(700, 480);

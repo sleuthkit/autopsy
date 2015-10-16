@@ -626,7 +626,12 @@ public class Server {
 
         Case currentCase = Case.getCurrentCase();
 
-        currentCore = openCore(currentCase);
+        try {
+            currentCore = openCore(currentCase);
+        } catch (KeywordSearchModuleException ex) {
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.openCore.exception.cantOpenForCase.msg", currentCase.getName()), ex.getCause().getMessage());
+            throw ex;
+        }
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
 
