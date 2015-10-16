@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutionException;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.awt.Cursor;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 
 /**
  * Action to open the New Case wizard.
@@ -139,7 +140,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                                 doFailedCaseCleanup(wizardDescriptor);
                             }
                         }
-                    } catch (InterruptedException | ExecutionException | MissingResourceException | TskCoreException | HeadlessException ex) {
+                    } catch (InterruptedException | ExecutionException | MissingResourceException | TskCoreException | HeadlessException | UserPreferencesException ex) {
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage() + " "
                                     + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
