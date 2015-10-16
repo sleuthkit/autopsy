@@ -64,13 +64,13 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
-import org.sleuthkit.autopsy.coreutils.History;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -134,6 +134,12 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
+
+    private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
+
+    public ReadOnlyStringProperty getStatusProperty() {
+        return status.getReadOnlyProperty();
+    }
 
     private final Case autoCase;
 
@@ -811,6 +817,10 @@ public class TimeLineController {
                 Bundle.Timeline_initTimeline_confDlg_genBeforeIngest_msg(),
                 Bundle.Timeline_confirmation_dialogs_title(),
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
+
+    public void setStatus(String string) {
+        status.set(string);
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {

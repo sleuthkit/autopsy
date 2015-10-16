@@ -242,6 +242,14 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         TimeLineController.getTimeZone().addListener((Observable observable) -> {
             update();
         });
+
+     hoverProperty().addListener((observable, oldActivated, newActivated) -> {
+            if (newActivated) {
+                controller.setStatus(DRAG_TOOLTIP.getText());
+            } else {
+                controller.setStatus("");
+            }
+        });
     }
 
     @Override
