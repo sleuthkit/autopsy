@@ -59,7 +59,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * is obtained from the user-defined types manager.
      */
     private DefaultListModel<String> typesListModel;
-    private Map<String, FileType> fileTypes;
+    private Map<String, java.util.List<FileType>> fileTypes;
 
     /**
      * This panel implements a property change listener that listens to ingest
@@ -250,31 +250,32 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      */
     private void populateTypeDetailsComponents() {
         String mimeType = typesList.getSelectedValue();
-        FileType fileType = fileTypes.get(mimeType);
-        if (null != fileType) {
-            mimeTypeTextField.setText(fileType.getMimeType());
-            Signature signature = fileType.getSignature();
-            FileType.Signature.Type sigType = signature.getType();
-            signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
-            String signatureBytes;
-            if (Signature.Type.RAW == signature.getType()) {
-                signatureBytes = DatatypeConverter.printHexBinary(signature.getSignatureBytes());
-            } else {
-                try {
-                    signatureBytes = new String(signature.getSignatureBytes(), "UTF-8");
-                } catch (UnsupportedEncodingException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            ex.getLocalizedMessage(),
-                            NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                    signatureBytes = "";
+        for (FileType fileType : fileTypes.get(mimeType)) {
+            if (null != fileType) {
+                mimeTypeTextField.setText(fileType.getMimeType());
+                Signature signature = fileType.getSignature();
+                FileType.Signature.Type sigType = signature.getType();
+                signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
+                String signatureBytes;
+                if (Signature.Type.RAW == signature.getType()) {
+                    signatureBytes = DatatypeConverter.printHexBinary(signature.getSignatureBytes());
+                } else {
+                    try {
+                        signatureBytes = new String(signature.getSignatureBytes(), "UTF-8");
+                    } catch (UnsupportedEncodingException ex) {
+                        JOptionPane.showMessageDialog(null,
+                                ex.getLocalizedMessage(),
+                                NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.storeFailed.title"),
+                                JOptionPane.ERROR_MESSAGE);
+                        signatureBytes = "";
+                    }
                 }
+                signatureTextField.setText(signatureBytes);
+                offsetTextField.setText(Long.toString(signature.getOffset()));
+                postHitCheckBox.setSelected(fileType.alertOnMatch());
+                filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
+                filesSetNameTextField.setText(fileType.getFilesSetName());
             }
-            signatureTextField.setText(signatureBytes);
-            offsetTextField.setText(Long.toString(signature.getOffset()));
-            postHitCheckBox.setSelected(fileType.alertOnMatch());
-            filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
-            filesSetNameTextField.setText(fileType.getFilesSetName());
         }
         enableButtons();
     }
@@ -640,7 +641,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
-        fileTypes.put(typeName, fileType);
+        UserDefinedFileTypesManager.getInstance().addFileTypeToMap(fileTypes, fileType);
         updateFileTypesListModel();
         typesList.setSelectedValue(fileType.getMimeType(), true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed

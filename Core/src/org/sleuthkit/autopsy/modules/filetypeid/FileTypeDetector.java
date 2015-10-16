@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import org.apache.tika.Tika;
@@ -38,15 +39,14 @@ public class FileTypeDetector {
     private static final Tika tika = new Tika();
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
-    private final Map<String, FileType> userDefinedFileTypes;
+    private final Map<String, List<FileType>> userDefinedFileTypes;
 
     /**
      * Constructs an object that detects the type of a file by an inspection of
      * its contents.
      *
      * @throws FileTypeDetector.FileTypeDetectorInitException if an
-     *                                                        initialization
-     *                                                        error occurs.
+     * initialization error occurs.
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
@@ -216,23 +216,25 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
-        for (FileType fileType : userDefinedFileTypes.values()) {
-            if (fileType.matches(file)) {
-                if (fileType.alertOnMatch()) {
-                    BlackboardArtifact artifact;
-                    artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
+        for (List<FileType> fileTypes : userDefinedFileTypes.values()) {
+            for (FileType fileType : fileTypes) {
+                if (fileType.matches(file)) {
+                    if (fileType.alertOnMatch()) {
+                        BlackboardArtifact artifact;
+                        artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                        BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getFilesSetName());
+                        artifact.addAttribute(setNameAttribute);
 
-                    /**
-                     * Use the MIME type as the category, i.e., the rule that
-                     * determined this file belongs to the interesting files
-                     * set.
-                     */
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
+                        /**
+                         * Use the MIME type as the category, i.e., the rule
+                         * that determined this file belongs to the interesting
+                         * files set.
+                         */
+                        BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
+                        artifact.addAttribute(ruleNameAttribute);
+                    }
+                    return fileType.getMimeType();
                 }
-                return fileType.getMimeType();
             }
         }
         return null;
