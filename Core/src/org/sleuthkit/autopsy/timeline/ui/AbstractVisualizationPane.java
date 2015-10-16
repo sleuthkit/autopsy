@@ -77,8 +77,12 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  */
 public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
 
-    @NbBundle.Messages("AbstractVisualizationPane.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
-    protected static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualizationPane_Drag_Tooltip_text());
+    @NbBundle.Messages("AbstractVisualization.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
+    private static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Drag_Tooltip_text());
+
+    public static Tooltip getDragTooltip() {
+        return DRAG_TOOLTIP;
+    }
 
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
@@ -243,7 +247,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
             update();
         });
 
-     hoverProperty().addListener((observable, oldActivated, newActivated) -> {
+        hoverProperty().addListener((observable, oldActivated, newActivated) -> {
             if (newActivated) {
                 controller.setStatus(DRAG_TOOLTIP.getText());
             } else {

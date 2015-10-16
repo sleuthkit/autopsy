@@ -64,6 +64,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -169,19 +170,29 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
             /*
-             * defer tooltip creation till needed, this had a surprisingly large
-             * impact on speed of loading the chart
+             * defer tooltip content creation till needed, this had a
+             * surprisingly large impact on speed of loading the chart
              */
             installTooltip();
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDragTooltip());
             showHoverControls(true);
             toFront();
 
         });
+        setOnMouseExited((MouseEvent event) -> {
+            showHoverControls(false);
+            if (parentNode != null) {
+                parentNode.showHoverControls(true);
+            } else {
+                Tooltip.install(chart, AbstractVisualizationPane.getDragTooltip());
+            }
+        });
 
-        setDescriptionVisibility(DescriptionVisibility.SHOWN);
         descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
             setDescriptionVisibility(newValue);
         });
+        setDescriptionVisibility(DescriptionVisibility.SHOWN);
+
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -284,7 +295,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         return subNodes;
     }
 
-    abstract void setDescriptionVisibility(DescriptionVisibility get);
+    abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
 
     void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
@@ -295,6 +306,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             parentNode.enableTooltip(false);
             parentNode.showHoverControls(false);
         }
+
     }
 
     final EventType getEventType() {
@@ -328,16 +340,15 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
      */
     abstract void setDescriptionWidth(double w);
 
-    void setDescriptionVisibilityLevel(DescriptionVisibility get) {
+    void setDescriptionVisibility(DescriptionVisibility get) {
         descVisibility.set(get);
     }
 
-    void enableTooltip(boolean b) {
-        if (b) {
+    void enableTooltip(boolean toolTipEnabled) {
+        if (toolTipEnabled) {
             Tooltip.install(this, tooltip);
         } else {
             Tooltip.uninstall(this, tooltip);
         }
     }
-
 }

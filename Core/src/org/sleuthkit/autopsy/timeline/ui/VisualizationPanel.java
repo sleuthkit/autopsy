@@ -91,11 +91,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
  * A Container for an {@link AbstractVisualizationPane}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstractVisualizationPane},
- * and the histogram / timeselection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractVisualizationPane}
- *
- * TODO: refactor common code out of histogram and CountsView? -jm
+ * hold settings widgets supplied by contained {@link AbstAbstractVisualization* and the histogram / timeselection on bottom. Also supplies containers for
+ * replacement axis to contained {@link AbstractAbstractVisualizationTODO: refactor common code out of histogram and CountsView? -jm
  */
 public class VisualizationPanel extends BorderPane implements TimeLineView {
 
@@ -109,7 +106,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NavPanel navPanel;
 
-    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
+    private AbstractVisualizationPane visualization;
 
     //// range slider and histogram componenets
     @FXML
@@ -178,8 +175,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private FilteredEventsModel filteredEvents;
 
-    private final ChangeListener<Object> rangeSliderListener
-            = (observable1, oldValue, newValue) -> {
+    private final ChangeListener<Object> rangeSliderListener =
+            (observable1, oldValue, newValue) -> {
                 if (rangeSlider.isHighValueChanging() == false && rangeSlider.isLowValueChanging() == false) {
                     Long minTime = filteredEvents.getMinTime() * 1000;
                     controller.pushTimeRange(new Interval(
@@ -377,7 +374,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 if (visualization instanceof DetailViewPane) {
                     navPanel.setDetailViewPane((DetailViewPane) visualization);
                 }
-                visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
                         notificationPane.setContent(new StackPane(visualization, new Region() {

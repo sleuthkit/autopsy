@@ -53,6 +53,7 @@ import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
@@ -74,6 +75,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
@@ -184,6 +186,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+        Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
+
         dateAxis.setAutoRanging(false);
 
         verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
@@ -496,7 +500,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setVisible(true);
                 bundleNode.setManaged(true);
                 //apply advanced layout description visibility options
-                bundleNode.setDescriptionVisibilityLevel(descrVisibility.get());
+                bundleNode.setDescriptionVisibility(descrVisibility.get());
                 bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
 
                 //do recursive layout

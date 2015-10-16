@@ -120,7 +120,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         chart.setData(dataSets);
         setCenter(chart);
 
-//        Tooltip.install(chart, DRAG_TOOLTIP);
+     
         chart.setPrefHeight(USE_COMPUTED_SIZE);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());

@@ -285,7 +285,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
-        Tooltip.install(chart, DRAG_TOOLTIP);
+
+        Tooltip.install(chart, getDragTooltip());
 
         settingsNodes = new ArrayList<>(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
