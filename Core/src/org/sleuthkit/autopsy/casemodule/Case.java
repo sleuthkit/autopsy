@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -455,6 +456,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            throw new CaseActionException(
+                    NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
 
         /**
@@ -566,7 +571,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 if (!UserPreferences.getIsMultiUserModeEnabled()) {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
-                db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                try {
+                    db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                } catch (UserPreferencesException ex) {
+                    logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+                    throw new CaseActionException(
+                            NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+                }
             }
 
             /**

@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -560,17 +561,25 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestSolrWarning.setText("");
         lbTestMessageWarning.setText("");
 
-        CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
-        tbDbHostname.setText(dbInfo.getHost().trim());
-        tbDbPort.setText(dbInfo.getPort().trim());
-        tbDbUsername.setText(dbInfo.getUserName().trim());
-        tbDbPassword.setText(dbInfo.getPassword());
+        try {
+            CaseDbConnectionInfo dbInfo = UserPreferences.getDatabaseConnectionInfo();
+            tbDbHostname.setText(dbInfo.getHost().trim());
+            tbDbPort.setText(dbInfo.getPort().trim());
+            tbDbUsername.setText(dbInfo.getUserName().trim());
+            tbDbPassword.setText(dbInfo.getPassword());
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
-        MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
-        tbMsgHostname.setText(msgServiceInfo.getHost().trim());
-        tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
-        tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
-        tbMsgPassword.setText(msgServiceInfo.getPassword());
+        try {
+            MessageServiceConnectionInfo msgServiceInfo = UserPreferences.getMessageServiceConnectionInfo();
+            tbMsgHostname.setText(msgServiceInfo.getHost().trim());
+            tbMsgPort.setText(Integer.toString(msgServiceInfo.getPort()));
+            tbMsgUsername.setText(msgServiceInfo.getUserName().trim());
+            tbMsgPassword.setText(msgServiceInfo.getPassword());
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
         String indexingServerHost = UserPreferences.getIndexingServerHost().trim();
         if (!indexingServerHost.isEmpty()) {
@@ -646,7 +655,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 new String(tbDbPassword.getPassword()),
                 dbType);
 
-        UserPreferences.setDatabaseConnectionInfo(info);
+        try {
+            UserPreferences.setDatabaseConnectionInfo(info);
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+        }
 
         int port = 0;
         try {
@@ -661,7 +674,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()));
 
-        UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+        try {
+            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
+        }
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
