@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -321,6 +322,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
         if (oldCase != null) {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            });
             doCaseChange(null); //closes windows, etc   
             if (null != oldCase.tskErrorReporter) {
                 oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
@@ -344,7 +348,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             // start listening for TSK errors for the new case
             currentCase.tskErrorReporter = new IntervalErrorReportData(currentCase, MIN_SECONDS_BETWEEN_ERROR_REPORTS,
-                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
+                    NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
                 RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
@@ -369,8 +373,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
+        SwingUtilities.invokeLater(() -> {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
     }
-    
+
     @Override
     public void receiveError(String context, String errorMessage) {
         /* NOTE: We are accessing tskErrorReporter from two different threads.
@@ -452,9 +459,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex); //NON-NLS
-            throw new CaseActionException(
-                    NbBundle.getMessage(Case.class, "Case.create.exception.msg", caseName, caseDir), ex);
+            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir + " " + ex.getMessage(), ex); //NON-NLS
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "CaseOpenException.DatabaseSettingsIssue") + " " + ex.getMessage()); //NON-NLS
         }
 
         /**
@@ -604,7 +613,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             Case openedCase = new Case(caseName, caseNumber, examiner, caseMetadataFilePath, xmlcm, db, caseType);
             changeCase(openedCase);
 
-        } catch (CaseMetadataException | TskCoreException ex) {
+        } catch (CaseMetadataException ex) {
             /**
              * Clean-up the case if it was actually opened. TODO: Do this
              * better.
@@ -612,11 +621,21 @@ public class Case implements SleuthkitCase.ErrorObserver {
             try {
                 Case badCase = Case.getCurrentCase();
                 badCase.closeCase();
+            } catch (IllegalStateException unused) {
+                // Already logged.
+            }
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            try {
+                Case badCase = Case.getCurrentCase();
+                badCase.closeCase();
             } catch (CaseActionException | IllegalStateException unused) {
                 // Already logged.
             }
-
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex);
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "CaseOpenException.DatabaseSettingsIssue") + " " + ex.getMessage(), ex); //NON-NLS
         }
     }
 
@@ -643,8 +662,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = (pathExists(path)
-                    || driveExists(path));
+            boolean fileExists = (pathExists(path) || driveExists(path));
             if (!fileExists) {
                 int ret = JOptionPane.showConfirmDialog(null,
                         NbBundle.getMessage(Case.class,
@@ -675,7 +693,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
      * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
-     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)}
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
@@ -690,13 +708,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     /**
      * Finishes adding new local data source to the case. Sends out event and
-     * reopens windows if needed. 
+     * reopens windows if needed.
      *
      * @param newDataSource new data source added
      *
      * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
      * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
-     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)}
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {
