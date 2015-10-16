@@ -239,7 +239,14 @@ public class ServicesMonitor {
      * Performs case database service availability status check.
      */
     private void checkDatabaseConnectionStatus() {
-        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+        CaseDbConnectionInfo info;
+        try {
+            info = UserPreferences.getDatabaseConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.DOWN.toString(), "Error accessing case database connection info");
+            return;
+        }
         try {
             SleuthkitCase.tryConnect(info);
             setServiceStatus(Service.REMOTE_CASE_DATABASE.toString(), ServiceStatus.UP.toString(), "");
@@ -277,7 +284,15 @@ public class ServicesMonitor {
      * Performs messaging service availability status check.
      */
     private void checkMessagingServerConnectionStatus() {
-        MessageServiceConnectionInfo info = UserPreferences.getMessageServiceConnectionInfo();
+        MessageServiceConnectionInfo info;
+        try {
+            info = UserPreferences.getMessageServiceConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
+            setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.DOWN.toString(), "Error accessing messaging service connection info");
+            return;
+        }
+
         try {
             info.tryConnect();
             setServiceStatus(Service.MESSAGING.toString(), ServiceStatus.UP.toString(), "");

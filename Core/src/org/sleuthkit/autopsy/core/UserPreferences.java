@@ -18,10 +18,17 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.util.Base64;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -130,7 +137,12 @@ public final class UserPreferences {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
-    public static CaseDbConnectionInfo getDatabaseConnectionInfo() {
+    /**
+     * Reads persisted case database connection info.
+     * @return An object encapsulating the database connection info.
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+     */
+    public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws UserPreferencesException {
         DbType dbType;
         try {
             dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL"));
@@ -141,15 +153,22 @@ public final class UserPreferences {
                 preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
                 preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
                 preferences.get(EXTERNAL_DATABASE_USER, ""),
-                preferences.get(EXTERNAL_DATABASE_PASSWORD, ""),
+                TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
                 dbType);
     }
 
-    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) {
+    /**
+     * Persists case database connection info.
+     *
+     * @param connectionInfo An object encapsulating the database connection
+     *                       info.
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+     */
+    public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws UserPreferencesException {
         preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
         preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
         preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
-        preferences.put(EXTERNAL_DATABASE_PASSWORD, connectionInfo.getPassword());
+        preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
         preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
@@ -181,20 +200,22 @@ public final class UserPreferences {
      * Persists message service connection info.
      *
      * @param info An object encapsulating the message service info.
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
-    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) {
+    public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws UserPreferencesException {
         preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
         preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
         preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
-        preferences.put(MESSAGE_SERVICE_PASSWORD, info.getPassword());
+        preferences.put(MESSAGE_SERVICE_PASSWORD, TextConverter.convertTextToHexText(info.getPassword()));
     }
 
     /**
      * Reads persisted message service connection info.
      *
      * @return An object encapsulating the message service info.
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
-    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() {
+    public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws UserPreferencesException {
         int port;
         try {
             port = Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, DEFAULT_PORT_STRING));
@@ -207,7 +228,7 @@ public final class UserPreferences {
                 preferences.get(MESSAGE_SERVICE_HOST, ""),
                 port,
                 preferences.get(MESSAGE_SERVICE_USER, ""),
-                preferences.get(MESSAGE_SERVICE_PASSWORD, ""));
+                TextConverter.convertHexTextToText(preferences.get(MESSAGE_SERVICE_PASSWORD, "")));
     }
 
     /**
@@ -256,5 +277,69 @@ public final class UserPreferences {
      */
     public static void setIsTimeOutEnabled(boolean enabled) {
         preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
+    }
+    
+    
+    /**
+     * Provides ability to convert text to hex text.
+     */
+    static final class TextConverter {
+
+        private static final char[] TMP = "hgleri21auty84fwe".toCharArray();
+        private static final byte[] SALT = {
+            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,};
+
+        /**
+         * Convert text to hex text.
+         *
+         * @param property Input text string.
+         *
+         * @return Converted hex string.
+         *
+         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+         */
+        static String convertTextToHexText(String property) throws UserPreferencesException {
+            try {
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+                pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+                return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+            } catch (Exception ex) {
+                throw new UserPreferencesException(
+                        NbBundle.getMessage(TextConverter.class, "TextConverter.convert.exception.txt"));
+            }
+        }
+
+        private static String base64Encode(byte[] bytes) {
+            return Base64.getEncoder().encodeToString(bytes);
+        }
+
+        /**
+         * Convert hex text back to text.
+         *
+         * @param property Input hex text string.
+         *
+         * @return Converted text string.
+         *
+         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+         */
+        static String convertHexTextToText(String property) throws UserPreferencesException {
+            try {
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+                pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+                return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+            } catch (Exception ex) {
+                throw new UserPreferencesException(
+                        NbBundle.getMessage(TextConverter.class, "TextConverter.convertFromHex.exception.txt"));
+            }
+        }
+
+        private static byte[] base64Decode(String property) {
+            return Base64.getDecoder().decode(property);
+        }
     }
 }
