@@ -183,11 +183,11 @@ final class UserDefinedFileTypesManager {
         try {
             FileType fileTypeXml = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
             addFileTypeToMap(fileTypes, fileTypeXml);
-            
-            byte[] gzip = DatatypeConverter.parseHexBinary("1F8B08");                 
+
+            byte[] gzip = DatatypeConverter.parseHexBinary("1F8B08");
             FileType fileTypeGzip = new FileType("application/x-gzip", new Signature(gzip, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
             addFileTypeToMap(fileTypes, fileTypeGzip);
-            
+
         } catch (UnsupportedEncodingException ex) {
             /**
              * Using an all-or-none policy.
@@ -234,13 +234,12 @@ final class UserDefinedFileTypesManager {
         addFileTypeToMap(userDefinedFileTypes, fileType);
         addFileTypeToMap(fileTypes, fileType);
     }
-    
+
     void addFileTypeToMap(Map<String, List<FileType>> map, FileType fileType) {
         String mimeType = fileType.getMimeType();
         if (map.containsKey(mimeType)) {
             map.get(mimeType).add(fileType);
-        }
-        else {
+        } else {
             List<FileType> newList = new ArrayList<>();
             newList.add(fileType);
             map.put(mimeType, newList);
@@ -251,13 +250,12 @@ final class UserDefinedFileTypesManager {
      * Sets the user-defined file types.
      *
      * @param newFileTypes A mapping of file type names to user-defined file
-     *                     types.
+     * types.
      */
     synchronized void setUserDefinedFileTypes(Map<String, List<FileType>> newFileTypes) throws UserDefinedFileTypesException {
         try {
             String filePath = getFileTypeDefinitionsFilePath(USER_DEFINED_TYPE_DEFINITIONS_FILE);
-            for(List<FileType> fileTypes : newFileTypes.values())
-                XmlWriter.writeFileTypes(fileTypes, filePath);
+            XmlWriter.writeFileTypes(newFileTypes.values(), filePath);
         } catch (ParserConfigurationException | FileNotFoundException | UnsupportedEncodingException | TransformerException ex) {
             throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.saveFileTypes.errorMessage");
         } catch (IOException ex) {
@@ -287,7 +285,7 @@ final class UserDefinedFileTypesManager {
          * Writes a set of file type definitions to an XML file.
          *
          * @param fileTypes A collection of file types.
-         * @param filePath  The path to the destination file.
+         * @param filePath The path to the destination file.
          *
          * @throws ParserConfigurationException
          * @throws IOException
@@ -295,13 +293,15 @@ final class UserDefinedFileTypesManager {
          * @throws UnsupportedEncodingException
          * @throws TransformerException
          */
-        private static void writeFileTypes(Collection<FileType> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
+        private static void writeFileTypes(Collection<List<FileType>> fileTypes, String filePath) throws ParserConfigurationException, IOException, FileNotFoundException, UnsupportedEncodingException, TransformerException {
             Document doc = XMLUtil.createDocument();
             Element fileTypesElem = doc.createElement(FILE_TYPES_TAG_NAME);
             doc.appendChild(fileTypesElem);
-            for (FileType fileType : fileTypes) {
-                Element fileTypeElem = XmlWriter.createFileTypeElement(fileType, doc);
-                fileTypesElem.appendChild(fileTypeElem);
+            for (List<FileType> fileTypeList : fileTypes) {
+                for (FileType fileType : fileTypeList) {
+                    Element fileTypeElem = XmlWriter.createFileTypeElement(fileType, doc);
+                    fileTypesElem.appendChild(fileTypeElem);
+                }
             }
             XMLUtil.saveDocument(doc, ENCODING_FOR_XML_FILE, filePath);
         }
@@ -310,7 +310,7 @@ final class UserDefinedFileTypesManager {
          * Creates an XML representation of a file type.
          *
          * @param fileType The file type object.
-         * @param doc      The WC3 DOM object to use to create the XML.
+         * @param doc The WC3 DOM object to use to create the XML.
          *
          * @return An XML element.
          */
@@ -326,9 +326,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a MIME type child element to a file type XML element.
          *
-         * @param fileType     The file type to use as a content source.
+         * @param fileType The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
+         * @param doc The WC3 DOM object to use to create the XML.
          */
         private static void addMimeTypeElement(FileType fileType, Element fileTypeElem, Document doc) {
             Element typeNameElem = doc.createElement(MIME_TYPE_TAG_NAME);
@@ -339,9 +339,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add a signature child element to a file type XML element.
          *
-         * @param fileType     The file type to use as a content source.
+         * @param fileType The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
+         * @param doc The WC3 DOM object to use to create the XML.
          */
         private static void addSignatureElement(FileType fileType, Element fileTypeElem, Document doc) {
             Signature signature = fileType.getSignature();
@@ -362,9 +362,9 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an interesting files set element to a file type XML element.
          *
-         * @param fileType     The file type to use as a content source.
+         * @param fileType The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
-         * @param doc          The WC3 DOM object to use to create the XML.
+         * @param doc The WC3 DOM object to use to create the XML.
          */
         private static void addInterestingFilesSetElement(FileType fileType, Element fileTypeElem, Document doc) {
             if (!fileType.getFilesSetName().isEmpty()) {
@@ -377,7 +377,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Add an alert attribute to a file type XML element.
          *
-         * @param fileType     The file type to use as a content source.
+         * @param fileType The file type to use as a content source.
          * @param fileTypeElem The parent file type element.
          */
         private static void addAlertAttribute(FileType fileType, Element fileTypeElem) {
@@ -500,7 +500,7 @@ final class UserDefinedFileTypesManager {
         /**
          * Gets the text content of a single child element.
          *
-         * @param elem    The parent element.
+         * @param elem The parent element.
          * @param tagName The tag name of the child element.
          *
          * @return The text content.
@@ -517,9 +517,9 @@ final class UserDefinedFileTypesManager {
      * Logs an exception, bundles the exception with a simple message in a
      * uniform exception type, and throws the wrapper exception.
      *
-     * @param ex         The exception to wrap.
+     * @param ex The exception to wrap.
      * @param messageKey A key into the bundle file that maps to the desired
-     *                   message.
+     * message.
      *
      * @throws
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
