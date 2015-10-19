@@ -246,6 +246,13 @@ final class UserDefinedFileTypesManager {
         }
     }
 
+    void removeFileTypeFromMap(Map<String, List<FileType>> map, FileType fileType) {
+        String mimeType = fileType.getMimeType();
+        if (map.containsKey(mimeType)) {
+            map.get(mimeType).remove(fileType);
+        }
+    }
+
     /**
      * Sets the user-defined file types.
      *
