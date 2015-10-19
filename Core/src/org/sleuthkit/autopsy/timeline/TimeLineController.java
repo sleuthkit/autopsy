@@ -64,13 +64,13 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
-import org.sleuthkit.autopsy.coreutils.History;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -291,7 +291,7 @@ public class TimeLineController {
      *         the user aborted after prompt about ingest running. True if the
      *         repo was rebuilt.
      */
-    boolean rebuildRepo() {
+    boolean rebuildRepo(Interval interval) {
         if (IngestManager.getInstance().isIngestRunning()) {
             //confirm timeline during ingest
             if (confirmRebuildDuringIngest() == false) {
@@ -328,7 +328,7 @@ public class TimeLineController {
                         //TODO: should this be an event?
                         newEventsFlag.set(false);
                         historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                        TimeLineController.this.showFullRange();
+                        TimeLineController.this.showRange(interval);
                     });
                 });
             }
@@ -344,18 +344,18 @@ public class TimeLineController {
      * tags table and rebuild it by querying for all the tags and inserting them
      * in to the TimeLine DB.
      */
-    void rebuildTagsTable() {
+    void rebuildTagsTable(Interval interval) {
         LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
-        SwingUtilities.invokeLater(() -> {
-            if (isWindowOpen()) {
-                mainFrame.close();
-            }
-        });
+//        SwingUtilities.invokeLater(() -> {
+//            if (isWindowOpen()) {
+//                mainFrame.close();
+//            }
+//        });
         synchronized (eventsRepository) {
             eventsRepository.rebuildTags(() -> {
                 showWindow();
                 Platform.runLater(() -> {
-                    showFullRange();
+                    showRange(interval);
                 });
             });
         }
@@ -364,6 +364,17 @@ public class TimeLineController {
     public void showFullRange() {
         synchronized (filteredEvents) {
             pushTimeRange(filteredEvents.getSpanningInterval());
+        }
+    }
+
+    public void showRange(Interval interval) {
+        synchronized (filteredEvents) {
+            if (null == interval) {
+                showFullRange();
+            } else {
+                System.out.println(interval);
+                pushTimeRange(interval);
+            }
         }
     }
 
@@ -382,7 +393,7 @@ public class TimeLineController {
     /**
      * show the timeline window and prompt for rebuilding database if necessary.
      */
-    synchronized void openTimeLine() {
+    synchronized void openTimeLine(Interval interval) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -397,14 +408,14 @@ public class TimeLineController {
 
             //if the repo is empty rebuild it
             if (timeLineLastObjectId == -1) {
-                repoRebuilt = rebuildRepo();
+                repoRebuilt = rebuildRepo(interval);
             }
 
             if (repoRebuilt == false) {
                 //if ingest was running uring last rebuild, prompt to rebuild
                 if (eventsRepository.getWasIngestRunning()) {
                     if (confirmLastBuiltDuringIngestRebuild()) {
-                        repoRebuilt = rebuildRepo();
+                        repoRebuilt = rebuildRepo(interval);
                     }
                 }
             }
@@ -415,7 +426,7 @@ public class TimeLineController {
                 if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
                         || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
                     if (confirmOutOfDateRebuild()) {
-                        repoRebuilt = rebuildRepo();
+                        repoRebuilt = rebuildRepo(interval);
                     }
                 }
             }
@@ -424,7 +435,7 @@ public class TimeLineController {
                 // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
                 if (eventsRepository.hasNewColumns() == false) {
                     if (confirmDataSourceIDsMissingRebuild()) {
-                        repoRebuilt = rebuildRepo();
+                        repoRebuilt = rebuildRepo(interval);
                     }
                 }
             }
@@ -434,7 +445,7 @@ public class TimeLineController {
              * have been updated without our knowing it.
              */
             if (repoRebuilt == false) {
-                rebuildTagsTable();
+                rebuildTagsTable(interval);
             }
 
         } catch (TskCoreException ex) {
@@ -738,10 +749,26 @@ public class TimeLineController {
      * @return true if they agree to rebuild
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void confirmOutOfDateRebuildIfWindowOpen(Interval interval) throws MissingResourceException, HeadlessException {
+        if (isWindowOpen()) {
+            if (confirmOutOfDateRebuild()) {
+                rebuildRepo(interval);
+            }
+        }
+    }
+
+    /**
+     * prompt the user to rebuild the db because the db is out of date and
+     * doesn't include things from subsequent ingests ONLY IF THE TIMELINE
+     * WINDOW IS OPEN
+     *
+     * @return true if they agree to rebuild
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
             if (confirmOutOfDateRebuild()) {
-                rebuildRepo();
+                rebuildRepo(null);
             }
         }
     }

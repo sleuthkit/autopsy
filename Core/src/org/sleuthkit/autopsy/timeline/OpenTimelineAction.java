@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline;
 
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import org.joda.time.Interval;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -59,7 +60,10 @@ public class OpenTimelineAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
+        showTimeline(null);
+    }
 
+    public void showTimeline(Interval interval) {
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -80,7 +84,7 @@ public class OpenTimelineAction extends CallableSystemAction {
                 timeLineController = new TimeLineController(currentCase);
             }
         }
-        timeLineController.openTimeLine();
+        timeLineController.openTimeLine(interval);
     }
 
     @Override
@@ -97,4 +101,5 @@ public class OpenTimelineAction extends CallableSystemAction {
     public boolean asynchronous() {
         return false; // run on edt
     }
+
 }

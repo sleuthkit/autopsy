@@ -86,6 +86,8 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "FileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
                 NbBundle.getMessage(this.getClass(), "FileNode.getActions.openInExtViewer.text"), this));
+        actionsList.add( ViewInTimeLineAction.getInstance());
+
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction(
