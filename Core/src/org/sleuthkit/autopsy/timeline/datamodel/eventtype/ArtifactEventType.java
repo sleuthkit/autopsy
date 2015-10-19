@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -33,6 +35,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public interface ArtifactEventType extends EventType {
+
+    public static Set<ArtifactEventType> getAllArtifactEventTypes() {
+        return allTypes.stream()
+                .filter((EventType t) -> t instanceof ArtifactEventType)
+                .map(ArtifactEventType.class::cast)
+                .collect(Collectors.toSet());
+    }
 
     /**
      * @return the Artifact type this event type is derived form, or null if
@@ -87,7 +96,8 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
-     * one object. Primarily used to have a single return value for      {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
+     * one object. Primarily used to have a single return value for null null
+     * null null     {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
      */
     static class AttributeEventDescription {
 

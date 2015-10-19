@@ -66,8 +66,10 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.ViewInTimeLineAction;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -77,6 +79,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -245,6 +248,21 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null);
                 actions.add(AddBlackboardArtifactTagAction.getInstance());
             }
+
+            boolean hasTimeStamp = ArtifactEventType.getAllArtifactEventTypes().stream()
+                    .filter(artEventType -> artEventType.getArtifactType().getTypeID() == ba.getArtifactTypeID())
+                    .filter(artEventType -> {
+                        try {
+                            return ba.getAttributes(artEventType.getDateTimeAttrubuteType()).isEmpty() == false;
+                        } catch (TskCoreException ex) {
+                            Logger.getLogger(DataResultFilterNode.class.getName()).log(Level.WARNING, "Error retreiving blackboard arttributes from blackboard artifact.", ex);
+                            return false;
+                        }
+                    }).findAny().isPresent();
+            if (hasTimeStamp){
+                actions.add(ViewInTimeLineAction.getInstance());
+            }
+            
             return actions;
         }
 

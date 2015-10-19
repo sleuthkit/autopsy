@@ -443,7 +443,7 @@ public class EventsRepository {
         private final SleuthkitCase skCase;
         private final TagsManager tagsManager;
 
-        public DBPopulationWorker(Runnable postPopulationOperation) {
+        DBPopulationWorker(Runnable postPopulationOperation) {
             progressDialog = new ProgressWindow(null, true, this);
             progressDialog.setVisible(true);
 

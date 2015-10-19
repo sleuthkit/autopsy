@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
  */
 public interface EventType {
 
-    final static List<? extends EventType> allTypes = RootEventType.getInstance().getSubTypesRecusive();
+    final static List<EventType> allTypes = RootEventType.getInstance().getSubTypesRecusive();
 
     static Comparator<EventType> getComparator() {
         return Comparator.comparing(EventType.allTypes::indexOf);
@@ -47,7 +47,7 @@ public interface EventType {
         }
     }
 
-    default List<? extends EventType> getSubTypesRecusive() {
+    default List<EventType> getSubTypesRecusive() {
         ArrayList<EventType> flatList = new ArrayList<>();
 
         for (EventType et : getSubTypes()) {
@@ -56,6 +56,8 @@ public interface EventType {
         }
         return flatList;
     }
+    
+    
 
     /**
      * @return the color used to represent this event type visually
