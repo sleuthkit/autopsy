@@ -31,16 +31,19 @@
                 <package>com.apple.eio</package>
                 <package>com.google.common.annotations</package>
                 <package>com.google.common.base</package>
-                <package>com.google.common.base.internal</package>
                 <package>com.google.common.cache</package>
                 <package>com.google.common.collect</package>
+                <package>com.google.common.escape</package>
                 <package>com.google.common.eventbus</package>
                 <package>com.google.common.hash</package>
+                <package>com.google.common.html</package>
                 <package>com.google.common.io</package>
                 <package>com.google.common.math</package>
                 <package>com.google.common.net</package>
                 <package>com.google.common.primitives</package>
+                <package>com.google.common.reflect</package>
                 <package>com.google.common.util.concurrent</package>
+                <package>com.google.common.xml</package>
                 <package>com.google.gson</package>
                 <package>com.google.gson.annotations</package>
                 <package>com.google.gson.reflect</package>
@@ -709,10 +712,6 @@
                 <binary-origin>release/modules/ext/commons-lang3-3.0-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-11.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-11.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
             </class-path-extension>
@@ -727,6 +726,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/common-lang-3.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-lang-3.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-18.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-15 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,19 +67,20 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -136,6 +137,13 @@ public class TimeLineController {
 
     private final Case autoCase;
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ObservableList<DescriptionFilter> quickHideMaskFilters = FXCollections.observableArrayList();
+
+    public ObservableList<DescriptionFilter> getQuickHideFilters() {
+        return quickHideMaskFilters;
+    }
+
     /**
      * @return the autopsy Case assigned to the controller
      */
@@ -173,7 +181,7 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<VisualizationMode> viewMode = new ReadOnlyObjectWrapper<>(VisualizationMode.COUNTS);
 
-    synchronized public ReadOnlyObjectProperty<VisualizationMode> getViewMode() {
+    synchronized public ReadOnlyObjectProperty<VisualizationMode> viewModeProperty() {
         return viewMode.getReadOnlyProperty();
     }
 
@@ -256,7 +264,7 @@ public class TimeLineController {
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
                 filteredEvents.filterProperty().get(),
-                DescriptionLOD.SHORT);
+                DescriptionLoD.SHORT);
         historyManager.advance(InitialZoomState);
     }
 
@@ -439,7 +447,6 @@ public class TimeLineController {
     private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
-
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
@@ -556,12 +563,12 @@ public class TimeLineController {
     @NbBundle.Messages({"# {0} - the number of events",
         "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
         + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
-    synchronized public boolean pushDescrLOD(DescriptionLOD newLOD) {
+    synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
-        if (newLOD == DescriptionLOD.FULL && count > 10_000) {
+        if (newLOD == DescriptionLoD.FULL && count > 10_000) {
             String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
@@ -616,7 +623,6 @@ public class TimeLineController {
 
     synchronized private void advance(ZoomParams newState) {
         historyManager.advance(newState);
-
     }
 
     public void selectTimeAndType(Interval interval, EventType type) {
@@ -811,6 +817,21 @@ public class TimeLineController {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /**
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
+             */
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
+                return;
+            }
+
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
@@ -866,6 +887,7 @@ public class TimeLineController {
                 case DATA_SOURCE_ADDED:
                     SwingUtilities.invokeLater(TimeLineController.this::confirmOutOfDateRebuildIfWindowOpen);
                     break;
+
                 case CURRENT_CASE:
                     OpenTimelineAction.invalidateController();
                     SwingUtilities.invokeLater(TimeLineController.this::closeTimeLine);

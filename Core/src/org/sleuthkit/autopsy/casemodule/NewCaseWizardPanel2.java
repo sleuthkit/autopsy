@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 
 /**
  * The "New Case" wizard panel with a component on it. This class represents
@@ -48,6 +48,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     private String caseName;
     private String caseDir;
     private String createdDirectory;
+    private CaseType caseType;
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -129,7 +130,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {
@@ -154,6 +155,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         caseName = (String) settings.getProperty("caseName"); //NON-NLS
         caseDir = (String) settings.getProperty("caseParentDir"); //NON-NLS
         createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
+        caseType = CaseType.values()[(int) settings.getProperty("caseType")]; //NON-NLS
     }
 
     /**
@@ -167,34 +169,13 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        NewCaseVisualPanel2 currentComponent = getComponent();
+        settings.putProperty("caseNumber", currentComponent.getCaseNumber());
+        settings.putProperty("caseExaminer", currentComponent.getExaminer());
     }
 
     @Override
     public void validate() throws WizardValidationException {
-
-        NewCaseVisualPanel2 currentComponent = getComponent();
-        final String caseNumber = currentComponent.getCaseNumber();
-        final String examiner = currentComponent.getExaminer();
-        try {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        Case.create(createdDirectory, caseName, caseNumber, examiner);
-                    } catch (Exception ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-
-            });
-
-            //Case.create(createdDirectory, caseName, caseNumber, examiner);
-        } catch (Exception ex) {
-            throw new WizardValidationException(this.getComponent(),
-                    NbBundle.getMessage(this.getClass(),
-                            "NewCaseWizardPanel2.validate.errCreateCase.msg"),
-                    null);
-        }
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     }
 }

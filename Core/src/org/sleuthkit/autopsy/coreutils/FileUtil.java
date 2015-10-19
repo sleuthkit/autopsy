@@ -163,8 +163,8 @@ public class FileUtil {
      * @return escaped string
      */
     public static String escapeFileName(String fileName) {
-        //for now escaping / (not valid in file name, at least on Windows)
-        //with underscores.  Windows/Java seem to ignore \\/ and \\\\/ escapings 
-        return fileName.replaceAll("/", "_");
+        //for now escaping /:"*?<>| (not valid in file name, at least on Windows)
+        //with underscores. We are only keeping \ as it could be part of the path.
+        return fileName.replaceAll("[/:\"*?<>|]+", "_");
     }
 }

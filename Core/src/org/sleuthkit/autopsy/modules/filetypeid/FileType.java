@@ -176,6 +176,9 @@ class FileType {
          * @return True or false.
          */
         boolean containedIn(final AbstractFile file) {
+            if (file.getSize() < (offset + signatureBytes.length)) {
+                return false; /// too small, can't contain this signature
+            }
             try {
                 byte[] buffer = new byte[signatureBytes.length];
                 int bytesRead = file.read(buffer, offset, signatureBytes.length);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -182,15 +182,40 @@ public class FileSize implements AutopsyVisitableItem {
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
 
-                    // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
-                        update();
+                        /**
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
+                         */
+                        try {
+                            // new file was added
+                            // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
+                            Case.getCurrentCase();
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                        update();
-                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        update();
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        /**
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {
@@ -348,11 +373,7 @@ public class FileSize implements AutopsyVisitableItem {
 
             @Override
             protected boolean createKeys(List<AbstractFile> list) {
-                List<AbstractFile> l = runFsQuery();
-                if (l == null) {
-                    return false;
-                }
-                list.addAll(l);
+                list.addAll(runFsQuery());
                 return true;
             }
 
@@ -371,8 +392,7 @@ public class FileSize implements AutopsyVisitableItem {
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get files by size: {0}", filter); //NON-NLS
-                        return null;
+                        throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
                 }
                 // ignore unalloc block files
                 query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
@@ -383,19 +403,15 @@ public class FileSize implements AutopsyVisitableItem {
             private List<AbstractFile> runFsQuery() {
                 List<AbstractFile> ret = new ArrayList<>();
 
-                String query = makeQuery(filter);
-                if (query == null) {
-                    return null;
-                }
-
                 try {
+                    String query = makeQuery(filter);
+
                     ret = skCase.findAllFilesWhere(query);
-                } catch (TskCoreException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the file size view using: " + query, e); //NON-NLS
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Error getting files for the file size view: " + e.getMessage()); //NON-NLS
                 }
 
                 return ret;
-
             }
 
             /**

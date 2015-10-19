@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,184 +21,205 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
- * Monitor health of the system and stop ingest if necessary
+ * Monitors disk space and memory and cancels ingest if disk space runs low.
+ * <p>
+ * Note: This should be a singleton and currrently is used as such, with the
+ * only instance residing in the IngestManager class.
  */
 public final class IngestMonitor {
 
     public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
+    private static final int MAX_LOG_FILES = 3;
+    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
-    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
-    private MonitorAction monitor;
+    private MonitorTimerAction timerAction;
 
+    /**
+     * Constructs an object that monitors disk space and memory and cancels
+     * ingest if disk space runs low.
+     */
     IngestMonitor() {
-
-        //setup the custom memory logger
+        /*
+         * Setup a separate memory usage logger.
+         */
         try {
-            final int MAX_LOG_FILES = 3;
-            FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log", //NON-NLS
-                    0, MAX_LOG_FILES);
+            FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log", 0, MAX_LOG_FILES); //NON-NLS
             monitorLogHandler.setFormatter(new SimpleFormatter());
             monitorLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
-            MONITOR_LOGGER.addHandler(monitorLogHandler);
-            //do not forward to the parent autopsy logger
             MONITOR_LOGGER.setUseParentHandlers(false);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SecurityException ex) {
-            Exceptions.printStackTrace(ex);
+            MONITOR_LOGGER.addHandler(monitorLogHandler);
+        } catch (IOException | SecurityException ex) {
+            logger.log(Level.SEVERE, "Failed to create memory usage logger", ex);
         }
-
     }
 
     /**
-     * Start the monitor
+     * Starts the ingest timerAction.
      */
     void start() {
-        monitor = new MonitorAction();
-        timer = new Timer(INITIAL_INTERVAL_MS, monitor);
+        timerAction = new MonitorTimerAction();
+        timer = new Timer(INITIAL_INTERVAL_MS, timerAction);
         timer.start();
     }
 
     /**
-     * Stop the monitor
+     * Stops the ingest timerAction.
      */
     void stop() {
-        if (timer != null) {
+        if (null != timer) {
             timer.stop();
         }
     }
 
     /**
-     * Check if the monitor is running
+     * Checks whether or not the ingest timerAction is running
      *
-     * @return true if the monitor is running, false otherwise
+     * @return True or false
      */
     boolean isRunning() {
-        return timer != null && timer.isRunning();
+        return (null != timer && timer.isRunning());
     }
 
     /**
-     * Get free space in bytes of the drive where case dir resides
+     * Gets the free space, in bytes, of the drive where the case folder for the
+     * current case resides.
      *
-     * @return free space in bytes or -1 if could not be determined.
+     * @return Free space in bytes or -1 if free sapce could not be determined.
      */
     long getFreeSpace() {
         try {
-            return monitor.getFreeSpace();
+            return timerAction.getFreeSpace();
         } catch (SecurityException e) {
             logger.log(Level.WARNING, "Error checking for free disk space on ingest data drive", e); //NON-NLS
             return DISK_FREE_SPACE_UNKNOWN;
         }
     }
 
-    //TODO add support to monitor multiple drives, e.g. user dir drive in addition to Case drive
-    private class MonitorAction implements ActionListener {
+    /**
+     * An action that is called every time the ingest monitor's timer expires.
+     * It does the actual monitoring.
+     */
+    private class MonitorTimerAction implements ActionListener {
 
-        private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024; //100MB
-        private File root = new File(File.separator); //default, root dir where autopsy runs
+        private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024; // 100MB
+        private File root;
 
-        MonitorAction() {
-            //find drive where case is located
-            setMonitorDir();
-
-            //update monitor dir if case changed
-            Case.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String changed = evt.getPropertyName();
-                    Object newValue = evt.getNewValue();
-
-                    if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                        if (newValue != null) {
-                            setMonitorDir();
+        MonitorTimerAction() {
+            findRootDirectoryForCurrentCase();
+            Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+                if (evt instanceof AutopsyEvent) {
+                    AutopsyEvent event = (AutopsyEvent) evt;
+                    if (AutopsyEvent.SourceType.LOCAL == event.getSourceType() && event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                        /*
+                         * The new value of the event will be non-null if a new
+                         * case has been opened.
+                         */
+                        if (null != evt.getNewValue()) {
+                            findRootDirectoryForCurrentCase((Case) evt.getNewValue());
                         }
-
                     }
-
                 }
             });
-
         }
 
-        private void setMonitorDir() {
-            String caseDir = Case.getCurrentCase().getCaseDirectory();
-            File curDir = new File(caseDir);
-            File tempF = null;
-            while ((tempF = curDir.getParentFile()) != null) {
-                curDir = tempF;
+        /**
+         * Determines the root directory of the case folder for the current case
+         * and sets it as the directory to monitor.
+         */
+        private void findRootDirectoryForCurrentCase() {
+            try {
+                Case currentCase = Case.getCurrentCase();
+                findRootDirectoryForCurrentCase(currentCase);
+            } catch (IllegalStateException unused) {
+                /*
+                 * Case.getCurrentCase() throws IllegalStateException when there
+                 * is no case.
+                 */
+                root = new File(File.separator);
+                logMonitoredRootDirectory();
+            }
+        }
+
+        /**
+         * Determines the root directory of the case folder for the current case
+         * and sets it as the directory to monitor.
+         *
+         * @param currentCase The current case.
+         */
+        private void findRootDirectoryForCurrentCase(Case currentCase) {
+            File curDir = new File(currentCase.getCaseDirectory());
+            File parentDir = curDir.getParentFile();
+            while (null != parentDir) {
+                curDir = parentDir;
+                parentDir = curDir.getParentFile();
             }
             root = curDir;
-            logger.log(Level.INFO, "Monitoring disk space of case root: " + curDir.getAbsolutePath()); //NON-NLS
+            logMonitoredRootDirectory();
+        }
+
+        /**
+         * Writes an info message to the Autopsy log identifying the root
+         * directory being monitored.
+         */
+        private void logMonitoredRootDirectory() {
+            logger.log(Level.INFO, "Monitoring disk space of {0}", root.getAbsolutePath()); //NON-NLS
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            /*
+             * Skip monitoring if ingest is not running.
+             */
             final IngestManager manager = IngestManager.getInstance();
-
-            //runs checks only if ingest is running
             if (manager.isIngestRunning() == false) {
                 return;
             }
 
-            monitorMemory();
+            logMemoryUsage();
 
-            if (checkDiskSpace() == false) {
-                //stop ingest if running
-                final String diskPath = root.getAbsolutePath();
-                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on disk {0}", diskPath); //NON-NLS
-                logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk {0}", diskPath); //NON-NLS
+            if (!enoughDiskSpace()) {
+                /*
+                 * Shut down ingest by cancelling all ingest jobs.
+                 */
                 manager.cancelAllIngestJobs();
+                String diskPath = root.getAbsolutePath();
                 IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
+                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
+                logger.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
             }
         }
 
         /**
-         * Get free space in bytes of the drive where case dir resides, or -1 if
-         * unknown
-         *
-         * @return free space in bytes
+         * Writes current message usage to the memory usage log.
          */
-        private long getFreeSpace() throws SecurityException {
-            final long freeSpace = root.getFreeSpace();
-
-            if (freeSpace == 0) {
-                //check if network drive, some network filesystems always return 0
-                final String monitoredPath = root.getAbsolutePath();
-                if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
-                    return DISK_FREE_SPACE_UNKNOWN;
-
-                }
-            }
-
-            return freeSpace;
-
+        private void logMemoryUsage() {
+            MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
 
         /**
-         * check disk space and see if enough to process/continue ingest
+         * Determines whether there is enough disk space to continue running
+         * ingest.
          *
          * @return true if OK, false otherwise
          */
-        private boolean checkDiskSpace() {
+        private boolean enoughDiskSpace() {
             long freeSpace;
             try {
                 freeSpace = getFreeSpace();
@@ -210,16 +231,30 @@ public final class IngestMonitor {
             if (freeSpace == DISK_FREE_SPACE_UNKNOWN) {
                 return true;
             } else {
-                //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));
                 return freeSpace > MIN_FREE_DISK_SPACE;
             }
         }
 
         /**
-         * Monitor memory usage and print to memory log
+         * Get free space in bytes of the drive where case dir resides, or -1 if
+         * unknown
+         *
+         * @return free space in bytes
          */
-        private void monitorMemory() {
-            MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+        private long getFreeSpace() throws SecurityException {
+            final long freeSpace = root.getFreeSpace();
+            if (0 == freeSpace) {
+                /*
+                 * Check for a network drive, some network filesystems always
+                 * return zero.
+                 */
+                final String monitoredPath = root.getAbsolutePath();
+                if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
+                    return DISK_FREE_SPACE_UNKNOWN;
+                }
+            }
+            return freeSpace;
         }
     }
+
 }

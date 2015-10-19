@@ -56,7 +56,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
  * Utilities for working with Images and creating thumbnails. Reuses thumbnails
  * by storing them in the case's cache directory.
  */
@@ -139,9 +138,6 @@ public class ImageUtils {
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
-
-    private ImageUtils() {
-    }
 
     public static List<String> getSupportedImageExtensions() {
         return Collections.unmodifiableList(SUPPORTED_IMAGE_EXTENSIONS);

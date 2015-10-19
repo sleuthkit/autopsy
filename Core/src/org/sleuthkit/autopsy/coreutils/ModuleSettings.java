@@ -39,6 +39,7 @@ public class ModuleSettings {
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
     public static final String DEFAULT_CONTEXT = "GeneralContext"; //NON-NLS
     public static final String MAIN_SETTINGS = "Case"; //NON-NLS
+    public static final String CURRENT_CASE_TYPE = "Current_Case_Type"; //NON-NLS
 
     /**
      * the constructor

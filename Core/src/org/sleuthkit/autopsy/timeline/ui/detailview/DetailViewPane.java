@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -30,7 +29,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.Cursor;
@@ -63,6 +61,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
@@ -70,60 +69,49 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
-import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavTreeNode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * FXML Controller class for a {@link EventDetailChart} based implementation of
- * a TimeLineView.
+ * Controller class for a {@link EventDetailChart} based implementation of a
+ * TimeLineView.
  *
  * This class listens to changes in the assigned {@link FilteredEventsModel} and
  * updates the internal {@link EventDetailChart} to reflect the currently
  * requested events.
  *
- * This class captures input from the user in the form of mouse clicks on graph
- * bars, and forwards them to the assigned {@link TimeLineController}
- *
  * Concurrency Policy: Access to the private members clusterChart, dateAxis,
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
- * must only be manipulated on the JavaFx thread (through {@link Platform#runLater(java.lang.Runnable)
- * }
- *
- * {@link CountsChartPane#filteredEvents} should encapsulate all needed
- * synchronization internally.
- *
- * TODO: refactor common code out of this class and CountsChartPane into
- * {@link AbstractVisualization}
+ * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEvent, AggregateEventNode, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
 
-    private final static Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
+    
+    private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private MultipleSelectionModel<TreeItem<NavTreeNode>> treeSelectionModel;
+    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
 
     //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();
 
-    private final Axis<AggregateEvent> verticalAxis = new EventAxis();
+    private final Axis<EventCluster> verticalAxis = new EventAxis();
 
     //private access to barchart data
-    private final Map<EventType, XYChart.Series<DateTime, AggregateEvent>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
+    private final Map<EventType, XYChart.Series<DateTime, EventCluster>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
 
     private final ScrollBar vertScrollBar = new ScrollBar();
 
     private final Region region = new Region();
 
-    private final ObservableList<AggregateEvent> aggregatedEvents = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    private final ObservableList<AggregateEventNode> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-
-    public ObservableList<AggregateEvent> getAggregatedEvents() {
-        return aggregatedEvents;
+    public ObservableList<EventBundle<?>> getEventBundles() {
+        return chart.getEventBundles();
     }
 
     public DetailViewPane(Pane partPane, Pane contextPane, Region spacer) {
@@ -146,16 +134,17 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
         dateAxis.setAutoRanging(false);
         region.minHeightProperty().bind(dateAxis.heightProperty());
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.getMaxVScroll()));
+        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.maxVScrollProperty()));
         requestLayout();
 
-        highlightedNodes.addListener((ListChangeListener.Change<? extends AggregateEventNode> change) -> {
+        highlightedNodes.addListener((ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
+
             while (change.next()) {
-                change.getAddedSubList().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(true);
+                change.getAddedSubList().forEach(node -> {
+                    node.applyHighlightEffect(true);
                 });
-                change.getRemoved().forEach(aeNode -> {
-                    aeNode.applyHighlightEffect(false);
+                change.getRemoved().forEach(node -> {
+                    node.applyHighlightEffect(false);
                 });
             }
         });
@@ -166,7 +155,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
         //These scroll related handlers don't affect any other view or the model, so they are handled internally
         //mouse wheel scroll handler
-        this.onScrollProperty().set((EventHandler<ScrollEvent>) (ScrollEvent t) -> {
+        this.onScrollProperty().set((ScrollEvent t) -> {
             vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() - t.getDeltaY() / 200.0)));
         });
 
@@ -212,8 +201,9 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
-                        -> t.getEvent().getDescription().equals(tn.getEvent().getDescription()))) {
+
+                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
+                        t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
@@ -227,17 +217,18 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     }
 
     private void incrementScrollValue(int factor) {
-        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.getMaxVScroll().get()))));
+        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
     }
 
-    public void setSelectionModel(MultipleSelectionModel<TreeItem<NavTreeNode>> selectionModel) {
+    public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle<?>>> selectionModel) {
         this.treeSelectionModel = selectionModel;
 
         treeSelectionModel.getSelectedItems().addListener((Observable observable) -> {
             highlightedNodes.clear();
-            for (TreeItem<NavTreeNode> tn : treeSelectionModel.getSelectedItems()) {
-                for (AggregateEventNode n : chart.getNodes((AggregateEventNode t)
-                        -> t.getEvent().getDescription().equals(tn.getValue().getDescription()))) {
+            for (TreeItem<EventBundle<?>> tn : treeSelectionModel.getSelectedItems()) {
+
+                for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
+                        t.getDescription().equals(tn.getValue().getDescription()))) {
                     highlightedNodes.add(n);
                 }
             }
@@ -250,7 +241,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
     }
 
     @Override
-    protected Axis<AggregateEvent> getYAxis() {
+    protected Axis<EventCluster> getYAxis() {
         return verticalAxis;
     }
 
@@ -279,15 +270,13 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
      *         EventType
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private XYChart.Series<DateTime, AggregateEvent> getSeries(final EventType et) {
-        XYChart.Series<DateTime, AggregateEvent> series = eventTypeToSeriesMap.get(et);
-        if (series == null) {
-            series = new XYChart.Series<>();
+    private XYChart.Series<DateTime, EventCluster> getSeries(final EventType et) {
+        return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
+            XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-            eventTypeToSeriesMap.put(et, series);
             dataSets.add(series);
-        }
-        return series;
+            return series;
+        });
     }
 
     @Override
@@ -300,11 +289,12 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 if (isCancelled()) {
                     return null;
                 }
-                Platform.runLater(() -> {
-                    if (isCancelled() == false) {
+
+                if (isCancelled() == false) {
+                    Platform.runLater(() -> {
                         setCursor(Cursor.WAIT);
-                    }
-                });
+                    });
+                }
 
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
@@ -314,7 +304,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                 final long upperBound = rangeInfo.getUpperBound();
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
-                aggregatedEvents.setAll(filteredEvents.getAggregatedEvents());
 
                 Platform.runLater(() -> {
                     if (isCancelled()) {
@@ -326,21 +315,24 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     eventTypeToSeriesMap.clear();
                     dataSets.clear();
                 });
-                final int size = aggregatedEvents.size();
-                int i = 0;
-                for (final AggregateEvent e : aggregatedEvents) {
+
+                List<EventCluster> eventClusters = filteredEvents.getEventClusters();
+
+                final int size = eventClusters.size();
+                for (int i = 0; i < size; i++) {
                     if (isCancelled()) {
                         break;
                     }
-                    updateProgress(i++, size);
+                    final EventCluster cluster = eventClusters.get(i);
+                    updateProgress(i, size);
                     updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
-                    final XYChart.Data<DateTime, AggregateEvent> xyData = new BarChart.Data<>(new DateTime(e.getSpan().getStartMillis()), e);
+                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getSpan().getStartMillis()), cluster);
 
-                    Platform.runLater(() -> {
-                        if (isCancelled() == false) {
-                            getSeries(e.getType()).getData().add(xyData);
-                        }
-                    });
+                    if (isCancelled() == false) {
+                        Platform.runLater(() -> {
+                            getSeries(cluster.getEventType()).getData().add(xyData);
+                        });
+                    }
                 }
 
                 Platform.runLater(() -> {
@@ -348,19 +340,20 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
                     layoutDateLabels();
                     updateProgress(1, 1);
                 });
-                return aggregatedEvents.isEmpty() == false;
+                return eventClusters.isEmpty() == false;
             }
         };
     }
 
     @Override
+
     protected Effect getSelectionEffect() {
         return null;
     }
 
     @Override
-    protected void applySelectionEffect(AggregateEventNode c1, Boolean applied) {
-        c1.applySelectionEffect(applied);
+    protected void applySelectionEffect(EventBundleNodeBase<?, ?, ?> c1, Boolean selected) {
+        c1.applySelectionEffect(selected);
     }
 
     private class DetailViewSettingsPane extends HBox {
@@ -376,12 +369,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
         @FXML
         private RadioButton countsRadio;
-
-        @FXML
-        private ResourceBundle resources;
-
-        @FXML
-        private URL location;
 
         @FXML
         private CheckBox bandByTypeBox;
@@ -425,7 +412,7 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
         @FXML
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
-        public DetailViewSettingsPane() {
+        DetailViewSettingsPane() {
             FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
@@ -435,9 +422,9 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
             assert oneEventPerRowBox != null : "fx:id=\"oneEventPerRowBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateAllBox != null : "fx:id=\"truncateAllBox\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
             assert truncateWidthSlider != null : "fx:id=\"truncateAllSlider\" was not injected: check your FXML file 'DetailViewSettings.fxml'."; // NON-NLS
-            bandByTypeBox.selectedProperty().bindBidirectional(chart.getBandByType());
-            truncateAllBox.selectedProperty().bindBidirectional(chart.getTruncateAll());
-            oneEventPerRowBox.selectedProperty().bindBidirectional(chart.getOneEventPerRow());
+            bandByTypeBox.selectedProperty().bindBidirectional(chart.bandByTypeProperty());
+            truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
+            oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
             truncateSliderLabel.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
@@ -450,11 +437,11 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
 
             descrVisibility.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
                 if (newToggle == countsRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.COUNT_ONLY);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.COUNT_ONLY);
                 } else if (newToggle == showRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.SHOWN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.SHOWN);
                 } else if (newToggle == hiddenRadio) {
-                    chart.getDescrVisibility().set(DescriptionVisibility.HIDDEN);
+                    chart.descrVisibilityProperty().set(DescriptionVisibility.HIDDEN);
                 }
             });
 
@@ -480,7 +467,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, AggregateEve
             hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
             hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
         }
-
     }
 
+    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return chart.new UnhideDescriptionAction(description, descriptionLoD);
+    }
+
+    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+        return chart.new HideDescriptionAction(description, descriptionLoD);
+    }
+
+  
 }

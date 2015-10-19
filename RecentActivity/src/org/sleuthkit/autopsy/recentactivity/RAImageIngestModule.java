@@ -209,7 +209,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * @return Path to directory
      */
     protected static String getRAOutputPath(Case a_case, String mod) {
-        String tmpDir = a_case.getModulesOutputDirAbsPath() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
+        String tmpDir = a_case.getModuleDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();

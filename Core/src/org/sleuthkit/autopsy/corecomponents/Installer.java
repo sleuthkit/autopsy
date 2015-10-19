@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,25 +69,26 @@ public class Installer extends ModuleInstall {
         /*
          * Open the passed in case, if an aut file was double clicked.
          */
-        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-            @Override
-            public void run() {
-                Collection<? extends OptionProcessor> processors = Lookup.getDefault().lookupAll(OptionProcessor.class);
-                for (OptionProcessor processor : processors) {
-                    if (processor instanceof OpenFromArguments) {
-                        OpenFromArguments argsProcessor = (OpenFromArguments) processor;
-                        String caseFile = argsProcessor.getDefaultArg();
-                        if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
+        WindowManager.getDefault().invokeWhenUIReady(() -> {
+            Collection<? extends OptionProcessor> processors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+            for (OptionProcessor processor : processors) {
+                if (processor instanceof OpenFromArguments) {
+                    OpenFromArguments argsProcessor = (OpenFromArguments) processor;
+                    final String caseFile = argsProcessor.getDefaultArg();
+                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(".aut") && new File(caseFile).exists()) { //NON-NLS
+                        new Thread(() -> {
+                            // Create case.
                             try {
                                 Case.open(caseFile);
-                                return;
-                            } catch (Exception e) {
+                            } catch (Exception ex) {
+                                logger.log(Level.SEVERE, "Error opening case: ", ex); //NON-NLS
                             }
-                        }
+                        }).start();
+                        return;
                     }
                 }
-                Case.invokeStartupDialog(); // bring up the startup dialog
             }
+            Case.invokeStartupDialog(); // bring up the startup dialog
         });
 
     }
@@ -95,18 +96,19 @@ public class Installer extends ModuleInstall {
     @Override
     public void uninstalled() {
         super.uninstalled();
-
     }
 
     @Override
     public void close() {
-        try {
-            if (Case.isCaseOpen()) {
-                Case.getCurrentCase().closeCase();
+        new Thread(() -> {
+            try {
+                if (Case.isCaseOpen()) {
+                    Case.getCurrentCase().closeCase();
+                }
+            } catch (CaseActionException | IllegalStateException unused) {
+                // Exception already logged. Shutting down, no need to do popup.
             }
-        } catch (CaseActionException ex) {
-            logger.log(Level.WARNING, "Error closing case. ", ex); //NON-NLS            
-        }
+        }).start();
     }
 
     private void setupLAF() {
@@ -157,8 +159,8 @@ public class Installer extends ModuleInstall {
         }
 
         // Overwrite the Metal menu item keys to use the Aqua versions
-        for (Map.Entry<Object, Object> entry : uiEntries.entrySet()) {
+        uiEntries.entrySet().stream().forEach((entry) -> {
             UIManager.put(entry.getKey(), entry.getValue());
-        }
+        });
     }
 }

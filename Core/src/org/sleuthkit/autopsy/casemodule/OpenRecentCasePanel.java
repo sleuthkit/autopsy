@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,8 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -37,7 +37,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
     static String[] caseNames;
     static String[] casePaths;
-    private static Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private static OpenRecentCasePanel instance;
     private RecentCasesTableModel model;
 
@@ -184,8 +184,8 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             logger.log(Level.INFO, "No Case paths exist, cannot open the case"); //NON-NLS
             return;
         }
-        String casePath = casePaths[imagesTable.getSelectedRow()];
-        String caseName = caseNames[imagesTable.getSelectedRow()];
+        final String casePath = casePaths[imagesTable.getSelectedRow()];
+        final String caseName = caseNames[imagesTable.getSelectedRow()];
         if (!casePath.equals("")) {
             // Close the startup menu
             try {
@@ -195,27 +195,34 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
             }
             // Open the recent cases
-            try {
-                if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(OpenRecentCasePanel.class,
-                                    "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
-                                    caseName),
-                            NbBundle.getMessage(OpenRecentCasePanel.class,
-                                    "OpenRecentCasePanel.openCase.msgDlg.err"),
-                            JOptionPane.ERROR_MESSAGE);
-                    RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
+                                caseName),
+                        NbBundle.getMessage(this.getClass(),
+                                "OpenRecentCasePanel.openCase.msgDlg.err"),
+                        JOptionPane.ERROR_MESSAGE);
+                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
-                    //if case is not opened, open the start window
-                    if (Case.isCaseOpen() == false) {
-                        StartupWindowProvider.getInstance().open();
-                    }
-
-                } else {
-                    Case.open(casePath); // open the case
+                //if case is not opened, open the start window
+                if (Case.isCaseOpen() == false) {
+                    StartupWindowProvider.getInstance().open();
                 }
-            } catch (CaseActionException ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex); //NON-NLS
+
+            } else {
+                new Thread(() -> {
+                    try {
+                        Case.open(casePath);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                            if (!Case.isCaseOpen()) {
+                                StartupWindowProvider.getInstance().open();
+                            }
+                        });
+                    }
+                }).start();
             }
         }
     }
@@ -286,7 +293,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     ret = shortenPath(casePaths[rowIndex]);
                     break;
                 default:
-                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex); //NON-NLS
+                    logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
                     break;
             }
             return ret;

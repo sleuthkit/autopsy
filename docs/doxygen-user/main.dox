@@ -15,6 +15,11 @@ The following topics are available here:
 - \subpage installation_page
 - \subpage quick_start_guide "Quick Start Guide"
 - \subpage workflow_page 
+- Multi-user Collaboration Setup
+ - \subpage install_activemq
+ - \subpage install_postgresql
+ - \subpage install_solr
+ - \subpage multiuser_page
 - Cases and Adding Data Sources
  - \subpage cases_page
  - \subpage ds_page

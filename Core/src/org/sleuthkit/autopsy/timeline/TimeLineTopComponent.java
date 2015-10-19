@@ -169,12 +169,12 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                             new Forward(controller).handle(new ActionEvent());
                         }
                     });
-            controller.getViewMode().addListener((Observable observable) -> {
-                if (controller.getViewMode().get().equals(VisualizationMode.COUNTS)) {
+            controller.viewModeProperty().addListener((Observable observable) -> {
+                if (controller.viewModeProperty().get().equals(VisualizationMode.COUNTS)) {
                     tabPane.getSelectionModel().select(filterTab);
                 }
             });
-            eventsTab.disableProperty().bind(controller.getViewMode().isEqualTo(VisualizationMode.COUNTS));
+            eventsTab.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
             visualizationPanel.setController(controller);
             navPanel.setController(controller);
             filtersPanel.setController(controller);

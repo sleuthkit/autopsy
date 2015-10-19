@@ -59,7 +59,6 @@ public class DataSourcesNode extends DisplayableItemNode {
     /*
      * Custom Keys implementation that listens for new data sources being added.
      */
-    // @@@ This can become private once DirectoryTree doesn't want to refresh the entire tree
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
@@ -107,9 +106,6 @@ public class DataSourcesNode extends DisplayableItemNode {
         /**
          * Refresh all content keys This creates new nodes of keys have changed.
          */
-       // I think this goes away once we get more listeners in place
-        // It was added as an interim stage 
-        @Deprecated
         public void refreshContentKeys() {
             for (Content key : currentKeys) {
                 refreshKey(key);

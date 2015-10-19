@@ -27,13 +27,6 @@ It is up to the user to distinguish between the paths when adding to this file.
 
 <Properties>
     <!-- Path to input directory -->
-    <!--indir value="X:\path\to\input\directory" /-->
-    <!-- Path to global CSV file -->
-    <!--global_csv value="X:\path\to\global\csv.txt" /-->
-    <!-- Path to images -->
-    <image value="..\input\nps-2008-jean.E01" />
-    <!--image value="../input/file.E01" /-->
-    <!--image value="This provokes an error." /-->
-    <!--image value="X:\Invalid\Path\Does\Not\Exist.img" /-->
-	<!--build value="X:\Path\To\Build\File.xml"-->
+    <!-- example: -->
+    <!--<image value="path-to-img" />-->
 </Properties>

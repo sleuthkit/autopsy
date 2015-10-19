@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,27 +114,29 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
-        AbstractFile file = task.getFile();
-        for (PipelineModule module : this.modules) {
-            try {
-                FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                module.process(file);
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                String msg = ex.getMessage();
-                // Jython run-time errors don't seem to have a message, but have details in toString.
-                if (msg == null) {
-                    msg = ex.toString();
-                }
-                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
-            }
-            if (this.job.isCancelled()) {
-                break;
-            }
-        }
-        file.close();
         if (!this.job.isCancelled()) {
-            IngestManager.getInstance().fireFileIngestDone(file);
+            AbstractFile file = task.getFile();
+            for (PipelineModule module : this.modules) {
+                try {
+                    FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
+                    module.process(file);
+                } catch (Throwable ex) { // Catch-all exception firewall
+                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                    String msg = ex.getMessage();
+                    // Jython run-time errors don't seem to have a message, but have details in toString.
+                    if (msg == null) {
+                        msg = ex.toString();
+                    }
+                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
+                }
+                if (this.job.isCancelled()) {
+                    break;
+                }
+            }
+            file.close();
+            if (!this.job.isCancelled()) {
+                IngestManager.getInstance().fireFileIngestDone(file);
+            }
         }
         FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;
@@ -147,17 +149,19 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
-        for (PipelineModule module : this.modules) {
-            try {
-                module.shutDown();
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                String msg = ex.getMessage();
-                // Jython run-time errors don't seem to have a message, but have details in toString.
-                if (msg == null) {
-                    msg = ex.toString();
+        if (this.running == true) { // Don't shut down pipelines that never started
+            for (PipelineModule module : this.modules) {
+                try {
+                    module.shutDown();
+                } catch (Throwable ex) { // Catch-all exception firewall
+                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
+                    String msg = ex.getMessage();
+                    // Jython run-time errors don't seem to have a message, but have details in toString.
+                    if (msg == null) {
+                        msg = ex.toString();
+                    }
+                    MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
                 }
-                MessageNotifyUtil.Notify.error(module.getDisplayName() + " Error", msg);
             }
         }
         this.running = false;

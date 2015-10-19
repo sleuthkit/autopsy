@@ -73,7 +73,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
+public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
 
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
@@ -173,8 +173,8 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
     protected abstract Axis<Y> getYAxis();
 
     /**
-     * update this visualization based on current state of zoom /
-     * filters.  Primarily this invokes the background {@link Task} returned by
+     * update this visualization based on current state of zoom / filters.
+     * Primarily this invokes the background {@link Task} returned by
      * {@link #getUpdateTask()} which derived classes must implement.
      */
     synchronized public void update() {
@@ -304,7 +304,7 @@ public abstract class AbstractVisualization<X, Y, N extends Node, C extends XYCh
             //x-positions (pixels) of the current branch and leaf labels
             double leafLabelX = 0;
 
-            if (dateTime.branch.equals("")) {
+            if (dateTime.branch.isEmpty()) {
                 //if there is only one part to the date (ie only year), just add a label for each tick
                 for (Axis.TickMark<X> t : tickMarks) {
                     assignLeafLabel(new TwoPartDateTime(getTickMarkLabel(t.getValue())).leaf,

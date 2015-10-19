@@ -23,7 +23,20 @@ There are also a set of tutorials that Basis Technology published on their blog:
 
 \section mod_dev_py_setup Basic Setup
 
-You don't really need anything to develop a python Autopsy module except for the standard Autopsy and your favorite text editor. We recommend pyCharm or the Python plug-in to NetBeans.
+-You don't really need anything to develop a python Autopsy module except for the standard Autopsy and your favorite text editor. We recommend IntelliJ IDEA or the Jython plug-in to NetBeans.
+
+To install NetBeans' plug-in:
+-# Download and install the Jython 2.7 installer (http://www.jython.org/downloads.html).
+-# Download NetBeans Python plug-in zip file (http://plugins.netbeans.org/plugin/56795/python4netbeans802).
+-# Unpack the content (.nbm files) of the zip file to the desired location.
+-# In NetBeans go to Tools->Plugins. In Download tab, click on Add Plugins, then choose extracted .nbm files.
+-# Setup Jython path from Tools->Python Platform, click on new, then choose Jython.exe (usually in C:/Program files/Jython2.7/bin/)
+
+To install IntelliJ IDEA + Python plug-in:
+-# Download and install IDEA https://www.jetbrains.com/idea/download/
+-# In File->Settings->Plugins-> install Python Community Edition
+-# In File->Project Structure->Project-> Project SDK-> choose IntelliJ IDEA Community Edition
+-# In Libraries->add new libraries->choose desired autopsy modules (usually in C:\Program Files\Autopsy-3.1.3\autopsy\modules)
 
 \section mod_dev_py_create Creating a Basic Python Module
 

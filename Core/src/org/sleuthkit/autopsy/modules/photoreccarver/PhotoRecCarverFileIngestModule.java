@@ -40,19 +40,13 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -60,6 +54,15 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with
@@ -82,6 +85,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
+    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private long jobId;
 
     private static class IngestJobTotals {
@@ -123,7 +127,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "unallocatedSpaceProcessingSettingsError.message"));
         }
 
-        this.rootOutputDirPath = PhotoRecCarverFileIngestModule.createModuleOutputDirectoryForCase();
+        this.rootOutputDirPath = createModuleOutputDirectoryForCase();
 
         Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
         executableFile = locateExecutable(execName.toString());
@@ -180,17 +184,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
 
             // Check that we have roughly enough disk space left to complete the operation
-            long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
-            // Some network drives always return -1 for free disk space.
+            // Some network drives always return -1 for free disk space. 
             // In this case, expect enough space and move on.
-
-            if ((freeDiskSpace != -1) && ((file.getSize() * 1.2) > freeDiskSpace)) {
-                totals.totalItemsWithErrors.incrementAndGet();
+            long freeDiskSpace = IngestServices.getInstance().getFreeDiskSpace();
+            if ((freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && ((file.getSize() * 1.2) > freeDiskSpace)) {
                 logger.log(Level.SEVERE, "PhotoRec error processing {0} with {1} Not enough space on primary disk to save unallocated space.", // NON-NLS
                         new Object[]{file.getName(), PhotoRecCarverIngestModuleFactory.getModuleName()}); // NON-NLS
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.UnableToCarve", file.getName()),
-                        NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.NotEnoughDiskSpace"));
-
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.UnableToCarve", file.getName()),
+                        NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.NotEnoughDiskSpace"));
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -219,7 +220,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             processAndSettings.redirectErrorStream(true);
             processAndSettings.redirectOutput(Redirect.appendTo(log));
 
-            int exitValue = ExecUtil.execute(processAndSettings, new FileIngestModuleProcessTerminator(this.context));
+            FileIngestModuleProcessTerminator terminator = new FileIngestModuleProcessTerminator(this.context, true);
+            int exitValue = ExecUtil.execute(processAndSettings, terminator);
 
             if (this.context.fileIngestIsCancelled() == true) {
                 // if it was cancelled by the user, result is OK
@@ -227,6 +229,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 logger.log(Level.INFO, "PhotoRec cancelled by user"); // NON-NLS
                 MessageNotifyUtil.Notify.info(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.cancelledByUser"));
                 return IngestModule.ProcessResult.OK;
+            } else if (terminator.getTerminationCode() == ProcTerminationCode.TIME_OUT) {
+                cleanup(outputDirPath, tempFilePath);
+                String msg = NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.processTerminated") + file.getName(); // NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "PhotoRecIngestModule.moduleError"), msg); // NON-NLS                
+                logger.log(Level.SEVERE, msg);
+                return IngestModule.ProcessResult.ERROR;
             } else if (0 != exitValue) {
                 // if it failed or was cancelled by timeout, result is ERROR
                 cleanup(outputDirPath, tempFilePath);
@@ -367,8 +375,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      *
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
-    synchronized static Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModulesOutputDirAbsPath(), PhotoRecCarverIngestModuleFactory.getModuleName());
+    synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
+        Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        if (UNCPathUtilities.isUNC(path)) {
+            // if the UNC path is using an IP address, convert to hostname
+            path = uncPathUtilities.ipToHostName(path);
+            if (path == null) {
+                throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.nonHostnameUNCPathUsed"));
+            }
+        }
         try {
             Files.createDirectory(path);
         } catch (FileAlreadyExistsException ex) {

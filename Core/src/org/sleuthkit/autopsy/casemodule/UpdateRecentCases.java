@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,8 +33,10 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
     int length;
     static boolean hasRecentCase = false;
 
-    /** the constructor */
-    UpdateRecentCases(){
+    /**
+     * the constructor
+     */
+    UpdateRecentCases() {
         // display last 5 cases.
         length = RecentCases.LENGTH - 1;
     }
@@ -60,7 +62,7 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
                 menuItem.setActionCommand(caseName[i].toUpperCase());
                 menuItem.addActionListener(new RecentItems(caseName[i], casePath[i]));
                 comps[i] = menuItem;
-                hasRecentCase = hasRecentCase || true;
+                hasRecentCase = true;
             }
         }
 

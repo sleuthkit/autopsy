@@ -8,7 +8,7 @@
     <property name="i586" location="${basedir}/Core/release/modules/lib/i586" />
     <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
     <property name="crt" location="${basedir}/thirdparty/crt" />
-        
+ 
     <import file="build-windows-installer.xml" />
     
     <target name="makeBaseLibDirs" description="Set up folder hierarchy under release/modules/lib">
@@ -27,10 +27,12 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
         
-        <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release"/>
-        <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release" />
+        <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
+        <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release_PostgreSQL" />
+        <property name="win64.TskLib.postgres_path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
         <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
+        <available property="win64.TskLib_postgres.exists" type="dir" file="{win64.TskLib.postgres_path}" />
     </target>
 
     <!-- The following copy the libtsk_jni dependencies to the Autopsy
@@ -42,15 +44,23 @@
             <include name="libewf.dll" />
             <include name="zlib.dll"/>
         </fileset>
+        
+        <fileset dir="${win64.TskLib.postgres_path}" id="postgres64dlls">
+            <include name="libeay32.dll"/>
+            <include name="ssleay32.dll"/>
+            <include name="libintl-8.dll"/>
+            <include name="libpq.dll"/>
+        </fileset>
 
         <copy todir="${amd64}" overwrite="true">
             <fileset refid="win64dlls" />
+            <fileset refid="postgres64dlls" />
         </copy>
-        
+
         <copy todir="${x86_64}" overwrite="true">
             <fileset refid="win64dlls" />
+            <fileset refid="postgres64dlls" />
         </copy>		
-        
     </target>
 
     <!-- copy 32-bit dlls into the installer folder -->
@@ -84,7 +94,6 @@
         <antcall target="copyWinTskLibs64ToBaseDir" inheritRefs="true" />
     </target>
 
-    
     <!-- CRT LIBS TO ZIP  - gets called from build.xml -->
     <target name="copyLibsToZip" depends="copyCRT32ToZIP,copyCRT64ToZIP"/>
     
