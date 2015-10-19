@@ -1,0 +1,19 @@
+/*! \page performance_page Optimizing Performance
+
+After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
+
+1.	Number of Threads: Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
+    - Run Autopsy from the Start Menu or desktop
+    - When presented with the case creation splash screen, cancel/close the window
+    - Select "Tools", "Options"
+    - On the "Autopsy" tab, there is a drop down for _Number of threads to use for file ingest_. We recommend you set this value 4.  If you set this number too high, performance can degrade because the pipelines are fighting for the same physical resources. Individual testing should be done to find an optimal setting. 
+    - After each change, restart Autopsy to let this setting take effect.
+
+<br><br>
+\image html threadcount.PNG
+<br><br>
+
+2.	When making a case, use different drives to store the case and the images. This allows the maximum amount of data to be read and written at the same time. 
+
+3.	We have had best performance using either solid state drives or fibre channel-attached SAN storage. 
+*/

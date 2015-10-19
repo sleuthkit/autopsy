@@ -6,7 +6,7 @@ Overview
 
 This is the User's Guide for the <a href="http://www.sleuthkit.org/autopsy/">open source Autopsy platform</a>.  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it. This guide should help you with using Autopsy. The <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/3.1/"> developer's guide</a> will help you develop your own Autopsy modules.
 
-Autopsy 3 is a complete rewrite from Autopsy 2, and none of this document is relevant to Autopsy 2.
+Autopsy 4 (and 3) are a complete rewrite from Autopsy 2, and none of this document is relevant to Autopsy 2.
 
 Help Topics
 -------
@@ -15,11 +15,6 @@ The following topics are available here:
 - \subpage installation_page
 - \subpage quick_start_guide "Quick Start Guide"
 - \subpage workflow_page 
-- Multi-user Collaboration Setup
- - \subpage install_activemq
- - \subpage install_postgresql
- - \subpage install_solr
- - \subpage multiuser_page
 - Cases and Adding Data Sources
  - \subpage cases_page
  - \subpage ds_page
@@ -42,14 +37,21 @@ The following topics are available here:
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
-<!-- - \subpage image_gallery_page      Not released yet, coming soon-->
+ - \subpage image_gallery_page
  - \subpage file_search_page
  - \subpage timeline_page
  - \subpage stix_page
 - Reporting
-    - \subpage tagging_page
-    - \subpage reporting_page
+ - \subpage tagging_page
+ - \subpage reporting_page
 - \subpage module_install_page
+- \subpage performance_page
+- Multi-user Collaborative Deployments
+ - \subpage install_multiuser_page
+  - \subpage install_activemq
+  - \subpage install_postgresql
+  - \subpage install_solr
+ - \subpage multiuser_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.
 

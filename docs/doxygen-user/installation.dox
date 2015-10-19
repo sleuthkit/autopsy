@@ -5,68 +5,28 @@
 \section prereqs Prerequisites
 It is _highly_ recommended to remove or disable any antivirus software from computers that will be processing or reviewing cases. Antivirus software will often conflict with forensic software, and may quarantine or even delete some of your results before you get a chance to look at them.
 <br><br>
+
+
+\section install Deployment Types
+Starting with Autopsy 4.0.0, there are two ways to deploy Autopsy:
+- **Single-User**: Cases can be open by only a single instance of Autopsy at a time.  Autopsy installations do not communicate with each other.  This is the easiest to install and deploy.  This page outlines that installation process. 
+- **Multi-User**: Cases can be open by multiple users at the same time and users can see what each other is doing. This collaborative deployment requires installation and configuration of other network-based services. The installation of this deployment is covered in \ref install_multiuser_page.
+
+
 \section download Download
 Download Autopsy from the website:
 
 http://sleuthkit.org/autopsy/download.php
 
-The current version of Autopsy 3 runs only on Microsoft Windows.
-We have gotten older versions to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
-<br><br>
+The current version of Autopsy 4 is distributed on sleuthkit.org only as a Windows installer. It can run on Linux and OS X, but requires some manual setup.  
 
-\section installation_section Installation
+
+\section install_standalone Installation
 To install Autopsy, perform the following steps:
 1.	Run the Autopsy _msi_ file
 2.	If Windows prompts with User Account Control, click _Yes_
 3.	Click through the dialog boxes until you click a button that says _Finish_
-4.	Core Autopsy should now be fully installed
-
-<br>
-\section deployment_types Deployment Types
-There are two types of cases that Autopsy can create and use:
- - **Standalone**: A single user with a single computer. Not intended to have multiple examiners working on the same case.
- - **Collaborative**: A multi-user environment with multiple computers. Multiple examiners can work on the same case at the same time.
-
-Both deployment types use the same analysis modules and the same base installer.
-<br><br>
-\subsection standalone_install Standalone (Single User) Installation
-1.	Install Autopsy as explained in \ref installation_section above. The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
-
-<br>
-\subsection collab_install Collaborative (Multi-user) Installation
-To use the Multi-user collaboration feature, three additional software packages are required. These packages install servers that need to be accessible to machines running Autopsy collaborative cases via the network. These servers do not have to be installed on the same machine as Autopsy, nor on the same machine as each other.
-
-1.	Install Autopsy just as in \ref standalone_install above
-2.	Install and configure Apache ActiveMQ on a machine accessible to Autopsy nodes. This is explained in \ref install_activemq.
-3.	Install and configure Bitnami Solr on a machine accessible to Autopsy nodes. This is explained in \ref install_solr.
-4.	Install and configure PostgreSQL on a machine accessible to Autopsy nodes. This is explained in \ref install_postgresql.
-5.	Configure Multi-user settings. This is explained in \ref multi_user_options.
-
-<br>
-While you may run all of the external services (ActiveMQ, Solr, and PostgreSQL) on the same machine that is running Autopsy, this is not ideal. Spreading the services out across several machines can improve throughput. Keep in mind that all the machines need to be able to communicate with each other and see the shared drive over the network.
-If possible, place Solr on a machine by itself, as it is the largest RAM and CPU utilizer among the servers. 
-<br><br>
-To use Multi-user cases, there needs to be a shared network drive accessible to all participating computers.
-<br><br>
-
-\section optimizing_performance Optimizing Performance
-After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
-1.	Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
-    - Run Autopsy from the Start Menu or desktop
-    - When presented with the case creation splash screen, cancel/close the window
-    - Select "Tools", "Options"
-    - On the "Autopsy" tab, there is a drop down for _Number of threads to use for file ingest_. We recommend you set this value 4.  If you set this number too high, performance can degrade because the pipelines are fighting for the same physical resources. Individual testing should be done to find an optimal setting. 
-    - After each change, restart Autopsy to let this setting take effect.
-<br><br>
-\image html threadcount.PNG
-<br><br>
-2.	In the screenshot above, there is an option to <i>Enable timeout to allow modules to automatically terminate after a set amount of time</i>. Enabling this feature by applying a checkmark and setting a number of hours puts a maximum amount of time an individual module may attempt to process before being stopped. If enabled and a module attempts to run for longer than this value, Autopsy stops the module and  moves on to process the next module. This allows processing to continue even if a rogue module does not end appropriately in a reasonable amount of time.
-<br><br>
-3.	When making a case, use different drives to store the case and the images. The case directory is where the SQLite database and keyword search index are stored in Single-user cases. This allows the maximum amount of data to be read and written at the same time. If using collaborative Multi-user mode, it is important that UNC paths are used to specifiy drive names. Fully-specified UNC paths should be in the form of <i>\\\\hostname\\sharename\\folder</i>.
-<br><br>
-4.	We have had best performance using either solid state drives or fibre channel-attached SAN storage. 
-
-
+4.	Autopsy should now be fully installed
 
 
 */
