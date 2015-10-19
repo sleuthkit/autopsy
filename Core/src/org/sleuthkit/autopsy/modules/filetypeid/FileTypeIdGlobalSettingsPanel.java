@@ -240,10 +240,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         Collections.sort(mimeTypes);
         typesListModel.clear();
         for (String mimeType : mimeTypes) {
-            int i = 0;
             for (FileType fileType : fileTypes.get(mimeType)) {
                 typesListModel.addElement(fileType);
-                i++;
             }
 
         }
