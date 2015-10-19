@@ -558,8 +558,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_newTypeButtonActionPerformed
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
-        FileType Filetype = typesList.getSelectedValue();
-        UserDefinedFileTypesManager.getInstance().removeFileTypeFromMap(fileTypes, Filetype);
+        FileType fileType = typesList.getSelectedValue();
+        UserDefinedFileTypesManager.getInstance().removeFileTypeFromMap(fileTypes, fileType);
         updateFileTypesListModel();
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
