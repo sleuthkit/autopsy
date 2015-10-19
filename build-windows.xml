@@ -50,6 +50,7 @@
             <include name="ssleay32.dll"/>
             <include name="libintl-8.dll"/>
             <include name="libpq.dll"/>
+            <include name="msvcr120.dll"/>
         </fileset>
 
         <copy todir="${amd64}" overwrite="true">
@@ -147,6 +148,4 @@
             <fileset refid="crt64dlls"/>
         </copy>
     </target>
-    
-
 </project>
