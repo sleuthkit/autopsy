@@ -224,7 +224,7 @@ class FileType {
         public boolean equals(Object other) {
             if (other != null && other instanceof Signature) {
                 Signature that = (Signature) other;
-                if(this.getSignatureBytes() == that.getSignatureBytes() && this.getOffset() == that.getOffset())
+                if(Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) && this.getOffset() == that.getOffset())
                     return true;
             }
             return false;
