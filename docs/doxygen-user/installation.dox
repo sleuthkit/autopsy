@@ -8,7 +8,7 @@ It is _highly_ recommended to remove or disable any antivirus software from comp
 
 
 \section install Deployment Types
-Starting with Autopsy 4.0.0, there are two ways to deploy Autopsy:
+Starting with Autopsy 4.0, there are two ways to deploy Autopsy:
 - **Single-User**: Cases can be open by only a single instance of Autopsy at a time.  Autopsy installations do not communicate with each other.  This is the easiest to install and deploy.  This page outlines that installation process. 
 - **Multi-User**: Cases can be open by multiple users at the same time and users can see what each other is doing. This collaborative deployment requires installation and configuration of other network-based services. The installation of this deployment is covered in \ref install_multiuser_page.
 

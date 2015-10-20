@@ -2,7 +2,7 @@
 
 \section multiuser_install Multi-user Installation
 
-Autopsy can be setup to work in an environment where multiple users on different computers can have the same case open at the same time.  To setup this type of environment, you will need to configure additional (free and open source) network-based services. 
+Autopsy can be setup to work in an environment where multiple users on different computers can have the same case open at the same time.  To set up this type of environment, you will need to configure additional (free and open source) network-based services. 
 
 \subsection multiuser_install_services Network-based Services
 
@@ -23,7 +23,7 @@ Ensure that the central storage and PostgreSQL servers are regularly backed up.
 
 Once the infrastructure is in place, you will need to configure Autopsy to use them. 
 - Install Autopsy on each client system as normal using the steps from \ref installation_page.
-- Start Autopsy and open the multi-user options panel from Tools -> Options -> Multi-user.  As shown in the screenshot below, you can then enter all of the address and authentication information for the network-based services. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+- Start Autopsy and open the multi-user options panel from “Tools”, “Options”, “Multi-user”.  As shown in the screenshot below, you can then enter all of the address and authentication information for the network-based services. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
 
 \image html multiuser_settings.PNG
 

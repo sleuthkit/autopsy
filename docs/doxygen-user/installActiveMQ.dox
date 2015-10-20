@@ -22,17 +22,17 @@ If you need the JRE, install it with the default settings.
 
 1. Extract the contents of the ActiveMQ archive folder to a location of your choice, bearing in mind that the files should be in a location that the running process will have write permissions to the folder. A typical folder choice is <i>C:\\Program Files\\apache-activemq-5.11.1</i>. Typically, it will ask for administrator permission to move the folder. Allow it if required. 
 
-2.	Edit the <i>conf\\activemq.xml</i> in the extracted folder to add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
+2. Edit the <i>conf\\activemq.xml</i> in the extracted folder to add <i>"&amp;wireFormat.maxInactivityDuration=0"</i> to the URI for the _transportConnector_ named _openwire_. Add the text highlighted in yellow below:
 <br><br>
 \image html maxinactivityduration.PNG
 <br><br>
 
 
-3.	Install ActiveMQ as a service by navigating to the folder <i>bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
+3. Install ActiveMQ as a service by navigating to the folder <i>bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
 
-4.  Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
+4. Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
 
-5. ActiveMQ should now be fully installed and configured. You can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. If you can see a page that looks like the following, it is ready to function.
+5. ActiveMQ should now be installed and configured using the default credentials.  You should go to the next section to change the default passwords. To test your installation, you can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. If you can see a page that looks like the following, it is ready to function.
 <br><br>
 \image html activemq.PNG
 <br><br>
@@ -47,11 +47,12 @@ You can optionally add authentication to your ActiveMQ server.  The ActiveMQ com
 The following directions allow you to set up credentials: 
 
 1. Copy and paste the following text to the file <i>"conf\groups.properties"</i>, overwriting the text highlighted in yellow in the screenshot below:
-            admins=system,sslclient,client,broker1,broker2
-            tempDestinationAdmins=system,user,sslclient,client,broker1,broker2
-            users=system,user,sslclient,client,broker1,broker2
-            guests=guest
-            
+<BLOCKQUOTE>
+admins=system,sslclient,client,broker1,broker2<br />
+tempDestinationAdmins=system,user,sslclient,client,broker1,broker2<br />
+users=system,user,sslclient,client,broker1,broker2<br />
+guests=guest<br />
+</BLOCKQUOTE>            
 <br><br>
 \image html groups.properties.before.PNG
 <br><br>
@@ -60,12 +61,12 @@ When complete, the file should look like this:
 \image html groups.properties.after.PNG
 <br><br>     
 2. Copy and paste the following text to the file <i>"conf\users.properties"</i>, overwriting the text highlighted in yellow in the screenshot below:
-            
-            system=manager
-            user=password
-            guest=password
-            sslclient=CN=localhost, OU=activemq.org, O=activemq.org, L=LA, ST=CA, C=US
-            
+<BLOCKQUOTE>            
+system=manager<br />
+user=password<br />
+guest=password<br />
+sslclient=CN=localhost, OU=activemq.org, O=activemq.org, L=LA, ST=CA, C=US<br />
+</BLOCKQUOTE>            
 <br><br>
 \image html users.properties.before.PNG
 <br><br>    
