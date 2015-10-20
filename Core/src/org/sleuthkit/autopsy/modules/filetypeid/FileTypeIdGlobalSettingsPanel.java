@@ -629,7 +629,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         /**
          * Get the interesting files set details.
          */
-        String filesSetName = filesSetNameTextField.getText();
+        String filesSetName = "";
+        if(postHitCheckBox.isSelected())
+            filesSetName = filesSetNameTextField.getText();
         if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
