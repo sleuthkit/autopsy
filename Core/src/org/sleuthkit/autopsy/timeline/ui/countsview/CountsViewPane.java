@@ -66,7 +66,6 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
@@ -279,9 +278,9 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         };
     }
 
-    public CountsViewPane(Pane partPane, Pane contextPane, Region spacer) {
-        super(partPane, contextPane, spacer);
-        chart = new EventCountsChart(dateAxis, countAxis);
+    public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        super(controller, partPane, contextPane, spacer);
+        chart = new EventCountsChart(controller, dateAxis, countAxis);
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
@@ -310,9 +309,6 @@ public class CountsViewPane extends AbstractVisualization<String, Number, Node, 
         });
     }
 
- 
-
-    
     @Override
     protected NumberAxis getYAxis() {
         return countAxis;

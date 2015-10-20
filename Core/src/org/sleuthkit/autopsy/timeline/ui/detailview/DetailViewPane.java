@@ -91,7 +91,6 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  */
 public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
 
-    
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
@@ -114,9 +113,9 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         return chart.getEventBundles();
     }
 
-    public DetailViewPane(Pane partPane, Pane contextPane, Region spacer) {
-        super(partPane, contextPane, spacer);
-        chart = new EventDetailChart(dateAxis, verticalAxis, selectedNodes);
+    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        super(controller, partPane, contextPane, spacer);
+        chart = new EventDetailChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
@@ -209,11 +208,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             });
         });
 
-    }
-
-    @Override
-    public synchronized void setModel(FilteredEventsModel filteredEvents) {
-        super.setModel(filteredEvents);
     }
 
     private void incrementScrollValue(int factor) {
@@ -477,5 +471,4 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 
-  
 }

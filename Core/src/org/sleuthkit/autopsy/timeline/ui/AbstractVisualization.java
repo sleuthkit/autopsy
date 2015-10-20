@@ -50,12 +50,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
@@ -73,7 +71,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
+public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
 
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
@@ -93,11 +91,15 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
      */
     private Task<Boolean> updateTask;
 
-    protected TimeLineController controller;
+    final protected TimeLineController controller;
 
-    protected FilteredEventsModel filteredEvents;
+    final protected FilteredEventsModel filteredEvents;
 
-    protected ReadOnlyListWrapper<N> selectedNodes = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+    final protected ReadOnlyListWrapper<N> selectedNodes = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+
+    private InvalidationListener invalidationListener = (Observable observable) -> {
+        update();
+    };
 
     public ReadOnlyListProperty<N> getSelectedNodes() {
         return selectedNodes.getReadOnlyProperty();
@@ -177,7 +179,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
      * Primarily this invokes the background {@link Task} returned by
      * {@link #getUpdateTask()} which derived classes must implement.
      */
-    synchronized public void update() {
+    final synchronized public void update() {
         if (updateTask != null) {
             updateTask.cancel(true);
             updateTask = null;
@@ -203,7 +205,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
         controller.monitorTask(updateTask);
     }
 
-    synchronized public void dispose() {
+    final synchronized public void dispose() {
         if (updateTask != null) {
             updateTask.cancel(true);
         }
@@ -211,7 +213,13 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
         invalidationListener = null;
     }
 
-    protected AbstractVisualization(Pane partPane, Pane contextPane, Region spacer) {
+    protected AbstractVisualization(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        this.controller = controller;
+
+        this.filteredEvents = controller.getEventsModel();
+        this.filteredEvents.registerForEvents(this);
+        this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
+
         this.leafPane = partPane;
         this.branchPane = contextPane;
         this.spacer = spacer;
@@ -226,32 +234,8 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
                 });
             }
         });
-    }
 
-    @Override
-    synchronized public void setController(TimeLineController controller) {
-        this.controller = controller;
-        chart.setController(controller);
-
-        setModel(controller.getEventsModel());
-        TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            update();
-        });
-    }
-
-    @Override
-    synchronized public void setModel(@Nonnull FilteredEventsModel filteredEvents) {
-
-        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
-            this.filteredEvents.unRegisterForEvents(this);
-            this.filteredEvents.zoomParametersProperty().removeListener(invalidationListener);
-        }
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
-            filteredEvents.zoomParametersProperty().addListener(invalidationListener);
-        }
-        this.filteredEvents = filteredEvents;
-
+        TimeLineController.getTimeZone().addListener(invalidationListener);
         update();
     }
 
@@ -259,10 +243,6 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
     }
-
-    protected InvalidationListener invalidationListener = (Observable observable) -> {
-        update();
-    };
 
     /**
      * iterate through the list of tick-marks building a two level structure of

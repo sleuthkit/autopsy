@@ -104,9 +104,9 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
     private ContextMenu chartContextMenu;
 
-    private TimeLineController controller;
+    private final TimeLineController controller;
 
-    private FilteredEventsModel filteredEvents;
+    private final FilteredEventsModel filteredEvents;
 
     /**
      * a user positionable vertical line to help compare events
@@ -183,8 +183,19 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+        this.controller = controller;
+        this.filteredEvents = this.controller.getEventsModel();
+
+        filteredEvents.zoomParametersProperty().addListener(o -> {
+            clearGuideLine();
+            clearIntervalSelector();
+            selectedNodes.clear();
+            projectionMap.clear();
+            controller.selectEventIDs(Collections.emptyList());
+        });
+
         dateAxis.setAutoRanging(false);
 
         verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
@@ -204,6 +215,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         truncateAll.addListener(layoutInvalidationListener);
         truncateWidth.addListener(layoutInvalidationListener);
         descrVisibility.addListener(layoutInvalidationListener);
+        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
         //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
         //TODO: seems like a hack, can we remove? -jm
@@ -263,30 +275,6 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     public synchronized SimpleBooleanProperty bandByTypeProperty() {
         return bandByType;
-    }
-
-    @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.zoomParametersProperty().addListener(o -> {
-                clearGuideLine();
-                clearIntervalSelector();
-
-                selectedNodes.clear();
-                projectionMap.clear();
-                controller.selectEventIDs(Collections.emptyList());
-            });
-        }
-        this.filteredEvents = filteredEvents;
-
     }
 
     @Override

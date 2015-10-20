@@ -32,15 +32,15 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 
 /**
  * Interface for TimeLineViews that are 'charts'.
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> extends TimeLineView {
+public interface TimeLineChart<X> {
 
+//    void setController(TimeLineController controller);
     IntervalSelector<? extends X> getIntervalSelector();
 
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
@@ -290,7 +290,9 @@ public interface TimeLineChart<X> extends TimeLineView {
          */
         private enum DragPosition {
 
-            LEFT, CENTER, RIGHT
+            LEFT,
+            CENTER,
+            RIGHT
         }
     }
 }

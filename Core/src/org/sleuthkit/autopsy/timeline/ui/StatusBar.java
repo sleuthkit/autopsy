@@ -28,13 +28,12 @@ import javafx.scene.layout.Region;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineUI;
 
 /**
  * simple status bar that only shows one possible message determined by
  * {@link TimeLineController#newEventsFlag}
  */
-public class StatusBar extends ToolBar implements TimeLineUI {
+public class StatusBar extends ToolBar {
 
     private TimeLineController controller;
 
@@ -53,7 +52,8 @@ public class StatusBar extends ToolBar implements TimeLineUI {
     @FXML
     private Label messageLabel;
 
-    public StatusBar() {
+    public StatusBar(TimeLineController controller) {
+        this.controller = controller;
         FXMLConstructor.construct(this, "StatusBar.fxml"); // NON-NLS
     }
 
@@ -70,11 +70,7 @@ public class StatusBar extends ToolBar implements TimeLineUI {
         taskLabel.setText(NbBundle.getMessage(this.getClass(), "StatusBar.taskLabel.text"));
         taskLabel.setVisible(false);
         HBox.setHgrow(spacer, Priority.ALWAYS);
-    }
 
-    @Override
-    public void setController(TimeLineController controller) {
-        this.controller = controller;
         refreshLabel.visibleProperty().bind(this.controller.getNewEventsFlag());
         taskLabel.textProperty().bind(this.controller.getTaskTitle());
         messageLabel.textProperty().bind(this.controller.getMessage());
