@@ -62,11 +62,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         if (UserPreferences.getIsMultiUserModeEnabled()) {
             multiUserCaseRadioButton.setEnabled(true);
             multiUserCaseRadioButton.setSelected(true);
-            multiUserSettingsWarningLabel.setVisible(false);
         } else {
             multiUserCaseRadioButton.setEnabled(false);
             singleUserCaseRadioButton.setSelected(true);
-            multiUserSettingsWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.MultiUserDisabled.text"));
         }
         validateSettings();
     }
