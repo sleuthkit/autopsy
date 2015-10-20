@@ -59,7 +59,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * is obtained from the user-defined types manager.
      */
     private DefaultListModel<FileType> typesListModel;
-    private Map<String, java.util.List<FileType>> fileTypes;
+    private java.util.List<FileType> fileTypes;
 
     /**
      * This panel implements a property change listener that listens to ingest
@@ -227,7 +227,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     ex.getLocalizedMessage(),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.loadFailed.title"),
                     JOptionPane.ERROR_MESSAGE);
-            fileTypes = Collections.emptyMap();
+            fileTypes = Collections.emptyList();
         }
         enableButtons();
     }
@@ -236,13 +236,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * Sets the list model for the file types list component.
      */
     private void updateFileTypesListModel() {
-        ArrayList<String> mimeTypes = new ArrayList<>(fileTypes.keySet());
-        Collections.sort(mimeTypes);
         typesListModel.clear();
-        for (String mimeType : mimeTypes) {
-            for (FileType fileType : fileTypes.get(mimeType)) {
-                typesListModel.addElement(fileType);
-            }
+        for (FileType fileType : fileTypes) {
+            typesListModel.addElement(fileType);
 
         }
     }
@@ -561,7 +557,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
         FileType fileType = typesList.getSelectedValue();
-        UserDefinedFileTypesManager.getInstance().removeFileTypeFromMap(fileTypes, fileType);
+        fileTypes.remove(fileType);
         updateFileTypesListModel();
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
@@ -630,8 +626,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          * Get the interesting files set details.
          */
         String filesSetName = "";
-        if(postHitCheckBox.isSelected())
+        if (postHitCheckBox.isSelected()) {
             filesSetName = filesSetNameTextField.getText();
+        }
         if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
@@ -646,9 +643,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
         FileType selected = typesList.getSelectedValue();
-        if (selected != null)
-            UserDefinedFileTypesManager.getInstance().removeFileTypeFromMap(fileTypes, selected);
-        UserDefinedFileTypesManager.getInstance().addFileTypeToMap(fileTypes, fileType);
+        if (selected != null) {
+            fileTypes.remove(selected);
+        }
+        fileTypes.add(fileType);
         updateFileTypesListModel();
         typesList.setSelectedValue(fileType.getMimeType(), true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed
