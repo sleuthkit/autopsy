@@ -25,10 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
@@ -233,38 +230,6 @@ final class UserDefinedFileTypesManager {
     private void addUserDefinedFileType(FileType fileType) {
         userDefinedFileTypes.add(fileType);
         fileTypes.add(fileType);
-    }
-
-    /**
-     * Adds given FileType to given map: if the mimetype exists, add fileType to
-     * that mimetype's list. otherwise, create a new mimetype with the new
-     * fileType.
-     *
-     * @param map The map to be modified.
-     * @param fileType The added FileType
-     */
-    void addFileTypeToMap(Map<String, List<FileType>> map, FileType fileType) {
-        String mimeType = fileType.getMimeType();
-        if (map.containsKey(mimeType)) {
-            map.get(mimeType).add(fileType);
-        } else {
-            List<FileType> newList = new ArrayList<>();
-            newList.add(fileType);
-            map.put(mimeType, newList);
-        }
-    }
-
-    /**
-     * Removes given fileType from given map if it exists.
-     *
-     * @param map
-     * @param fileType
-     */
-    void removeFileTypeFromMap(Map<String, List<FileType>> map, FileType fileType) {
-        String mimeType = fileType.getMimeType();
-        if (map.containsKey(mimeType)) {
-            map.get(mimeType).remove(fileType);
-        }
     }
 
     /**
