@@ -64,13 +64,13 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
-import org.sleuthkit.autopsy.coreutils.History;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.History;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -135,6 +135,21 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
+    private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
+
+    /**
+     * status is a string that will be displayed in the status bar as a kind of
+     * user hint/information when it is not empty
+     *
+     * @return the status property
+     */
+    public ReadOnlyStringProperty getStatusProperty() {
+        return status.getReadOnlyProperty();
+    }
+
+    public void setStatus(String string) {
+        status.set(string);
+    }
     private final Case autoCase;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)

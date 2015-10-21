@@ -90,10 +90,10 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A Container for an {@link AbstractVisualization}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstractVisualization},
+ * A container for an {@link AbstractVisualizationPane}, has a toolbar on top to
+ * hold settings widgets supplied by contained {@link AbstAbstractVisualization}
  * and the histogram / timeselection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractVisualization}
+ * replacement axis to contained {@link AbstractAbstractVisualization}
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
@@ -109,7 +109,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NavPanel navPanel;
 
-    private AbstractVisualization<?, ?, ?, ?> visualization;
+    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
 
     //// range slider and histogram componenets
     @FXML
@@ -178,8 +178,8 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private FilteredEventsModel filteredEvents;
 
-    private final ChangeListener<Object> rangeSliderListener
-            = (observable1, oldValue, newValue) -> {
+    private final ChangeListener<Object> rangeSliderListener =
+            (observable1, oldValue, newValue) -> {
                 if (rangeSlider.isHighValueChanging() == false && rangeSlider.isLowValueChanging() == false) {
                     Long minTime = filteredEvents.getMinTime() * 1000;
                     controller.pushTimeRange(new Interval(
@@ -361,7 +361,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
     }
 
-    private synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+    private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {
@@ -377,7 +377,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 if (visualization instanceof DetailViewPane) {
                     navPanel.setDetailViewPane((DetailViewPane) visualization);
                 }
-                visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
                         notificationPane.setContent(new StackPane(visualization, new Region() {
