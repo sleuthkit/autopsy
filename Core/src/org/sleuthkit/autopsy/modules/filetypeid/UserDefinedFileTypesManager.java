@@ -198,11 +198,6 @@ final class UserDefinedFileTypesManager {
         fileType = new FileType("application/x-123", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
         fileTypes.put(fileType.getMimeType(), fileType);
         
-        // Add rule for .cur
-        byteArray = DatatypeConverter.parseHexBinary("00000200");
-        fileType = new FileType("image/x-icon", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-        fileTypes.put(fileType.getMimeType(), fileType);
-        
         // Add rule for Radiance image
         byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");
         fileType = new FileType("image/vnd.radiance", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
