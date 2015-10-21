@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
@@ -44,11 +43,11 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * Customized {@link StackedBarChart<String, Number>} used to display the event
  * counts in {@link CountsViewPane}
  */
-class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
+final class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
 
-    private ContextMenu contextMenu;
+    private final ContextMenu contextMenu;
 
-    private TimeLineController controller;
+    private final TimeLineController controller;
 
     private IntervalSelector<? extends String> intervalSelector;
 
@@ -59,8 +58,9 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
      */
     private RangeDivisionInfo rangeInfo;
 
-    EventCountsChart(CategoryAxis dateAxis, NumberAxis countAxis) {
+    EventCountsChart(TimeLineController controller, CategoryAxis dateAxis, NumberAxis countAxis) {
         super(dateAxis, countAxis);
+        this.controller = controller;
         //configure constant properties on axes and chart
         dateAxis.setAnimated(true);
         dateAxis.setLabel(null);
@@ -86,6 +86,12 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
         setOnMouseReleased(dragHandler);
         setOnMouseDragged(dragHandler);
 
+        contextMenu = ActionUtils.createContextMenu(
+                Arrays.asList(new ActionGroup(
+                                NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
+                                new Back(controller),
+                                new Forward(controller))));
+        contextMenu.setAutoHide(true);
         setOnMouseClicked((MouseEvent clickEvent) -> {
             contextMenu.hide();
             if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
@@ -93,25 +99,18 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
                 clickEvent.consume();
             }
         });
+
+        this.controller.getEventsModel().zoomParametersProperty().addListener(o -> {
+            clearIntervalSelector();
+            controller.selectEventIDs(Collections.emptyList());
+        });
+
     }
 
     @Override
     public void clearIntervalSelector() {
         getChartChildren().remove(intervalSelector);
         intervalSelector = null;
-    }
-
-    @Override
-    public final synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-        //we have defered creating context menu until control is available
-        contextMenu = ActionUtils.createContextMenu(
-                Arrays.asList(new ActionGroup(
-                                NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
-                                new Back(controller),
-                                new Forward(controller))));
-        contextMenu.setAutoHide(true);
     }
 
     @Override
@@ -123,14 +122,6 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
     public void setIntervalSelector(IntervalSelector<? extends String> newIntervalSelector) {
         intervalSelector = newIntervalSelector;
         getChartChildren().add(getIntervalSelector());
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        filteredEvents.zoomParametersProperty().addListener(o -> {
-            clearIntervalSelector();
-            controller.selectEventIDs(Collections.emptyList());
-        });
     }
 
     @Override
@@ -175,9 +166,9 @@ class EventCountsChart extends StackedBarChart<String, Number> implements TimeLi
      * Interval Selector for the counts chart, adjusts interval based on
      * rangeInfo to include final period
      */
-    private class CountsIntervalSelector extends IntervalSelector<String> {
+    final private class CountsIntervalSelector extends IntervalSelector<String> {
 
-        public CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
+        CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
             super(x, height, axis, controller);
         }
 

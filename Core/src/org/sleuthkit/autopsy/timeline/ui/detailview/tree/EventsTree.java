@@ -46,9 +46,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
@@ -59,11 +57,9 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
  * out. Right clicking on a item in the tree shows a context menu to show/hide
  * it.
  */
-public class NavPanel extends BorderPane implements TimeLineView {
+final public class EventsTree extends BorderPane {
 
-    private TimeLineController controller;
-
-    private FilteredEventsModel filteredEvents;
+    private final TimeLineController controller;
 
     private DetailViewPane detailViewPane;
 
@@ -76,8 +72,10 @@ public class NavPanel extends BorderPane implements TimeLineView {
     @FXML
     private ComboBox<Comparator<TreeItem<EventBundle<?>>>> sortByBox;
 
-    public NavPanel() {
-        FXMLConstructor.construct(this, "NavPanel.fxml"); // NON-NLS 
+    public EventsTree(TimeLineController controller) {
+        this.controller = controller;
+
+        FXMLConstructor.construct(this, "EventsTree.fxml"); // NON-NLS 
     }
 
     public void setDetailViewPane(DetailViewPane detailViewPane) {
@@ -112,19 +110,8 @@ public class NavPanel extends BorderPane implements TimeLineView {
 
     }
 
-    @Override
-    public void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(controller.getEventsModel());
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-
-    }
-
     @FXML
+    @NbBundle.Messages("EventsTree.Label.text=Sort By:")
     void initialize() {
         assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'NavPanel.fxml'."; // NON-NLS
 
@@ -137,7 +124,7 @@ public class NavPanel extends BorderPane implements TimeLineView {
         eventsTree.setCellFactory((TreeView<EventBundle<?>> p) -> new EventBundleTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        eventsTreeLabel.setText(NbBundle.getMessage(this.getClass(), "NavPanel.eventsTreeLabel.text"));
+        eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
     }
 
     /**
@@ -232,6 +219,5 @@ public class NavPanel extends BorderPane implements TimeLineView {
                 setContextMenu(null);
             }
         }
-
     }
 }
