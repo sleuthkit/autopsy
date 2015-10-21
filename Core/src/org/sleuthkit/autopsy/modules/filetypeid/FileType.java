@@ -118,7 +118,6 @@ class FileType {
          * The way the signature byte sequence should be interpreted.
          */
         enum Type {
-
             RAW, ASCII
         };
 
@@ -132,8 +131,8 @@ class FileType {
          *
          * @param signatureBytes The signature bytes.
          * @param offset         The offset of the signature bytes.
-         * @param type           The interpretation of the signature bytes
-         *                       (e.g., raw bytes, an ASCII string).
+         * @param type           The type of data in the byte array. Impacts
+         *                       how it is displayed to the user in the UI. 
          */
         Signature(final byte[] signatureBytes, long offset, Type type) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -152,6 +151,21 @@ class FileType {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
             this.offset = offset;
             this.type = Type.ASCII;
+        }
+        
+        /**
+         * Creates a file signature consisting of a sequence of bytes at a
+         * specific offset within a file.  If bytes correspond to an ASCII
+         * string, use one of the other constructors so that the string is 
+         * displayed to the user instead of the raw bytes. 
+         *
+         * @param signatureBytes The signature bytes.
+         * @param offset         The offset of the signature bytes.
+         */
+        Signature(final byte[] signatureBytes, long offset) {
+            this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
+            this.offset = offset;
+            this.type = Type.RAW;
         }
 
         /**
