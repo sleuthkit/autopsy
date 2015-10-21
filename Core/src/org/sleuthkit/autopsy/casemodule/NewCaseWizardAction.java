@@ -125,6 +125,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         }
 
                     } catch (Exception ex) {
+                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
+            
                         final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -138,6 +139,19 @@ class FileType {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = type;
+        }
+        
+        /**
+         * Creates a file signature consisting of an ASCII string at a
+         * specific offset within a file.
+         *
+         * @param signatureString The ASCII string
+         * @param offset         The offset of the signature bytes.
+         */
+        Signature(String signatureString, long offset) {
+            this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
+            this.offset = offset;
+            this.type = Type.ASCII;
         }
 
         /**
