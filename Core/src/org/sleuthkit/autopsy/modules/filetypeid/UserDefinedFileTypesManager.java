@@ -185,38 +185,36 @@ final class UserDefinedFileTypesManager {
         
         try {
             // Add rule for xml
-            byteArray = DatatypeConverter.parseHexBinary("3C3F786D6C");//NON-NLS
-            fileType = new FileType("text/xml", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("text/xml", new Signature("<?xml", 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for gzip
             byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS               
-            fileType = new FileType("application/x-gzip", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-                fileTypes.put(fileType.getMimeType(), fileType);
+            fileType = new FileType("application/x-gzip", new Signature(byteArray, 0L), "", false); //NON-NLS
+            fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for .wk1
             byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
-            fileType = new FileType("application/x-123", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("application/x-123", new Signature(byteArray, 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for Radiance image
             byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
-            fileType = new FileType("image/vnd.radiance", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("image/vnd.radiance", new Signature(byteArray, 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for .dcx image
             byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
-                fileType = new FileType("image/x-dcx", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("image/x-dcx", new Signature(byteArray, 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for .ics image
-            byteArray = DatatypeConverter.parseHexBinary("69636E73"); //NON-NLS
-            fileType = new FileType("image/x-icns", new Signature(byteArray, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("image/x-icns", new Signature("icns", 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for .pict image
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
-            fileType = new FileType("image/x-pict", new Signature(byteArray, 522L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
+            fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
 
             // Add rule for .pam
