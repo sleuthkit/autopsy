@@ -33,8 +33,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -48,7 +46,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -77,7 +74,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
+import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
@@ -296,17 +293,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             controller.pushZoomInTime();
         });
 
-        snapShotButton.setOnAction((ActionEvent event) -> {
-            //take snapshot
-            final SnapshotParameters snapshotParameters = new SnapshotParameters();
-            snapshotParameters.setViewport(new Rectangle2D(visualization.getBoundsInParent().getMinX(), visualization.getBoundsInParent().getMinY(),
-                    visualization.getBoundsInParent().getWidth(),
-                    contextPane.getLayoutBounds().getHeight() + visualization.getLayoutBounds().getHeight() + partPane.getLayoutBounds().getHeight()
-            ));
-            WritableImage snapshot = this.snapshot(snapshotParameters, null);
-            //pass snapshot to save action
-            new SaveSnapshot(controller, snapshot).handle(event);
-        });
+        snapShotButton.setOnAction(event ->
+                this.snapshot(snapShotResult -> {
+                    new SaveSnapshotAsReport(controller, snapShotResult.getImage()).handle(event);
+                    return null;
+                }, null, null)
+        );
 
         snapShotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapShotButton.text")); // NON-NLS
     }
