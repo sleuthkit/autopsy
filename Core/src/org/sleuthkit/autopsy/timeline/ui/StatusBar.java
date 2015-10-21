@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,9 @@ public class StatusBar extends ToolBar {
     private Label refreshLabel;
 
     @FXML
+    private Label statusLabel;
+
+    @FXML
     private ProgressBar progressBar;
 
     @FXML
@@ -72,9 +75,14 @@ public class StatusBar extends ToolBar {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         refreshLabel.visibleProperty().bind(this.controller.getNewEventsFlag());
+        refreshLabel.managedProperty().bind(this.controller.getNewEventsFlag());
         taskLabel.textProperty().bind(this.controller.getTaskTitle());
         messageLabel.textProperty().bind(this.controller.getMessage());
         progressBar.progressProperty().bind(this.controller.getProgress());
         taskLabel.visibleProperty().bind(this.controller.getTasks().emptyProperty().not());
+
+        statusLabel.textProperty().bind(this.controller.getStatusProperty());
+        statusLabel.visibleProperty().bind(statusLabel.textProperty().isNotEmpty());
+
     }
 }

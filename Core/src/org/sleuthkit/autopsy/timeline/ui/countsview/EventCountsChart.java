@@ -19,23 +19,19 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import java.util.Collections;
-import javafx.scene.chart.Axis;
+import java.util.MissingResourceException;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.util.StringConverter;
-import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
+import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
@@ -45,7 +41,12 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 final class EventCountsChart extends StackedBarChart<String, Number> implements TimeLineChart<String> {
 
-    private final ContextMenu contextMenu;
+    private ContextMenu chartContextMenu;
+
+    @Override
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
 
     private final TimeLineController controller;
 
@@ -80,30 +81,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setAnimated(true);
         setTitle(null);
 
-        //use one handler with an if chain because it maintains state
-        ChartDragHandler<String, EventCountsChart> dragHandler = new ChartDragHandler<>(this, getXAxis());
-        setOnMousePressed(dragHandler);
-        setOnMouseReleased(dragHandler);
-        setOnMouseDragged(dragHandler);
+        ChartDragHandler<String, EventCountsChart> chartDragHandler = new ChartDragHandler<>(this);
+        setOnMousePressed(chartDragHandler);
+        setOnMouseReleased(chartDragHandler);
+        setOnMouseDragged(chartDragHandler);
 
-        contextMenu = ActionUtils.createContextMenu(
-                Arrays.asList(new ActionGroup(
-                                NbBundle.getMessage(this.getClass(), "EventCountsChart.contextMenu.zoomHistory.name"),
-                                new Back(controller),
-                                new Forward(controller))));
-        contextMenu.setAutoHide(true);
-        setOnMouseClicked((MouseEvent clickEvent) -> {
-            contextMenu.hide();
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                contextMenu.show(EventCountsChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
-            }
-        });
-
-        this.controller.getEventsModel().zoomParametersProperty().addListener(o -> {
-            clearIntervalSelector();
-            controller.selectEventIDs(Collections.emptyList());
-        });
+        setOnMouseClicked(new MouseClickedHandler<>(this));
 
     }
 
@@ -111,6 +94,24 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     public void clearIntervalSelector() {
         getChartChildren().remove(intervalSelector);
         intervalSelector = null;
+    }
+
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+        if (chartContextMenu != null) {
+            chartContextMenu.hide();
+        }
+
+        chartContextMenu = ActionUtils.createContextMenu(
+                Arrays.asList(
+                        TimeLineChart.newZoomHistoyActionGroup(controller)));
+        chartContextMenu.setAutoHide(true);
+        return chartContextMenu;
+    }
+
+    @Override
+    public TimeLineController getController() {
+        return controller;
     }
 
     @Override
@@ -125,8 +126,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
-    public CountsIntervalSelector newIntervalSelector(double x, Axis<String> dateAxis) {
-        return new CountsIntervalSelector(x, getHeight() - dateAxis.getHeight() - dateAxis.getTickLength(), dateAxis, controller);
+    public CountsIntervalSelector newIntervalSelector() {
+        return new CountsIntervalSelector(this);
     }
 
     /**
@@ -136,7 +137,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * @return the context menu for this chart
      */
     ContextMenu getContextMenu() {
-        return contextMenu;
+        return chartContextMenu;
     }
 
     void setRangeInfo(RangeDivisionInfo rangeInfo) {
@@ -166,10 +167,13 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * Interval Selector for the counts chart, adjusts interval based on
      * rangeInfo to include final period
      */
-    final private class CountsIntervalSelector extends IntervalSelector<String> {
+    final static private class CountsIntervalSelector extends IntervalSelector<String> {
 
-        CountsIntervalSelector(double x, double height, Axis<String> axis, TimeLineController controller) {
-            super(x, height, axis, controller);
+        private final EventCountsChart countsChart;
+
+        CountsIntervalSelector(EventCountsChart chart) {
+            super(chart);
+            this.countsChart = chart;
         }
 
         @Override
@@ -186,12 +190,13 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());
             final DateTime upperDate = new DateTime(upperBound, TimeLineController.getJodaTimeZone());
             //add extra block to end that gets cut of by conversion from string/category.
-            return new Interval(lowerDate, upperDate.plus(rangeInfo.getPeriodSize().getPeriod()));
+            return new Interval(lowerDate, upperDate.plus(countsChart.rangeInfo.getPeriodSize().getPeriod()));
         }
 
         @Override
         protected DateTime parseDateTime(String date) {
-            return date == null ? new DateTime(rangeInfo.getLowerBound()) : rangeInfo.getTickFormatter().parseDateTime(date);
+            return date == null ? new DateTime(countsChart.rangeInfo.getLowerBound()) : countsChart.rangeInfo.getTickFormatter().parseDateTime(date);
         }
     }
+
 }
