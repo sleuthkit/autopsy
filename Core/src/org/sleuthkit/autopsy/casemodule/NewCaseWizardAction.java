@@ -117,6 +117,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                             AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                             addImageAction.actionPerformed(null);
                         } else {
+                            // @@@ Should we log here?
                             JOptionPane.showMessageDialog(null,
                                     NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
                                     NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
