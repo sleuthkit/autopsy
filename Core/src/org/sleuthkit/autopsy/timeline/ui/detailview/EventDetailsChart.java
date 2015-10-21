@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -103,14 +104,11 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
 
-    
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
     private ContextMenu chartContextMenu;
 
-
-    
     public ContextMenu getChartContextMenu() {
         return chartContextMenu;
     }
@@ -203,7 +201,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             controller.selectEventIDs(Collections.emptyList());
         });
         Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
-
 
         dateAxis.setAutoRanging(false);
 
@@ -342,7 +339,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         stripeNodeMap.put(eventStripe, stripeNode);
         nodeGroup.getChildren().add(stripeNode);
         data.setNode(stripeNode);
-        layoutPlotChildren();
     }
 
     @Override
@@ -359,7 +355,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
         nodeGroup.getChildren().remove(removedNode);
         data.setNode(null);
-        layoutPlotChildren();
     }
 
     @Override
@@ -463,48 +458,42 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      * @param nodes collection of nodes to layout
      * @param minY  the minimum y coordinate to position the nodes at.
      */
-    synchronized double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
-        // map from y value (ranges) to right most occupied x value.
+    double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
+
         TreeRangeMap<Double, Double> treeRangeMap = TreeRangeMap.create();
         // maximum y values occupied by any of the given nodes,  updated as nodes are layed out.
         double localMax = minY;
 
+        Set<String> activeQuickHidefilters = getController().getQuickHideFilters().stream()
+                .filter(AbstractFilter::isActive)
+                .map(DescriptionFilter::getDescription)
+                .collect(Collectors.toSet());
         //for each node do a recursive layout to size it and then position it in first available slot
-        for (final EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
+        for (EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
             //is the node hiden by a quick hide filter?
-            boolean quickHide = getController().getQuickHideFilters().stream()
-                    .filter(AbstractFilter::isActive)
-                    .anyMatch(filter -> filter.getDescription().equals(bundleNode.getDescription()));
+            boolean quickHide = activeQuickHidefilters.contains(bundleNode.getDescription());
             if (quickHide) {
                 //hide it and skip layout
                 bundleNode.setVisible(false);
                 bundleNode.setManaged(false);
             } else {
-                //make sure it is shown
-                bundleNode.setVisible(true);
-                bundleNode.setManaged(true);
-                //apply advanced layout description visibility options
-                bundleNode.setDescriptionVisibility(descrVisibility.get());
-                bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
-
-                //do recursive layout
-                bundleNode.layout();
+                bundleLayoutHelper(bundleNode);
                 //get computed height and width
                 double h = bundleNode.getBoundsInLocal().getHeight();
                 double w = bundleNode.getBoundsInLocal().getWidth();
                 //get left and right x coords from axis plus computed width
                 double xLeft = getXForEpochMillis(bundleNode.getStartMillis()) - bundleNode.getLayoutXCompensation();
-                double xRight = xLeft + w;
+                double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
 
                 //initial test position
                 double yTop = minY;
-                double yBottom = yTop + h;
 
                 if (oneEventPerRow.get()) {
                     // if onePerRow, just put it at end
                     yTop = (localMax + MINIMUM_EVENT_NODE_GAP);
-                    yBottom = yTop + h;
                 } else {
+                    double yBottom = yTop + h;
+
                     //until the node is not overlapping any others try moving it down.
                     boolean overlapping = true;
                     while (overlapping) {
@@ -525,19 +514,40 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                     treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
                 }
 
-                localMax = Math.max(yBottom, localMax);
+                localMax = Math.max(yTop + h, localMax);
 
-                //animate node to new position
-                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                        new KeyValue(bundleNode.layoutXProperty(), xLeft),
-                        new KeyValue(bundleNode.layoutYProperty(), yTop)));
-                timeline.setOnFinished((ActionEvent event) -> {
-                    requestChartLayout();
-                });
-                timeline.play();
+                if ((xLeft != bundleNode.getLayoutX()) || (yTop != bundleNode.getLayoutY())) {
+
+                    //animate node to new position
+                    Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
+                            new KeyValue(bundleNode.layoutXProperty(), xLeft),
+                            new KeyValue(bundleNode.layoutYProperty(), yTop))
+                    );
+                    timeline.setOnFinished((ActionEvent event) -> {
+                        requestChartLayout();
+                    });
+                    timeline.play();
+                }
             }
         }
         return localMax; //return new max
+    }
+
+    private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
+        //make sure it is shown
+        bundleNode.setVisible(true);
+        bundleNode.setManaged(true);
+        //apply advanced layout description visibility options
+        bundleNode.setDescriptionVisibility(descrVisibility.get());
+        bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
+
+        //do recursive layout
+        bundleNode.layoutChildren();
+    }
+
+    @Override
+    public void requestChartLayout() {
+        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
     }
 
     private double getXForEpochMillis(Long millis) {
@@ -568,6 +578,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     public FilteredEventsModel getFilteredEvents() {
         return filteredEvents;
+
     }
 
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
@@ -673,7 +684,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
                             testFilter.selectedProperty().addListener((Observable observable) -> {
-                                layoutPlotChildren();
+                                requestChartLayout();
                             });
                             getController().getQuickHideFilters().add(testFilter);
                             return testFilter;

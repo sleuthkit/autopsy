@@ -98,6 +98,8 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         descrLabel.setMaxWidth(w);
     }
 
+   
+
     /**
      * apply the 'effect' to visually indicate highlighted nodes
      *

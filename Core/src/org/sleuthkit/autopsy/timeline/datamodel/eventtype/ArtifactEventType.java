@@ -87,7 +87,7 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
-     * one object. Primarily used to have a single return value for      {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
+     * one object. Primarily used to have a single return value for null     {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
      */
     static class AttributeEventDescription {
 
@@ -186,6 +186,8 @@ public interface ArtifactEventType extends EventType {
             this.attribute = attribute;
         }
     }
+
+   
 
     public static class EmptyExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
 

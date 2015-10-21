@@ -114,7 +114,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
+    void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
         final int size = getEventBundle().getEventIDs().size();
         switch (descrVis) {
             case HIDDEN:
@@ -212,11 +212,12 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex);
                 }
-                chart.layoutPlotChildren();
+                chart.requestChartLayout();
                 chart.setCursor(null);
             }
         };
 
+        new Thread(loggedTask).start();
         //start task
         chart.getController().monitorTask(loggedTask);
     }
@@ -233,8 +234,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     protected void layoutChildren() {
         double chartX = chart.getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
         double w = chart.getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
-        subNodePane.setPrefWidth(w);
-        subNodePane.setMinWidth(Math.max(1, w));
+        subNodePane.setPrefWidth(Math.max(1, w));
         super.layoutChildren();
     }
 

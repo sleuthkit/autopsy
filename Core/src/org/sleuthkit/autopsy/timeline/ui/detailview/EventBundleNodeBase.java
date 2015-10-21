@@ -27,11 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -126,7 +126,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         this.eventBundle = eventBundle;
         this.parentNode = parentNode;
         this.chart = chart;
-
         this.descLOD.set(eventBundle.getDescriptionLoD());
         sleuthkitCase = chart.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chart.getController().getEventsModel();
@@ -145,22 +144,24 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         setAlignment(Pos.TOP_LEFT);
 
         setPrefHeight(USE_COMPUTED_SIZE);
-        heightProperty().addListener((Observable observable) -> {
-            chart.layoutPlotChildren();
+        heightProperty().addListener(heightProp -> {
+            chart.requestChartLayout();
         });
         setMaxHeight(USE_PREF_SIZE);
+        setMinWidth(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
         setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
 
         //initialize info hbox
         infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
-        infoHBox.setPadding(new Insets(2, 5, 2, 5));
+        infoHBox.setPadding(new Insets(2, 3, 2, 3));
         infoHBox.setAlignment(Pos.TOP_LEFT);
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMaxHeight(USE_PREF_SIZE);
+        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
+        subNodePane.setMinHeight(24);
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
@@ -177,7 +178,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             Tooltip.uninstall(chart, AbstractVisualizationPane.getDragTooltip());
             showHoverControls(true);
             toFront();
-
         });
         setOnMouseExited((MouseEvent event) -> {
             showHoverControls(false);
@@ -269,7 +269,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                     }
                 }
             };
-
+            new Thread(tooltTipTask).start();
             chart.getController().monitorTask(tooltTipTask);
         }
     }
@@ -327,6 +327,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     final Set<Long> getEventIDs() {
         return getEventBundle().getEventIDs();
+    }
+
+    @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
     }
 
     @Override

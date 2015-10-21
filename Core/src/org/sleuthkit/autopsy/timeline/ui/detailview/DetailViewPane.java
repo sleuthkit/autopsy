@@ -332,7 +332,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                 }
 
                 Platform.runLater(() -> {
-                    setCursor(Cursor.NONE);
+                    setCursor(Cursor.DEFAULT);
                     layoutDateLabels();
                     updateProgress(1, 1);
                 });
