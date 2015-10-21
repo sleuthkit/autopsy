@@ -63,6 +63,7 @@ import jfxtras.scene.control.LocalDateTimeTextField;
 import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -74,7 +75,9 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
+import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
+import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
@@ -286,13 +289,6 @@ final public class VisualizationPanel extends BorderPane {
         }
         zoomMenuButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomMenuButton.text")); // NON-NLS
 
-        zoomOutButton.setOnAction(e -> {
-            controller.pushZoomOutTime();
-        });
-        zoomInButton.setOnAction(e -> {
-            controller.pushZoomInTime();
-        });
-
         snapShotButton.setOnAction(event ->
                 this.snapshot(snapShotResult -> {
                     new SaveSnapshotAsReport(controller, snapShotResult.getImage()).handle(event);
@@ -314,6 +310,9 @@ final public class VisualizationPanel extends BorderPane {
 
         this.filteredEvents = controller.getEventsModel();
         refreshTimeUI(controller.getEventsModel().timeRangeProperty().get());
+        ActionUtils.configureButton(new ZoomOut(controller), zoomOutButton);
+        ActionUtils.configureButton(new ZoomIn(controller), zoomInButton);
+
         setViewMode(controller.viewModeProperty().get());
         controller.getNeedsHistogramRebuild().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
@@ -360,14 +359,15 @@ final public class VisualizationPanel extends BorderPane {
                 visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
-                        notificationPane.setContent(new StackPane(visualization, new Region() {
-                            {
-                                setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                setOpacity(.3);
-                            }
-                        }, new NoEventsDialog(() -> {
-                            notificationPane.setContent(visualization);
-                        })));
+                        notificationPane.setContent(
+                                new StackPane(visualization,
+                                        new Region() {
+                                            {
+                                                setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+                                                setOpacity(.3);
+                                            }
+                                        },
+                                        new NoEventsDialog(() -> notificationPane.setContent(visualization))));
                     } else {
                         notificationPane.setContent(visualization);
                     }
@@ -532,7 +532,6 @@ final public class VisualizationPanel extends BorderPane {
         private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
-
         }
 
         @FXML
@@ -542,15 +541,9 @@ final public class VisualizationPanel extends BorderPane {
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
-            zoomButton.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.zoomButton.text")); // NON-NLS
+            ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
 
-            Action zoomOutAction = new ZoomOut(controller);
-            zoomButton.setOnAction(zoomOutAction);
-            zoomButton.disableProperty().bind(zoomOutAction.disabledProperty());
-
-            dismissButton.setOnAction(e -> {
-                closeCallback.run();
-            });
+            dismissButton.setOnAction(actionEvent -> closeCallback.run());
             Action defaultFiltersAction = new ResetFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
