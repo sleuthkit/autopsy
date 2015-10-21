@@ -249,6 +249,9 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
+                // make sure we disable an indeterminate 
+                reportProgressBar.setIndeterminate(false);
+                
                 if (STATUS != ReportStatus.CANCELED) {
                     switch (reportStatus) {
                         case COMPLETE: {
@@ -261,6 +264,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                             // set reportProgressBar color as green.
                             reportProgressBar.setForeground(new Color(50, 205, 50));
                             reportProgressBar.setString("Complete"); //NON-NLS
+                            
                             break;
                         }
                         case ERROR: {

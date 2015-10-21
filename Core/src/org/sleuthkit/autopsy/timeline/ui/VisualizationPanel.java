@@ -33,8 +33,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -48,7 +46,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -78,7 +75,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
+import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
@@ -93,10 +90,10 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A Container for an {@link AbstractVisualization}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstractVisualization},
+ * A container for an {@link AbstractVisualizationPane}, has a toolbar on top to
+ * hold settings widgets supplied by contained {@link AbstAbstractVisualization}
  * and the histogram / timeselection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractVisualization}
+ * replacement axis to contained {@link AbstractAbstractVisualization}
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
@@ -112,7 +109,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NavPanel navPanel;
 
-    private AbstractVisualization<?, ?, ?, ?> visualization;
+    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
 
     //// range slider and histogram componenets
     @FXML
@@ -292,17 +289,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
         zoomMenuButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomMenuButton.text")); // NON-NLS
 
-        snapShotButton.setOnAction((ActionEvent event) -> {
-            //take snapshot
-            final SnapshotParameters snapshotParameters = new SnapshotParameters();
-            snapshotParameters.setViewport(new Rectangle2D(visualization.getBoundsInParent().getMinX(), visualization.getBoundsInParent().getMinY(),
-                    visualization.getBoundsInParent().getWidth(),
-                    contextPane.getLayoutBounds().getHeight() + visualization.getLayoutBounds().getHeight() + partPane.getLayoutBounds().getHeight()
-            ));
-            WritableImage snapshot = this.snapshot(snapshotParameters, null);
-            //pass snapshot to save action
-            new SaveSnapshot(controller, snapshot).handle(event);
-        });
+        snapShotButton.setOnAction(event ->
+                this.snapshot(snapShotResult -> {
+                    new SaveSnapshotAsReport(controller, snapShotResult.getImage()).handle(event);
+                    return null;
+                }, null, null)
+        );
 
         snapShotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapShotButton.text")); // NON-NLS
     }
@@ -360,7 +352,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
     }
 
-    private synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+    private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {
@@ -376,7 +368,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 if (visualization instanceof DetailViewPane) {
                     navPanel.setDetailViewPane((DetailViewPane) visualization);
                 }
-                visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
                         notificationPane.setContent(
