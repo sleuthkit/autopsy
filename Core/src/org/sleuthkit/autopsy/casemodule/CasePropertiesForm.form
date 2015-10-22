@@ -49,9 +49,9 @@
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="caseNameTextField" alignment="0" pref="244" max="32767" attributes="1"/>
-                          <Component id="caseNumberTextField" alignment="0" pref="244" max="32767" attributes="1"/>
-                          <Component id="examinerTextField" alignment="0" pref="244" max="32767" attributes="1"/>
+                          <Component id="caseNameTextField" alignment="0" pref="245" max="32767" attributes="1"/>
+                          <Component id="caseNumberTextField" alignment="0" pref="245" max="32767" attributes="1"/>
+                          <Component id="examinerTextField" alignment="0" pref="245" max="32767" attributes="1"/>
                           <Component id="crDateTextField" alignment="0" max="32767" attributes="1"/>
                           <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
                           <Component id="tbDbType" alignment="0" max="32767" attributes="0"/>

@@ -79,7 +79,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
     /**
      * Creates new form CasePropertiesForm
      */
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) {
+    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
         caseNumberTextField.setText(currentCase.getNumber());
@@ -88,18 +88,14 @@ class CasePropertiesForm extends javax.swing.JPanel {
         caseDirTextArea.setText(caseDir);
         current = currentCase;
 
-        try {
-            CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
-            tbDbName.setText(caseMetadata.getCaseDatabaseName());
-            Case.CaseType caseType = caseMetadata.getCaseType();
-            tbDbType.setText(caseType.toString());
-            if (caseType == Case.CaseType.SINGLE_USER_CASE) {
-                deleteCaseButton.setEnabled(true);
-            } else {
-                deleteCaseButton.setEnabled(false);
-            }
-        } catch (CaseMetadata.CaseMetadataException ex) {
-            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Could not read case properties.", ex); //NON-NLS
+        CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
+        tbDbName.setText(caseMetadata.getCaseDatabaseName());
+        Case.CaseType caseType = caseMetadata.getCaseType();
+        tbDbType.setText(caseType.toString());
+        if (caseType == Case.CaseType.SINGLE_USER_CASE) {
+            deleteCaseButton.setEnabled(true);
+        } else {
+            deleteCaseButton.setEnabled(false);
         }
 
         int totalImages = imgPaths.size();
@@ -314,9 +310,9 @@ class CasePropertiesForm extends javax.swing.JPanel {
                             .addComponent(lbDbType))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
-                            .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
-                            .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
+                            .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
                             .addComponent(crDateTextField)
                             .addComponent(jScrollPane2)
                             .addComponent(tbDbType)
