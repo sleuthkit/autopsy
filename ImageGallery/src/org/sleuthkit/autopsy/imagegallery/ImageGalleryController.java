@@ -425,7 +425,7 @@ public final class ImageGalleryController {
 
     @Nullable
     synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
-        if (Objects.isNull(db)){
+        if (Objects.isNull(db)) {
             LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed.");
             return null;
         }
@@ -766,7 +766,7 @@ public final class ImageGalleryController {
         private final DrawableDB taskDB;
         private final SleuthkitCase tskCase;
 
-        public CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             this.controller = controller;
             this.taskDB = taskDB;
             this.tskCase = tskCase;
@@ -777,7 +777,7 @@ public final class ImageGalleryController {
                         "' or name LIKE '%.")
                 + "')";
         static private final String MIMETYPE_CLAUSE =
-                 "blackboard_attributes.value_text LIKE '"
+                "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
@@ -859,11 +859,11 @@ public final class ImageGalleryController {
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
             }
-
             progressHandle.finish();
 
             updateMessage("");
             updateProgress(-1.0);
+
             controller.setStale(false);
         }
     }
