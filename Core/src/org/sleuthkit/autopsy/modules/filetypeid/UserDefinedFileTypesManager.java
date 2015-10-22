@@ -177,20 +177,54 @@ final class UserDefinedFileTypesManager {
      * org.sleuthkit.autopsy.modules.filetypeid.UserDefinedFileTypesManager.UserDefinedFileTypesException
      */
     private void loadPredefinedFileTypes() throws UserDefinedFileTypesException {
+        byte[] byteArray;
+        FileType fileType;
+        
         try {
-            FileType fileTypeXml = new FileType("text/xml", new Signature("<?xml".getBytes(ASCII_ENCODING), 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-            fileTypes.add(fileTypeXml);
+            // Add rule for xml
+            fileType = new FileType("text/xml", new Signature("<?xml", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
 
-            byte[] gzip = DatatypeConverter.parseHexBinary("1F8B08");
-            FileType fileTypeGzip = new FileType("application/x-gzip", new Signature(gzip, 0L, FileType.Signature.Type.ASCII), "", false); //NON-NLS
-            fileTypes.add(fileTypeGzip);
+            // Add rule for gzip
+            byteArray = DatatypeConverter.parseHexBinary("1F8B");  //NON-NLS               
+            fileType = new FileType("application/x-gzip", new Signature(byteArray, 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
 
-        } catch (UnsupportedEncodingException ex) {
-            /**
-             * Using an all-or-none policy.
-             */
-            fileTypes.clear();
-            throwUserDefinedFileTypesException(ex, "UserDefinedFileTypesManager.loadFileTypes.errorMessage");
+            // Add rule for .wk1
+            byteArray = DatatypeConverter.parseHexBinary("0000020006040600080000000000"); //NON-NLS
+            fileType = new FileType("application/x-123", new Signature(byteArray, 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for Radiance image
+            byteArray = DatatypeConverter.parseHexBinary("233F52414449414E43450A");//NON-NLS
+            fileType = new FileType("image/vnd.radiance", new Signature(byteArray, 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for .dcx image
+            byteArray = DatatypeConverter.parseHexBinary("B168DE3A"); //NON-NLS
+            fileType = new FileType("image/x-dcx", new Signature(byteArray, 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for .ics image
+            fileType = new FileType("image/x-icns", new Signature("icns", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for .pict image
+            byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
+            fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for .pam
+            fileType = new FileType("image/x-portable-arbitrarymap", new Signature("P7", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+
+            // Add rule for .pfm
+            fileType = new FileType("image/x-portable-floatmap", new Signature("PF", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+        }
+        // parseHexBinary() throws this if the argument passed in is not Hex
+        catch (IllegalArgumentException e) {
+            throw new UserDefinedFileTypesException("Error creating predefined file types", e); //
         }
     }
 

@@ -25,6 +25,8 @@ Regardless of the type of data source, there are some common steps in the proces
 
 \image html select-data-source-type.PNG
 
+NOTE: If you are adding a data source to a multi-user case, ensure that all Autopsy clients will have access to the data source at the same path. We recommend using UNC paths to ensure this consistent mapping. 
+
 2) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
 
 3) While it is examining the data source, you will be prompted with a list of ingest modules to enable. 
