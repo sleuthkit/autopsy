@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.configureLoDButton;
 
 /**
- * Node used in {@link EventDetailChart} to represent an EventStripe.
+ * Node used in {@link EventDetailsChart} to represent an EventStripe.
  */
 final public class EventStripeNode extends EventBundleNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
@@ -53,12 +53,12 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 //    private final HBox clustersHBox = new HBox();
     private final ImageView eventTypeImageView = new ImageView();
 
-    public EventStripeNode(EventDetailChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
+    public EventStripeNode(EventDetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
 
         setMinHeight(48);
 
-        EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
+        EventDetailsChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
         hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
         configureLoDButton(hideButton);
 
@@ -115,7 +115,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     }
 
     @Override
-    public void setDescriptionVisibility(DescriptionVisibility descrVis) {
+    void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
         final int size = getEventStripe().getEventIDs().size();
 
         switch (descrVis) {
@@ -150,7 +150,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         public void handle(MouseEvent t) {
 
             if (t.getButton() == MouseButton.PRIMARY) {
-             
+
                 if (t.isShiftDown()) {
                     if (chart.selectedNodes.contains(EventStripeNode.this) == false) {
                         chart.selectedNodes.add(EventStripeNode.this);
@@ -167,7 +167,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
                     contextMenu = new ContextMenu();
                     contextMenu.setAutoHide(true);
 
-                    EventDetailChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
+                    EventDetailsChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
                     MenuItem hideDescriptionMenuItem = ActionUtils.createMenuItem(hideClusterAction);
                     contextMenu.getItems().addAll(hideDescriptionMenuItem);
                     contextMenu.getItems().addAll(chartContextMenu.getItems());

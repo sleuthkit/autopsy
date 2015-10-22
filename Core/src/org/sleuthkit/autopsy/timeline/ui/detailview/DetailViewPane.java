@@ -73,25 +73,24 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.ui.AbstractVisualization;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Controller class for a {@link EventDetailChart} based implementation of a
+ * Controller class for a {@link EventDetailsChart} based implementation of a
  * TimeLineView.
  *
  * This class listens to changes in the assigned {@link FilteredEventsModel} and
- * updates the internal {@link EventDetailChart} to reflect the currently
+ * updates the internal {@link EventDetailsChart} to reflect the currently
  * requested events.
  *
  * Concurrency Policy: Access to the private members clusterChart, dateAxis,
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
 
-    
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
@@ -114,13 +113,15 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         return chart.getEventBundles();
     }
 
-    public DetailViewPane(Pane partPane, Pane contextPane, Region spacer) {
-        super(partPane, contextPane, spacer);
-        chart = new EventDetailChart(dateAxis, verticalAxis, selectedNodes);
+
+    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        super(controller, partPane, contextPane, spacer);
+        chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
 
+     
         chart.setPrefHeight(USE_COMPUTED_SIZE);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
@@ -209,11 +210,6 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
             });
         });
 
-    }
-
-    @Override
-    public synchronized void setModel(FilteredEventsModel filteredEvents) {
-        super.setModel(filteredEvents);
     }
 
     private void incrementScrollValue(int factor) {
@@ -477,5 +473,4 @@ public class DetailViewPane extends AbstractVisualization<DateTime, EventCluster
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
 
-  
 }

@@ -89,7 +89,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                 return fileOpt;
             } else {
                 try {
-                    fileOpt = Optional.of(getController().getFileFromId(fileIDOpt.get()));
+                    fileOpt = Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()));
                 } catch (TskCoreException ex) {
                     Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex);
                     fileOpt = Optional.empty();
@@ -206,7 +206,6 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             super.failed();
             LOGGER.log(Level.SEVERE, "Failed to cache content for" + file.getName(), getException());
         }
-        
 
         abstract void saveToCache(X result);
     }
