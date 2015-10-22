@@ -24,9 +24,10 @@ package com.sun.javafx;
  * code, specifically ControlsFX, that depended on it broke. ControlsFX has
  * removed their dependency on this class, but their fix will not be released
  * until version 8.60.10 of ControlsFX. Until then, this shim class allows
- * version 8.40.9 to run on Java 8u60. This class (and package) should be
- * removed once we upgrade to ControlsFX 8.60.x.
+ * version 8.40.9 to run on Java 8u60. This class (and package) should and will
+ * be removed once we upgrade to ControlsFX 8.60.x.
  */
+@Deprecated // DO NOT USE
 public class Utils extends com.sun.javafx.util.Utils {
 
     //Does nothing but expose com.sun.javafx.utila.Utils in the old package (com.sun.javafx.Utils)
