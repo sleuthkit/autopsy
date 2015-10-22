@@ -140,7 +140,9 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }
-                    /// KDM here????
+                     SwingUtilities.invokeLater(() -> {
+         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+         });
                 }
             }.execute();
         } else {

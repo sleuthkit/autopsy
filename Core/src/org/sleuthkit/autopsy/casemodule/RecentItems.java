@@ -88,11 +88,14 @@ class RecentItems implements ActionListener {
                             StartupWindowProvider.getInstance().open();
                         }
                     });
-                } finally {
+                }
+                /* KDM from RC 
+                finally {
                     SwingUtilities.invokeLater(() -> {
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     });
                 }
+                */
             }).start();
         }
     }
