@@ -140,9 +140,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }
-                     SwingUtilities.invokeLater(() -> {
-         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-         });
                 }
             }.execute();
         } else {

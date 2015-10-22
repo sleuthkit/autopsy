@@ -102,13 +102,6 @@ public final class CaseOpenAction implements ActionListener {
                         }
                     });
                 } 
-                /* KDM from RC 
-                finally {
-                    SwingUtilities.invokeLater(() -> {
-                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    });
-                }
-                */
             }).start();
         }
     }
