@@ -53,6 +53,7 @@ import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
@@ -62,14 +63,11 @@ import javafx.scene.shape.StrokeLineCap;
 import javafx.util.Duration;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
@@ -77,6 +75,8 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
@@ -94,7 +94,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class EventDetailChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
+public final class EventDetailsChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
 
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
@@ -102,11 +102,18 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
+
+    
+    private final TimeLineController controller;
+    private final FilteredEventsModel filteredEvents;
+
     private ContextMenu chartContextMenu;
 
-    private TimeLineController controller;
 
-    private FilteredEventsModel filteredEvents;
+    
+    public ContextMenu getChartContextMenu() {
+        return chartContextMenu;
+    }
 
     /**
      * a user positionable vertical line to help compare events
@@ -183,8 +190,21 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+        this.controller = controller;
+        this.filteredEvents = this.controller.getEventsModel();
+
+        filteredEvents.zoomParametersProperty().addListener(o -> {
+            clearGuideLine();
+            clearIntervalSelector();
+            selectedNodes.clear();
+            projectionMap.clear();
+            controller.selectEventIDs(Collections.emptyList());
+        });
+        Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
+
+
         dateAxis.setAutoRanging(false);
 
         verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
@@ -204,6 +224,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         truncateAll.addListener(layoutInvalidationListener);
         truncateWidth.addListener(layoutInvalidationListener);
         descrVisibility.addListener(layoutInvalidationListener);
+        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
         //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
         //TODO: seems like a hack, can we remove? -jm
@@ -211,22 +232,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             setPrefHeight(boundsInLocalProperty().get().getHeight());
         });
 
-        ///////set up mouse listeners
-        setOnMouseClicked((MouseEvent clickEvent) -> {
-            if (chartContextMenu != null) {
-                chartContextMenu.hide();
-            }
-            if (clickEvent.getButton() == MouseButton.SECONDARY && clickEvent.isStillSincePress()) {
-                getChartContextMenu(clickEvent);
-                chartContextMenu.show(EventDetailChart.this, clickEvent.getScreenX(), clickEvent.getScreenY());
-                clickEvent.consume();
-            }
-        });
-        //use one handler with an if chain because it maintains state
-        final ChartDragHandler<DateTime, EventDetailChart> dragHandler = new ChartDragHandler<>(this, getXAxis());
-        setOnMousePressed(dragHandler);
-        setOnMouseReleased(dragHandler);
-        setOnMouseDragged(dragHandler);
+        ChartDragHandler<DateTime, EventDetailsChart> chartDragHandler = new ChartDragHandler<>(this);
+        setOnMousePressed(chartDragHandler);
+        setOnMouseReleased(chartDragHandler);
+        setOnMouseDragged(chartDragHandler);
+
+        setOnMouseClicked(new MouseClickedHandler<>(this));
 
         this.selectedNodes = selectedNodes;
         this.selectedNodes.addListener(new SelectionChangeHandler());
@@ -236,21 +247,20 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
         return bundles;
     }
 
-    TimeLineController getController() {
+    @Override
+    public TimeLineController getController() {
         return controller;
     }
 
-    @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker",
-        "EventDetailChart.contextMenu.zoomHistory.name=Zoom History"})
-    ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
+    @Override
+    public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
         }
 
         chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
-                new ActionGroup(Bundle.EventDetailChart_contextMenu_zoomHistory_name(),
-                        new Back(controller),
-                        new Forward(controller))));
+                //                new StartIntervalSelectionAction(clickEvent, dragHandler),
+                TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
     }
@@ -266,32 +276,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
     }
 
     @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.zoomParametersProperty().addListener(o -> {
-                clearGuideLine();
-                clearIntervalSelector();
-
-                selectedNodes.clear();
-                projectionMap.clear();
-                controller.selectEventIDs(Collections.emptyList());
-            });
-        }
-        this.filteredEvents = filteredEvents;
-
-    }
-
-    @Override
-    public IntervalSelector<DateTime> newIntervalSelector(double x, Axis<DateTime> axis) {
-        return new DetailIntervalSelector(x, getHeight() - axis.getHeight() - axis.getTickLength(), axis, controller);
+    public IntervalSelector<DateTime> newIntervalSelector() {
+        return new DetailIntervalSelector(this);
     }
 
     synchronized void setBandByType(Boolean t1) {
@@ -300,12 +286,12 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     /**
      * get the DateTime along the x-axis that corresponds to the given
-     * x-coordinate in the coordinate system of this {@link EventDetailChart}
+     * x-coordinate in the coordinate system of this {@link EventDetailsChart}
      *
-     * @param x a x-coordinate in the space of this {@link EventDetailChart}
+     * @param x a x-coordinate in the space of this {@link EventDetailsChart}
      *
      * @return the DateTime along the x-axis corresponding to the given x value
-     *         (in the space of this {@link EventDetailChart}
+     *         (in the space of this {@link EventDetailsChart}
      */
     public DateTime getDateTimeForPosition(double x) {
         return getXAxis().getValueForDisplay(getXAxis().parentToLocal(x, 0).getX());
@@ -352,7 +338,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     return EventStripe.merge(u, v);
                 }
         );
-        EventStripeNode stripeNode = new EventStripeNode(EventDetailChart.this, eventStripe, null);
+        EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
         stripeNodeMap.put(eventStripe, stripeNode);
         nodeGroup.getChildren().add(stripeNode);
         data.setNode(stripeNode);
@@ -498,7 +484,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                 bundleNode.setVisible(true);
                 bundleNode.setManaged(true);
                 //apply advanced layout description visibility options
-                bundleNode.setDescriptionVisibilityLevel(descrVisibility.get());
+                bundleNode.setDescriptionVisibility(descrVisibility.get());
                 bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
 
                 //do recursive layout
@@ -586,8 +572,8 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     static private class DetailIntervalSelector extends IntervalSelector<DateTime> {
 
-        DetailIntervalSelector(double x, double height, Axis<DateTime> axis, TimeLineController controller) {
-            super(x, height, axis, controller);
+        DetailIntervalSelector(EventDetailsChart chart) {
+            super(chart);
         }
 
         @Override
@@ -608,6 +594,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
 
     private class PlaceMarkerAction extends Action {
 
+        @NbBundle.Messages({"EventDetailChart.chartContextMenu.placeMarker.name=Place Marker"})
         PlaceMarkerAction(MouseEvent clickEvent) {
             super(Bundle.EventDetailChart_chartContextMenu_placeMarker_name());
 
@@ -664,7 +651,7 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
                     }
                 });
             }
-            EventDetailChart.this.controller.selectEventIDs(selectedNodes.stream()
+            EventDetailsChart.this.controller.selectEventIDs(selectedNodes.stream()
                     .flatMap(detailNode -> detailNode.getEventIDs().stream())
                     .collect(Collectors.toList()));
         }
@@ -708,4 +695,5 @@ public final class EventDetailChart extends XYChart<DateTime, EventCluster> impl
             );
         }
     }
+
 }
