@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,12 +34,13 @@ import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
@@ -55,7 +57,7 @@ import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -104,7 +106,7 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper< DescriptionLOD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLOD.SHORT);
+    private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
@@ -143,6 +145,7 @@ public final class FilteredEventsModel {
         });
         requestedFilter.set(getDefaultFilter());
 
+        //TODO: use bindings to keep these in sync? -jm
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
@@ -153,7 +156,7 @@ public final class FilteredEventsModel {
                         || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
 
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilter().copyOf());
+                    requestedFilter.set(zoomParams.getFilter());
                     requestedTimeRange.set(zoomParams.getTimeRange());
                     requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
@@ -178,7 +181,7 @@ public final class FilteredEventsModel {
         return requestedTimeRange.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<DescriptionLOD> descriptionLODProperty() {
+    synchronized public ReadOnlyObjectProperty<DescriptionLoD> descriptionLODProperty() {
         return requestedLOD.getReadOnlyProperty();
     }
 
@@ -190,7 +193,7 @@ public final class FilteredEventsModel {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
-    synchronized public DescriptionLOD getDescriptionLOD() {
+    synchronized public DescriptionLoD getDescriptionLOD() {
         return requestedLOD.get();
     }
 
@@ -227,7 +230,7 @@ public final class FilteredEventsModel {
             tagNameFilter.setSelected(Boolean.TRUE);
             tagsFilter.addSubFilter(tagNameFilter);
         });
-        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter);
+        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
     }
 
     public Interval getBoundingEventsInterval() {
@@ -320,24 +323,22 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @param aggregation
      *
-     * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation
-     *         to control the grouping of events
+     * @return a list of event clusters at the requested zoom levels that are
+     *         within the requested time range and pass the requested filter
      */
-    public List<AggregateEvent> getAggregatedEvents() {
+    public List<EventCluster> getEventClusters() {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
-        final DescriptionLOD lod;
+        final DescriptionLoD lod;
         synchronized (this) {
             range = requestedTimeRange.get();
             filter = requestedFilter.get();
             zoom = requestedTypeZoom.get();
             lod = requestedLOD.get();
         }
-        return repo.getAggregatedEvents(new ZoomParams(range, zoom, filter, lod));
+        return repo.getEventClusters(new ZoomParams(range, zoom, filter, lod));
     }
 
     /**
@@ -347,30 +348,30 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
-        return repo.getAggregatedEvents(params);
+    public List<EventCluster> getEventClusters(ZoomParams params) {
+        return repo.getEventClusters(params);
     }
 
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
-        ContentTag contentTag = evt.getTag();
+        ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
         Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
-        BlackboardArtifactTag artifactTag = evt.getTag();
+        BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
         Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
-        ContentTag contentTag = evt.getTag();
-        Content content = contentTag.getContent();
+        DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         try {
+            Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
             boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, contentTag, tagged);
+            Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex);
@@ -379,11 +380,11 @@ public final class FilteredEventsModel {
     }
 
     synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
-        BlackboardArtifactTag artifactTag = evt.getTag();
-        BlackboardArtifact artifact = artifactTag.getArtifact();
+        DeletedBlackboardArtifactTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         try {
+            BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
             boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, tagged);
+            Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
             return postTagsUpdated(updatedEventIDs);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex);

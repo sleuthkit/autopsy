@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
 import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.filters.Filter;
 import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
 import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
@@ -42,9 +43,9 @@ import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD;
-import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.FULL;
-import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLOD.MEDIUM;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.FULL;
+import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.MEDIUM;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
@@ -57,16 +58,16 @@ import org.sleuthkit.datamodel.TskData;
  * Static helper methods for converting between java data model objects and
  * sqlite queries.
  */
-public class SQLHelper {
+class SQLHelper {
 
     static String useHashHitTablesHelper(RootFilter filter) {
         HashHitsFilter hashHitFilter = filter.getHashHitsFilter();
-        return hashHitFilter.isSelected() && false == hashHitFilter.isDisabled() ? " LEFT JOIN hash_set_hits " : " ";
+        return hashHitFilter.isActive() ? " LEFT JOIN hash_set_hits " : " ";
     }
 
     static String useTagTablesHelper(RootFilter filter) {
         TagsFilter tagsFilter = filter.getTagsFilter();
-        return tagsFilter.isSelected() && false == tagsFilter.isDisabled() ? " LEFT JOIN tags " : " ";
+        return tagsFilter.isActive() ? " LEFT JOIN tags " : " ";
     }
 
     /**
@@ -105,10 +106,20 @@ public class SQLHelper {
         return getSQLWhere((IntersectionFilter) filter);
     }
 
+    /**
+     * NOTE: I don't like this if-else instance of chain, but I can't decide
+     * what to do instead -jm
+     *
+     * @param filter
+     *
+     * @return
+     */
     private static String getSQLWhere(Filter filter) {
         String result = "";
         if (filter == null) {
             return "1";
+        } else if (filter instanceof DescriptionFilter) {
+            result = getSQLWhere((DescriptionFilter) filter);
         } else if (filter instanceof TagsFilter) {
             result = getSQLWhere((TagsFilter) filter);
         } else if (filter instanceof HashHitsFilter) {
@@ -130,7 +141,7 @@ public class SQLHelper {
         } else if (filter instanceof UnionFilter) {
             result = getSQLWhere((UnionFilter) filter);
         } else {
-            return "1";
+            throw new IllegalArgumentException("getSQLWhere not defined for " + filter.getClass().getCanonicalName());
         }
         result = StringUtils.deleteWhitespace(result).equals("(1and1and1)") ? "1" : result;
         result = StringUtils.deleteWhitespace(result).equals("()") ? "1" : result;
@@ -138,16 +149,24 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(HideKnownFilter filter) {
-        if (filter.isSelected()) {
+        if (filter.isActive()) {
             return "(known_state IS NOT '" + TskData.FileKnown.KNOWN.getFileKnownValue() + "')"; // NON-NLS
         } else {
             return "1";
         }
     }
 
+    private static String getSQLWhere(DescriptionFilter filter) {
+        if (filter.isActive()) {
+            String likeOrNotLike = (filter.getFilterMode() == DescriptionFilter.FilterMode.INCLUDE ? "" : " NOT") + " LIKE '";
+            return "(" + getDescriptionColumn(filter.getDescriptionLoD()) + likeOrNotLike + filter.getDescription() + "'  )"; // NON-NLS
+        } else {
+            return "1";
+        }
+    }
+
     private static String getSQLWhere(TagsFilter filter) {
-        if (filter.isSelected()
-                && (false == filter.isDisabled())
+        if (filter.isActive()
                 && (filter.getSubFilters().isEmpty() == false)) {
             String tagNameIDs = filter.getSubFilters().stream()
                     .filter((TagNameFilter t) -> t.isSelected() && !t.isDisabled())
@@ -162,8 +181,7 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(HashHitsFilter filter) {
-        if (filter.isSelected()
-                && (false == filter.isDisabled())
+        if (filter.isActive()
                 && (filter.getSubFilters().isEmpty() == false)) {
             String hashSetIDs = filter.getSubFilters().stream()
                     .filter((HashSetFilter t) -> t.isSelected() && !t.isDisabled())
@@ -176,7 +194,7 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(DataSourceFilter filter) {
-        if (filter.isSelected()) {
+        if (filter.isActive()) {
             return "(datasource_id = '" + filter.getDataSourceID() + "')";
         } else {
             return "1";
@@ -184,15 +202,15 @@ public class SQLHelper {
     }
 
     private static String getSQLWhere(DataSourcesFilter filter) {
-        return (filter.isSelected()) ? "(datasource_id in ("
+        return (filter.isActive()) ? "(datasource_id in ("
                 + filter.getSubFilters().stream()
-                .filter(AbstractFilter::isSelected)
+                .filter(AbstractFilter::isActive)
                 .map((dataSourceFilter) -> String.valueOf(dataSourceFilter.getDataSourceID()))
                 .collect(Collectors.joining(", ")) + "))" : "1";
     }
 
     private static String getSQLWhere(TextFilter filter) {
-        if (filter.isSelected()) {
+        if (filter.isActive()) {
             if (StringUtils.isBlank(filter.getText())) {
                 return "1";
             }
@@ -218,7 +236,7 @@ public class SQLHelper {
             return "0";
         } else if (typeFilter.getEventType() instanceof RootEventType) {
             if (typeFilter.getSubFilters().stream()
-                    .allMatch(subFilter -> subFilter.isSelected() && subFilter.getSubFilters().stream().allMatch(Filter::isSelected))) {
+                    .allMatch(subFilter -> subFilter.isActive() && subFilter.getSubFilters().stream().allMatch(Filter::isActive))) {
                 return "1"; //then collapse clause to true
             }
         }
@@ -226,7 +244,7 @@ public class SQLHelper {
     }
 
     private static List<Integer> getActiveSubTypes(TypeFilter filter) {
-        if (filter.isSelected()) {
+        if (filter.isActive()) {
             if (filter.getSubFilters().isEmpty()) {
                 return Collections.singletonList(RootEventType.allTypes.indexOf(filter.getEventType()));
             } else {
@@ -266,7 +284,7 @@ public class SQLHelper {
         }
     }
 
-    static String getDescriptionColumn(DescriptionLOD lod) {
+    static String getDescriptionColumn(DescriptionLoD lod) {
         switch (lod) {
             case FULL:
                 return "full_description";

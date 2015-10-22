@@ -28,12 +28,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -60,8 +61,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -102,14 +103,18 @@ public class GroupManager {
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
-    /** list of unseen groups */
+    /**
+     * list of unseen groups
+     */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
 
     private ReGroupTask<?> groupByTask;
 
-    /* --- current grouping/sorting attributes --- */
+    /*
+     * --- current grouping/sorting attributes ---
+     */
     private volatile GroupSortBy sortBy = GroupSortBy.NONE;
 
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
@@ -172,15 +177,17 @@ public class GroupManager {
      * using the current groupBy set for this manager, find groupkeys for all
      * the groups the given file is a part of
      *
-     *
-     *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
      *         file is a part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
-            DrawableFile<?> file = db.getFileFromID(fileID);
-            return getGroupKeysForFile(file);
+            if (nonNull(db)) {
+                DrawableFile<?> file = db.getFileFromID(fileID);
+                return getGroupKeysForFile(file);
+            } else {
+                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID);
+            }
         } catch (TskCoreException ex) {
             Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex);
         }
@@ -191,8 +198,7 @@ public class GroupManager {
      * @param groupKey
      *
      * @return return the DrawableGroup (if it exists) for the given GroupKey,
-     *         or
-     *         null if no group exists for that key.
+     *         or null if no group exists for that key.
      */
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
@@ -239,8 +245,8 @@ public class GroupManager {
     }
 
     /**
-     * 'mark' the given group as seen. This removes it from the queue of
-     * groups to review, and is persisted in the drawable db.
+     * 'mark' the given group as seen. This removes it from the queue of groups
+     * to review, and is persisted in the drawable db.
      *
      * @param group the {@link  DrawableGroup} to mark as seen
      */
@@ -486,16 +492,16 @@ public class GroupManager {
     @Subscribe
     public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> newGroupKey = null;
-        final long fileID = evt.getTag().getContent().getId();
-        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
-            newGroupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
+        final long fileID = evt.getAddedTag().getContent().getId();
+        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()));
             for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
                 if (oldGroupKey.equals(newGroupKey) == false) {
                     removeFromGroup(oldGroupKey, fileID);
                 }
             }
-        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
-            newGroupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
+        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
         }
         if (newGroupKey != null) {
             DrawableGroup g = getGroupForKey(newGroupKey);
@@ -522,13 +528,15 @@ public class GroupManager {
     @Subscribe
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
-        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getTag().getName())) {
-            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getTag().getName()));
-        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getTag().getName())) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getTag().getName());
+        final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
+        final TagName tagName = deletedTagInfo.getName();
+        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
+            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName));
+        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
+            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, tagName);
         }
         if (groupKey != null) {
-            final long fileID = evt.getTag().getContent().getId();
+            final long fileID = deletedTagInfo.getContentID();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
         }
     }
@@ -555,10 +563,9 @@ public class GroupManager {
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
         /**
-         * TODO: is there a way to optimize this to avoid quering to db
-         * so much. the problem is that as a new files are analyzed they
-         * might be in new groups( if we are grouping by say make or
-         * model) -jm
+         * TODO: is there a way to optimize this to avoid quering to db so much.
+         * the problem is that as a new files are analyzed they might be in new
+         * groups( if we are grouping by say make or model) -jm
          */
         for (long fileId : updatedFileIDs) {
 
@@ -579,18 +586,22 @@ public class GroupManager {
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
 
         if (Objects.nonNull(task) && (task.isCancelled())) {
-            /* if this method call is part of a ReGroupTask and that task is
+            /*
+             * if this method call is part of a ReGroupTask and that task is
              * cancelled, no-op
              *
              * this allows us to stop if a regroup task has been cancelled (e.g.
-             * the user picked a different group by attribute, while the
-             * current task was still running) */
+             * the user picked a different group by attribute, while the current
+             * task was still running)
+             */
 
         } else {         // no task or un-cancelled task
             if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
-                /* for attributes other than path we can't be sure a group is
-                 * fully analyzed because we don't know all the files that
-                 * will be a part of that group,. just show them no matter what. */
+                /*
+                 * for attributes other than path we can't be sure a group is
+                 * fully analyzed because we don't know all the files that will
+                 * be a part of that group,. just show them no matter what.
+                 */
 
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);

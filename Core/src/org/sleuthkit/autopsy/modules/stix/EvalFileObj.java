@@ -85,7 +85,7 @@ class EvalFileObj extends EvaluatableObject {
         if (obj.getFileExtension() != null) {
             if ((obj.getFileExtension().getCondition() == null)
                     || (obj.getFileExtension().getCondition() == ConditionTypeEnum.EQUALS)) {
-                String newClause = "name LIKE \'%" + obj.getFileExtension().getValue() + "\'"; //NON-NLS
+                String newClause = "LOWER(name) LIKE LOWER(\'%" + obj.getFileExtension().getValue() + "\')"; //NON-NLS
                 whereClause = addClause(whereClause, newClause);
             } else {
                 addWarning(

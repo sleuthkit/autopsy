@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,8 +101,21 @@ public final class Reports implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-                    if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
-                        ReportNodeFactory.this.refresh(true);
+                    if (eventType.equals(Case.Events.REPORT_ADDED.toString())) {
+                        /**
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            ReportNodeFactory.this.refresh(true);
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     }
                 }
             });

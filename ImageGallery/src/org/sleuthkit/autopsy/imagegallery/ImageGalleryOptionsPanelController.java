@@ -33,7 +33,8 @@ import org.openide.util.Lookup;
         categoryName = "#OptionsCategory_Name_Options",
         iconBase = "org/sleuthkit/autopsy/imagegallery/images/polaroid_48_silhouette.png",
         keywords = "#OptionsCategory_Keywords_Options",
-        keywordsCategory = "Options"
+        keywordsCategory = "Options",
+        position = 10
 )
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_Options=Image / Video Gallery", "OptionsCategory_Keywords_Options=image video gallery category "})
 public final class ImageGalleryOptionsPanelController extends OptionsPanelController {

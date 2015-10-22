@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,28 +22,41 @@ import javax.swing.event.ChangeEvent;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Event data that are fired off by ingest modules when they changed or added
- * new content.
+ * Event data that is published when content is added to case.
  */
 public class ModuleContentEvent extends ChangeEvent {
 
-    private String moduleName;
+    private String moduleName = "";
 
     /**
-     * Create a new event passing content that has changed
+     * Constructs event data that is published when content is added to case.
      *
-     * @param content
+     * @param content A reference to the new content.
      */
     public ModuleContentEvent(Content content) {
         super(content);
     }
 
     /**
-     * get module name that changed the content and fired the event
+     * Constructs event data that is published when content is added to case.
      *
-     * @return
+     * @param content    A reference to the new content.
+     * @param moduleName The name of the module that added the content.
+     * @param content
+     */
+    public ModuleContentEvent(String moduleName, Content content) {
+        super(content);
+        this.moduleName = moduleName;
+    }
+
+    /**
+     * Gets the name of the module that added the content, if the module name
+     * has been provided.
+     *
+     * @return The module name as a string. May be empty.
      */
     public String getModuleName() {
         return moduleName;
     }
+
 }

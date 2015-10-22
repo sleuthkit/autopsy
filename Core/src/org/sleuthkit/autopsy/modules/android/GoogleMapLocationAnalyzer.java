@@ -87,7 +87,7 @@ class GoogleMapLocationAnalyzer {
 
         try {
             resultSet = statement.executeQuery(
-                    "Select time,dest_lat,dest_lng,dest_title,dest_address,source_lat,source_lng FROM destination_history;"); //NON-NLS
+                    "SELECT time,dest_lat,dest_lng,dest_title,dest_address,source_lat,source_lng FROM destination_history;"); //NON-NLS
 
             while (resultSet.next()) {
                 Long time = Long.valueOf(resultSet.getString("time")) / 1000; //NON-NLS

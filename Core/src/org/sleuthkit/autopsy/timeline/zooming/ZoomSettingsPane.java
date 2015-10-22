@@ -18,19 +18,20 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.net.URL;
 import java.time.temporal.ChronoUnit;
-import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.Tooltip;
 import javafx.util.StringConverter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
@@ -44,13 +45,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  * has sliders to provide context/control over three axes of zooming (timescale,
  * event hierarchy, and description detail).
  */
-public class ZoomSettingsPane extends TitledPane implements TimeLineView {
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
+public class ZoomSettingsPane extends TitledPane {
 
     @FXML
     private Button backButton;
@@ -97,7 +92,7 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         typeZoomSlider.setMin(1);
         typeZoomSlider.setMax(2);
         typeZoomSlider.setLabelFormatter(new TypeZoomConverter());
-        descrLODSlider.setMax(DescriptionLOD.values().length - 1);
+        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
         descrLODSlider.setLabelFormatter(new DescrLODConverter());
         descrLODLabel.setText(
                 NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.descrLODLabel.text"));
@@ -105,35 +100,6 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
         timeUnitLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.timeUnitLabel.text"));
         zoomLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.zoomLabel.text"));
         historyLabel.setText(NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.historyLabel.text"));
-    }
-
-    public ZoomSettingsPane() {
-        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml"); // NON-NLS
-    }
-
-    @Override
-    synchronized public void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(controller.getEventsModel());
-        descrLODSlider.disableProperty().bind(controller.getViewMode().isEqualTo(VisualizationMode.COUNTS));
-        Back back = new Back(controller);
-        backButton.disableProperty().bind(back.disabledProperty());
-        backButton.setOnAction(back);
-        backButton.setTooltip(new Tooltip(
-                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.backButton.toolTip.text",
-                        back.getAccelerator().getName())));
-        Forward forward = new Forward(controller);
-        forwardButton.disableProperty().bind(forward.disabledProperty());
-        forwardButton.setOnAction(forward);
-        forwardButton.setTooltip(new Tooltip(
-                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.forwardButton.toolTip.text",
-                        forward.getAccelerator().getName())));
-
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
 
         initializeSlider(timeUnitSlider,
                 () -> {
@@ -151,18 +117,14 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
                     timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
                 });
-
-        initializeSlider(descrLODSlider,
-                () -> {
-                    DescriptionLOD newLOD = DescriptionLOD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
-                    if (controller.pushDescrLOD(newLOD) == false) {
-                        descrLODSlider.setValue(new DescrLODConverter().fromString(filteredEvents.getDescriptionLOD().toString()));
-                    }
-                }, this.filteredEvents.descriptionLODProperty(),
-                () -> {
-                    descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
-                });
-
+        initializeSlider(descrLODSlider, () -> {
+            DescriptionLoD newLOD = DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
+            if (controller.pushDescrLOD(newLOD) == false) {
+                descrLODSlider.setValue(new DescrLODConverter().fromString(controller.getEventsModel().getDescriptionLOD().toString()));
+            }
+        }, this.filteredEvents.descriptionLODProperty(), () -> {
+            descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
+        });
         initializeSlider(typeZoomSlider,
                 () -> {
                     EventTypeZoomLevel newZoomLevel = EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())];
@@ -172,6 +134,26 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
                 () -> {
                     typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal());
                 });
+        descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
+        Back back = new Back(controller);
+        backButton.disableProperty().bind(back.disabledProperty());
+        backButton.setOnAction(back);
+        backButton.setTooltip(new Tooltip(
+                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.backButton.toolTip.text",
+                        back.getAccelerator().getName())));
+        Forward forward = new Forward(controller);
+        forwardButton.disableProperty().bind(forward.disabledProperty());
+        forwardButton.setOnAction(forward);
+        forwardButton.setTooltip(new Tooltip(
+                NbBundle.getMessage(this.getClass(), "ZoomSettingsPane.forwardButton.toolTip.text",
+                        forward.getAccelerator().getName())));
+
+    }
+
+    public ZoomSettingsPane(TimeLineController controller) {
+        this.controller = controller;
+        this.filteredEvents = controller.getEventsModel();
+        FXMLConstructor.construct(this, "ZoomSettingsPane.fxml"); // NON-NLS
     }
 
     /**
@@ -244,12 +226,12 @@ public class ZoomSettingsPane extends TitledPane implements TimeLineView {
 
         @Override
         public String toString(Double object) {
-            return DescriptionLOD.values()[object.intValue()].getDisplayName();
+            return DescriptionLoD.values()[object.intValue()].getDisplayName();
         }
 
         @Override
         public Double fromString(String string) {
-            return new Integer(DescriptionLOD.valueOf(string).ordinal()).doubleValue();
+            return new Integer(DescriptionLoD.valueOf(string).ordinal()).doubleValue();
         }
     }
 }

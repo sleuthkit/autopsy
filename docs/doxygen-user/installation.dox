@@ -1,34 +1,32 @@
-/*! \page installation_page Installation 
+/*! \page installation_page Installing Autopsy
 
-Installation
------
+[TOC]
 
+\section prereqs Prerequisites
+It is _highly_ recommended to remove or disable any antivirus software from computers that will be processing or reviewing cases. Antivirus software will often conflict with forensic software, and may quarantine or even delete some of your results before you get a chance to look at them.
+<br><br>
+
+
+\section install Deployment Types
+Starting with Autopsy 4.0, there are two ways to deploy Autopsy:
+- **Single-User**: Cases can be open by only a single instance of Autopsy at a time.  Autopsy installations do not communicate with each other.  This is the easiest to install and deploy.  This page outlines that installation process. 
+- **Multi-User**: Cases can be open by multiple users at the same time and users can see what each other is doing. This collaborative deployment requires installation and configuration of other network-based services. The installation of this deployment is covered in \ref install_multiuser_page.
+
+
+\section download Download
 Download Autopsy from the website:
 
 http://sleuthkit.org/autopsy/download.php
 
-The current version of Autopsy 3 runs only on Microsoft Windows.
-We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries.
-
-The Windows installer is self-contained and will place everything in the needed places. Simply follow the standard prompts for installation.
+The current version of Autopsy 4 is distributed on sleuthkit.org only as a Windows installer. It can run on Linux and OS X, but requires some manual setup.  
 
 
-Optimizing Performance
------
+\section install_standalone Installation
+To install Autopsy, perform the following steps:
+1.	Run the Autopsy _msi_ file
+2.	If Windows prompts with User Account Control, click _Yes_
+3.	Click through the dialog boxes until you click a button that says _Finish_
+4.	Autopsy should now be fully installed
 
-After installing Autopsy, there are several hardware-based things that we suggest you do to optimize performance:
-
-1) Change the number of parallel pipelines used at run time. The default is two pipelines, but this can be increased if you are running on a system with several cores. To do this:
-- Run Autopsy from the Start Menu or desktop
-- When presented with the case creation splash screen, cancel/close the window
-- Select "Tools", "Options"
-- On the "Autopsy" tab, there is a drop down for "Number of thread to use for file ingest". We recommend that you set this value to be smaller than the number of cores minus two.  If you set this number too high, performance can degrade because the pipelines are fighting for the same resources. Individual testing should be done to find an optimal setting. 
-- After each change, restart Autopsy to let this setting take effect.
-
-\image html threadcount.PNG
-
-2) When making a case, use different drives to store the case and the images. The case directory is where the SQLite database and keyword search index are stored.  This allows the maximum amount of data to be read and written at the same time. 
-
-3) We have had best performance using either local solid state drives or fibre channel-attached SAN storage. 
 
 */

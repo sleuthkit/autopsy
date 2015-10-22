@@ -31,8 +31,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -205,7 +206,8 @@ class PstParser {
             try {
                 PSTAttachment attach = msg.getAttachment(x);
                 long size = attach.getAttachSize();
-                if (size >= services.getFreeDiskSpace()) {
+                long freeSpace = services.getFreeDiskSpace();
+                if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (size >= freeSpace)) {
                     continue;
                 }
                 // both long and short filenames can be used for attachments
@@ -254,10 +256,16 @@ class PstParser {
             int bufferSize = 8176;
             byte[] buffer = new byte[bufferSize];
             int count = attachmentStream.read(buffer);
+            
+            if(count == -1) {
+                throw new IOException("attachmentStream invalid (read() fails). File "+attach.getLongFilename()+ " skipped");
+            }
+            
             while (count == bufferSize) {
                 out.write(buffer);
                 count = attachmentStream.read(buffer);
             }
+
             byte[] endBuffer = new byte[count];
             System.arraycopy(buffer, 0, endBuffer, 0, count);
             out.write(endBuffer);

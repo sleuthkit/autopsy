@@ -1,8 +1,8 @@
-                   Last Updated: Sept 17, 2014
+                  Last Updated: 27 April 2015
 
 This file outlines what it takes to build Autopsy from source.
 
-Note that it currently only works out of the box on Windows.  We
+Note that it currently only works out-of-the-box on Windows.  We
 are working on getting the process working under non-Windows systems.
 It generally works, but needs some custom mangling to find the
 correct C libraries.
@@ -11,7 +11,10 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install JDK version 1.8. For the current version of JavaFX that we use, you'll need 1.8.0_40 or greater.  You can now use 32-bit or 64-bit, but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 32-bit is easier. 
+1a) Download and install JDK version 1.8.  For the current version of JavaFX 
+that we use, you'll need 1.8.0_40 or greater. You can now use 32-bit or 64-bit, 
+but special work is needed to get The Sleuth Kit to compile as 64-bit.  So, 
+32-bit is easier, but if you intend to use PostgreSQL, choose 64-bit.
 
 Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
 (http://www.oracle.com/technetwork/java/javase/downloads/index.html).
@@ -28,33 +31,26 @@ but it is a recommended IDE to use for development of Autopsy modules.
 need to set JRE_HOME_32 to the root 32-bit JRE directory and/or JRE_HOME_64
 to the root 64-bit JRE directory. 
 
-1e) (optional) For some Autopsy features to be functional, you need to add java executable to the system PATH.
-
+1e) (optional) For some Autopsy features to be functional, you need to add the 
+    java executable to the system PATH.
 
 
 2) Get Sleuth Kit Setup
-2a) Download and build the release version of Libewf2 (20130119 or
-later).  All you need is the dll file.  Note that you will get a
-launching error if you use libewf 1.
-- http://sourceforge.net/projects/libewf/
-If you want to build the 64-bit version of The Sleuth Kit, download
-our 64-bit version of libewf:
-- https://github.com/sleuthkit/libewf_64bit
-
-2b) Set LIBEWF_HOME environment variable to root directory of LIBEWF
-
-2c) Download and build a Release version of Sleuth Kit (TSK) 4.0.  You
-need to build the tsk_jni project.  You can use a released version or
-download the latest from github:
+2a) Download and build a Release version of Sleuth Kit (TSK) 4.0. See
+    win32\BUILDING.txt in the TSK package for more information. You need to 
+    build the tsk_jni project. Select the Release_PostgreSQL x64 target. You can
+    use a released version or download the latest from github:
 - git://github.com/sleuthkit/sleuthkit.git
 
-2d) Build the TSK JAR file by typing 'ant' in bindings/java in the
-TSK source code folder from a command line.  You can also add the
-code to a NetBeans project and build it from there.
+2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in
+    bindings/java in the
+    TSK source code folder from a command line. Note it is case
+    sensitive. You can also add the code to a NetBeans project and build
+    it from there, selecting the dist-PostgreSQL target.
 
-2e) Set TSK_HOME environment variable to the root directory of TSK
+2c) Set TSK_HOME environment variable to the root directory of TSK
 
-2f) On Non-Windows systems, you will need to do a 'make install'
+2d) On Non-Windows systems, you will need to do a 'make install'
 from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
@@ -85,12 +81,12 @@ and by submitting pull requests to the main Autopsy repository.
 5) Compile Autopsy
 5a) using Netbeans IDE:
 - Start NetBeans IDE and open the Autopsy project.
-- Choose to build the Autopsy project / module.  It is the highest
-level project that will then cause the other modules to be compiled.
+- Choose to build the Autopsy project / module. It is the highest level project
+    that will cause the other modules to be compiled.
 
 5b) without Netbeans IDE (requires JDK and ant >= 1.7.1):
 - from root directory of Autopsy source execute:
-ant build
+ant
 (to build Autopsy)
 ant run
 (to run Autopsy)
@@ -101,14 +97,13 @@ Here are some notes to shed some light on what is going on during
 the build process.
 
 - The Sleuth Kit Java datamodel JAR file has native JNI libraries
-that are copied into it.   These JNI libraries have dependencies on
-libewf and zlib.  On non-Windows platforms, the JNI library also has
-a dependency on libtsk (on Windows, it is compiled into libtsk_jni).
+that are copied into it. These JNI libraries have dependencies on
+libewf, zlib, libpq, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows 
+platforms, the JNI library also has a dependency on libtsk (on Windows, 
+it is compiled into libtsk_jni).
 
-- NetBeans uses ant to build Autopsy.  The build target copies the
-TSK datamodel JAR file into the project.  If you want to use the
-debug version of the TSK dll, then there is a different ant target
-in the TSK datamodel to copy the debug versions of the dlls. 
+- NetBeans uses ant to build Autopsy. The build target copies the
+TSK datamodel JAR file into the project.
 
 - On a Windows system, the compile-time ant target copies the 
 dependency libraries into the Autopsy code structure so that they can

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,8 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import javax.swing.JComponent;
+import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -33,6 +35,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * Action to open the New Case wizard.
@@ -74,7 +82,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
      * The method to perform new case creation
      */
     private void newCaseAction() {
-        WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
+        final WizardDescriptor wizardDescriptor = new WizardDescriptor(getPanels());
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
@@ -82,32 +90,70 @@ final class NewCaseWizardAction extends CallableSystemAction {
         dialog.setVisible(true);
         dialog.toFront();
 
-        boolean finished = wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION; // check if it finishes (it's not cancelled)
-        boolean isCancelled = wizardDescriptor.getValue() == WizardDescriptor.CANCEL_OPTION; // check if the "Cancel" button is pressed
+        if (wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION) {
+            new SwingWorker<Void, Void>() {
 
-        // if the finish button is pressed (not cancelled)
-        if (finished) {
-            // now start the 'Add Image' wizard
-            //TODO fix for local
-            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-            addImageAction.actionPerformed(null);
-        }
+                @Override
+                protected Void doInBackground() throws Exception {
+                    // Create case.
 
-        // if Cancel button is pressed
-        if (isCancelled) {
-            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
-            if (createdDirectory != null) {
-                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory); //NON-NLS
-                Case.deleteCaseDirectory(new File(createdDirectory));
-            }
-            // if there's case opened, close the case
-            if (Case.existsCurrentCase()) {
-                // close the previous case if there's any
-                CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
-                closeCase.actionPerformed(null);
-            }
+                    String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
+                    String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
+                    String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
+                    CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
+
+                    Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
+                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+                        if ((currentCaseType == CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && SleuthkitCase.tryConnectOld(info.getHost(), info.getPort(), info.getUserName(), info.getPassword(), info.getDbType()))) {
+                            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                            addImageAction.actionPerformed(null);
+                        } else {
+                            // @@@ Should we log here?
+                            JOptionPane.showMessageDialog(null,
+                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
+                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
+                                    JOptionPane.ERROR_MESSAGE);
+                            doFailedCaseCleanup(wizardDescriptor);
+                        }
+
+                    } catch (Exception ex) {
+                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
+            
+                        final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
+                                    "CaseCreateAction.msgDlg.cantCreateCase.msg") + " " + caseName,
+                                    NbBundle.getMessage(this.getClass(),
+                                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                                    JOptionPane.ERROR_MESSAGE);
+                        });
+                        doFailedCaseCleanup(wizardDescriptor);
+                    }
+                }
+            }.execute();
+        } else {
+            new Thread(() -> {
+                doFailedCaseCleanup(wizardDescriptor);
+            }).start();
         }
-        panels = null; // reset the panel
+    }
+
+    private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {
+        String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
+
+        if (createdDirectory != null) {
+            logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: {0}", createdDirectory); //NON-NLS
+            Case.deleteCaseDirectory(new File(createdDirectory));
+        }
     }
 
     /**
@@ -131,7 +177,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 if (c instanceof JComponent) { // assume Swing components
                     JComponent jc = (JComponent) c;
                     // Sets step number of a component
-                    jc.putClientProperty("WizardPanel_contentSelectedIndex", new Integer(i));
+                    jc.putClientProperty("WizardPanel_contentSelectedIndex", i);
                     // Sets steps names for a panel
                     jc.putClientProperty("WizardPanel_contentData", steps);
                     // Turn on subtitle creation on each step

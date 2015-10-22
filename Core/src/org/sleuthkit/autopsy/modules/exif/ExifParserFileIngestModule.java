@@ -22,21 +22,10 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.lang.GeoLocation;
 import com.drew.lang.Rational;
-import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
-import com.drew.metadata.MetadataException;
-import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
-import com.drew.metadata.exif.makernotes.CasioType1MakernoteDirectory;
-import com.drew.metadata.exif.makernotes.FujifilmMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.KodakMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.NikonType2MakernoteDirectory;
-import com.drew.metadata.exif.makernotes.PanasonicMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.PentaxMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.SanyoMakernoteDirectory;
-import com.drew.metadata.exif.makernotes.SonyType1MakernoteDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,7 +67,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
-    private volatile boolean facesDetected = false;
     private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -125,11 +113,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (filesToFire) {
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
                 filesToFire = false;
-            }
-            if (facesDetected) {
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
-                listOfFacesDetectedArtifacts.clear();
-                facesDetected = false;
             }
         }
 
@@ -205,11 +188,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
             }
 
-            if (containsFace(metadata)) {
-                listOfFacesDetectedArtifacts.add(f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED));
-                facesDetected = true;
-            }
-
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
@@ -243,121 +221,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     /**
-     * Checks if this metadata contains any tags related to facial information.
-     * NOTE: Cases with this metadata containing tags like enabled red-eye
-     * reduction settings, portrait settings, etc are also assumed to contain
-     * facial information. The method returns true. The return value of this
-     * method does NOT guarantee actual presence of face.
-     *
-     * @param metadata the metadata which needs to be parsed for possible facial
-     *                 information.
-     *
-     * @return returns true if the metadata contains any tags related to facial
-     *         information.
-     */
-    private boolean containsFace(Metadata metadata) {
-        Directory d = metadata.getFirstDirectoryOfType(CanonMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1)
-                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_1) != null) {
-                return true;
-            }
-            if (d.containsTag(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2)
-                    && d.getString(CanonMakernoteDirectory.TAG_FACE_DETECT_ARRAY_2) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(CasioType1MakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(CasioType1MakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(CasioType1MakernoteDirectory.TAG_FLASH_MODE) == 0x04) { //0x04 = "Red eye reduction"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(FujifilmMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(FujifilmMakernoteDirectory.TAG_FACES_DETECTED)
-                    && d.getString(FujifilmMakernoteDirectory.TAG_FACES_DETECTED) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(KodakMakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(KodakMakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(KodakMakernoteDirectory.TAG_FLASH_MODE) == 0x03) { //0x03 = "Red Eye"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                /// move on and check next directory
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(NikonType2MakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(NikonType2MakernoteDirectory.TAG_SCENE_MODE)
-                    && d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE) != null
-                    && (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("BEST FACE") // NON-NLS
-                    || (d.getString(NikonType2MakernoteDirectory.TAG_SCENE_MODE).equals("SMILE")))) { // NON-NLS
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(PanasonicMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(PanasonicMakernoteDirectory.TAG_FACES_DETECTED)
-                    && d.getString(PanasonicMakernoteDirectory.TAG_FACES_DETECTED) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(PentaxMakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(PentaxMakernoteDirectory.TAG_FLASH_MODE)
-                        && d.getInt(PentaxMakernoteDirectory.TAG_FLASH_MODE) == 6) { // 6 = Red-eye Reduction
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(SanyoMakernoteDirectory.class);
-        if (d != null) {
-            if (d.containsTag(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO)
-                    && d.getString(SanyoMakernoteDirectory.TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO) != null) {
-                return true;
-            }
-        }
-
-        d = metadata.getFirstDirectoryOfType(SonyType1MakernoteDirectory.class);
-        if (d != null) {
-            try {
-                if (d.containsTag(SonyType1MakernoteDirectory.TAG_AF_MODE)
-                        && d.getInt(SonyType1MakernoteDirectory.TAG_AF_MODE) == 15) { //15 = "Face Detected"
-                    return true;
-                }
-                if (d.containsTag(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE)
-                        && d.getInt(SonyType1MakernoteDirectory.TAG_EXPOSURE_MODE) == 14) { //14 = "Smile shutter"
-                    return true;
-                }
-            } catch (MetadataException ex) {
-                // move on and check next directory
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Checks if should try to attempt to extract exif. Currently checks if JPEG
      * image (by signature)
      *
@@ -387,10 +250,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (filesToFire) {
                 //send the final new data event
                 services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-            }
-            if (facesDetected) {
-                //send the final new data event
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED, listOfFacesDetectedArtifacts));
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,16 @@ import java.awt.event.ActionListener;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action in menu to open the folder containing the log files
@@ -41,6 +42,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionReference(path = "Menu/Help", position = 1750)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
+
+    private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -61,7 +64,8 @@ public final class OpenLogFolderAction implements ActionListener {
                 Desktop.getDesktop().open(logDir);
             }
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder"), ex); //NON-NLS
+
         }
     }
 }

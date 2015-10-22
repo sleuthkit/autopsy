@@ -93,9 +93,9 @@ final class LocalDiskPanel extends JPanel {
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
 
+        errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
-
     }
 
     /**
@@ -167,7 +167,7 @@ final class LocalDiskPanel extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables

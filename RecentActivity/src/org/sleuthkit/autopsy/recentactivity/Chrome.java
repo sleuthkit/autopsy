@@ -56,11 +56,11 @@ import org.sleuthkit.datamodel.TskData;
 class Chrome extends Extract {
 
     private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
-            + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
-    private static final String cookieQuery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies"; //NON-NLS
-    private static final String downloadQuery = "select full_path, url, start_time, received_bytes from downloads"; //NON-NLS
-    private static final String downloadQueryVersion30 = "SELECT current_path as full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
-    private static final String loginQuery = "select origin_url, username_value, signon_realm from logins"; //NON-NLS
+            + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
+    private static final String cookieQuery = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
+    private static final String downloadQuery = "SELECT full_path, url, start_time, received_bytes FROM downloads"; //NON-NLS
+    private static final String downloadQueryVersion30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
+    private static final String loginQuery = "SELECT origin_url, username_value, signon_realm from logins"; //NON-NLS
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;

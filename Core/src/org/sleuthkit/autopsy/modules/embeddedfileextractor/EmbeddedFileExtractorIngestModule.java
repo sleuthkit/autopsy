@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -69,8 +68,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
 
         final Case currentCase = Case.getCurrentCase();
 
-        moduleDirRelative = Case.getModulesOutputDirRelPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-        moduleDirAbsolute = currentCase.getModulesOutputDirAbsPath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
+        moduleDirRelative = currentCase.getModuleOutputDirectoryRelativePath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
+        moduleDirAbsolute = currentCase.getModuleDirectory() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
 
         // initialize the folder where the embedded files are extracted.
         File extractionDirectory = new File(moduleDirAbsolute);
@@ -103,7 +102,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        // skip unknown files
+        // skip known files
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
@@ -116,7 +115,7 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             return ProcessResult.OK;
         }
 
-        // call the archive extractor if archiveextraction flag is set.
+        // call the archive extractor if archiveExtraction flag is set.
         if (this.archivextraction) {
             archiveExtractor.unpack(abstractFile);
         }

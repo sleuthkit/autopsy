@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -183,16 +183,42 @@ public class DeletedContent implements AutopsyVisitableItem {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     String eventType = evt.getPropertyName();
-
-                    // new file was added
                     if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                        // @@@ COULD CHECK If the new file is deleted before notifying...
-                        update();
+                        /**
+                         * + // @@@ COULD CHECK If the new file is deleted
+                         * before notifying... Checking for a current case is a
+                         * stop gap measure	+ update(); until a different way of
+                         * handling the closing of cases is worked out.
+                         * Currently, remote events may be received for a case
+                         * that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            // new file was added                            		
+                            // @@@ COULD CHECK If the new file is deleted before notifying...		
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                        update();
-                    } else if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        update();
+                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                        /**
+                         * Checking for a current case is a stop gap measure
+                         * until a different way of handling the closing of
+                         * cases is worked out. Currently, remote events may be
+                         * received for a case that is already closed.
+                         */
+                        try {
+                            Case.getCurrentCase();
+                            update();
+                        } catch (IllegalStateException notUsed) {
+                            /**
+                             * Case is closed, do nothing.
+                             */
+                        }
                     } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                         // case was closed. Remove listeners so that we don't get called with a stale case handle
                         if (evt.getNewValue() == null) {
@@ -210,6 +236,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
 
         @Override
+
         protected boolean createKeys(List<DeletedContent.DeletedContentFilter> list) {
             list.addAll(Arrays.asList(DeletedContent.DeletedContentFilter.values()));
             return true;
@@ -222,8 +249,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         public class DeletedContentNode extends DisplayableItemNode {
 
-            private DeletedContent.DeletedContentFilter filter;
-            private final Logger logger = Logger.getLogger(DeletedContentNode.class.getName());
+            private final DeletedContent.DeletedContentFilter filter;
 
             // Use version that has observer for updates
             @Deprecated
@@ -296,8 +322,8 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         static class DeletedContentChildren extends ChildFactory.Detachable<AbstractFile> {
 
-            private SleuthkitCase skCase;
-            private DeletedContent.DeletedContentFilter filter;
+            private final SleuthkitCase skCase;
+            private final DeletedContent.DeletedContentFilter filter;
             private static final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
             private static final int MAX_OBJECTS = 10001;
             private final Observable notifier;
@@ -339,7 +365,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
                     queryList.remove(queryList.size() - 1);
-
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;

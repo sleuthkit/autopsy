@@ -31,6 +31,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
+import org.openide.windows.WindowManager;
 
 /**
  * File search dialog
@@ -50,6 +51,7 @@ class FileSearchDialog extends javax.swing.JDialog {
         double w = getSize().getWidth();
         double h = getSize().getHeight();
         setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         fileSearchPanel1.addListenerToAll(new ActionListener() {
 
             @Override

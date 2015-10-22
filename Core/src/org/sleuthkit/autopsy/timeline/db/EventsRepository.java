@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ProgressWindow;
-import org.sleuthkit.autopsy.timeline.datamodel.AggregateEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
@@ -98,7 +98,7 @@ public class EventsRepository {
 
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<AggregateEvent>> aggregateEventsCache;
+    private final LoadingCache<ZoomParams, List<EventCluster>> eventClusterCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
@@ -146,10 +146,10 @@ public class EventsRepository {
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(CacheLoader.from(eventDB::countEventsByType));
-        aggregateEventsCache = CacheBuilder.newBuilder()
+        eventClusterCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(CacheLoader.from(eventDB::getAggregatedEvents));
+                ).build(CacheLoader.from(eventDB::getClusteredEvents));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
@@ -206,8 +206,8 @@ public class EventsRepository {
 
     }
 
-    synchronized public List<AggregateEvent> getAggregatedEvents(ZoomParams params) {
-        return aggregateEventsCache.getUnchecked(params);
+    synchronized public List<EventCluster> getEventClusters(ZoomParams params) {
+        return eventClusterCache.getUnchecked(params);
     }
 
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
@@ -218,7 +218,7 @@ public class EventsRepository {
         minCache.invalidateAll();
         maxCache.invalidateAll();
         eventCountsCache.invalidateAll();
-        aggregateEventsCache.invalidateAll();
+        eventClusterCache.invalidateAll();
         idToEventCache.invalidateAll();
     }
 
@@ -282,8 +282,8 @@ public class EventsRepository {
         return updatedEventIDs;
     }
 
-    synchronized public Set<Long> deleteTag(long objID, Long artifactID, Tag tag, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tag, tagged);
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) {
+        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tagID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -292,7 +292,7 @@ public class EventsRepository {
 
     synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
         eventCountsCache.invalidateAll();
-        aggregateEventsCache.invalidateAll();
+        eventClusterCache.invalidateAll();
         idToEventCache.invalidateAll(updatedEventIDs);
         try {
             tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
@@ -487,26 +487,29 @@ public class EventsRepository {
                             final String uniquePath = f.getUniquePath();
                             final String parentPath = f.getParentPath();
                             long datasourceID = f.getDataSource().getId();
-                            String datasourceName = StringUtils.substringBefore(StringUtils.stripStart(uniquePath, "/"), parentPath);
-                            String rootFolder = StringUtils.substringBetween(parentPath, "/", "/");
-                            String shortDesc = datasourceName + "/" + StringUtils.defaultIfBlank(rootFolder, "");
-                            String medD = datasourceName + parentPath;
+                            String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
+
+                            String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
+                            String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
+                            shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
+                            String medDesc = datasourceName + parentPath;
+
                             final TskData.FileKnown known = f.getKnown();
                             Set<String> hashSets = f.getHashSetNames();
                             List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
                             //insert it into the db if time is > 0  => time is legitimate (drops logical files)
                             if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
                             if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medD, shortDesc, known, hashSets, tags, trans);
+                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
                             }
 
                             publish(new ProgressWindow.ProgressUpdate(i, numFiles,
@@ -618,5 +621,10 @@ public class EventsRepository {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
             }
         }
+    }
+
+    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
+        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
+
     }
 }

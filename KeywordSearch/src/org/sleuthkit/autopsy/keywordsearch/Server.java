@@ -33,7 +33,7 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +44,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -60,8 +59,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Handles for keeping track of a Solr server and its cores
@@ -148,7 +152,6 @@ public class Server {
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
-    // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java"; //NON-NLS
@@ -160,33 +163,39 @@ public class Server {
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
     private static final String KEY = "jjk#09s"; //NON-NLS
+    static final String DEFAULT_SOLR_SERVER_HOST = "localhost"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
     public enum CORE_EVT_STATES {
 
         STOPPED, STARTED
     };
-    private SolrServer solrServer;
-    private String instanceDir;
-    private File solrFolder;
-    private ServerAction serverAction;
+
+    // A reference to the locally running Solr instance.
+    private final HttpSolrServer localSolrServer;
+
+    // A reference to the Solr server we are currently connected to for the Case.
+    // This could be a local or remote server.
+    private HttpSolrServer currentSolrServer;
+
+    private final String instanceDir;
+    private final File solrFolder;
+    private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
-    private String solrUrl;
 
     /**
      * New instance for the server at the given URL
      *
-     * @param url should be something like "http://localhost:23232/solr/"
      */
     Server() {
         initSettings();
 
-        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr"; //NON-NLS
-        this.solrServer = new HttpSolrServer(solrUrl);
+        this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
@@ -196,6 +205,7 @@ public class Server {
     }
 
     private void initSettings() {
+
         if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
             try {
                 currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
@@ -325,10 +335,10 @@ public class Server {
      * @return
      */
     List<Long> getSolrPIDs() {
-        List<Long> pids = new ArrayList<Long>();
+        List<Long> pids = new ArrayList<>();
 
         //NOTE: these needs to be in sync with process start string in start()
-        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.7.eq=start.jar"; //NON-NLS
+        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.6.eq=start.jar"; //NON-NLS
 
         long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
         if (pidsArr != null) {
@@ -353,45 +363,79 @@ public class Server {
     }
 
     /**
-     * Tries to start a Solr instance in a separate process. Returns immediately
-     * (probably before the server is ready) and doesn't check whether it was
-     * successful.
+     * Tries to start a local Solr instance in a separate process. Returns
+     * immediately (probably before the server is ready) and doesn't check
+     * whether it was successful.
      */
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
+        if (isRunning()) {
+            // If a Solr server is running we stop it.
+            stop();
+        }
+
+        if (!isPortAvailable(currentSolrServerPort)) {
+            // There is something already listening on our port. Let's see if
+            // this is from an earlier run that didn't successfully shut down
+            // and if so kill it.
+            final List<Long> pids = this.getSolrPIDs();
+
+            // If the culprit listening on the port is not a Solr process
+            // we refuse to start.
+            if (pids.isEmpty()) {
+                throw new SolrServerNoPortException(currentSolrServerPort);
+            }
+
+            // Ok, we've tried to stop it above but there still appears to be
+            // a Solr process listening on our port so we forcefully kill it.
+            killSolr();
+
+            // If either of the ports are still in use after our attempt to kill 
+            // previously running processes we give up and throw an exception.
+            if (!isPortAvailable(currentSolrServerPort)) {
+                throw new SolrServerNoPortException(currentSolrServerPort);
+            }
+            if (!isPortAvailable(currentSolrStopPort)) {
+                throw new SolrServerNoPortException(currentSolrStopPort);
+            }
+        }
+
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr"); //NON-NLS
             try {
                 final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
 
-                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
-                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
+//                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
+//                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
+//
+//                if (DEBUG) {
+//                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
+//                } else {
+//                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
+//                }
+//                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
+                List<String> commandLine = new ArrayList<>();
+                commandLine.add(javaPath);
+                commandLine.add(MAX_SOLR_MEM_MB_PAR);
+                commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
+                commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
+                commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
+                commandLine.add("-jar"); //NON-NLS
+                commandLine.add("start.jar"); //NON-NLS
 
-                if (DEBUG) {
-                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
-                } else {
-                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
-                }
+                ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
+                solrProcessBuilder.directory(solrFolder);
 
-                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
+                // Redirect stdout and stderr to files to prevent blocking.
+                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout");
+                solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
 
-                final String[] SOLR_START_CMD = {
-                    javaPath,
-                    MAX_SOLR_MEM_MB_PAR,
-                    "-DSTOP.PORT=" + currentSolrStopPort, //NON-NLS
-                    "-Djetty.port=" + currentSolrServerPort, //NON-NLS
-                    "-DSTOP.KEY=" + KEY, //NON-NLS
-                    loggingProperties,
-                    "-jar", //NON-NLS
-                    "start.jar"}; //NON-NLS
+                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr");
+                solrProcessBuilder.redirectError(solrStderrPath.toFile());
 
-                StringBuilder cmdSb = new StringBuilder();
-                for (int i = 0; i < SOLR_START_CMD.length; ++i) {
-                    cmdSb.append(SOLR_START_CMD[i]).append(" ");
-                }
-
-                logger.log(Level.INFO, "Starting Solr using: " + cmdSb.toString()); //NON-NLS
-                curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
+                logger.log(Level.INFO, "Starting Solr using: " + solrProcessBuilder.command()); //NON-NLS
+                curSolrProcess = solrProcessBuilder.start();
                 logger.log(Level.INFO, "Finished starting Solr"); //NON-NLS
 
                 try {
@@ -401,10 +445,6 @@ public class Server {
                 } catch (InterruptedException ex) {
                     logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
                 }
-                // Handle output to prevent process from blocking
-
-                errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr"); //NON-NLS
-                errorRedirectThread.start();
 
                 final List<Long> pids = this.getSolrPIDs();
                 logger.log(Level.INFO, "New Solr process PID: " + pids); //NON-NLS
@@ -417,9 +457,6 @@ public class Server {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.start.exception.cantStartSolr.msg2"), ex);
             }
-        } else {
-            logger.log(Level.SEVERE, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!"); //NON-NLS
-            throw new SolrServerNoPortException(currentSolrServerPort);
         }
     }
 
@@ -475,13 +512,22 @@ public class Server {
     }
 
     /**
-     * Tries to stop a Solr instance.
+     * Tries to stop the local Solr instance.
      *
      * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
+
+        try {
+            // Close any open core before stopping server
+            closeCore();
+        } catch (KeywordSearchModuleException e) {
+            logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
+        }
+
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+
             //try graceful shutdown
             final String[] SOLR_STOP_CMD = {
                 javaPath,
@@ -501,8 +547,7 @@ public class Server {
                 curSolrProcess = null;
             }
 
-        } catch (InterruptedException ex) {
-        } catch (IOException ex) {
+        } catch (InterruptedException | IOException ex) {
         } finally {
             //stop Solr stream -> log redirect threads
             try {
@@ -520,7 +565,7 @@ public class Server {
     }
 
     /**
-     * Tests if there's a Solr server running by sending it a core-status
+     * Tests if there's a local Solr server running by sending it a core-status
      * request.
      *
      * @return false if the request failed with a connection error, otherwise
@@ -528,12 +573,19 @@ public class Server {
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
         try {
+
+            if (isPortAvailable(currentSolrServerPort)) {
+                return false;
+            }
+
+            if (curSolrProcess != null && !curSolrProcess.isAlive()) {
+                return false;
+            }
+
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
-
-            //TODO check if port avail and return false if it is
             //TODO handle timeout in cases when some other type of server on that port
-            CoreAdminRequest.getStatus(null, solrServer);
+            CoreAdminRequest.getStatus(null, localSolrServer);
 
             logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
@@ -574,43 +626,20 @@ public class Server {
 
         Case currentCase = Case.getCurrentCase();
 
-        validateIndexLocation(currentCase);
-
-        currentCore = openCore(currentCase);
-        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
-    }
-
-    /**
-     * Checks if index dir exists, and moves it to new location if needed (for
-     * backwards compatibility with older cases)
-     */
-    private void validateIndexLocation(Case theCase) {
-        logger.log(Level.INFO, "Validating keyword search index location"); //NON-NLS
-        String properIndexPath = getIndexDirPath(theCase);
-
-        String legacyIndexPath = theCase.getCaseDirectory()
-                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-
-        File properIndexDir = new File(properIndexPath);
-        File legacyIndexDir = new File(legacyIndexPath);
-        if (!properIndexDir.exists()
-                && legacyIndexDir.exists() && legacyIndexDir.isDirectory()) {
-            logger.log(Level.INFO, "Moving keyword search index location from: " //NON-NLS
-                    + legacyIndexPath + " to: " + properIndexPath); //NON-NLS
-            try {
-                Files.move(Paths.get(legacyIndexDir.getParent()), Paths.get(properIndexDir.getParent()));
-            } catch (IOException | SecurityException ex) {
-                logger.log(Level.WARNING, "Error moving keyword search index folder from: " //NON-NLS
-                        + legacyIndexPath + " to: " + properIndexPath //NON-NLS
-                        + " will recreate a new index.", ex); //NON-NLS
-            }
+        try {
+            currentCore = openCore(currentCase);
+        } catch (KeywordSearchModuleException ex) {
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.openCore.exception.cantOpenForCase.msg", currentCase.getName()), ex.getCause().getMessage());
+            throw ex;
         }
+        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
 
     synchronized void closeCore() throws KeywordSearchModuleException {
         if (currentCore == null) {
             return;
         }
+
         currentCore.close();
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
@@ -628,9 +657,16 @@ public class Server {
      * @return absolute path to index dir
      */
     String getIndexDirPath(Case theCase) {
-        String indexDir = theCase.getModulesOutputDirAbsPath()
-                + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        return indexDir;
+        String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
+        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        if (result == null) {
+            uncPathUtilities.rescanDrives();
+            result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        }
+        if (result == null) {
+            return indexDir;
+        }
+        return result;
     }
 
     /**
@@ -644,8 +680,24 @@ public class Server {
      * @return
      */
     private synchronized Core openCore(Case theCase) throws KeywordSearchModuleException {
+        try {
+            if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                currentSolrServer = this.localSolrServer;
+            } else {
+                String host = UserPreferences.getIndexingServerHost();
+                String port = UserPreferences.getIndexingServerPort();
+
+                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+            }
+            connectToSolrServer(currentSolrServer);
+        } catch (SolrServerException | IOException ex) {
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex.getCause().getMessage());
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"));
+        }
+
         String dataDir = getIndexDirPath(theCase);
-        return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
+        String coreName = theCase.getTextIndexName();
+        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
     }
 
     /**
@@ -675,7 +727,7 @@ public class Server {
      * @return int representing number of indexed files
      *
      * @throws KeywordSearchModuleException
-     * @throws NoOpenCoreExceptionn
+     * @throws NoOpenCoreException
      */
     public int queryNumIndexedFiles() throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
@@ -943,7 +995,8 @@ public class Server {
      *
      * @return new core
      */
-    private Core openCore(String coreName, File dataDir) throws KeywordSearchModuleException {
+    private Core openCore(String coreName, File dataDir, CaseType caseType) throws KeywordSearchModuleException {
+
         try {
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
@@ -956,18 +1009,22 @@ public class Server {
                         NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
-            createCore.setDataDir(dataDir.getAbsolutePath());
-            createCore.setInstanceDir(instanceDir);
-            createCore.setCoreName(coreName);
+            if (!isCoreLoaded(coreName)) {
+                CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
+                createCore.setDataDir(dataDir.getAbsolutePath());
+                createCore.setCoreName(coreName);
+                createCore.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCore.setIsLoadOnStartup(false);
+                createCore.setIsTransient(true);
 
-            this.solrServer.request(createCore);
+                currentSolrServer.request(createCore);
+            }
 
-            final Core newCore = new Core(coreName);
+            final Core newCore = new Core(coreName, caseType);
 
             return newCore;
 
-        } catch (SolrServerException ex) {
+        } catch (SolrServerException | SolrException ex) {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         } catch (IOException ex) {
@@ -976,18 +1033,49 @@ public class Server {
         }
     }
 
+    /**
+     * Attempts to connect to the given Solr server.
+     *
+     * @param solrServer
+     *
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
+        CoreAdminRequest.getStatus(null, solrServer);
+    }
+
+    /**
+     * Determines whether the Solr core with the given name already exists.
+     *
+     * @param coreName
+     *
+     * @return true if core exists, otherwise false.
+     *
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    private boolean isCoreLoaded(String coreName) throws SolrServerException, IOException {
+        CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
+        return response.getCoreStatus(coreName).get("instanceDir") != null; //NON-NLS
+    }
+
     class Core {
 
         // handle to the core in Solr
-        private String name;
+        private final String name;
+
+        private final CaseType caseType;
+
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private HttpSolrServer solrCore;
+        private final HttpSolrServer solrCore;
 
-        private Core(String name) {
+        private Core(String name, CaseType caseType) {
             this.name = name;
+            this.caseType = caseType;
 
-            this.solrCore = new HttpSolrServer(solrUrl + "/" + name);
+            this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name);
 
             //TODO test these settings
             //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
@@ -1091,8 +1179,13 @@ public class Server {
         }
 
         synchronized void close() throws KeywordSearchModuleException {
+            // We only unload cores for "single-user" cases.
+            if (this.caseType == CaseType.MULTI_USER_CASE) {
+                return;
+            }
+
             try {
-                CoreAdminRequest.unloadCore(this.name, solrServer);
+                CoreAdminRequest.unloadCore(this.name, currentSolrServer);
             } catch (SolrServerException ex) {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);

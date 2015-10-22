@@ -18,15 +18,19 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import java.awt.Window;
 import java.util.Collection;
 import java.util.Set;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javax.swing.SwingUtilities;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.datamodel.TagName;
 
@@ -35,16 +39,16 @@ import org.sleuthkit.datamodel.TagName;
  * model objects.
  *
  * //TODO: this class started as a cut and paste from
- * org.sleuthkit.autopsy.actions.AddTagAction and needs to be
- * refactored or reintegrated to the AddTagAction hierarchy of Autopysy.
+ * org.sleuthkit.autopsy.actions.AddTagAction and needs to be refactored or
+ * reintegrated to the AddTagAction hierarchy of Autopysy.
  */
 abstract class AddTagAction {
 
     protected static final String NO_COMMENT = "";
 
     /**
-     * Template method to allow derived classes to provide a string for a
-     * menu item label.
+     * Template method to allow derived classes to provide a string for a menu
+     * item label.
      */
     abstract protected String getActionDisplayName();
 
@@ -76,9 +80,11 @@ abstract class AddTagAction {
             Menu quickTagMenu = new Menu("Quick Tag");
             getItems().add(quickTagMenu);
 
-            /* Each non-Category tag name in the current set of tags gets its
+            /*
+             * Each non-Category tag name in the current set of tags gets its
              * own menu item in the "Quick Tags" sub-menu. Selecting one of
-             * these menu items adds a tag with the associated tag name. */
+             * these menu items adds a tag with the associated tag name.
+             */
             Collection<TagName> tagNames = controller.getTagsManager().getNonCategoryTagNames();
             if (tagNames.isEmpty()) {
                 MenuItem empty = new MenuItem("No tags");
@@ -94,13 +100,15 @@ abstract class AddTagAction {
                 }
             }
 
-            /* The "Quick Tag" menu also gets an "New Tag..." menu item.
+            /*
+             * The "Quick Tag" menu also gets an "New Tag..." menu item.
              * Selecting this item initiates a dialog that can be used to create
-             * or select a tag name and adds a tag with the resulting name. */
+             * or select a tag name and adds a tag with the resulting name.
+             */
             MenuItem newTagMenuItem = new MenuItem("New Tag...");
             newTagMenuItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
-                    TagName tagName = GetTagNameDialog.doDialog();
+                    TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
                     if (tagName != null) {
                         addTag(tagName, NO_COMMENT);
                     }
@@ -108,14 +116,16 @@ abstract class AddTagAction {
             });
             quickTagMenu.getItems().add(newTagMenuItem);
 
-            /* Create a "Tag and Comment..." menu item. Selecting this item
+            /*
+             * Create a "Tag and Comment..." menu item. Selecting this item
              * initiates a dialog that can be used to create or select a tag
              * name with an optional comment and adds a tag with the resulting
-             * name. */
+             * name.
+             */
             MenuItem tagAndCommentItem = new MenuItem("Tag and Comment...");
             tagAndCommentItem.setOnAction((ActionEvent t) -> {
                 SwingUtilities.invokeLater(() -> {
-                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
+                    GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
                     if (null != tagNameAndComment) {
                         if (CategoryManager.isCategoryTagName(tagNameAndComment.getTagName())) {
                             new CategorizeAction(controller).addTag(tagNameAndComment.getTagName(), tagNameAndComment.getComment());
@@ -127,5 +137,14 @@ abstract class AddTagAction {
             });
             getItems().add(tagAndCommentItem);
         }
+
+    }
+
+    /**
+     * @return the Window containing the ImageGalleryTopComponent
+     */
+    static private Window getIGWindow() {
+        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+        return SwingUtilities.getWindowAncestor(etc);
     }
 }

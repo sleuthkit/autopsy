@@ -33,8 +33,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -48,7 +46,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -66,6 +63,7 @@ import jfxtras.scene.control.LocalDateTimeTextField;
 import org.controlsfx.control.NotificationPane;
 import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -74,11 +72,12 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.actions.SaveSnapshot;
+import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
+import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
+import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
@@ -86,18 +85,18 @@ import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_refres
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_tagsAddedOrDeleted;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
- * A Container for an {@link AbstractVisualization}, has a toolbar on top to
- * hold settings widgets supplied by contained {@link AbstractVisualization},
+ * A container for an {@link AbstractVisualizationPane}, has a toolbar on top to
+ * hold settings widgets supplied by contained {@link AbstAbstractVisualization}
  * and the histogram / timeselection on bottom. Also supplies containers for
- * replacement axis to contained {@link AbstractVisualization}
+ * replacement axis to contained {@link AbstractAbstractVisualization}
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
-public class VisualizationPanel extends BorderPane implements TimeLineView {
+final public class VisualizationPanel extends BorderPane {
 
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
@@ -107,22 +106,22 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
 
-    private final NavPanel navPanel;
+    private final EventsTree eventsTree;
 
-    private AbstractVisualization<?, ?, ?, ?> visualization;
+    private AbstractVisualizationPane<?, ?, ?, ?> visualization;
 
     //// range slider and histogram componenets
     @FXML
-    protected HBox histogramBox;
+    private HBox histogramBox;
 
     @FXML
-    protected StackPane rangeHistogramStack;
+    private StackPane rangeHistogramStack;
 
     private final RangeSlider rangeSlider = new RangeSlider(0, 1.0, .25, .75);
 
     //// time range selection components
     @FXML
-    protected MenuButton zoomMenuButton;
+    private MenuButton zoomMenuButton;
 
     @FXML
     private Separator rightSeperator;
@@ -131,26 +130,26 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     private Separator leftSeperator;
 
     @FXML
-    protected Button zoomOutButton;
+    private Button zoomOutButton;
 
     @FXML
-    protected Button zoomInButton;
+    private Button zoomInButton;
 
     @FXML
-    protected LocalDateTimeTextField startPicker;
+    private LocalDateTimeTextField startPicker;
 
     @FXML
-    protected LocalDateTimeTextField endPicker;
+    private LocalDateTimeTextField endPicker;
 
     //// replacemetn axis label componenets
     @FXML
-    protected Pane partPane;
+    private Pane partPane;
 
     @FXML
-    protected Pane contextPane;
+    private Pane contextPane;
 
     @FXML
-    protected Region spacer;
+    private Region spacer;
 
     //// header toolbar componenets
     @FXML
@@ -174,12 +173,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     private final NotificationPane notificationPane = new NotificationPane();
 
-    protected TimeLineController controller;
+    private TimeLineController controller;
 
-    protected FilteredEventsModel filteredEvents;
+    private FilteredEventsModel filteredEvents;
 
-    private final ChangeListener<Object> rangeSliderListener
-            = (observable1, oldValue, newValue) -> {
+    private final ChangeListener<Object> rangeSliderListener =
+            (observable1, oldValue, newValue) -> {
                 if (rangeSlider.isHighValueChanging() == false && rangeSlider.isLowValueChanging() == false) {
                     Long minTime = filteredEvents.getMinTime() * 1000;
                     controller.pushTimeRange(new Interval(
@@ -207,14 +206,15 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     static private final Lighting lighting = new Lighting();
 
-    public VisualizationPanel(NavPanel navPanel) {
-        this.navPanel = navPanel;
+    public VisualizationPanel(TimeLineController controller, EventsTree eventsTree) {
+        this.controller = controller;
+        this.eventsTree = eventsTree;
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     @NbBundle.Messages("VisualizationPanel.refresh=refresh")
-    protected void initialize() {
+    void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -289,79 +289,58 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         }
         zoomMenuButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomMenuButton.text")); // NON-NLS
 
-        zoomOutButton.setOnAction(e -> {
-            controller.pushZoomOutTime();
-        });
-        zoomInButton.setOnAction(e -> {
-            controller.pushZoomInTime();
-        });
-
-        snapShotButton.setOnAction((ActionEvent event) -> {
-            //take snapshot
-            final SnapshotParameters snapshotParameters = new SnapshotParameters();
-            snapshotParameters.setViewport(new Rectangle2D(visualization.getBoundsInParent().getMinX(), visualization.getBoundsInParent().getMinY(),
-                    visualization.getBoundsInParent().getWidth(),
-                    contextPane.getLayoutBounds().getHeight() + visualization.getLayoutBounds().getHeight() + partPane.getLayoutBounds().getHeight()
-            ));
-            WritableImage snapshot = this.snapshot(snapshotParameters, null);
-            //pass snapshot to save action
-            new SaveSnapshot(controller, snapshot).handle(event);
-        });
+        snapShotButton.setOnAction(event ->
+                this.snapshot(snapShotResult -> {
+                    new SaveSnapshotAsReport(controller, snapShotResult.getImage()).handle(event);
+                    return null;
+                }, null, null)
+        );
 
         snapShotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapShotButton.text")); // NON-NLS
-    }
+        if (this.filteredEvents != null && this.filteredEvents != controller.getEventsModel()) {
+            this.filteredEvents.unRegisterForEvents(this);
+            this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
+            this.filteredEvents.zoomParametersProperty().removeListener(zoomListener);
+        }
+        if (this.filteredEvents != controller.getEventsModel()) {
+            controller.getEventsModel().registerForEvents(this);
+            controller.getEventsModel().timeRangeProperty().addListener(timeRangeInvalidationListener);
+            controller.getEventsModel().zoomParametersProperty().addListener(zoomListener);
+        }
 
-    @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(controller.getEventsModel());
-        setViewMode(controller.getViewMode().get());
+        this.filteredEvents = controller.getEventsModel();
+        refreshTimeUI(controller.getEventsModel().timeRangeProperty().get());
+        ActionUtils.configureButton(new ZoomOut(controller), zoomOutButton);
+        ActionUtils.configureButton(new ZoomIn(controller), zoomInButton);
+
+        setViewMode(controller.viewModeProperty().get());
         controller.getNeedsHistogramRebuild().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 refreshHistorgram();
             }
         });
 
-        controller.getViewMode().addListener((ObservableValue<? extends VisualizationMode> ov, VisualizationMode t, VisualizationMode t1) -> {
+        controller.viewModeProperty().addListener((ObservableValue<? extends VisualizationMode> ov, VisualizationMode t, VisualizationMode t1) -> {
             setViewMode(t1);
         });
         TimeLineController.getTimeZone().addListener(timeRangeInvalidationListener);
         refreshHistorgram();
     }
 
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
-            this.filteredEvents.unRegisterForEvents(this);
-            this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
-            this.filteredEvents.zoomParametersProperty().removeListener(zoomListener);
-        }
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
-            filteredEvents.timeRangeProperty().addListener(timeRangeInvalidationListener);
-            filteredEvents.zoomParametersProperty().addListener(zoomListener);
-        }
-
-        this.filteredEvents = filteredEvents;
-
-        refreshTimeUI(filteredEvents.timeRangeProperty().get());
-
-    }
-
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
-                setVisualization(new CountsViewPane(partPane, contextPane, spacer));
+                setVisualization(new CountsViewPane(controller, partPane, contextPane, spacer));
                 countsToggle.setSelected(true);
                 break;
             case DETAIL:
-                setVisualization(new DetailViewPane(partPane, contextPane, spacer));
+                setVisualization(new DetailViewPane(controller, partPane, contextPane, spacer));
                 detailsToggle.setSelected(true);
                 break;
         }
     }
 
-    synchronized void setVisualization(final AbstractVisualization<?, ?, ?, ?> newViz) {
+    private synchronized void setVisualization(final AbstractVisualizationPane<?, ?, ?, ?> newViz) {
         Platform.runLater(() -> {
             synchronized (VisualizationPanel.this) {
                 if (visualization != null) {
@@ -370,24 +349,25 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 }
 
                 visualization = newViz;
+                visualization.update();
                 toolBar.getItems().addAll(newViz.getSettingsNodes());
 
-                visualization.setController(controller);
                 notificationPane.setContent(visualization);
                 if (visualization instanceof DetailViewPane) {
-                    navPanel.setChart((DetailViewPane) visualization);
+                    eventsTree.setDetailViewPane((DetailViewPane) visualization);
                 }
-                visualization.hasEvents.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+                visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {
 
-                        notificationPane.setContent(new StackPane(visualization, new Region() {
-                            {
-                                setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-                                setOpacity(.3);
-                            }
-                        }, new NoEventsDialog(() -> {
-                            notificationPane.setContent(visualization);
-                        })));
+                        notificationPane.setContent(
+                                new StackPane(visualization,
+                                        new Region() {
+                                            {
+                                                setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+                                                setOpacity(.3);
+                                            }
+                                        },
+                                        new NoEventsDialog(() -> notificationPane.setContent(visualization))));
                     } else {
                         notificationPane.setContent(visualization);
                     }
@@ -549,10 +529,9 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         @FXML
         private Label noEventsDialogLabel;
 
-        public NoEventsDialog(Runnable closeCallback) {
+        private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); // NON-NLS
-
         }
 
         @FXML
@@ -562,15 +541,9 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
-            zoomButton.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.zoomButton.text")); // NON-NLS
+            ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
 
-            Action zoomOutAction = new ZoomOut(controller);
-            zoomButton.setOnAction(zoomOutAction);
-            zoomButton.disableProperty().bind(zoomOutAction.disabledProperty());
-
-            dismissButton.setOnAction(e -> {
-                closeCallback.run();
-            });
+            dismissButton.setOnAction(actionEvent -> closeCallback.run());
             Action defaultFiltersAction = new ResetFilters(controller);
             resetFiltersButton.setOnAction(defaultFiltersAction);
             resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());

@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.util.HashMap;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -31,6 +33,10 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.openide.util.NbBundle;
+import java.net.InetAddress;
+import java.util.MissingResourceException;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
@@ -38,6 +44,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
+
+    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occured when talking to server";
+    private static final String SERVER_REFUSED_CONNECTION = "server refused connection";
+    private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
@@ -53,8 +63,11 @@ public class SolrSearchService implements KeywordSearchService {
             return;
         }
 
-        Case currentCase = Case.getCurrentCase();
-        if (currentCase == null) {
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCase();
+        } catch (IllegalStateException ignore) {
+            // thorown by Case.getCurrentCase() if currentCase is null
             return;
         }
 
@@ -103,7 +116,8 @@ public class SolrSearchService implements KeywordSearchService {
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
                     || attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), abstractFile));
+
+                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
             } else {
                 artifactContents.append(attribute.getDisplayString());
             }
@@ -146,6 +160,63 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
+        }
+    }
+
+    /**
+     * Checks if we can communicate with Solr using the passed-in host and port.
+     * Closes the connection upon exit. Throws if it cannot communicate with
+     * Solr.
+     *
+     * When issues occur, it attempts to diagnose them by looking at the
+     * exception messages, returning the appropriate user-facing text for the
+     * exception received. This method expects the Exceptions messages to be in
+     * English and compares against English text.
+     *
+     * @param host the remote hostname or IP address of the Solr server
+     * @param port the remote port for Solr
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.KeywordSearchServiceException
+     *
+     */
+    @Override
+    public void tryConnect(String host, int port) throws KeywordSearchServiceException {
+        HttpSolrServer solrServer = null;
+        if (host == null || host.isEmpty()) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
+        }
+        try {
+            solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS;
+            KeywordSearch.getServer().connectToSolrServer(solrServer);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS
+        } catch (IOException ex) {
+            String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+            String message = ex.getCause().getMessage().toLowerCase();
+            if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
+                try {
+                    if (InetAddress.getByName(host).isReachable(IS_REACHABLE_TIMEOUT_MS)) {
+                        // if we can reach the host, then it's probably port problem
+                        result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port"); //NON-NLS
+                    } else {
+                        result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+                    }
+                } catch (IOException | MissingResourceException any) {
+                    // it may be anything
+                    result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
+                }
+            } else if (message.startsWith(BAD_IP_ADDRESS_FORMAT)) {
+                result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Hostname"); //NON-NLS
+            }
+            throw new KeywordSearchServiceException(result);
+        } catch (NumberFormatException ex) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.Port")); //NON-NLS
+        } catch (IllegalArgumentException ex) {
+            throw new KeywordSearchServiceException(ex.getMessage());
+        } finally {
+            if (null != solrServer) {
+                solrServer.shutdown();
+            }
         }
     }
 

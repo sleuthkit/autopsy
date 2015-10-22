@@ -33,8 +33,8 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -170,7 +170,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         NewCaseVisualPanel1 component = getComponent();
         try {
             String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
-            component.getCaseParentDirTextField().setText(lastBaseDirectory);
+            component.setCaseParentDir(lastBaseDirectory);
+            component.readSettings();
             createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
             if (createdDirectory != null && !createdDirectory.equals("")) {
                 logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory); //NON-NLS
@@ -192,9 +193,12 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        CaseType caseType = getComponent().getCaseType();
         settings.putProperty("caseName", getComponent().getCaseName()); //NON-NLS
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir()); //NON-NLS
         settings.putProperty("createdDirectory", createdDirectory); //NON-NLS
+        settings.putProperty("caseType", caseType.ordinal()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, ModuleSettings.CURRENT_CASE_TYPE, caseType.toString());
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
@@ -237,7 +241,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         if (res2 != null && res2 == DialogDescriptor.YES_OPTION) {
                             // if user say yes
                             try {
-                                createDirectory(caseDirPath);
+                                createDirectory(caseDirPath, getComponent().getCaseType());
                             } catch (Exception ex) {
                                 String errorMsg = NbBundle.getMessage(this.getClass(),
                                         "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
@@ -254,7 +258,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                         }
                     } else {
                         try {
-                            createDirectory(caseDirPath);
+                            createDirectory(caseDirPath, getComponent().getCaseType());
                         } catch (Exception ex) {
                             String errorMsg = NbBundle
                                     .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.cantCreateDir");
@@ -279,11 +283,11 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /*
      * create the directory and create a new case
      */
-    private void createDirectory(final String caseDirPath) throws WizardValidationException {
-        // try to create the directory with the case name in the choosen parent directory
+    private void createDirectory(final String caseDirPath, CaseType caseType) throws WizardValidationException {
+        // try to create the directory with the case name in the chosen parent directory
         boolean success = false;
         try {
-            Case.createCaseDirectory(caseDirPath);
+            Case.createCaseDirectory(caseDirPath, caseType);
             success = true;
         } catch (CaseActionException ex) {
             logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex); //NON-NLS

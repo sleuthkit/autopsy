@@ -23,7 +23,10 @@ import java.util.Date;
 import java.util.TimeZone;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -50,8 +53,9 @@ public class TimeZonePanel extends TitledPane {
     }
 
     @FXML
+    @NbBundle.Messages({"TimeZonePanel.title=Display Times In:"})
     public void initialize() {
-
+        setText(Bundle.TimeZonePanel_title());
 //        localRadio.setText("Local Time Zone: " + getTimeZoneString(TimeZone.getDefault()));
         localRadio.setText(NbBundle.getMessage(this.getClass(), "TimeZonePanel.localRadio.text"));
         otherRadio.setText(NbBundle.getMessage(this.getClass(), "TimeZonePanel.otherRadio.text"));

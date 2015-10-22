@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
@@ -28,9 +29,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.KeyStroke;
-
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -65,15 +64,40 @@ public class GetTagNameAndCommentDialog extends JDialog {
         }
     }
 
+    /**
+     * Show the Tag Name and Comment Dialog and return the TagNameAndContent
+     * chosen by the user. The dialog will be centered with the main autopsy
+     * window as its owner. To set another window as the owner use {@link #doDialog(java.awt.Window)
+     * }
+     *
+     * @return a TagNameAndComment instance containing the TagName selected by
+     *         the user and the entered comment, or null if the user canceled
+     *         the dialog.
+     */
     public static TagNameAndComment doDialog() {
-        GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog();
-        return dialog.tagNameAndComment;
+        return doDialog(WindowManager.getDefault().getMainWindow());
     }
 
-    private GetTagNameAndCommentDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(),
+    /**
+     * Show the Tag Name and Comment Dialog and return the TagNameAndContent
+     * chosen by the user.
+     *
+     * @param owner the window that will be the owner of the dialog. The dialog
+     *              will be centered over this window and will block the rest of
+     *              the application.
+     *
+     * @return a TagNameAndComment instance containg the TagName selected by the
+     *         user and the entered comment, or null if the user canceled the
+     *         dialog.
+     */
+    public static TagNameAndComment doDialog(Window owner) {
+        return new GetTagNameAndCommentDialog(owner).tagNameAndComment;
+    }
+
+    private GetTagNameAndCommentDialog(Window owner) {
+        super(owner,
                 NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
-                true);
+                ModalityType.APPLICATION_MODAL);
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
@@ -231,7 +255,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }//GEN-LAST:event_closeDialog
 
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        TagName newTagName = GetTagNameDialog.doDialog();
+        TagName newTagName = GetTagNameDialog.doDialog(this);
         if (newTagName != null) {
             tagNames.put(newTagName.getDisplayName(), newTagName);
             tagCombo.addItem(newTagName.getDisplayName());

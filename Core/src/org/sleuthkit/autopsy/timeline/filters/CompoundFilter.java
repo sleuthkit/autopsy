@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.filters;
 
 import java.util.List;
+import java.util.Objects;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -71,7 +72,7 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
     private void addSubFilterListeners(List<? extends SubFilterType> newSubfilters) {
         for (SubFilterType sf : newSubfilters) {
             //if a subfilter changes active state
-            sf.getSelectedProperty().addListener((Observable observable) -> {
+            sf.selectedProperty().addListener((Observable observable) -> {
                 //set this filter acttive af any of the subfilters are active.
                 setSelected(getSubFilters().parallelStream().anyMatch(Filter::isSelected));
             });
@@ -83,10 +84,21 @@ public abstract class CompoundFilter<SubFilterType extends Filter> extends Abstr
             return false;
         }
         for (int i = 0; i < oneFilter.getSubFilters().size(); i++) {
-            if (oneFilter.getSubFilters().get(i).equals(otherFilter.getSubFilters().get(i)) == false) {
+            final SubFilterType subFilter = oneFilter.getSubFilters().get(i);
+            final SubFilterType otherSubFilter = otherFilter.getSubFilters().get(i);
+            if (subFilter.equals(otherSubFilter) == false
+                    || subFilter.isDisabled() != otherSubFilter.isDisabled()
+                    || subFilter.isSelected() != otherSubFilter.isSelected()) {
                 return false;
             }
         }
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 61 * hash + Objects.hashCode(this.subFilters);
+        return hash;
     }
 }

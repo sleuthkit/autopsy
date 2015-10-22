@@ -36,4 +36,17 @@ public interface KeywordSearchService extends Closeable {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
-}
+
+    /**
+     * Checks if we can communicate with the KeywordSearchService using the
+     * passed-in host and port. Closes the connection upon exit. Throws if it
+     * cannot communicate.
+     *
+     * @param host the remote hostname or IP address of the server
+     * @param port the remote port of the server
+     *
+     * @throws KeywordSearchServiceException
+     */
+    public void tryConnect(String host, int port) throws KeywordSearchServiceException;
+
+    }
