@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.MissingResourceException;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -32,7 +31,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
@@ -45,11 +43,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
 
     private ContextMenu chartContextMenu;
 
+    @Override
     public ContextMenu getChartContextMenu() {
         return chartContextMenu;
     }
 
-    private TimeLineController controller;
+    private final TimeLineController controller;
 
     private IntervalSelector<? extends String> intervalSelector;
 
@@ -60,8 +59,9 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      */
     private RangeDivisionInfo rangeInfo;
 
-    EventCountsChart(CategoryAxis dateAxis, NumberAxis countAxis) {
+    EventCountsChart(TimeLineController controller, CategoryAxis dateAxis, NumberAxis countAxis) {
         super(dateAxis, countAxis);
+        this.controller = controller;
         //configure constant properties on axes and chart
         dateAxis.setAnimated(true);
         dateAxis.setLabel(null);
@@ -87,6 +87,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         setOnMouseDragged(chartDragHandler);
 
         setOnMouseClicked(new MouseClickedHandler<>(this));
+
     }
 
     @Override
@@ -95,6 +96,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         intervalSelector = null;
     }
 
+    @Override
     public ContextMenu getChartContextMenu(MouseEvent clickEvent) throws MissingResourceException {
         if (chartContextMenu != null) {
             chartContextMenu.hide();
@@ -113,12 +115,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     }
 
     @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-    }
-
-    @Override
     public IntervalSelector<? extends String> getIntervalSelector() {
         return intervalSelector;
     }
@@ -127,14 +123,6 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     public void setIntervalSelector(IntervalSelector<? extends String> newIntervalSelector) {
         intervalSelector = newIntervalSelector;
         getChartChildren().add(getIntervalSelector());
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        filteredEvents.zoomParametersProperty().addListener(o -> {
-            clearIntervalSelector();
-            controller.selectEventIDs(Collections.emptyList());
-        });
     }
 
     @Override
@@ -179,7 +167,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * Interval Selector for the counts chart, adjusts interval based on
      * rangeInfo to include final period
      */
-    static private class CountsIntervalSelector extends IntervalSelector<String> {
+    final static private class CountsIntervalSelector extends IntervalSelector<String> {
 
         private final EventCountsChart countsChart;
 

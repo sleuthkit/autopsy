@@ -72,7 +72,6 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
@@ -86,7 +85,7 @@ import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_refres
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.VisualizationPanel_tagsAddedOrDeleted;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
-import org.sleuthkit.autopsy.timeline.ui.detailview.tree.NavPanel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -97,7 +96,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  *
  * TODO: refactor common code out of histogram and CountsView? -jm
  */
-public class VisualizationPanel extends BorderPane implements TimeLineView {
+final public class VisualizationPanel extends BorderPane {
 
     private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); // NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); // NON-NLS
@@ -107,7 +106,7 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
     @GuardedBy("this")
     private LoggedTask<Void> histogramTask;
 
-    private final NavPanel navPanel;
+    private final EventsTree eventsTree;
 
     private AbstractVisualizationPane<?, ?, ?, ?> visualization;
 
@@ -207,14 +206,15 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
 
     static private final Lighting lighting = new Lighting();
 
-    public VisualizationPanel(NavPanel navPanel) {
-        this.navPanel = navPanel;
+    public VisualizationPanel(TimeLineController controller, EventsTree eventsTree) {
+        this.controller = controller;
+        this.eventsTree = eventsTree;
         FXMLConstructor.construct(this, "VisualizationPanel.fxml"); // NON-NLS
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     @NbBundle.Messages("VisualizationPanel.refresh=refresh")
-    protected void initialize() {
+    void initialize() {
         assert endPicker != null : "fx:id=\"endPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert histogramBox != null : "fx:id=\"histogramBox\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
         assert startPicker != null : "fx:id=\"startPicker\" was not injected: check your FXML file 'ViewWrapper.fxml'."; // NON-NLS
@@ -297,15 +297,22 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         );
 
         snapShotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapShotButton.text")); // NON-NLS
-    }
+        if (this.filteredEvents != null && this.filteredEvents != controller.getEventsModel()) {
+            this.filteredEvents.unRegisterForEvents(this);
+            this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
+            this.filteredEvents.zoomParametersProperty().removeListener(zoomListener);
+        }
+        if (this.filteredEvents != controller.getEventsModel()) {
+            controller.getEventsModel().registerForEvents(this);
+            controller.getEventsModel().timeRangeProperty().addListener(timeRangeInvalidationListener);
+            controller.getEventsModel().zoomParametersProperty().addListener(zoomListener);
+        }
 
-    @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
+        this.filteredEvents = controller.getEventsModel();
+        refreshTimeUI(controller.getEventsModel().timeRangeProperty().get());
         ActionUtils.configureButton(new ZoomOut(controller), zoomOutButton);
         ActionUtils.configureButton(new ZoomIn(controller), zoomInButton);
 
-        setModel(controller.getEventsModel());
         setViewMode(controller.viewModeProperty().get());
         controller.getNeedsHistogramRebuild().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
@@ -320,33 +327,14 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
         refreshHistorgram();
     }
 
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
-            this.filteredEvents.unRegisterForEvents(this);
-            this.filteredEvents.timeRangeProperty().removeListener(timeRangeInvalidationListener);
-            this.filteredEvents.zoomParametersProperty().removeListener(zoomListener);
-        }
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
-            filteredEvents.timeRangeProperty().addListener(timeRangeInvalidationListener);
-            filteredEvents.zoomParametersProperty().addListener(zoomListener);
-        }
-
-        this.filteredEvents = filteredEvents;
-
-        refreshTimeUI(filteredEvents.timeRangeProperty().get());
-
-    }
-
     private void setViewMode(VisualizationMode visualizationMode) {
         switch (visualizationMode) {
             case COUNTS:
-                setVisualization(new CountsViewPane(partPane, contextPane, spacer));
+                setVisualization(new CountsViewPane(controller, partPane, contextPane, spacer));
                 countsToggle.setSelected(true);
                 break;
             case DETAIL:
-                setVisualization(new DetailViewPane(partPane, contextPane, spacer));
+                setVisualization(new DetailViewPane(controller, partPane, contextPane, spacer));
                 detailsToggle.setSelected(true);
                 break;
         }
@@ -361,12 +349,12 @@ public class VisualizationPanel extends BorderPane implements TimeLineView {
                 }
 
                 visualization = newViz;
+                visualization.update();
                 toolBar.getItems().addAll(newViz.getSettingsNodes());
 
-                visualization.setController(controller);
                 notificationPane.setContent(visualization);
                 if (visualization instanceof DetailViewPane) {
-                    navPanel.setDetailViewPane((DetailViewPane) visualization);
+                    eventsTree.setDetailViewPane((DetailViewPane) visualization);
                 }
                 visualization.hasEvents.addListener((observable, oldValue, newValue) -> {
                     if (newValue == false) {

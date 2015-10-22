@@ -113,9 +113,10 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         return chart.getEventBundles();
     }
 
-    public DetailViewPane(Pane partPane, Pane contextPane, Region spacer) {
-        super(partPane, contextPane, spacer);
-        chart = new EventDetailsChart(dateAxis, verticalAxis, selectedNodes);
+
+    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        super(controller, partPane, contextPane, spacer);
+        chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler();
         chart.setData(dataSets);
         setCenter(chart);
@@ -209,11 +210,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
             });
         });
 
-    }
-
-    @Override
-    public synchronized void setModel(FilteredEventsModel filteredEvents) {
-        super.setModel(filteredEvents);
     }
 
     private void incrementScrollValue(int factor) {
