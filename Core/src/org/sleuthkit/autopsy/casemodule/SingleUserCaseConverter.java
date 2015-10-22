@@ -18,18 +18,10 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -37,208 +29,193 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import static javax.swing.JOptionPane.OK_CANCEL_OPTION;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
- * Import case(s) from single-user to multi-user. Recursively scans subfolders.
+ * Import a case from single-user to multi-user.
  */
-public class SingleUserCaseImporter implements Runnable {
+public class SingleUserCaseConverter {
 
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = ".aut"; //NON-NLS
-    public static final String CASE_IMPORT_LOG_FILE = "case_import_log.txt"; //NON-NLS
-    private static final String logDateFormat = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
-    //If TIMELINE_FOLDER changes, also update TIMELINE in EventsRepository 
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
-    //If TIMELINE_FILE changes, also update TIMELINE_FILE in EventDB 
-    private final static String TIMELINE_FILE = "events.db"; //NON-NLS
-    private final static String AIM_LOG_FILE_NAME = "auto_ingest_log.txt"; //NON-NLS
-    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(logDateFormat);
+    private static final String TIMELINE_FILE = "events.db"; //NON-NLS
+    private static final String POSTGRES_DEFAULT_DB_NAME = "postgres";
     private static final int MAX_DB_NAME_LENGTH = 63;
-    private final String SEP = System.getProperty("line.separator");
-    private final Object threadWaitNotifyLock = new Object();
 
-    private final Path caseInputFolder;
-    private final String caseOutputFolder;
-    private final String imageInputFolder;
-    private final String imageOutputFolder;
-    private final boolean copySourceImages;
-    private final boolean deleteCase;
-    private final CaseDbConnectionInfo db;
-    private final ImportDoneCallback notifyOnComplete;
-    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
-    private PrintWriter writer;
-    private XMLCaseManagement oldXmlCaseManagement;
-    private XMLCaseManagement newXmlCaseManagement;
-    private boolean addTimestamp;
-    private int userAnswer = 0;
+    public class ImportCaseData {
 
-    /**
-     * SingleUserCaseImporter constructor
-     *
-     * @param caseInput        the folder to start our case search from. Will
-     *                         find valid cases from this folder down, and
-     *                         process them.
-     * @param caseOutput       the folder to place processed cases into
-     * @param imageInput       the folder that holds the images to copy over
-     * @param imageOutput      the destination folder for the images
-     * @param database         the connection information to talk to the
-     *                         PostgreSQL db
-     * @param copySourceImages true if images should be copied
-     * @param deleteCase       true if the old version of the case should be
-     *                         deleted after import
-     * @param addTimestamp     true if the output case name should end in a
-     *                         timestamp, false otherwise
-     * @param callback         a callback from the calling panel for
-     *                         notification when the import has completed. This
-     *                         is a Runnable on a different thread.
-     */
-    public SingleUserCaseImporter(String caseInput, String caseOutput, String imageInput, String imageOutput, CaseDbConnectionInfo database,
-            boolean copySourceImages, boolean deleteCase, ImportDoneCallback callback, boolean addTimestamp) {
-        this.caseInputFolder = Paths.get(caseInput);
-        this.caseOutputFolder = caseOutput;
-        this.imageInputFolder = imageInput;
-        this.imageOutputFolder = imageOutput;
-        this.copySourceImages = copySourceImages;
-        this.deleteCase = deleteCase;
-        this.db = database;
-        this.notifyOnComplete = callback;
-        this.addTimestamp = addTimestamp;
-    }
+        private final Path baseImageInputFolder;
+        private final Path baseCaseInputFolder;
+        private final Path baseImageOutputFolder;
+        private final Path baseCaseOutputFolder;
+        private final Path imageInputFolder;
+        private final Path caseInputFolder;
+        private final Path imageOutputFolder;
+        private final Path caseOutputFolder;
+        private final String oldCaseName;
+        private final String newCaseName;
+        private final boolean copySourceImages;
+        private final boolean deleteCase;
+        private String postgreSQLDbName;
+        private final String autFileName;
+        private final String rawFolderName;
+        private final CaseDbConnectionInfo db;
 
-    /**
-     * Tests if the input path has a corresponding image input folder and no
-     * repeated case names in the path. If both of these conditions are true, we
-     * can process this case, otherwise we can not.
-     *
-     * @param icd the import case data for the current case
-     *
-     * @return true if we can process it, false if not
-     */
-    private boolean canProcess(ImportCaseData icd) {
-        try {
-            String relativeCaseName = TimeStampUtils.removeTimeStamp(icd.getRelativeCaseName());
-            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName());
+        public ImportCaseData(
+                Path baseImageInputFolder,
+                Path baseCaseInputFolder,
+                Path baseImageOutputFolder,
+                Path baseCaseOutputFolder,
+                Path imageInput,
+                Path caseInput,
+                Path imageOutput,
+                Path caseOutput,
+                String oldCaseName,
+                String newCaseName,
+                String autFileName,
+                String rawFolderName,
+                boolean copySourceImages,
+                boolean deleteCase) throws UserPreferencesException {
 
-            // check for image folder
-            Path testImageInputsFromOldCase = Paths.get(imageInputFolder, relativeCaseName);
-            if (copySourceImages) {
-                if (!testImageInputsFromOldCase.toFile().isDirectory()) {
-                    log(imageInputFolder + " has no corresponding images folder.  Not able to process.");
-                    return false;
-                } else {
-                    icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
-                }
-
-                Path imagePath = Paths.get(imageInputFolder);
-                // see if case name is in the image path. This causes bad things to happen with the parsing.
-                for (int x = 0; x < imagePath.getNameCount(); ++x) {
-                    if (caseName.toLowerCase().equals(imagePath.getName(x).toString().toLowerCase())) {
-                        log(imagePath.toString() + " has case name \"" + caseName + "\" within path. Not able to process.");
-                        return false;
-                    }
-                }
-            } else {
-                icd.setSpecificImageInputFolder(testImageInputsFromOldCase);
-            }
-        } catch (Exception ex) {
-            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + ex.getMessage());
-            return false; // anything goes wrong, bail.
+            this.baseImageInputFolder = baseImageInputFolder;
+            this.baseCaseInputFolder = baseCaseInputFolder;
+            this.baseImageOutputFolder = baseImageOutputFolder;
+            this.baseCaseOutputFolder = baseCaseOutputFolder;
+            this.imageInputFolder = imageInput;
+            this.caseInputFolder = caseInput;
+            this.imageOutputFolder = imageOutput;
+            this.caseOutputFolder = caseOutput;
+            this.oldCaseName = oldCaseName;
+            this.newCaseName = newCaseName;
+            this.autFileName = autFileName;
+            this.rawFolderName = rawFolderName;
+            this.copySourceImages = copySourceImages;
+            this.deleteCase = deleteCase;
+            this.db = UserPreferences.getDatabaseConnectionInfo();
         }
 
-        return true;
+        public Path getCaseInputFolder() {
+            return this.caseInputFolder;
+        }
+
+        public Path getCaseOutputFolder() {
+            return this.caseOutputFolder;
+        }
+
+        Path getImageInputFolder() {
+            return this.imageInputFolder;
+        }
+
+        Path getImageOutputFolder() {
+            return this.imageOutputFolder;
+        }
+
+        String getOldCaseName() {
+            return this.oldCaseName;
+        }
+
+        String getNewCaseName() {
+            return this.newCaseName;
+        }
+
+        boolean getCopySourceImages() {
+            return this.copySourceImages;
+        }
+
+        boolean getDeleteCase() {
+            return this.deleteCase;
+        }
+
+        String getPostgreSQLDbName() {
+            return this.postgreSQLDbName;
+        }
+
+        String getAutFileName() {
+            return this.autFileName;
+        }
+
+        String getRawFolderName() {
+            return this.rawFolderName;
+        }
+
+        CaseDbConnectionInfo getDb() {
+            return this.db;
+        }
+
+        void setPostgreSQLDbName(String dbName) {
+            this.postgreSQLDbName = dbName;
+        }
     }
 
     /**
-     * Handles most of the heavy lifting for importing cases from single-user to
-     * multi-user. Creates new .aut file, moves folders to the right place,
-     * imports the database, and updates paths within the database.
+     * Handles most of the heavy lifting for importing a case from single-user
+     * to multi-user. Creates new .aut file, moves folders to the right place,
+     * imports the , and updates paths within the database.
      *
      * @param icd the Import Case Data for the current case
      *
-     * @return true if successful, false if not
+     * @throws java.lang.Exception
      */
-    private boolean processCase(ImportCaseData icd) {
-        boolean result = true;
-        try {
-            log("Importing case " + icd.getSpecificCaseInputFolder().toString() + " to " + caseOutputFolder + "\\" + icd.getOldCaseName()); //NON-NLS
+    public static void importCase(ImportCaseData icd) throws Exception {
 
-            checkInputDatabase(icd.getSpecificCaseInputFolder());
+        Class.forName("org.postgresql.Driver"); //NON-NLS
 
-            oldXmlCaseManagement = new XMLCaseManagement();
-
-            // read old xml config
-            oldXmlCaseManagement.open(icd.getSpecificCaseInputFolder().resolve(TimeStampUtils.removeTimeStamp(icd.getOldCaseName()) + DOTAUT).toString());
-            if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
-                throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.AlreadyMultiUser"));
-            }
-
-            prepareOutput(icd);
-
-            // create sanitized names for database and solr 
-            String caseName = TimeStampUtils.removeTimeStamp(icd.getNewCaseName());  // caseName holds the deconflicted, timestampless name of the case
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
-            Date date = new Date();
-            String santizedDatabaseName = Case.sanitizeCaseName(caseName);
-            String dbName = santizedDatabaseName + "_" + dateFormat.format(date); //NON-NLS
-            String solrName = dbName;
-
-            icd.setSpecificImageOutputFolder(Paths.get(imageOutputFolder, icd.getNewCaseName()));
-            copyResults(icd); // Copy items to new hostname folder structure
-            dbName = importDb(dbName, icd.getSpecificCaseInputFolder(), icd.getSpecificCaseOutputFolder().toString()); // Change from SQLite to PostgreSQL
-
-            fixPaths(icd, dbName); // Update paths in DB
-
-            copyImages(icd); // Copy images over
-
-            // create new XML config
-            newXmlCaseManagement = new XMLCaseManagement();
-            newXmlCaseManagement.create(icd.getSpecificCaseOutputFolder().toString(),
-                    caseName,
-                    oldXmlCaseManagement.getCaseExaminer(),
-                    oldXmlCaseManagement.getCaseNumber(),
-                    CaseType.MULTI_USER_CASE, dbName, solrName);
-
-            // Set created date. This calls writefile, no need to call it again
-            newXmlCaseManagement.setCreatedDate(oldXmlCaseManagement.getCreatedDate());
-
-            // At this point the import has been finished successfully so we can delete the original case
-            // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file
-            // and database in the given directory so the user shouldn't be able to accidently blow away
-            // their C drive.
-            if (deleteCase) {
-                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.DeletingCase") + " " + icd.getSpecificCaseInputFolder().toString());
-                FileUtils.deleteDirectory(icd.getSpecificCaseInputFolder().toFile());
-            }
-
-            result = reportLostImages(db, dbName);
-
-            log("Finished importing case " + icd.getSpecificCaseInputFolder().toString() + " to " + icd.getSpecificCaseOutputFolder().toString());
-        } catch (Exception exp) {
-            /// clean up here
-            log("Error processing " + icd.specificCaseInputFolder.toString() + ": " + exp.getMessage());
-            result = false;
+        Path oldDatabasePath = icd.getCaseInputFolder().resolve(AUTOPSY_DB_FILE);
+        if (false == oldDatabasePath.toFile().exists()) {
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.BadDatabaseFileName"));
         }
-        return result;
+
+        // read old xml config
+        XMLCaseManagement oldXmlCaseManagement = new XMLCaseManagement();
+        oldXmlCaseManagement.open(icd.getCaseInputFolder().resolve(icd.getAutFileName()).toString());
+        if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser"));
+        }
+
+        // create sanitized names for database and solr 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
+        Date date = new Date();
+        String dbName = Case.sanitizeCaseName(icd.getNewCaseName()) + "_" + dateFormat.format(date); //NON-NLS
+        String solrName = dbName;
+        icd.setPostgreSQLDbName(dbName);
+
+        copyResults(icd); // Copy items to new hostname folder structure
+
+        importDb(icd); // Change from SQLite to PostgreSQL
+
+        fixPaths(icd); // Update paths in DB
+
+        copyImages(icd); // Copy images over
+
+        // create new XML config
+        XMLCaseManagement newXmlCaseManagement = new XMLCaseManagement();
+        newXmlCaseManagement.create(icd.getCaseOutputFolder().toString(),
+                icd.getNewCaseName(),
+                oldXmlCaseManagement.getCaseExaminer(),
+                oldXmlCaseManagement.getCaseNumber(),
+                CaseType.MULTI_USER_CASE, dbName, solrName);
+
+        // Set created date. This calls writefile, no need to call it again
+        newXmlCaseManagement.setCreatedDate(oldXmlCaseManagement.getCreatedDate());
+
+        // At this point the import has been finished successfully so we can delete the original case
+        // (if requested). This *should* be fairly safe - at this point we know there was an autopsy file
+        // and database in the given directory so the user shouldn't be able to accidently blow away
+        // their C drive.
+        if (icd.getDeleteCase()) {
+            FileUtils.deleteDirectory(icd.getCaseInputFolder().toFile());
+        }
+        reportLostImages(icd);
     }
 
     /**
@@ -250,29 +227,24 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @return true if successfully found all images, false otherwise.
      */
-    private boolean reportLostImages(CaseDbConnectionInfo db, String dbName) {
-        boolean result = true;
-        if (copySourceImages) {
+    private static void reportLostImages(ImportCaseData icd) {
+        if (icd.getCopySourceImages()) {
             try {
-                Class.forName("org.postgresql.Driver"); //NON-NLS
-                Connection dbConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
-                Statement inputStatement = dbConnection.createStatement();
+                Connection postgreSQLConnection = getPostgreSQLConnection(icd);
+                Statement inputStatement = postgreSQLConnection.createStatement();
                 ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
 
                 while (inputResultSet.next()) {
 
                     File theFile = new File(inputResultSet.getString(2));
                     if (false == theFile.exists()) {
-                        log("Unable to find image " + theFile.toString() + " for case " + dbName);
-                        result = false;
+                        // do not throw, this can be fixed when they open the case
                     }
                 }
-            } catch (Exception ex) {
-                log("Error. Unable to verify images were copied.");
-                result = false;
+            } catch (SQLException ex) {
+                // do not throw, this can be fixed when they open the case
             }
         }
-        return result;
     }
 
     /**
@@ -282,71 +254,15 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @return the name of the proper input folder
      */
-    private File findInputFolder(ImportCaseData icd) {
+    private static File findInputFolder(ImportCaseData icd) {
 
-        File thePath = icd.getSpecificImageInputFolder().resolve(icd.getOldCaseName()).toFile();
+        File thePath = icd.getImageInputFolder().resolve(icd.getOldCaseName()).toFile();
         if (thePath.isDirectory()) {
             /// we've found it
             return thePath;
         } else {
-            return icd.getSpecificImageInputFolder().toFile();
+            return icd.getImageInputFolder().toFile();
         }
-    }
-
-    /**
-     * Ensure the input source has an autopsy.db and exists.
-     *
-     * @param caseInput The folder containing a case to import.
-     *
-     * @throws Exception
-     */
-    private void checkInputDatabase(Path caseInput) throws Exception {
-        Path path = caseInput.resolve(AUTOPSY_DB_FILE);
-        if (false == path.toFile().exists()) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.BadDatabaseFileName"));
-        }
-    }
-
-    /**
-     * Handles case folder, PosgreSql database, and Solr core name deconfliction
-     * Sets the appropriate portions of the ImportCaseData object.
-     *
-     * @param icd the case data folder name
-     *
-     * @throws Exception
-     */
-    private void prepareOutput(ImportCaseData icd) throws Exception {
-        // test for uniqueness
-        String caseName = icd.getOldCaseName();
-        File specificOutputFolder = Paths.get(caseOutputFolder, caseName).toFile();
-        String sanitizedCaseName = caseName;
-        if (specificOutputFolder.exists()) {
-            // not unique. add numbers before timestamp to specific case name
-            String timeStamp = TimeStampUtils.getTimeStampOnly(caseName); //NON-NLS
-            sanitizedCaseName = TimeStampUtils.removeTimeStamp(caseName);
-
-            int number = 1;
-            String temp = ""; //NON-NLS
-            while (specificOutputFolder.exists()) {
-                if (number == Integer.MAX_VALUE) {
-                    // oops. it never became unique. give up.
-                    throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueOutputFolder") + sanitizedCaseName);
-                }
-                temp = sanitizedCaseName + "_" + Integer.toString(number) + timeStamp; //NON-NLS
-                specificOutputFolder = Paths.get(caseOutputFolder, temp).toFile();
-                ++number;
-            }
-            sanitizedCaseName = temp;
-        }
-
-        if (addTimestamp && !TimeStampUtils.endsWithTimeStamp(sanitizedCaseName)) {
-            sanitizedCaseName += "_" + TimeStampUtils.createTimeStamp();
-        }
-
-        Path caseOutputPath = Paths.get(caseOutputFolder, sanitizedCaseName);
-        icd.setNewCaseName(sanitizedCaseName);
-        icd.setSpecificCaseOutputFolder(caseOutputPath);
-        caseOutputPath.toFile().mkdirs(); // create output folders just in case
     }
 
     /**
@@ -357,55 +273,38 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws IOException
      */
-    private void copyResults(ImportCaseData icd) throws IOException {
+    private static void copyResults(ImportCaseData icd) throws IOException {
         /// get hostname
         String hostName = NetworkUtils.getLocalHostName();
         Path destination;
         Path source;
 
-        source = icd.getSpecificCaseInputFolder();
+        source = icd.getCaseInputFolder();
         if (source.toFile().exists()) {
-            destination = icd.getSpecificCaseOutputFolder().resolve(hostName);
+            destination = icd.getCaseOutputFolder().resolve(hostName);
             FileUtils.copyDirectory(source.toFile(), destination.toFile());
         }
 
-        source = icd.getSpecificCaseInputFolder().resolve(TIMELINE_FILE);
+        source = icd.getCaseInputFolder().resolve(TIMELINE_FILE);
         if (source.toFile().exists()) {
-            destination = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
+            destination = Paths.get(icd.getCaseOutputFolder().toString(), hostName, MODULE_FOLDER, TIMELINE_FOLDER, TIMELINE_FILE);
             FileUtils.copyFile(source.toFile(), destination.toFile());
-        }
-
-        source = icd.getSpecificCaseInputFolder().resolve(AIM_LOG_FILE_NAME);
-        destination = icd.getSpecificCaseOutputFolder().resolve(AIM_LOG_FILE_NAME);
-        if (source.toFile().exists()) {
-            FileUtils.copyFile(source.toFile(), destination.toFile());
-
-        }
-        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination.toString(), true)))) {
-            out.println(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ImportedAsMultiUser") + new Date());
-        } catch (IOException e) {
-            // if unable to log it, no problem
         }
 
         // Remove the single-user .aut file, database, Timeline database and log
-        File oldAutopsyFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, TimeStampUtils.removeTimeStamp(icd.getOldCaseName()) + DOTAUT).toFile();
+        File oldAutopsyFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, icd.getOldCaseName() + DOTAUT).toFile();
         if (oldAutopsyFile.exists()) {
             oldAutopsyFile.delete();
         }
 
-        File oldDatabaseFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, AUTOPSY_DB_FILE).toFile();
+        File oldDatabaseFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, AUTOPSY_DB_FILE).toFile();
         if (oldDatabaseFile.exists()) {
             oldDatabaseFile.delete();
         }
 
-        File oldTimelineFile = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, TIMELINE_FILE).toFile();
+        File oldTimelineFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, TIMELINE_FILE).toFile();
         if (oldTimelineFile.exists()) {
             oldTimelineFile.delete();
-        }
-
-        File oldIngestLog = Paths.get(icd.getSpecificCaseOutputFolder().toString(), hostName, AIM_LOG_FILE_NAME).toFile();
-        if (oldIngestLog.exists()) {
-            oldIngestLog.delete();
         }
     }
 
@@ -414,7 +313,7 @@ public class SingleUserCaseImporter implements Runnable {
      * data while loading it over. Fixing paths is done once the database is
      * completely imported.
      *
-     * @param dbName         the name of the database, could have name collision
+     * @param newDbName      the name of the database, could have name collision
      * @param inputPath      the path to the input case
      * @param outputCaseName the name of the output case, could have extra
      *                       digits to avoid name collisions
@@ -424,19 +323,18 @@ public class SingleUserCaseImporter implements Runnable {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    private String importDb(String dbName, Path inputPath, String outputCaseName) throws SQLException, ClassNotFoundException, Exception {
+    private static void importDb(ImportCaseData icd) throws SQLException, ClassNotFoundException, Exception {
         // deconflict the database name
-        dbName = deconflictDatabaseName(db, dbName);
+        deconflictDatabaseName(icd);
 
         // Create a new database via SleuthkitCase
-        SleuthkitCase newCase = SleuthkitCase.newCase(dbName, db, outputCaseName);
+        SleuthkitCase newCase = SleuthkitCase.newCase(icd.getPostgreSQLDbName(), icd.getDb(), icd.getCaseOutputFolder().toString());
         newCase.close();
 
         /// Migrate from SQLite to PostgreSQL
         Class.forName("org.sqlite.JDBC"); //NON-NLS
-        Connection sqliteConnection = DriverManager.getConnection("jdbc:sqlite:" + inputPath.resolve(AUTOPSY_DB_FILE).toString(), "", ""); //NON-NLS
-
-        Connection postgresqlConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
+        Connection sqliteConnection = getSQLiteConnection(icd);
+        Connection postgreSQLConnection = getPostgreSQLConnection(icd);
 
         // blackboard_artifact_types        
         Statement inputStatement = sqliteConnection.createStatement();
@@ -451,14 +349,14 @@ public class SingleUserCaseImporter implements Runnable {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                Statement check = postgresqlConnection.createStatement();
+                Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_artifact_types WHERE artifact_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
                     String sql = "INSERT INTO blackboard_artifact_types (artifact_type_id, type_name, display_name) VALUES ("
                             + value + ", '"
                             + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "',"
                             + " ? )"; //NON-NLS
-                    PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                    PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                     populateNullableString(pst, inputResultSet, 3, 1);
                     pst.executeUpdate();
                 }
@@ -468,7 +366,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE blackboard_artifact_types_artifact_type_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_attribute_types
@@ -482,7 +380,7 @@ public class SingleUserCaseImporter implements Runnable {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                Statement check = postgresqlConnection.createStatement();
+                Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM blackboard_attribute_types WHERE attribute_type_id=" + value + " AND type_name LIKE '" + inputResultSet.getString(2) + "' AND display_name LIKE '" + inputResultSet.getString(3) + "'"); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
                     String sql = "INSERT INTO blackboard_attribute_types (attribute_type_id, type_name, display_name) VALUES ("
@@ -490,7 +388,7 @@ public class SingleUserCaseImporter implements Runnable {
                             + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(2)) + "',"
                             + " ? )"; //NON-NLS
 
-                    PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                    PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                     populateNullableString(pst, inputResultSet, 3, 1);
                     pst.executeUpdate();
                 }
@@ -500,7 +398,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE blackboard_attribute_types_attribute_type_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_objects
@@ -509,7 +407,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_objects"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -525,7 +423,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_objects_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_image_names, no primary key
@@ -533,7 +431,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 outputStatement.executeUpdate("INSERT INTO tsk_image_names (obj_id, name, sequence) VALUES ("
                         + inputResultSet.getLong(1) + ",'"
@@ -552,7 +450,6 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_info"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -567,7 +464,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + " ? ,"
                         + " ? )"; //NON-NLS
 
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 4, 1);
                 populateNullableString(pst, inputResultSet, 6, 2);
                 populateNullableString(pst, inputResultSet, 7, 3);
@@ -579,7 +476,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_image_info_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_fs_info
@@ -604,7 +501,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + inputResultSet.getLong(8) + ","
                         + " ? )"; //NON-NLS
 
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 9, 1);
                 pst.executeUpdate();
 
@@ -614,7 +511,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_fs_info_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_files_path
@@ -623,7 +520,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_files_path"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -638,7 +535,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_files_path_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_files
@@ -679,7 +576,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + getNullableInt(inputResultSet, 24) + ","
                         + " ? )"; //NON-NLS
 
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 23, 1);
                 populateNullableString(pst, inputResultSet, 25, 2);
                 pst.executeUpdate();
@@ -690,7 +587,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_files_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_file_layout, no primary key
@@ -698,7 +595,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_file_layout"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 outputStatement.executeUpdate("INSERT INTO tsk_file_layout (obj_id, byte_start, byte_len, sequence) VALUES ("
                         + inputResultSet.getLong(1) + ","
@@ -717,9 +614,9 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_db_info"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
-                Statement check = postgresqlConnection.createStatement();
+                Statement check = postgreSQLConnection.createStatement();
                 ResultSet checkResult = check.executeQuery("SELECT * FROM tsk_db_info WHERE schema_ver=" + inputResultSet.getInt(1) + " AND tsk_ver=" + inputResultSet.getInt(2)); //NON-NLS
                 if (!checkResult.isBeforeFirst()) { // only insert if it doesn't exist
                     outputStatement.executeUpdate("INSERT INTO tsk_db_info (schema_ver, tsk_ver) VALUES ("
@@ -750,7 +647,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(3)) + "','"
                         + SleuthkitCase.escapeSingleQuotes(inputResultSet.getString(4)) + "')"; //NON-NLS
 
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 2, 1);
                 pst.executeUpdate();
 
@@ -760,7 +657,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tag_names_tag_name_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // reports
@@ -769,7 +666,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM reports"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -788,7 +685,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE reports_report_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_artifacts
@@ -797,7 +694,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM blackboard_artifacts"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -814,7 +711,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE blackboard_artifacts_artifact_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_attributes, no primary key
@@ -835,7 +732,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + getNullableInt(inputResultSet, 9) + ","
                         + getNullableLong(inputResultSet, 10) + ","
                         + " ? )"; //NON-NLS
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 3, 1);
                 populateNullableString(pst, inputResultSet, 4, 2);
                 populateNullableByteArray(pst, inputResultSet, 7, 3);
@@ -868,7 +765,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + inputResultSet.getLong(4) + ","
                         + " ? ,"
                         + inputResultSet.getInt(6) + ")"; //NON-NLS
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 5, 1);
                 pst.executeUpdate();
 
@@ -878,7 +775,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_vs_parts_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_vs_info
@@ -887,7 +784,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_vs_info"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -905,7 +802,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_vs_info_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_files_derived 
@@ -923,7 +820,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + " ? )"; //NON-NLS
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 3, 1);
                 pst.executeUpdate();
 
@@ -933,7 +830,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_files_derived_obj_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // tsk_files_derived_method
@@ -952,7 +849,7 @@ public class SingleUserCaseImporter implements Runnable {
                         + inputResultSet.getString(2) + "','"
                         + inputResultSet.getString(3) + "',"
                         + " ? )"; //NON-NLS
-                PreparedStatement pst = postgresqlConnection.prepareStatement(sql);
+                PreparedStatement pst = postgreSQLConnection.prepareStatement(sql);
                 populateNullableString(pst, inputResultSet, 4, 1);
                 pst.executeUpdate();
 
@@ -962,7 +859,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE tsk_files_derived_method_derived_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // content_tags
@@ -971,7 +868,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM content_tags"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -991,7 +888,7 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE content_tags_tag_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         // blackboard_artifact_tags
@@ -1000,7 +897,7 @@ public class SingleUserCaseImporter implements Runnable {
         inputResultSet = inputStatement.executeQuery("SELECT * FROM blackboard_artifact_tags"); //NON-NLS
 
         while (inputResultSet.next()) {
-            outputStatement = postgresqlConnection.createStatement();
+            outputStatement = postgreSQLConnection.createStatement();
             try {
                 long value = inputResultSet.getLong(1);
                 if (value > biggestPK) {
@@ -1018,13 +915,11 @@ public class SingleUserCaseImporter implements Runnable {
                 }
             }
         }
-        numberingPK = postgresqlConnection.createStatement();
+        numberingPK = postgreSQLConnection.createStatement();
         numberingPK.execute("ALTER SEQUENCE blackboard_artifact_tags_tag_id_seq RESTART WITH " + (biggestPK + 1)); //NON-NLS
 
         sqliteConnection.close();
-        postgresqlConnection.close();
-
-        return dbName;
+        postgreSQLConnection.close();
     }
 
     /**
@@ -1041,21 +936,20 @@ public class SingleUserCaseImporter implements Runnable {
      * @throws SQLException
      * @throws Exception
      */
-    private String deconflictDatabaseName(CaseDbConnectionInfo db, String baseDbName) throws ClassNotFoundException, SQLException, Exception {
+    private static void deconflictDatabaseName(ImportCaseData icd) throws ClassNotFoundException, SQLException, Exception {
 
-        Class.forName("org.postgresql.Driver"); //NON-NLS
-        Connection dbNameConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
+        Connection postgreSQLConnection = getPostgreSQLConnection(icd, POSTGRES_DEFAULT_DB_NAME);
 
         int number = 1;
         boolean unique = false;
-        String sanitizedDbName = baseDbName;
+        String sanitizedDbName = icd.getPostgreSQLDbName();
         if (sanitizedDbName.length() > MAX_DB_NAME_LENGTH) {
             sanitizedDbName = sanitizedDbName.substring(0, MAX_DB_NAME_LENGTH);
         }
 
-        if (dbNameConnection != null) {
+        if (postgreSQLConnection != null) {
             while (unique == false) {
-                Statement st = dbNameConnection.createStatement();
+                Statement st = postgreSQLConnection.createStatement();
                 ResultSet answer = st.executeQuery("SELECT datname FROM pg_catalog.pg_database WHERE LOWER(datname) LIKE LOWER('" + sanitizedDbName + "%')"); //NON-NLS
 
                 if (!answer.next()) {
@@ -1064,9 +958,9 @@ public class SingleUserCaseImporter implements Runnable {
                     // not unique. add numbers before dbName.
                     if (number == Integer.MAX_VALUE) {
                         // oops. it never became unique. give up.
-                        throw new Exception(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.NonUniqueDatabaseName"));
+                        throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.NonUniqueDatabaseName"));
                     }
-                    sanitizedDbName = "_" + Integer.toString(number) + "_" + baseDbName; //NON-NLS
+                    sanitizedDbName = "_" + Integer.toString(number) + "_" + icd.getPostgreSQLDbName(); //NON-NLS
 
                     // Chop full db name to 63 characters (max for PostgreSQL)
                     if (sanitizedDbName.length() > MAX_DB_NAME_LENGTH) {
@@ -1075,14 +969,13 @@ public class SingleUserCaseImporter implements Runnable {
                     ++number;
                 }
             }
-            dbNameConnection.close();
+            postgreSQLConnection.close();
         } else {
             // Could be caused by database credentials, using user accounts that 
             // can not check if other databases exist, so allow it to continue
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.PotentiallyNonUniqueDatabaseName"));
         }
 
-        return sanitizedDbName;
+        icd.setPostgreSQLDbName(sanitizedDbName);
     }
 
     /**
@@ -1093,17 +986,17 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws IOException
      */
-    private void copyImages(ImportCaseData icd) throws IOException {
-        if (copySourceImages) {
+    private static void copyImages(ImportCaseData icd) throws Exception {
+        if (icd.getCopySourceImages()) {
             File imageSource = findInputFolder(icd); // Find the folder for the input images
-            File imageDestination = new File(icd.getSpecificImageOutputFolder().toString());
+            File imageDestination = new File(icd.getImageOutputFolder().toString());
 
             // If we can find the input images, copy if needed.
             if (imageSource.exists()) {
                 FileUtils.copyDirectory(imageSource, imageDestination);
 
             } else {
-                log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.UnableToCopySourceImages"));
+                throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.UnableToCopySourceImages"));
             }
         }
     }
@@ -1115,13 +1008,14 @@ public class SingleUserCaseImporter implements Runnable {
      * @param icd    the import case data for the current case
      * @param dbName the name of the database
      */
-    private void fixPaths(ImportCaseData icd, String dbName) throws SQLException {
+    private static void fixPaths(ImportCaseData icd) throws SQLException, Exception {
         /// Fix paths in reports, tsk_files_path, and tsk_image_names tables
 
-        String input = icd.getSpecificImageInputFolder().toString();
-        String output = icd.getSpecificImageOutputFolder().toString();
+        String input = icd.getImageInputFolder().toString();
+        String output = icd.getImageOutputFolder().toString();
 
-        Connection postgresqlConnection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/" + dbName, db.getUserName(), db.getPassword()); //NON-NLS
+        Connection postgresqlConnection = getPostgreSQLConnection(icd);
+
         if (postgresqlConnection != null) {
             String hostName = NetworkUtils.getLocalHostName();
 
@@ -1133,9 +1027,9 @@ public class SingleUserCaseImporter implements Runnable {
             updateStatement = postgresqlConnection.createStatement();
             updateStatement.executeUpdate("UPDATE tsk_files_path SET path=CONCAT('" + hostName + "\\', path) WHERE path IS NOT NULL AND path != ''"); //NON-NLS
 
-            String caseName = TimeStampUtils.removeTimeStamp(icd.getOldCaseName()).toLowerCase();
+            String caseName = icd.getRawFolderName().toLowerCase();
 
-            if (copySourceImages) {
+            if (icd.getCopySourceImages()) {
                 // update path for images
                 Statement inputStatement = postgresqlConnection.createStatement();
                 ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
@@ -1155,7 +1049,7 @@ public class SingleUserCaseImporter implements Runnable {
             }
             postgresqlConnection.close();
         } else {
-            log(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.CanNotOpenDatabase"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.CanNotOpenDatabase"));
         }
     }
 
@@ -1170,7 +1064,7 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws SQLException
      */
-    private String getNullableInt(ResultSet rs, int index) throws SQLException {
+    private static String getNullableInt(ResultSet rs, int index) throws SQLException {
         int value = rs.getInt(index);
         if (rs.wasNull()) {
             return "NULL"; //NON-NLS
@@ -1190,7 +1084,7 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws SQLException
      */
-    private String getNullableLong(ResultSet rs, int index) throws SQLException {
+    private static String getNullableLong(ResultSet rs, int index) throws SQLException {
         long value = rs.getLong(index);
         if (rs.wasNull()) {
             return "NULL"; //NON-NLS
@@ -1210,7 +1104,7 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws SQLException
      */
-    private void populateNullableString(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
+    private static void populateNullableString(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
         String nullableString = rs.getString(rsIndex);
         if (rs.wasNull()) {
             pst.setNull(psIndex, java.sql.Types.NULL);
@@ -1230,7 +1124,7 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws SQLException
      */
-    private void populateNullableByteArray(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
+    private static void populateNullableByteArray(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
         byte[] nullableBytes = rs.getBytes(rsIndex);
         if (rs.wasNull()) {
             pst.setNull(psIndex, java.sql.Types.NULL);
@@ -1250,7 +1144,7 @@ public class SingleUserCaseImporter implements Runnable {
      *
      * @throws SQLException
      */
-    private void populateNullableNumeric(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
+    private static void populateNullableNumeric(PreparedStatement pst, ResultSet rs, int rsIndex, int psIndex) throws SQLException {
         double nullableNumeric = rs.getDouble(rsIndex);
         if (rs.wasNull()) {
             pst.setNull(psIndex, java.sql.Types.NULL);
@@ -1259,286 +1153,49 @@ public class SingleUserCaseImporter implements Runnable {
         }
     }
 
-    private class ImportCaseData {
-
-        private Path specificCaseInputFolder;
-        private Path specificCaseOutputFolder;
-        private Path specificImageInputFolder;
-        private Path specificImageOutputFolder;
-        private String relativeCaseName;
-        private String newCaseName;
-        private String oldCaseName;
-
-        public Path getSpecificCaseInputFolder() {
-            return specificCaseInputFolder;
-        }
-
-        public Path getSpecificCaseOutputFolder() {
-            return specificCaseOutputFolder;
-        }
-
-        public Path getSpecificImageInputFolder() {
-            return specificImageInputFolder;
-        }
-
-        public Path getSpecificImageOutputFolder() {
-            return specificImageOutputFolder;
-        }
-
-        public String getRelativeCaseName() {
-            return relativeCaseName;
-        }
-
-        public String getOldCaseName() {
-            return oldCaseName;
-        }
-
-        public String getNewCaseName() {
-            return newCaseName;
-        }
-
-        public void setSpecificCaseInputFolder(Path caseInputFolder) {
-            this.specificCaseInputFolder = caseInputFolder;
-        }
-
-        public void setSpecificCaseOutputFolder(Path caseOutputFolder) {
-            this.specificCaseOutputFolder = caseOutputFolder;
-        }
-
-        public void setSpecificImageInputFolder(Path imageInputFolder) {
-            this.specificImageInputFolder = imageInputFolder;
-        }
-
-        public void setSpecificImageOutputFolder(Path imageOutputFolder) {
-            this.specificImageOutputFolder = imageOutputFolder;
-        }
-
-        public void setRelativeCaseName(Path input, Path aut) {
-            this.relativeCaseName = input.relativize(aut).toString();
-        }
-
-        public void setOldCaseName(String oldCaseName) {
-            this.oldCaseName = oldCaseName;
-        }
-
-        public void setNewCaseName(String newCaseName) {
-            this.newCaseName = newCaseName;
-        }
-
-        public ImportCaseData(Path p) {
-            this.specificCaseInputFolder = p;
-            this.oldCaseName = p.getFileName().toString();
-            this.specificCaseOutputFolder = null;
-            this.specificImageInputFolder = null;
-            this.specificImageOutputFolder = null;
-            this.relativeCaseName = null;
-            this.newCaseName = null;
-        }
-    }
-
     /**
-     * This is the runnable's run method. It causes the iteration on all .aut
-     * files in the path, calling processCase for each one.
-     */
-    @Override
-    public void run() {
-        openLog();
-        boolean result = true;
-
-        // iterate for .aut files
-        FindDotAutFolders dotAutFolders = new FindDotAutFolders();
-        try {
-            Path walked = Files.walkFileTree(caseInputFolder, dotAutFolders);
-        } catch (IOException ex) {
-            log(ex.getMessage());
-            result = false;
-        }
-
-        ArrayList<ImportCaseData> ableToProcess = new ArrayList<>();
-        ArrayList<ImportCaseData> unableToProcess = new ArrayList<>();
-
-        // validate we can convert this .aut file, one by one
-        for (Path p : dotAutFolders.getTheList()) {
-            ImportCaseData icd = new ImportCaseData(p);
-            icd.setRelativeCaseName(caseInputFolder, p);
-            if (canProcess(icd)) {
-                ableToProcess.add(icd);
-            } else {
-                unableToProcess.add(icd);
-            }
-        }
-
-        StringBuilder casesThatWillBeProcessed = new StringBuilder();
-        StringBuilder casesThatWillNotBeProcessed = new StringBuilder();
-
-        casesThatWillBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.WillImport")).append(SEP); // NON-NLS
-        if (ableToProcess.isEmpty()) {
-            casesThatWillBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.None")).append(SEP); // NON-NLS
-        } else {
-            for (ImportCaseData icd : ableToProcess) {
-                casesThatWillBeProcessed.append(icd.getSpecificCaseInputFolder().toString()).append(SEP);
-            }
-        }
-
-        if (!unableToProcess.isEmpty()) {
-            casesThatWillNotBeProcessed.append(NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.WillNotImport")).append(SEP); // NON-NLS
-            for (ImportCaseData icd : unableToProcess) {
-                casesThatWillNotBeProcessed.append(icd.getSpecificCaseInputFolder().toString()).append(SEP);
-            }
-        }
-
-        JTextArea jta = new JTextArea(casesThatWillBeProcessed.toString() + SEP + casesThatWillNotBeProcessed.toString());
-        jta.setEditable(false);
-        JScrollPane jsp = new JScrollPane(jta) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(700, 480);
-            }
-        };
-
-        SwingUtilities.invokeLater(() -> {
-            userAnswer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                    jsp,
-                    NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.ContinueWithImport"), // NON-NLS
-                    OK_CANCEL_OPTION);
-            synchronized (threadWaitNotifyLock) {
-                threadWaitNotifyLock.notify();
-            }
-        });
-
-        synchronized (threadWaitNotifyLock) {
-            try {
-                threadWaitNotifyLock.wait();
-            } catch (InterruptedException ex) {
-                log("Unable to wait for user input");
-            }
-        }
-
-        if (userAnswer == JOptionPane.OK_OPTION) {
-            // feed .aut files in one by one for processing
-            for (ImportCaseData icd : ableToProcess) {
-                if (false == processCase(icd)) {
-                    result = false;
-                }
-            }
-            closeLog(result);
-            if (notifyOnComplete != null) {
-                notifyOnComplete.importDoneCallback(result, ""); // NON-NLS
-            }
-        } else {
-            closeLog(result);
-            if (notifyOnComplete != null) {
-                notifyOnComplete.importDoneCallback(false, NbBundle.getMessage(SingleUserCaseImporter.class, "SingleUserCaseImporter.Cancelled")); // NON-NLS
-            }
-        }
-    }
-
-    /**
-     * Open the case import log in the base output folder.
+     * Open the PostgreSQL database
      *
+     * @param icd ImportCaseData holding connection credentials
+     *
+     * @return returns a Connection
+     *
+     * @throws SQLException if unable to open
      */
-    private void openLog() {
-        File temp = new File(caseOutputFolder);
-        temp.mkdirs();
-        File logFile = Paths.get(caseOutputFolder, CASE_IMPORT_LOG_FILE).toFile();
-        try {
-            writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true);
-        } catch (IOException ex) {
-            writer = null;
-            Logger.getLogger(SingleUserCaseImporter.class.getName()).log(Level.WARNING, "Error opening log file " + logFile.toString(), ex);
-        }
-        log("Starting batch processing of " + caseInputFolder.toString() + " to " + caseOutputFolder);
+    private static Connection getPostgreSQLConnection(ImportCaseData icd) throws SQLException {
+        return getPostgreSQLConnection(icd, icd.getPostgreSQLDbName());
     }
 
     /**
-     * Log a message to the case import log in the base output folder.
+     * Open the PostgreSQL database
      *
-     * @param message the message to log.
+     * @param icd    ImportCaseData holding connection credentials
+     * @param dbName the name of the database to open
+     *
+     * @return returns a Connection
+     *
+     * @throws SQLException if unable to open
      */
-    private void log(String message) {
-        if (writer != null) {
-            writer.println(String.format("%s %s", simpleDateFormat.format((Date.from(Instant.now()).getTime())), message)); //NON-NLS
-        }
+    private static Connection getPostgreSQLConnection(ImportCaseData icd, String dbName) throws SQLException {
+        return DriverManager.getConnection("jdbc:postgresql://"
+                + icd.getDb().getHost() + ":"
+                + icd.getDb().getPort() + "/"
+                + dbName,
+                icd.getDb().getUserName(),
+                icd.getDb().getPassword()); //NON-NLS   
     }
 
     /**
+     * Open the SQLite database
      *
-     * Close the case import log in the base output folder.
+     * @param icd ImportCaseData holding database path details
      *
-     * @param result this informs the log if the end result was successful or
-     *               not. True if all was successful, false otherwise.
+     * @return returns a Connection
+     *
+     * @throws SQLException if unable to open
      */
-    private void closeLog(boolean result) {
-        log("Completed batch processing of " + caseInputFolder.toString() + " to " + caseOutputFolder + ". Batch processing result: " + ((result == true) ? "Success" : "Failure"));
-        if (writer != null) {
-            writer.close();
-        }
+    private static Connection getSQLiteConnection(ImportCaseData icd) throws SQLException {
+        return DriverManager.getConnection("jdbc:sqlite:" + icd.getCaseInputFolder().resolve(AUTOPSY_DB_FILE).toString(), "", ""); //NON-NLS
     }
 
-    /**
-     * This class extends SimpleFileVisitor to find all the cases to process
-     * based upon .aut files.
-     */
-    private class FindDotAutFolders extends SimpleFileVisitor<Path> {
-
-        private final ArrayList<Path> theList;
-
-        public FindDotAutFolders() {
-            this.theList = new ArrayList<>();
-        }
-
-        /**
-         * Handle comparing .aut file and containing folder names without
-         * timestamps on either one. It strips them off if they exist.
-         *
-         * @param directory the directory we are currently visiting.
-         * @param attrs     file attributes.
-         *
-         * @return Continue if we want to carry one, SKIP_SUBTREE if we've found
-         *         a .aut file, precluding searching any deeper into this
-         *         folder.
-         *
-         * @throws IOException
-         */
-        @Override
-        public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attrs) throws IOException {
-            // find all files that end in .aut
-            File[] dotAutFiles = directory.toFile().listFiles((File dir, String name) -> name.toLowerCase().endsWith(DOTAUT));
-
-            for (File specificFile : dotAutFiles) {
-                // if it ends in a timestamp, strip it off
-                String sanitizedCaseName = specificFile.getName();
-                if (TimeStampUtils.endsWithTimeStamp(sanitizedCaseName)) {
-                    sanitizedCaseName = sanitizedCaseName.substring(0, sanitizedCaseName.length() - TimeStampUtils.getTimeStampLength());
-                }
-
-                // if folder ends in a timestamp, strip it off
-                String sanitizedFolderName = directory.getFileName().toString();
-                if (TimeStampUtils.endsWithTimeStamp(sanitizedFolderName)) {
-                    sanitizedFolderName = sanitizedFolderName.substring(0, sanitizedFolderName.length() - TimeStampUtils.getTimeStampLength());
-                }
-
-                // If file and folder match, found leaf node case
-                if (sanitizedCaseName.toLowerCase().startsWith(sanitizedFolderName.toLowerCase())) {
-                    theList.add(directory);
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
-            }
-
-            // If no matching .aut files, traverse subfolders
-            return FileVisitResult.CONTINUE;
-        }
-
-        /**
-         * This returns the list of folders we've found that need to be looked
-         * at for possible import as multi-user cases.
-         *
-         * @return the theList
-         */
-        public ArrayList<Path> getTheList() {
-            return theList;
-        }
-    }
 }
