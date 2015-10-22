@@ -49,6 +49,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -422,7 +423,12 @@ public final class ImageGalleryController {
         dbWorkerThread.addTask(innerTask);
     }
 
+    @Nullable
     synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+        if (Objects.isNull(db)){
+            LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed.");
+            return null;
+        }
         return db.getFileFromID(fileID);
     }
 
