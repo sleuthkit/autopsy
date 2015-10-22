@@ -26,6 +26,7 @@ import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -135,8 +136,8 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver
-            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver =
+            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
 
     public static List<String> getSupportedImageExtensions() {
@@ -524,14 +525,13 @@ public class ImageUtils {
                 return ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
             }
         } catch (OutOfMemoryError e) {
-            LOGGER.log(Level.WARNING, "Could not scale image (too large): " + content.getName(), e); //NON-NLS
-
-            return null;
+            LOGGER.log(Level.WARNING, "Could not scale image (too large) " + content.getName(), e); //NON-NLS
+        } catch (EOFException e) {
+            LOGGER.log(Level.WARNING, "Could not load image (EOF) {0}", content.getName()); //NON-NLS
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not load image: " + content.getName(), e); //NON-NLS
-            return null;
-
+            LOGGER.log(Level.WARNING, "Could not load image " + content.getName(), e); //NON-NLS
         }
+        return null;
     }
 
 }
