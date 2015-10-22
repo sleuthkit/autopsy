@@ -30,9 +30,11 @@
         <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
         <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release_PostgreSQL" />
         <property name="win64.TskLib.postgres_path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
+        <property name="win32.TskLib.postgres_path" value="${env.TSK_HOME}/win32/Release_PostgreSQL"/>
         <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
         <available property="win64.TskLib_postgres.exists" type="dir" file="{win64.TskLib.postgres_path}" />
+        <available property="win32.TskLib_postgres.exists" type="dir" file="{win32.TskLib.postgres_path}" />
     </target>
 
     <!-- The following copy the libtsk_jni dependencies to the Autopsy
@@ -68,23 +70,35 @@
     <target name="copyWinTskLibs32ToBaseDir" if="win32.TskLib.exists">
         <fileset dir="${win32.TskLib.path}" id="win32dlls">
             <include name="zlib.dll" />
-            <include name="libewf.dll"/>
+            <include name="libewf.dll"/>          
+        </fileset>
+        
+        <fileset dir="${win32.TskLib.postgres_path}" id="postgres32dlls">
+            <include name="libeay32.dll"/>
+            <include name="ssleay32.dll"/>
+            <include name="intl.dll"/>
+            <include name="libpq.dll"/>
+            <include name="msvcr120.dll"/>
         </fileset>
 
         <copy todir="${i386}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="postgres32dlls" />
         </copy>
 
         <copy todir="${x86}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="postgres32dlls" />
         </copy>
 
         <copy todir="${i586}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="postgres32dlls" />
         </copy>	
 
         <copy todir="${i686}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="postgres32dlls" />
         </copy>
     </target>
     
