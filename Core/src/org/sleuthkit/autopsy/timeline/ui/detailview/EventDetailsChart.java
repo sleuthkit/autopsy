@@ -102,15 +102,18 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
+
+    
+    private final TimeLineController controller;
+    private final FilteredEventsModel filteredEvents;
+
     private ContextMenu chartContextMenu;
 
+
+    
     public ContextMenu getChartContextMenu() {
         return chartContextMenu;
     }
-
-    private TimeLineController controller;
-
-    private FilteredEventsModel filteredEvents;
 
     /**
      * a user positionable vertical line to help compare events
@@ -187,9 +190,20 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailsChart(DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+        this.controller = controller;
+        this.filteredEvents = this.controller.getEventsModel();
+
+        filteredEvents.zoomParametersProperty().addListener(o -> {
+            clearGuideLine();
+            clearIntervalSelector();
+            selectedNodes.clear();
+            projectionMap.clear();
+            controller.selectEventIDs(Collections.emptyList());
+        });
         Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
+
 
         dateAxis.setAutoRanging(false);
 
@@ -210,6 +224,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         truncateAll.addListener(layoutInvalidationListener);
         truncateWidth.addListener(layoutInvalidationListener);
         descrVisibility.addListener(layoutInvalidationListener);
+        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
 
         //this is needed to allow non circular binding of the guideline and timerangeRect heights to the height of the chart
         //TODO: seems like a hack, can we remove? -jm
@@ -258,30 +273,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
 
     public synchronized SimpleBooleanProperty bandByTypeProperty() {
         return bandByType;
-    }
-
-    @Override
-    public synchronized void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-        getController().getQuickHideFilters().addListener(layoutInvalidationListener);
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.zoomParametersProperty().addListener(o -> {
-                clearGuideLine();
-                clearIntervalSelector();
-
-                selectedNodes.clear();
-                projectionMap.clear();
-                controller.selectEventIDs(Collections.emptyList());
-            });
-        }
-        this.filteredEvents = filteredEvents;
-
     }
 
     @Override

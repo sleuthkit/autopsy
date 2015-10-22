@@ -53,7 +53,8 @@ public class SaveSnapshotAsReport extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(SaveSnapshotAsReport.class.getName());
 
-    @NbBundle.Messages({"SaveSnapshot.action.name.text=save snapshot", "SaveSnapshot.fileChoose.title.text=Save snapshot to"})
+    @NbBundle.Messages({"SaveSnapshot.action.name.text=save snapshot",
+        "SaveSnapshot.fileChoose.title.text=Save snapshot to"})
     public SaveSnapshotAsReport(TimeLineController controller, WritableImage snapshot) {
         super(Bundle.SaveSnapshot_action_name_text());
         setEventHandler(new Consumer<ActionEvent>() {

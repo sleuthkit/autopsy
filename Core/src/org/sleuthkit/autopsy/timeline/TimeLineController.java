@@ -316,8 +316,10 @@ public class TimeLineController {
         LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
         try {
             SwingUtilities.invokeLater(() -> {
-                if (isWindowOpen()) {
-                    mainFrame.close();
+                synchronized (TimeLineController.this) {
+                    if (isWindowOpen()) {
+                        mainFrame.close();
+                    }
                 }
             });
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
@@ -362,8 +364,10 @@ public class TimeLineController {
     void rebuildTagsTable() {
         LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
         SwingUtilities.invokeLater(() -> {
-            if (isWindowOpen()) {
-                mainFrame.close();
+            synchronized (TimeLineController.this) {
+                if (isWindowOpen()) {
+                    mainFrame.close();
+                }
             }
         });
         synchronized (eventsRepository) {
@@ -388,16 +392,19 @@ public class TimeLineController {
             IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
             IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
             Case.removePropertyChangeListener(caseListener);
-            mainFrame.close();
-            mainFrame.setVisible(false);
-            mainFrame = null;
+            SwingUtilities.invokeLater(() -> {
+                synchronized (TimeLineController.this) {
+                    mainFrame.close();
+                    mainFrame = null;
+                }
+            });
         }
     }
 
     /**
      * show the timeline window and prompt for rebuilding database if necessary.
      */
-    synchronized void openTimeLine() {
+    void openTimeLine() {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
@@ -539,20 +546,20 @@ public class TimeLineController {
     /**
      * private method to build gui if necessary and make it visible.
      */
-    synchronized private void showWindow() {
-        if (mainFrame == null) {
-            LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI."); // NON-NLS
-            mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent(
-                    NbBundle.getMessage(TimeLineController.class, "CTL_TimeLineTopComponentAction"));
-            if (mainFrame == null) {
-                mainFrame = new TimeLineTopComponent();
-            }
-            mainFrame.setController(this);
-        }
+    private void showWindow() {
         SwingUtilities.invokeLater(() -> {
-            mainFrame.open();
-            mainFrame.setVisible(true);
-            mainFrame.toFront();
+            synchronized (TimeLineController.this) {
+                if (mainFrame == null) {
+                    LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI."); // NON-NLS
+                    mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent(
+                            NbBundle.getMessage(TimeLineController.class, "CTL_TimeLineTopComponentAction"));
+                    if (mainFrame == null) {
+                        mainFrame = new TimeLineTopComponent(this);
+                    }
+                }
+                mainFrame.open();
+                mainFrame.toFront();
+            }
         });
     }
 

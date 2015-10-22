@@ -29,7 +29,6 @@ import javafx.scene.input.MouseEvent;
 import org.controlsfx.control.action.ActionGroup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.Forward;
 
@@ -38,8 +37,9 @@ import org.sleuthkit.autopsy.timeline.actions.Forward;
  *
  * @param <X> the type of values along the horizontal axis
  */
-public interface TimeLineChart<X> extends TimeLineView {
+public interface TimeLineChart<X> {
 
+//    void setController(TimeLineController controller);
     IntervalSelector<? extends X> getIntervalSelector();
 
     void setIntervalSelector(IntervalSelector<? extends X> newIntervalSelector);
@@ -137,6 +137,17 @@ public interface TimeLineChart<X> extends TimeLineView {
                 clickEvent.consume();
             }
         }
+    }
+
+    /**
+     * enum to represent whether the drag is a left/right-edge modification or a
+     * horizontal slide triggered by dragging the center
+     */
+    enum DragPosition {
+
+        LEFT,
+        CENTER,
+        RIGHT
     }
 
     @NbBundle.Messages({"TimeLineChart.zoomHistoryActionGroup.name=Zoom History"})
