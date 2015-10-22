@@ -16,12 +16,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="pnOverallPanel" min="-2" pref="555" max="-2" attributes="0"/>
+          <Component id="pnOverallPanel" min="-2" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="pnOverallPanel" alignment="0" min="-2" pref="559" max="-2" attributes="0"/>
+          <Component id="pnOverallPanel" alignment="0" min="-2" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
