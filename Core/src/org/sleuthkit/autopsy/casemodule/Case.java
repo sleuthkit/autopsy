@@ -323,9 +323,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
         Case oldCase = Case.currentCase;
         Case.currentCase = null;
         if (oldCase != null) {
-            SwingUtilities.invokeLater(() -> {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            });
+            /* KDM I think we want this one....
+             SwingUtilities.invokeLater(() -> {
+             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+             });*/
             doCaseChange(null); //closes windows, etc   
             if (null != oldCase.tskErrorReporter) {
                 oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
@@ -349,7 +350,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             // start listening for TSK errors for the new case
             currentCase.tskErrorReporter = new IntervalErrorReportData(currentCase, MIN_SECONDS_BETWEEN_ERROR_REPORTS,
-                            NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
+                    NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
             doCaseChange(currentCase);
             SwingUtilities.invokeLater(() -> {
                 RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
@@ -374,11 +375,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
         } else {
             Logger.setLogDirectory(PlatformUtil.getLogDirectory());
         }
-        SwingUtilities.invokeLater(() -> {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        });
+        /* KDM I think we want this one too.
+         SwingUtilities.invokeLater(() -> {
+         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+         });*/
     }
-    
+
     @Override
     public void receiveError(String context, String errorMessage) {
         /* NOTE: We are accessing tskErrorReporter from two different threads.
@@ -469,6 +471,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+        } finally {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });
         }
 
         /**
@@ -581,7 +587,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.multiUserCaseNotEnabled"));
                 }
                 try {
-                db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                    db = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseDir);
                 } catch (UserPreferencesException ex) {
                     logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
                     throw new CaseActionException(
@@ -647,6 +653,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
             throw new CaseActionException(NbBundle.getMessage(Case.class, "CaseOpenException.DatabaseSettingsIssue") + " " + ex.getMessage(), ex); //NON-NLS
+        } finally {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });
         }
     }
 
@@ -704,7 +714,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
      * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
-     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)}
      */
     @Deprecated
     public Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
@@ -719,13 +729,13 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
     /**
      * Finishes adding new local data source to the case. Sends out event and
-     * reopens windows if needed. 
+     * reopens windows if needed.
      *
      * @param newDataSource new data source added
      *
      * @deprecated As of release 4.0, replaced by {@link #notifyAddingDataSource(java.util.UUID) and
      * {@link #notifyDataSourceAdded(org.sleuthkit.datamodel.Content, java.util.UUID) and
-     * {@link #notifyFailedAddingDataSource(java.util.UUID)} 
+     * {@link #notifyFailedAddingDataSource(java.util.UUID)}
      */
     @Deprecated
     void addLocalDataSource(Content newDataSource) {

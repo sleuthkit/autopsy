@@ -228,6 +228,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                                 StartupWindowProvider.getInstance().open();
                             }
                         });
+                    } finally {
+                        SwingUtilities.invokeLater(() -> {
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        });
                     }
                 }).start();
             }

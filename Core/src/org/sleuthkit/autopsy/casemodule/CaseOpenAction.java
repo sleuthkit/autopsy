@@ -101,6 +101,10 @@ public final class CaseOpenAction implements ActionListener {
                             StartupWindowProvider.getInstance().open();
                         }
                     });
+                } finally {
+                    SwingUtilities.invokeLater(() -> {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    });
                 }
             }).start();
         }

@@ -120,10 +120,10 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     try {
                         get();
-                            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-                            addImageAction.actionPerformed(null);
+                        AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                        addImageAction.actionPerformed(null);
                     } catch (Exception ex) {
-						logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage() + " "
                                     + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
@@ -140,6 +140,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }
+                    /// KDM here????
                 }
             }.execute();
         } else {
