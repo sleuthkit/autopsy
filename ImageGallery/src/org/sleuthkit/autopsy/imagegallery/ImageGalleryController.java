@@ -396,6 +396,9 @@ public final class ImageGalleryController {
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
+        dbWorkerThread.cancelAllTasks();
+        dbWorkerThread = null;
+        restartWorker();
 
         Toolbar.getDefault(this).reset();
         groupManager.clear();
@@ -694,7 +697,7 @@ public final class ImageGalleryController {
      */
     static private class UpdateFileTask extends FileTask {
 
-        public UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
+        UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
         }
 
@@ -721,7 +724,7 @@ public final class ImageGalleryController {
      */
     static private class RemoveFileTask extends FileTask {
 
-        public RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
+        RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
         }
 
@@ -767,8 +770,8 @@ public final class ImageGalleryController {
                 + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
                         "' or name LIKE '%.")
                 + "')";
-        static private final String MIMETYPE_CLAUSE
-                = "blackboard_attributes.value_text LIKE '"
+        static private final String MIMETYPE_CLAUSE =
+                 "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
@@ -849,7 +852,7 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } 
+            }
 
             progressHandle.finish();
 
@@ -884,7 +887,7 @@ public final class ImageGalleryController {
          *
          * @param dataSourceId Data source object ID
          */
-        public PrePopulateDataSourceFiles(Content dataSource) {
+        PrePopulateDataSourceFiles(Content dataSource) {
             super();
             this.dataSource = dataSource;
         }
@@ -952,7 +955,7 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } 
+            }
 
             progressHandle.finish();
         }
