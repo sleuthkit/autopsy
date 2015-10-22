@@ -44,7 +44,6 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -64,7 +63,7 @@ import static org.sleuthkit.autopsy.timeline.ui.filtering.Bundle.Timeline_ui_fil
  * This also implements {@link TimeLineView} since it dynamically updates its
  * filters based on the contents of a {@link FilteredEventsModel}
  */
-final public class FilterSetPanel extends BorderPane implements TimeLineView {
+final public class FilterSetPanel extends BorderPane {
 
     private static final Image TICK = new Image("org/sleuthkit/autopsy/timeline/images/tick.png");
 
@@ -171,20 +170,25 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
         legendColumn.setCellValueFactory(param -> param.getValue().valueProperty());
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
-    }
-
-    public FilterSetPanel() {
-        FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
         expansionMap.put(new TypeFilter(RootEventType.getInstance()).getDisplayName(), true);
-    }
 
-    @Override
-    public void setController(TimeLineController timeLineController) {
-        this.controller = timeLineController;
         Action defaultFiltersAction = new ResetFilters(controller);
         defaultButton.setOnAction(defaultFiltersAction);
         defaultButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
-        this.setModel(timeLineController.getEventsModel());
+
+        this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> {
+            applyFilters();
+        });
+        this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> {
+            applyFilters();
+        });
+        this.filteredEvents.timeRangeProperty().addListener((Observable observable2) -> {
+            applyFilters();
+        });
+        this.filteredEvents.filterProperty().addListener((Observable o) -> {
+            refresh();
+        });
+        refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory((ListView<DescriptionFilter> param) -> {
@@ -237,25 +241,13 @@ final public class FilterSetPanel extends BorderPane implements TimeLineView {
 
             }
         });
+
     }
 
-    @Override
-
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
-        this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> {
-            applyFilters();
-        });
-        this.filteredEvents.descriptionLODProperty().addListener((Observable observable) -> {
-            applyFilters();
-        });
-        this.filteredEvents.timeRangeProperty().addListener((Observable observable) -> {
-            applyFilters();
-        });
-        this.filteredEvents.filterProperty().addListener((Observable o) -> {
-            refresh();
-        });
-        refresh();
+    public FilterSetPanel(TimeLineController controller) {
+        this.controller = controller;
+        this.filteredEvents = controller.getEventsModel();
+        FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
 
     }
 
