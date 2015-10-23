@@ -30,6 +30,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -39,6 +40,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
+    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
@@ -177,6 +179,9 @@ public final class UserPreferences {
     }
 
     public static boolean getIsMultiUserModeEnabled() {
+        if (!isWindowsOS) {
+            return false;
+        }
         return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
     }
 
