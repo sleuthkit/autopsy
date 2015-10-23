@@ -54,10 +54,6 @@ public class SingleUserCaseConverter {
 
     public class ImportCaseData {
 
-        private final Path baseImageInputFolder;
-        private final Path baseCaseInputFolder;
-        private final Path baseImageOutputFolder;
-        private final Path baseCaseOutputFolder;
         private final Path imageInputFolder;
         private final Path caseInputFolder;
         private final Path imageOutputFolder;
@@ -72,10 +68,6 @@ public class SingleUserCaseConverter {
         private final CaseDbConnectionInfo db;
 
         public ImportCaseData(
-                Path baseImageInputFolder,
-                Path baseCaseInputFolder,
-                Path baseImageOutputFolder,
-                Path baseCaseOutputFolder,
                 Path imageInput,
                 Path caseInput,
                 Path imageOutput,
@@ -87,10 +79,6 @@ public class SingleUserCaseConverter {
                 boolean copySourceImages,
                 boolean deleteCase) throws UserPreferencesException {
 
-            this.baseImageInputFolder = baseImageInputFolder;
-            this.baseCaseInputFolder = baseCaseInputFolder;
-            this.baseImageOutputFolder = baseImageOutputFolder;
-            this.baseCaseOutputFolder = baseCaseOutputFolder;
             this.imageInputFolder = imageInput;
             this.caseInputFolder = caseInput;
             this.imageOutputFolder = imageOutput;
@@ -158,9 +146,9 @@ public class SingleUserCaseConverter {
     }
 
     /**
-     * Handles most of the heavy lifting for importing a case from single-user
-     * to multi-user. Creates new .aut file, moves folders to the right place,
-     * imports the , and updates paths within the database.
+     * Handles the heavy lifting for importing a case from single-user to
+     * multi-user. Creates new .aut file, moves folders to the right place,
+     * imports the database, and updates paths within the database.
      *
      * @param icd the Import Case Data for the current case
      *
@@ -170,34 +158,39 @@ public class SingleUserCaseConverter {
 
         Class.forName("org.postgresql.Driver"); //NON-NLS
 
+        // Make sure there is a SQLite databse file
         Path oldDatabasePath = icd.getCaseInputFolder().resolve(AUTOPSY_DB_FILE);
         if (false == oldDatabasePath.toFile().exists()) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.BadDatabaseFileName"));
         }
 
-        // read old xml config
+        // Read old xml config
         XMLCaseManagement oldXmlCaseManagement = new XMLCaseManagement();
         oldXmlCaseManagement.open(icd.getCaseInputFolder().resolve(icd.getAutFileName()).toString());
         if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
             throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser"));
         }
 
-        // create sanitized names for database and solr 
+        // Create sanitized names for PostgreSQL and Solr 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
         Date date = new Date();
         String dbName = Case.sanitizeCaseName(icd.getNewCaseName()) + "_" + dateFormat.format(date); //NON-NLS
         String solrName = dbName;
         icd.setPostgreSQLDbName(dbName);
 
-        copyResults(icd); // Copy items to new hostname folder structure
+        // Copy items to new hostname folder structure
+        copyResults(icd);
 
-        importDb(icd); // Change from SQLite to PostgreSQL
+        // Convert from SQLite to PostgreSQL
+        importDb(icd);
 
-        fixPaths(icd); // Update paths in DB
+        // Update paths inside databse
+        fixPaths(icd);
 
-        copyImages(icd); // Copy images over
+        // Copy images
+        copyImages(icd);
 
-        // create new XML config
+        // Create new .aut file
         XMLCaseManagement newXmlCaseManagement = new XMLCaseManagement();
         newXmlCaseManagement.create(icd.getCaseOutputFolder().toString(),
                 icd.getNewCaseName(),
@@ -215,44 +208,14 @@ public class SingleUserCaseConverter {
         if (icd.getDeleteCase()) {
             FileUtils.deleteDirectory(icd.getCaseInputFolder().toFile());
         }
-        reportLostImages(icd);
-    }
-
-    /**
-     * Searches for images in the filesystem. It parses the new PostgreSQL
-     * database to find images that should exist, and notifies when they do not.
-     *
-     * @param db     database credentials
-     * @param dbName the name of the database
-     *
-     * @return true if successfully found all images, false otherwise.
-     */
-    private static void reportLostImages(ImportCaseData icd) {
-        if (icd.getCopySourceImages()) {
-            try {
-                Connection postgreSQLConnection = getPostgreSQLConnection(icd);
-                Statement inputStatement = postgreSQLConnection.createStatement();
-                ResultSet inputResultSet = inputStatement.executeQuery("SELECT * FROM tsk_image_names"); //NON-NLS
-
-                while (inputResultSet.next()) {
-
-                    File theFile = new File(inputResultSet.getString(2));
-                    if (false == theFile.exists()) {
-                        // do not throw, this can be fixed when they open the case
-                    }
-                }
-            } catch (SQLException ex) {
-                // do not throw, this can be fixed when they open the case
-            }
-        }
     }
 
     /**
      * Figure out the input folder for images and return it.
      *
-     * @param icd the import case data for the current case
+     * @param icd the Import Case Data for the current case
      *
-     * @return the name of the proper input folder
+     * @return the name of the proper Image input folder
      */
     private static File findInputFolder(ImportCaseData icd) {
 
@@ -260,26 +223,29 @@ public class SingleUserCaseConverter {
         if (thePath.isDirectory()) {
             /// we've found it
             return thePath;
-        } else {
-            return icd.getImageInputFolder().toFile();
         }
+        thePath = icd.getImageInputFolder().resolve(icd.getRawFolderName()).toFile();
+        if (thePath.isDirectory()) {
+            /// we've found it
+            return thePath;
+        }
+        return icd.getImageInputFolder().toFile();
     }
 
     /**
-     * Copy all the folders at the base level to the new scheme involving
-     * hostname. Also take care of a few files such as logs, timeline db, etc.
+     * Copy all folders at the base level to the new scheme involving hostname.
+     * Also take care of a few files such as logs, timeline database, etc.
      *
-     * @param icd the case data
+     * @param icd the Import Case Data for the current case
      *
      * @throws IOException
      */
     private static void copyResults(ImportCaseData icd) throws IOException {
         /// get hostname
         String hostName = NetworkUtils.getLocalHostName();
-        Path destination;
-        Path source;
 
-        source = icd.getCaseInputFolder();
+        Path destination;
+        Path source = icd.getCaseInputFolder();
         if (source.toFile().exists()) {
             destination = icd.getCaseOutputFolder().resolve(hostName);
             FileUtils.copyDirectory(source.toFile(), destination.toFile());
@@ -291,17 +257,19 @@ public class SingleUserCaseConverter {
             FileUtils.copyFile(source.toFile(), destination.toFile());
         }
 
-        // Remove the single-user .aut file, database, Timeline database and log
+        // Remove the single-user .aut file from the multi-user folder
         File oldAutopsyFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, icd.getOldCaseName() + DOTAUT).toFile();
         if (oldAutopsyFile.exists()) {
             oldAutopsyFile.delete();
         }
 
+        // Remove the single-user database file from the multi-user folder
         File oldDatabaseFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, AUTOPSY_DB_FILE).toFile();
         if (oldDatabaseFile.exists()) {
             oldDatabaseFile.delete();
         }
 
+        // Remove the single-user Timeline file from the multi-user folder
         File oldTimelineFile = Paths.get(icd.getCaseOutputFolder().toString(), hostName, TIMELINE_FILE).toFile();
         if (oldTimelineFile.exists()) {
             oldTimelineFile.delete();
@@ -313,13 +281,9 @@ public class SingleUserCaseConverter {
      * data while loading it over. Fixing paths is done once the database is
      * completely imported.
      *
-     * @param newDbName      the name of the database, could have name collision
-     * @param inputPath      the path to the input case
-     * @param outputCaseName the name of the output case, could have extra
-     *                       digits to avoid name collisions
+     * @param icd the Import Case Data for the current case
      *
-     * @return the deconflicted name of the PostgreSQL database that was created
-     *
+     * @throws Exception
      * @throws SQLException
      * @throws ClassNotFoundException
      */
@@ -923,18 +887,15 @@ public class SingleUserCaseConverter {
     }
 
     /**
-     * Checks that our database name is unique. If it is not, attempts to add
+     * Checks that the database name is unique. If it is not, attempts to add
      * numbers to it until it is unique. Gives up if it goes through all
      * positive integers without finding a unique name.
      *
-     * @param db         Database credentials
-     * @param baseDbName proposed name of the database to check for collisions
+     * @param icd the Import Case Data for the current case
      *
-     * @return name to use for the new database. Could be the name passed in.
-     *
-     * @throws ClassNotFoundException
-     * @throws SQLException
      * @throws Exception
+     * @throws SQLException
+     * @throws ClassNotFoundException
      */
     private static void deconflictDatabaseName(ImportCaseData icd) throws ClassNotFoundException, SQLException, Exception {
 
@@ -955,12 +916,12 @@ public class SingleUserCaseConverter {
                 if (!answer.next()) {
                     unique = true;
                 } else {
-                    // not unique. add numbers before dbName.
+                    // not unique. add numbers to db name.
                     if (number == Integer.MAX_VALUE) {
                         // oops. it never became unique. give up.
                         throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.NonUniqueDatabaseName"));
                     }
-                    sanitizedDbName = "_" + Integer.toString(number) + "_" + icd.getPostgreSQLDbName(); //NON-NLS
+                    sanitizedDbName = "db_" + Integer.toString(number) + "_" + icd.getPostgreSQLDbName(); //NON-NLS
 
                     // Chop full db name to 63 characters (max for PostgreSQL)
                     if (sanitizedDbName.length() > MAX_DB_NAME_LENGTH) {
@@ -979,10 +940,10 @@ public class SingleUserCaseConverter {
     }
 
     /**
-     * Get the images from the old case and place them in the central
-     * repository, if the user chose to.
+     * Get the images from the old case and stage them for the new case, if the
+     * user chose to copy images over.
      *
-     * @param icd the Import Case Data
+     * @param icd the Import Case Data for the current case
      *
      * @throws IOException
      */
@@ -1005,8 +966,10 @@ public class SingleUserCaseConverter {
      * Fix up any paths in the database that refer to items that have moved.
      * Candidates include events.db, input images, reports, file paths, etc.
      *
-     * @param icd    the import case data for the current case
-     * @param dbName the name of the database
+     * @param icd the Import Case Data for the current case
+     *
+     * @throws Exception
+     * @throws SQLExceptionException
      */
     private static void fixPaths(ImportCaseData icd) throws SQLException, Exception {
         /// Fix paths in reports, tsk_files_path, and tsk_image_names tables
@@ -1156,7 +1119,7 @@ public class SingleUserCaseConverter {
     /**
      * Open the PostgreSQL database
      *
-     * @param icd ImportCaseData holding connection credentials
+     * @param icd Import Case Data holding connection credentials
      *
      * @return returns a Connection
      *
@@ -1169,7 +1132,7 @@ public class SingleUserCaseConverter {
     /**
      * Open the PostgreSQL database
      *
-     * @param icd    ImportCaseData holding connection credentials
+     * @param icd    Import Case Data holding connection credentials
      * @param dbName the name of the database to open
      *
      * @return returns a Connection
@@ -1188,7 +1151,7 @@ public class SingleUserCaseConverter {
     /**
      * Open the SQLite database
      *
-     * @param icd ImportCaseData holding database path details
+     * @param icd Import Case Data holding database path details
      *
      * @return returns a Connection
      *
