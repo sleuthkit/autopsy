@@ -77,19 +77,19 @@ public class FileManager implements Closeable {
         }
 
     }
-
+    
     /**
      * Finds a set of files that meets the name criteria.
      *
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * the given fileName
+     *         the given fileName
      */
     public synchronized List<AbstractFile> findFiles(String fileName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-
+        
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles.exception.msg"));
         }
@@ -103,17 +103,18 @@ public class FileManager implements Closeable {
     /**
      * Finds a set of files that meets the name criteria.
      *
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
-     * @param dirName Pattern of the name of the parent directory to use as the
-     * root of the search (case insensitive, used in LIKE SQL statement).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
+     * @param dirName    Pattern of the name of the parent directory to use as
+     *                   the root of the search (case insensitive, used in LIKE
+     *                   SQL statement).
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * fileName and whose parent directory contains dirName.
+     *         fileName and whose parent directory contains dirName.
      */
     public synchronized List<AbstractFile> findFiles(String fileName, String dirName) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-
+        
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles2.exception.msg"));
         }
@@ -127,22 +128,23 @@ public class FileManager implements Closeable {
     /**
      * Finds a set of files that meets the name criteria.
      *
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
      * @param parentFile Object of root/parent directory to restrict search to.
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * fileName and that were inside a directory described by parentFsContent.
+     *         fileName and that were inside a directory described by
+     *         parentFsContent.
      */
     public synchronized List<AbstractFile> findFiles(String fileName, AbstractFile parentFile) throws TskCoreException {
         List<AbstractFile> result = new ArrayList<>();
-
+        
         if (tskCase == null) {
             throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles3.exception.msg"));
         }
         List<Content> dataSources = tskCase.getRootObjects();
         for (Content dataSource : dataSources) {
-            result.addAll(findFiles(dataSource, fileName, parentFile));
+          result.addAll(findFiles(dataSource, fileName, parentFile));
         }
         return result;
     }
@@ -151,12 +153,12 @@ public class FileManager implements Closeable {
      * Finds a set of files that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
-     * VirtualDirectory, etc.).
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
+     *                   VirtualDirectory, etc.).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * the given fileName
+     *         the given fileName
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName) throws TskCoreException {
         if (tskCase == null) {
@@ -169,14 +171,15 @@ public class FileManager implements Closeable {
      * Finds a set of files that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
-     * VirtualDirectory, etc.).
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
-     * @param dirName Pattern of the name of the parent directory to use as the
-     * root of the search (case insensitive, used in LIKE SQL statement).
+     *                   VirtualDirectory, etc.).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
+     * @param dirName    Pattern of the name of the parent directory to use as
+     *                   the root of the search (case insensitive, used in LIKE
+     *                   SQL statement).
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * fileName and whose parent directory contains dirName.
+     *         fileName and whose parent directory contains dirName.
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String dirName) throws TskCoreException {
         if (tskCase == null) {
@@ -189,13 +192,14 @@ public class FileManager implements Closeable {
      * Finds a set of files that meets the name criteria.
      *
      * @param dataSource Root data source to limit search results to (Image,
-     * VirtualDirectory, etc.).
-     * @param fileName Pattern of the name of the file or directory to match
-     * (case insensitive, used in LIKE SQL statement).
+     *                   VirtualDirectory, etc.).
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
      * @param parentFile Object of root/parent directory to restrict search to.
      *
      * @return a list of AbstractFile for files/directories whose name matches
-     * fileName and that were inside a directory described by parentFsContent.
+     *         fileName and that were inside a directory described by
+     *         parentFsContent.
      */
     public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parentFile) throws TskCoreException {
         if (tskCase == null) {
@@ -206,9 +210,9 @@ public class FileManager implements Closeable {
 
     /**
      * @param dataSource data source Content (Image, parent-less
-     * VirtualDirectory) where to find files
-     * @param filePath The full path to the file(s) of interest. This can
-     * optionally include the image and volume names.
+     *                   VirtualDirectory) where to find files
+     * @param filePath   The full path to the file(s) of interest. This can
+     *                   optionally include the image and volume names.
      *
      * @return a list of AbstractFile that have the given file path.
      */
@@ -222,28 +226,31 @@ public class FileManager implements Closeable {
     /**
      * Creates a derived file, adds it to the database and returns it.
      *
-     * @param fileName file name the derived file
-     * @param localPath local path of the derived file, including the file name.
-     * The path is relative to the case folder.
-     * @param size size of the derived file in bytes
+     * @param fileName        file name the derived file
+     * @param localPath       local path of the derived file, including the file
+     *                        name. The path is relative to the case folder.
+     * @param size            size of the derived file in bytes
      * @param ctime
      * @param crtime
      * @param atime
      * @param mtime
-     * @param isFile whether a file or directory, true if a file
-     * @param parentFile the parent file object this the new file was derived
-     * from, either a fs file or parent derived file/dikr\\r
+     * @param isFile          whether a file or directory, true if a file
+     * @param parentFile      the parent file object this the new file was
+     *                        derived from, either a fs file or parent derived
+     *                        file/dikr\\r
      * @param rederiveDetails details needed to re-derive file (will be specific
-     * to the derivation method), currently unused
-     * @param toolName name of derivation method/tool, currently unused
-     * @param toolVersion version of derivation method/tool, currently unused
-     * @param otherDetails details of derivation method/tool, currently unused
+     *                        to the derivation method), currently unused
+     * @param toolName        name of derivation method/tool, currently unused
+     * @param toolVersion     version of derivation method/tool, currently
+     *                        unused
+     * @param otherDetails    details of derivation method/tool, currently
+     *                        unused
      *
      * @return newly created derived file object added to the database
      *
      * @throws TskCoreException exception thrown if the object creation failed
-     * due to a critical system error or of the file manager has already been
-     * closed
+     *                          due to a critical system error or of the file
+     *                          manager has already been closed
      *
      */
     public synchronized DerivedFile addDerivedFile(String fileName, String localPath, long size,
@@ -265,14 +272,14 @@ public class FileManager implements Closeable {
      * or image given by systemId.
      *
      * @param carvedFileName the name of the carved file (containing appropriate
-     * extension)
+     *                       extension)
      * @param carvedFileSize size of the carved file to add
-     * @param systemId the ID of the parent volume or file system
-     * @param sectors a list of SectorGroups giving this sectors that make up
-     * this carved file.
+     * @param systemId       the ID of the parent volume or file system
+     * @param sectors        a list of SectorGroups giving this sectors that
+     *                       make up this carved file.
      *
      * @throws TskCoreException exception thrown when critical tsk error
-     * occurred and carved file could not be added
+     *                          occurred and carved file could not be added
      */
     public synchronized LayoutFile addCarvedFile(String carvedFileName, long carvedFileSize,
             long systemId, List<TskFileRange> sectors) throws TskCoreException {
@@ -290,10 +297,10 @@ public class FileManager implements Closeable {
      * not exist already.
      *
      * @param filesToAdd a list of CarvedFileContainer files to add as carved
-     * files
+     *                   files
      *
      * @return List<LayoutFile> This is a list of the files added to the
-     * database
+     *         database
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
@@ -323,17 +330,19 @@ public class FileManager implements Closeable {
     /**
      * Add a set of local/logical files and dirs.
      *
-     * @param localAbsPaths list of absolute paths to local files and dirs
+     * @param localAbsPaths      list of absolute paths to local files and dirs
      * @param addProgressUpdater notifier to receive progress notifications on
-     * folders added, or null if not used
+     *                           folders added, or null if not used
      *
      * @return file set root VirtualDirectory contained containing all
-     * AbstractFile objects added
+     *         AbstractFile objects added
      *
      * @throws TskCoreException exception thrown if the object creation failed
-     * due to a critical system error or of the file manager has already been
-     * closed. There is no "revert" logic if one of the additions fails. The
-     * addition stops with the first error encountered.
+     *                          due to a critical system error or of the file
+     *                          manager has already been closed. There is no
+     *                          "revert" logic if one of the additions fails.
+     *                          The addition stops with the first error
+     *                          encountered.
      */
     public synchronized VirtualDirectory addLocalFilesDirs(List<String> localAbsPaths, FileAddProgressUpdater addProgressUpdater) throws TskCoreException {
         final List<java.io.File> rootsToAdd = new ArrayList<>();
@@ -415,10 +424,10 @@ public class FileManager implements Closeable {
      * Helper (internal) method to recursively add contents of a folder. Node
      * passed in can be a file or directory. Children of directories are added.
      *
-     * @param parentVd Dir that is the parent of localFile
-     * @param localFile File/Dir that we are adding
+     * @param parentVd           Dir that is the parent of localFile
+     * @param localFile          File/Dir that we are adding
      * @param addProgressUpdater notifier to receive progress notifications on
-     * folders added, or null if not used
+     *                           folders added, or null if not used
      *
      * @returns File object of file added or new virtualdirectory for the
      * directory.
@@ -470,14 +479,14 @@ public class FileManager implements Closeable {
      * and can be read. This checking is done by addLocalDirInt().
      *
      * @param parentFile parent file object container (such as virtual
-     * directory, another local file, or fscontent File),
-     * @param localFile File that we are adding
+     *                   directory, another local file, or fscontent File),
+     * @param localFile  File that we are adding
      *
      * @return newly created local file object added to the database
      *
      * @throws TskCoreException exception thrown if the object creation failed
-     * due to a critical system error or of the file manager has already been
-     * closed
+     *                          due to a critical system error or of the file
+     *                          manager has already been closed
      */
     private synchronized LocalFile addLocalFileInt(AbstractFile parentFile, java.io.File localFile, CaseDbTransaction trans) throws TskCoreException {
 
