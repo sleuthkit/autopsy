@@ -212,7 +212,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         caseDirTextField = new javax.swing.JTextField();
         singleUserCaseRadioButton = new javax.swing.JRadioButton();
         multiUserCaseRadioButton = new javax.swing.JRadioButton();
-        multiUserSettingsWarningLabel = new javax.swing.JLabel();
         caseParentDirWarningLabel = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -254,9 +253,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             }
         });
 
-        multiUserSettingsWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(multiUserSettingsWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.multiUserSettingsWarningLabel.text")); // NOI18N
-
         caseParentDirWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(caseParentDirWarningLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseParentDirWarningLabel.text")); // NOI18N
 
@@ -283,8 +279,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
-                                        .addComponent(caseNameTextField))
-                                    .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addComponent(caseNameTextField)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
                         .addContainerGap())
@@ -321,9 +316,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(multiUserCaseRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(caseParentDirWarningLabel)
-                .addGap(1, 1, 1)
-                .addComponent(multiUserSettingsWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(35, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -368,7 +361,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton multiUserCaseRadioButton;
-    private javax.swing.JLabel multiUserSettingsWarningLabel;
     private javax.swing.JRadioButton singleUserCaseRadioButton;
     // End of variables declaration//GEN-END:variables
 
