@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -80,25 +81,28 @@ public final class CaseOpenAction implements ActionListener {
             }
 
             /**
-             * Try to open the caswe associated with the case meta data file the
+             * Try to open the case associated with the case meta data file the
              * user selected.
              */
             final String path = fileChooser.getSelectedFile().getPath();
             String dirPath = fileChooser.getSelectedFile().getParent();
             ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             new Thread(() -> {
                 try {
                     Case.open(path);
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
+                                + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
                         }
                     });
-                }
+                } 
             }).start();
         }
     }
-
 }
