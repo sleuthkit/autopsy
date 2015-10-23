@@ -197,6 +197,7 @@
             <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow"/>
             <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
             <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
+            <file name="org-netbeans-modules-templates-actions-TemplatesAction.shadow_hidden"/>
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>

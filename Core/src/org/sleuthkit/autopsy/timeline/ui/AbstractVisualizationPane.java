@@ -40,6 +40,7 @@ import javafx.scene.chart.Chart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Effect;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -50,12 +51,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
@@ -73,8 +73,15 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane implements TimeLineView {
+public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
 
+    @NbBundle.Messages("AbstractVisualization.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
+    private static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Drag_Tooltip_text());
+    private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
+
+    public static Tooltip getDragTooltip() {
+        return DRAG_TOOLTIP;
+    }
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
     protected final ObservableList<BarChart.Series<X, Y>> dataSets = FXCollections.<BarChart.Series<X, Y>>observableArrayList();
@@ -93,11 +100,15 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
      */
     private Task<Boolean> updateTask;
 
-    protected TimeLineController controller;
+    final protected TimeLineController controller;
 
-    protected FilteredEventsModel filteredEvents;
+    final protected FilteredEventsModel filteredEvents;
 
-    protected ReadOnlyListWrapper<N> selectedNodes = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+    final protected ReadOnlyListWrapper<N> selectedNodes = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+
+    private InvalidationListener invalidationListener = (Observable observable) -> {
+        update();
+    };
 
     public ReadOnlyListProperty<N> getSelectedNodes() {
         return selectedNodes.getReadOnlyProperty();
@@ -177,7 +188,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
      * Primarily this invokes the background {@link Task} returned by
      * {@link #getUpdateTask()} which derived classes must implement.
      */
-    synchronized public void update() {
+    final synchronized public void update() {
         if (updateTask != null) {
             updateTask.cancel(true);
             updateTask = null;
@@ -195,7 +206,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
                     try {
                         this.hasEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(AbstractVisualization.class.getName()).log(Level.SEVERE, "Unexpected exception updating visualization", ex);
+                        LOGGER.log(Level.SEVERE, "Unexpected exception updating visualization", ex); //NOI18N
                     }
                     break;
             }
@@ -203,7 +214,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
         controller.monitorTask(updateTask);
     }
 
-    synchronized public void dispose() {
+    final synchronized public void dispose() {
         if (updateTask != null) {
             updateTask.cancel(true);
         }
@@ -211,7 +222,12 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
         invalidationListener = null;
     }
 
-    protected AbstractVisualization(Pane partPane, Pane contextPane, Region spacer) {
+    protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
+        this.controller = controller;
+
+        this.filteredEvents = controller.getEventsModel();
+        this.filteredEvents.registerForEvents(this);
+        this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
         this.leafPane = partPane;
         this.branchPane = contextPane;
         this.spacer = spacer;
@@ -226,32 +242,18 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
                 });
             }
         });
-    }
 
-    @Override
-    synchronized public void setController(TimeLineController controller) {
-        this.controller = controller;
-        chart.setController(controller);
-
-        setModel(controller.getEventsModel());
-        TimeLineController.getTimeZone().addListener((Observable observable) -> {
-            update();
+        TimeLineController.getTimeZone().addListener(invalidationListener);
+        
+        //show tooltip text in status bar
+        hoverProperty().addListener((observable, oldActivated, newActivated) -> {
+            if (newActivated) {
+                controller.setStatus(DRAG_TOOLTIP.getText());
+            } else {
+                controller.setStatus("");
+            }
         });
-    }
-
-    @Override
-    synchronized public void setModel(@Nonnull FilteredEventsModel filteredEvents) {
-
-        if (this.filteredEvents != null && this.filteredEvents != filteredEvents) {
-            this.filteredEvents.unRegisterForEvents(this);
-            this.filteredEvents.zoomParametersProperty().removeListener(invalidationListener);
-        }
-        if (this.filteredEvents != filteredEvents) {
-            filteredEvents.registerForEvents(this);
-            filteredEvents.zoomParametersProperty().addListener(invalidationListener);
-        }
-        this.filteredEvents = filteredEvents;
-
+        
         update();
     }
 
@@ -259,10 +261,6 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         update();
     }
-
-    protected InvalidationListener invalidationListener = (Observable observable) -> {
-        update();
-    };
 
     /**
      * iterate through the list of tick-marks building a two level structure of
@@ -370,7 +368,7 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
      */
     private synchronized void assignLeafLabel(String labelText, double labelWidth, double labelX, boolean bold) {
 
-        Text label = new Text(" " + labelText + " ");
+        Text label = new Text(" " + labelText + " "); //NOI18N
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFont(Font.font(null, bold ? FontWeight.BOLD : FontWeight.NORMAL, 10));
         //position label accounting for width
@@ -414,9 +412,9 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
         label.relocate(labelX, 0);
 
         if (labelX == 0) { // first label has no border
-            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); // NON-NLS
+            label.setStyle("-fx-border-width: 0 0 0 0 ; -fx-border-color:black;"); // NON-NLS //NOI18N
         } else {  // subsequent labels have border on left to create dividers
-            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); // NON-NLS
+            label.setStyle("-fx-border-width: 0 0 0 1; -fx-border-color:black;"); // NON-NLS //NOI18N
         }
 
         branchPane.getChildren().add(label);
@@ -446,10 +444,10 @@ public abstract class AbstractVisualization<X, Y, N, C extends XYChart<X, Y> & T
 
         TwoPartDateTime(String dateString) {
             //find index of separator to spit on
-            int splitIndex = StringUtils.lastIndexOfAny(dateString, " ", "-", ":");
+            int splitIndex = StringUtils.lastIndexOfAny(dateString, " ", "-", ":"); //NOI18N
             if (splitIndex < 0) { // there is only one part
                 leaf = dateString;
-                branch = "";
+                branch = ""; //NOI18N
             } else { //split at index
                 leaf = StringUtils.substring(dateString, splitIndex + 1);
                 branch = StringUtils.substring(dateString, 0, splitIndex);
