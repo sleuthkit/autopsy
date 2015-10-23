@@ -6,7 +6,7 @@ The Android Analyzer module allows you to analyze SQLite and other files from an
 
 Simply add your physical images or file system dumps as data sources and enable the Android Analyzer module.
 
-NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the Developer docs (http://sleuthkit.org/autopsy/docs/api-docs/3.1/mod_mobile_page.html) for information on writing modules. 
+NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the Developer docs (http://sleuthkit.org/autopsy/docs/api-docs/4.0/mod_mobile_page.html) for information on writing modules. 
 
 
 Analysis
