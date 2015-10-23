@@ -111,7 +111,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-
                     Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
                 }
@@ -121,26 +120,10 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     try {
                         get();
-                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-
-                        if (currentCaseType == CaseType.SINGLE_USER_CASE) {
-                            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-                            addImageAction.actionPerformed(null);
-                        } else {
-                            if (info.getDbType() != DbType.SQLITE) {
-                                SleuthkitCase.tryConnect(info);
-                                AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-                                addImageAction.actionPerformed(null);
-                            } else {
-                                JOptionPane.showMessageDialog(null,
-                                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
-                                        NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
-                                        JOptionPane.ERROR_MESSAGE);
-                                doFailedCaseCleanup(wizardDescriptor);
-                            }
-                        }
-                    } catch (InterruptedException | ExecutionException | MissingResourceException | TskCoreException | HeadlessException | UserPreferencesException ex) {
+                        AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                        addImageAction.actionPerformed(null);
+                    } catch (Exception ex) {
+                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage() + " "
                                     + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),

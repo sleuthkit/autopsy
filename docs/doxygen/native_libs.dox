@@ -8,14 +8,15 @@ The easiest guidance (from http://bits.netbeans.org/dev/javadoc/org-openide-modu
 
 \section native_autopsy Autopsy Native Libraries
 
-Autopsy has two types of native libraries:
-- The libtsk_jni native library
-- The libraries that libtsk_jni depends on
-
-<tt>libtsk_jni</tt> is embedded inside of the <tt>Tsk_DataModel.jar</tt> file from The Sleuth Kit. The java code extracts the file from the jar into a local temp folder and launches it in the LibraryUtils.loadSleuthkitJNI() method.
-
-The libraries that <tt>libtsk_jni</tt> depends on are launched by Autopsy in the Installer.loadDynLibraries() method. This is because if we wait until <tt>libtsk_jni</tt> needs them, then they will be located based on Windows search paths and the NetBeans paths are not in that set.  So, we launch them before <tt>libtsk_jni</tt> needs them and from within Autopsy so that it  uses the Autopsy search pathes. 
-
-There is code in build-windows.xml and build-unix.xml to copy the external libraries into their respective locations when a ZIP package is made of the program.  These libraries must be accessible via normal launching methods when developing Autopsy (i.e. we only copy them into the Autopsy structure when building the ZIP). 
+Autopsy has three types of native libraries that it depends on (and ships with):
+- The Sleuth Kit JNI Library(libtsk_jni)
+ - This is embedded inside of the <tt>Tsk_DataModel.jar</tt> file.  It gets copied into there by the datamodel ant target. 
+ - At runtime, java code extracts the file from the jar into a local temp folder and launches it in the LibraryUtils.loadSleuthkitJNI() method.
+- The libraries that libtsk_jni depends on that are not the Visual Studio runtime dlls that were used to build libtsk_jni
+ - These are copied by Autopsy from TSK_HOME to a folder inside of Autopsy at compile time.
+ - They are loaded by Autopsy in the Installer.loadDynLibraries() method. This is because if we wait until <tt>libtsk_jni</tt> needs them, then they will be located based on Windows search paths and the NetBeans paths are not in that set.  So, we launch them before <tt>libtsk_jni</tt> needs them and from within Autopsy so that it uses the Autopsy search paths. 
+- The Visual Studio runtime dlls that were used to build libtsk_jni
+ - These are only copied by Autopsy when a ZIP folder is created of the project (on the theory that the local system doesn't need copies of them because it is already building TSK). There is code in build-windows.xml and build-unix.xml to copy the external libraries (from thidrparty/crt) into their respective locations in the ZIP file.
+ - NOTE: If other versions of the runtimes need to be included (because of the other 3rd party libraries), then they should be treated like other 3rd party libraries and copied at compile time. 
 
 */

@@ -64,6 +64,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.show;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -96,7 +97,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         b.setManaged(show);
     }
 
-    protected final EventDetailChart chart;
+    protected final EventDetailsChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
     final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
     protected final BundleType eventBundle;
@@ -119,9 +120,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final ImageView tagIV = new ImageView(TAG);
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
-    private Tooltip tooltip;
+    private final Tooltip tooltip = new Tooltip("loading...");
 
-    public EventBundleNodeBase(EventDetailChart chart, BundleType eventBundle, ParentNodeType parentNode) {
+    public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         this.eventBundle = eventBundle;
         this.parentNode = parentNode;
         this.chart = chart;
@@ -156,7 +157,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         infoHBox.setMaxWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 5, 2, 5));
         infoHBox.setAlignment(Pos.TOP_LEFT);
-        infoHBox.setPickOnBounds(true);
 
         //set up subnode pane sizing contraints
         subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
@@ -165,27 +165,34 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         subNodePane.setMinWidth(USE_PREF_SIZE);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
 
+        Tooltip.install(this, this.tooltip);
+
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
             /*
-             * defer tooltip creation till needed, this had a surprisingly large
-             * impact on speed of loading the chart
+             * defer tooltip content creation till needed, this had a
+             * surprisingly large impact on speed of loading the chart
              */
             installTooltip();
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDragTooltip());
             showHoverControls(true);
             toFront();
+
         });
         setOnMouseExited((MouseEvent event) -> {
             showHoverControls(false);
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
+            } else {
+                Tooltip.install(chart, AbstractVisualizationPane.getDragTooltip());
             }
         });
 
-        setDescriptionVisibility(DescriptionVisibility.SHOWN);
         descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
-            setDescriptionVisibility(newValue);
+            setDescriptionVisibiltiyImpl(newValue);
         });
+        setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
+
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -210,8 +217,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         "EventBundleNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void installTooltip() {
-        if (tooltip == null) {
+        if (tooltip.getText().equalsIgnoreCase("loading...")) {
             final Task<String> tooltTipTask = new Task<String>() {
+                {
+                    updateTitle("loading tooltip");
+                }
 
                 @Override
                 protected String call() throws Exception {
@@ -252,13 +262,10 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 protected void succeeded() {
                     super.succeeded();
                     try {
-                        tooltip = new Tooltip(get());
-                        tooltip.setAutoHide(true);
-                        Tooltip.install(EventBundleNodeBase.this, tooltip);
+                        tooltip.setText(get());
+                        tooltip.setGraphic(null);
                     } catch (InterruptedException | ExecutionException ex) {
                         LOGGER.log(Level.SEVERE, "Tooltip generation failed.", ex);
-                        Tooltip.uninstall(EventBundleNodeBase.this, tooltip);
-                        tooltip = null;
                     }
                 }
             };
@@ -288,15 +295,18 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         return subNodes;
     }
 
-    abstract void setDescriptionVisibility(DescriptionVisibility get);
+    abstract void setDescriptionVisibiltiyImpl(DescriptionVisibility get);
 
     void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
+        enableTooltip(showControls);
         if (parentNode != null) {
+            parentNode.enableTooltip(false);
             parentNode.showHoverControls(false);
         }
+
     }
 
     final EventType getEventType() {
@@ -330,8 +340,15 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
      */
     abstract void setDescriptionWidth(double w);
 
-    void setDescriptionVisibilityLevel(DescriptionVisibility get) {
+    void setDescriptionVisibility(DescriptionVisibility get) {
         descVisibility.set(get);
     }
 
+    void enableTooltip(boolean toolTipEnabled) {
+        if (toolTipEnabled) {
+            Tooltip.install(this, tooltip);
+        } else {
+            Tooltip.uninstall(this, tooltip);
+        }
+    }
 }

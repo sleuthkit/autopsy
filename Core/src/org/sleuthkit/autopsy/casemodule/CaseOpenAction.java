@@ -101,7 +101,7 @@ public final class CaseOpenAction implements ActionListener {
                             StartupWindowProvider.getInstance().open();
                         }
                     });
-                }
+                } 
             }).start();
         }
     }

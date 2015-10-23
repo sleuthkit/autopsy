@@ -74,7 +74,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
     final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
 
-    public EventClusterNode(EventDetailChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
+    public EventClusterNode(EventDetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
         setMinHeight(24);
 
@@ -114,7 +114,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    public void setDescriptionVisibility(DescriptionVisibility descrVis) {
+     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
         final int size = getEventBundle().getEventIDs().size();
         switch (descrVis) {
             case HIDDEN:
