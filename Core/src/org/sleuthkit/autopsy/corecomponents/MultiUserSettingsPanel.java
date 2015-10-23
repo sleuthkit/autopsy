@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -39,7 +40,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
-    private static final int DEFAULT_MESSAGE_SERVICE_PORT = 61616;
+    private static final String NON_WINDOWS_OS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.nonWindowsOs.msg");
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -47,6 +48,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MultiUserSettingsPanel.class.getName());
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
+    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
@@ -105,6 +107,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+        if (!isWindowsOS) {
+            cbEnableMultiUser.setEnabled(false);
+            cbEnableMultiUser.setSelected(false);
+        }
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
     }
 
@@ -460,7 +466,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
         if (!cbEnableMultiUser.isSelected()) {
-            tbOops.setText("");
+            if (!isWindowsOS) {
+                tbOops.setText(NON_WINDOWS_OS_MSG);
+            } else {
+                tbOops.setText("");
+            }
             bnTestDatabase.setEnabled(false);
             lbTestDatabase.setIcon(null);
             bnTestSolr.setEnabled(false);
@@ -643,6 +653,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     void store() {
+        if (!isWindowsOS) {
+            return;
+        }
+        
         DbType dbType = DbType.SQLITE;
 
         if (cbEnableMultiUser.isSelected()) {
@@ -694,7 +708,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        tbOops.setText("");
+        if (!isWindowsOS) {
+            tbOops.setText(NON_WINDOWS_OS_MSG);
+        } else {
+            tbOops.setText("");
+        }
 
         if (cbEnableMultiUser.isSelected()) {
             return checkFieldsAndEnableButtons()
