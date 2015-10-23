@@ -167,6 +167,7 @@ public class Server {
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
+    private volatile Core currentCore = null;    
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
@@ -182,7 +183,7 @@ public class Server {
     // This could be a local or remote server.
     private HttpSolrServer currentSolrServer;
 
-    private final String instanceDir;
+//    private final String instanceDir;
     private final File solrFolder;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -197,7 +198,7 @@ public class Server {
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
+//        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
 
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
@@ -586,10 +587,10 @@ public class Server {
 
         return true;
     }
-    /**
+    
+    /*
      * ** Convenience methods for use while we only open one case at a time ***
      */
-    private volatile Core currentCore = null;
 
     synchronized void openCore() throws KeywordSearchModuleException {
         if (currentCore != null) {
