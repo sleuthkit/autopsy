@@ -43,7 +43,7 @@ ingest modules.
 
 \section ingest_modules_lifecycle Ingest Module Life Cycle
 
-Before we dive into the details of creating a module, it is important to understand the life cycle of the module. Note that this life cycle is much different for Autopsy 3.1 modules compared to Autopsy 3.0 modules. This section only talks about 3.1 modules. 
+Before we dive into the details of creating a module, it is important to understand the life cycle of the module. Note that this life cycle is much different for Autopsy 3.1 and newer modules compared to Autopsy 3.0 modules. This section only talks about 3.1 and newer modules. 
 
 You will need to implement at least two classes to make an ingest module:
 -# A factory class that will be created when Autopsy starts and will provide configuration panels to Autopsy and will create instances of your ingest module.
@@ -319,7 +319,7 @@ databases from the hash databases manager.
 
 
 
-\section ingest_modules_api_migration Migrating 3.0 Java Ingest Modules to the 3.1 API
+\section ingest_modules_api_migration Migrating 3.0 Java Ingest Modules to the 3.1 and newer API
 
 This section is a guide for module developers who wrote modules for the 3.0 API.  These API changes occurred so that 
 we could make parallel pipelines of the file-level ingest modules.   This section assumes you've read the above description of the new API.
