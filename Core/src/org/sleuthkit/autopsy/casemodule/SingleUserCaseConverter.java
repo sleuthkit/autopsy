@@ -161,14 +161,14 @@ public class SingleUserCaseConverter {
         // Make sure there is a SQLite databse file
         Path oldDatabasePath = icd.getCaseInputFolder().resolve(AUTOPSY_DB_FILE);
         if (false == oldDatabasePath.toFile().exists()) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.BadDatabaseFileName"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.BadDatabaseFileName")); //NON-NLS
         }
 
         // Read old xml config
         XMLCaseManagement oldXmlCaseManagement = new XMLCaseManagement();
         oldXmlCaseManagement.open(icd.getCaseInputFolder().resolve(icd.getAutFileName()).toString());
         if (oldXmlCaseManagement.getCaseType() == CaseType.MULTI_USER_CASE) {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.AlreadyMultiUser")); //NON-NLS
         }
 
         // Create sanitized names for PostgreSQL and Solr 
@@ -919,7 +919,7 @@ public class SingleUserCaseConverter {
                     // not unique. add numbers to db name.
                     if (number == Integer.MAX_VALUE) {
                         // oops. it never became unique. give up.
-                        throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.NonUniqueDatabaseName"));
+                        throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.NonUniqueDatabaseName")); //NON-NLS
                     }
                     sanitizedDbName = "db_" + Integer.toString(number) + "_" + icd.getPostgreSQLDbName(); //NON-NLS
 
@@ -957,7 +957,7 @@ public class SingleUserCaseConverter {
                 FileUtils.copyDirectory(imageSource, imageDestination);
 
             } else {
-                throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.UnableToCopySourceImages"));
+                throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.UnableToCopySourceImages")); //NON-NLS
             }
         }
     }
@@ -1012,7 +1012,7 @@ public class SingleUserCaseConverter {
             }
             postgresqlConnection.close();
         } else {
-            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.CanNotOpenDatabase"));
+            throw new Exception(NbBundle.getMessage(SingleUserCaseConverter.class, "SingleUserCaseConverter.CanNotOpenDatabase")); //NON-NLS
         }
     }
 
