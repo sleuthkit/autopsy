@@ -24,12 +24,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.*;
+import java.nio.file.Paths;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
@@ -47,7 +46,9 @@ import org.openide.util.actions.CallableSystemAction;
  */
 class CasePropertiesForm extends javax.swing.JPanel {
 
-    Case current = null;
+    private static final long serialVersionUID = 1L;
+
+    private Case current = null;
     private static JPanel caller;    // panel for error
 
     // Shrink a path to fit in targetLength (if necessary), by replaceing part
@@ -78,15 +79,24 @@ class CasePropertiesForm extends javax.swing.JPanel {
     /**
      * Creates new form CasePropertiesForm
      */
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) {
+    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
         caseNumberTextField.setText(currentCase.getNumber());
         examinerTextField.setText(currentCase.getExaminer());
         crDateTextField.setText(crDate);
         caseDirTextArea.setText(caseDir);
-
         current = currentCase;
+
+        CaseMetadata caseMetadata = new CaseMetadata(Paths.get(currentCase.getConfigFilePath()));
+        tbDbName.setText(caseMetadata.getCaseDatabaseName());
+        Case.CaseType caseType = caseMetadata.getCaseType();
+        tbDbType.setText(caseType.toString());
+        if (caseType == Case.CaseType.SINGLE_USER_CASE) {
+            deleteCaseButton.setEnabled(true);
+        } else {
+            deleteCaseButton.setEnabled(false);
+        }
 
         int totalImages = imgPaths.size();
 
@@ -186,12 +196,16 @@ class CasePropertiesForm extends javax.swing.JPanel {
         examinerLabel = new javax.swing.JLabel();
         caseNumberTextField = new javax.swing.JTextField();
         examinerTextField = new javax.swing.JTextField();
+        lbDbType = new javax.swing.JLabel();
+        tbDbType = new javax.swing.JTextField();
+        lbDbName = new javax.swing.JLabel();
+        tbDbName = new javax.swing.JTextField();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePropLabel.setFont(casePropLabel.getFont().deriveFont(Font.BOLD, 24));
+        casePropLabel.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
         casePropLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         casePropLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.casePropLabel.text")); // NOI18N
 
@@ -213,11 +227,10 @@ class CasePropertiesForm extends javax.swing.JPanel {
             }
         });
 
-        genInfoLabel.setFont(genInfoLabel.getFont().deriveFont(Font.BOLD, 14));
-        genInfoLabel.setText(
-                org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
+        genInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        genInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.genInfoLabel.text")); // NOI18N
 
-        imgInfoLabel.setFont(imgInfoLabel.getFont().deriveFont(Font.BOLD, 14));
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         imgInfoLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.imgInfoLabel.text")); // NOI18N
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.OKButton.text")); // NOI18N
@@ -227,7 +240,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Path", "Remove" //NON-NLS
+                "Path", "Remove"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -244,9 +257,9 @@ class CasePropertiesForm extends javax.swing.JPanel {
         imagesTable.setUpdateSelectionOnSort(false);
         imagesTableScrollPane.setViewportView(imagesTable);
 
+        caseDirTextArea.setEditable(false);
         caseDirTextArea.setBackground(new java.awt.Color(240, 240, 240));
         caseDirTextArea.setColumns(20);
-        caseDirTextArea.setEditable(false);
         caseDirTextArea.setRows(1);
         caseDirTextArea.setRequestFocusEnabled(false);
         jScrollPane2.setViewportView(caseDirTextArea);
@@ -268,6 +281,16 @@ class CasePropertiesForm extends javax.swing.JPanel {
         examinerTextField.setEditable(false);
         examinerTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.examinerTextField.text")); // NOI18N
 
+        lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbType.text")); // NOI18N
+
+        tbDbType.setEditable(false);
+        tbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.tbDbType.text")); // NOI18N
+
+        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbName.text")); // NOI18N
+
+        tbDbName.setEditable(false);
+        tbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.tbDbName.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -276,38 +299,37 @@ class CasePropertiesForm extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(casePropLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
-                    .addComponent(genInfoLabel)
-                    .addComponent(imgInfoLabel)
                     .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(181, 181, 181)
-                        .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseNameLabel)
-                                    .addComponent(caseNumberLabel))
-                                .addGap(25, 25, 25)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                                    .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(examinerLabel)
-                                .addGap(45, 45, 45)
-                                .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(caseDirLabel)
-                                    .addComponent(crDateLabel))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                                    .addComponent(crDateTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNameLabel)
+                            .addComponent(caseNumberLabel)
+                            .addComponent(examinerLabel)
+                            .addComponent(caseDirLabel)
+                            .addComponent(crDateLabel)
+                            .addComponent(lbDbType))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .addComponent(crDateTextField)
+                            .addComponent(jScrollPane2)
+                            .addComponent(tbDbType)
+                            .addComponent(tbDbName))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(updateCaseNameButton)
-                            .addComponent(deleteCaseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(deleteCaseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(updateCaseNameButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(genInfoLabel)
+                            .addComponent(imgInfoLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(181, 181, 181)
+                                .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lbDbName))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -317,32 +339,42 @@ class CasePropertiesForm extends javax.swing.JPanel {
                 .addComponent(casePropLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(genInfoLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(caseNameLabel)
                     .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateCaseNameButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(caseNumberLabel)
                     .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(examinerLabel)
                     .addComponent(examinerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(crDateLabel)
                     .addComponent(crDateTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseDirLabel)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(39, 39, 39)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(caseDirLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tbDbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbDbType))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbDbName)
+                            .addComponent(tbDbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
                         .addComponent(imgInfoLabel))
-                    .addComponent(deleteCaseButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addComponent(deleteCaseButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -445,6 +477,10 @@ class CasePropertiesForm extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JLabel lbDbName;
+    private javax.swing.JLabel lbDbType;
+    private javax.swing.JTextField tbDbName;
+    private javax.swing.JTextField tbDbType;
     private javax.swing.JButton updateCaseNameButton;
     // End of variables declaration//GEN-END:variables
 

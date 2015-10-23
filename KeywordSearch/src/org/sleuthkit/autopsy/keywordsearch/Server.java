@@ -158,7 +158,6 @@ public class Server {
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
-    private static Ingester ingester = null;
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
@@ -168,6 +167,7 @@ public class Server {
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
+    private volatile Core currentCore = null;    
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
@@ -183,7 +183,7 @@ public class Server {
     // This could be a local or remote server.
     private HttpSolrServer currentSolrServer;
 
-    private final String instanceDir;
+//    private final String instanceDir;
     private final File solrFolder;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -198,7 +198,7 @@ public class Server {
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
+//        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
 
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
@@ -291,13 +291,12 @@ public class Server {
 
         @Override
         public void run() {
-            InputStreamReader isr = new InputStreamReader(stream);
-            BufferedReader br = new BufferedReader(isr);
-            OutputStreamWriter osw = null;
-            BufferedWriter bw = null;
-            try {
-                osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
-                bw = new BufferedWriter(osw);
+
+            try (InputStreamReader isr = new InputStreamReader(stream);
+                    BufferedReader br = new BufferedReader(isr);
+                    OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
+                    BufferedWriter bw = new BufferedWriter(osw);) {
+                
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
                     bw.write(line);
@@ -309,22 +308,7 @@ public class Server {
                 }
                 bw.flush();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error redirecting Solr output stream"); //NON-NLS
-            } finally {
-                if (bw != null) {
-                    try {
-                        bw.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing Solr output stream writer"); //NON-NLS
-                    }
-                }
-                if (br != null) {
-                    try {
-                        br.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Error closing Solr output stream reader"); //NON-NLS
-                    }
-                }
+                logger.log(Level.SEVERE, "Error redirecting Solr output stream", ex); //NON-NLS
             }
         }
     }
@@ -357,7 +341,7 @@ public class Server {
     void killSolr() {
         List<Long> solrPids = getSolrPIDs();
         for (long pid : solrPids) {
-            logger.log(Level.INFO, "Trying to kill old Solr process, PID: " + pid); //NON-NLS
+            logger.log(Level.INFO, "Trying to kill old Solr process, PID: {0}", pid); //NON-NLS
             PlatformUtil.killProcess(pid);
         }
     }
@@ -399,22 +383,12 @@ public class Server {
             }
         }
 
-        logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+        logger.log(Level.INFO, "Starting Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
         if (isPortAvailable(currentSolrServerPort)) {
-            logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr"); //NON-NLS
+            logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
                 final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
-
-//                String loggingPropertiesOpt = "-Djava.util.logging.config.file="; //NON-NLS
-//                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator; //NON-NLS
-//
-//                if (DEBUG) {
-//                    loggingPropertiesFilePath += "logging-development.properties"; //NON-NLS
-//                } else {
-//                    loggingPropertiesFilePath += "logging-release.properties"; //NON-NLS
-//                }
-//                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
                 List<String> commandLine = new ArrayList<>();
                 commandLine.add(javaPath);
                 commandLine.add(MAX_SOLR_MEM_MB_PAR);
@@ -434,7 +408,7 @@ public class Server {
                 Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr");
                 solrProcessBuilder.redirectError(solrStderrPath.toFile());
 
-                logger.log(Level.INFO, "Starting Solr using: " + solrProcessBuilder.command()); //NON-NLS
+                logger.log(Level.INFO, "Starting Solr using: {0}", solrProcessBuilder.command()); //NON-NLS
                 curSolrProcess = solrProcessBuilder.start();
                 logger.log(Level.INFO, "Finished starting Solr"); //NON-NLS
 
@@ -447,7 +421,7 @@ public class Server {
                 }
 
                 final List<Long> pids = this.getSolrPIDs();
-                logger.log(Level.INFO, "New Solr process PID: " + pids); //NON-NLS
+                logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
@@ -526,7 +500,7 @@ public class Server {
         }
 
         try {
-            logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath()); //NON-NLS
+            logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
             final String[] SOLR_STOP_CMD = {
@@ -613,10 +587,10 @@ public class Server {
 
         return true;
     }
-    /**
+    
+    /*
      * ** Convenience methods for use while we only open one case at a time ***
      */
-    private volatile Core currentCore = null;
 
     synchronized void openCore() throws KeywordSearchModuleException {
         if (currentCore != null) {
@@ -1278,6 +1252,7 @@ public class Server {
     }
 
     class ServerAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -1289,11 +1264,12 @@ public class Server {
      * Exception thrown if solr port not available
      */
     class SolrServerNoPortException extends SocketException {
+        private static final long serialVersionUID = 1L;
 
         /**
          * the port number that is not available
          */
-        private int port;
+        private final int port;
 
         SolrServerNoPortException(int port) {
             super(NbBundle.getMessage(Server.class, "Server.solrServerNoPortException.msg", port,
