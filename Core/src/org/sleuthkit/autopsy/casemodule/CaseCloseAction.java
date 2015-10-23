@@ -65,7 +65,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        boolean proceedWithAction = true;
+
         // if ingest is ongoing, warn and get confirmaion before opening a different case
         if (IngestManager.getInstance().isIngestRunning()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -83,35 +83,33 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
                     Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             } else {
-                proceedWithAction = false;
-            }
-        }
-
-        if (proceedWithAction) {
-            if (Case.existsCurrentCase() == false) {
                 return;
             }
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            new SwingWorker<Void, Void>() {
-
-                @Override
-                protected Void doInBackground() throws Exception {
-                    try {
-                        Case result = Case.getCurrentCase();
-                        result.closeCase();
-                    } catch (CaseActionException | IllegalStateException unused) {
-                        // Already logged.
-                    }
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    StartupWindowProvider.getInstance().open();
-                }
-            }.execute();
         }
+
+        if (Case.existsCurrentCase() == false) {
+            return;
+        }
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    Case result = Case.getCurrentCase();
+                    result.closeCase();
+                } catch (CaseActionException | IllegalStateException unused) {
+                    // Already logged.
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                StartupWindowProvider.getInstance().open();
+            }
+        }.execute();
     }
 
     /**

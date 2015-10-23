@@ -72,7 +72,6 @@ public final class CaseOpenAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        boolean proceedWithAction = true;
         // if ingest is ongoing, warn and get confirmaion before opening a different case
         if (IngestManager.getInstance().isIngestRunning()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -90,50 +89,48 @@ public final class CaseOpenAction implements ActionListener {
                     Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             } else {
-                proceedWithAction = false;
+                return;
             }
         }
 
-        if (proceedWithAction) {
+        /**
+         * Pop up a file chooser to allow the user to select a case meta data
+         * file (.aut file)
+         */
+        int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
+        if (retval == JFileChooser.APPROVE_OPTION) {
             /**
-             * Pop up a file chooser to allow the user to select a case meta
-             * data file (.aut file)
+             * This is a bit of a hack, but close the startup window, if it was
+             * the source of the action invocation.
              */
-            int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
-            if (retval == JFileChooser.APPROVE_OPTION) {
-                /**
-                 * This is a bit of a hack, but close the startup window, if it
-                 * was the source of the action invocation.
-                 */
-                try {
-                    StartupWindowProvider.getInstance().close();
-                } catch (Exception unused) {
-                }
-
-                /**
-                 * Try to open the case associated with the case meta data file
-                 * the user selected.
-                 */
-                final String path = fileChooser.getSelectedFile().getPath();
-                String dirPath = fileChooser.getSelectedFile().getParent();
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                new Thread(() -> {
-                    try {
-                        Case.open(path);
-                    } catch (CaseActionException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
-                                    + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
-                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
-                            if (!Case.isCaseOpen()) {
-                                StartupWindowProvider.getInstance().open();
-                            }
-                        });
-                    }
-                }).start();
+            try {
+                StartupWindowProvider.getInstance().close();
+            } catch (Exception unused) {
             }
+
+            /**
+             * Try to open the case associated with the case meta data file the
+             * user selected.
+             */
+            final String path = fileChooser.getSelectedFile().getPath();
+            String dirPath = fileChooser.getSelectedFile().getParent();
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new Thread(() -> {
+                try {
+                    Case.open(path);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
+                                + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                        if (!Case.isCaseOpen()) {
+                            StartupWindowProvider.getInstance().open();
+                        }
+                    });
+                }
+            }).start();
         }
     }
 }

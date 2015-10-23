@@ -56,7 +56,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        boolean proceedWithAction = true;
+
         // if ingest is ongoing, warn and get confirmaion before opening a different case
         if (IngestManager.getInstance().isIngestRunning()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -74,14 +74,12 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             } else {
-                proceedWithAction = false;
+                return;
             }
         }
 
-        if (proceedWithAction) {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            newCaseAction(); // start the new case creation process
-        }
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        newCaseAction(); // start the new case creation process
     }
 
     /**

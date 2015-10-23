@@ -61,7 +61,6 @@ class RecentItems implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        boolean proceedWithAction = true;
         // if ingest is ongoing, warn and get confirmaion before opening a different case
         if (IngestManager.getInstance().isIngestRunning()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
@@ -79,48 +78,46 @@ class RecentItems implements ActionListener {
                     Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
             } else {
-                proceedWithAction = false;
+                return;
             }
         }
 
-        if (proceedWithAction) {
-            // check if the file exists
-            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                // throw an error here
-                JOptionPane.showMessageDialog(caller,
-                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
-                                caseName),
-                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
-                        JOptionPane.ERROR_MESSAGE);
-                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+        // check if the file exists
+        if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
+            // throw an error here
+            JOptionPane.showMessageDialog(caller,
+                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text",
+                            caseName),
+                    NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.err"),
+                    JOptionPane.ERROR_MESSAGE);
+            RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
-                //if case is not opened, open the start window
-                if (Case.isCaseOpen() == false) {
-                    EventQueue.invokeLater(() -> {
-                        StartupWindowProvider.getInstance().open();
-                    });
-
-                }
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            //if case is not opened, open the start window
+            if (Case.isCaseOpen() == false) {
+                EventQueue.invokeLater(() -> {
+                    StartupWindowProvider.getInstance().open();
                 });
-                new Thread(() -> {
-                    // Create case.
-                    try {
-                        Case.open(casePath);
-                    } catch (CaseActionException ex) {
-                        SwingUtilities.invokeLater(() -> {
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
-                                    NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
-                            if (!Case.isCaseOpen()) {
-                                StartupWindowProvider.getInstance().open();
-                            }
-                        });
-                    }
-                }).start();
+
             }
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            });
+            new Thread(() -> {
+                // Create case.
+                try {
+                    Case.open(casePath);
+                } catch (CaseActionException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                                NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                        if (!Case.isCaseOpen()) {
+                            StartupWindowProvider.getInstance().open();
+                        }
+                    });
+                }
+            }).start();
         }
     }
 }
