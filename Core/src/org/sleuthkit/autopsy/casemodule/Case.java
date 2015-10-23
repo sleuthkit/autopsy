@@ -464,7 +464,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "CaseOpenException.DatabaseSettingsIssue") + " " + ex.getMessage()); //NON-NLS
+            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
             throw new CaseActionException(
@@ -635,7 +635,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             } catch (IllegalStateException unused) {
                 // Already logged.
             }
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ". " + ex.getMessage(), ex); //NON-NLS
+            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.gen.msg") + ": " + ex.getMessage(), ex); //NON-NLS
         } catch (TskCoreException ex) {
             try {
                 Case badCase = Case.getCurrentCase();
@@ -646,7 +646,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             });
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "CaseOpenException.DatabaseSettingsIssue") + " " + ex.getMessage(), ex); //NON-NLS
+            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         }
     }
 
