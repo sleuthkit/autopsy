@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,24 +28,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
-import org.apache.solr.common.SolrException;
-import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -56,7 +47,6 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -193,7 +183,7 @@ class Ingester {
 
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
-            return new HashMap<String, String>();
+            return new HashMap<>();
         }
 
         @Override
@@ -239,14 +229,13 @@ class Ingester {
         }
 
         private Map<String, String> getCommonFields(AbstractFile af) {
-            Map<String, String> params = new HashMap<String, String>();
+            Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
-            long dataSourceId = -1;
             try {
-                dataSourceId = af.getDataSource().getId();
+                long dataSourceId = af.getDataSource().getId();
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId()); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file {0}", af.getId()); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
 
@@ -291,7 +280,7 @@ class Ingester {
         //using size here, but we are no longer ingesting entire files
         //size is normally a chunk size, up to 1MB
         if (size > 0) {
-
+            // TODO (RC): Use try with resources, adjust exception messages
             InputStream is = null;
             int read = 0;
             try {
@@ -302,10 +291,12 @@ class Ingester {
                         NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.cantReadStream.msg",
                                 cs.getName()));
             } finally {
-                try {
-                    is.close();
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex); //NON-NLS
+                if (null != is) {
+                    try {
+                        is.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex); //NON-NLS
+                    }
                 }
             }
 
@@ -337,78 +328,6 @@ class Ingester {
     }
 
     /**
-     * Delegate method actually performing the indexing work for objects
-     * implementing ContentStream
-     *
-     * @param cs     ContentStream to ingest
-     * @param fields content specific fields
-     * @param size   size of the content - used to determine the Solr timeout,
-     *               not used to populate meta-data
-     *
-     * @throws IngesterException if there was an error processing a specific
-     *                           content, but the Solr server is probably fine.
-     */
-    private void ingestExtract(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
-        final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract"); //NON-NLS
-        up.addContentStream(cs);
-        setFields(up, fields);
-        up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
-
-        final String contentType = cs.getContentType();
-        if (contentType != null && !contentType.trim().equals("")) {
-            up.setParam("stream.contentType", contentType); //NON-NLS
-        }
-
-        //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
-        up.setParam("commit", "false"); //NON-NLS
-
-        final Future<?> f = upRequestExecutor.submit(new UpRequestTask(up));
-
-        try {
-            f.get(getTimeout(size), TimeUnit.SECONDS);
-        } catch (TimeoutException te) {
-            logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr"); //NON-NLS
-            //restart may be needed to recover from some error conditions
-            hardSolrRestart();
-            throw new IngesterException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.solrTimeout.msg",
-                            fields.get("id"), fields.get("file_name"))); //NON-NLS
-        } catch (Exception e) {
-            throw new IngesterException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.ingestExtract.exception.probPostToSolr.msg",
-                            fields.get("id"), fields.get("file_name")), e); //NON-NLS
-        }
-        uncommitedIngests = true;
-    }
-
-    /**
-     * attempt to restart Solr and recover from its internal error
-     */
-    private void hardSolrRestart() {
-        try {
-            solrServer.closeCore();
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot close core", ex); //NON-NLS
-        }
-
-        solrServer.stop();
-
-        try {
-            solrServer.start();
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot start", ex); //NON-NLS
-        } catch (SolrServerNoPortException ex) {
-            logger.log(Level.WARNING, "Cannot start server with this port", ex); //NON-NLS
-        }
-
-        try {
-            solrServer.openCore();
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Cannot open core", ex); //NON-NLS
-        }
-    }
-
-    /**
      * return timeout that should be used to index the content
      *
      * @param size size of the content
@@ -431,51 +350,6 @@ class Ingester {
 
     }
 
-    private class UpRequestTask implements Runnable {
-
-        ContentStreamUpdateRequest up;
-
-        UpRequestTask(ContentStreamUpdateRequest up) {
-            this.up = up;
-        }
-
-        @Override
-        public void run() {
-            try {
-                up.setMethod(METHOD.POST);
-                solrServer.request(up);
-            } catch (NoOpenCoreException ex) {
-                throw new RuntimeException(
-                        NbBundle.getMessage(this.getClass(), "Ingester.UpReqestTask.run.exception.sorlNotAvail.msg"), ex);
-            } catch (IllegalStateException ex) {
-                // problems with content
-                throw new RuntimeException(
-                        NbBundle.getMessage(this.getClass(), "Ingester.UpRequestTask.run.exception.probReadFile.msg"), ex);
-            } catch (SolrServerException ex) {
-                // If there's a problem talking to Solr, something is fundamentally
-                // wrong with ingest
-                throw new RuntimeException(
-                        NbBundle.getMessage(this.getClass(), "Ingester.UpRequestTask.run.exception.solrProb.msg"), ex);
-            } catch (SolrException ex) {
-                // Tika problems result in an unchecked SolrException
-                ErrorCode ec = ErrorCode.getErrorCode(ex.code());
-
-                // When Tika has problems with a document, it throws a server error
-                // but it's okay to continue with other documents
-                if (ec.equals(ErrorCode.SERVER_ERROR)) {
-                    throw new RuntimeException(NbBundle.getMessage(this.getClass(),
-                            "Ingester.UpRequestTask.run.exception.probPostToSolr.msg",
-                            ec),
-                            ex);
-                } else {
-                    // shouldn't get any other error codes
-                    throw ex;
-                }
-            }
-
-        }
-    }
-
     /**
      * Tells Solr to commit (necessary before ingested files will appear in
      * searches)
@@ -484,9 +358,7 @@ class Ingester {
         try {
             solrServer.commit();
             uncommitedIngests = false;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
-        } catch (SolrServerException ex) {
+        } catch (NoOpenCoreException | SolrServerException ex) {
             logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
         }
     }
@@ -594,6 +466,8 @@ class Ingester {
      * it's still okay to continue ingesting files.
      */
     static class IngesterException extends Exception {
+
+        private static final long serialVersionUID = 1L;
 
         IngesterException(String message, Throwable ex) {
             super(message, ex);
