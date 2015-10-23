@@ -34,6 +34,8 @@ import java.util.logging.Level;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 
 /**
  * The action to close the current Case. This class should be disabled on
@@ -89,7 +91,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
             if (Case.existsCurrentCase() == false) {
                 return;
             }
-
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             new SwingWorker<Void, Void>() {
 
                 @Override
@@ -105,6 +107,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
 
                 @Override
                 protected void done() {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     StartupWindowProvider.getInstance().open();
                 }
             }.execute();

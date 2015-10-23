@@ -79,6 +79,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
         }
 
         if (proceedWithAction) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             newCaseAction(); // start the new case creation process
         }
     }
