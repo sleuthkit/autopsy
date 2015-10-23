@@ -32,6 +32,12 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action that opens an existing case.
@@ -65,6 +71,28 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+
+        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        if (IngestManager.getInstance().isIngestRunning()) {
+            // show the confirmation first to close the current case and open the "New Case" wizard panel
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
+                try {
+                    Case.getCurrentCase().closeCase(); // close the current case
+                } catch (Exception ex) {
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                }
+            } else {
+                return;
+            }
+        }
+
         /**
          * Pop up a file chooser to allow the user to select a case meta data
          * file (.aut file)
@@ -101,7 +129,7 @@ public final class CaseOpenAction implements ActionListener {
                             StartupWindowProvider.getInstance().open();
                         }
                     });
-                } 
+                }
             }).start();
         }
     }
