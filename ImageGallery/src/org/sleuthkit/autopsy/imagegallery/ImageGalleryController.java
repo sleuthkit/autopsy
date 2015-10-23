@@ -49,10 +49,12 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -395,6 +397,9 @@ public final class ImageGalleryController {
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
+        dbWorkerThread.cancelAllTasks();
+        dbWorkerThread = null;
+        restartWorker();
 
         Toolbar.getDefault(this).reset();
         groupManager.clear();
@@ -418,7 +423,12 @@ public final class ImageGalleryController {
         dbWorkerThread.addTask(innerTask);
     }
 
+    @Nullable
     synchronized public DrawableFile<?> getFileFromId(Long fileID) throws TskCoreException {
+        if (Objects.isNull(db)) {
+            LOGGER.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed.");
+            return null;
+        }
         return db.getFileFromID(fileID);
     }
 
@@ -587,7 +597,7 @@ public final class ImageGalleryController {
                 try {
                     InnerTask it = workQueue.take();
 
-                    if (it.cancelled == false) {
+                    if (it.isCancelled() == false) {
                         it.run();
                     }
 
@@ -609,7 +619,7 @@ public final class ImageGalleryController {
     /**
      * Abstract base class for task to be done on {@link DBWorkerThread}
      */
-    static public abstract class InnerTask implements Runnable {
+    static public abstract class InnerTask implements Runnable, Cancellable {
 
         public double getProgress() {
             return progress.get();
@@ -653,13 +663,13 @@ public final class ImageGalleryController {
         protected InnerTask() {
         }
 
-        protected volatile boolean cancelled = false;
-
-        public void cancel() {
+        @Override
+        synchronized public boolean cancel() {
             updateState(Worker.State.CANCELLED);
+            return true;
         }
 
-        protected boolean isCancelled() {
+        synchronized protected boolean isCancelled() {
             return getState() == Worker.State.CANCELLED;
         }
     }
@@ -693,7 +703,7 @@ public final class ImageGalleryController {
      */
     static private class UpdateFileTask extends FileTask {
 
-        public UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
+        UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
         }
 
@@ -720,7 +730,7 @@ public final class ImageGalleryController {
      */
     static private class RemoveFileTask extends FileTask {
 
-        public RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
+        RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
         }
 
@@ -756,7 +766,7 @@ public final class ImageGalleryController {
         private final DrawableDB taskDB;
         private final SleuthkitCase tskCase;
 
-        public CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             this.controller = controller;
             this.taskDB = taskDB;
             this.tskCase = tskCase;
@@ -766,8 +776,8 @@ public final class ImageGalleryController {
                 + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
                         "' or name LIKE '%.")
                 + "')";
-        static private final String MIMETYPE_CLAUSE
-                = "blackboard_attributes.value_text LIKE '"
+        static private final String MIMETYPE_CLAUSE =
+                "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
@@ -801,7 +811,7 @@ public final class ImageGalleryController {
                 DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
                 int units = 0;
                 for (final AbstractFile f : files) {
-                    if (cancelled) {
+                    if (isCancelled()) {
                         LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
                         progressHandle.finish();
                         break;
@@ -848,12 +858,12 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } 
-
+            }
             progressHandle.finish();
 
             updateMessage("");
             updateProgress(-1.0);
+
             controller.setStale(false);
         }
     }
@@ -877,13 +887,13 @@ public final class ImageGalleryController {
         // (name like '.jpg' or name like '.png' ...)
         private final String DRAWABLE_QUERY = "(name LIKE '%." + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(), "' OR name LIKE '%.") + "') ";
 
-        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database");
+        private ProgressHandle progressHandle = ProgressHandleFactory.createHandle("prepopulating image/video database", this);
 
         /**
          *
          * @param dataSourceId Data source object ID
          */
-        public PrePopulateDataSourceFiles(Content dataSource) {
+        PrePopulateDataSourceFiles(Content dataSource) {
             super();
             this.dataSource = dataSource;
         }
@@ -933,7 +943,7 @@ public final class ImageGalleryController {
                 DrawableDB.DrawableTransaction tr = db.beginTransaction();
                 int units = 0;
                 for (final AbstractFile f : files) {
-                    if (cancelled) {
+                    if (isCancelled()) {
                         LOGGER.log(Level.WARNING, "task cancelled: not all contents may be transfered to database");
                         progressHandle.finish();
                         break;
@@ -951,7 +961,7 @@ public final class ImageGalleryController {
 
             } catch (TskCoreException ex) {
                 Logger.getLogger(PrePopulateDataSourceFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
-            } 
+            }
 
             progressHandle.finish();
         }

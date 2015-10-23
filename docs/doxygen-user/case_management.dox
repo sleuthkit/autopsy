@@ -16,6 +16,8 @@ The New Case wizard dialog will open and you will need to enter the case name an
 
 \image html case-newcase.png
 
+NOTE: You will only have the option of making a multi-user case if you have configured Autopsy with multi-user settings.  See \ref install_multiuser_page for installation instructions and \ref creating_multi_user_cases for details on creating multi-user cases.
+
 You will also be prompted for optional information, such as investigator name and case number.  
 
 After you create the case, you will be prompted to add a data source, as described in \ref ds_add. 

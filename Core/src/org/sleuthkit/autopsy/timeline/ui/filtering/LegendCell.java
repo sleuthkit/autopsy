@@ -29,7 +29,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineView;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
@@ -40,18 +39,19 @@ import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
  * A TreeTableCell that shows an icon and color corresponding to the represented
  * filter
  */
-class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implements TimeLineView {
+final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
 
     private static final Color CLEAR = Color.rgb(0, 0, 0, 0);
 
-    private TimeLineController controller;
+    private final TimeLineController controller;
 
-    private FilteredEventsModel filteredEvents;
+    private final FilteredEventsModel filteredEvents;
 
     //We need a controller so we can listen to changes in EventTypeZoom to show/hide legends
-    public LegendCell(TimeLineController controller) {
+    LegendCell(TimeLineController controller) {
         setEditable(false);
-        setController(controller);
+        this.controller = controller;
+        this.filteredEvents = this.controller.getEventsModel();
     }
 
     @Override
@@ -118,16 +118,5 @@ class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> implement
                 rect.setFill(CLEAR);
             });
         }
-    }
-
-    @Override
-    synchronized public final void setController(TimeLineController controller) {
-        this.controller = controller;
-        setModel(this.controller.getEventsModel());
-    }
-
-    @Override
-    public void setModel(FilteredEventsModel filteredEvents) {
-        this.filteredEvents = filteredEvents;
     }
 }

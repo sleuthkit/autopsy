@@ -41,11 +41,20 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData.DbType;
+import java.awt.HeadlessException;
+import java.util.MissingResourceException;
+import java.util.concurrent.ExecutionException;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.datamodel.TskCoreException;
+import java.awt.Cursor;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 
 /**
  * Action to open the New Case wizard.
  */
 final class NewCaseWizardAction extends CallableSystemAction {
+
+    private static final long serialVersionUID = 1L;
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
 
@@ -102,36 +111,32 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-
                     Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
                 }
 
                 @Override
                 protected void done() {
+                    final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     try {
                         get();
-                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
-                        if ((currentCaseType == CaseType.SINGLE_USER_CASE) || ((info.getDbType() != DbType.SQLITE) && SleuthkitCase.tryConnectOld(info.getHost(), info.getPort(), info.getUserName(), info.getPassword(), info.getDbType()))) {
-                            AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
-                            addImageAction.actionPerformed(null);
-                        } else {
-                            JOptionPane.showMessageDialog(null,
-                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem1.text"),
-                                    NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.databaseProblem2.text"),
-                                    JOptionPane.ERROR_MESSAGE);
-                            doFailedCaseCleanup(wizardDescriptor);
-                        }
-
+                        AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
+                        addImageAction.actionPerformed(null);
                     } catch (Exception ex) {
-                        final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
+                        logger.log(Level.SEVERE, "Error creating case", ex); //NON-NLS
                         SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(),
-                                    "CaseCreateAction.msgDlg.cantCreateCase.msg") + " " + caseName,
-                                    NbBundle.getMessage(this.getClass(),
-                                            "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                                    JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage() + " "
+                                    + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                                    NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"),
+                                    JOptionPane.ERROR_MESSAGE); //NON-NLS
+
+                            try {
+                                StartupWindowProvider.getInstance().close();
+                            } catch (Exception unused) {
+                            }
+                            if (!Case.isCaseOpen()) {
+                                StartupWindowProvider.getInstance().open();
+                            }
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }
@@ -151,6 +156,9 @@ final class NewCaseWizardAction extends CallableSystemAction {
             logger.log(Level.INFO, "Deleting a created case directory due to an error, dir: {0}", createdDirectory); //NON-NLS
             Case.deleteCaseDirectory(new File(createdDirectory));
         }
+        SwingUtilities.invokeLater(() -> {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
     }
 
     /**

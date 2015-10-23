@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -174,6 +175,9 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                             borderpane.setCenter(fxImageView);
                         }
                     }
+                } catch (EOFException ex) {
+                    LOGGER.log(Level.WARNING, "Could not load image file into media view (EOF): {0}", file.getName()); //NON-NLS
+                    borderpane.setCenter(errorLabel);
                 } catch (IllegalArgumentException | IOException ex) {
                     LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
                     borderpane.setCenter(errorLabel);
