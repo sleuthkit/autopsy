@@ -43,7 +43,6 @@
                                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                                       <Component id="caseNameTextField" max="32767" attributes="0"/>
                                   </Group>
-                                  <Component id="multiUserSettingsWarningLabel" alignment="1" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="caseDirBrowseButton" min="-2" max="-2" attributes="0"/>
@@ -93,9 +92,7 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="caseParentDirWarningLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="multiUserSettingsWarningLabel" min="-2" pref="23" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="35" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -189,16 +186,6 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="multiUserCaseRadioButtonActionPerformed"/>
       </Events>
-    </Component>
-    <Component class="javax.swing.JLabel" name="multiUserSettingsWarningLabel">
-      <Properties>
-        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="0" green="0" red="ff" type="rgb"/>
-        </Property>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="NewCaseVisualPanel1.multiUserSettingsWarningLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="caseParentDirWarningLabel">
       <Properties>

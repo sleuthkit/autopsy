@@ -28,6 +28,14 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import java.util.logging.Level;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 
 /**
  * The action to close the current Case. This class should be disabled on
@@ -57,10 +65,32 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+
+        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        if (IngestManager.getInstance().isIngestRunning()) {
+            // show the confirmation first to close the current case and open the "New Case" wizard panel
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
+                try {
+                    Case.getCurrentCase().closeCase(); // close the current case
+                } catch (Exception ex) {
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                }
+            } else {
+                return;
+            }
+        }
+
         if (Case.existsCurrentCase() == false) {
             return;
         }
-
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<Void, Void>() {
 
             @Override
@@ -76,6 +106,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
 
             @Override
             protected void done() {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 StartupWindowProvider.getInstance().open();
             }
         }.execute();
