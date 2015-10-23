@@ -25,12 +25,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.Exceptions;
@@ -56,7 +52,6 @@ class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private volatile boolean uncommitedIngests = false;
-    private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     private static Ingester instance;
@@ -360,18 +355,6 @@ class Ingester {
             uncommitedIngests = false;
         } catch (NoOpenCoreException | SolrServerException ex) {
             logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
-        }
-    }
-
-    /**
-     * Helper to set document fields
-     *
-     * @param up     request with document
-     * @param fields map of field-names->values
-     */
-    private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
-        for (Entry<String, String> field : fields.entrySet()) {
-            up.setParam("literal." + field.getKey(), field.getValue()); //NON-NLS
         }
     }
 
