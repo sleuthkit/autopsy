@@ -26,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 
 /**
  * This class is used to add the action to the recent case menu item. When the
@@ -70,13 +72,18 @@ class RecentItems implements ActionListener {
 
             }
         } else {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            });
             new Thread(() -> {
                 // Create case.
                 try {
                     Case.open(casePath);
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                                NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
                         }
