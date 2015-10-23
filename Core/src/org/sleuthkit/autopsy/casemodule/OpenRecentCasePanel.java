@@ -28,6 +28,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
 
 /**
  * Panel show from the splash dialog that shows recent cases and allows them to
@@ -196,7 +198,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             }
             // Open the recent cases
             if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(this.getClass(),
                                 "OpenRecentCasePanel.openCase.msgDlg.caseDoesntExist.msg",
                                 caseName),
@@ -211,12 +213,17 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 }
 
             } else {
+                SwingUtilities.invokeLater(() -> {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                });
                 new Thread(() -> {
                     try {
                         Case.open(casePath);
                     } catch (CaseActionException ex) {
                         SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                             if (!Case.isCaseOpen()) {
                                 StartupWindowProvider.getInstance().open();
                             }
