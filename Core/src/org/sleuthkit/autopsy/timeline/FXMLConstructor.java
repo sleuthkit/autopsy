@@ -42,8 +42,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * intended only to remove the boilerplate initialization code when defining a
  * relatively static layout
  *
- * TODO: find a way to move this to CoreUtils and remove duplicate verison in
- * image analyzer
+ * TODO: move this to CoreUtils and remove duplicate verison in image analyzer
  */
 public class FXMLConstructor {
 
@@ -55,12 +54,28 @@ public class FXMLConstructor {
      *
      *
      * @param node         a node to initialize from a loaded FXML
-     * @param fxmlFileName the the file name of the FXML to load, relative to
-     *                     the package that the class of node is defined in.
+     * @param fxmlFileName the file name of the FXML to load, relative to the
+     *                     package that the class of node is defined in.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     static public void construct(Node node, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(node.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName; // NON-NLS
+        construct(node, node.getClass(), fxmlFileName);
+    }
+
+    /**
+     * Load an fxml file and initialize a node with it. Since this manipulates
+     * the node, it must be called on the JFX thread.
+     *
+     *
+     * @param node         a node to initialize from a loaded FXML
+     * @param clazz        a class to use for relative location of the fxml
+     * @param fxmlFileName the file name of the FXML to load, relative to the
+     *                     package of clazz.
+     *
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    static public void construct(Node node, Class<? extends Node> clazz, String fxmlFileName) {
+        final String name = "nbres:/" + StringUtils.replace(clazz.getPackage().getName(), ".", "/") + "/" + fxmlFileName; // NON-NLS
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));

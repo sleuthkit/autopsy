@@ -42,10 +42,11 @@ to the root 64-bit JRE directory.
     use a released version or download the latest from github:
 - git://github.com/sleuthkit/sleuthkit.git
 
-2b) Build the TSK JAR file by typing 'ant PostgreSQL' in bindings/java in the 
-    TSK source code folder from a command line. Note it is case sensitive. You 
-    can also add the code to a NetBeans project and build it from there, 
-    selecting the PostgreSQL target.
+2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in
+    bindings/java in the
+    TSK source code folder from a command line. Note it is case
+    sensitive. You can also add the code to a NetBeans project and build
+    it from there, selecting the dist-PostgreSQL target.
 
 2c) Set TSK_HOME environment variable to the root directory of TSK
 

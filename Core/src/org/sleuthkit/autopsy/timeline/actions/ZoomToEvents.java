@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,18 +29,18 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 /**
  *
  */
-public class ZoomOut extends Action {
+public class ZoomToEvents extends Action {
 
-    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N
+    private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N
 
-    @NbBundle.Messages({"ZoomOut.longText=Zoom out to view 50% more time.",
-        "ZoomOut.action.text=Zoom out"})
-    public ZoomOut(TimeLineController controller) {
-        super(Bundle.ZoomOut_action_text());
-        setLongText(Bundle.ZoomOut_longText());
+    @NbBundle.Messages({"ZoomToEvents.action.text=Zoom to events",
+        "ZoomToEvents.longText=Zoom out to show the nearest events."})
+    public ZoomToEvents(final TimeLineController controller) {
+        super(Bundle.ZoomToEvents_action_text());
+        setLongText(Bundle.ZoomToEvents_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
         setEventHandler(actionEvent -> {
-            controller.pushZoomOutTime();
+            controller.zoomOutToActivity();
         });
 
         //disable action when the current time range already encompases the entire case.
@@ -53,6 +53,7 @@ public class ZoomOut extends Action {
 
             @Override
             protected boolean computeValue() {
+                //TODO: do a db query to see if using this action will actually result in viewable events
                 return eventsModel.zoomParametersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
             }
         });
