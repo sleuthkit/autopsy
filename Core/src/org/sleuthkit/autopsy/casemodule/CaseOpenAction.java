@@ -32,6 +32,12 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action that opens an existing case.
@@ -65,44 +71,69 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        /**
-         * Pop up a file chooser to allow the user to select a case meta data
-         * file (.aut file)
-         */
-        int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            /**
-             * This is a bit of a hack, but close the startup window, if it was
-             * the source of the action invocation.
-             */
-            try {
-                StartupWindowProvider.getInstance().close();
-            } catch (Exception unused) {
-            }
 
-            /**
-             * Try to open the case associated with the case meta data file the
-             * user selected.
-             */
-            final String path = fileChooser.getSelectedFile().getPath();
-            String dirPath = fileChooser.getSelectedFile().getParent();
-            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            new Thread(() -> {
+        boolean proceedWithAction = true;
+        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        if (IngestManager.getInstance().isIngestRunning()) {
+            // show the confirmation first to close the current case and open the "New Case" wizard panel
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
                 try {
-                    Case.open(path);
-                } catch (CaseActionException ex) {
-                    SwingUtilities.invokeLater(() -> {
-                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
-                                + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
-                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
-                        if (!Case.isCaseOpen()) {
-                            StartupWindowProvider.getInstance().open();
-                        }
-                    });
-                } 
-            }).start();
+                    Case.getCurrentCase().closeCase(); // close the current case
+                } catch (Exception ex) {
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                }
+            } else {
+                proceedWithAction = false;
+            }
+        }
+
+        if (proceedWithAction) {
+            /**
+             * Pop up a file chooser to allow the user to select a case meta
+             * data file (.aut file)
+             */
+            int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                /**
+                 * This is a bit of a hack, but close the startup window, if it
+                 * was the source of the action invocation.
+                 */
+                try {
+                    StartupWindowProvider.getInstance().close();
+                } catch (Exception unused) {
+                }
+
+                /**
+                 * Try to open the case associated with the case meta data file
+                 * the user selected.
+                 */
+                final String path = fileChooser.getSelectedFile().getPath();
+                String dirPath = fileChooser.getSelectedFile().getParent();
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                new Thread(() -> {
+                    try {
+                        Case.open(path);
+                    } catch (CaseActionException ex) {
+                        SwingUtilities.invokeLater(() -> {
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage() + " "
+                                    + NbBundle.getMessage(this.getClass(), "CaseExceptionWarning.CheckMultiUserOptions"),
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
+                            if (!Case.isCaseOpen()) {
+                                StartupWindowProvider.getInstance().open();
+                            }
+                        });
+                    }
+                }).start();
+            }
         }
     }
 }

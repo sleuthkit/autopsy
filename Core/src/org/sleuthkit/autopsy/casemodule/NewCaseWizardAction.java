@@ -39,15 +39,9 @@ import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskData.DbType;
-import java.awt.HeadlessException;
-import java.util.MissingResourceException;
-import java.util.concurrent.ExecutionException;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.datamodel.TskCoreException;
 import java.awt.Cursor;
-import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * Action to open the New Case wizard.
@@ -62,28 +56,30 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        // there's a case open
-        if (Case.existsCurrentCase()) {
+        boolean proceedWithAction = true;
+        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        if (IngestManager.getInstance().isIngestRunning()) {
             // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = NbBundle
-                    .getMessage(this.getClass(), "NewCaseWizardAction.closeCurCase.confMsg.msg");
-            NotifyDescriptor d = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                    NbBundle.getMessage(this.getClass(),
-                            "NewCaseWizardAction.closeCurCase.confMsg.title"),
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-            d.setValue(NotifyDescriptor.NO_OPTION);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
 
-            Object res = DialogDisplayer.getDefault().notify(d);
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
             if (res != null && res == DialogDescriptor.YES_OPTION) {
                 try {
                     Case.getCurrentCase().closeCase(); // close the current case
-                    newCaseAction(); // start the new case creation process
                 } catch (Exception ex) {
                     Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
                 }
+            } else {
+                proceedWithAction = false;
             }
-        } else {
-            newCaseAction();
+        }
+
+        if (proceedWithAction) {
+            newCaseAction(); // start the new case creation process
         }
     }
 
@@ -120,6 +116,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     try {
                         get();
+                        CaseType currentCaseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
+                        CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (Exception ex) {
