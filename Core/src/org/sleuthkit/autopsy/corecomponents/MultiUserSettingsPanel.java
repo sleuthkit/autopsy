@@ -143,6 +143,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane = new javax.swing.JScrollPane();
         pnOverallPanel = new javax.swing.JPanel();
         pnDatabaseSettings = new javax.swing.JPanel();
         tbDbHostname = new javax.swing.JTextField();
@@ -432,15 +433,17 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(39, Short.MAX_VALUE))
         );
 
+        jScrollPane.setViewportView(pnOverallPanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 555, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 559, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -800,6 +803,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnTestMessageService;
     private javax.swing.JButton bnTestSolr;
     private javax.swing.JCheckBox cbEnableMultiUser;
+    private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessageServiceSettings;
     private javax.swing.JLabel lbSolrSettings;
