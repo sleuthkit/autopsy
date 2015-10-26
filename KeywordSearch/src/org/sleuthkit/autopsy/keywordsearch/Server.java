@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
@@ -170,6 +169,7 @@ public class Server {
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private static final String INDEX_DIR_NAME = "index";
 
     public enum CORE_EVT_STATES {
 
@@ -1069,26 +1069,25 @@ public class Server {
             }
 
             if (!isCoreLoaded(coreName)) {
-                CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
-                createCore.setDataDir(dataDir.getAbsolutePath());
-                createCore.setCoreName(coreName);
-                createCore.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCore.setIsLoadOnStartup(false);
-                createCore.setIsTransient(true);
-
-                currentSolrServer.request(createCore);
+                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                createCoreRequest.setCoreName(coreName);
+                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
+                currentSolrServer.request(createCoreRequest);
             }
 
-            final Core newCore = new Core(coreName, caseType);
+            File indexDir = Paths.get(dataDir.getAbsolutePath(), INDEX_DIR_NAME).toFile();
+            if (!indexDir.exists()) {
+                throw new IOException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+            }
 
-            return newCore;
+            return new Core(coreName, caseType);
 
-        } catch (SolrServerException | SolrException ex) {
+        } catch (SolrServerException | SolrException | IOException ex) {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
-        } catch (IOException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg2"), ex);
         }
     }
 
