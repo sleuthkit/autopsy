@@ -454,7 +454,7 @@ public class EventsRepository {
         }
 
         @Override
-        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles==Populating MAC time events for files:",
+        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files:",
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
