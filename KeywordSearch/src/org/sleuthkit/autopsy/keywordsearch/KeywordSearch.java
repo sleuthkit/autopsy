@@ -26,7 +26,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -76,7 +75,7 @@ public class KeywordSearch {
             //do not forward to the parent autopsy logger
             TIKA_LOGGER.setUseParentHandlers(false);
         } catch (IOException | SecurityException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error setting up tika logging", ex);
         }
     }
 
