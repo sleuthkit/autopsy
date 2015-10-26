@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,13 +38,14 @@ import org.sleuthkit.autopsy.coreutils.Version;
 class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void restored() {
         //Setup the default KeywordSearch configuration files
         KeywordSearchSettings.setDefaults();
 
-        Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new KeywordSearch.CaseChangeListener());
 
         final Server server = KeywordSearch.getServer();
         try {

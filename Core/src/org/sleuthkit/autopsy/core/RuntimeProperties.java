@@ -59,4 +59,11 @@ public class RuntimeProperties {
     public static boolean coreComponentsAreActive() {
         return coreComponentsActive;
     }
+    
+    /**
+     * Private constructor to prevent creation of instances of this class.
+     */
+    private RuntimeProperties() {
+        
+    }
 }
