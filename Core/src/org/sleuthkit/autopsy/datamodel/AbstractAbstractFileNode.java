@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -60,9 +61,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
             }
         }
-
+        // Listen for case events so that we can detect when case is closed
+        Case.addPropertyChangeListener(pcl);
     }
 
+    private void removeListeners() {
+        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+        Case.removePropertyChangeListener(pcl);
+    }
+    
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
@@ -90,6 +97,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // Skip
                 }
 
+            }
+        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            if (evt.getNewValue() == null) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                removeListeners();
             }
         }
     };
