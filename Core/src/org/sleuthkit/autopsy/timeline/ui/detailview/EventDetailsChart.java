@@ -661,6 +661,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
 
         HideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
             super("Hide");
+            setLongText("Hide this group from the details view.");
             setGraphic(new ImageView(HIDE));
             setEventHandler((ActionEvent t) -> {
                 final DescriptionFilter testFilter = new DescriptionFilter(

@@ -60,7 +60,6 @@ import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.DATA_SOURCE_ADDED;
@@ -546,16 +545,11 @@ public class TimeLineController {
     /**
      * private method to build gui if necessary and make it visible.
      */
-    private void showWindow() {
+    synchronized private void showWindow() {
         SwingUtilities.invokeLater(() -> {
             synchronized (TimeLineController.this) {
                 if (mainFrame == null) {
-                    LOGGER.log(Level.WARNING, "Tried to show timeline with invalid window. Rebuilding GUI."); // NON-NLS
-                    mainFrame = (TimeLineTopComponent) WindowManager.getDefault().findTopComponent(
-                            NbBundle.getMessage(TimeLineController.class, "CTL_TimeLineTopComponentAction"));
-                    if (mainFrame == null) {
-                        mainFrame = new TimeLineTopComponent(this);
-                    }
+                    mainFrame = new TimeLineTopComponent(this);
                 }
                 mainFrame.open();
                 mainFrame.toFront();
