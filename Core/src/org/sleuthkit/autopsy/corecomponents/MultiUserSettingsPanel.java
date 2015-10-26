@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -35,11 +36,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText");
     private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText");
     private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText");
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
-    private static final int DEFAULT_MESSAGE_SERVICE_PORT = 61616;
+    private static final String NON_WINDOWS_OS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.nonWindowsOs.msg");
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -47,6 +50,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(MultiUserSettingsPanel.class.getName());
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
+    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
@@ -68,8 +72,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbMsgUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbMsgPassword));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
         configureTextPrompts(textPrompts);
@@ -105,6 +109,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
+        if (!isWindowsOS) {
+            cbEnableMultiUser.setEnabled(false);
+            cbEnableMultiUser.setSelected(false);
+        }
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected());
     }
 
@@ -143,6 +151,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane = new javax.swing.JScrollPane();
         pnOverallPanel = new javax.swing.JPanel();
         pnDatabaseSettings = new javax.swing.JPanel();
         tbDbHostname = new javax.swing.JTextField();
@@ -432,15 +441,17 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(39, Short.MAX_VALUE))
         );
 
+        jScrollPane.setViewportView(pnOverallPanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 555, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnOverallPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 559, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -457,7 +468,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
         if (!cbEnableMultiUser.isSelected()) {
-            tbOops.setText("");
+            if (!isWindowsOS) {
+                tbOops.setText(NON_WINDOWS_OS_MSG);
+            } else {
+                tbOops.setText("");
+            }
             bnTestDatabase.setEnabled(false);
             lbTestDatabase.setIcon(null);
             bnTestSolr.setEnabled(false);
@@ -627,19 +642,29 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the message
-     * service settings text fields.
+     * Tests whether or not values have been entered in all of the 
+     * required message service settings text fields.
      *
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        return !tbMsgHostname.getText().trim().isEmpty()
-                && !tbMsgPort.getText().trim().isEmpty()
-                && !tbMsgUsername.getText().trim().isEmpty()
-                && tbMsgPassword.getPassword().length != 0;
+        
+        if ((tbMsgHostname.getText().trim().isEmpty()) || 
+                (tbMsgPort.getText().trim().isEmpty())) {
+            return false;
+        }
+        
+        // user name and pw are optional, but make sure they are both set or both empty
+        boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
+        boolean isPwSet = (tbMsgPassword.getPassword().length != 0); 
+        return (isUserSet == isPwSet);
     }
 
     void store() {
+        if (!isWindowsOS) {
+            return;
+        }
+        
         DbType dbType = DbType.SQLITE;
 
         if (cbEnableMultiUser.isSelected()) {
@@ -691,7 +716,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        tbOops.setText("");
+        if (!isWindowsOS) {
+            tbOops.setText(NON_WINDOWS_OS_MSG);
+        } else {
+            tbOops.setText("");
+        }
 
         if (cbEnableMultiUser.isSelected()) {
             return checkFieldsAndEnableButtons()
@@ -800,6 +829,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnTestMessageService;
     private javax.swing.JButton bnTestSolr;
     private javax.swing.JCheckBox cbEnableMultiUser;
+    private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessageServiceSettings;
     private javax.swing.JLabel lbSolrSettings;

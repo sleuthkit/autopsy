@@ -26,6 +26,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import java.awt.Cursor;
+import java.util.logging.Level;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * This class is used to add the action to the recent case menu item. When the
@@ -52,6 +60,28 @@ class RecentItems implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+
+        // if ingest is ongoing, warn and get confirmaion before opening a different case
+        if (IngestManager.getInstance().isIngestRunning()) {
+            // show the confirmation first to close the current case and open the "New Case" wizard panel
+            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
+                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+
+            Object res = DialogDisplayer.getDefault().notify(descriptor);
+            if (res != null && res == DialogDescriptor.YES_OPTION) {
+                try {
+                    Case.getCurrentCase().closeCase(); // close the current case
+                } catch (Exception ex) {
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                }
+            } else {
+                return;
+            }
+        }
+
         // check if the file exists
         if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
             // throw an error here
@@ -70,13 +100,18 @@ class RecentItems implements ActionListener {
 
             }
         } else {
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            });
             new Thread(() -> {
                 // Create case.
                 try {
                     Case.open(casePath);
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, ex.getMessage(), NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE);
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getMessage(),
+                                NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), JOptionPane.ERROR_MESSAGE); //NON-NLS
                         if (!Case.isCaseOpen()) {
                             StartupWindowProvider.getInstance().open();
                         }

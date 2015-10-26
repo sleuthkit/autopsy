@@ -14,6 +14,7 @@
 
     <folder name="OptionsDialog"> 
         <!--<folder name="General.instance_hidden"/>-->
+        <file name="Appearance.instance_hidden"/>
         <file name="General.instance"/>
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
