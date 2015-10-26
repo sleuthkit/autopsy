@@ -79,7 +79,7 @@ public class FileManager implements Closeable {
     }
     
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
      *
      * @param fileName   Pattern of the name of the file or directory to match
      *                   (case insensitive, used in LIKE SQL statement).
@@ -101,7 +101,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
      *
      * @param fileName   Pattern of the name of the file or directory to match
      *                   (case insensitive, used in LIKE SQL statement).
@@ -126,7 +126,7 @@ public class FileManager implements Closeable {
     }
 
     /**
-     * Finds a set of files that meets the name criteria.
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
      *
      * @param fileName   Pattern of the name of the file or directory to match
      *                   (case insensitive, used in LIKE SQL statement).
