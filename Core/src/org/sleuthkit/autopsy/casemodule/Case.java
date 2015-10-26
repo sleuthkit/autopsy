@@ -507,7 +507,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @return the sanitized case name to use for Database, Solr, and ActiveMQ
      */
-    public static String sanitizeCaseName(String caseName) {
+    static String sanitizeCaseName(String caseName) {
 
         String result;
 
@@ -897,7 +897,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case 
                     updateMainWindowTitle(newCaseName);
                 } catch (Exception e) {
-                    Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", e); //NON-NLS
+                    Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: problem updating case name.", e); //NON-NLS
                 }
             });
         } catch (Exception e) {

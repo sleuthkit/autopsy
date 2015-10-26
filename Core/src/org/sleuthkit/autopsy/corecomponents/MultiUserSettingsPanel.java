@@ -36,6 +36,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText");
     private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText");
     private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText");
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
@@ -70,8 +72,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbMsgUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbMsgPassword));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
         configureTextPrompts(textPrompts);
@@ -640,16 +642,22 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the message
-     * service settings text fields.
+     * Tests whether or not values have been entered in all of the 
+     * required message service settings text fields.
      *
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        return !tbMsgHostname.getText().trim().isEmpty()
-                && !tbMsgPort.getText().trim().isEmpty()
-                && !tbMsgUsername.getText().trim().isEmpty()
-                && tbMsgPassword.getPassword().length != 0;
+        
+        if ((tbMsgHostname.getText().trim().isEmpty()) || 
+                (tbMsgPort.getText().trim().isEmpty())) {
+            return false;
+        }
+        
+        // user name and pw are optional, but make sure they are both set or both empty
+        boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
+        boolean isPwSet = (tbMsgPassword.getPassword().length != 0); 
+        return (isUserSet == isPwSet);
     }
 
     void store() {
