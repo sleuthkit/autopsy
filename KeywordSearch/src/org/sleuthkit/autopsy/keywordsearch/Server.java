@@ -182,7 +182,8 @@ public class Server {
     // This could be a local or remote server.
     private HttpSolrServer currentSolrServer;
 
-    private final String instanceDir;
+    private Core currentCore;
+
     private final File solrFolder;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -197,9 +198,8 @@ public class Server {
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr"; //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
-
+                
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
     }
 
@@ -295,7 +295,7 @@ public class Server {
                     BufferedReader br = new BufferedReader(isr);
                     OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
                     BufferedWriter bw = new BufferedWriter(osw);) {
-                
+
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
                     bw.write(line);
@@ -586,11 +586,10 @@ public class Server {
 
         return true;
     }
-    /**
+
+    /*
      * ** Convenience methods for use while we only open one case at a time ***
      */
-    private volatile Core currentCore = null;
-
     synchronized void openCore() throws KeywordSearchModuleException {
         if (currentCore != null) {
             throw new KeywordSearchModuleException(
@@ -1251,6 +1250,7 @@ public class Server {
     }
 
     class ServerAction extends AbstractAction {
+
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -1263,6 +1263,7 @@ public class Server {
      * Exception thrown if solr port not available
      */
     class SolrServerNoPortException extends SocketException {
+
         private static final long serialVersionUID = 1L;
 
         /**
