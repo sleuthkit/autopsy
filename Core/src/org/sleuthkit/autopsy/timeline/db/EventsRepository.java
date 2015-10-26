@@ -454,7 +454,7 @@ public class EventsRepository {
         }
 
         @Override
-        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=populating mac events for files:",
+        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files:",
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
@@ -587,7 +587,7 @@ public class EventsRepository {
          * @param trans   the db transaction to use
          * @param skCase  a reference to the sleuthkit case
          */
-        @NbBundle.Messages({"# {0} - event type ", "progressWindow.populatingXevents=populating {0} events"})
+        @NbBundle.Messages({"# {0} - event type ", "progressWindow.populatingXevents=Populating {0} events"})
         private void populateEventType(final ArtifactEventType type, EventDB.EventTransaction trans) {
             try {
                 //get all the blackboard artifacts corresponding to the given event sub_type
