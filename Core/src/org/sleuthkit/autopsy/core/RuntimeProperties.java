@@ -61,7 +61,7 @@ public class RuntimeProperties {
     }
     
     /**
-     * Private constructor to prevent creatino of instances of this class.
+     * Private constructor to prevent creation of instances of this class.
      */
     private RuntimeProperties() {
         
