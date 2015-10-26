@@ -36,11 +36,13 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * The action to close the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
+@ServiceProvider(service = CaseCloseAction.class)
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     JButton toolbarButton = new JButton();
