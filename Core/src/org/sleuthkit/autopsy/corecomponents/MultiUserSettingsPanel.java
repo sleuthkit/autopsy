@@ -640,16 +640,22 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the message
-     * service settings text fields.
+     * Tests whether or not values have been entered in all of the 
+     * required message service settings text fields.
      *
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        return !tbMsgHostname.getText().trim().isEmpty()
-                && !tbMsgPort.getText().trim().isEmpty()
-                && !tbMsgUsername.getText().trim().isEmpty()
-                && tbMsgPassword.getPassword().length != 0;
+        
+        if ((tbMsgHostname.getText().trim().isEmpty()) || 
+                (tbMsgPort.getText().trim().isEmpty())) {
+            return false;
+        }
+        
+        // user name and pw are optional, but make sure they are both set or both empty
+        boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
+        boolean isPwSet = (tbMsgPassword.getPassword().length != 0); 
+        return (isUserSet == isPwSet);
     }
 
     void store() {
