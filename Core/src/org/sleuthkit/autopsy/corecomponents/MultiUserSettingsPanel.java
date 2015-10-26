@@ -36,6 +36,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String PORT_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPort.toolTipText");
     private static final String USER_NAME_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbUsername.toolTipText");
     private static final String PASSWORD_PROMPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbDbPassword.toolTipText");
+    private static final String USER_NAME_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgUsername.toolTipText");
+    private static final String PASSWORD_PROMPT_OPT = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbMsgPassword.toolTipText");
     private static final String INCOMPLETE_SETTINGS_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.incomplete");
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
@@ -70,8 +72,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbDbPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbMsgHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbMsgPort));
-        textPrompts.add(new TextPrompt(USER_NAME_PROMPT, tbMsgUsername));
-        textPrompts.add(new TextPrompt(PASSWORD_PROMPT, tbMsgPassword));
+        textPrompts.add(new TextPrompt(USER_NAME_PROMPT_OPT, tbMsgUsername));
+        textPrompts.add(new TextPrompt(PASSWORD_PROMPT_OPT, tbMsgPassword));
         textPrompts.add(new TextPrompt(HOST_NAME_OR_IP_PROMPT, tbSolrHostname));
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
         configureTextPrompts(textPrompts);
