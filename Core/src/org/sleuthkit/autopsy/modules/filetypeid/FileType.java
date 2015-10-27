@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -102,6 +103,29 @@ class FileType {
      */
     String getFilesSetName() {
         return interestingFilesSetName;
+    }
+    
+    @Override
+    public String toString() {
+        return this.mimeType;
+    }
+    
+    @Override
+    public boolean equals(Object other) {
+        if(other != null && other instanceof FileType) {
+            FileType that = (FileType) other;
+            if(this.getMimeType().equals(that.getMimeType()) && this.getSignature().equals(that.getSignature()))
+                return true;
+        }        
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.mimeType);
+        hash = 67 * hash + Objects.hashCode(this.signature);
+        return hash;
     }
 
     /**
@@ -273,6 +297,27 @@ class FileType {
             long newOffset = file.getSize() - signatureBytes.length;
             Signature newSignature = new Signature(signatureBytes, newOffset);
             return newSignature.containedIn(file);
+        }
+        
+        @Override
+        public boolean equals(Object other) {
+            if (other != null && other instanceof Signature) {
+                Signature that = (Signature) other;
+                if(Arrays.equals(this.getSignatureBytes(), that.getSignatureBytes()) 
+                        && this.getOffset() == that.getOffset()
+                        && this.getType().equals(that.getType()))
+                    return true;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 97 * hash + Arrays.hashCode(this.signatureBytes);
+            hash = 97 * hash + (int) (this.offset ^ (this.offset >>> 32));
+            hash = 97 * hash + Objects.hashCode(this.type);
+            return hash;
         }
     }
 

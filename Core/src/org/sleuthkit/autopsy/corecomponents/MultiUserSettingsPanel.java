@@ -78,8 +78,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         textPrompts.add(new TextPrompt(PORT_PROMPT, tbSolrPort));
         configureTextPrompts(textPrompts);
 
-        /* Set each textbox with a "statusIcon" property enabling the 
-         DocumentListeners to know which icon to erase when changes are made */
+        /*
+         * Set each textbox with a "statusIcon" property enabling the
+         * DocumentListeners to know which icon to erase when changes are made
+         */
         tbDbHostname.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbPort.getDocument().putProperty("statusIcon", lbTestDatabase);
         tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase);
@@ -642,21 +644,21 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Tests whether or not values have been entered in all of the 
-     * required message service settings text fields.
+     * Tests whether or not values have been entered in all of the required
+     * message service settings text fields.
      *
      * @return True or false.
      */
     private boolean messageServiceFieldsArePopulated() {
-        
-        if ((tbMsgHostname.getText().trim().isEmpty()) || 
-                (tbMsgPort.getText().trim().isEmpty())) {
+
+        if ((tbMsgHostname.getText().trim().isEmpty())
+                || (tbMsgPort.getText().trim().isEmpty())) {
             return false;
         }
-        
+
         // user name and pw are optional, but make sure they are both set or both empty
         boolean isUserSet = (tbMsgUsername.getText().trim().isEmpty() == false);
-        boolean isPwSet = (tbMsgPassword.getPassword().length != 0); 
+        boolean isPwSet = (tbMsgPassword.getPassword().length != 0);
         return (isUserSet == isPwSet);
     }
 
@@ -664,45 +666,47 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (!isWindowsOS) {
             return;
         }
-        
-        DbType dbType = DbType.SQLITE;
 
-        if (cbEnableMultiUser.isSelected()) {
-            dbType = DbType.POSTGRESQL;
+        boolean multiUserCasesEnabled = cbEnableMultiUser.isSelected();
+        UserPreferences.setIsMultiUserModeEnabled(multiUserCasesEnabled);
+        if (multiUserCasesEnabled == false) {
+            return;
         }
 
-        UserPreferences.setIsMultiUserModeEnabled(cbEnableMultiUser.isSelected());
-
+        /*
+         * Currently only supporting multi-user cases with PostgreSQL case
+         * databases.
+         */
+        DbType dbType = DbType.POSTGRESQL;
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
                 tbDbHostname.getText().trim(),
                 tbDbPort.getText().trim(),
                 tbDbUsername.getText().trim(),
                 new String(tbDbPassword.getPassword()),
                 dbType);
-
         try {
             UserPreferences.setDatabaseConnectionInfo(info);
         } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
         }
 
-        int port = 0;
+        int msgServicePort = 0;
         try {
-            port = Integer.parseInt(this.tbMsgPort.getText().trim());
+            msgServicePort = Integer.parseInt(this.tbMsgPort.getText().trim());
         } catch (NumberFormatException ex) {
-            logger.log(Level.SEVERE, "Bad port setting", ex);
+            logger.log(Level.SEVERE, "Could not parse messaging service port setting", ex);
         }
 
         MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
                 tbMsgHostname.getText().trim(),
-                port,
+                msgServicePort,
                 tbMsgUsername.getText().trim(),
                 new String(tbMsgPassword.getPassword()));
 
         try {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
         } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing messaging service connection info", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
         }
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
