@@ -634,8 +634,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          * Get the offset.
          */
         long offset;
-        try {          
-            offset = isFooterCheckBox.isSelected() ? -1 : Long.parseUnsignedLong(offsetTextField.getText());          
+        try {
+            offset = isFooterCheckBox.isSelected() ? -1 : Long.parseUnsignedLong(offsetTextField.getText());
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
