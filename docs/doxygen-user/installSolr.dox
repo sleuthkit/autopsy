@@ -68,27 +68,25 @@ The added part is highlighted in yellow below. Ensure that it is inside the <i>\
 <br>
 Again you may have trouble saving to the file in the current location. If so, just save it out to the desktop and copy the edited file back over the top of the original.
 <br><br>
-4. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
-    - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB. 
-    - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
-<br><br>
 The log file should end up looking like this (modified lines are highlighted in yellow):
 <br><br>
 \image html log4j.PNG
 <br><br>
-5. Edit the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to increase the _tickTime_ value to 15000 as shown in the screenshot below.
+4. Edit the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to increase the _tickTime_ value to 15000 as shown in the screenshot below.
 <br><br>
 \image html tickTime.PNG
 <br><br>
-6.	Edit the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to set the value <i>dataDir=C:/Bitnami/zookeeper</i> as shown in the screenshot below.
+5. Edit the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to set the value <i>dataDir=C:/Bitnami/zookeeper</i> as shown in the screenshot below.
 <br><br>
 \image html dataDir.PNG
 <br><br>
+6. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
+    - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB. 
+    - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
+<br><br>
 7. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
 8. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
-9. Right-click on the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> and click "Run As Administrator", selecting _Yes_ if prompted by User Account Control. 
-
-    If there is no "Run as administrator" option when you right-click the _serviceinstall.bat_ file, start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service:
+9. Start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service:
     <br><br>
     <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
     <br><br>
