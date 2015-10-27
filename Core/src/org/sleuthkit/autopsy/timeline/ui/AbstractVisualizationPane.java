@@ -25,8 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.ReadOnlyListProperty;
-import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -104,14 +102,14 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
 
     final protected FilteredEventsModel filteredEvents;
 
-    final protected ReadOnlyListWrapper<N> selectedNodes = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+    final protected ObservableList<N> selectedNodes = FXCollections.observableArrayList();
 
     private InvalidationListener invalidationListener = (Observable observable) -> {
         update();
     };
 
-    public ReadOnlyListProperty<N> getSelectedNodes() {
-        return selectedNodes.getReadOnlyProperty();
+    public ObservableList<N> getSelectedNodes() {
+        return selectedNodes;
     }
 
     /**
