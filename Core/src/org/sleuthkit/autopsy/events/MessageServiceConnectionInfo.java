@@ -53,7 +53,9 @@ public final class MessageServiceConnectionInfo {
      *                 a host name or an IP address.
      * @param port     The port number to use for a message service connection.
      * @param userName The user name to use for a message service connection.
-     * @param password The password to use for a message service connection.
+     *                 May be the empty string.
+     * @param password The password to use for a message service connection. May
+     *                 be the empty string.
      *
      */
     public MessageServiceConnectionInfo(String host, int port, String userName, String password) {
@@ -66,7 +68,7 @@ public final class MessageServiceConnectionInfo {
     /**
      * Gets the user name to use for a message service connection.
      *
-     * @return The user name as a string.
+     * @return The user name as a string. May be empty.
      */
     public String getUserName() {
         return userName;
@@ -75,7 +77,7 @@ public final class MessageServiceConnectionInfo {
     /**
      * Gets the password to use for a message service connection.
      *
-     * @return The password as a string.
+     * @return The password as a string. May be empty.
      */
     public String getPassword() {
         return password;
@@ -126,9 +128,9 @@ public final class MessageServiceConnectionInfo {
     public void tryConnect() throws MessageServiceException {
         if (host == null || host.isEmpty()) {
             throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingHostname")); //NON-NLS
-        } else if (userName == null || userName.isEmpty()) {
+        } else if (userName == null) {
             throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingUsername")); //NON-NLS
-        } else if (password == null || password.isEmpty()) {
+        } else if (password == null) {
             throw new MessageServiceException(NbBundle.getMessage(MessageServiceConnectionInfo.class, "MessageServiceConnectionInfo.MissingPassword")); //NON-NLS
         }
         try {

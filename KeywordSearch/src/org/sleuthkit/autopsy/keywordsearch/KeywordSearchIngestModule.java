@@ -134,6 +134,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         jobId = context.getJobId();
         dataSourceId = context.getDataSource().getId();
 
+        Server server = KeywordSearch.getServer();
+        if (server.coreIsOpen() == false) {
+            throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.startUp.noOpenCore.msg"));            
+        }
+        
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
@@ -170,7 +175,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             } else {
                 // for single-user cases need to verify connection to local SOLR service
-                final Server server = KeywordSearch.getServer();
                 try {
                     if (!server.isRunning()) {
                         String msg = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.badInitMsg");

@@ -1,31 +1,20 @@
 /*
- * Autopsy Forensic Browser
- *
- * Copyright 2015 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeMap;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeMap;
+import com.google.common.collect.TreeRangeSet;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import javax.annotation.concurrent.Immutable;
 import org.python.google.common.base.Objects;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -33,10 +22,10 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
- * description, and zoom levels, but not necessarily close together in time.
+ * description, and zoom levels.
  */
 @Immutable
-public final class EventStripe implements EventBundle<EventCluster> {
+public final class EventStripe implements EventBundle {
 
     public static EventStripe merge(EventStripe u, EventStripe v) {
         Preconditions.checkNotNull(u);
@@ -48,9 +37,10 @@ public final class EventStripe implements EventBundle<EventCluster> {
         return new EventStripe(u, v);
     }
 
-    private final EventCluster parent;
+    private final EventBundle parent;
 
-    private final SortedSet<EventCluster> clusters = new TreeSet<>(Comparator.comparing(EventCluster::getStartMillis));
+    private final RangeSet<Long> spans = TreeRangeSet.create();
+    private final RangeMap<Long, EventCluster> spanMap = TreeRangeMap.create();
 
     /**
      * the type of all the events
@@ -83,21 +73,23 @@ public final class EventStripe implements EventBundle<EventCluster> {
      */
     private final Set<Long> hashHits = new HashSet<>();
 
-    public EventStripe(EventCluster cluster, EventCluster parent) {
-        clusters.add(cluster);
-
+    public EventStripe(EventCluster cluster) {
+        spans.add(cluster.getRange());
+        spanMap.put(cluster.getRange(), cluster);
         type = cluster.getEventType();
         description = cluster.getDescription();
         lod = cluster.getDescriptionLoD();
         eventIDs.addAll(cluster.getEventIDs());
         tagged.addAll(cluster.getEventIDsWithTags());
         hashHits.addAll(cluster.getEventIDsWithHashHits());
-        this.parent = parent;
+        parent = cluster.getParentBundle().orElse(null);
     }
 
     private EventStripe(EventStripe u, EventStripe v) {
-        clusters.addAll(u.clusters);
-        clusters.addAll(v.clusters);
+        spans.addAll(u.spans);
+        spans.addAll(v.spans);
+        spanMap.putAll(u.spanMap);
+        spanMap.putAll(v.spanMap);
         type = u.getEventType();
         description = u.getDescription();
         lod = u.getDescriptionLoD();
@@ -107,11 +99,11 @@ public final class EventStripe implements EventBundle<EventCluster> {
         tagged.addAll(v.getEventIDsWithTags());
         hashHits.addAll(u.getEventIDsWithHashHits());
         hashHits.addAll(v.getEventIDsWithHashHits());
-        parent = u.getParentBundle().orElse(v.getParentBundle().orElse(null));
+        parent = u.getParentBundle().orElse(null);
     }
 
     @Override
-    public Optional<EventCluster> getParentBundle() {
+    public Optional<EventBundle> getParentBundle() {
         return Optional.ofNullable(parent);
     }
 
@@ -147,15 +139,16 @@ public final class EventStripe implements EventBundle<EventCluster> {
 
     @Override
     public long getStartMillis() {
-        return clusters.first().getStartMillis();
+        return spans.span().lowerEndpoint();
     }
 
     @Override
     public long getEndMillis() {
-        return clusters.last().getEndMillis();
+        return spans.span().upperEndpoint();
     }
 
-    public SortedSet< EventCluster> getClusters() {
-        return Collections.unmodifiableSortedSet(clusters);
+    @Override
+    public Iterable<Range<Long>> getRanges() {
+        return spans.asRanges();
     }
 }

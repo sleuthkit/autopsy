@@ -18,22 +18,23 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.Range;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * A interface for groups of events that share some attributes in common.
+ *
  */
-public interface EventBundle<ParentType extends EventBundle<?>> {
+public interface EventBundle {
 
     String getDescription();
 
     DescriptionLoD getDescriptionLoD();
 
     Set<Long> getEventIDs();
+
 
     Set<Long> getEventIDsWithHashHits();
 
@@ -45,11 +46,11 @@ public interface EventBundle<ParentType extends EventBundle<?>> {
 
     long getStartMillis();
 
-    Optional<ParentType> getParentBundle();
+    Iterable<Range<Long>> getRanges();
 
-    default long getCount() {
+    Optional<EventBundle> getParentBundle();
+
+    default  long getCount() {
         return getEventIDs().size();
     }
-
-    SortedSet<EventCluster> getClusters();
 }
