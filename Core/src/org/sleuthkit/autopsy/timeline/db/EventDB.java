@@ -441,6 +441,17 @@ public class EventDB {
         return Collections.unmodifiableMap(hashSets);
     }
 
+    void analyze() {
+        DBLock.lock();
+        try (Statement createStatement = con.createStatement()) {
+            boolean b = createStatement.execute("analyze; analyze sqlite_master;");
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to analyze db.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+    }
+
     /**
      * @return maximum time in seconds from unix epoch
      */
@@ -587,9 +598,9 @@ public class EventDB {
             createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("artifact_id"));
+            createIndex("events", Arrays.asList("sub_type", "short_description", "time"));
+            createIndex("events", Arrays.asList("base_type", "short_description", "time"));
             createIndex("events", Arrays.asList("time"));
-            createIndex("events", Arrays.asList("sub_type", "time"));
-            createIndex("events", Arrays.asList("base_type", "time"));
             createIndex("events", Arrays.asList("known_state"));
 
             try {
@@ -649,7 +660,7 @@ public class EventDB {
      */
     private void createIndex(final String tableName, final List<String> columnList) {
         String indexColumns = columnList.stream().collect(Collectors.joining(",", "(", ")"));
-        String indexName = tableName + StringUtils.join(columnList, "_") + "_idx";
+        String indexName = tableName + "_" + StringUtils.join(columnList, "_") + "_idx";
         try (Statement stmt = con.createStatement()) {
 
             String sql = "CREATE INDEX IF NOT EXISTS " + indexName + " ON " + tableName + indexColumns; // NON-NLS
@@ -1092,6 +1103,7 @@ public class EventDB {
         try (Statement createStatement = con.createStatement();
                 ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {
+
                 events.add(eventClusterHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
             }
         } catch (SQLException ex) {

@@ -388,6 +388,7 @@ public class EventsRepository {
 
             LOGGER.log(Level.INFO, "committing tags"); // NON-NLS
             publish(new ProgressWindow.ProgressUpdate(0, -1, "committing tag changes", ""));
+            eventDB.analyze();
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -535,6 +536,8 @@ public class EventsRepository {
             }
 
             publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
+
+            eventDB.analyze();
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
