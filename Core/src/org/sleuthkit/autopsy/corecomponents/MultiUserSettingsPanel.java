@@ -665,12 +665,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             return;
         }
         
-        DbType dbType = DbType.SQLITE;
-
-        if (cbEnableMultiUser.isSelected()) {
-            dbType = DbType.POSTGRESQL;
-        }
-
         UserPreferences.setIsMultiUserModeEnabled(cbEnableMultiUser.isSelected());
 
         CaseDbConnectionInfo info = new CaseDbConnectionInfo(
@@ -678,7 +672,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                 tbDbPort.getText().trim(),
                 tbDbUsername.getText().trim(),
                 new String(tbDbPassword.getPassword()),
-                dbType);
+                DbType.POSTGRESQL);
 
         try {
             UserPreferences.setDatabaseConnectionInfo(info);
