@@ -13,19 +13,25 @@
         <xs:restriction base="stringType">
             <xs:whiteSpace value="preserve"/>
         </xs:restriction>
-    </xs:simpleType>    
-               
+    </xs:simpleType>
+    
     <xs:simpleType name="sigInterpretationType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="RAW"/>
             <xs:enumeration value="ASCII"/>
         </xs:restriction>
     </xs:simpleType>
+    
+    <xs:simpleType name="nonNegativeMinus1">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="-1"/>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="signatureType">
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
-            <xs:element name="Offset" type="xs:nonNegativeInteger"/>
+            <xs:element name="Offset" type="nonNegativeMinus1"/>
         </xs:sequence>
         <xs:attribute name="type" type="sigInterpretationType" use="required"/>
     </xs:complexType>

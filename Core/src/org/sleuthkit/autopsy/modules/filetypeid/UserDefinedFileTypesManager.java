@@ -224,12 +224,6 @@ final class UserDefinedFileTypesManager {
             // Add rule for .pfm
             fileType = new FileType("image/x-portable-floatmap", new Signature("PF", 0L), "", false); //NON-NLS
             fileTypes.put(fileType.getMimeType(), fileType);
-            
-            // Add rule for .tga
-            byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00");
-            fileType = new FileType("image/x-tga", new Signature(byteArray, true), "", false); // NON-NLS
-            fileTypes.put(fileType.getMimeType(), fileType);
-            
         }
         // parseHexBinary() throws this if the argument passed in is not Hex
         catch (IllegalArgumentException e) {
