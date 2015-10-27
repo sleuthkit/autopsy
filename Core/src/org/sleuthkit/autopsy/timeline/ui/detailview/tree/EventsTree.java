@@ -64,13 +64,13 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<EventBundle<?>> eventsTree;
+    private TreeView<EventBundle> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
 
     @FXML
-    private ComboBox<Comparator<TreeItem<EventBundle<?>>>> sortByBox;
+    private ComboBox<Comparator<TreeItem<EventBundle>>> sortByBox;
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
@@ -89,8 +89,8 @@ final public class EventsTree extends BorderPane {
 
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
             eventsTree.getSelectionModel().clearSelection();
-            detailViewPane.getSelectedNodes().forEach(eventBundleNode -> {
-                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventBundleNode.getEventBundle()));
+            detailViewPane.getSelectedNodes().forEach(eventStripeNode -> {
+                eventsTree.getSelectionModel().select(getRoot().findTreeItemForEvent(eventStripeNode.getEventStripe()));
             });
         });
 
@@ -103,7 +103,7 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem();
-        for (EventBundle<?> bundle : detailViewPane.getEventBundles()) {
+        for (EventBundle bundle : detailViewPane.getEventBundles()) {
             root.insert(bundle);
         }
         eventsTree.setRoot(root);
@@ -121,7 +121,7 @@ final public class EventsTree extends BorderPane {
             getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
         });
         eventsTree.setShowRoot(false);
-        eventsTree.setCellFactory((TreeView<EventBundle<?>> p) -> new EventBundleTreeCell());
+        eventsTree.setCellFactory((TreeView<EventBundle> p) -> new EventBundleTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
@@ -131,7 +131,7 @@ final public class EventsTree extends BorderPane {
      * A tree cell to display {@link EventBundle}s. Shows the description, and
      * count, as well a a "legend icon" for the event type.
      */
-    private class EventBundleTreeCell extends TreeCell<EventBundle<?>> {
+    private class EventBundleTreeCell extends TreeCell<EventBundle> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -145,7 +145,7 @@ final public class EventsTree extends BorderPane {
         }
 
         @Override
-        protected void updateItem(EventBundle<?> item, boolean empty) {
+        protected void updateItem(EventBundle item, boolean empty) {
             super.updateItem(item, empty);
             if (item == null || empty) {
                 setText(null);
@@ -164,7 +164,7 @@ final public class EventsTree extends BorderPane {
                 });
                 registerListeners(controller.getQuickHideFilters(), item);
                 String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
+                TreeItem<EventBundle> parent = getTreeItem().getParent();
                 if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
                     text = StringUtils.substringAfter(text, parent.getValue().getDescription());
                 }
@@ -176,7 +176,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, EventBundle<?> item) {
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, EventBundle item) {
             for (DescriptionFilter filter : filters) {
                 if (filter.getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
@@ -192,8 +192,8 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void updateHiddenState(EventBundle<?> item) {
-            TreeItem<EventBundle<?>> treeItem = getTreeItem();
+        private void updateHiddenState(EventBundle item) {
+            TreeItem<EventBundle> treeItem = getTreeItem();
             ContextMenu newMenu;
             if (controller.getQuickHideFilters().stream().
                     filter(AbstractFilter::isActive)

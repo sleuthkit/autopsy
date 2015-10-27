@@ -35,13 +35,13 @@ class EventDescriptionTreeItem extends NavTreeItem {
      * maps a description to the child item of this item with that description
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
-    private final EventBundle<?> bundle;
+    private final EventBundle bundle;
 
-    public EventBundle<?> getEventBundle() {
+    public EventBundle getEventBundle() {
         return bundle;
     }
 
-    EventDescriptionTreeItem(EventBundle<?> g) {
+    EventDescriptionTreeItem(EventBundle g) {
         bundle = g;
         setValue(g);
     }
@@ -51,8 +51,8 @@ class EventDescriptionTreeItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    public void insert(Deque<EventBundle<?>> path) {
-        EventBundle<?> head = path.removeFirst();
+    public void insert(Deque<EventBundle> path) {
+        EventBundle head = path.removeFirst();
         EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
         if (treeItem == null) {
             treeItem = new EventDescriptionTreeItem(head);
@@ -68,12 +68,12 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
         FXCollections.sort(getChildren(), comp);
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
 
         if (getValue().getEventType() == t.getEventType()
                 && getValue().getDescription().equals(t.getDescription())) {

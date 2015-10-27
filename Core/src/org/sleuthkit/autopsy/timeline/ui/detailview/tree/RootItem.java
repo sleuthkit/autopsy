@@ -56,7 +56,7 @@ class RootItem extends NavTreeItem {
      *
      * @param g Group to add
      */
-    public void insert(EventBundle<?> g) {
+    public void insert(EventBundle g) {
 
         EventTypeTreeItem treeItem = childMap.computeIfAbsent(g.getEventType().getBaseType(),
                 baseType -> {
@@ -69,12 +69,12 @@ class RootItem extends NavTreeItem {
         treeItem.insert(getTreePath(g));
     }
 
-    static Deque< EventBundle<?>> getTreePath(EventBundle<?> g) {
-        Deque<EventBundle<?>> path = new ArrayDeque<>();
-        Optional<? extends EventBundle<?>> p = Optional.of(g);
+    static Deque<EventBundle> getTreePath(EventBundle g) {
+        Deque<EventBundle> path = new ArrayDeque<>();
+        Optional<EventBundle> p = Optional.of(g);
 
         while (p.isPresent()) {
-            EventBundle<?> parent = p.get();
+            EventBundle parent = p.get();
             path.addFirst(parent);
             p = parent.getParentBundle();
         }
@@ -83,12 +83,12 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle>> comp) {
         childMap.values().forEach(ti -> ti.resort(comp));
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle t) {
         for (EventTypeTreeItem child : childMap.values()) {
             final NavTreeItem findTreeItemForEvent = child.findTreeItemForEvent(t);
             if (findTreeItemForEvent != null) {
