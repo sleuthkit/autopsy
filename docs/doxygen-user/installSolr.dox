@@ -77,7 +77,7 @@ The added part is highlighted in yellow below. Ensure that it is inside the <i>\
 6. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
     - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB. 
     - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
-<br>
+<br><br>
 Again you may have trouble saving to the file in the current location. If so, just save it out to the desktop and copy the edited file back over the top of the original.
 <br><br>
 The log file should end up looking like this (modified lines are highlighted in yellow):
