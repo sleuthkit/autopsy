@@ -65,12 +65,6 @@ The following steps will configure Solr to run using an account that will have a
 The added part is highlighted in yellow below. Ensure that it is inside the <i>\<solr></i> tag as follows:
 <br>
 \image html transientcache.PNG
-<br>
-Again you may have trouble saving to the file in the current location. If so, just save it out to the desktop and copy the edited file back over the top of the original.
-<br><br>
-The log file should end up looking like this (modified lines are highlighted in yellow):
-<br><br>
-\image html log4j.PNG
 <br><br>
 4. Edit the file <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to increase the _tickTime_ value to 15000 as shown in the screenshot below.
 <br><br>
@@ -83,6 +77,12 @@ The log file should end up looking like this (modified lines are highlighted in 
 6. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
     - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB. 
     - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
+<br>
+Again you may have trouble saving to the file in the current location. If so, just save it out to the desktop and copy the edited file back over the top of the original.
+<br><br>
+The log file should end up looking like this (modified lines are highlighted in yellow):
+<br><br>
+\image html log4j.PNG
 <br><br>
 7. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
 8. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
