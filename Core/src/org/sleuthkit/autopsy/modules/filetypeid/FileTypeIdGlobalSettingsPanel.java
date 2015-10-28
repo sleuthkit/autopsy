@@ -648,7 +648,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         }
         fileTypes.add(fileType);
         updateFileTypesListModel();
-        typesList.setSelectedValue(fileType.getMimeType(), true);
+        typesList.setSelectedValue(fileType, true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed
 
     private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
