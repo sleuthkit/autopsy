@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 /**
@@ -67,6 +68,7 @@ final class UserDefinedFileTypesManager {
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
+    private static final String TRAILING_TAG_NAME = "Trailing";
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
@@ -378,6 +380,10 @@ final class UserDefinedFileTypesManager {
             Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
             signatureElem.appendChild(offsetElem);
+            
+            Element trailingElem = doc.createElement(TRAILING_TAG_NAME);
+            trailingElem.setTextContent(DatatypeConverter.printBoolean(signature.isTrailing()));
+            signatureElem.appendChild(trailingElem);
 
             signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
             fileTypeElem.appendChild(signatureElem);
@@ -488,8 +494,14 @@ final class UserDefinedFileTypesManager {
 
             String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
             long offset = DatatypeConverter.parseLong(offsetString);
+            
+            String trailingString = getChildElementTextContent(signatureElem, TRAILING_TAG_NAME);
+            if(trailingString == null)
+                return new Signature(signatureBytes, offset, signatureType);
+            
+            boolean trailing = DatatypeConverter.parseBoolean(trailingString);
 
-            return new Signature(signatureBytes, offset, signatureType);
+            return new Signature(signatureBytes, offset, signatureType, trailing);
         }
 
         /**
@@ -531,7 +543,10 @@ final class UserDefinedFileTypesManager {
          */
         private static String getChildElementTextContent(Element elem, String tagName) {
             NodeList childElems = elem.getElementsByTagName(tagName);
-            Element childElem = (Element) childElems.item(0);
+            Node childNode = childElems.item(0);
+            if(childNode == null)
+                return null;
+            Element childElem = (Element) childNode;
             return childElem.getTextContent();
         }
 

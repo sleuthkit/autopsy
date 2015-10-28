@@ -21,17 +21,12 @@
             <xs:enumeration value="ASCII"/>
         </xs:restriction>
     </xs:simpleType>
-    
-    <xs:simpleType name="nonNegativeMinus1">
-        <xs:restriction base="xs:integer">
-            <xs:minInclusive value="-1"/>
-        </xs:restriction>
-    </xs:simpleType>
 
     <xs:complexType name="signatureType">
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
-            <xs:element name="Offset" type="nonNegativeMinus1"/>
+            <xs:element name="Offset" type="xs:nonNegativeInteger"/>
+            <xs:element name="Trailing" type="xs:boolean" minOccurs="0" maxOccurs="1" />
         </xs:sequence>
         <xs:attribute name="type" type="sigInterpretationType" use="required"/>
     </xs:complexType>

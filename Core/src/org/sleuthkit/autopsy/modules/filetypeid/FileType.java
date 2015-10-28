@@ -51,7 +51,7 @@ class FileType {
      */
     FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isTrailing());
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
@@ -71,7 +71,7 @@ class FileType {
      * @return The signature.
      */
     Signature getSignature() {
-        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isTrailing());
     }
 
     /**
@@ -148,6 +148,7 @@ class FileType {
         private final byte[] signatureBytes;
         private final long offset;
         private final Type type;
+        private final boolean trailing;
 
         /**
          * Creates a file signature consisting of a sequence of bytes at a
@@ -162,6 +163,7 @@ class FileType {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = type;
+            this.trailing = false;
         }
         
         /**
@@ -175,6 +177,7 @@ class FileType {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
             this.offset = offset;
             this.type = Type.ASCII;
+            this.trailing = false;
         }
         
         /**
@@ -190,49 +193,56 @@ class FileType {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = Type.RAW;
+            this.trailing = false;
         }
         
         /**
          * Creates a file signature consisting of a sequence of bytes at a
-         * specific offset within a file with default offset.
+         * specific offset within a file.
          *
          * @param signatureBytes The signature bytes.
-         * @param isFooter       Whether this is a footer or not
+         * @param offset         The offset of the signature bytes.
          * @param type           The type of data in the byte array. Impacts
-         *                       how it is displayed to the user in the UI. 
+         *                       how it is displayed to the user in the UI.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(final byte[] signatureBytes, boolean isFooter, Type type) {
+        Signature(final byte[] signatureBytes, long offset, Type type, boolean trailing) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
-            this.offset = isFooter ? -1 : 0;
+            this.offset = offset;
             this.type = type;
+            this.trailing = trailing;
         }
         
         /**
          * Creates a file signature consisting of an ASCII string at a
-         * specific offset within a file with default offset.
+         * specific offset within a file.
          *
          * @param signatureString The ASCII string
-         * @param isFooter        Whether this is a footer or not
+         * @param offset         The offset of the signature bytes.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(String signatureString, boolean isFooter) {
+        Signature(String signatureString, long offset, boolean trailing) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
-            this.offset = isFooter ? -1 : 0;
+            this.offset = offset;
             this.type = Type.ASCII;
+            this.trailing = trailing;
         }
         
         /**
          * Creates a file signature consisting of a sequence of bytes at a
-         * specific offset within a file with default offset.  If bytes 
-         * correspond to an ASCII string, use one of the other constructors 
-         * so that the string is displayed to the user instead of the raw bytes. 
+         * specific offset within a file.  If bytes correspond to an ASCII
+         * string, use one of the other constructors so that the string is 
+         * displayed to the user instead of the raw bytes. 
          *
          * @param signatureBytes The signature bytes.
-         * @param isFooter       Whether this is a footer or not
+         * @param offset         The offset of the signature bytes.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(final byte[] signatureBytes, boolean isFooter) {
+        Signature(final byte[] signatureBytes, long offset, boolean trailing) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
-            this.offset = isFooter ? -1 : 0;
+            this.offset = offset;
             this.type = Type.RAW;
+            this.trailing = trailing;
         }
 
         /**
@@ -261,6 +271,10 @@ class FileType {
         Type getType() {
             return type;
         }
+        
+        boolean isTrailing() {
+            return trailing;
+        }
 
         /**
          * Determines whether or not the signature is contained within a given
@@ -270,15 +284,16 @@ class FileType {
          *
          * @return True or false.
          */
-        boolean containedIn(final AbstractFile file) {            
-            if(offset == -1)
-                return containedAsFooter(file);
-            if (file.getSize() < (offset + signatureBytes.length)) {
+        boolean containedIn(final AbstractFile file) {
+            long actualOffset = offset;
+            if(trailing)
+                actualOffset = file.getSize() - signatureBytes.length - offset;
+            if (file.getSize() < (actualOffset + signatureBytes.length)) {
                 return false; /// too small, can't contain this signature
             }
             try {
                 byte[] buffer = new byte[signatureBytes.length];
-                int bytesRead = file.read(buffer, offset, signatureBytes.length);
+                int bytesRead = file.read(buffer, actualOffset, signatureBytes.length);
                 return ((bytesRead == signatureBytes.length) && (Arrays.equals(buffer, signatureBytes)));
             } catch (TskCoreException ex) {
                 /**
@@ -289,14 +304,6 @@ class FileType {
                 Signature.logger.log(Level.WARNING, "Error reading from file with objId = " + file.getId(), ex); //NON-NLS
                 return false;
             }
-        }
-        
-        private boolean containedAsFooter(final AbstractFile file) {
-            if(file.getSize() < signatureBytes.length)
-                return false;
-            long newOffset = file.getSize() - signatureBytes.length;
-            Signature newSignature = new Signature(signatureBytes, newOffset);
-            return newSignature.containedIn(file);
         }
         
         @Override

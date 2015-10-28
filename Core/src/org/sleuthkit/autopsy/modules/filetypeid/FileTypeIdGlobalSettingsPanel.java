@@ -203,7 +203,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         boolean requiredFieldsPopulated
                 = !mimeTypeTextField.getText().isEmpty()
-                && (isFooterCheckBox.isSelected() ? true  : !offsetTextField.getText().isEmpty())
+                && !offsetTextField.getText().isEmpty()
                 && !signatureTextField.getText().isEmpty()
                 && (postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true);
         saveTypeButton.setEnabled(!ingestIsRunning && requiredFieldsPopulated);
@@ -270,16 +270,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 }
             }
             signatureTextField.setText(signatureBytes);
-            if(signature.getOffset() == -1) {
-                isFooterCheckBox.setSelected(true);
-                offsetTextField.setEnabled(false);
-                offsetTextField.setText("");
-            }
-            else {
-                isFooterCheckBox.setSelected(false);
-                offsetTextField.setEnabled(true);
-                offsetTextField.setText(Long.toString(signature.getOffset()));
-            }
+            isTrailingCheckBox.setSelected(signature.isTrailing());
+            offsetTextField.setText(Long.toString(signature.getOffset()));
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
             filesSetNameTextField.setText(fileType.getFilesSetName());
@@ -298,8 +290,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         signatureTypeComboBox.setSelectedItem(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         hexPrefixLabel.setVisible(true);
         signatureTextField.setText("0000"); //NON-NLS
-        isFooterCheckBox.setSelected(false);
-        offsetTextField.setEnabled(true);
+        isTrailingCheckBox.setSelected(false);
         offsetTextField.setText(""); //NON-NLS
         postHitCheckBox.setSelected(false);
         filesSetNameTextField.setText(""); //NON-NLS
@@ -371,7 +362,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        isFooterCheckBox = new javax.swing.JCheckBox();
+        isTrailingCheckBox = new javax.swing.JCheckBox();
 
         setMaximumSize(new java.awt.Dimension(500, 300));
         setPreferredSize(new java.awt.Dimension(500, 300));
@@ -451,10 +442,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.jLabel3.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(isFooterCheckBox, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.isFooterCheckBox.text")); // NOI18N
-        isFooterCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(isTrailingCheckBox, org.openide.util.NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.isTrailingCheckBox.text")); // NOI18N
+        isTrailingCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                isFooterCheckBoxActionPerformed(evt);
+                isTrailingCheckBoxActionPerformed(evt);
             }
         });
 
@@ -511,7 +502,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                         .addComponent(saveTypeButton)
                                         .addGap(8, 8, 8))
-                                    .addComponent(isFooterCheckBox)))
+                                    .addComponent(isTrailingCheckBox)))
                             .addComponent(jLabel1)
                             .addComponent(jLabel3))
                         .addContainerGap(50, Short.MAX_VALUE))))
@@ -553,7 +544,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                                 .addComponent(signatureTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(signatureLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(isFooterCheckBox)
+                        .addComponent(isTrailingCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(offsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -635,7 +626,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         long offset;
         try {
-            offset = isFooterCheckBox.isSelected() ? -1 : Long.parseUnsignedLong(offsetTextField.getText());
+            offset = Long.parseUnsignedLong(offsetTextField.getText());
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
@@ -662,7 +653,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         /**
          * Put it all together and reset the file types list component.
          */
-        FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
+        FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType, isTrailingCheckBox.isSelected());
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
         FileType selected = typesList.getSelectedValue();
         if (selected != null) {
@@ -692,10 +683,9 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         // TODO add your handling code here:
     }//GEN-LAST:event_signatureTextFieldActionPerformed
 
-    private void isFooterCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isFooterCheckBoxActionPerformed
-        offsetTextField.setEnabled(!isFooterCheckBox.isSelected());
-        enableButtons();
-    }//GEN-LAST:event_isFooterCheckBoxActionPerformed
+    private void isTrailingCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isTrailingCheckBoxActionPerformed
+
+    }//GEN-LAST:event_isTrailingCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteTypeButton;
@@ -703,7 +693,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JTextField filesSetNameTextField;
     private javax.swing.JLabel hexPrefixLabel;
     private javax.swing.JLabel ingestRunningWarningLabel;
-    private javax.swing.JCheckBox isFooterCheckBox;
+    private javax.swing.JCheckBox isTrailingCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
