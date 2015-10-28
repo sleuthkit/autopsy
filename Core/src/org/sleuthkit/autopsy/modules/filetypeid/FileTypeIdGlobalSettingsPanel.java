@@ -270,14 +270,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 }
             }
             signatureTextField.setText(signatureBytes);
-            if(signature.getOffset() < 0) {
-                isFooterCheckBox.setSelected(true);
-                offsetTextField.setText(Long.toString(signature.getOffset()*-1 -1));
-            }
-            else {
-                isFooterCheckBox.setSelected(false);
-                offsetTextField.setText(Long.toString(signature.getOffset()));
-            }
+            isFooterCheckBox.setSelected(signature.isTrailing());
+            offsetTextField.setText(Long.toString(signature.getOffset()));
             postHitCheckBox.setSelected(fileType.alertOnMatch());
             filesSetNameTextField.setEnabled(postHitCheckBox.isSelected());
             filesSetNameTextField.setText(fileType.getFilesSetName());
@@ -632,12 +626,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         long offset;
         try {
-            if(isFooterCheckBox.isSelected()) {
-                offset = Long.parseUnsignedLong(offsetTextField.getText())*-1 -1;
-            }
-            else {
                 offset = Long.parseUnsignedLong(offsetTextField.getText());
-            }
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
@@ -664,7 +653,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         /**
          * Put it all together and reset the file types list component.
          */
-        FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
+        boolean isTrailing = isFooterCheckBox.isSelected();
+        FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType, isFooterCheckBox.isSelected());
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
         FileType selected = typesList.getSelectedValue();
         if (selected != null) {

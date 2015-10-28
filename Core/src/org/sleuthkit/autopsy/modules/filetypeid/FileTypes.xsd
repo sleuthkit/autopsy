@@ -25,7 +25,8 @@
     <xs:complexType name="signatureType">
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
-            <xs:element name="Offset" type="xs:integer"/>
+            <xs:element name="Offset" type="xs:nonNegativeInteger"/>
+            <xs:element name="Trailing" type="xs:boolean" minOccurs="0" maxOccurs="1" />
         </xs:sequence>
         <xs:attribute name="type" type="sigInterpretationType" use="required"/>
     </xs:complexType>
