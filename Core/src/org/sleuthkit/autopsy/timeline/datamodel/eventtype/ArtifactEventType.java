@@ -188,6 +188,8 @@ public interface ArtifactEventType extends EventType {
         }
     }
 
+   
+
     public static class EmptyExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
 
         @Override
