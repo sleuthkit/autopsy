@@ -203,7 +203,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         boolean requiredFieldsPopulated
                 = !mimeTypeTextField.getText().isEmpty()
-                && (isFooterCheckBox.isSelected() ? true  : !offsetTextField.getText().isEmpty())
+                && !offsetTextField.getText().isEmpty()
                 && !signatureTextField.getText().isEmpty()
                 && (postHitCheckBox.isSelected() ? !filesSetNameTextField.getText().isEmpty() : true);
         saveTypeButton.setEnabled(!ingestIsRunning && requiredFieldsPopulated);
@@ -270,14 +270,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 }
             }
             signatureTextField.setText(signatureBytes);
-            if(signature.getOffset() == -1) {
+            if(signature.getOffset() < 0) {
                 isFooterCheckBox.setSelected(true);
-                offsetTextField.setEnabled(false);
-                offsetTextField.setText("");
+                offsetTextField.setText(Long.toString(signature.getOffset()*-1 -1));
             }
             else {
                 isFooterCheckBox.setSelected(false);
-                offsetTextField.setEnabled(true);
                 offsetTextField.setText(Long.toString(signature.getOffset()));
             }
             postHitCheckBox.setSelected(fileType.alertOnMatch());
@@ -299,7 +297,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         hexPrefixLabel.setVisible(true);
         signatureTextField.setText("0000"); //NON-NLS
         isFooterCheckBox.setSelected(false);
-        offsetTextField.setEnabled(true);
         offsetTextField.setText(""); //NON-NLS
         postHitCheckBox.setSelected(false);
         filesSetNameTextField.setText(""); //NON-NLS
@@ -635,7 +632,12 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         long offset;
         try {
-            offset = isFooterCheckBox.isSelected() ? -1 : Long.parseUnsignedLong(offsetTextField.getText());
+            if(isFooterCheckBox.isSelected()) {
+                offset = Long.parseUnsignedLong(offsetTextField.getText())*-1 -1;
+            }
+            else {
+                offset = Long.parseUnsignedLong(offsetTextField.getText());
+            }
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
@@ -693,8 +695,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_signatureTextFieldActionPerformed
 
     private void isFooterCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isFooterCheckBoxActionPerformed
-        offsetTextField.setEnabled(!isFooterCheckBox.isSelected());
-        enableButtons();
+
     }//GEN-LAST:event_isFooterCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
