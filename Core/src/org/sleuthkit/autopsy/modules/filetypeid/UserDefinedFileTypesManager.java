@@ -226,7 +226,7 @@ final class UserDefinedFileTypesManager {
             
             // Add rule for .tga
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00");
-            fileType = new FileType("image/x-tga", new Signature(byteArray, true), "", false);
+            fileType = new FileType("image/x-tga", new Signature(byteArray, 0, true), "", false);
             fileTypes.add(fileType);
             
         }
