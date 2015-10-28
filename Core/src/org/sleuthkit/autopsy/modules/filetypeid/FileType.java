@@ -203,13 +203,14 @@ class FileType {
          * @param signatureBytes The signature bytes.
          * @param offset         The offset of the signature bytes.
          * @param type           The type of data in the byte array. Impacts
-         *                       how it is displayed to the user in the UI. 
+         *                       how it is displayed to the user in the UI.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(final byte[] signatureBytes, long offset, Type type, boolean isFooter) {
+        Signature(final byte[] signatureBytes, long offset, Type type, boolean trailing) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = type;
-            this.trailing = isFooter;
+            this.trailing = trailing;
         }
         
         /**
@@ -218,12 +219,13 @@ class FileType {
          *
          * @param signatureString The ASCII string
          * @param offset         The offset of the signature bytes.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(String signatureString, long offset, boolean isFooter) {
+        Signature(String signatureString, long offset, boolean trailing) {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
             this.offset = offset;
             this.type = Type.ASCII;
-            this.trailing = isFooter;
+            this.trailing = trailing;
         }
         
         /**
@@ -234,12 +236,13 @@ class FileType {
          *
          * @param signatureBytes The signature bytes.
          * @param offset         The offset of the signature bytes.
+         * @param trailing       Determines whether this signature is trailing.
          */
-        Signature(final byte[] signatureBytes, long offset, boolean isFooter) {
+        Signature(final byte[] signatureBytes, long offset, boolean trailing) {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = Type.RAW;
-            this.trailing = isFooter;
+            this.trailing = trailing;
         }
 
         /**
