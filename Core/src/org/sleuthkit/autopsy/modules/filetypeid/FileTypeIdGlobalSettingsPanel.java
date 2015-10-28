@@ -653,7 +653,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         /**
          * Put it all together and reset the file types list component.
          */
-        boolean isTrailing = isTrailingCheckBox.isSelected();
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType, isTrailingCheckBox.isSelected());
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
         FileType selected = typesList.getSelectedValue();
