@@ -596,7 +596,6 @@ public class EventDB {
             createIndex("events", Arrays.asList("event_id", "hash_hit"));
             createIndex("events", Arrays.asList("event_id", "tagged"));
             createIndex("events", Arrays.asList("file_id"));
-            createIndex("events", Arrays.asList("file_id"));
             createIndex("events", Arrays.asList("artifact_id"));
             createIndex("events", Arrays.asList("sub_type", "short_description", "time"));
             createIndex("events", Arrays.asList("base_type", "short_description", "time"));
