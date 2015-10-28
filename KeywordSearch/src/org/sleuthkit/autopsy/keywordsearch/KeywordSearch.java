@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -75,10 +74,8 @@ public class KeywordSearch {
             TIKA_LOGGER.addHandler(tikaLogHandler);
             //do not forward to the parent autopsy logger
             TIKA_LOGGER.setUseParentHandlers(false);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SecurityException ex) {
-            Exceptions.printStackTrace(ex);
+        } catch (IOException | SecurityException ex) {
+            logger.log(Level.SEVERE, "Error setting up tika logging", ex);
         }
     }
 
@@ -117,37 +114,29 @@ public class KeywordSearch {
      */
     static class CaseChangeListener implements PropertyChangeListener {
 
-        CaseChangeListener() {
-        }
-
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-
-            final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
-            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                /*
-                 * don't call getOld/NewValue() unless they are needed, since
-                 * they might do expensive db operations to load transient
-                 * values lost in serialization
-                 */
-                Object oldValue = evt.getOldValue();
-                Object newValue = evt.getNewValue();
-                if (newValue != null) {
-                    // new case is open
-                    try {
-                        server.openCore();
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Could not open core."); //NON-NLS
-                    }
-                } else if (oldValue != null) {
-                    // a case was closed
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                if (null != evt.getOldValue()) {
+                    Case closedCase = (Case) evt.getOldValue();
                     try {
                         BlackboardResultWriter.stopAllWriters();
-                        Thread.sleep(2000);
+                        Thread.sleep(2000); // TODO (RC): This is a fragile way to wait here.
                         server.closeCore();
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Could not close core."); //NON-NLS
+                    } catch (Exception ex) {
+                        String caseName = closedCase.getName();
+                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseName), ex);
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification..msg"), ex.getCause().getMessage());
+                    }
+                }
+                if (null != evt.getNewValue()) {
+                    Case openedCase = (Case) evt.getNewValue();
+                    try {
+                        server.openCoreForCase(openedCase);
+                    } catch (Exception ex) {
+                        String caseName = openedCase.getName();
+                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseName), ex);
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getCause().getMessage());
                     }
                 }
             }

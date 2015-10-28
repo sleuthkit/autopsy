@@ -28,11 +28,11 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
  * {@link EventTreeCell}. Each NavTreeItem has a EventBundle which has a type,
  * description , count, etc.
  */
-abstract class NavTreeItem extends TreeItem<EventBundle<?>> {
+abstract class NavTreeItem extends TreeItem<EventBundle> {
 
     abstract long getCount();
 
-    abstract void resort(Comparator<TreeItem<EventBundle<?>>> comp);
+    abstract void resort(Comparator<TreeItem<EventBundle>> comp);
 
-    abstract NavTreeItem findTreeItemForEvent(EventBundle<?> t);
+    abstract NavTreeItem findTreeItemForEvent(EventBundle t);
 }

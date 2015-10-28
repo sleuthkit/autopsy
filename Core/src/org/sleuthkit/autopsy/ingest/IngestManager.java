@@ -396,7 +396,6 @@ public class IngestManager {
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
         this.jobCreationIsEnabled = false;
-        cancelAllIngestJobs();
         clearIngestMessageBox();
     }
 

@@ -38,8 +38,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
@@ -169,6 +169,7 @@ public class Server {
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private static final String INDEX_DIR_NAME = "index";
 
     public enum CORE_EVT_STATES {
 
@@ -183,6 +184,7 @@ public class Server {
     private HttpSolrServer currentSolrServer;
 
     private Core currentCore;
+    private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solrFolder;
     private final ServerAction serverAction;
@@ -199,7 +201,9 @@ public class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
-                
+
+        currentCoreLock = new ReentrantReadWriteLock(true);
+
         logger.log(Level.INFO, "Created Server instance"); //NON-NLS
     }
 
@@ -590,35 +594,57 @@ public class Server {
     /*
      * ** Convenience methods for use while we only open one case at a time ***
      */
-    synchronized void openCore() throws KeywordSearchModuleException {
-        if (currentCore != null) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.alreadyOpen.msg"));
-        }
-
-        Case currentCase = Case.getCurrentCase();
-
+    /**
+     * Opens or creates a core (index) for a case.
+     *
+     * @param theCase the case for which the core is to be opened or created.
+     *
+     * @throws KeywordSearchModuleException
+     */
+    void openCoreForCase(Case theCase) throws KeywordSearchModuleException {
+        currentCoreLock.writeLock().lock();
         try {
-            currentCore = openCore(currentCase);
-        } catch (KeywordSearchModuleException ex) {
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.openCore.exception.cantOpenForCase.msg", currentCase.getName()), ex.getCause().getMessage());
-            throw ex;
+            currentCore = openCore(theCase);
+            serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
+        } finally {
+            currentCoreLock.writeLock().unlock();
         }
-        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
 
-    synchronized void closeCore() throws KeywordSearchModuleException {
-        if (currentCore == null) {
-            return;
+    /**
+     * Determines whether or not there is a currently open core (index).
+     *
+     * @return true or false
+     */
+    boolean coreIsOpen() {
+        currentCoreLock.readLock().lock();
+        try {
+            return (null != currentCore);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
+    }
 
-        currentCore.close();
-        currentCore = null;
-        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
+    void closeCore() throws KeywordSearchModuleException {
+        currentCoreLock.writeLock().lock();
+        try {
+            if (null != currentCore) {
+                currentCore.close();
+                currentCore = null;
+                serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
+            }
+        } finally {
+            currentCoreLock.writeLock().unlock();
+        }
     }
 
     void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
-        currentCore.addDocument(doc);
+        currentCoreLock.readLock().lock();
+        try {
+            currentCore.addDocument(doc);
+        } finally {
+            currentCoreLock.readLock().unlock();
+        }
     }
 
     /**
@@ -651,7 +677,7 @@ public class Server {
      *
      * @return
      */
-    private synchronized Core openCore(Case theCase) throws KeywordSearchModuleException {
+    private Core openCore(Case theCase) throws KeywordSearchModuleException {
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
@@ -673,22 +699,32 @@ public class Server {
     }
 
     /**
-     * commit current core if it exists
+     * Commits current core if it exists
      *
      * @throws SolrServerException, NoOpenCoreException
      */
-    synchronized void commit() throws SolrServerException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+    void commit() throws SolrServerException, NoOpenCoreException {
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            currentCore.commit();
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        currentCore.commit();
     }
 
     NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.request(request);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        return currentCore.request(request);
     }
 
     /**
@@ -702,16 +738,19 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public int queryNumIndexedFiles() throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryNumIndexedFiles();
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryNumIndexedFiles();
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-
     }
 
     /**
@@ -724,14 +763,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public int queryNumIndexedChunks() throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryNumIndexedChunks();
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxChunks.exception.msg"), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryNumIndexedChunks();
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxChunks.exception.msg"), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -745,14 +788,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public int queryNumIndexedDocuments() throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryNumIndexedDocuments();
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryNumIdxDocs.exception.msg"), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryNumIndexedDocuments();
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxDocs.exception.msg"), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -767,14 +814,19 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public boolean queryIsIndexed(long contentID) throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryIsIndexed(contentID);
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryIsIdxd.exception.msg"), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryIsIndexed(contentID);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryIsIdxd.exception.msg"), ex);
+            }
+
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -790,14 +842,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public int queryNumFileChunks(long fileID) throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryNumFileChunks(fileID);
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryNumFileChunks.exception.msg"), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryNumFileChunks(fileID);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumFileChunks.exception.msg"), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -812,14 +868,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public QueryResponse query(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.query(sq);
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.query(sq);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -835,14 +895,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.query(sq, method);
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.query(sq, method);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -857,14 +921,18 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public TermsResponse queryTerms(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
-        }
+        currentCoreLock.readLock().lock();
         try {
-            return currentCore.queryTerms(sq);
-        } catch (SolrServerException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            try {
+                return currentCore.queryTerms(sq);
+            } catch (SolrServerException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
     }
 
@@ -878,10 +946,15 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public String getSolrContent(final Content content) throws NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.getSolrContent(content.getId(), 0);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        return currentCore.getSolrContent(content.getId(), 0);
     }
 
     /**
@@ -897,10 +970,15 @@ public class Server {
      * @throws NoOpenCoreException
      */
     public String getSolrContent(final Content content, int chunkID) throws NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.getSolrContent(content.getId(), chunkID);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        return currentCore.getSolrContent(content.getId(), chunkID);
     }
 
     /**
@@ -913,10 +991,15 @@ public class Server {
      * @throws NoOpenCoreException
      */
     String getSolrContent(final long objectID) throws NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.getSolrContent(objectID, 0);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        return currentCore.getSolrContent(objectID, 0);
     }
 
     /**
@@ -930,11 +1013,15 @@ public class Server {
      * @throws NoOpenCoreException
      */
     String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
-        if (currentCore == null) {
-            throw new NoOpenCoreException();
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.getSolrContent(objectID, chunkID);
+        } finally {
+            currentCoreLock.readLock().unlock();
         }
-        return currentCore.getSolrContent(objectID, chunkID);
-
     }
 
     /**
@@ -982,26 +1069,25 @@ public class Server {
             }
 
             if (!isCoreLoaded(coreName)) {
-                CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
-                createCore.setDataDir(dataDir.getAbsolutePath());
-                createCore.setCoreName(coreName);
-                createCore.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCore.setIsLoadOnStartup(false);
-                createCore.setIsTransient(true);
-
-                currentSolrServer.request(createCore);
+                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                createCoreRequest.setCoreName(coreName);
+                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
+                currentSolrServer.request(createCoreRequest);
             }
 
-            final Core newCore = new Core(coreName, caseType);
+            File indexDir = Paths.get(dataDir.getAbsolutePath(), INDEX_DIR_NAME).toFile();
+            if (!indexDir.exists()) {
+                throw new IOException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+            }
 
-            return newCore;
+            return new Core(coreName, caseType);
 
-        } catch (SolrServerException | SolrException ex) {
+        } catch (SolrServerException | SolrException | IOException ex) {
             throw new KeywordSearchModuleException(
                     NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
-        } catch (IOException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg2"), ex);
         }
     }
 
