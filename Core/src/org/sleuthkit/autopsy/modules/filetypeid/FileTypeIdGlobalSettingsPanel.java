@@ -626,7 +626,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         long offset;
         try {
-                offset = Long.parseUnsignedLong(offsetTextField.getText());
+            offset = Long.parseUnsignedLong(offsetTextField.getText());
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
