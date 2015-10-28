@@ -18,12 +18,14 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
-import com.google.common.collect.Range;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -36,7 +38,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * designated 'zoom level', and be 'close together' in time.
  */
 @Immutable
-public class EventCluster implements EventBundle {
+public class EventCluster implements EventBundle<EventStripe> {
 
     /**
      * merge two event clusters into one new event cluster.
@@ -62,7 +64,7 @@ public class EventCluster implements EventBundle {
         return new EventCluster(IntervalUtils.span(cluster1.span, cluster2.span), cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion, cluster1.getDescription(), cluster1.lod);
     }
 
-    final private EventBundle parent;
+    final private EventStripe parent;
 
     /**
      * the smallest time interval containing all the clustered events
@@ -101,7 +103,7 @@ public class EventCluster implements EventBundle {
      */
     private final Set<Long> hashHits;
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventBundle parent) {
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventStripe parent) {
 
         this.span = spanningInterval;
         this.type = type;
@@ -118,7 +120,7 @@ public class EventCluster implements EventBundle {
     }
 
     @Override
-    public Optional<EventBundle> getParentBundle() {
+    public Optional<EventStripe> getParentBundle() {
         return Optional.ofNullable(parent);
     }
 
@@ -166,19 +168,6 @@ public class EventCluster implements EventBundle {
         return lod;
     }
 
-    Range<Long> getRange() {
-        if (getEndMillis() > getStartMillis()) {
-            return Range.closedOpen(getSpan().getStartMillis(), getSpan().getEndMillis());
-        } else {
-            return Range.singleton(getStartMillis());
-        }
-    }
-
-    @Override
-    public Iterable<Range<Long>> getRanges() {
-        return Collections.singletonList(getRange());
-    }
-
     /**
      * return a new EventCluster identical to this one, except with the given
      * EventBundle as the parent.
@@ -188,11 +177,15 @@ public class EventCluster implements EventBundle {
      * @return a new EventCluster identical to this one, except with the given
      *         EventBundle as the parent.
      */
-    public EventCluster withParent(EventBundle parent) {
+    public EventCluster withParent(EventStripe parent) {
         if (Objects.nonNull(this.parent)) {
             throw new IllegalStateException("Event Cluster already has a parent!");
         }
         return new EventCluster(span, type, eventIDs, hashHits, tagged, description, lod, parent);
     }
 
+    @Override
+    public SortedSet< EventCluster> getClusters() {
+        return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
+    }
 }

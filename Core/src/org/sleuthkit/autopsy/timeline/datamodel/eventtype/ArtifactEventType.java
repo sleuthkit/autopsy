@@ -87,7 +87,8 @@ public interface ArtifactEventType extends EventType {
 
     /**
      * bundles the per event information derived from a BlackBoard Artifact into
-     * one object. Primarily used to have a single return value for      {@link SubType#buildEventDescription(org.sleuthkit.datamodel.BlackboardArtifact).
+     * one object. Primarily used to have a single return value for
+     * {@link ArtifactEventType#buildEventDescription(ArtifactEventType, BlackboardArtifact)}.
      */
     static class AttributeEventDescription {
 
@@ -124,52 +125,52 @@ public interface ArtifactEventType extends EventType {
             this.fullDescription = fullDescription;
         }
 
-        /**
-         * Build a {@link AttributeEventDescription} derived from a
-         * {@link BlackboardArtifact}. This is a template method that relies on
-         * each {@link SubType}'s implementation of
-         * {@link SubType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
-         * know how to go from {@link BlackboardAttribute}s to the event
-         * description.
-         *
-         * @param artf the {@link BlackboardArtifact} to derive the event
-         *             description from
-         *
-         * @return an {@link AttributeEventDescription} derived from the given
-         *         artifact
-         *
-         * @throws TskCoreException is there is a problem accessing the
-         *                          blackboard data
-         */
-        static public AttributeEventDescription buildEventDescription(
-                ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
-            //if we got passed an artifact that doesn't correspond to the type of the event, 
-            //something went very wrong. throw an exception.
-            if (type.getArtifactType().getTypeID() != artf.getArtifactTypeID()) {
-                throw new IllegalArgumentException();
-            }
+    }
 
-            /*
-             * build a map from attribute type to attribute, this makes
-             * implementing the parseAttributeHelper easier but could be
-             * ineffecient if we don't need most of the attributes. This would
-             * be unnessecary if there was an api on Blackboard artifacts to get
-             * specific attributes by type
-             */
-            List<BlackboardAttribute> attributes = artf.getAttributes();
-            Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap = new HashMap<>();
-            for (BlackboardAttribute attr : attributes) {
-                attrMap.put(BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.
-                        getAttributeTypeName()), attr);
-            }
-
-            if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {
-                Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0}  has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
-                return null;
-            }
-            //use the hook provided by this subtype implementation
-            return type.parseAttributesHelper(artf, attrMap);
+    /**
+     * Build a {@link AttributeEventDescription} derived from a
+     * {@link BlackboardArtifact}. This is a template method that relies on each
+     * {@link SubType}'s implementation of
+     * {@link SubType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
+     * know how to go from {@link BlackboardAttribute}s to the event
+     * description.
+     *
+     * @param artf the {@link BlackboardArtifact} to derive the event
+     *             description from
+     *
+     * @return an {@link AttributeEventDescription} derived from the given
+     *         artifact
+     *
+     * @throws TskCoreException is there is a problem accessing the blackboard
+     *                          data
+     */
+    static public AttributeEventDescription buildEventDescription(
+            ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
+        //if we got passed an artifact that doesn't correspond to the type of the event, 
+        //something went very wrong. throw an exception.
+        if (type.getArtifactType().getTypeID() != artf.getArtifactTypeID()) {
+            throw new IllegalArgumentException();
         }
+
+        /*
+         * build a map from attribute type to attribute, this makes implementing
+         * the parseAttributeHelper easier but could be ineffecient if we don't
+         * need most of the attributes. This would be unnessecary if there was
+         * an api on Blackboard artifacts to get specific attributes by type
+         */
+        List<BlackboardAttribute> attributes = artf.getAttributes();
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap = new HashMap<>();
+        for (BlackboardAttribute attr : attributes) {
+            attrMap.put(BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(attr.
+                    getAttributeTypeName()), attr);
+        }
+
+        if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {
+            Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0}  has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
+            return null;
+        }
+        //use the hook provided by this subtype implementation
+        return type.parseAttributesHelper(artf, attrMap);
     }
 
     public static class AttributeExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
