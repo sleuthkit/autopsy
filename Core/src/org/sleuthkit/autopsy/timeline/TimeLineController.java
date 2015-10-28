@@ -567,7 +567,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushTimeRange(Interval timeRange) {
-//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
