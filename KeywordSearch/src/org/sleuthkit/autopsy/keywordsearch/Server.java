@@ -1078,10 +1078,12 @@ public class Server {
                 currentSolrServer.request(createCoreRequest);
             }
 
-            File indexDir = Paths.get(dataDir.getAbsolutePath(), INDEX_DIR_NAME).toFile();
-            if (!indexDir.exists()) {
-                throw new IOException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-            }
+            // TODO (RC): This check only works for single-user cases. For multi-user cases
+            // the path from the case metadata file needs to be checked.
+//            File indexDir = Paths.get(dataDir.getAbsolutePath(), INDEX_DIR_NAME).toFile();
+//            if (!indexDir.exists()) {
+//                throw new IOException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+//            }
 
             return new Core(coreName, caseType);
 
