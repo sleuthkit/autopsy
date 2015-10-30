@@ -25,10 +25,10 @@ import java.util.Comparator;
 import java.util.Objects;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tooltip;
@@ -36,6 +36,8 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -61,6 +63,7 @@ final public class EventsTree extends BorderPane {
 
     private final TimeLineController controller;
 
+
     private DetailViewPane detailViewPane;
 
     @FXML
@@ -74,7 +77,7 @@ final public class EventsTree extends BorderPane {
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
-
+     
         FXMLConstructor.construct(this, "EventsTree.fxml"); // NON-NLS 
     }
 
@@ -82,9 +85,18 @@ final public class EventsTree extends BorderPane {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
-        detailViewPane.getEventBundles().addListener((Observable observable) -> {
-            setRoot();
+        detailViewPane.getEventBundles().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
+            while (c.next()) {
+                for (EventBundle<?> bundle : c.getAddedSubList()) {
+                    getRoot().insert(bundle);
+                }
+                for (EventBundle<?> bundle : c.getRemoved()) {
+                    getRoot().remove(bundle);
+                }
+            }
+            getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
         });
+      
         setRoot();
 
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
@@ -96,8 +108,8 @@ final public class EventsTree extends BorderPane {
 
     }
 
-    private NavTreeItem getRoot() {
-        return (NavTreeItem) eventsTree.getRoot();
+    private RootItem getRoot() {
+        return (RootItem) eventsTree.getRoot();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -106,6 +118,7 @@ final public class EventsTree extends BorderPane {
         for (EventBundle<?> bundle : detailViewPane.getEventBundles()) {
             root.insert(bundle);
         }
+        root.resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
         eventsTree.setRoot(root);
 
     }
@@ -118,7 +131,7 @@ final public class EventsTree extends BorderPane {
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
+            getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
         });
         eventsTree.setShowRoot(false);
         eventsTree.setCellFactory((TreeView<EventBundle<?>> p) -> new EventBundleTreeCell());
@@ -137,6 +150,7 @@ final public class EventsTree extends BorderPane {
         private final Rectangle rect = new Rectangle(24, 24);
         private final ImageView imageView = new ImageView();
         private InvalidationListener filterStateChangeListener;
+        SimpleBooleanProperty hidden = new SimpleBooleanProperty(false);
 
         EventBundleTreeCell() {
             rect.setArcHeight(5);
@@ -173,6 +187,21 @@ final public class EventsTree extends BorderPane {
                 imageView.setImage(item.getEventType().getFXImage());
                 setGraphic(new StackPane(rect, imageView));
                 updateHiddenState(item);
+                if (getTreeItem() instanceof EventDescriptionTreeItem) {
+                    setOnMouseClicked((MouseEvent event) -> {
+                        if (event.getButton() == MouseButton.SECONDARY) {
+                            if (hidden.get()) {
+                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
+                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
+                            } else {
+                                ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD())))
+                                        .show(EventBundleTreeCell.this, event.getScreenX(), event.getScreenY());
+                            }
+                        }
+                    });
+                } else {
+                    setOnMouseClicked(null);
+                }
             }
         }
 
@@ -194,10 +223,11 @@ final public class EventsTree extends BorderPane {
 
         private void updateHiddenState(EventBundle<?> item) {
             TreeItem<EventBundle<?>> treeItem = getTreeItem();
-            ContextMenu newMenu;
-            if (controller.getQuickHideFilters().stream().
+
+            hidden.set(controller.getQuickHideFilters().stream().
                     filter(AbstractFilter::isActive)
-                    .anyMatch(filter -> filter.getDescription().equals(item.getDescription()))) {
+                    .anyMatch(filter -> filter.getDescription().equals(item.getDescription())));
+            if (hidden.get()) {
                 if (treeItem != null) {
                     treeItem.setExpanded(false);
                 }
@@ -205,18 +235,11 @@ final public class EventsTree extends BorderPane {
                 imageView.setOpacity(HIDDEN_MULTIPLIER);
                 rect.setStroke(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
                 rect.setFill(item.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
-                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
                 rect.setStroke(item.getEventType().getColor());
                 rect.setFill(item.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
-                newMenu = ActionUtils.createContextMenu(ImmutableList.of(detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD())));
-            }
-            if (treeItem instanceof EventDescriptionTreeItem) {
-                setContextMenu(newMenu);
-            } else {
-                setContextMenu(null);
             }
         }
     }
