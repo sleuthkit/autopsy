@@ -1,4 +1,4 @@
-                  Last Updated: 27 April 2015
+                  Last Updated: 30 October 2015
 
 This file outlines what it takes to build Autopsy from source.
 
