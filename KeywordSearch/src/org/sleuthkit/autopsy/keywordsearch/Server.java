@@ -169,7 +169,6 @@ public class Server {
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
-    private static final String INDEX_DIR_NAME = "index";
 
     public enum CORE_EVT_STATES {
 
@@ -1129,7 +1128,7 @@ public class Server {
     private boolean coreFilesFolderExists(String coreName) throws SolrServerException, IOException {
         CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
         String corePath = (String) response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
-        File indexDir = Paths.get(corePath, INDEX_DIR_NAME).toFile();
+        File indexDir = Paths.get(corePath, "index").toFile();  //NON-NLS
         return indexDir.exists();
     }
 
