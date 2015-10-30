@@ -862,7 +862,7 @@ def main():
 
     # Check if javadoc and jdiff are present.
     jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
-    if(not os.path.isdir(jdiff)):
+    if(not os.path.isfile(jdiff)):
         printt("jdiff not found. Exiting...")
         return 1
     try:
