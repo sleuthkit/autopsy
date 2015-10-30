@@ -33,9 +33,9 @@ class EventTypeTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new ConcurrentHashMap<>();
 
-    private final Comparator<TreeItem<EventBundle>> comparator = TreeComparator.Description;
+    private final Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
 
-    EventTypeTreeItem(EventBundle g) {
+    EventTypeTreeItem(EventBundle<?> g) {
         setValue(g);
     }
 
@@ -44,8 +44,8 @@ class EventTypeTreeItem extends NavTreeItem {
         return getValue().getCount();
     }
 
-    public void insert(Deque<EventBundle> path) {
-        EventBundle head = path.removeFirst();
+    public void insert(Deque<EventBundle<?>> path) {
+        EventBundle<?> head = path.removeFirst();
         EventDescriptionTreeItem treeItem = childMap.get(head.getDescription());
         if (treeItem == null) {
             treeItem = new EventDescriptionTreeItem(head);
@@ -61,7 +61,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public NavTreeItem findTreeItemForEvent(EventBundle t) {
+    public NavTreeItem findTreeItemForEvent(EventBundle<?> t) {
         if (t.getEventType().getBaseType() == getValue().getEventType().getBaseType()) {
 
             for (EventDescriptionTreeItem child : childMap.values()) {
@@ -75,7 +75,7 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
         FXCollections.sort(getChildren(), comp);
     }
 }
