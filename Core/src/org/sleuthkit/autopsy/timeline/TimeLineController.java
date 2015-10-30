@@ -578,18 +578,19 @@ public class TimeLineController {
 
     @NbBundle.Messages({"# {0} - the number of events",
         "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
-        + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
+        + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
+        "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
     synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
-        if (newLOD == DescriptionLoD.FULL && count > 10_000) {
+        if ((newLOD == DescriptionLoD.FULL|| newLOD ==DescriptionLoD.MEDIUM )&& count > 10_000) {
             String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
                     Bundle.Timeline_pushDescrLOD_confdlg_msg(format),
-                    Bundle.Timeline_confirmation_dialogs_title(),
+                    Bundle.Timeline_pushDescrLOD_confdlg_title(),
                     JOptionPane.YES_NO_OPTION);
 
             shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
