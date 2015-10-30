@@ -32,6 +32,9 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.stage.DirectoryChooser;
 import javafx.util.Pair;
@@ -48,15 +51,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class SaveSnapshotAsReport extends Action {
 
+    private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true);
     private static final String HTML_EXT = ".html";
     private static final String REPORT_IMAGE_EXTENSION = ".png";
 
     private static final Logger LOGGER = Logger.getLogger(SaveSnapshotAsReport.class.getName());
 
-    @NbBundle.Messages({"SaveSnapshot.action.name.text=save snapshot",
-        "SaveSnapshot.fileChoose.title.text=Save snapshot to"})
-    public SaveSnapshotAsReport(TimeLineController controller, WritableImage snapshot) {
+    @NbBundle.Messages({"SaveSnapshot.action.name.text=Snapshot",
+        "SaveSnapshot.action.longText=Save a screen capture of the visualization as a report.",
+        "SaveSnapshot.fileChoose.title.text=Save snapshot to",})
+    public SaveSnapshotAsReport(TimeLineController controller, Node node) {
         super(Bundle.SaveSnapshot_action_name_text());
+        setLongText(Bundle.SaveSnapshot_action_longText());
+        setGraphic(new ImageView(SNAP_SHOT));
         setEventHandler(new Consumer<ActionEvent>() {
 
             @Override
@@ -86,6 +93,7 @@ public class SaveSnapshotAsReport extends Action {
 
                 //save snapshot as png
                 try {
+                    WritableImage snapshot = node.snapshot(null, null);
                     ImageIO.write(SwingFXUtils.fromFXImage(snapshot, null), "png",
                             new File(reportPath, reportName + REPORT_IMAGE_EXTENSION)); // NON-NLS
                 } catch (IOException ex) {

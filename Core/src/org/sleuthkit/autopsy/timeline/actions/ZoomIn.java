@@ -31,7 +31,7 @@ public class ZoomIn extends Action {
 
     private static final Image MAGNIFIER_IN = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-in-green.png"); //NOI18N
 
-    @NbBundle.Messages({"ZoomIn.longText=Zoom in to view half as much time.",
+    @NbBundle.Messages({"ZoomIn.longText=Zoom in to view about half as much time.",
         "ZoomIn.action.text=Zoom in"})
     public ZoomIn(TimeLineController controller) {
         super(Bundle.ZoomIn_action_text());
