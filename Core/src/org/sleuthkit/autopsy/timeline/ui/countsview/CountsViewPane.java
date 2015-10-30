@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -55,8 +54,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javax.swing.JOptionPane;
-import org.controlsfx.control.action.ActionGroup;
-import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
@@ -67,8 +64,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -120,15 +115,6 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     protected Boolean isTickBold(String value) {
         return dataSets.stream().flatMap((series) -> series.getData().stream())
                 .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
-    }
-
-    private ContextMenu getContextMenu() {
-
-        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup(
-                NbBundle.getMessage(this.getClass(), "Timeline.ui.countsview.contextMenu.ActionGroup.zoomHistory.title"),
-                new Back(controller), new Forward(controller))));
-        chartContextMenu.setAutoHide(true);
-        return chartContextMenu;
     }
 
     @Override
@@ -400,7 +386,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                     selectedNodes.setAll(node);
                 } else if (e.getButton().equals(MouseButton.SECONDARY)) {
                     Platform.runLater(() -> {
-                        chart.getContextMenu().hide();
+                        chart.getChartContextMenu(e).hide();
 
                         if (barContextMenu == null) {
                             barContextMenu = new ContextMenu();
@@ -457,7 +443,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             });
                                         }
                                     });
-                            barContextMenu.getItems().addAll(getContextMenu().getItems());
+                            barContextMenu.getItems().addAll(chart.getChartContextMenu(e).getItems());
                         }
 
                         barContextMenu.show(node, e.getScreenX(), e.getScreenY());
