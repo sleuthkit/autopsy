@@ -1075,7 +1075,7 @@ public class Server {
                 currentSolrServer.request(createCoreRequest);
             }
 
-            if (!coreFilesFolderExists(coreName)) {
+            if (!coreIndexFolderExists(coreName)) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
@@ -1125,11 +1125,15 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    private boolean coreFilesFolderExists(String coreName) throws SolrServerException, IOException {
+    private boolean coreIndexFolderExists(String coreName) throws SolrServerException, IOException {
         CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
-        String corePath = (String) response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
-        File indexDir = Paths.get(corePath, "index").toFile();  //NON-NLS
-        return indexDir.exists();
+        Object dataDirPath = response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
+        if (null != dataDirPath) {
+            File indexDir = Paths.get((String)dataDirPath, "index").toFile();  //NON-NLS
+            return indexDir.exists();
+        } else {
+            return false;
+        }
     }
 
     class Core {
