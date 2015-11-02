@@ -39,21 +39,19 @@ public class ZoomOut extends Action {
         super(Bundle.ZoomOut_action_text());
         setLongText(Bundle.ZoomOut_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
-        setEventHandler(actionEvent -> {
-            controller.pushZoomOutTime();
-        });
+        setEventHandler(actionEvent -> controller.pushZoomOutTime());
 
         //disable action when the current time range already encompases the entire case.
         disabledProperty().bind(new BooleanBinding() {
             private final FilteredEventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomParametersProperty());
+                bind(eventsModel.zoomParametersProperty(), eventsModel.timeRangeProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.zoomParametersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
+                return eventsModel.timeRangeProperty().get().contains(eventsModel.getSpanningInterval());
             }
         });
     }
