@@ -67,7 +67,6 @@ import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
@@ -178,21 +177,13 @@ final public class VisualizationPanel extends BorderPane {
         public void invalidated(Observable observable) {
             if (rangeSlider.isHighValueChanging() == false
                     && rangeSlider.isLowValueChanging() == false) {
-                Long minTime = filteredEvents.getMinTime() * 1000;
-                controller.pushTimeRange(new Interval(
-                        new Double(rangeSlider.getLowValue() + minTime).longValue(),
-                        new Double(rangeSlider.getHighValue() + minTime).longValue(),
-                        DateTimeZone.UTC));
+                Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval()).getLowerBound();
+                if (false == controller.pushTimeRange(new Interval(
+                        (long) (rangeSlider.getLowValue() + minTime),
+                        (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
+                    refreshTimeUI();
+                }
             }
-        }
-    };
-
-    /**
-     * listens to timerange of filtered events model and updates UI to match
-     */
-    final private InvalidationListener timeRangeInvalidationListener = new InvalidationListener() {
-        public void invalidated(Observable observable) {
-            refreshTimeUI(filteredEvents.timeRangeProperty().get());
         }
     };
 
@@ -349,10 +340,10 @@ final public class VisualizationPanel extends BorderPane {
         filteredEvents.registerForEvents(this);
 
         //listen for changes in the time range / zoom params
-        TimeLineController.getTimeZone().addListener(timeRangeInvalidationListener);
-        filteredEvents.timeRangeProperty().addListener(timeRangeInvalidationListener);
+        TimeLineController.getTimeZone().addListener(timeZoneProp -> refreshTimeUI());
+        filteredEvents.timeRangeProperty().addListener(timeRangeProp -> refreshTimeUI());
         filteredEvents.zoomParametersProperty().addListener(zoomListener);
-        refreshTimeUI(filteredEvents.timeRangeProperty().get()); //populate the viz
+        refreshTimeUI(); //populate the viz
 
         //this should use an event(EventBus) , not this weird observable pattern
         controller.getNeedsHistogramRebuild().addListener((observable, oldValue, newValue) -> {
@@ -425,6 +416,7 @@ final public class VisualizationPanel extends BorderPane {
     }
 
     synchronized private void refreshHistorgram() {
+
         if (histogramTask != null) {
             histogramTask.cancel(true);
         }
@@ -508,11 +500,19 @@ final public class VisualizationPanel extends BorderPane {
         controller.monitorTask(histogramTask);
     }
 
+    private void refreshTimeUI() {
+        refreshTimeUI(filteredEvents.timeRangeProperty().get());
+    }
+
     private void refreshTimeUI(Interval interval) {
+
         RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
 
         final long minTime = rangeDivisionInfo.getLowerBound();
         final long maxTime = rangeDivisionInfo.getUpperBound();
+
+        long startMillis = interval.getStartMillis();
+        long endMillis = interval.getEndMillis();
 
         if (minTime > 0 && maxTime > minTime) {
 
@@ -523,8 +523,7 @@ final public class VisualizationPanel extends BorderPane {
                 rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
 
                 rangeSlider.setMax((maxTime - minTime));
-                long startMillis = interval.getStartMillis();
-                long endMillis = interval.getEndMillis();
+
                 rangeSlider.setLowValue(startMillis - minTime);
                 rangeSlider.setHighValue(endMillis - minTime);
                 startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
@@ -592,7 +591,7 @@ final public class VisualizationPanel extends BorderPane {
             LocalDateTime pickerTime = pickerSupplier.get().getLocalDateTime();
             if (pickerTime != null) {
                 controller.pushTimeRange(intervalMapper.apply(filteredEvents.timeRangeProperty().get(), localDateTimeToEpochMilli(pickerTime)));
-                Platform.runLater(() -> refreshTimeUI(filteredEvents.timeRangeProperty().get()));
+                Platform.runLater(VisualizationPanel.this::refreshTimeUI);
             }
         }
     }
