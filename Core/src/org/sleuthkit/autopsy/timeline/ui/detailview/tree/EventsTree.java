@@ -63,7 +63,6 @@ final public class EventsTree extends BorderPane {
 
     private final TimeLineController controller;
 
-
     private DetailViewPane detailViewPane;
 
     @FXML
@@ -77,7 +76,7 @@ final public class EventsTree extends BorderPane {
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
-     
+
         FXMLConstructor.construct(this, "EventsTree.fxml"); // NON-NLS 
     }
 
@@ -96,7 +95,7 @@ final public class EventsTree extends BorderPane {
             }
             getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
         });
-      
+
         setRoot();
 
         detailViewPane.getSelectedNodes().addListener((Observable observable) -> {
@@ -177,10 +176,15 @@ final public class EventsTree extends BorderPane {
                     updateHiddenState(item);
                 });
                 registerListeners(controller.getQuickHideFilters(), item);
-                String text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
-                TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
-                if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
-                    text = StringUtils.substringAfter(text, parent.getValue().getDescription());
+                String text;
+                if (getTreeItem() instanceof EventTypeTreeItem) {
+                    text = item.getEventType().getDisplayName();
+                } else {
+                    text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
+                    TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
+                    if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {
+                        text = StringUtils.substringAfter(text, parent.getValue().getDescription());
+                    }
                 }
                 setText(text);
                 setTooltip(new Tooltip(text));
