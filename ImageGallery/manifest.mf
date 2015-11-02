@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.imagegallery
+OpenIDE-Module: org.sleuthkit.autopsy.imagegallery/1
+OpenIDE-Module-Implementation-Version: 1
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/imagegallery/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
 

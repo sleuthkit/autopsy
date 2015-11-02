@@ -388,6 +388,7 @@ public class EventsRepository {
 
             LOGGER.log(Level.INFO, "committing tags"); // NON-NLS
             publish(new ProgressWindow.ProgressUpdate(0, -1, "committing tag changes", ""));
+            eventDB.analyze();
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -536,6 +537,8 @@ public class EventsRepository {
 
             publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
 
+            eventDB.analyze();
+
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
@@ -600,7 +603,7 @@ public class EventsRepository {
 
                     //for each artifact, extract the relevant information for the descriptions
                     BlackboardArtifact bbart = blackboardArtifacts.get(i);
-                    ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.AttributeEventDescription.buildEventDescription(type, bbart);
+                    ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
 
                     //insert it into the db if time is > 0  => time is legitimate
                     if (eventDescription != null && eventDescription.getTime() > 0L) {

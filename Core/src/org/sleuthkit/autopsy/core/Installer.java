@@ -108,11 +108,16 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
             }
 
+            // This library name is different in 32-bit versus 64-bit
+            String libintlName = "libintl-8";
+            if (PlatformUtil.is64BitOS() == false) {
+                libintlName = "libintl";
+            }
             try {
-                System.loadLibrary("libintl-8"); //NON-NLS
-                logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
+                System.loadLibrary(libintlName); //NON-NLS
+                logger.log(Level.INFO, libintlName + " library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
+                logger.log(Level.SEVERE, "Error loading " + libintlName + " library, ", e); //NON-NLS
             }
 
             try {

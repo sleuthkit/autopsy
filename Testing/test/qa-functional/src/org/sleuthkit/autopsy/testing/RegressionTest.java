@@ -174,10 +174,10 @@ public class RegressionTest extends TestCase {
     public void testNewCaseWizard() {
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
-        JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 2);
-        jtfo1.typeText("AutopsyTestCase"); // Name the case "AutopsyTestCase"
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 1);
-        jtfo0.typeText(getEscapedPath(System.getProperty("out_path")));
+        jtfo0.typeText("AutopsyTestCase"); // Name the case "AutopsyTestCase"
+        JTextFieldOperator jtfo1 = new JTextFieldOperator(wo, 2);
+        jtfo1.typeText(getEscapedPath(System.getProperty("out_path")));
         wo.btNext().clickMouse();
         JTextFieldOperator jtfo2 = new JTextFieldOperator(wo, 0);
         jtfo2.typeText("000"); // Set the case number

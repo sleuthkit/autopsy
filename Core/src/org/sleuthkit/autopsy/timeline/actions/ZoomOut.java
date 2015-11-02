@@ -33,7 +33,7 @@ public class ZoomOut extends Action {
 
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N
 
-    @NbBundle.Messages({"ZoomOut.longText=Zoom out to view 50% more time.",
+    @NbBundle.Messages({"ZoomOut.longText=Zoom out to view about 50% more time.",
         "ZoomOut.action.text=Zoom out"})
     public ZoomOut(TimeLineController controller) {
         super(Bundle.ZoomOut_action_text());

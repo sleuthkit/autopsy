@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel.eventtype;
 
+import com.google.common.net.InternetDomainName;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
             "downloads.png", // NON-NLS
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD,
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
+            TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL)) {
 
@@ -67,7 +68,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
             "cookies.png", // NON-NLS
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE,
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
+            TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE)),
     //TODO: review description separators
@@ -75,7 +76,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
             "bookmarks.png", // NON-NLS
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK,
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
+            TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
     //TODO: review description separators
@@ -83,7 +84,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
             "history.png", // NON-NLS
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY,
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
+            TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE)),
     //TODO: review description separators
@@ -92,7 +93,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY,
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT),
-            new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN),
+            TopPrivateDomainExtractor.getInstance(),
             new AttributeExtractor(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
 
     private final BlackboardAttribute.ATTRIBUTE_TYPE dateTimeAttributeType;
@@ -184,6 +185,32 @@ public enum WebTypes implements EventType, ArtifactEventType {
     @Override
     public List<? extends EventType> getSubTypes() {
         return Collections.emptyList();
+    }
+
+    private static class TopPrivateDomainExtractor extends AttributeExtractor {
+
+        final private static TopPrivateDomainExtractor instance = new TopPrivateDomainExtractor();
+
+        static TopPrivateDomainExtractor getInstance() {
+            return instance;
+        }
+
+        @Override
+        public String apply(BlackboardArtifact artf, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attrMap) {
+            String domainString = StringUtils.substringBefore(super.apply(artf, attrMap), "/");
+            if (InternetDomainName.isValid(domainString)) {
+                InternetDomainName domain = InternetDomainName.from(domainString);
+                return (domain.isUnderPublicSuffix())
+                        ? domain.topPrivateDomain().toString()
+                        : domain.toString();
+            } else {
+                return domainString;
+            }
+        }
+
+        TopPrivateDomainExtractor() {
+            super(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
+        }
     }
 
 }

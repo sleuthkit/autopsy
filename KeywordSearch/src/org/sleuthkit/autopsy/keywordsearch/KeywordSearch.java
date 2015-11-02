@@ -126,7 +126,7 @@ public class KeywordSearch {
                     } catch (Exception ex) {
                         String caseName = closedCase.getName();
                         logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseName), ex);
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification..msg"), ex.getCause().getMessage());
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
                     }
                 }
                 if (null != evt.getNewValue()) {
@@ -136,7 +136,7 @@ public class KeywordSearch {
                     } catch (Exception ex) {
                         String caseName = openedCase.getName();
                         logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseName), ex);
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getCause().getMessage());
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
                     }
                 }
             }
