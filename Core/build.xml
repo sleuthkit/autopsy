@@ -22,7 +22,7 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel_PostgreSQL.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4-1201-jdbc41.jar" tofile="${basedir}/release/modules/ext/postgresql-9.4-1201-jdbc41.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar" tofile="${basedir}/release/modules/ext/mchange-commons-java-0.2.9.jar"/>
