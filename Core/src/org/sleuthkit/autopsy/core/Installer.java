@@ -110,8 +110,8 @@ public class Installer extends ModuleInstall {
 
             // This library name is different in 32-bit versus 64-bit
             String libintlName = "libintl-8";
-            if (PlatformUtil.is64BitOS() == false) {
-                libintlName = "libintl";
+            if (PlatformUtil.is64BitJVM() == false) {
+                libintlName = "intl";
             }
             try {
                 System.loadLibrary(libintlName); //NON-NLS
