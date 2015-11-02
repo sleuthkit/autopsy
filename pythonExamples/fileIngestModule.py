@@ -104,7 +104,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where the analysis is done.  Each file will be passed into here.
     # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     # TODO: Add your analysis code in here.
     def process(self, file):
         # Skip non-files
