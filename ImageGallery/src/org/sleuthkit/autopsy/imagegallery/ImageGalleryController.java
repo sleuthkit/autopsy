@@ -480,13 +480,19 @@ public final class ImageGalleryController {
 
                     if (isListeningEnabled()) {
                         if (file.isFile()) {
-                            if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
-                                //this file should be included and we don't already know about it from hash sets (NSRL)
-                                queueDBWorkerTask(new UpdateFileTask(file, db));
-                            } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                                //doing this check results in fewer tasks queued up, and faster completion of db update
-                                //this file would have gotten scooped up in initial grab, but actually we don't need it
-                                queueDBWorkerTask(new RemoveFileTask(file, db));
+                            try {
+                                if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
+                                    //this file should be included and we don't already know about it from hash sets (NSRL)
+                                    queueDBWorkerTask(new UpdateFileTask(file, db));
+                                } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                                    //doing this check results in fewer tasks queued up, and faster completion of db update
+                                    //this file would have gotten scooped up in initial grab, but actually we don't need it
+                                    queueDBWorkerTask(new RemoveFileTask(file, db));
+                                }
+                            } catch (TskCoreException ex) {
+                                //TODO: What to do here?
+                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex);
+                                throw new RuntimeException(ex);
                             }
                         }
                     } else {   //TODO: keep track of what we missed for later
@@ -857,8 +863,10 @@ public final class ImageGalleryController {
                 taskDB.commitTransaction(tr, true);
 
             } catch (TskCoreException ex) {
-                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "failed to transfer all database contents", ex);
+                progressHandle.progress("Stopping copy to drawable db task.");
+                Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage());
             }
+
             progressHandle.finish();
 
             updateMessage("");
