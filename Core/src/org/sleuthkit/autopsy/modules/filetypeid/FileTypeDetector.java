@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import org.apache.tika.Tika;
@@ -38,15 +39,14 @@ public class FileTypeDetector {
     private static final Tika tika = new Tika();
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
-    private final Map<String, FileType> userDefinedFileTypes;
+    private final List<FileType> userDefinedFileTypes;
 
     /**
      * Constructs an object that detects the type of a file by an inspection of
      * its contents.
      *
      * @throws FileTypeDetector.FileTypeDetectorInitException if an
-     *                                                        initialization
-     *                                                        error occurs.
+     * initialization error occurs.
      */
     public FileTypeDetector() throws FileTypeDetectorInitException {
         try {
@@ -77,7 +77,12 @@ public class FileTypeDetector {
      * @return True if MIME type is detectable.
      */
     private boolean isDetectableAsUserDefinedType(String mimeType) {
-        return userDefinedFileTypes.containsKey(mimeType);
+        for (FileType fileType : userDefinedFileTypes) {
+            if (fileType.getMimeType().equals(mimeType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -216,7 +221,7 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     private String detectUserDefinedType(AbstractFile file) throws TskCoreException {
-        for (FileType fileType : userDefinedFileTypes.values()) {
+        for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
                 if (fileType.alertOnMatch()) {
                     BlackboardArtifact artifact;
