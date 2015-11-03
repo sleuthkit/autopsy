@@ -77,6 +77,77 @@ public class FileManager implements Closeable {
         }
 
     }
+    
+    /**
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     *
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
+     *
+     * @return a list of AbstractFile for files/directories whose name matches
+     *         the given fileName
+     */
+    public synchronized List<AbstractFile> findFiles(String fileName) throws TskCoreException {
+        List<AbstractFile> result = new ArrayList<>();
+        
+        if (tskCase == null) {
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles.exception.msg"));
+        }
+        List<Content> dataSources = tskCase.getRootObjects();
+        for (Content dataSource : dataSources) {
+            result.addAll(findFiles(dataSource, fileName));
+        }
+        return result;
+    }
+
+    /**
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     *
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
+     * @param dirName    Pattern of the name of the parent directory to use as
+     *                   the root of the search (case insensitive, used in LIKE
+     *                   SQL statement).
+     *
+     * @return a list of AbstractFile for files/directories whose name matches
+     *         fileName and whose parent directory contains dirName.
+     */
+    public synchronized List<AbstractFile> findFiles(String fileName, String dirName) throws TskCoreException {
+        List<AbstractFile> result = new ArrayList<>();
+        
+        if (tskCase == null) {
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles2.exception.msg"));
+        }
+        List<Content> dataSources = tskCase.getRootObjects();
+        for (Content dataSource : dataSources) {
+            result.addAll(findFiles(dataSource, fileName, dirName));
+        }
+        return result;
+    }
+
+    /**
+     * Finds a set of files that meets the name criteria in all data sources in the current case.
+     *
+     * @param fileName   Pattern of the name of the file or directory to match
+     *                   (case insensitive, used in LIKE SQL statement).
+     * @param parentFile Object of root/parent directory to restrict search to.
+     *
+     * @return a list of AbstractFile for files/directories whose name matches
+     *         fileName and that were inside a directory described by
+     *         parentFsContent.
+     */
+    public synchronized List<AbstractFile> findFiles(String fileName, AbstractFile parentFile) throws TskCoreException {
+        List<AbstractFile> result = new ArrayList<>();
+        
+        if (tskCase == null) {
+            throw new TskCoreException(NbBundle.getMessage(this.getClass(), "FileManager.findFiles3.exception.msg"));
+        }
+        List<Content> dataSources = tskCase.getRootObjects();
+        for (Content dataSource : dataSources) {
+          result.addAll(findFiles(dataSource, fileName, parentFile));
+        }
+        return result;
+    }
 
     /**
      * Finds a set of files that meets the name criteria.
