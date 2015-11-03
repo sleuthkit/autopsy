@@ -188,10 +188,11 @@ public class ZoomSettingsPane extends TitledPane {
             slider.valueProperty().removeListener(sliderListener);
             slider.valueChangingProperty().removeListener(sliderListener);
 
-            Platform.runLater(driverChangHandler);
-
-            slider.valueProperty().addListener(sliderListener);
-            slider.valueChangingProperty().addListener(sliderListener);
+            Platform.runLater(() -> {
+                driverChangHandler.run();
+                slider.valueProperty().addListener(sliderListener);
+                slider.valueChangingProperty().addListener(sliderListener);
+            });
         });
     }
 

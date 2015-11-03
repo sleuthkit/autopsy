@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.beans.Observable;
@@ -31,7 +32,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -153,7 +153,7 @@ public final class FilteredEventsModel {
                 if (zoomParams.getTypeZoomLevel().equals(requestedTypeZoom.get()) == false
                         || zoomParams.getDescriptionLOD().equals(requestedLOD.get()) == false
                         || zoomParams.getFilter().equals(requestedFilter.get()) == false
-                        || zoomParams.getTimeRange().equals(requestedTimeRange.get()) == false) {
+                        || Objects.equals(zoomParams.getTimeRange(), requestedTimeRange.get()) == false) {
 
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
                     requestedFilter.set(zoomParams.getFilter());
@@ -294,7 +294,7 @@ public final class FilteredEventsModel {
      *         repository, ignoring any filters or requested ranges
      */
     public Interval getSpanningInterval() {
-        return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000, DateTimeZone.UTC);
+        return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
     }
 
     /**
