@@ -25,7 +25,8 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.datamodel.KeywordSearchService;
+import org.sleuthkit.datamodel.KeywordSearchServiceException;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -36,7 +37,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.openide.util.NbBundle;
 import java.net.InetAddress;
 import java.util.MissingResourceException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
@@ -222,5 +222,15 @@ public class SolrSearchService implements KeywordSearchService {
 
     @Override
     public void close() throws IOException {
+    }
+    
+    /**
+     * Returns whether or not keyword search is enabled for the current job.
+     *
+     * @return True is keyword search is enabled for the current job, false
+     *         otherwise.
+     */
+    public boolean isActive() {
+        return true;
     }
 }
