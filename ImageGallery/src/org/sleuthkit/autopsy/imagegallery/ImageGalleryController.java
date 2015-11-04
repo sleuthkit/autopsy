@@ -782,8 +782,8 @@ public final class ImageGalleryController {
                 + StringUtils.join(FileTypeUtils.getAllSupportedExtensions(),
                         "' or name LIKE '%.")
                 + "')";
-        static private final String MIMETYPE_CLAUSE =
-                "blackboard_attributes.value_text LIKE '"
+        static private final String MIMETYPE_CLAUSE
+                = "blackboard_attributes.value_text LIKE '"
                 + StringUtils.join(FileTypeUtils.getAllSupportedMimeTypes(),
                         "' OR blackboard_attributes.value_text LIKE '") + "' ";
 
@@ -865,13 +865,16 @@ public final class ImageGalleryController {
             } catch (TskCoreException ex) {
                 progressHandle.progress("Stopping copy to drawable db task.");
                 Logger.getLogger(CopyAnalyzedFiles.class.getName()).log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents: " + ex.getMessage());
+                progressHandle.finish();
+                updateMessage("");
+                updateProgress(-1.0);
+                controller.setStale(true);
+                return;
             }
 
             progressHandle.finish();
-
             updateMessage("");
             updateProgress(-1.0);
-
             controller.setStale(false);
         }
     }
