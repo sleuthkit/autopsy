@@ -230,6 +230,7 @@ public class SolrSearchService implements KeywordSearchService {
      * @return True is keyword search is enabled for the current job, false
      *         otherwise.
      */
+    @Override
     public boolean isActive() {
         return true;
     }
