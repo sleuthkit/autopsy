@@ -9,7 +9,7 @@ This page outlines the security protections that exist in a multi-user case depl
 - Messaging Service: ActiveMQ can be configured to require a username and password.  Like the central database, it is up to you to decide on if there is a single username and password or one for each client. 
 
 Because the Solr server does not restrict access to the indexed content,
-you should depoly these services in a network that only authorized users
+you should deploy these services in a network that only authorized users
 have access to.  Future versions will allow for additional protection
 of sensitive data.
 
