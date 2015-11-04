@@ -566,13 +566,18 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushTimeRange(Interval timeRange) {
+    synchronized public boolean pushTimeRange(Interval timeRange) {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(timeRange));
+            return true;
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
             advance(currentZoom.withTimeRange(timeRange));
+            return true;
+        }
+        else{
+            return false;
         }
     }
 

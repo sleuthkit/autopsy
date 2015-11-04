@@ -102,7 +102,7 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
 
     # Where the analysis is done.  Each file will be passed into here.
     # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     def process(self, file):
         # Skip non-files
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 

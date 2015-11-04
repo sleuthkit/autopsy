@@ -93,12 +93,10 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 public class CountsViewPane extends AbstractVisualizationPane<String, Number, Node, EventCountsChart> {
 
+    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
 
-    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
-
     private final NumberAxis countAxis = new NumberAxis();
-
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
 
     private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LOGARITHMIC);
@@ -166,15 +164,14 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 DateTime start = timeRange.getStart();
                 while (timeRange.contains(start)) {
 
-                    final String dateString = start.toString(rangeInfo.getTickFormatter());
+                    final String startString = start.toString(rangeInfo.getTickFormatter());
                     DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
                     final Interval interval = new Interval(start, end);
+                    //increment for next iteration
+                    start = end;
 
                     //query for current range
                     Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(interval);
-
-                    //increment for next iteration
-                    start = end;
 
                     int dateMax = 0; //used in max tracking
 
@@ -190,7 +187,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                             final double adjustedCount = count == 0 ? 0 : scale.get().adjust(count);
 
                             dateMax += adjustedCount;
-                            final XYChart.Data<String, Number> xyData = new BarChart.Data<>(dateString, adjustedCount);
+                            final XYChart.Data<String, Number> xyData = new BarChart.Data<>(startString, adjustedCount);
 
                             xyData.nodeProperty().addListener((Observable o) -> {
                                 final Node node = xyData.getNode();
@@ -202,9 +199,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
                                                     count,
                                                     et.getDisplayName(),
-                                                    dateString,
-                                                    interval.getEnd().toString(
-                                                            rangeInfo.getTickFormatter())));
+                                                    startString,
+                                                    interval.getEnd().toString(rangeInfo.getTickFormatter())));
                                     tooltip.setGraphic(new ImageView(et.getFXImage()));
                                     Tooltip.install(node, tooltip);
 
@@ -219,7 +215,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                         }
                                     });
 
-                                    node.addEventHandler(MouseEvent.MOUSE_CLICKED, new BarClickHandler(node, dateString, interval, et));
+                                    node.addEventHandler(MouseEvent.MOUSE_CLICKED, new BarClickHandler(node, startString, interval, et));
                                 }
                             });
 

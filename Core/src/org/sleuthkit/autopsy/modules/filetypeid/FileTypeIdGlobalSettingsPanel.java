@@ -58,8 +58,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * the MIME types to file type objects lies behind the list model. This map
      * is obtained from the user-defined types manager.
      */
-    private DefaultListModel<String> typesListModel;
-    private Map<String, FileType> fileTypes;
+    private DefaultListModel<FileType> typesListModel;
+    private java.util.List<FileType> fileTypes;
 
     /**
      * This panel implements a property change listener that listens to ingest
@@ -227,7 +227,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                     ex.getLocalizedMessage(),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.loadFailed.title"),
                     JOptionPane.ERROR_MESSAGE);
-            fileTypes = Collections.emptyMap();
+            fileTypes = Collections.emptyList();
         }
         enableButtons();
     }
@@ -236,11 +236,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * Sets the list model for the file types list component.
      */
     private void updateFileTypesListModel() {
-        ArrayList<String> mimeTypes = new ArrayList<>(fileTypes.keySet());
-        Collections.sort(mimeTypes);
         typesListModel.clear();
-        for (String mimeType : mimeTypes) {
-            typesListModel.addElement(mimeType);
+        for (FileType fileType : fileTypes) {
+            typesListModel.addElement(fileType);
+
         }
     }
 
@@ -249,10 +248,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      * panel based on the current selection in the file types list.
      */
     private void populateTypeDetailsComponents() {
-        String mimeType = typesList.getSelectedValue();
-        FileType fileType = fileTypes.get(mimeType);
+        FileType fileType = typesList.getSelectedValue();
         if (null != fileType) {
             mimeTypeTextField.setText(fileType.getMimeType());
+            mimeTypeTextField.setEditable(false);
             Signature signature = fileType.getSignature();
             FileType.Signature.Type sigType = signature.getType();
             signatureTypeComboBox.setSelectedItem(sigType == FileType.Signature.Type.RAW ? FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM : FileTypeIdGlobalSettingsPanel.ASCII_SIGNATURE_TYPE_COMBO_BOX_ITEM);
@@ -286,6 +285,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void clearTypeDetailsComponents() {
         typesList.clearSelection();
         mimeTypeTextField.setText(""); //NON-NLS
+        mimeTypeTextField.setEditable(true);
         signatureTypeComboBox.setSelectedItem(FileTypeIdGlobalSettingsPanel.RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM);
         hexPrefixLabel.setVisible(true);
         signatureTextField.setText("0000"); //NON-NLS
@@ -339,7 +339,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void initComponents() {
 
         typesScrollPane = new javax.swing.JScrollPane();
-        typesList = new javax.swing.JList<String>();
+        typesList = new javax.swing.JList<FileType>();
         separator = new javax.swing.JSeparator();
         mimeTypeLabel = new javax.swing.JLabel();
         mimeTypeTextField = new javax.swing.JTextField();
@@ -451,48 +451,47 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                         .addGap(30, 30, 30))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(deleteTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(mimeTypeLabel)
-                                    .addGap(30, 30, 30)
-                                    .addComponent(mimeTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(postHitCheckBox)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(signatureTypeLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(signatureTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(signatureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(hexPrefixLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(signatureTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(offsetLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(offsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                    .addGap(21, 21, 21)
-                                    .addComponent(filesSetNameLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(saveTypeButton)
-                                .addGap(8, 8, 8)))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addComponent(deleteTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(typesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(mimeTypeLabel)
+                                            .addGap(30, 30, 30)
+                                            .addComponent(mimeTypeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(postHitCheckBox)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(signatureTypeLabel)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(signatureTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(signatureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(hexPrefixLabel)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(signatureTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(offsetLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(offsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                            .addGap(21, 21, 21)
+                                            .addComponent(filesSetNameLabel)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(filesSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(saveTypeButton)
+                                        .addGap(8, 8, 8))))
                             .addComponent(jLabel1)
                             .addComponent(jLabel3))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
@@ -557,8 +556,8 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_newTypeButtonActionPerformed
 
     private void deleteTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTypeButtonActionPerformed
-        String typeName = typesList.getSelectedValue();
-        fileTypes.remove(typeName);
+        FileType fileType = typesList.getSelectedValue();
+        fileTypes.remove(fileType);
         updateFileTypesListModel();
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
@@ -626,7 +625,10 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         /**
          * Get the interesting files set details.
          */
-        String filesSetName = filesSetNameTextField.getText();
+        String filesSetName = "";
+        if (postHitCheckBox.isSelected()) {
+            filesSetName = filesSetNameTextField.getText();
+        }
         if (postHitCheckBox.isSelected() && filesSetName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidInterestingFilesSetName.message"),
@@ -640,9 +642,13 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
          */
         FileType.Signature signature = new FileType.Signature(signatureBytes, offset, sigType);
         FileType fileType = new FileType(typeName, signature, filesSetName, postHitCheckBox.isSelected());
-        fileTypes.put(typeName, fileType);
+        FileType selected = typesList.getSelectedValue();
+        if (selected != null) {
+            fileTypes.remove(selected);
+        }
+        fileTypes.add(fileType);
         updateFileTypesListModel();
-        typesList.setSelectedValue(fileType.getMimeType(), true);
+        typesList.setSelectedValue(fileType, true);
     }//GEN-LAST:event_saveTypeButtonActionPerformed
 
     private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
@@ -685,7 +691,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JTextField signatureTextField;
     private javax.swing.JComboBox<String> signatureTypeComboBox;
     private javax.swing.JLabel signatureTypeLabel;
-    private javax.swing.JList<String> typesList;
+    private javax.swing.JList<FileType> typesList;
     private javax.swing.JScrollPane typesScrollPane;
     // End of variables declaration//GEN-END:variables
 

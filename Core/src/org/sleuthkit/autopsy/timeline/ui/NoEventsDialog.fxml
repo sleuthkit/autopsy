@@ -19,7 +19,7 @@
 </graphic>
 <content>
 <VBox alignment="CENTER_RIGHT" fillWidth="false" prefHeight="130.0" prefWidth="259.0" spacing="5.0">
-<children><Label graphicTextGap="10.0" fx:id="noEventsDialogLabel" wrapText="true" GridPane.columnIndex="1" VBox.vgrow="ALWAYS">
+<children><Label fx:id="noEventsDialogLabel" graphicTextGap="10.0" wrapText="true" GridPane.columnIndex="1" VBox.vgrow="ALWAYS">
 <GridPane.margin>
 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 </GridPane.margin>
@@ -50,7 +50,7 @@
 </GridPane.margin>
 <VBox.margin>
 <Insets />
-</VBox.margin></Button><Button fx:id="resetFiltersButton" alignment="BASELINE_LEFT" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="25.0" prefWidth="120.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+</VBox.margin></Button><Button fx:id="resetFiltersButton" alignment="BASELINE_LEFT" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
 <graphic>
 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
 <image>
