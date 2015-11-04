@@ -40,6 +40,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -345,9 +347,11 @@ public class EventsRepository {
         private final Runnable postPopulationOperation;
         private final SleuthkitCase skCase;
         private final TagsManager tagsManager;
+        private final ProgressHandle progressHandle;
 
         public RebuildTagsWorker(Runnable postPopulationOperation) {
-            progressDialog = new ProgressWindow(null, true, this);
+            progressDialog = new ProgressWindow(null, false, this);
+            progressHandle = ProgressHandleFactory.createHandle("refreshing tags", () -> cancel(true));
             progressDialog.setVisible(true);
 
             skCase = autoCase.getSleuthkitCase();
@@ -358,7 +362,7 @@ public class EventsRepository {
 
         @Override
         protected Void doInBackground() throws Exception {
-
+            progressHandle.start();
             EventDB.EventTransaction trans = eventDB.beginTransaction();
             LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
             eventDB.reInitializeTags();
@@ -411,6 +415,11 @@ public class EventsRepository {
             super.process(chunks);
             ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
             progressDialog.update(chunk);
+
+            progressHandle.switchToDeterminate(chunk.getTotal());
+            progressHandle.setDisplayName(chunk.getHeaderMessage());
+            progressHandle.progress(chunk.getDetailMessage());
+            progressHandle.progress(chunk.getProgress());
         }
 
         @Override
@@ -418,8 +427,10 @@ public class EventsRepository {
                 + "  Some events may have inacurate tags. See the log for details.")
         protected void done() {
             super.done();
+
+            progressHandle.finish();
+            progressDialog.close();
             try {
-                progressDialog.close();
                 get();
             } catch (CancellationException ex) {
                 LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
@@ -443,11 +454,12 @@ public class EventsRepository {
         private final Runnable postPopulationOperation;
         private final SleuthkitCase skCase;
         private final TagsManager tagsManager;
+        private final ProgressHandle progressHandle;
 
         public DBPopulationWorker(Runnable postPopulationOperation) {
-            progressDialog = new ProgressWindow(null, true, this);
+            progressDialog = new ProgressWindow(null, false, this);
             progressDialog.setVisible(true);
-
+            progressHandle = ProgressHandleFactory.createHandle("(re)initializing events database", () -> this.cancel(true));
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
 
@@ -459,6 +471,7 @@ public class EventsRepository {
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
+            progressHandle.start();
             publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), ""));
             //reset database 
             //TODO: can we do more incremental updates? -jm
@@ -561,6 +574,15 @@ public class EventsRepository {
             super.process(chunks);
             ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
             progressDialog.update(chunk);
+
+            if (chunk.getTotal() >= 0) {
+                progressHandle.switchToDeterminate(chunk.getTotal());
+            } else {
+                progressHandle.switchToIndeterminate();
+            }
+            progressHandle.setDisplayName(chunk.getHeaderMessage());
+            progressHandle.progress(chunk.getDetailMessage());
+            progressHandle.progress(chunk.getProgress());
         }
 
         @Override
@@ -568,11 +590,12 @@ public class EventsRepository {
                 + "  Not all events may be present or accurate. See the log for details.")
         protected void done() {
             super.done();
+            progressHandle.finish();
+            progressDialog.close();
             try {
-                progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details."); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());

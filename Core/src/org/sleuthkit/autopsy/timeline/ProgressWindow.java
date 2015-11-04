@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * Dialog with progress bar that pops up when timeline is being generated
  */
 public class ProgressWindow extends JFrame {
-
+    
     private final SwingWorker<?, ?> worker;
 
     /**
@@ -50,25 +50,25 @@ public class ProgressWindow extends JFrame {
     public ProgressWindow(Component parent, boolean modal, SwingWorker<?, ?> worker) {
         super();
         initComponents();
-
+        
         setLocationRelativeTo(parent);
-
+        
         setAlwaysOnTop(modal);
 
         //set icon the same as main app
         SwingUtilities.invokeLater(() -> {
             setIconImage(WindowManager.getDefault().getMainWindow().getIconImage());
         });
-
+        
         setName(Bundle.Timeline_progressWindow_name());
         setTitle(Bundle.Timeline_progressWindow_title());
         // Close the dialog when Esc is pressed
         String cancelName = "cancel"; // NON-NLS
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
-
+        
         actionMap.put(cancelName, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -149,7 +149,7 @@ public class ProgressWindow extends JFrame {
             }
         });
     }
-
+    
     public void close() {
         worker.cancel(false);
         setVisible(false);
@@ -181,28 +181,28 @@ public class ProgressWindow extends JFrame {
      */
     @Immutable
     public static class ProgressUpdate {
-
+        
         private final int progress;
         private final int total;
         private final String headerMessage;
         private final String detailMessage;
-
+        
         public int getProgress() {
             return progress;
         }
-
+        
         public int getTotal() {
             return total;
         }
-
+        
         public String getHeaderMessage() {
             return headerMessage;
         }
-
+        
         public String getDetailMessage() {
             return detailMessage;
         }
-
+        
         public ProgressUpdate(int progress, int total, String headerMessage, String detailMessage) {
             super();
             this.progress = progress;
