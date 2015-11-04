@@ -18,23 +18,13 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import com.google.common.collect.Sets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
-import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -112,7 +102,7 @@ public class ImageGalleryModule {
      * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
      */
-    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) {
+    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws TskCoreException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
     }
 }

@@ -51,9 +51,9 @@ public enum FileTypeUtils {
     private static final Logger LOGGER = Logger.getLogger(FileTypeUtils.class.getName());
 
     /**
-     * Set of specific mimetypes (as strings) that we should support(ie,
-     * include in db and show to user).
-     * These are in addition to all image/* or video/* types
+     * Set of specific mimetypes (as strings) that we should support(ie, include
+     * in db and show to user). These are in addition to all image/* or video/*
+     * types
      */
     private static final Set<String> supportedMimeTypes = new HashSet<>();
     /**
@@ -76,8 +76,8 @@ public enum FileTypeUtils {
      */
     private static final Set<String> supportedExtensions;
     /**
-     * Lazily instantiated FileTypeDetector to use when the mimetype of a
-     * file is needed
+     * Lazily instantiated FileTypeDetector to use when the mimetype of a file
+     * is needed
      */
     private static FileTypeDetector FILE_TYPE_DETECTOR;
 
@@ -86,8 +86,8 @@ public enum FileTypeUtils {
     private static final TreeSet<String> GIF_MIME_SET = new TreeSet<>(Arrays.asList(IMAGE_GIF_MIME));
 
     /**
-     * static initalizer block to initialize sets of extensions and mimetypes
-     * to be supported
+     * static initalizer block to initialize sets of extensions and mimetypes to
+     * be supported
      */
     static {
         ImageIO.scanForPlugins();
@@ -169,7 +169,7 @@ public enum FileTypeUtils {
      *
      * @return true if this file is supported or false if not
      */
-    public static boolean isDrawable(AbstractFile file) {
+    public static boolean isDrawable(AbstractFile file) throws TskCoreException {
         return hasDrawableMimeType(file).orElseGet(() -> {
             final boolean contains = FileTypeUtils.supportedExtensions.contains(file.getNameExtension());
             final boolean jpegFileHeader = ImageUtils.isJpegFileHeader(file);
@@ -209,28 +209,25 @@ public enum FileTypeUtils {
      *
      * @param file
      *
-     * @return an Optional containg:
-     *         True if the file has an image or video mime type.
-     *         False if a non image/video mimetype.
-     *         null empty Optional if a mimetype could not be detected.
+     * @return an Optional containg: True if the file has an image or video mime
+     *         type. False if a non image/video mimetype. empty Optional if
+     *         a mimetype could not be detected.
      */
-    static Optional<Boolean> hasDrawableMimeType(AbstractFile file) {
-        try {
-            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
-            if (nonNull(fileTypeDetector)) {
-                String mimeType = fileTypeDetector.getFileType(file);
-                if (isNull(mimeType)) {
-                    return Optional.empty();
-                } else {
-                    mimeType = mimeType.toLowerCase();
-                    return Optional.of(mimeType.startsWith("image/")
-                            || mimeType.startsWith("video/")
-                            || supportedMimeTypes.contains(mimeType));
-                }
+    static Optional<Boolean> hasDrawableMimeType(AbstractFile file) throws TskCoreException {
+
+        final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+        if (nonNull(fileTypeDetector)) {
+            String mimeType = fileTypeDetector.getFileType(file);
+            if (isNull(mimeType)) {
+                return Optional.empty();
+            } else {
+                mimeType = mimeType.toLowerCase();
+                return Optional.of(mimeType.startsWith("image/")
+                        || mimeType.startsWith("video/")
+                        || supportedMimeTypes.contains(mimeType));
             }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.INFO, "failed to get mime type for " + file.getName(), ex);
         }
+
         return Optional.empty();
     }
 
