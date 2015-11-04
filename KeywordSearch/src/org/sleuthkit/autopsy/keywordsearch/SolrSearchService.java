@@ -175,8 +175,7 @@ public class SolrSearchService implements KeywordSearchService {
      *
      * @param host the remote hostname or IP address of the Solr server
      * @param port the remote port for Solr
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.KeywordSearchServiceException
+     * @throws org.sleuthkit.datamodel.KeywordSearchServiceException
      *
      */
     @Override
