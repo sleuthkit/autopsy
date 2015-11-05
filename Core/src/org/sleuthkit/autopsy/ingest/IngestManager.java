@@ -945,7 +945,7 @@ public class IngestManager {
                         @Override
                         public boolean cancel() {
                             if (progress != null) {
-                                progress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.cancelling", displayName));
+                                progress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling", displayName));
                             }
                             Future<?> handle = ingestJobStarters.remove(threadId);
                             handle.cancel(true);
