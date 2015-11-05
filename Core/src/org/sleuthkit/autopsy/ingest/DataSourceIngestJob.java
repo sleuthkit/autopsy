@@ -753,15 +753,15 @@ final class DataSourceIngestJob {
     }
     
     /**
-     * Updates the display name shown on the current file ingest
+     * Updates the message shown on the current file ingest
      * progress bar for this job.
      *
      * @param displayName The new display name.
      */
-    void updateFileIngestProgressBarMessage(String displayName) {
+    void updateFileIngestProgressBarMessage(String message) {
         if (this.doUI && !this.cancelled) {
             synchronized (this.fileIngestProgressLock) {
-                this.fileIngestProgress.progress(displayName);
+                this.fileIngestProgress.progress(message);
             }
         }
     }

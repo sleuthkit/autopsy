@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -119,7 +120,10 @@ final class FileIngestPipeline {
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    this.job.updateFileIngestProgressBarMessage(module.getDisplayName() + " for " + task.getFile().getName());
+                    String message = NbBundle.getMessage(this.getClass(),
+                            "IngestJob.progress.fileIngest.displayName",
+                            module.getDisplayName(), task.getFile().getName());
+                    this.job.updateFileIngestProgressBarMessage(message);
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
