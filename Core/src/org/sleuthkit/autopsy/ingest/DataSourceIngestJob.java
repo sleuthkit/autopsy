@@ -720,7 +720,6 @@ final class DataSourceIngestJob {
                             }
                         }
                     }
-
                 }
                 this.fileIngestPipelinesQueue.put(pipeline);
             }
@@ -960,6 +959,13 @@ final class DataSourceIngestJob {
         this.checkForStageCompleted();
     }
 
+    /**
+     * Set the current module name being run and the file name it is running on.
+     * To be used for more detailed cancelling.
+     * 
+     * @param moduleName Name of module currently running.
+     * @param taskName  Name of file the module is running on.
+     */
     void setCurrentFileIngestModule(String moduleName, String taskName) {
         this.currentFileIngestModule = moduleName;
         this.currentFileIngestTask = taskName;
