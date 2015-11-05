@@ -148,6 +148,8 @@ final class DataSourceIngestJob {
     private long estimatedFilesToProcess;
     private long processedFiles;
     private ProgressHandle fileIngestProgress;
+    private String currentFileIngestModule;
+    private String currentFileIngestTask;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -172,6 +174,8 @@ final class DataSourceIngestJob {
         this.settings = settings;
         this.doUI = runInteractively;
         this.createTime = new Date().getTime();
+        this.currentFileIngestModule = "";
+        this.currentFileIngestTask = "";
         this.createIngestPipelines();
     }
 
@@ -704,6 +708,21 @@ final class DataSourceIngestJob {
                         logIngestModuleErrors(errors);
                     }
 
+                    if (this.doUI && !this.cancelled) {
+                        synchronized (this.fileIngestProgressLock) {
+                            /**
+                             * Update the file ingest progress bar again, in
+                             * case the file was being displayed.
+                             */
+                            this.filesInProgress.remove(file.getName());
+                            if (this.filesInProgress.size() > 0) {
+                                this.fileIngestProgress.progress(this.filesInProgress.get(0));
+                            } else {
+                                this.fileIngestProgress.progress("");
+                            }
+                        }
+                    }
+
                 }
                 this.fileIngestPipelinesQueue.put(pipeline);
             }
@@ -748,20 +767,6 @@ final class DataSourceIngestJob {
         if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
                 this.dataSourceIngestProgress.setDisplayName(displayName);
-            }
-        }
-    }
-    
-    /**
-     * Updates the message shown on the current file ingest
-     * progress bar for this job.
-     *
-     * @param displayName The new display name.
-     */
-    void updateFileIngestProgressBarMessage(String message) {
-        if (this.doUI && !this.cancelled) {
-            synchronized (this.fileIngestProgressLock) {
-                this.fileIngestProgress.progress(message);
             }
         }
     }
@@ -939,6 +944,10 @@ final class DataSourceIngestJob {
                     this.fileIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.canceling",
                                     displayName));
+                    this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
+                            "IngestJob.progress.fileIngest.cancelMessage",
+                            this.currentFileIngestModule, this.currentFileIngestTask));
+
                 }
             }
         }
@@ -951,6 +960,11 @@ final class DataSourceIngestJob {
          */
         DataSourceIngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
         this.checkForStageCompleted();
+    }
+
+    void setCurrentFileIngestModule(String moduleName, String taskName) {
+        this.currentFileIngestModule = moduleName;
+        this.currentFileIngestTask = taskName;
     }
 
     /**

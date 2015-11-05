@@ -120,10 +120,7 @@ final class FileIngestPipeline {
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    String message = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.fileIngest.displayName",
-                            module.getDisplayName(), task.getFile().getName());
-                    this.job.updateFileIngestProgressBarMessage(message);
+                    this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
