@@ -148,8 +148,8 @@ final class DataSourceIngestJob {
     private long estimatedFilesToProcess;
     private long processedFiles;
     private ProgressHandle fileIngestProgress;
-    private String currentFileIngestModule;
-    private String currentFileIngestTask;
+    private String currentFileIngestModule = "";
+    private String currentFileIngestTask = "";
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -174,8 +174,6 @@ final class DataSourceIngestJob {
         this.settings = settings;
         this.doUI = runInteractively;
         this.createTime = new Date().getTime();
-        this.currentFileIngestModule = "";
-        this.currentFileIngestTask = "";
         this.createIngestPipelines();
     }
 
