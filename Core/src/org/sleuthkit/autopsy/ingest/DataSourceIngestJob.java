@@ -922,7 +922,7 @@ final class DataSourceIngestJob {
                             dataSource.getName());
                     dataSourceIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(),
-                                    "IngestJob.progress.cancelling",
+                                    "IngestJob.progress.canceling",
                                     displayName));
                 }
             }
@@ -937,7 +937,7 @@ final class DataSourceIngestJob {
                             "IngestJob.progress.fileIngest.displayName",
                             this.dataSource.getName());
                     this.fileIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
+                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.canceling",
                                     displayName));
                 }
             }
