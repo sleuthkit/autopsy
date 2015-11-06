@@ -131,21 +131,19 @@ public interface ArtifactEventType extends EventType {
      * Build a {@link AttributeEventDescription} derived from a
      * {@link BlackboardArtifact}. This is a template method that relies on each
      * {@link SubType}'s implementation of
-     * {@link SubType#parseAttributesHelper(org.sleuthkit.datamodel.BlackboardArtifact, java.util.Map)}
-     * know how to go from {@link BlackboardAttribute}s to the event
-     * description.
+     * {@link SubType#parseAttributesHelper()} to know how to go from
+     * {@link BlackboardAttribute}s to the event description.
      *
      * @param artf the {@link BlackboardArtifact} to derive the event
      *             description from
      *
      * @return an {@link AttributeEventDescription} derived from the given
-     *         artifact
+     *         artifact, if the given artifact has no timestamp
      *
      * @throws TskCoreException is there is a problem accessing the blackboard
      *                          data
      */
-    static public AttributeEventDescription buildEventDescription(
-            ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
+    static public AttributeEventDescription buildEventDescription(ArtifactEventType type, BlackboardArtifact artf) throws TskCoreException {
         //if we got passed an artifact that doesn't correspond to the type of the event, 
         //something went very wrong. throw an exception.
         if (type.getArtifactType().getTypeID() != artf.getArtifactTypeID()) {
@@ -166,7 +164,7 @@ public interface ArtifactEventType extends EventType {
         }
 
         if (attrMap.get(type.getDateTimeAttrubuteType()) == null) {
-            Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0}  has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
+            Logger.getLogger(AttributeEventDescription.class.getName()).log(Level.WARNING, "Artifact {0} has no date/time attribute, skipping it.", artf.getArtifactID()); // NON-NLS
             return null;
         }
         //use the hook provided by this subtype implementation
@@ -187,8 +185,6 @@ public interface ArtifactEventType extends EventType {
             this.attribute = attribute;
         }
     }
-
-   
 
     public static class EmptyExtractor implements BiFunction<BlackboardArtifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute>, String> {
 
