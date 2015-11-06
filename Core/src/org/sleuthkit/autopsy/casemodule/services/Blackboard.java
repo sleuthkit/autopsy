@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -44,7 +43,7 @@ public final class Blackboard implements Closeable {
      */
     public static void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
         KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        if (null != searchService) {
+        if (null == searchService) {
             throw new BlackboardException("Keyword search service not found");
         }
         
@@ -57,7 +56,6 @@ public final class Blackboard implements Closeable {
 
     @Override
     public void close() throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
