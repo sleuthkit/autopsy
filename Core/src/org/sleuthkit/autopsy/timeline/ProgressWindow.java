@@ -204,11 +204,14 @@ public class ProgressWindow extends JFrame {
         }
 
         public ProgressUpdate(int progress, int total, String headerMessage, String detailMessage) {
-            super();
             this.progress = progress;
             this.total = total;
             this.headerMessage = headerMessage;
             this.detailMessage = detailMessage;
+        }
+
+        public ProgressUpdate(int progress, int total, String headerMessage) {
+            this(progress, total, headerMessage, "");
         }
     }
 }
