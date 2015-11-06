@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -41,16 +42,16 @@ public final class Blackboard implements Closeable {
      * @throws
      * org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException
      */
-    public static void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
+    public void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
         KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         if (null == searchService) {
-            throw new BlackboardException("Keyword search service not found");
+            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.keywordSearchNotFound.exception.msg"));
         }
         
         try {
             searchService.indexArtifact(artifact);
         } catch (TskCoreException ex) {
-            throw new BlackboardException("Unable to index blackboard artifact", ex);
+            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.unableToIndexArtifact.exception.msg"), ex);
         }
     }
 

@@ -146,6 +146,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
 
         // Next create the index entry for the document content.
