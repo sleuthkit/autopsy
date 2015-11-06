@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import org.joda.time.DateTime;
@@ -31,44 +31,53 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 /**
  *
  */
+@NbBundle.Messages({"GuideLine.tooltip.text={0}\nRight-click to remove.\nRight-drag to reposition."})
 class GuideLine extends Line {
 
     private final Axis<DateTime> dateAxis;
+    private Tooltip tooltip = new Tooltip();
 
     private double startLayoutX;
-
-    protected Tooltip tooltip;
-
     private double dragStartX = 0;
 
     GuideLine(double startX, double startY, double endX, double endY, Axis<DateTime> axis) {
         super(startX, startY, endX, endY);
         dateAxis = axis;
+        //TODO: assign via css
         setCursor(Cursor.E_RESIZE);
         getStrokeDashArray().setAll(5.0, 5.0);
         setStroke(Color.RED);
         setOpacity(.5);
         setStrokeWidth(3);
 
-        setOnMouseEntered((MouseEvent event) -> {
-            setTooltip();
-        });
+        Tooltip.install(this, tooltip);
+        tooltip.textProperty().bind(new StringBinding() {
+            {
+                bind(layoutXProperty());
+            }
 
-        setOnMousePressed((MouseEvent event) -> {
+            @Override
+            protected String computeValue() {
+                return Bundle.GuideLine_tooltip_text(formatSpan(getDateTime()));
+            }
+        });
+//        setOnMouseEntered(enteredEvent -> updateToolTipText());
+        setOnMousePressed(pressedEvent -> {
             startLayoutX = getLayoutX();
-            dragStartX = event.getScreenX();
+            dragStartX = pressedEvent.getScreenX();
         });
-        setOnMouseDragged((MouseEvent event) -> {
-            double dX = event.getScreenX() - dragStartX;
-
+        setOnMouseDragged(dragEvent -> {
+            double dX = dragEvent.getScreenX() - dragStartX;
             relocate(startLayoutX + dX, 0);
+//            updateToolTipText();
+            dragEvent.consume();
         });
     }
 
-    private void setTooltip() {
+    private void updateToolTipText() {
         Tooltip.uninstall(this, tooltip);
-        tooltip = new Tooltip(
-                NbBundle.getMessage(this.getClass(), "Timeline.ui.detailview.tooltip.text", formatSpan(getDateTime())));
+
+        tooltip = new Tooltip(Bundle.GuideLine_tooltip_text(formatSpan(getDateTime())));
         Tooltip.install(this, tooltip);
     }
 
