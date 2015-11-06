@@ -425,9 +425,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         return getNodes(x -> true);
     }
 
-    synchronized void setVScroll(double d) {
-        final double h = maxY.get() - (getHeight() * .9);
-        nodeGroup.setTranslateY(-d * h);
+    synchronized void setVScroll(double vScrollValue) {
+        nodeGroup.setTranslateY(-vScrollValue);
     }
 
     private void clearGuideLine() {
