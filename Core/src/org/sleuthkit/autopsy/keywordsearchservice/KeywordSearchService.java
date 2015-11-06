@@ -23,9 +23,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * @deprecated Use org.sleuthkit.datamodel.KeywordSearchService instead.
+ * 
  */
-@Deprecated
 public interface KeywordSearchService extends Closeable {
 
     /**
