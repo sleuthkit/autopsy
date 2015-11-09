@@ -20,11 +20,16 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedSet;
+import java.util.logging.Level;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,6 +45,8 @@ public class FileTypeDetector {
     private static final int BUFFER_SIZE = 64 * 1024;
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
+    private static Blackboard blackboard;
+    private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
 
     /**
      * Constructs an object that detects the type of a file by an inspection of
@@ -167,6 +174,7 @@ public class FileTypeDetector {
      * @throws TskCoreException
      */
     public String detect(AbstractFile file) throws TskCoreException {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         // consistently mark non-regular files (refer TskData.TSK_FS_META_TYPE_ENUM),
         // 0 sized files, unallocated, and unused blocks (refer TskData.TSK_DB_FILES_TYPE_ENUM)
         // as octet-stream.
@@ -236,6 +244,15 @@ public class FileTypeDetector {
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                     artifact.addAttribute(ruleNameAttribute);
+
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                    }
                 }
                 return fileType.getMimeType();
             }
