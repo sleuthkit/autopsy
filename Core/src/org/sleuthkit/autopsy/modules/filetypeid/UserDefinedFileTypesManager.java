@@ -213,6 +213,9 @@ final class UserDefinedFileTypesManager {
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
             fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
             fileTypes.add(fileType);
+            byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
+            fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
+            fileTypes.add(fileType);
 
             // Add rule for .pam
             fileType = new FileType("image/x-portable-arbitrarymap", new Signature("P7", 0L), "", false); //NON-NLS
@@ -220,6 +223,8 @@ final class UserDefinedFileTypesManager {
 
             // Add rule for .pfm
             fileType = new FileType("image/x-portable-floatmap", new Signature("PF", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);
+            fileType = new FileType("image/x-portable-floatmap", new Signature("Pf", 0L), "", false); //NON-NLS
             fileTypes.add(fileType);
         }
         // parseHexBinary() throws this if the argument passed in is not Hex

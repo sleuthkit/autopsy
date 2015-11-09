@@ -46,6 +46,7 @@ public final class CaseMetadata {
     private final String examiner;
     private final String caseDirectory;
     private final String caseDatabaseName;
+    private final String caseTextIndexName;
 
     /**
      * Constructs an object that provides access to case metadata.
@@ -71,6 +72,7 @@ public final class CaseMetadata {
                 throw new CaseMetadataException("Case directory missing");
             }
             caseDatabaseName = metadata.getDatabaseName();
+            caseTextIndexName = metadata.getTextIndexName();
             if (Case.CaseType.MULTI_USER_CASE == caseType && caseDatabaseName.isEmpty()) {
                 throw new CaseMetadataException("Case database name missing");
             }
@@ -131,6 +133,15 @@ public final class CaseMetadata {
      */
     public String getCaseDatabaseName() {
         return caseDatabaseName;
+    }
+    
+    /**
+     * Gets the text index name.
+     *
+     * @return The case text index name, will be empty for a single-user case.
+     */
+    public String getTextIndexName() {
+        return caseTextIndexName;
     }
 
 }
