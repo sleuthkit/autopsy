@@ -155,9 +155,9 @@ class ContactAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, NbBundle.getMessage(ContactAnalyzer.class, "Blackboard.unableToIndexArtifact.exception.msg") + bba.getDisplayName(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(ContactAnalyzer.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
                 }
             }
 
