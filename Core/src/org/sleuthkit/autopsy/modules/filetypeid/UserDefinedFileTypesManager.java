@@ -488,7 +488,7 @@ final class UserDefinedFileTypesManager {
             long offset = DatatypeConverter.parseLong(offsetString);
             
             String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
-            if(relativeString == null)
+            if(relativeString == null || relativeString.equals(""))
                 return new Signature(signatureBytes, offset, signatureType);
             
             boolean isRelative = DatatypeConverter.parseBoolean(relativeString);
