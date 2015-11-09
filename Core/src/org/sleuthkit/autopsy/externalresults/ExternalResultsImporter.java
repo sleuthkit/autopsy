@@ -28,9 +28,12 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ErrorInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -52,6 +55,7 @@ public final class ExternalResultsImporter {
     private static final Logger logger = Logger.getLogger(ExternalResultsImporter.class.getName());
     private static final HashSet<Integer> standardArtifactTypeIds = new HashSet<>();
     private final List<ErrorInfo> errors = new ArrayList<>();
+    private Blackboard blackboard;
 
     static {
         for (BlackboardArtifact.ARTIFACT_TYPE artifactType : BlackboardArtifact.ARTIFACT_TYPE.values()) {
@@ -71,6 +75,7 @@ public final class ExternalResultsImporter {
      *         interface.
      */
     public List<ErrorInfo> importResults(ExternalResults results) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         // Import files first, they may be artifactData sources.
         importDerivedFiles(results);
         importArtifacts(results);
@@ -170,6 +175,15 @@ public final class ExternalResultsImporter {
                         }
                     }
                     artifact.addAttributes(attributes);
+
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                    }
 
                     if (standardArtifactTypeIds.contains(artifactTypeId)) {
                         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(this.getClass().getSimpleName(), BlackboardArtifact.ARTIFACT_TYPE.fromID(artifactTypeId)));
