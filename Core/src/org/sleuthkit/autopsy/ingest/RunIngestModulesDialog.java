@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.Content;
 public final class RunIngestModulesDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
+    private final boolean isDir;
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private final List<Content> dataSources = new ArrayList<>();
     private IngestJobSettingsPanel ingestJobSettingsPanel;
@@ -59,6 +60,23 @@ public final class RunIngestModulesDialog extends JDialog {
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
         this.dataSources.addAll(dataSources);
+        this.isDir = false;
+    }
+    
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @param frame       The dialog parent window.
+     * @param title       The title for the dialog.
+     * @param modal       True if the dialog should be modal, false otherwise.
+     * @param dataSources The data sources to be processed.
+     * @param isDir       Whether the data sources are directories
+     */
+    public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources, boolean isDir) {
+        super(frame, title, modal);
+        this.dataSources.addAll(dataSources);
+        this.isDir = isDir;
     }
 
     /**
@@ -69,6 +87,17 @@ public final class RunIngestModulesDialog extends JDialog {
      */
     public RunIngestModulesDialog(List<Content> dataSources) {
         this(new JFrame(TITLE), TITLE, true, dataSources);
+    }
+    
+    /**
+     * Construct a dialog box that allows a user to configure and run an ingest
+     * job on one or more data sources.
+     *
+     * @param dataSources The data sources to be processed.
+     * @param isDir       Whether the data sources are directories
+     */
+    public RunIngestModulesDialog(List<Content> dataSources, boolean isDir) {
+        this(new JFrame(TITLE), TITLE, true, dataSources, isDir);
     }
 
     /**
@@ -84,6 +113,7 @@ public final class RunIngestModulesDialog extends JDialog {
     @Deprecated
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
+        this.isDir = false;
     }
 
     /**
@@ -129,7 +159,7 @@ public final class RunIngestModulesDialog extends JDialog {
          * Get the default or saved ingest job settings for this context and use
          * them to create and add an ingest job settings panel.
          */
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), isDir);
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);

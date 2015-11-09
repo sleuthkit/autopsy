@@ -58,6 +58,7 @@ public class IngestJobSettings {
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
+    private final boolean isDir;
 
     /**
      * Constructs an ingest job settings object for a given context.
@@ -69,6 +70,23 @@ public class IngestJobSettings {
         this.moduleTemplates = new ArrayList<>();
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
         this.warnings = new ArrayList<>();
+        this.isDir = false;
+        this.createSavedModuleSettingsFolder();
+        this.load();
+    }
+    
+    /**
+     * Constructs an ingest job settings object for a given context.
+     *
+     * @param context The context identifier string.
+     * @param isDir   Whether the dataSources are directories
+     */
+    public IngestJobSettings(String context, boolean isDir) {
+        this.context = context;
+        this.moduleTemplates = new ArrayList<>();
+        this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
+        this.warnings = new ArrayList<>();
+        this.isDir = isDir;
         this.createSavedModuleSettingsFolder();
         this.load();
     }
@@ -178,8 +196,15 @@ public class IngestJobSettings {
          * Get the ingest module factories discovered by the ingest module
          * loader.
          */
-        List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
-        HashSet<String> loadedModuleNames = new HashSet<>();
+        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
+        List<IngestModuleFactory> tempModuleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
+        HashSet<String> loadedModuleNames = new HashSet<>();          
+        
+        for(IngestModuleFactory moduleFactory : tempModuleFactories) {
+            if(!isDir || moduleFactory.isFileIngestModuleFactory())
+                moduleFactories.add(moduleFactory);
+        }
+        
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
         }
