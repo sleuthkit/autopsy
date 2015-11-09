@@ -18,31 +18,40 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import javafx.beans.binding.StringBinding;
 import javafx.scene.Cursor;
-import javafx.scene.chart.Axis;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 
 /**
  *
  */
-@NbBundle.Messages({"GuideLine.tooltip.text={0}\nRight-click to remove.\nRight-drag to reposition."})
+@NbBundle.Messages({"GuideLine.tooltip.text={0}\nRight-click to remove.\nDrag to reposition."})
 class GuideLine extends Line {
 
-    private final Axis<DateTime> dateAxis;
+    private static final Tooltip CHART_DEFAULT_TOOLTIP = AbstractVisualizationPane.getDefaultTooltip();
+
     private Tooltip tooltip = new Tooltip();
 
     private double startLayoutX;
     private double dragStartX = 0;
+    private final EventDetailsChart chart;
 
-    GuideLine(double startX, double startY, double endX, double endY, Axis<DateTime> axis) {
+    /**
+     *
+     * @param startX
+     * @param startY
+     * @param endX
+     * @param endY
+     * @param chart
+     */
+    GuideLine(double startX, double startY, double endX, double endY, EventDetailsChart chart) {
         super(startX, startY, endX, endY);
-        dateAxis = axis;
+        this.chart = chart;
         //TODO: assign via css
         setCursor(Cursor.E_RESIZE);
         getStrokeDashArray().setAll(5.0, 5.0);
@@ -51,17 +60,16 @@ class GuideLine extends Line {
         setStrokeWidth(3);
 
         Tooltip.install(this, tooltip);
-        tooltip.textProperty().bind(new StringBinding() {
-            {
-                bind(layoutXProperty());
-            }
-
-            @Override
-            protected String computeValue() {
-                return Bundle.GuideLine_tooltip_text(formatSpan(getDateTime()));
+        tooltip.setOnShowing(windowEvent -> tooltip.setText(Bundle.GuideLine_tooltip_text(getDateTimeAsString())));
+        setOnMouseEntered(entered -> Tooltip.uninstall(chart, CHART_DEFAULT_TOOLTIP));
+        setOnMouseExited(exited -> Tooltip.install(chart, CHART_DEFAULT_TOOLTIP));
+        setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getButton() == MouseButton.SECONDARY
+                    && mouseEvent.isStillSincePress() == false) {
+                chart.clearGuideLine();
+                mouseEvent.consume();
             }
         });
-//        setOnMouseEntered(enteredEvent -> updateToolTipText());
         setOnMousePressed(pressedEvent -> {
             startLayoutX = getLayoutX();
             dragStartX = pressedEvent.getScreenX();
@@ -69,24 +77,12 @@ class GuideLine extends Line {
         setOnMouseDragged(dragEvent -> {
             double dX = dragEvent.getScreenX() - dragStartX;
             relocate(startLayoutX + dX, 0);
-//            updateToolTipText();
             dragEvent.consume();
         });
     }
 
-    private void updateToolTipText() {
-        Tooltip.uninstall(this, tooltip);
-
-        tooltip = new Tooltip(Bundle.GuideLine_tooltip_text(formatSpan(getDateTime())));
-        Tooltip.install(this, tooltip);
-    }
-
-    private String formatSpan(DateTime date) {
-        return date.toString(TimeLineController.getZonedFormatter());
-    }
-
-    private DateTime getDateTime() {
-        return dateAxis.getValueForDisplay(dateAxis.parentToLocal(getLayoutX(), 0).getX());
+    private String getDateTimeAsString() {
+        return chart.getDateTimeForPosition(getLayoutX()).toString(TimeLineController.getZonedFormatter());
     }
 
 }

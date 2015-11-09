@@ -57,7 +57,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
@@ -200,7 +199,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             projectionMap.clear();
             controller.selectEventIDs(Collections.emptyList());
         });
-        Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
+        Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
 
@@ -430,7 +429,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         nodeGroup.setTranslateY(-d * h);
     }
 
-    private void clearGuideLine() {
+    void clearGuideLine() {
         getChartChildren().remove(guideLine);
         guideLine = null;
     }
@@ -612,16 +611,11 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             setGraphic(new ImageView(MARKER)); // NON-NLS
             setEventHandler(actionEvent -> {
                 if (guideLine == null) {
-                    guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
+                    guideLine = new GuideLine(0, 0, 0, getHeight(), EventDetailsChart.this);
                     guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
                     guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
                     getChartChildren().add(guideLine);
-                    guideLine.setOnMouseClicked(mouseEvent -> {
-                        if (mouseEvent.getButton() == MouseButton.SECONDARY) {
-                            clearGuideLine();
-                            mouseEvent.consume();
-                        }
-                    });
+
                 } else {
                     guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
                 }
