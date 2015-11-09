@@ -29,14 +29,15 @@ import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,8 +47,10 @@ class TextMessageAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
+    private static Blackboard blackboard;
 
     public static void findTexts(Content dataSource, FileManager fileManager) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
 
             List<AbstractFile> absFiles = fileManager.findFiles(dataSource, "mmssms.db"); //NON-NLS
@@ -120,8 +123,16 @@ class TextMessageAnalyzer {
                 bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName,
                         NbBundle.getMessage(TextMessageAnalyzer.class,
                                 "TextMessageAnalyzer.bbAttribute.smsMessage")));
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
             }
-
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         } finally {
