@@ -68,7 +68,7 @@ final class UserDefinedFileTypesManager {
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
-    private static final String TRAILING_TAG_NAME = "Trailing";
+    private static final String RELATIVE_ATTRIBUTE = "RelativeToStart";
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
@@ -373,11 +373,8 @@ final class UserDefinedFileTypesManager {
 
             Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
+            offsetElem.setAttribute(RELATIVE_ATTRIBUTE, String.valueOf(signature.isRelativeToStart()));
             signatureElem.appendChild(offsetElem);
-            
-            Element trailingElem = doc.createElement(TRAILING_TAG_NAME);
-            trailingElem.setTextContent(DatatypeConverter.printBoolean(signature.isTrailing()));
-            signatureElem.appendChild(trailingElem);
 
             signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
             fileTypeElem.appendChild(signatureElem);
@@ -486,16 +483,17 @@ final class UserDefinedFileTypesManager {
             String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
             byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
-            String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
+            Element offsetElem = (Element) signatureElem.getElementsByTagName(OFFSET_TAG_NAME).item(0);
+            String offsetString = offsetElem.getTextContent();
             long offset = DatatypeConverter.parseLong(offsetString);
             
-            String trailingString = getChildElementTextContent(signatureElem, TRAILING_TAG_NAME);
-            if(trailingString == null)
+            String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
+            if(relativeString == null)
                 return new Signature(signatureBytes, offset, signatureType);
             
-            boolean trailing = DatatypeConverter.parseBoolean(trailingString);
+            boolean isRelative = DatatypeConverter.parseBoolean(relativeString);
 
-            return new Signature(signatureBytes, offset, signatureType, trailing);
+            return new Signature(signatureBytes, offset, signatureType, isRelative);
         }
 
         /**
