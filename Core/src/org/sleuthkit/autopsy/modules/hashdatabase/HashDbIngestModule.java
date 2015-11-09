@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -59,6 +61,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private Blackboard blackboard;
 
     private static class IngestJobTotals {
 
@@ -135,6 +138,8 @@ public class HashDbIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         // Skip unallocated space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -292,6 +297,15 @@ public class HashDbIngestModule implements FileIngestModule {
             badFile.addAttribute(att3);
             BlackboardAttribute att4 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(), MODULE_NAME, comment);
             badFile.addAttribute(att4);
+            
+            try {
+                // index the artifact for keyword search
+                blackboard.indexArtifact(badFile);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", badFile.getDisplayName()), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), badFile.getDisplayName());
+            }
 
             if (showInboxMessage) {
                 StringBuilder detailsSb = new StringBuilder();
