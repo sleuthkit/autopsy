@@ -531,7 +531,7 @@ final class UserDefinedFileTypesManager {
          * @param elem The parent element.
          * @param tagName The tag name of the child element.
          *
-         * @return The text content.
+         * @return The text content or null if the tag doesn't exist.
          */
         private static String getChildElementTextContent(Element elem, String tagName) {
             NodeList childElems = elem.getElementsByTagName(tagName);
