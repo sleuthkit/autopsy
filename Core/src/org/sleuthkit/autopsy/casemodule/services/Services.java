@@ -39,6 +39,7 @@ public class Services implements Closeable {
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
+    private final Blackboard blackboard;
 
     public Services(SleuthkitCase tskCase) {
         fileManager = new FileManager(tskCase);
@@ -49,6 +50,9 @@ public class Services implements Closeable {
 
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
+        
+        blackboard = new Blackboard();
+        services.add(blackboard);
     }
 
     public FileManager getFileManager() {
@@ -61,6 +65,10 @@ public class Services implements Closeable {
 
     public KeywordSearchService getKeywordSearchService() {
         return keywordSearchService;
+    }
+    
+    public Blackboard getBlackboard() {
+        return blackboard;
     }
 
     @Override
