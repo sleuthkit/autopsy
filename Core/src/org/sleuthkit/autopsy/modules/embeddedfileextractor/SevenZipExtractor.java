@@ -141,7 +141,6 @@ class SevenZipExtractor {
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
         this.archiveDepthCountTree = new ArchiveDepthCountTree();
-        this.blackboard = Case.getCurrentCase().getServices().getBlackboard();
     }
 
     /**
@@ -290,6 +289,7 @@ class SevenZipExtractor {
      * @return list of unpacked derived files
      */
     void unpack(AbstractFile archiveFile) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         String archiveFilePath;
         try {
             archiveFilePath = archiveFile.getUniquePath();
