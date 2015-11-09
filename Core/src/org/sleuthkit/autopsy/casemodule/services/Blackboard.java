@@ -31,9 +31,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class Blackboard implements Closeable {
 
-    Blackboard() {
-    }
-
     /**
      * Index the text associated with the given artifact.
      *
