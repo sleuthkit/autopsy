@@ -162,6 +162,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
 
