@@ -51,7 +51,7 @@ public final class Blackboard implements Closeable {
         try {
             searchService.indexArtifact(artifact);
         } catch (TskCoreException ex) {
-            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.unableToIndexArtifact.exception.msg"), ex);
+            throw new BlackboardException(NbBundle.getMessage(this.getClass(), "Blackboard.unableToIndexArtifact.exception.msg") + artifact.getDisplayName(), ex);
         }
     }
 

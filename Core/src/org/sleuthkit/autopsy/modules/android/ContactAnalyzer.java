@@ -27,12 +27,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -78,7 +79,7 @@ class ContactAnalyzer {
      *                     path The fileId will be the Abstract file associated
      *                     with the artifacts
      */
-    private static void findContactsInDB(String databasePath, AbstractFile f) throws IngestModuleException {
+    private static void findContactsInDB(String databasePath, AbstractFile f) {
         Connection connection = null;
         ResultSet resultSet = null;
         Statement statement = null;
@@ -154,7 +155,9 @@ class ContactAnalyzer {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
-                    throw new IngestModuleException(ex.getMessage());
+                    logger.log(Level.SEVERE, NbBundle.getMessage(ContactAnalyzer.class, "Blackboard.unableToIndexArtifact.exception.msg") + bba.getDisplayName(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(ContactAnalyzer.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
                 }
             }
 
