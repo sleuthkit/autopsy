@@ -200,10 +200,10 @@ class FileType {
          * Creates a file signature consisting of a sequence of bytes at a
          * specific offset within a file.
          *
-         * @param signatureBytes The signature bytes.
-         * @param offset         The offset of the signature bytes.
-         * @param type           The type of data in the byte array. Impacts
-         *                       how it is displayed to the user in the UI.
+         * @param signatureBytes        The signature bytes.
+         * @param offset                The offset of the signature bytes.
+         * @param type                  The type of data in the byte array. Impacts
+         *                              how it is displayed to the user in the UI.
          * @param isRelativeToStart     Determines whether this signature is relative to start.
          */
         Signature(final byte[] signatureBytes, long offset, Type type, boolean isRelativeToStart) {
@@ -217,8 +217,8 @@ class FileType {
          * Creates a file signature consisting of an ASCII string at a
          * specific offset within a file.
          *
-         * @param signatureString The ASCII string
-         * @param offset         The offset of the signature bytes.
+         * @param signatureString       The ASCII string
+         * @param offset                The offset of the signature bytes.
          * @param isRelativeToStart     Determines whether this signature is relative to start.
          */
         Signature(String signatureString, long offset, boolean isRelativeToStart) {
