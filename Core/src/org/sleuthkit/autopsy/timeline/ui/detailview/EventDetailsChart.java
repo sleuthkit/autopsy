@@ -24,11 +24,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -148,17 +149,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     private final Group nodeGroup = new Group();
     private final ObservableList<EventBundle<?>> bundles = FXCollections.observableArrayList();
-    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
-    private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
-    private final Map<EventCluster, Line> projectionMap = new HashMap<>();
-
-    /**
-     * list of series of data added to this chart
-     *
-     * TODO: replace this with a map from name to series? -jm
-     */
-    private final ObservableList<Series<DateTime, EventCluster>> seriesList =
-            FXCollections.<Series<DateTime, EventCluster>>observableArrayList();
+    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new ConcurrentHashMap<>();
+    private final Map<EventStripe, EventStripeNode> stripeNodeMap = new ConcurrentHashMap<>();
+    private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
     /**
      * true == layout each event type in its own band, false == mix all the
@@ -334,21 +327,26 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     @Override
     protected synchronized void dataItemAdded(Series<DateTime, EventCluster> series, int i, Data<DateTime, EventCluster> data) {
         final EventCluster eventCluster = data.getYValue();
-        bundles.add(eventCluster);
+
         EventStripe eventStripe = stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
                 new EventStripe(eventCluster, null),
                 (EventStripe u, EventStripe v) -> {
-                    EventStripeNode remove = stripeNodeMap.remove(u);
-                    nodeGroup.getChildren().remove(remove);
-                    remove = stripeNodeMap.remove(v);
-                    nodeGroup.getChildren().remove(remove);
+                    EventStripeNode removeU = stripeNodeMap.remove(u);
+                    EventStripeNode removeV = stripeNodeMap.remove(v);
+                    Platform.runLater(() -> {
+                        nodeGroup.getChildren().remove(removeU);
+                        nodeGroup.getChildren().remove(removeV);
+                    });
                     return EventStripe.merge(u, v);
                 }
         );
         EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
         stripeNodeMap.put(eventStripe, stripeNode);
-        nodeGroup.getChildren().add(stripeNode);
-        data.setNode(stripeNode);
+        Platform.runLater(() -> {
+            bundles.add(eventCluster);
+            nodeGroup.getChildren().add(stripeNode);
+            data.setNode(stripeNode);
+        });
     }
 
     @Override
@@ -360,11 +358,18 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     @Override
     protected synchronized void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
         EventCluster eventCluster = data.getYValue();
-        bundles.removeAll(eventCluster);
+        Platform.runLater(() -> {
+            bundles.removeAll(eventCluster);
+        });
+
         EventStripe removedStripe = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
-        EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
-        nodeGroup.getChildren().remove(removedNode);
-        data.setNode(null);
+        if (removedStripe != null) {
+            EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
+            Platform.runLater(() -> {
+                nodeGroup.getChildren().remove(removedNode);
+                data.setNode(null);
+            });
+        }
     }
 
     @Override
@@ -396,7 +401,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         for (int j = 0; j < series.getData().size(); j++) {
             dataItemAdded(series, j, series.getData().get(j));
         }
-        seriesList.add(series);
     }
 
     @Override
@@ -404,7 +408,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         for (int j = 0; j < series.getData().size(); j++) {
             dataItemRemoved(series.getData().get(j), series);
         }
-        seriesList.remove(series);
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {

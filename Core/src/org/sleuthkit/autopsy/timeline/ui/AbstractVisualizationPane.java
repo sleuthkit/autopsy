@@ -33,7 +33,6 @@ import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.BarChart;
 import javafx.scene.chart.Chart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
@@ -81,7 +80,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
     }
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
-    protected final ObservableList<BarChart.Series<X, Y>> dataSets = FXCollections.<BarChart.Series<X, Y>>observableArrayList();
+    protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>> observableArrayList();
 
     protected C chart;
 

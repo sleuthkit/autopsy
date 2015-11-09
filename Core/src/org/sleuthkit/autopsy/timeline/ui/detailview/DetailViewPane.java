@@ -111,15 +111,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler(); //can we push this into chart
-        chart.setData(dataSets);
+        chart.setData(dataSeries);
         setCenter(chart);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
-
         //bind layout fo axes and spacers
         dateAxis.setTickLabelGap(0);
         dateAxis.setAutoRanging(false);
@@ -260,7 +258,10 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
             XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-            dataSets.add(series);
+            Platform.runLater(() -> {
+                dataSeries.add(series);
+            });
+
             return series;
         });
     }
@@ -299,7 +300,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                     dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
                     vertScrollBar.setValue(0);
                     eventTypeToSeriesMap.clear();
-                    dataSets.clear();
+                    dataSeries.clear();
                 });
 
                 List<EventCluster> eventClusters = filteredEvents.getEventClusters();
@@ -315,9 +316,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                     final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getSpan().getStartMillis()), cluster);
 
                     if (isCancelled() == false) {
-                        Platform.runLater(() -> {
-                            getSeries(cluster.getEventType()).getData().add(xyData);
-                        });
+//                        Platform.runLater(() -> {
+                        getSeries(cluster.getEventType()).getData().add(xyData);
+//                        });
                     }
                 }
 

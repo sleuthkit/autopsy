@@ -111,7 +111,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected Boolean isTickBold(String value) {
-        return dataSets.stream().flatMap((series) -> series.getData().stream())
+        return dataSeries.stream().flatMap((series) -> series.getData().stream())
                 .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
     }
 
@@ -144,7 +144,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 Platform.runLater(() -> {
                     updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.resetUI"));
                     eventTypeMap.clear();
-                    dataSets.clear();
+                    dataSeries.clear();
                     dateAxis.getCategories().clear();
 
                     DateTime start = timeRange.getStart();
@@ -264,7 +264,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         super(controller, partPane, contextPane, spacer);
         chart = new EventCountsChart(controller, dateAxis, countAxis);
         setChartClickHandler();
-        chart.setData(dataSets);
+        chart.setData(dataSeries);
         setCenter(chart);
 
         Tooltip.install(chart, getDefaultTooltip());
@@ -337,8 +337,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
             eventTypeMap.put(et, series);
-
-            dataSets.add(series);
+            dataSeries.add(series);
         }
         return series;
 
@@ -395,7 +394,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                                 controller.selectTimeAndType(interval, RootEventType.getInstance());
 
                                                 selectedNodes.clear();
-                                                for (XYChart.Series<String, Number> s : dataSets) {
+                                                for (XYChart.Series<String, Number> s : dataSeries) {
                                                     s.getData().forEach((XYChart.Data<String, Number> d) -> {
                                                         if (startDateString.contains(d.getXValue())) {
                                                             selectedNodes.add(d.getNode());
