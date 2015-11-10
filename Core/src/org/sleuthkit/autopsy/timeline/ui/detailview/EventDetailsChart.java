@@ -50,6 +50,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -67,6 +68,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
@@ -96,6 +98,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  */
 public final class EventDetailsChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
 
+    private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm();
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true);
@@ -108,6 +111,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
 
     private ContextMenu chartContextMenu;
 
+    @Override
     public ContextMenu getChartContextMenu() {
         return chartContextMenu;
     }
@@ -115,6 +119,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     /**
      * a user positionable vertical line to help compare events
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Line guideLine;
 
     /**
@@ -192,6 +197,13 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         this.controller = controller;
         this.filteredEvents = this.controller.getEventsModel();
 
+        sceneProperty().addListener(observable -> {
+            Scene scene = getScene();
+            if (scene != null && scene.getStylesheets().contains(styleSheet) == false) {
+                scene.getStylesheets().add(styleSheet);
+            }
+        });
+
         filteredEvents.zoomParametersProperty().addListener(o -> {
             clearGuideLine();
             clearIntervalSelector();
@@ -199,15 +211,14 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             projectionMap.clear();
             controller.selectEventIDs(Collections.emptyList());
         });
+
         Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
-
         verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
         verticalAxis.setTickLabelsVisible(false);
         verticalAxis.setTickMarkVisible(false);
         setLegendVisible(false);
-
         setPadding(Insets.EMPTY);
         setAlternativeColumnFillVisible(true);
 
@@ -611,9 +622,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             setGraphic(new ImageView(MARKER)); // NON-NLS
             setEventHandler(actionEvent -> {
                 if (guideLine == null) {
-                    guideLine = new GuideLine(0, 0, 0, getHeight(), EventDetailsChart.this);
+                    guideLine = new GuideLine(EventDetailsChart.this);
                     guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                    guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
                     getChartChildren().add(guideLine);
 
                 } else {

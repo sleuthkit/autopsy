@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,56 +18,55 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import javafx.scene.Cursor;
+import javafx.scene.chart.Axis;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
 
 /**
- *
+ * Subclass of {@link Line} with appropriate behavior (mouse listeners) to act
+ * as a visual reference point in the details view.
  */
-@NbBundle.Messages({"GuideLine.tooltip.text={0}\nRight-click to remove.\nDrag to reposition."})
+@NbBundle.Messages({"# {0} - date/time at guideline position",
+    "GuideLine.tooltip.text={0}\nRight-click to remove.\nDrag to reposition."})
 class GuideLine extends Line {
 
     private static final Tooltip CHART_DEFAULT_TOOLTIP = AbstractVisualizationPane.getDefaultTooltip();
 
-    private Tooltip tooltip = new Tooltip();
-
-    private double startLayoutX;
-    private double dragStartX = 0;
+    private final Tooltip tooltip = new Tooltip();
     private final EventDetailsChart chart;
 
+    //used across invocations of mouse event handlers to maintain state
+    private double startLayoutX;
+    private double dragStartX = 0;
+
     /**
-     *
-     * @param startX
-     * @param startY
-     * @param endX
-     * @param endY
-     * @param chart
+     * @param chart the chart this GuideLine belongs to.
      */
-    GuideLine(double startX, double startY, double endX, double endY, EventDetailsChart chart) {
-        super(startX, startY, endX, endY);
+    GuideLine(EventDetailsChart chart) {
+        super(0, 0, 0, 0);
         this.chart = chart;
-        //TODO: assign via css
-        setCursor(Cursor.E_RESIZE);
-        getStrokeDashArray().setAll(5.0, 5.0);
-        setStroke(Color.RED);
-        setOpacity(.5);
-        setStrokeWidth(3);
+        Axis<DateTime> xAxis = chart.getXAxis();
+        endYProperty().bind(chart.heightProperty().subtract(xAxis.heightProperty().subtract(xAxis.tickLengthProperty())));
+
+        getStyleClass().add("guide-line");
 
         Tooltip.install(this, tooltip);
-        tooltip.setOnShowing(windowEvent -> tooltip.setText(Bundle.GuideLine_tooltip_text(getDateTimeAsString())));
+        tooltip.setOnShowing(showing -> tooltip.setText(Bundle.GuideLine_tooltip_text(getDateTimeAsString())));
+
+        //this is a hack to override the tooltip of the enclosing chart.
         setOnMouseEntered(entered -> Tooltip.uninstall(chart, CHART_DEFAULT_TOOLTIP));
         setOnMouseExited(exited -> Tooltip.install(chart, CHART_DEFAULT_TOOLTIP));
-        setOnMouseClicked(mouseEvent -> {
-            if (mouseEvent.getButton() == MouseButton.SECONDARY
-                    && mouseEvent.isStillSincePress() == false) {
+
+        setOnMouseClicked(clickedEvent -> {
+            if (clickedEvent.getButton() == MouseButton.SECONDARY
+                    && clickedEvent.isStillSincePress() == false) {
                 chart.clearGuideLine();
-                mouseEvent.consume();
+                clickedEvent.consume();
             }
         });
         setOnMousePressed(pressedEvent -> {
@@ -84,5 +83,4 @@ class GuideLine extends Line {
     private String getDateTimeAsString() {
         return chart.getDateTimeForPosition(getLayoutX()).toString(TimeLineController.getZonedFormatter());
     }
-
 }
