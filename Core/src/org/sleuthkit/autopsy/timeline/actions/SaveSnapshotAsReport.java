@@ -47,6 +47,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -75,7 +76,10 @@ public class SaveSnapshotAsReport extends Action {
             public void accept(ActionEvent t) {
                 //choose location/name
                 ZonedDateTime now = ZonedDateTime.now();
-                String reportName = "timeline-report-" + now.toString();
+
+                String reportName = "timeline-report-" + FileUtil.escapeFileName(now.toString());
+                System.out.println(reportName);
+                System.out.println(Case.getCurrentCase().getReportDirectory());
                 Path reportPath = Paths.get(Case.getCurrentCase().getReportDirectory(), reportName).toAbsolutePath();
                 try {
                     Files.createDirectories(reportPath);
