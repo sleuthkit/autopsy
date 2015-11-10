@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.OSUtility; // TEMP
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -427,6 +425,9 @@ class ExtractRegistry extends Extract {
                         if (results.isEmpty()) {
                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                             bbart.addAttributes(bbattributes);
+                                                
+                            // index the artifact for keyword search
+                            this.indexArtifact(bbart);
                         } else {
                             results.get(0).addAttributes(bbattributes);
                         }
@@ -473,6 +474,9 @@ class ExtractRegistry extends Extract {
                         if (results.isEmpty()) {
                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                             bbart.addAttributes(bbattributes);
+
+                            // index the artifact for keyword search
+                            this.indexArtifact(bbart);
                         } else {
                             results.get(0).addAttributes(bbattributes);
                         }
@@ -511,6 +515,9 @@ class ExtractRegistry extends Extract {
                         if (results.isEmpty()) {
                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                             bbart.addAttributes(bbattributes);
+                                                
+                            // index the artifact for keyword search
+                            this.indexArtifact(bbart);
                         } else {
                             results.get(0).addAttributes(bbattributes);
                         }
@@ -559,6 +566,9 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), parentModuleName, model));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), parentModuleName, value));
                                         bbart.addAttributes(bbattributes);
+                                                            
+                                        // index the artifact for keyword search
+                                        this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
                                     }
@@ -578,6 +588,9 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), parentModuleName, itemMtime));
                                         BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                         bbart.addAttributes(bbattributes);
+                                                            
+                                        // index the artifact for keyword search
+                                        this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
                                     }
@@ -595,6 +608,9 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), parentModuleName, value));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), parentModuleName, artnode.getNodeName()));
                                         bbart.addAttributes(bbattributes);
+                                                            
+                                        // index the artifact for keyword search
+                                        this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
                                     }
@@ -629,6 +645,8 @@ class ExtractRegistry extends Extract {
                                                 parentModuleName, sid));
                                         bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),
                                                 parentModuleName, homeDir));
+                                        // index the artifact for keyword search
+                                        this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding account artifact to blackboard."); //NON-NLS
                                     }
@@ -643,7 +661,8 @@ class ExtractRegistry extends Extract {
                                                 parentModuleName, localPath));
                                         bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH.getTypeID(),
                                                 parentModuleName, remoteName));
-
+                                        // index the artifact for keyword search
+                                        this.indexArtifact(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding network artifact to blackboard."); //NON-NLS
                                     }
