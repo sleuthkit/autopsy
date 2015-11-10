@@ -105,6 +105,14 @@ class DirectoryTreeFilterNode extends FilterNode {
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(ExtractAction.getInstance());
+                actions.add(new AbstractAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(dir);
+                                ingestDialog.display();
+                            }
+                        });
             }
 
             final Image img = this.getLookup().lookup(Image.class);
@@ -124,14 +132,14 @@ class DirectoryTreeFilterNode extends FilterNode {
 
             // 'run ingest' action and 'file search' action are added only if the
             // selected node is img node or a root level virtual directory or a directory.
-            if (img != null || isRootVD || dir !=null) {
+            if (img != null || isRootVD) {
                 actions.add(new FileSearchAction(
                         NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
                 actions.add(new AbstractAction(
                         NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content), dir != null);
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
                                 ingestDialog.display();
                             }
                         });
