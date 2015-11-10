@@ -25,8 +25,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,8 +48,10 @@ class TextMessageAnalyzer {
     List<AbstractFile> absFiles;
     private String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
+    private Blackboard blackboard;
 
     void findTexts() {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //NON-NLS //get exact file name
@@ -122,6 +127,15 @@ class TextMessageAnalyzer {
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), moduleName, subject));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), moduleName, body));
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE.getTypeID(), moduleName, "SMS Message"));
+                    
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(bba);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                    }
                 }
 
             } catch (Exception e) {
