@@ -23,11 +23,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,9 +39,13 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.dialog.ProgressDialog;
 import org.joda.time.Interval;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -336,80 +342,134 @@ public class EventsRepository {
         dbPopulationWorker.execute();
     }
 
-    private class RebuildTagsWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
-
-        private final ProgressWindow progressDialog;
+    /**
+     * A base class for swing workers that shows a {@link ProgressWorker} and
+     * updates a {@link ProgressHandle} as it performs its background work, and
+     * calls a call-back when finished.
+     *
+     * //TODO: I prefer the JavaFX task API as it has built in progress
+     * properties that can be bound to a javafx progress indicator. Convert
+     * these to a JavaFX implementation,and replace {@link ProgressWindow} with
+     * {@link ProgressDialog}
+     */
+    private abstract class DBProgressWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
 
         //TODO: can we avoid this with a state listener?  does it amount to the same thing?
         //post population operation to execute
-        private final Runnable postPopulationOperation;
-        private final SleuthkitCase skCase;
-        private final TagsManager tagsManager;
+        final Runnable postPopulationOperation;
 
-        public RebuildTagsWorker(Runnable postPopulationOperation) {
-            progressDialog = new ProgressWindow(null, true, this);
+        final SleuthkitCase skCase;
+        final TagsManager tagsManager;
+
+        final ProgressWindow progressDialog;
+        volatile ProgressHandle progressHandle;
+
+        DBProgressWorker(Runnable postPopulationOperation, String initialProgressDisplayName) {
+            progressDialog = new ProgressWindow(null, false, this);
             progressDialog.setVisible(true);
+            progressHandle = ProgressHandleFactory.createHandle(initialProgressDisplayName, () -> cancel(true));
 
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
-
             this.postPopulationOperation = postPopulationOperation;
         }
 
-        @Override
-        protected Void doInBackground() throws Exception {
+        /**
+         * update progress UIs
+         *
+         * @param chunk
+         */
+        final protected void update(ProgressWindow.ProgressUpdate chunk) {
+            SwingUtilities.invokeLater(() -> {
+                progressDialog.update(chunk);
+            });
+            if (chunk.getTotal() >= 0) {
+                progressHandle.progress(chunk.getProgress());
+            }
+            progressHandle.setDisplayName(chunk.getHeaderMessage());
+            progressHandle.progress(chunk.getDetailMessage());
+        }
 
+        @Override
+        protected void done() {
+            super.done();
+            progressDialog.close();
+            postPopulationOperation.run();  //execute post db population operation
+        }
+    }
+
+    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
+        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
+    }
+
+    private class RebuildTagsWorker extends DBProgressWorker {
+
+        @NbBundle.Messages("RebuildTagsWorker.task.displayName=refreshing tags")
+        RebuildTagsWorker(Runnable postPopulationOperation) {
+            super(postPopulationOperation, Bundle.RebuildTagsWorker_task_displayName());
+        }
+
+        @Override
+        @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=refreshing file tags",
+            "progressWindow.msg.refreshingResultTags=refreshing result tags",
+            "progressWindow.msg.commitingTags=committing tag changes"})
+        protected Void doInBackground() throws Exception {
+            int currentWorkTotal;
+
+            progressHandle.start();
             EventDB.EventTransaction trans = eventDB.beginTransaction();
             LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
             eventDB.reInitializeTags();
 
             LOGGER.log(Level.INFO, "updating content tags"); // NON-NLS
             List<ContentTag> contentTags = tagsManager.getAllContentTags();
-            int size = contentTags.size();
-            for (int i = 0; i < size; i++) {
+            progressHandle.finish();
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingFileTags(),
+                    () -> cancel(true));
+            progressHandle.start(currentWorkTotal = contentTags.size());
+
+            for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelled()) {
                     break;
                 }
-                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing file tags", ""));
+                update(new ProgressWindow.ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingFileTags()));
                 ContentTag contentTag = contentTags.get(i);
                 eventDB.addTag(contentTag.getContent().getId(), null, contentTag);
             }
+
             LOGGER.log(Level.INFO, "updating artifact tags"); // NON-NLS
             List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
-            size = artifactTags.size();
-            for (int i = 0; i < size; i++) {
+            progressHandle.finish();
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingResultTags(),
+                    () -> cancel(true));
+            progressHandle.start(currentWorkTotal = artifactTags.size());
+
+            for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelled()) {
                     break;
                 }
-                publish(new ProgressWindow.ProgressUpdate(i, size, "refreshing result tags", ""));
+                update(new ProgressWindow.ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingResultTags()));
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
                 eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
             }
 
             LOGGER.log(Level.INFO, "committing tags"); // NON-NLS
-            publish(new ProgressWindow.ProgressUpdate(0, -1, "committing tag changes", ""));
+            progressHandle.finish();
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingTags());
+            progressHandle.start();
+            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingTags()));
+
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
                 eventDB.commitTransaction(trans);
             }
-
+            eventDB.analyze();
             populateFilterData(skCase);
             invalidateCaches();
 
+            progressHandle.finish();
             return null;
-        }
-
-        /**
-         * handle intermediate 'results': just update progress dialog
-         *
-         * @param chunks
-         */
-        @Override
-        protected void process(List<ProgressWindow.ProgressUpdate> chunks) {
-            super.process(chunks);
-            ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
-            progressDialog.update(chunk);
         }
 
         @Override
@@ -418,39 +478,22 @@ public class EventsRepository {
         protected void done() {
             super.done();
             try {
-                progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
+                LOGGER.log(Level.WARNING, "Timeline database population was cancelled by the user.  "
+                        + "Not all events may be present or accurate."); // NON-NLS
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_tagsproblem_text());
             }
-            postPopulationOperation.run();  //execute post db population operation
         }
     }
 
-    private class DBPopulationWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
+    private class DBPopulationWorker extends DBProgressWorker {
 
-        private final ProgressWindow progressDialog;
-
-        //TODO: can we avoid this with a state listener?  does it amount to the same thing?
-        //post population operation to execute
-        private final Runnable postPopulationOperation;
-        private final SleuthkitCase skCase;
-        private final TagsManager tagsManager;
-
+        @NbBundle.Messages("DBPopulationWorker.task.displayName=(re)initializing events database")
         public DBPopulationWorker(Runnable postPopulationOperation) {
-            progressDialog = new ProgressWindow(null, true, this);
-            progressDialog.setVisible(true);
-
-            skCase = autoCase.getSleuthkitCase();
-            tagsManager = autoCase.getServices().getTagsManager();
-
-            this.postPopulationOperation = postPopulationOperation;
+            super(postPopulationOperation, Bundle.DBPopulationWorker_task_displayName());
         }
 
         @Override
@@ -458,68 +501,38 @@ public class EventsRepository {
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void doInBackground() throws Exception {
-            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db(), ""));
-            //reset database 
-            //TODO: can we do more incremental updates? -jm
+            progressHandle.start();
+            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db()));
+            //reset database //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
 
             //grab ids of all files
-            List<Long> files = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
-
-            final int numFiles = files.size();
-            publish(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles(), ""));
+            List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
+            final int numFiles = fileIDs.size();
+            progressHandle.switchToDeterminate(numFiles);
+            update(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles()));
 
             //insert file events into db
-            int i = 1;
             EventDB.EventTransaction trans = eventDB.beginTransaction();
-            for (final Long fID : files) {
+            for (int i = 0; i < numFiles; i++) {
                 if (isCancelled()) {
                     break;
                 } else {
+                    long fID = fileIDs.get(i);
                     try {
                         AbstractFile f = skCase.getAbstractFileById(fID);
 
-                        if (f == null) {
+                        if (isNull(f)) {
                             LOGGER.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                         } else {
-                            //TODO: This is broken for logical files? fix -jm
-                            //TODO: logical files don't necessarily have valid timestamps, so ... -jm
-                            final String uniquePath = f.getUniquePath();
-                            final String parentPath = f.getParentPath();
-                            long datasourceID = f.getDataSource().getId();
-                            String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
-
-                            String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
-                            String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
-                            shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
-                            String medDesc = datasourceName + parentPath;
-
-                            final TskData.FileKnown known = f.getKnown();
-                            Set<String> hashSets = f.getHashSetNames();
-                            List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
-
-                            //insert it into the db if time is > 0  => time is legitimate (drops logical files)
-                            if (f.getAtime() > 0) {
-                                eventDB.insertEvent(f.getAtime(), FileSystemTypes.FILE_ACCESSED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
-                            }
-                            if (f.getMtime() > 0) {
-                                eventDB.insertEvent(f.getMtime(), FileSystemTypes.FILE_MODIFIED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
-                            }
-                            if (f.getCtime() > 0) {
-                                eventDB.insertEvent(f.getCtime(), FileSystemTypes.FILE_CHANGED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
-                            }
-                            if (f.getCrtime() > 0) {
-                                eventDB.insertEvent(f.getCrtime(), FileSystemTypes.FILE_CREATED, datasourceID, fID, null, uniquePath, medDesc, shortDesc, known, hashSets, tags, trans);
-                            }
-
-                            publish(new ProgressWindow.ProgressUpdate(i, numFiles,
+                            insertEventsForFile(f, trans);
+                            update(new ProgressWindow.ProgressUpdate(i, numFiles,
                                     Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName()));
                         }
                     } catch (TskCoreException tskCoreException) {
-                        LOGGER.log(Level.WARNING, "failed to insert mac event for file : " + fID, tskCoreException); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to insert MAC time events for file : " + fID, tskCoreException); // NON-NLS
                     }
                 }
-                i++;
             }
 
             //insert artifact based events
@@ -534,50 +547,77 @@ public class EventsRepository {
                 }
             }
 
-            publish(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb(), ""));
+            progressHandle.finish();
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingDb());
+            progressHandle.start();
+            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb()));
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
             } else {
                 eventDB.commitTransaction(trans);
             }
-
+            eventDB.analyze();
             populateFilterData(skCase);
             invalidateCaches();
 
+            progressHandle.finish();
             return null;
         }
 
-        /**
-         * handle intermediate 'results': just update progress dialog
-         *
-         * @param chunks
-         */
-        @Override
-        protected void process(List<ProgressWindow.ProgressUpdate> chunks) {
-            super.process(chunks);
-            ProgressWindow.ProgressUpdate chunk = chunks.get(chunks.size() - 1);
-            progressDialog.update(chunk);
+        private void insertEventsForFile(AbstractFile f, EventDB.EventTransaction trans) throws TskCoreException {
+            //gather time stamps into map
+            EnumMap<FileSystemTypes, Long> timeMap = new EnumMap<>(FileSystemTypes.class);
+            timeMap.put(FileSystemTypes.FILE_CREATED, f.getCrtime());
+            timeMap.put(FileSystemTypes.FILE_ACCESSED, f.getAtime());
+            timeMap.put(FileSystemTypes.FILE_CHANGED, f.getCtime());
+            timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
+
+            /* if there are no legitimate ( greater tan zero ) time stamps ( eg,
+             * logical/local files) skip the rest of the event generation: this
+             * should result in droping logical files, since they do not have
+             * legitimate time stamps. */
+            if (Collections.max(timeMap.values()) > 0) {
+                final String uniquePath = f.getUniquePath();
+                final String parentPath = f.getParentPath();
+                long datasourceID = f.getDataSource().getId();
+                String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
+
+                String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
+                String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
+                shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
+                String medDesc = datasourceName + parentPath;
+
+                final TskData.FileKnown known = f.getKnown();
+                Set<String> hashSets = f.getHashSetNames();
+                List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
+
+                for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
+                    /* if the time is legitimate ( greater than zero ) insert it
+                     * into the db */
+                    if (timeEntry.getValue() > 0) {
+                        eventDB.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
+                                datasourceID, f.getId(), null, uniquePath, medDesc,
+                                shortDesc, known, hashSets, tags, trans);
+                    }
+                }
+            }
         }
 
         @Override
         @NbBundle.Messages("msgdlg.problem.text=There was a problem populating the timeline."
-                + "  Not all events may be present or accurate. See the log for details.")
+                + "  Not all events may be present or accurate.")
         protected void done() {
             super.done();
             try {
-                progressDialog.close();
                 get();
             } catch (CancellationException ex) {
-                LOGGER.log(Level.WARNING, "Database population was cancelled by the user.  Not all events may be present or accurate. See the log for details.", ex); // NON-NLS
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.WARNING, "Exception while populating database.", ex); // NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
+                LOGGER.log(Level.WARNING, "Timeline database population was cancelled by the user. "
+                        + " Not all events may be present or accurate."); // NON-NLS
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.msgdlg_problem_text());
             }
-            postPopulationOperation.run();  //execute post db population operation
         }
 
         /**
@@ -593,38 +633,40 @@ public class EventsRepository {
                 //get all the blackboard artifacts corresponding to the given event sub_type
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactType());
                 final int numArtifacts = blackboardArtifacts.size();
-
+                progressHandle.finish();
+                progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_populatingXevents(type.getDisplayName()), () -> cancel(true));
+                progressHandle.start(numArtifacts);
                 for (int i = 0; i < numArtifacts; i++) {
-                    publish(new ProgressWindow.ProgressUpdate(i, numArtifacts,
-                            Bundle.progressWindow_populatingXevents(type.getDisplayName()), ""));
-
-                    //for each artifact, extract the relevant information for the descriptions
-                    BlackboardArtifact bbart = blackboardArtifacts.get(i);
-                    ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.AttributeEventDescription.buildEventDescription(type, bbart);
-
-                    //insert it into the db if time is > 0  => time is legitimate
-                    if (eventDescription != null && eventDescription.getTime() > 0L) {
-                        long objectID = bbart.getObjectID();
-                        AbstractFile f = skCase.getAbstractFileById(objectID);
-                        long datasourceID = f.getDataSource().getId();
-                        long artifactID = bbart.getArtifactID();
-                        Set<String> hashSets = f.getHashSetNames();
-                        List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
-                        String fullDescription = eventDescription.getFullDescription();
-                        String medDescription = eventDescription.getMedDescription();
-                        String shortDescription = eventDescription.getShortDescription();
-
-                        eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags, trans);
+                    try {
+                        //for each artifact, extract the relevant information for the descriptions
+                        insertEventForArtifact(type, blackboardArtifacts.get(i), trans);
+                        update(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                                Bundle.progressWindow_populatingXevents(type.getDisplayName())));
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
                     }
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type = " + type.toString() + ".", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type " + type.toString() + ".", ex); // NON-NLS
             }
         }
-    }
 
-    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
-        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
-
+        private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart, EventDB.EventTransaction trans) throws TskCoreException {
+            ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
+            /* if the time is legitimate ( greater than zero ) insert it into
+             * the db */
+            if (eventDescription != null && eventDescription.getTime() > 0) {
+                long objectID = bbart.getObjectID();
+                AbstractFile f = skCase.getAbstractFileById(objectID);
+                long datasourceID = f.getDataSource().getId();
+                long artifactID = bbart.getArtifactID();
+                Set<String> hashSets = f.getHashSetNames();
+                List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
+                String fullDescription = eventDescription.getFullDescription();
+                String medDescription = eventDescription.getMedDescription();
+                String shortDescription = eventDescription.getShortDescription();
+                eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags, trans);
+            }
+        }
     }
 }

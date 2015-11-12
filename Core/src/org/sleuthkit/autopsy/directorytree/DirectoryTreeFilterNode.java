@@ -105,6 +105,14 @@ class DirectoryTreeFilterNode extends FilterNode {
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(ExtractAction.getInstance());
+                actions.add(new AbstractAction(
+                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(dir);
+                                ingestDialog.display();
+                            }
+                        });
             }
 
             final Image img = this.getLookup().lookup(Image.class);

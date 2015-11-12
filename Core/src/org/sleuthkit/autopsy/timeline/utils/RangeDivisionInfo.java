@@ -82,7 +82,6 @@ public class RangeDivisionInfo {
     }
 
     private RangeDivisionInfo(Interval timeRange, int periodsInRange, TimeUnits periodSize, DateTimeFormatter tickformatter, long lowerBound, long upperBound) {
-        super();
         this.numberOfBlocks = periodsInRange;
         this.blockSize = periodSize;
         this.tickFormatter = tickformatter;

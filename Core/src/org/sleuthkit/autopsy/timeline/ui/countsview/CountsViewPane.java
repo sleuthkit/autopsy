@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -55,8 +54,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javax.swing.JOptionPane;
-import org.controlsfx.control.action.ActionGroup;
-import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
@@ -67,8 +64,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
-import org.sleuthkit.autopsy.timeline.actions.Back;
-import org.sleuthkit.autopsy.timeline.actions.Forward;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
@@ -98,12 +93,10 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 public class CountsViewPane extends AbstractVisualizationPane<String, Number, Node, EventCountsChart> {
 
+    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
     private static final Effect SELECTED_NODE_EFFECT = new Lighting();
 
-    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
-
     private final NumberAxis countAxis = new NumberAxis();
-
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
 
     private final SimpleObjectProperty<ScaleType> scale = new SimpleObjectProperty<>(ScaleType.LOGARITHMIC);
@@ -120,15 +113,6 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     protected Boolean isTickBold(String value) {
         return dataSets.stream().flatMap((series) -> series.getData().stream())
                 .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
-    }
-
-    private ContextMenu getContextMenu() {
-
-        ContextMenu chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new ActionGroup(
-                NbBundle.getMessage(this.getClass(), "Timeline.ui.countsview.contextMenu.ActionGroup.zoomHistory.title"),
-                new Back(controller), new Forward(controller))));
-        chartContextMenu.setAutoHide(true);
-        return chartContextMenu;
     }
 
     @Override
@@ -180,15 +164,14 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 DateTime start = timeRange.getStart();
                 while (timeRange.contains(start)) {
 
-                    final String dateString = start.toString(rangeInfo.getTickFormatter());
+                    final String startString = start.toString(rangeInfo.getTickFormatter());
                     DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
                     final Interval interval = new Interval(start, end);
+                    //increment for next iteration
+                    start = end;
 
                     //query for current range
                     Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(interval);
-
-                    //increment for next iteration
-                    start = end;
 
                     int dateMax = 0; //used in max tracking
 
@@ -204,7 +187,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                             final double adjustedCount = count == 0 ? 0 : scale.get().adjust(count);
 
                             dateMax += adjustedCount;
-                            final XYChart.Data<String, Number> xyData = new BarChart.Data<>(dateString, adjustedCount);
+                            final XYChart.Data<String, Number> xyData = new BarChart.Data<>(startString, adjustedCount);
 
                             xyData.nodeProperty().addListener((Observable o) -> {
                                 final Node node = xyData.getNode();
@@ -216,9 +199,8 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
                                                     count,
                                                     et.getDisplayName(),
-                                                    dateString,
-                                                    interval.getEnd().toString(
-                                                            rangeInfo.getTickFormatter())));
+                                                    startString,
+                                                    interval.getEnd().toString(rangeInfo.getTickFormatter())));
                                     tooltip.setGraphic(new ImageView(et.getFXImage()));
                                     Tooltip.install(node, tooltip);
 
@@ -233,7 +215,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                         }
                                     });
 
-                                    node.addEventHandler(MouseEvent.MOUSE_CLICKED, new BarClickHandler(node, dateString, interval, et));
+                                    node.addEventHandler(MouseEvent.MOUSE_CLICKED, new BarClickHandler(node, startString, interval, et));
                                 }
                             });
 
@@ -285,7 +267,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         chart.setData(dataSets);
         setCenter(chart);
 
-        Tooltip.install(chart, getDragTooltip());
+        Tooltip.install(chart, getDefaultTooltip());
 
         settingsNodes = new ArrayList<>(new CountsViewSettingsPane().getChildrenUnmodifiable());
 
@@ -400,7 +382,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                     selectedNodes.setAll(node);
                 } else if (e.getButton().equals(MouseButton.SECONDARY)) {
                     Platform.runLater(() -> {
-                        chart.getContextMenu().hide();
+                        chart.getChartContextMenu(e).hide();
 
                         if (barContextMenu == null) {
                             barContextMenu = new ContextMenu();
@@ -457,7 +439,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             });
                                         }
                                     });
-                            barContextMenu.getItems().addAll(getContextMenu().getItems());
+                            barContextMenu.getItems().addAll(chart.getChartContextMenu(e).getItems());
                         }
 
                         barContextMenu.show(node, e.getScreenX(), e.getScreenY());

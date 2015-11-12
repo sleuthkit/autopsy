@@ -15,6 +15,14 @@
         </xs:restriction>
     </xs:simpleType>
     
+    <xs:complexType name="offsetType">
+        <xs:simpleContent>
+            <xs:extension base="xs:nonNegativeInteger">
+                <xs:attribute name="RelativeToStart" type="xs:boolean" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
     <xs:simpleType name="sigInterpretationType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="RAW"/>
@@ -25,8 +33,7 @@
     <xs:complexType name="signatureType">
         <xs:sequence>
             <xs:element name="Bytes" type="stringType"/>
-            <xs:element name="Offset" type="xs:nonNegativeInteger"/>
-            <xs:element name="Trailing" type="xs:boolean" minOccurs="0" maxOccurs="1" />
+            <xs:element name="Offset" type="offsetType"/>
         </xs:sequence>
         <xs:attribute name="type" type="sigInterpretationType" use="required"/>
     </xs:complexType>

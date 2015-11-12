@@ -1,0 +1,16 @@
+/*! \page multiuser_sec_page Multi-user Case Security
+
+\section mulit_sec_overview Overview
+This page outlines the security protections that exist in a multi-user case deployment so that you can protect sensitive data.  A multi-user deployment must be in a private network to ensure that only authorized users can access data.  Remote sites should connect to central services via a VPN. 
+
+- Central Storage: It is your responsibility to use folder-based permissions to restrict access to the case folder. A user must be able to read and write into the case folder to open a case via Autopsy.  It contains the Solr index, module output, logs, and reports. 
+- Central Database: PostgreSQL supports authentication via a login and password.  Each Autopsy client must be configured with a PostgreSQL username and password.  It is up to you to decide if there is a single username and password for the entire lab or if you will configure a new one for each client.  
+- Central Solr: Solr does not require a username or password to connect to it and query it.  There is an optional way to configure Solr to require them, but we have not tried that yet. 
+- Messaging Service: ActiveMQ can be configured to require a username and password.  Like the central database, it is up to you to decide on if there is a single username and password or one for each client. 
+
+Because the Solr server does not restrict access to the indexed content,
+you should deploy these services in a network that only authorized users
+have access to.  Future versions will allow for additional protection
+of sensitive data.
+
+*/

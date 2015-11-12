@@ -72,13 +72,12 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * common history context menu items out of derived classes? -jm
  */
 public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
-
-    @NbBundle.Messages("AbstractVisualization.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
-    private static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Drag_Tooltip_text());
+    @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
+    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
     private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
 
-    public static Tooltip getDragTooltip() {
-        return DRAG_TOOLTIP;
+    public static Tooltip getDefaultTooltip() {
+        return DEFAULT_TOOLTIP;
     }
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
@@ -242,16 +241,16 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         });
 
         TimeLineController.getTimeZone().addListener(invalidationListener);
-        
+
         //show tooltip text in status bar
         hoverProperty().addListener((observable, oldActivated, newActivated) -> {
             if (newActivated) {
-                controller.setStatus(DRAG_TOOLTIP.getText());
+                controller.setStatus(DEFAULT_TOOLTIP.getText());
             } else {
                 controller.setStatus("");
             }
         });
-        
+
         update();
     }
 

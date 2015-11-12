@@ -310,7 +310,19 @@ public class PlatformUtil {
             return (System.getProperty("os.arch").contains("64")); //NON-NLS
         }
     }
-
+    
+    
+    /**
+     * Attempts to determine whether the JVM is 64-bit or 32-bit. 
+     * May not be completely reliable for non-Windows operating systems.
+     *
+     * @return True if the JVM is 64-bit. False otherwise.
+     */
+    public static boolean is64BitJVM() {
+        return (System.getProperty("sun.arch.data.model").equals("64"));
+    }
+    
+    
     /**
      * Get a list of all physical drives attached to the client's machine. Error
      * threshold of 4 non-existent physical drives before giving up.

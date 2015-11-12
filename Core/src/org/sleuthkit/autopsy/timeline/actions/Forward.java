@@ -37,8 +37,9 @@ public class Forward extends Action {
 
     private final TimeLineController controller;
 
+    @NbBundle.Messages("Forward.text=Forward")
     public Forward(TimeLineController controller) {
-        super(NbBundle.getMessage(Forward.class, "Forward.action.name.text"));
+        super(Bundle.Forward_text());
         setGraphic(new ImageView(BACK_IMAGE));
         setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN));
         this.controller = controller;

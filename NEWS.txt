@@ -1,3 +1,10 @@
+---------------- VERSION 4.0.0  --------------
+Improvements:
+- Collaboration supported by optional multi-user cases with centralized data and services
+- New image gallery feature
+- Directory tree does not collapse if expanded and data sources or files are added
+- Assorted bug fixes and minor enhancements 
+
 ---------------- VERSION 3.1.3  --------------
 Improvements:
 - New Embedded File Extractor module that incorporates ZIP file module and extracts images from Office documents

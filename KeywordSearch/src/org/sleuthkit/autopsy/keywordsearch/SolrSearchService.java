@@ -25,6 +25,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
@@ -145,6 +146,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
 
         // Next create the index entry for the document content.
@@ -160,6 +162,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
 
@@ -176,7 +179,8 @@ public class SolrSearchService implements KeywordSearchService {
      * @param host the remote hostname or IP address of the Solr server
      * @param port the remote port for Solr
      *
-     * @throws org.sleuthkit.autopsy.keywordsearch.KeywordSearchServiceException
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
      *
      */
     @Override

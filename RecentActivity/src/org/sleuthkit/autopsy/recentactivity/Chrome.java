@@ -286,6 +286,9 @@ class Chrome extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "Chrome.parentModuleName"), domain));
                     bbart.addAttributes(bbattributes);
+                    
+                    // index the artifact for keyword search
+                    this.indexArtifact(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
                     this.addErrorMessage(

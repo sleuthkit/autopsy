@@ -108,7 +108,6 @@
                 <package>org.apache.commons.lang.mutable</package>
                 <package>org.apache.commons.lang.text</package>
                 <package>org.apache.commons.lang.time</package>
-                <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
                 <package>org.apache.tika</package>
                 <package>org.apache.tika.config</package>

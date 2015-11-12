@@ -68,7 +68,7 @@ final class UserDefinedFileTypesManager {
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
-    private static final String TRAILING_TAG_NAME = "Trailing";
+    private static final String RELATIVE_ATTRIBUTE = "RelativeToStart";
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
@@ -215,6 +215,9 @@ final class UserDefinedFileTypesManager {
             byteArray = DatatypeConverter.parseHexBinary("001102FF"); //NON-NLS
             fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
             fileTypes.add(fileType);
+            byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
+            fileType = new FileType("image/x-pict", new Signature(byteArray, 522L), "", false); //NON-NLS
+            fileTypes.add(fileType);
 
             // Add rule for .pam
             fileType = new FileType("image/x-portable-arbitrarymap", new Signature("P7", 0L), "", false); //NON-NLS
@@ -222,12 +225,15 @@ final class UserDefinedFileTypesManager {
 
             // Add rule for .pfm
             fileType = new FileType("image/x-portable-floatmap", new Signature("PF", 0L), "", false); //NON-NLS
+            fileTypes.add(fileType);      
+            fileType = new FileType("image/x-portable-floatmap", new Signature("Pf", 0L), "", false); //NON-NLS
             fileTypes.add(fileType);
             
             // Add rule for .tga
             byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00");
-            fileType = new FileType("image/x-tga", new Signature(byteArray, 0, true), "", false);
+            fileType = new FileType("image/x-tga", new Signature(byteArray, 17, false), "", false);
             fileTypes.add(fileType);
+            
             
         }
         // parseHexBinary() throws this if the argument passed in is not Hex
@@ -379,11 +385,8 @@ final class UserDefinedFileTypesManager {
 
             Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
+            offsetElem.setAttribute(RELATIVE_ATTRIBUTE, String.valueOf(signature.isRelativeToStart()));
             signatureElem.appendChild(offsetElem);
-            
-            Element trailingElem = doc.createElement(TRAILING_TAG_NAME);
-            trailingElem.setTextContent(DatatypeConverter.printBoolean(signature.isTrailing()));
-            signatureElem.appendChild(trailingElem);
 
             signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
             fileTypeElem.appendChild(signatureElem);
@@ -492,16 +495,17 @@ final class UserDefinedFileTypesManager {
             String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
             byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
-            String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
+            Element offsetElem = (Element) signatureElem.getElementsByTagName(OFFSET_TAG_NAME).item(0);
+            String offsetString = offsetElem.getTextContent();
             long offset = DatatypeConverter.parseLong(offsetString);
             
-            String trailingString = getChildElementTextContent(signatureElem, TRAILING_TAG_NAME);
-            if(trailingString == null)
+            String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
+            if(relativeString == null || relativeString.equals(""))
                 return new Signature(signatureBytes, offset, signatureType);
             
-            boolean trailing = DatatypeConverter.parseBoolean(trailingString);
+            boolean isRelative = DatatypeConverter.parseBoolean(relativeString);
 
-            return new Signature(signatureBytes, offset, signatureType, trailing);
+            return new Signature(signatureBytes, offset, signatureType, isRelative);
         }
 
         /**
@@ -539,7 +543,7 @@ final class UserDefinedFileTypesManager {
          * @param elem The parent element.
          * @param tagName The tag name of the child element.
          *
-         * @return The text content.
+         * @return The text content or null if the tag doesn't exist.
          */
         private static String getChildElementTextContent(Element elem, String tagName) {
             NodeList childElems = elem.getElementsByTagName(tagName);
