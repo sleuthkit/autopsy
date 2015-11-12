@@ -228,6 +228,11 @@ final class UserDefinedFileTypesManager {
             fileTypes.add(fileType);
             fileType = new FileType("image/x-portable-floatmap", new Signature("Pf", 0L), "", false); //NON-NLS
             fileTypes.add(fileType);
+            
+            // Add rule for .tga
+            byteArray = DatatypeConverter.parseHexBinary("54525545564953494F4E2D5846494C452E00");
+            fileType = new FileType("image/x-tga", new Signature(byteArray, 17, false), "", false);
+            fileTypes.add(fileType);
         }
         // parseHexBinary() throws this if the argument passed in is not Hex
         catch (IllegalArgumentException e) {
