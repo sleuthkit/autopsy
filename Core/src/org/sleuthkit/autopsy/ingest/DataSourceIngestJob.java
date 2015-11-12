@@ -941,9 +941,11 @@ final class DataSourceIngestJob {
                     this.fileIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.canceling",
                                     displayName));
-                    this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.fileIngest.cancelMessage",
-                            this.currentFileIngestModule, this.currentFileIngestTask));
+                    if (!this.currentFileIngestModule.isEmpty() && !this.currentFileIngestTask.isEmpty()) {
+                        this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
+                                "IngestJob.progress.fileIngest.cancelMessage",
+                                this.currentFileIngestModule, this.currentFileIngestTask));
+                    }
 
                 }
             }
