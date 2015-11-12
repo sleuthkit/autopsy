@@ -34,6 +34,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 
@@ -44,7 +45,7 @@ import org.sleuthkit.datamodel.Directory;
 public final class RunIngestModulesDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
-    private final String context;
+    private final IngestType ingestType;
     private static Dimension DIMENSIONS = new Dimension(500, 300);
     private final List<Content> dataSources = new ArrayList<>();
     private IngestJobSettingsPanel ingestJobSettingsPanel;
@@ -61,7 +62,7 @@ public final class RunIngestModulesDialog extends JDialog {
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal, List<Content> dataSources) {
         super(frame, title, modal);
         this.dataSources.addAll(dataSources);
-        this.context = RunIngestModulesDialog.class.getCanonicalName();
+        this.ingestType = IngestType.ALL_MODULES;
     }
 
     /**
@@ -76,7 +77,7 @@ public final class RunIngestModulesDialog extends JDialog {
     
     public RunIngestModulesDialog(Directory dir) {
         this.dataSources.add(dir);
-        this.context = RunIngestModulesDialog.class.getCanonicalName() + ".isDir";
+        this.ingestType = IngestType.FILES_ONLY;
     }
 
     /**
@@ -92,7 +93,7 @@ public final class RunIngestModulesDialog extends JDialog {
     @Deprecated
     public RunIngestModulesDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        this.context = RunIngestModulesDialog.class.getCanonicalName();
+        this.ingestType = IngestType.ALL_MODULES;
     }
 
     /**
@@ -138,7 +139,7 @@ public final class RunIngestModulesDialog extends JDialog {
          * Get the default or saved ingest job settings for this context and use
          * them to create and add an ingest job settings panel.
          */
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(context);       
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);       
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         add(this.ingestJobSettingsPanel, BorderLayout.PAGE_START);
