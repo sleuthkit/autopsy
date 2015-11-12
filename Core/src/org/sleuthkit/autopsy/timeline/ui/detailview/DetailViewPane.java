@@ -111,13 +111,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
 
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler(); //can we push this into chart
         chart.setData(dataSets);
         setCenter(chart);
+
+        settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
 
         //bind layout fo axes and spacers
         dateAxis.setTickLabelGap(0);
@@ -398,7 +399,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
         DetailViewSettingsPane() {
-            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
+            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
         @FXML
