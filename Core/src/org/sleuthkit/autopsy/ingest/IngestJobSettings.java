@@ -53,11 +53,23 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final String context;
+    private final IngestType ingestType;
     private String moduleSettingsFolderPath;
     private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1);
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
+
+    // Determines which modeules to run
+    public enum IngestType {
+
+        // Run all modules
+        ALL_MODULES,
+        // Run only data source modules
+        DATA_SOURCE_ONLY,
+        // Run only files modules
+        FILES_ONLY
+    }
 
     /**
      * Constructs an ingest job settings object for a given context.
@@ -66,6 +78,29 @@ public class IngestJobSettings {
      */
     public IngestJobSettings(String context) {
         this.context = context;
+        this.ingestType = IngestType.ALL_MODULES;
+        this.moduleTemplates = new ArrayList<>();
+        this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
+        this.warnings = new ArrayList<>();
+        this.createSavedModuleSettingsFolder();
+        this.load();
+    }
+
+    /**
+     * Constructs an ingest job settings object for a given context.
+     *
+     * @param context The context identifier string.
+     * @param ingestType The type of modules ingest is running.
+     */
+    public IngestJobSettings(String context, IngestType ingestType) {
+        this.ingestType = ingestType;
+
+        if (this.ingestType.equals(IngestType.ALL_MODULES)) {
+            this.context = context;
+        } else {
+            this.context = context + "." + this.ingestType.name();  
+        }
+
         this.moduleTemplates = new ArrayList<>();
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
         this.warnings = new ArrayList<>();
@@ -145,10 +180,10 @@ public class IngestJobSettings {
     void setProcessUnallocatedSpace(boolean processUnallocatedSpace) {
         this.processUnallocatedSpace = processUnallocatedSpace;
     }
-    
+
     /**
      * Returns the path to the ingest module settings folder.
-     * 
+     *
      * @return path to the module settings folder
      */
     public Path getSavedModuleSettingsFolder(){
@@ -178,8 +213,21 @@ public class IngestJobSettings {
          * Get the ingest module factories discovered by the ingest module
          * loader.
          */
-        List<IngestModuleFactory> moduleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
+        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
+        List<IngestModuleFactory> allModuleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
+
+        // Add modules that are going to be used for this ingest depending on type.
+        for (IngestModuleFactory moduleFactory : allModuleFactories) {
+            if (this.ingestType.equals(IngestType.ALL_MODULES)) {
+                moduleFactories.add(moduleFactory);
+            } else if (this.ingestType.equals(IngestType.DATA_SOURCE_ONLY) && moduleFactory.isDataSourceIngestModuleFactory()) {
+                moduleFactories.add(moduleFactory);
+            } else if (this.ingestType.equals(IngestType.FILES_ONLY) && moduleFactory.isFileIngestModuleFactory()) {
+                moduleFactories.add(moduleFactory);
+            }
+        }
+
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
         }

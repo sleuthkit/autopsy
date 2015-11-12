@@ -56,6 +56,7 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
+from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -104,6 +105,10 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
     # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     def process(self, file):
+
+        # Use blackboard class to index blackboard artifacts for keyword search
+        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+
         # Skip non-files
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
             (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or 
@@ -119,7 +124,13 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), 
                   FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
             art.addAttribute(att)
-  
+
+            try:
+                # index the artifact for keyword search
+                blackboard.indexArtifact(art)
+            except Blackboard.BlackboardException as e:
+                self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+
             # Fire an event to notify the UI and others that there is a new artifact  
             IngestServices.getInstance().fireModuleDataEvent(
                 ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName, 

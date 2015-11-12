@@ -51,7 +51,7 @@ class FileType {
      */
     FileType(String mimeType, final Signature signature, String filesSetName, boolean alert) {
         this.mimeType = mimeType;
-        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        this.signature = new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
         this.interestingFilesSetName = filesSetName;
         this.alert = alert;
     }
@@ -71,7 +71,7 @@ class FileType {
      * @return The signature.
      */
     Signature getSignature() {
-        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType());
+        return new Signature(signature.getSignatureBytes(), signature.getOffset(), signature.getType(), signature.isRelativeToStart());
     }
 
     /**
@@ -148,6 +148,7 @@ class FileType {
         private final byte[] signatureBytes;
         private final long offset;
         private final Type type;
+        private final boolean isRelativeToStart;
 
         /**
          * Creates a file signature consisting of a sequence of bytes at a
@@ -162,6 +163,7 @@ class FileType {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = type;
+            this.isRelativeToStart = true;
         }
         
         /**
@@ -175,6 +177,7 @@ class FileType {
             this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
             this.offset = offset;
             this.type = Type.ASCII;
+            this.isRelativeToStart = true;
         }
         
         /**
@@ -190,6 +193,56 @@ class FileType {
             this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
             this.offset = offset;
             this.type = Type.RAW;
+            this.isRelativeToStart = true;
+        }
+        
+        /**
+         * Creates a file signature consisting of a sequence of bytes at a
+         * specific offset within a file.
+         *
+         * @param signatureBytes        The signature bytes.
+         * @param offset                The offset of the signature bytes.
+         * @param type                  The type of data in the byte array. Impacts
+         *                              how it is displayed to the user in the UI.
+         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         */
+        Signature(final byte[] signatureBytes, long offset, Type type, boolean isRelativeToStart) {
+            this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
+            this.offset = offset;
+            this.type = type;
+            this.isRelativeToStart = isRelativeToStart;
+        }
+        
+        /**
+         * Creates a file signature consisting of an ASCII string at a
+         * specific offset within a file.
+         *
+         * @param signatureString       The ASCII string
+         * @param offset                The offset of the signature bytes.
+         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         */
+        Signature(String signatureString, long offset, boolean isRelativeToStart) {
+            this.signatureBytes = signatureString.getBytes(StandardCharsets.US_ASCII);
+            this.offset = offset;
+            this.type = Type.ASCII;
+            this.isRelativeToStart = isRelativeToStart;
+        }
+        
+        /**
+         * Creates a file signature consisting of a sequence of bytes at a
+         * specific offset within a file.  If bytes correspond to an ASCII
+         * string, use one of the other constructors so that the string is 
+         * displayed to the user instead of the raw bytes. 
+         *
+         * @param signatureBytes        The signature bytes.
+         * @param offset                The offset of the signature bytes.
+         * @param isRelativeToStart     Determines whether this signature is relative to start.
+         */
+        Signature(final byte[] signatureBytes, long offset, boolean isRelativeToStart) {
+            this.signatureBytes = Arrays.copyOf(signatureBytes, signatureBytes.length);
+            this.offset = offset;
+            this.type = Type.RAW;
+            this.isRelativeToStart = isRelativeToStart;
         }
 
         /**
@@ -218,6 +271,10 @@ class FileType {
         Type getType() {
             return type;
         }
+        
+        boolean isRelativeToStart() {
+            return isRelativeToStart;
+        }
 
         /**
          * Determines whether or not the signature is contained within a given
@@ -228,12 +285,15 @@ class FileType {
          * @return True or false.
          */
         boolean containedIn(final AbstractFile file) {
-            if (file.getSize() < (offset + signatureBytes.length)) {
+            long actualOffset = offset;
+            if(!isRelativeToStart)
+                actualOffset = file.getSize() - 1 - offset;
+            if (file.getSize() < (actualOffset + signatureBytes.length)) {
                 return false; /// too small, can't contain this signature
             }
             try {
                 byte[] buffer = new byte[signatureBytes.length];
-                int bytesRead = file.read(buffer, offset, signatureBytes.length);
+                int bytesRead = file.read(buffer, actualOffset, signatureBytes.length);
                 return ((bytesRead == signatureBytes.length) && (Arrays.equals(buffer, signatureBytes)));
             } catch (TskCoreException ex) {
                 /**
