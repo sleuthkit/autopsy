@@ -27,9 +27,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -55,6 +59,7 @@ import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -121,6 +126,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final HBox infoHBox = new HBox(5, descrLabel, countLabel, hashIV, tagIV);
 
     private final Tooltip tooltip = new Tooltip("loading...");
+    private Timeline timeline;
 
     public EventBundleNodeBase(EventDetailsChart chart, BundleType eventBundle, ParentNodeType parentNode) {
         this.eventBundle = eventBundle;
@@ -355,5 +361,19 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         } else {
             Tooltip.uninstall(this, tooltip);
         }
+    }
+
+    void animateTo(double xLeft, double yTop) {
+        if (timeline != null) {
+            timeline.stop();
+        }
+        timeline = new Timeline(new KeyFrame(Duration.millis(100),
+                new KeyValue(layoutXProperty(), xLeft),
+                new KeyValue(layoutYProperty(), yTop))
+        );
+        timeline.setOnFinished((ActionEvent event) -> {
+            chart.requestChartLayout();
+        });
+        timeline.play();
     }
 }

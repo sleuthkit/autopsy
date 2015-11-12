@@ -33,9 +33,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -62,7 +59,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.util.Duration;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -187,6 +183,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
 
     EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+
         this.controller = controller;
         this.filteredEvents = this.controller.getEventsModel();
 
@@ -259,7 +256,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         }
 
         chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
-                //                new StartIntervalSelectionAction(clickEvent, dragHandler),
                 TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
@@ -350,13 +346,13 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     }
 
     @Override
-    protected synchronized void dataItemChanged(Data<DateTime, EventCluster> data) {
+    protected void dataItemChanged(Data<DateTime, EventCluster> data) {
         //TODO: can we use this to help with local detail level adjustment -jm
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    protected synchronized void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
+    protected void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
         EventCluster eventCluster = data.getYValue();
         Platform.runLater(() -> {
             bundles.removeAll(eventCluster);
@@ -373,7 +369,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     }
 
     @Override
-    protected synchronized void layoutPlotChildren() {
+    protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
         maxY.set(0);
         if (bandByType.get()) {
@@ -397,14 +393,14 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     }
 
     @Override
-    protected synchronized void seriesAdded(Series<DateTime, EventCluster> series, int i) {
+    protected void seriesAdded(Series<DateTime, EventCluster> series, int i) {
         for (int j = 0; j < series.getData().size(); j++) {
             dataItemAdded(series, j, series.getData().get(j));
         }
     }
 
     @Override
-    protected synchronized void seriesRemoved(Series<DateTime, EventCluster> series) {
+    protected void seriesRemoved(Series<DateTime, EventCluster> series) {
         for (int j = 0; j < series.getData().size(); j++) {
             dataItemRemoved(series.getData().get(j), series);
         }
@@ -529,21 +525,17 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                 localMax = Math.max(yTop + h, localMax);
 
                 if ((xLeft != bundleNode.getLayoutX()) || (yTop != bundleNode.getLayoutY())) {
-
-                    //animate node to new position
-                    Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                            new KeyValue(bundleNode.layoutXProperty(), xLeft),
-                            new KeyValue(bundleNode.layoutYProperty(), yTop))
-                    );
-                    timeline.setOnFinished((ActionEvent event) -> {
-                        requestChartLayout();
-                    });
-                    timeline.play();
+//                    bundleNode.relocate(xLeft, yTop);
+//                    requestChartLayout();
+//                    //animate node to new position
+                    bundleNode.animateTo(xLeft, yTop);
                 }
             }
         }
         return localMax; //return new max
     }
+
+    
 
     private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
         //make sure it is shown
@@ -713,5 +705,4 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             );
         }
     }
-
 }

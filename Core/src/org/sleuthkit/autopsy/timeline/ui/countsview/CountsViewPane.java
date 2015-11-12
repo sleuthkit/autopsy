@@ -61,6 +61,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -331,15 +332,20 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
      * @return a Series object to contain all the events with the given
      *         EventType
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private XYChart.Series<String, Number> getSeries(final EventType et) {
-        XYChart.Series<String, Number> series = eventTypeMap.get(et);
-        if (series == null) {
-            series = new XYChart.Series<>();
+        return eventTypeMap.computeIfAbsent(et, (EventType t) -> {
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-            eventTypeMap.put(et, series);
-            dataSeries.add(series);
-        }
-        return series;
+                dataSeries.add(series);
+            return series;
+        });
+        
+//        XYChart.Series<String, Number> series = eventTypeMap.get(et);
+//        if (series == null) {
+//
+//        }
+//        return series;
 
     }
 

@@ -31,7 +31,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
-import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
@@ -64,7 +63,6 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
@@ -113,6 +111,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         super(controller, partPane, contextPane, bottomLeftSpacer);
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
+
         setChartClickHandler(); //can we push this into chart
         chart.setData(dataSeries);
         setCenter(chart);
@@ -253,14 +252,14 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
      * @return a Series object to contain all the events with the given
      *         EventType
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+//    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private XYChart.Series<DateTime, EventCluster> getSeries(final EventType et) {
         return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
             XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-            Platform.runLater(() -> {
-                dataSeries.add(series);
-            });
+//            Platform.runLater(() -> {
+            dataSeries.add(series);
+//            });
 
             return series;
         });
@@ -276,12 +275,18 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                 if (isCancelled()) {
                     return null;
                 }
-
-                if (isCancelled() == false) {
-                    Platform.runLater(() -> {
-                        setCursor(Cursor.WAIT);
-                    });
-                }
+//                else {
+//                    Platform.runLater(new Runnable() {
+//
+//                        public void run() {
+//                            ProgressIndicator progressIndicator = new ProgressIndicator(-1);
+//                            progressIndicator.progressProperty().bind(progressProperty());
+//                            progressIndicator.setOpacity(.5);
+//                            setCenter(new StackPane(chart, progressIndicator));
+//                            setCursor(Cursor.WAIT);
+//                        }
+//                    });
+//                }
 
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
@@ -291,43 +296,44 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                 final long upperBound = rangeInfo.getUpperBound();
 
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
+                dataSeries.clear();
+                Platform.runLater(new Runnable() {
 
-                Platform.runLater(() -> {
-                    if (isCancelled()) {
-                        return;
+                    public void run() {
+                        if (isCancelled()) {
+                            return;
+                        }
+                        dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
+                        dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
+                        vertScrollBar.setValue(0);
+                        eventTypeToSeriesMap.clear();
                     }
-                    dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
-                    dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
-                    vertScrollBar.setValue(0);
-                    eventTypeToSeriesMap.clear();
-                    dataSeries.clear();
                 });
 
                 List<EventCluster> eventClusters = filteredEvents.getEventClusters();
 
                 final int size = eventClusters.size();
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
                 for (int i = 0; i < size; i++) {
                     if (isCancelled()) {
                         break;
                     }
                     final EventCluster cluster = eventClusters.get(i);
                     updateProgress(i, size);
-                    updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
-                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getSpan().getStartMillis()), cluster);
+                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
 
-                    if (isCancelled() == false) {
 //                        Platform.runLater(() -> {
-                        getSeries(cluster.getEventType()).getData().add(xyData);
+                    getSeries(cluster.getEventType()).getData().add(xyData);
 //                        });
-                    }
                 }
-
-                Platform.runLater(() -> {
-                    setCursor(Cursor.DEFAULT);
-                    layoutDateLabels();
-                    updateProgress(1, 1);
-                });
+                updateProgress(1, 1);
                 return eventClusters.isEmpty() == false;
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                layoutDateLabels();
             }
         };
     }

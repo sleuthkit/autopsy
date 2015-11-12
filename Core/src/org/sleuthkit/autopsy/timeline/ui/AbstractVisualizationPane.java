@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -52,6 +53,7 @@ import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
@@ -273,9 +275,8 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      *
      * _________october___________|_____________september___________
      *
-     *
-     * NOTE: This method should only be invoked on the JFX thread
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public synchronized void layoutDateLabels() {
 
         //clear old labels
@@ -284,7 +285,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         //since the tickmarks aren't necessarily in value/position order,
         //make a clone of the list sorted by position along axis
         ObservableList<Axis.TickMark<X>> tickMarks = FXCollections.observableArrayList(getXAxis().getTickMarks());
-        tickMarks.sort((Axis.TickMark<X> t, Axis.TickMark<X> t1) -> Double.compare(t.getPosition(), t1.getPosition()));
+        tickMarks.sort(Comparator.comparing(Axis.TickMark::getPosition));
 
         if (tickMarks.isEmpty() == false) {
             //get the spacing between ticks in the underlying axis
