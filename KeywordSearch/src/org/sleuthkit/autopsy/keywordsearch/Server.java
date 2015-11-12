@@ -628,7 +628,6 @@ public class Server {
         currentCoreLock.writeLock().lock();
         try {
             if (null != currentCore) {
-                currentCore.close();
                 currentCore = null;
                 serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
             }
@@ -1129,7 +1128,7 @@ public class Server {
         CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
         Object dataDirPath = response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
         if (null != dataDirPath) {
-            File indexDir = Paths.get((String)dataDirPath, "index").toFile();  //NON-NLS
+            File indexDir = Paths.get((String) dataDirPath, "index").toFile();  //NON-NLS
             return indexDir.exists();
         } else {
             return false;
@@ -1252,23 +1251,6 @@ public class Server {
             }
 
             return null;
-        }
-
-        synchronized void close() throws KeywordSearchModuleException {
-            // We only unload cores for "single-user" cases.
-            if (this.caseType == CaseType.MULTI_USER_CASE) {
-                return;
-            }
-
-            try {
-                CoreAdminRequest.unloadCore(this.name, currentSolrServer);
-            } catch (SolrServerException ex) {
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg"), ex);
-            } catch (IOException ex) {
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.close.exception.msg2"), ex);
-            }
         }
 
         /**
