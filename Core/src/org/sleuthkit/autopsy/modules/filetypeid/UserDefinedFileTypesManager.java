@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 /**
@@ -67,6 +68,7 @@ final class UserDefinedFileTypesManager {
     private static final String SIGNATURE_TYPE_ATTRIBUTE = "type"; //NON-NLS
     private static final String BYTES_TAG_NAME = "Bytes"; //NON-NLS
     private static final String OFFSET_TAG_NAME = "Offset"; //NON-NLS
+    private static final String RELATIVE_ATTRIBUTE = "RelativeToStart";
     private static final String INTERESTING_FILES_SET_TAG_NAME = "InterestingFileSset"; //NON-NLS
     private static final String ALERT_ATTRIBUTE = "alert"; //NON-NLS
     private static final String ENCODING_FOR_XML_FILE = "UTF-8"; //NON-NLS
@@ -376,6 +378,7 @@ final class UserDefinedFileTypesManager {
 
             Element offsetElem = doc.createElement(OFFSET_TAG_NAME);
             offsetElem.setTextContent(DatatypeConverter.printLong(signature.getOffset()));
+            offsetElem.setAttribute(RELATIVE_ATTRIBUTE, String.valueOf(signature.isRelativeToStart()));
             signatureElem.appendChild(offsetElem);
 
             signatureElem.setAttribute(SIGNATURE_TYPE_ATTRIBUTE, signature.getType().toString());
@@ -485,10 +488,17 @@ final class UserDefinedFileTypesManager {
             String sigBytesString = getChildElementTextContent(signatureElem, BYTES_TAG_NAME);
             byte[] signatureBytes = DatatypeConverter.parseHexBinary(sigBytesString);
 
-            String offsetString = getChildElementTextContent(signatureElem, OFFSET_TAG_NAME);
+            Element offsetElem = (Element) signatureElem.getElementsByTagName(OFFSET_TAG_NAME).item(0);
+            String offsetString = offsetElem.getTextContent();
             long offset = DatatypeConverter.parseLong(offsetString);
+            
+            String relativeString = offsetElem.getAttribute(RELATIVE_ATTRIBUTE);
+            if(relativeString == null || relativeString.equals(""))
+                return new Signature(signatureBytes, offset, signatureType);
+            
+            boolean isRelative = DatatypeConverter.parseBoolean(relativeString);
 
-            return new Signature(signatureBytes, offset, signatureType);
+            return new Signature(signatureBytes, offset, signatureType, isRelative);
         }
 
         /**
@@ -526,11 +536,14 @@ final class UserDefinedFileTypesManager {
          * @param elem The parent element.
          * @param tagName The tag name of the child element.
          *
-         * @return The text content.
+         * @return The text content or null if the tag doesn't exist.
          */
         private static String getChildElementTextContent(Element elem, String tagName) {
             NodeList childElems = elem.getElementsByTagName(tagName);
-            Element childElem = (Element) childElems.item(0);
+            Node childNode = childElems.item(0);
+            if(childNode == null)
+                return null;
+            Element childElem = (Element) childNode;
             return childElem.getTextContent();
         }
 

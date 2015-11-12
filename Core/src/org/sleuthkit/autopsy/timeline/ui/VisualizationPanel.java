@@ -37,7 +37,6 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.TitledPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
@@ -74,6 +73,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
+import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
@@ -537,8 +537,10 @@ final public class VisualizationPanel extends BorderPane {
         }
     }
 
-    private class NoEventsDialog extends TitledPane {
+    private class NoEventsDialog extends StackPane {
 
+        @FXML
+        private Button backButton;
         @FXML
         private Button resetFiltersButton;
         @FXML
@@ -562,13 +564,12 @@ final public class VisualizationPanel extends BorderPane {
             assert zoomButton != null : "fx:id=\"zoomButton\" was not injected: check your FXML file 'NoEventsDialog.fxml'."; // NON-NLS
 
             noEventsDialogLabel.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.noEventsDialogLabel.text")); // NON-NLS
-            ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
-
+         
             dismissButton.setOnAction(actionEvent -> closeCallback.run());
-            Action defaultFiltersAction = new ResetFilters(controller);
-            resetFiltersButton.setOnAction(defaultFiltersAction);
-            resetFiltersButton.disableProperty().bind(defaultFiltersAction.disabledProperty());
-            resetFiltersButton.setText(NbBundle.getMessage(NoEventsDialog.class, "VisualizationPanel.resetFiltersButton.text")); // NON-NLS
+
+            ActionUtils.configureButton(new ZoomToEvents(controller), zoomButton);
+            ActionUtils.configureButton(new Back(controller), backButton);
+            ActionUtils.configureButton(new ResetFilters(controller), resetFiltersButton);
         }
     }
 

@@ -54,8 +54,6 @@ import static javafx.scene.input.KeyCode.PAGE_DOWN;
 import static javafx.scene.input.KeyCode.PAGE_UP;
 import static javafx.scene.input.KeyCode.UP;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -93,53 +91,92 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
-    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
+    private static final double LINE_SCROLL_PERCENTAGE = .10;
+    private static final double PAGE_SCROLL_PERCENTAGE = .70;
 
-    //these three could be injected from fxml but it was causing npe's
     private final DateAxis dateAxis = new DateAxis();
-
     private final Axis<EventCluster> verticalAxis = new EventAxis();
+    private final ScrollBar vertScrollBar = new ScrollBar();
+    private final Region scrollBarSpacer = new Region();
+
+    private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
+    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     //private access to barchart data
     private final Map<EventType, XYChart.Series<DateTime, EventCluster>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
-
-    private final ScrollBar vertScrollBar = new ScrollBar();
-
-    private final Region region = new Region();
-
-    private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     public ObservableList<EventBundle<?>> getEventBundles() {
         return chart.getEventBundles();
     }
 
+    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
+        super(controller, partPane, contextPane, bottomLeftSpacer);
 
-    public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
-        super(controller, partPane, contextPane, spacer);
+        //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
-        setChartClickHandler();
+        setChartClickHandler(); //can we push this into chart
         chart.setData(dataSets);
         setCenter(chart);
 
-     
-        chart.setPrefHeight(USE_COMPUTED_SIZE);
-
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
 
-        vertScrollBar.setOrientation(Orientation.VERTICAL);
-        VBox vBox = new VBox();
-        VBox.setVgrow(vertScrollBar, Priority.ALWAYS);
-        vBox.getChildren().add(vertScrollBar);
-        vBox.getChildren().add(region);
-        setRight(vBox);
-
+        //bind layout fo axes and spacers
+        dateAxis.setTickLabelGap(0);
         dateAxis.setAutoRanging(false);
-        region.minHeightProperty().bind(dateAxis.heightProperty());
-        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty().multiply(100).divide(chart.maxVScrollProperty()));
-        requestLayout();
+        dateAxis.setTickLabelsVisible(false);
+        dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
+        dateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
 
+        bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
+        bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
+        bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
+
+        scrollBarSpacer.minHeightProperty().bind(dateAxis.heightProperty());
+
+        //configure scrollbar
+        vertScrollBar.setOrientation(Orientation.VERTICAL);
+        vertScrollBar.maxProperty().bind(chart.maxVScrollProperty().subtract(chart.heightProperty()));
+        vertScrollBar.visibleAmountProperty().bind(chart.heightProperty());
+        vertScrollBar.visibleProperty().bind(vertScrollBar.visibleAmountProperty().greaterThanOrEqualTo(0));
+        VBox.setVgrow(vertScrollBar, Priority.ALWAYS);
+        setRight(new VBox(vertScrollBar, scrollBarSpacer));
+
+        //interpret scroll events to the scrollBar
+        this.setOnScroll(scrollEvent ->
+                vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() - scrollEvent.getDeltaY())));
+
+        //request focus for keyboard scrolling
+        setOnMouseClicked(mouseEvent -> requestFocus());
+
+        //interpret scroll related keys to scrollBar
+        this.setOnKeyPressed((KeyEvent t) -> {
+            switch (t.getCode()) {
+                case PAGE_UP:
+                    incrementScrollValue(-PAGE_SCROLL_PERCENTAGE);
+                    t.consume();
+                    break;
+                case PAGE_DOWN:
+                    incrementScrollValue(PAGE_SCROLL_PERCENTAGE);
+                    t.consume();
+                    break;
+                case KP_UP:
+                case UP:
+                    incrementScrollValue(-LINE_SCROLL_PERCENTAGE);
+                    t.consume();
+                    break;
+                case KP_DOWN:
+                case DOWN:
+                    incrementScrollValue(LINE_SCROLL_PERCENTAGE);
+                    t.consume();
+                    break;
+            }
+        });
+
+        //scrollbar value change handler.  This forwards changes in scroll bar to chart
+        this.vertScrollBar.valueProperty().addListener(observable -> chart.setVScroll(vertScrollBar.getValue()));
+
+        //maintain highlighted effect on correct nodes
         highlightedNodes.addListener((ListChangeListener.Change<? extends EventBundleNodeBase<?, ?, ?>> change) -> {
-
             while (change.next()) {
                 change.getAddedSubList().forEach(node -> {
                     node.applyHighlightEffect(true);
@@ -149,71 +186,24 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                 });
             }
         });
-        //request focus for keyboard scrolling
-        setOnMouseClicked((MouseEvent t) -> {
-            requestFocus();
-        });
-
-        //These scroll related handlers don't affect any other view or the model, so they are handled internally
-        //mouse wheel scroll handler
-        this.onScrollProperty().set((ScrollEvent t) -> {
-            vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() - t.getDeltaY() / 200.0)));
-        });
-
-        this.setOnKeyPressed((KeyEvent t) -> {
-            switch (t.getCode()) {
-                case PAGE_UP:
-                    incrementScrollValue(-70);
-                    break;
-                case PAGE_DOWN:
-                    incrementScrollValue(70);
-                    break;
-                case KP_UP:
-                case UP:
-                    incrementScrollValue(-10);
-                    break;
-                case KP_DOWN:
-                case DOWN:
-                    incrementScrollValue(10);
-                    break;
-            }
-            t.consume();
-        });
-
-        //scrollbar handler
-        this.vertScrollBar.valueProperty().addListener((o, oldValue, newValue) -> {
-            chart.setVScroll(newValue.doubleValue() / 100.0);
-        });
-        spacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        spacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-        spacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
-
-        dateAxis.setTickLabelsVisible(false);
-
-        dateAxis.getTickMarks().addListener((Observable observable) -> {
-            layoutDateLabels();
-        });
-        dateAxis.getTickSpacing().addListener((Observable observable) -> {
-            layoutDateLabels();
-        });
-
-        dateAxis.setTickLabelGap(0);
 
         selectedNodes.addListener((Observable observable) -> {
             highlightedNodes.clear();
             selectedNodes.stream().forEach((tn) -> {
-
                 for (EventBundleNodeBase<?, ?, ?> n : chart.getNodes((EventBundleNodeBase<?, ?, ?> t) ->
                         t.getDescription().equals(tn.getDescription()))) {
                     highlightedNodes.add(n);
                 }
             });
         });
-
     }
 
-    private void incrementScrollValue(int factor) {
-        vertScrollBar.valueProperty().set(Math.max(0, Math.min(100, vertScrollBar.getValue() + factor * (chart.getHeight() / chart.maxVScrollProperty().get()))));
+    private void incrementScrollValue(double factor) {
+        vertScrollBar.valueProperty().set(clampScroll(vertScrollBar.getValue() + factor * chart.getHeight()));
+    }
+
+    private Double clampScroll(Double value) {
+        return Math.max(0, Math.min(vertScrollBar.getMax() + 50, value));
     }
 
     public void setSelectionModel(MultipleSelectionModel<TreeItem<EventBundle<?>>> selectionModel) {
@@ -409,7 +399,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         private SeparatorMenuItem descVisibilitySeparatorMenuItem;
 
         DetailViewSettingsPane() {
-            FXMLConstructor.construct(this, "DetailViewSettingsPane.fxml"); // NON-NLS
+            FXMLConstructor.construct(DetailViewSettingsPane.this, "DetailViewSettingsPane.fxml"); // NON-NLS
         }
 
         @FXML
@@ -472,5 +462,4 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
     }
-
 }

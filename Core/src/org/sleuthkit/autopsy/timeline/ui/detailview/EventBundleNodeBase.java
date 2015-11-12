@@ -175,7 +175,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
              * surprisingly large impact on speed of loading the chart
              */
             installTooltip();
-            Tooltip.uninstall(chart, AbstractVisualizationPane.getDragTooltip());
+            Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
         });
@@ -184,7 +184,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             if (parentNode != null) {
                 parentNode.showHoverControls(true);
             } else {
-                Tooltip.install(chart, AbstractVisualizationPane.getDragTooltip());
+                Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
 
