@@ -53,11 +53,11 @@ from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
+from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 
 
