@@ -619,8 +619,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
 
-                    // make sure dataResult is open, redundant?
-                    //dataResult.open();
                     Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                     if (treeNode != null) {
                         DirectoryTreeFilterNode.OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
