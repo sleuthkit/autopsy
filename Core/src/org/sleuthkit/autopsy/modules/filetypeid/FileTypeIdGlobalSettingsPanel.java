@@ -627,6 +627,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         byte[] signatureBytes;
         if (FileType.Signature.Type.RAW == sigType) {
             try {
+                sigString = sigString.replaceAll("\\s", "");
                 signatureBytes = DatatypeConverter.parseHexBinary(sigString);
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(null,
@@ -646,7 +647,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         boolean isRelativeToStart = offsetRelativeToComboBox.getSelectedItem() == FileTypeIdGlobalSettingsPanel.START_OFFSET_RELATIVE_COMBO_BOX_ITEM;
         try {
                 offset = Long.parseUnsignedLong(offsetTextField.getText());
-                if(!isRelativeToStart && sigString.length() > offset) {
+                if(!isRelativeToStart && signatureBytes.length > offset+1) {
                     JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.length"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),

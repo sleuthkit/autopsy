@@ -287,7 +287,7 @@ class FileType {
         boolean containedIn(final AbstractFile file) {
             long actualOffset = offset;
             if(!isRelativeToStart)
-                actualOffset = file.getSize() - offset;
+                actualOffset = file.getSize() - 1 - offset;
             if (file.getSize() < (actualOffset + signatureBytes.length)) {
                 return false; /// too small, can't contain this signature
             }
