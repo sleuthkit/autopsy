@@ -225,7 +225,7 @@ final class UserDefinedFileTypesManager {
 
             // Add rule for .pfm
             fileType = new FileType("image/x-portable-floatmap", new Signature("PF", 0L), "", false); //NON-NLS
-            fileTypes.add(fileType);      
+            fileTypes.add(fileType);
             fileType = new FileType("image/x-portable-floatmap", new Signature("Pf", 0L), "", false); //NON-NLS
             fileTypes.add(fileType);
             
