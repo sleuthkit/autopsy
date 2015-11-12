@@ -59,7 +59,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
@@ -71,7 +70,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -93,7 +91,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class EventDetailsChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
+public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements TimeLineChart<DateTime> {
 
     private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm();
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
@@ -145,7 +143,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     private final Group nodeGroup = new Group();
     private final ObservableList<EventBundle<?>> bundles = FXCollections.observableArrayList();
-    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new ConcurrentHashMap<>();
+//    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new ConcurrentHashMap<>();
     private final Map<EventStripe, EventStripeNode> stripeNodeMap = new ConcurrentHashMap<>();
     private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
@@ -181,7 +179,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
 
         this.controller = controller;
@@ -321,55 +319,56 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     }
 
     @Override
-    protected synchronized void dataItemAdded(Series<DateTime, EventCluster> series, int i, Data<DateTime, EventCluster> data) {
-        final EventCluster eventCluster = data.getYValue();
-
-        EventStripe eventStripe = stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
-                new EventStripe(eventCluster, null),
-                (EventStripe u, EventStripe v) -> {
-                    EventStripeNode removeU = stripeNodeMap.remove(u);
-                    EventStripeNode removeV = stripeNodeMap.remove(v);
-                    Platform.runLater(() -> {
-                        nodeGroup.getChildren().remove(removeU);
-                        nodeGroup.getChildren().remove(removeV);
-                    });
-                    return EventStripe.merge(u, v);
-                }
-        );
+    protected synchronized void dataItemAdded(Series<DateTime, EventStripe> series, int i, Data<DateTime, EventStripe> data) {
+        final EventStripe eventStripe = data.getYValue();
+//
+//        EventStripe eventStripe = stripeDescMap.put(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()), eventCluster);
+////                new EventStripe(eventCluster, null),
+////                (EventStripe u, EventStripe v) -> {
+////                    EventStripeNode removeU = stripeNodeMap.remove(u);
+////                    EventStripeNode removeV = stripeNodeMap.remove(v);
+////                    Platform.runLater(() -> {
+////                        nodeGroup.getChildren().remove(removeU);
+////                        nodeGroup.getChildren().remove(removeV);
+////                    });
+////                    return EventStripe.merge(u, v);
+////                }
+////        );
         EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
         stripeNodeMap.put(eventStripe, stripeNode);
         Platform.runLater(() -> {
-            bundles.add(eventCluster);
+            bundles.add(eventStripe);
             nodeGroup.getChildren().add(stripeNode);
             data.setNode(stripeNode);
         });
     }
 
     @Override
-    protected void dataItemChanged(Data<DateTime, EventCluster> data) {
+    protected void dataItemChanged(Data<DateTime, EventStripe> data) {
         //TODO: can we use this to help with local detail level adjustment -jm
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    protected void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
-        EventCluster eventCluster = data.getYValue();
-        Platform.runLater(() -> {
-            bundles.removeAll(eventCluster);
-        });
+    protected synchronized void dataItemRemoved(Data<DateTime, EventStripe> data, Series<DateTime, EventStripe> series) {
+        EventStripe removedStripe = data.getYValue();
+//        Platform.runLater(() -> {
+//            bundles.removeAll(removedStripe);
+//        });
 
-        EventStripe removedStripe = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
-        if (removedStripe != null) {
-            EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
-            Platform.runLater(() -> {
-                nodeGroup.getChildren().remove(removedNode);
-                data.setNode(null);
-            });
-        }
+//        EventStripe removedStripe = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
+//        if (removedStripe != null) {
+        EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
+        Platform.runLater(() -> {
+            bundles.removeAll(removedStripe);
+            nodeGroup.getChildren().remove(removedNode);
+            data.setNode(null);
+        });
+//        }
     }
 
     @Override
-    protected void layoutPlotChildren() {
+    protected synchronized  void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
         maxY.set(0);
         if (bandByType.get()) {
@@ -393,16 +392,16 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     }
 
     @Override
-    protected void seriesAdded(Series<DateTime, EventCluster> series, int i) {
+    protected void seriesAdded(Series<DateTime, EventStripe> series, int i) {
         for (int j = 0; j < series.getData().size(); j++) {
             dataItemAdded(series, j, series.getData().get(j));
         }
     }
 
     @Override
-    protected void seriesRemoved(Series<DateTime, EventCluster> series) {
-        for (int j = 0; j < series.getData().size(); j++) {
-            dataItemRemoved(series.getData().get(j), series);
+    protected void seriesRemoved(Series<DateTime, EventStripe> series) {
+        for (Data<DateTime, EventStripe> data : series.getData()) {
+            dataItemRemoved(data, series);
         }
     }
 
@@ -413,7 +412,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     /**
      * @return all the nodes that pass the given predicate
      */
-    Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
+    synchronized  Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
         //use this recursive function to flatten the tree of nodes into an iterable.
         Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
                 new Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>>() {
@@ -534,8 +533,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         }
         return localMax; //return new max
     }
-
-    
 
     private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
         //make sure it is shown

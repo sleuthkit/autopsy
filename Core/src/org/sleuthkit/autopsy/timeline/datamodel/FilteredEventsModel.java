@@ -327,7 +327,7 @@ public final class FilteredEventsModel {
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
      */
-    public List<EventCluster> getEventClusters() {
+    public List<EventStripe> getEventClusters() {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
@@ -348,7 +348,7 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventCluster> getEventClusters(ZoomParams params) {
+    public List<EventStripe> getEventClusters(ZoomParams params) {
         return repo.getEventClusters(params);
     }
 

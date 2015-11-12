@@ -83,6 +83,22 @@ public final class EventStripe implements EventBundle<EventCluster> {
      */
     private final Set<Long> hashHits = new HashSet<>();
 
+    public EventStripe withParent(EventCluster parent) {
+        EventStripe eventStripe = new EventStripe(parent, this.type, this.description, this.lod);
+        eventStripe.clusters.addAll(clusters);
+        eventStripe.eventIDs.addAll(eventIDs);
+        eventStripe.tagged.addAll(tagged);
+        eventStripe.hashHits.addAll(hashHits);
+        return eventStripe;
+    }
+
+    private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod) {
+        this.parent = parent;
+        this.type = type;
+        this.description = description;
+        this.lod = lod;
+    }
+
     public EventStripe(EventCluster cluster, EventCluster parent) {
         clusters.add(cluster);
 
@@ -158,4 +174,5 @@ public final class EventStripe implements EventBundle<EventCluster> {
     public SortedSet< EventCluster> getClusters() {
         return Collections.unmodifiableSortedSet(clusters);
     }
+
 }

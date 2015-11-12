@@ -66,7 +66,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -85,7 +85,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -93,7 +93,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     private static final double PAGE_SCROLL_PERCENTAGE = .70;
 
     private final DateAxis dateAxis = new DateAxis();
-    private final Axis<EventCluster> verticalAxis = new EventAxis();
+    private final Axis<EventStripe> verticalAxis = new EventAxis();
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
 
@@ -101,7 +101,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     //private access to barchart data
-    private final Map<EventType, XYChart.Series<DateTime, EventCluster>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
+    private final Map<EventType, XYChart.Series<DateTime, EventStripe>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
 
     public ObservableList<EventBundle<?>> getEventBundles() {
         return chart.getEventBundles();
@@ -224,7 +224,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     }
 
     @Override
-    protected Axis<EventCluster> getYAxis() {
+    protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
@@ -253,9 +253,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
      *         EventType
      */
 //    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private XYChart.Series<DateTime, EventCluster> getSeries(final EventType et) {
+    private XYChart.Series<DateTime, EventStripe> getSeries(final EventType et) {
         return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
-            XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
+            XYChart.Series<DateTime, EventStripe> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
 //            Platform.runLater(() -> {
             dataSeries.add(series);
@@ -310,7 +310,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                     }
                 });
 
-                List<EventCluster> eventClusters = filteredEvents.getEventClusters();
+                List<EventStripe> eventClusters = filteredEvents.getEventClusters();
 
                 final int size = eventClusters.size();
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
@@ -318,9 +318,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                     if (isCancelled()) {
                         break;
                     }
-                    final EventCluster cluster = eventClusters.get(i);
+                    final EventStripe cluster = eventClusters.get(i);
                     updateProgress(i, size);
-                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
+                    final XYChart.Data<DateTime, EventStripe> xyData = new BarChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
 
 //                        Platform.runLater(() -> {
                     getSeries(cluster.getEventType()).getData().add(xyData);

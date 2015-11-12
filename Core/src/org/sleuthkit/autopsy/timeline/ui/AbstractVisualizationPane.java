@@ -252,7 +252,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
             }
         });
 
-        update();
+//        update();
     }
 
     @Subscribe

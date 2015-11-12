@@ -53,10 +53,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
@@ -106,7 +104,7 @@ public class EventsRepository {
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<EventCluster>> eventClusterCache;
+    private final LoadingCache<ZoomParams, List<EventStripe>> eventClusterCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
@@ -213,7 +211,7 @@ public class EventsRepository {
 
     }
 
-    synchronized public List<EventCluster> getEventClusters(ZoomParams params) {
+    synchronized public List<EventStripe> getEventClusters(ZoomParams params) {
         return eventClusterCache.getUnchecked(params);
     }
 
