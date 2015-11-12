@@ -469,6 +469,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });            
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
