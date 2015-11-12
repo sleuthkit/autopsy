@@ -95,10 +95,10 @@ public class IngestJobSettings {
     public IngestJobSettings(String context, IngestType ingestType) {
         this.ingestType = ingestType;
 
-        if (!this.ingestType.equals(IngestType.ALL_MODULES)) {
-            this.context = context + this.ingestType.name();
-        } else {
+        if (this.ingestType.equals(IngestType.ALL_MODULES)) {
             this.context = context;
+        } else {
+            this.context = context + "." + this.ingestType.name();  
         }
 
         this.moduleTemplates = new ArrayList<>();
@@ -214,11 +214,11 @@ public class IngestJobSettings {
          * loader.
          */
         List<IngestModuleFactory> moduleFactories = new ArrayList<>();
-        List<IngestModuleFactory> tempModuleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
+        List<IngestModuleFactory> allModuleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
         HashSet<String> loadedModuleNames = new HashSet<>();
 
         // Add modules that are going to be used for this ingest depending on type.
-        for (IngestModuleFactory moduleFactory : tempModuleFactories) {
+        for (IngestModuleFactory moduleFactory : allModuleFactories) {
             if (this.ingestType.equals(IngestType.ALL_MODULES)) {
                 moduleFactories.add(moduleFactory);
             } else if (this.ingestType.equals(IngestType.DATA_SOURCE_ONLY) && moduleFactory.isDataSourceIngestModuleFactory()) {
