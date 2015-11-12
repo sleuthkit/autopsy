@@ -285,6 +285,9 @@ class FileType {
          * @return True or false.
          */
         boolean containedIn(final AbstractFile file) {
+            if(offset >= file.getSize()) {
+                return false; // File is too small, offset lies outside file.
+            }
             long actualOffset = offset;
             if(!isRelativeToStart)
                 actualOffset = file.getSize() - 1 - offset;
