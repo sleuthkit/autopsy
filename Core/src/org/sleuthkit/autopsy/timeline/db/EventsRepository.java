@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.db;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,8 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,10 +40,8 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javax.annotation.concurrent.GuardedBy;
+import javafx.concurrent.Task;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.dialog.ProgressDialog;
 import org.joda.time.Interval;
@@ -50,7 +51,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.ProgressWindow;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.ProgressUpdate;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -93,8 +95,7 @@ public class EventsRepository {
 
     private final EventDB eventDB;
 
-    @GuardedBy("this")
-    private SwingWorker<Void, ProgressWindow.ProgressUpdate> dbPopulationWorker;
+    private Task<Void> dbPopulationWorker;
 
     private final LoadingCache<Object, Long> maxCache;
 
@@ -177,15 +178,15 @@ public class EventsRepository {
 //        return eventDB.getMinTime();
     }
 
-    public void recordLastArtifactID(long lastArtfID) {
+    private void recordLastArtifactID(long lastArtfID) {
         eventDB.recordLastArtifactID(lastArtfID);
     }
 
-    public void recordWasIngestRunning(Boolean wasIngestRunning) {
+    private void recordWasIngestRunning(Boolean wasIngestRunning) {
         eventDB.recordWasIngestRunning(wasIngestRunning);
     }
 
-    public void recordLastObjID(Long lastObjID) {
+    private void recordLastObjID(Long lastObjID) {
         eventDB.recordLastObjID(lastObjID);
     }
 
@@ -324,22 +325,48 @@ public class EventsRepository {
         }
     }
 
-    synchronized public void rebuildRepository(Runnable r) {
+    Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build());
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public Task<Void> rebuildRepository(long lastObjId, long lastArtfID, Boolean injestRunning) {
         if (dbPopulationWorker != null) {
             dbPopulationWorker.cancel(true);
-
+            LOGGER.log(Level.INFO, "cancelling previous db worker");
         }
-        dbPopulationWorker = new DBPopulationWorker(r);
-        dbPopulationWorker.execute();
+        LOGGER.log(Level.INFO, "rebuilding repo");
+        dbPopulationWorker = new DBPopulationWorker(lastObjId, lastArtfID, injestRunning);
+        workerExecutor.execute(dbPopulationWorker);
+        return dbPopulationWorker;
     }
 
-    synchronized public void rebuildTags(Runnable r) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public Task<Void> rebuildTags() {
         if (dbPopulationWorker != null) {
             dbPopulationWorker.cancel(true);
-
+            LOGGER.log(Level.INFO, "cancelling previous db worker");
         }
-        dbPopulationWorker = new RebuildTagsWorker(r);
-        dbPopulationWorker.execute();
+        LOGGER.log(Level.INFO, "rebuilding tags");
+        dbPopulationWorker = new RebuildTagsWorker();
+        workerExecutor.execute(dbPopulationWorker);
+        return dbPopulationWorker;
+    }
+
+    /**
+     *
+     * @param lastObjId          the value of lastObjId
+     * @param lastArtfID         the value of lastArtfID
+     * @param injestRunning      the value of injestRunning
+     * @param timeLineController the value of timeLineController
+     */
+    public void recordDBPopulationState(final long lastObjId, final long lastArtfID, final Boolean injestRunning) {
+        recordLastObjID(lastObjId);
+        recordLastArtifactID(lastArtfID);
+        recordWasIngestRunning(injestRunning);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public boolean isRebuilding() {
+        return dbPopulationWorker != null && dbPopulationWorker.isDone() == false;
     }
 
     /**
@@ -352,26 +379,19 @@ public class EventsRepository {
      * these to a JavaFX implementation,and replace {@link ProgressWindow} with
      * {@link ProgressDialog}
      */
-    private abstract class DBProgressWorker extends SwingWorker<Void, ProgressWindow.ProgressUpdate> {
-
-        //TODO: can we avoid this with a state listener?  does it amount to the same thing?
-        //post population operation to execute
-        final Runnable postPopulationOperation;
+    private abstract class DBProgressWorker extends Task<Void> {
 
         final SleuthkitCase skCase;
         final TagsManager tagsManager;
 
-        final ProgressWindow progressDialog;
         volatile ProgressHandle progressHandle;
 
-        DBProgressWorker(Runnable postPopulationOperation, String initialProgressDisplayName) {
-            progressDialog = new ProgressWindow(null, false, this);
-            progressDialog.setVisible(true);
+        DBProgressWorker(String initialProgressDisplayName) {
             progressHandle = ProgressHandleFactory.createHandle(initialProgressDisplayName, () -> cancel(true));
 
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
-            this.postPopulationOperation = postPopulationOperation;
+
         }
 
         /**
@@ -379,10 +399,11 @@ public class EventsRepository {
          *
          * @param chunk
          */
-        final protected void update(ProgressWindow.ProgressUpdate chunk) {
-            SwingUtilities.invokeLater(() -> {
-                progressDialog.update(chunk);
-            });
+        final protected void update(ProgressUpdate chunk) {
+            updateProgress(chunk.getProgress(), chunk.getTotal());
+            updateMessage(chunk.getDetailMessage());
+            updateTitle(chunk.getHeaderMessage());
+
             if (chunk.getTotal() >= 0) {
                 progressHandle.progress(chunk.getProgress());
             }
@@ -390,12 +411,6 @@ public class EventsRepository {
             progressHandle.progress(chunk.getDetailMessage());
         }
 
-        @Override
-        protected void done() {
-            super.done();
-            progressDialog.close();
-            postPopulationOperation.run();  //execute post db population operation
-        }
     }
 
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
@@ -405,15 +420,15 @@ public class EventsRepository {
     private class RebuildTagsWorker extends DBProgressWorker {
 
         @NbBundle.Messages("RebuildTagsWorker.task.displayName=refreshing tags")
-        RebuildTagsWorker(Runnable postPopulationOperation) {
-            super(postPopulationOperation, Bundle.RebuildTagsWorker_task_displayName());
+        RebuildTagsWorker() {
+            super(Bundle.RebuildTagsWorker_task_displayName());
         }
 
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=refreshing file tags",
             "progressWindow.msg.refreshingResultTags=refreshing result tags",
             "progressWindow.msg.commitingTags=committing tag changes"})
-        protected Void doInBackground() throws Exception {
+        protected Void call() throws Exception {
             int currentWorkTotal;
 
             progressHandle.start();
@@ -432,7 +447,7 @@ public class EventsRepository {
                 if (isCancelled()) {
                     break;
                 }
-                update(new ProgressWindow.ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingFileTags()));
+                update(new ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingFileTags()));
                 ContentTag contentTag = contentTags.get(i);
                 eventDB.addTag(contentTag.getContent().getId(), null, contentTag);
             }
@@ -448,7 +463,7 @@ public class EventsRepository {
                 if (isCancelled()) {
                     break;
                 }
-                update(new ProgressWindow.ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingResultTags()));
+                update(new ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingResultTags()));
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
                 eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
             }
@@ -457,7 +472,7 @@ public class EventsRepository {
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingTags());
             progressHandle.start();
-            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingTags()));
+            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingTags()));
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
@@ -491,18 +506,25 @@ public class EventsRepository {
 
     private class DBPopulationWorker extends DBProgressWorker {
 
+        private final long lastObjId;
+        private final long lastArtfID;
+        private final boolean injestRunning;
+
         @NbBundle.Messages("DBPopulationWorker.task.displayName=(re)initializing events database")
-        public DBPopulationWorker(Runnable postPopulationOperation) {
-            super(postPopulationOperation, Bundle.DBPopulationWorker_task_displayName());
+        DBPopulationWorker(long lastObjId, long lastArtfID, Boolean injestRunning) {
+            super(Bundle.DBPopulationWorker_task_displayName());
+            this.lastObjId = lastObjId;
+            this.lastArtfID = lastArtfID;
+            this.injestRunning = injestRunning;
         }
 
         @Override
         @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files:",
             "progressWindow.msg.reinit_db=(re)initializing events database",
             "progressWindow.msg.commitingDb=committing events db"})
-        protected Void doInBackground() throws Exception {
+        protected Void call() throws Exception {
             progressHandle.start();
-            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db()));
+            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db()));
             //reset database //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
 
@@ -510,7 +532,7 @@ public class EventsRepository {
             List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
             final int numFiles = fileIDs.size();
             progressHandle.switchToDeterminate(numFiles);
-            update(new ProgressWindow.ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles()));
+            update(new ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles()));
 
             //insert file events into db
             EventDB.EventTransaction trans = eventDB.beginTransaction();
@@ -526,7 +548,7 @@ public class EventsRepository {
                             LOGGER.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                         } else {
                             insertEventsForFile(f, trans);
-                            update(new ProgressWindow.ProgressUpdate(i, numFiles,
+                            update(new ProgressUpdate(i, numFiles,
                                     Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName()));
                         }
                     } catch (TskCoreException tskCoreException) {
@@ -550,7 +572,7 @@ public class EventsRepository {
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingDb());
             progressHandle.start();
-            update(new ProgressWindow.ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb()));
+            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb()));
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
@@ -561,6 +583,7 @@ public class EventsRepository {
             populateFilterData(skCase);
             invalidateCaches();
 
+            recordDBPopulationState(lastObjId, lastArtfID, injestRunning);
             progressHandle.finish();
             return null;
         }
@@ -573,10 +596,12 @@ public class EventsRepository {
             timeMap.put(FileSystemTypes.FILE_CHANGED, f.getCtime());
             timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
 
-            /* if there are no legitimate ( greater tan zero ) time stamps ( eg,
+            /*
+             * if there are no legitimate ( greater tan zero ) time stamps ( eg,
              * logical/local files) skip the rest of the event generation: this
              * should result in droping logical files, since they do not have
-             * legitimate time stamps. */
+             * legitimate time stamps.
+             */
             if (Collections.max(timeMap.values()) > 0) {
                 final String uniquePath = f.getUniquePath();
                 final String parentPath = f.getParentPath();
@@ -593,8 +618,10 @@ public class EventsRepository {
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
                 for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
-                    /* if the time is legitimate ( greater than zero ) insert it
-                     * into the db */
+                    /*
+                     * if the time is legitimate ( greater than zero ) insert it
+                     * into the db
+                     */
                     if (timeEntry.getValue() > 0) {
                         eventDB.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
                                 datasourceID, f.getId(), null, uniquePath, medDesc,
@@ -640,7 +667,7 @@ public class EventsRepository {
                     try {
                         //for each artifact, extract the relevant information for the descriptions
                         insertEventForArtifact(type, blackboardArtifacts.get(i), trans);
-                        update(new ProgressWindow.ProgressUpdate(i, numArtifacts,
+                        update(new ProgressUpdate(i, numArtifacts,
                                 Bundle.progressWindow_populatingXevents(type.getDisplayName())));
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
@@ -653,8 +680,10 @@ public class EventsRepository {
 
         private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart, EventDB.EventTransaction trans) throws TskCoreException {
             ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
-            /* if the time is legitimate ( greater than zero ) insert it into
-             * the db */
+            /*
+             * if the time is legitimate ( greater than zero ) insert it into
+             * the db
+             */
             if (eventDescription != null && eventDescription.getTime() > 0) {
                 long objectID = bbart.getObjectID();
                 AbstractFile f = skCase.getAbstractFileById(objectID);

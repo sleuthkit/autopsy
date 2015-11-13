@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.timeline;
 import java.awt.HeadlessException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
@@ -28,6 +30,7 @@ import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,10 +52,18 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogEvent;
+import javafx.scene.image.Image;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.controlsfx.dialog.ProgressDialog;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -136,6 +147,9 @@ public class TimeLineController {
 
     private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private ProgressDialog taskProgressDialog;
+
     /**
      * status is a string that will be displayed in the status bar as a kind of
      * user hint/information when it is not empty
@@ -202,7 +216,6 @@ public class TimeLineController {
     @GuardedBy("filteredEvents")
     private final FilteredEventsModel filteredEvents;
 
-    @GuardedBy("eventsRepository")
     private final EventsRepository eventsRepository;
 
     @GuardedBy("this")
@@ -305,6 +318,7 @@ public class TimeLineController {
      *         the user aborted after prompt about ingest running. True if the
      *         repo was rebuilt.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     boolean rebuildRepo() {
         if (IngestManager.getInstance().isIngestRunning()) {
             //confirm timeline during ingest
@@ -314,40 +328,29 @@ public class TimeLineController {
         }
         LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
         try {
-            SwingUtilities.invokeLater(() -> {
-                synchronized (TimeLineController.this) {
-                    if (isWindowOpen()) {
-                        mainFrame.close();
-                    }
-                }
-            });
+            closeTimelineWindow();
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
             final long lastObjId = sleuthkitCase.getLastObjectId();
             final long lastArtfID = getCaseLastArtifactID(sleuthkitCase);
             final Boolean injestRunning = IngestManager.getInstance().isIngestRunning();
-            //TODO: verify this locking is correct? -jm
-            synchronized (eventsRepository) {
-                eventsRepository.rebuildRepository(() -> {
-                    synchronized (eventsRepository) {
-                        eventsRepository.recordLastObjID(lastObjId);
-                        eventsRepository.recordLastArtifactID(lastArtfID);
-                        eventsRepository.recordWasIngestRunning(injestRunning);
-                    }
-                    synchronized (TimeLineController.this) {
-                        //TODO: this looks hacky.  what is going on? should this be an event?
-                        needsHistogramRebuild.set(true);
-                        needsHistogramRebuild.set(false);
-                        showWindow();
-                    }
+            final Task<Void> rebuildRepository = eventsRepository.rebuildRepository(lastObjId, lastArtfID, injestRunning);
+            Platform.runLater(() -> {
+                rebuildRepository.setOnSucceeded((WorkerStateEvent event) -> {
+                //this is run on jfx thread
 
-                    Platform.runLater(() -> {
-                        //TODO: should this be an event?
-                        newEventsFlag.set(false);
-                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                        TimeLineController.this.showFullRange();
-                    });
+                    //TODO: this looks hacky.  what is going on? should this be an event?
+                    needsHistogramRebuild.set(true);
+                    needsHistogramRebuild.set(false);
+                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+
+                    //TODO: should this be an event?
+                    newEventsFlag.set(false);
+                    historyManager.reset(filteredEvents.zoomParametersProperty().get());
+                    TimeLineController.this.showFullRange();
                 });
-            }
+                taskProgressDialog = showProgressDialogForTask(rebuildRepository);
+            });
+
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
             return false;
@@ -360,23 +363,60 @@ public class TimeLineController {
      * tags table and rebuild it by querying for all the tags and inserting them
      * in to the TimeLine DB.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void rebuildTagsTable() {
         LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
-        SwingUtilities.invokeLater(() -> {
-            synchronized (TimeLineController.this) {
-                if (isWindowOpen()) {
-                    mainFrame.close();
-                }
-            }
-        });
-        synchronized (eventsRepository) {
-            eventsRepository.rebuildTags(() -> {
-                showWindow();
-                Platform.runLater(() -> {
-                    showFullRange();
-                });
+        closeTimelineWindow();
+        Task<Void> rebuildTags = eventsRepository.rebuildTags();
+
+        Platform.runLater(() -> {
+            rebuildTags.setOnSucceeded((WorkerStateEvent event) -> {
+                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                showFullRange();;
             });
+            taskProgressDialog = showProgressDialogForTask(rebuildTags);
+        });
+
+    }
+
+    private void closeTimelineWindow() {
+        if (isWindowOpen()) {
+            mainFrame.close();
         }
+    }
+
+    @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline data",
+        "Timeline.ProgressWindow.cancel.confdlg.msg=Not all events will be present of accurate if you cancel the timeline population.  Do you want to cancel?",
+        "Timeline.ProgressWindow.cancel.confdlg.detail=Cancel timeline population?"})
+    private ProgressDialog showProgressDialogForTask(Task<Void> task) {
+        ProgressDialog progressDialog = new ProgressDialog(task);
+        progressDialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+
+        progressDialog.setTitle(Bundle.Timeline_progressWindow_title());
+        progressDialog.getDialogPane().headerTextProperty().bind(task.titleProperty());
+        try {
+            Image image = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream());
+            ((Stage) progressDialog.getDialogPane().getScene().getWindow()).getIcons().setAll(image);
+        } catch (IOException iOException) {
+            LOGGER.log(Level.WARNING, "Failed to laod branded icon for progress dialog.", iOException);
+        }
+        progressDialog.setOnCloseRequest((DialogEvent event) -> {
+            Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, Bundle.Timeline_ProgressWindow_cancel_confdlg_msg(), ButtonType.YES, ButtonType.NO);
+            confirmation.setHeaderText(null);
+            confirmation.setTitle(Bundle.Timeline_ProgressWindow_cancel_confdlg_detail());
+            confirmation.initOwner(progressDialog.getDialogPane().getScene().getWindow());
+            confirmation.initModality(Modality.WINDOW_MODAL);
+            Optional<ButtonType> showAndWait = confirmation.showAndWait();
+
+            showAndWait.ifPresent(buttonType -> {
+                if (buttonType == ButtonType.YES) {
+                    task.cancel(true);
+                } else {
+                    event.consume();
+                }
+            });
+        });
+        return progressDialog;
     }
 
     public void showFullRange() {
@@ -403,6 +443,7 @@ public class TimeLineController {
     /**
      * show the timeline window and prompt for rebuilding database if necessary.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void openTimeLine() {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
@@ -413,6 +454,16 @@ public class TimeLineController {
         }
 
         try {
+            if (eventsRepository.isRebuilding()) {
+                Platform.runLater(() -> {
+                    if (taskProgressDialog != null) {
+                        ((Stage) taskProgressDialog.getDialogPane().getScene().getWindow()).toFront();
+                    }
+                });
+
+                return;
+            }
+
             boolean repoRebuilt = false;  //has the repo been rebuilt
             long timeLineLastObjectId = eventsRepository.getLastObjID();
 
@@ -545,16 +596,13 @@ public class TimeLineController {
     /**
      * private method to build gui if necessary and make it visible.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
-        SwingUtilities.invokeLater(() -> {
-            synchronized (TimeLineController.this) {
-                if (mainFrame == null) {
-                    mainFrame = new TimeLineTopComponent(this);
-                }
-                mainFrame.open();
-                mainFrame.toFront();
-            }
-        });
+        if (mainFrame == null) {
+            mainFrame = new TimeLineTopComponent(this);
+        }
+        mainFrame.open();
+        mainFrame.toFront();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
@@ -575,8 +623,7 @@ public class TimeLineController {
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
             advance(currentZoom.withTimeRange(timeRange));
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }
@@ -590,7 +637,7 @@ public class TimeLineController {
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
-        if ((newLOD == DescriptionLoD.FULL|| newLOD ==DescriptionLoD.MEDIUM )&& count > 10_000) {
+        if ((newLOD == DescriptionLoD.FULL || newLOD == DescriptionLoD.MEDIUM) && count > 10_000) {
             String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
@@ -748,7 +795,8 @@ public class TimeLineController {
      *
      * @return true if the timeline window is open
      */
-    synchronized private boolean isWindowOpen() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private boolean isWindowOpen() {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
