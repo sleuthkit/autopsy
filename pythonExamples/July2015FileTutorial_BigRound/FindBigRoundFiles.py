@@ -56,7 +56,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
+# This will work in 4.0.1 and beyond
+# from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -106,8 +107,9 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     def process(self, file):
 
+        # This will work in 4.0.1 and beyond
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        # blackboard = Case.getCurrentCase().getServices().getBlackboard()
 
         # Skip non-files
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
@@ -125,11 +127,12 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
                   FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
             art.addAttribute(att)
 
-            try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
-            except Blackboard.BlackboardException as e:
-                self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+            # This will work in 4.0.1 and beyond
+            #try:
+            #    # index the artifact for keyword search
+            #    blackboard.indexArtifact(art)
+            #except Blackboard.BlackboardException as e:
+            #    self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
             # Fire an event to notify the UI and others that there is a new artifact  
             IngestServices.getInstance().fireModuleDataEvent(
