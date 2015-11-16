@@ -31,19 +31,23 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.dialog.ProgressDialog;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -52,7 +56,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.ProgressUpdate;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
@@ -95,7 +101,7 @@ public class EventsRepository {
 
     private final EventDB eventDB;
 
-    private Task<Void> dbPopulationWorker;
+    private final DBPopulationService dbPopulationService = new DBPopulationService(this);
 
     private final LoadingCache<Object, Long> maxCache;
 
@@ -325,38 +331,72 @@ public class EventsRepository {
         }
     }
 
-    Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build());
+    static private final Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build());
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public Task<Void> rebuildRepository(long lastObjId, long lastArtfID, Boolean injestRunning) {
-        if (dbPopulationWorker != null) {
-            dbPopulationWorker.cancel(true);
-            LOGGER.log(Level.INFO, "cancelling previous db worker");
-        }
-        LOGGER.log(Level.INFO, "rebuilding repo");
-        dbPopulationWorker = new DBPopulationWorker(lastObjId, lastArtfID, injestRunning);
-        workerExecutor.execute(dbPopulationWorker);
-        return dbPopulationWorker;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public Worker<Void> rebuildRepository() {
+        return rebuildRepository(DBPopulationService.DBPopulationMode.FULL);
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public Task<Void> rebuildTags() {
-        if (dbPopulationWorker != null) {
-            dbPopulationWorker.cancel(true);
-            LOGGER.log(Level.INFO, "cancelling previous db worker");
-        }
-        LOGGER.log(Level.INFO, "rebuilding tags");
-        dbPopulationWorker = new RebuildTagsWorker();
-        workerExecutor.execute(dbPopulationWorker);
-        return dbPopulationWorker;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public Worker<Void> rebuildTags() {
+        return rebuildRepository(DBPopulationService.DBPopulationMode.TAGS_ONLY);
     }
 
     /**
      *
-     * @param lastObjId          the value of lastObjId
-     * @param lastArtfID         the value of lastArtfID
-     * @param injestRunning      the value of injestRunning
-     * @param timeLineController the value of timeLineController
+     * @param mode the value of mode
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private Worker<Void> rebuildRepository(final DBPopulationService.DBPopulationMode mode) {
+        LOGGER.log(Level.INFO, "(re) starting {0}db population task", mode);
+        dbPopulationService.setDBPopulationMode(mode);
+        dbPopulationService.restart();
+        return dbPopulationService;
+    }
+
+    private static class DBPopulationService extends Service<Void> {
+
+        enum DBPopulationMode {
+
+            FULL,
+            TAGS_ONLY;
+        }
+
+        private final EventsRepository eventRepo;
+
+        @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+        private DBPopulationMode dbPopulationMode = DBPopulationMode.FULL;
+
+        DBPopulationService(EventsRepository eventRepo) {
+            this.eventRepo = eventRepo;
+            setExecutor(workerExecutor);
+        }
+
+        @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+        public final void setDBPopulationMode(DBPopulationMode value) {
+            dbPopulationMode = value;
+        }
+
+        @Override
+        protected Task<Void> createTask() {
+            DBPopulationMode dbPopMode = dbPopulationMode;
+            switch (dbPopMode) {
+                case FULL:
+                    return eventRepo.new DBPopulationWorker();
+                case TAGS_ONLY:
+                    return eventRepo.new RebuildTagsWorker();
+                default:
+                    throw new IllegalArgumentException("Unknown db population mode: " + dbPopMode + ". Skipping db population.");
+            }
+        }
+    }
+
+    /**
+     *
+     * @param lastObjId     the value of lastObjId
+     * @param lastArtfID    the value of lastArtfID
+     * @param injestRunning the value of injestRunning
      */
     public void recordDBPopulationState(final long lastObjId, final long lastArtfID, final Boolean injestRunning) {
         recordLastObjID(lastObjId);
@@ -364,20 +404,23 @@ public class EventsRepository {
         recordWasIngestRunning(injestRunning);
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public boolean isRebuilding() {
-        return dbPopulationWorker != null && dbPopulationWorker.isDone() == false;
+        FutureTask<Boolean> task = new FutureTask<>(dbPopulationService::isRunning);
+        Platform.runLater(task);
+        try {
+            return task.get();
+        } catch (InterruptedException interruptedException) {
+        } catch (ExecutionException executionException) {
+        }
+        return false;
     }
 
     /**
-     * A base class for swing workers that shows a {@link ProgressWorker} and
-     * updates a {@link ProgressHandle} as it performs its background work, and
-     * calls a call-back when finished.
+     * A base class for Tasks that show a updates a {@link ProgressHandle} as it
+     * performs its background work on the events DB.
      *
-     * //TODO: I prefer the JavaFX task API as it has built in progress
-     * properties that can be bound to a javafx progress indicator. Convert
-     * these to a JavaFX implementation,and replace {@link ProgressWindow} with
-     * {@link ProgressDialog}
+     * //TODO: I don't like the coupling to ProgressHandle, but the
+     * alternatives I can think of seem even worse. -jm
      */
     private abstract class DBProgressWorker extends Task<Void> {
 
@@ -387,11 +430,9 @@ public class EventsRepository {
         volatile ProgressHandle progressHandle;
 
         DBProgressWorker(String initialProgressDisplayName) {
-            progressHandle = ProgressHandleFactory.createHandle(initialProgressDisplayName, () -> cancel(true));
-
+            progressHandle = ProgressHandleFactory.createHandle(initialProgressDisplayName, this::cancel);
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
-
         }
 
         /**
@@ -429,8 +470,6 @@ public class EventsRepository {
             "progressWindow.msg.refreshingResultTags=refreshing result tags",
             "progressWindow.msg.commitingTags=committing tag changes"})
         protected Void call() throws Exception {
-            int currentWorkTotal;
-
             progressHandle.start();
             EventDB.EventTransaction trans = eventDB.beginTransaction();
             LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
@@ -439,9 +478,9 @@ public class EventsRepository {
             LOGGER.log(Level.INFO, "updating content tags"); // NON-NLS
             List<ContentTag> contentTags = tagsManager.getAllContentTags();
             progressHandle.finish();
-            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingFileTags(),
-                    () -> cancel(true));
-            progressHandle.start(currentWorkTotal = contentTags.size());
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingFileTags(), this::cancel);
+            int currentWorkTotal = contentTags.size();
+            progressHandle.start(currentWorkTotal);
 
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelled()) {
@@ -455,9 +494,9 @@ public class EventsRepository {
             LOGGER.log(Level.INFO, "updating artifact tags"); // NON-NLS
             List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
             progressHandle.finish();
-            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingResultTags(),
-                    () -> cancel(true));
-            progressHandle.start(currentWorkTotal = artifactTags.size());
+            progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingResultTags(), this::cancel);
+            currentWorkTotal = artifactTags.size();
+            progressHandle.start(currentWorkTotal);
 
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelled()) {
@@ -506,27 +545,27 @@ public class EventsRepository {
 
     private class DBPopulationWorker extends DBProgressWorker {
 
-        private final long lastObjId;
-        private final long lastArtfID;
-        private final boolean injestRunning;
-
         @NbBundle.Messages("DBPopulationWorker.task.displayName=(re)initializing events database")
-        DBPopulationWorker(long lastObjId, long lastArtfID, Boolean injestRunning) {
+        DBPopulationWorker() {
             super(Bundle.DBPopulationWorker_task_displayName());
-            this.lastObjId = lastObjId;
-            this.lastArtfID = lastArtfID;
-            this.injestRunning = injestRunning;
         }
 
         @Override
-        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files:",
-            "progressWindow.msg.reinit_db=(re)initializing events database",
+        @NbBundle.Messages({"progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files",
+            "progressWindow.msg.reinit_db=(Re)Initializing events database",
+            "progressWindow.msg.gatheringData=Gather event data",
             "progressWindow.msg.commitingDb=committing events db"})
         protected Void call() throws Exception {
+            LOGGER.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
             progressHandle.start();
             update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db()));
             //reset database //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
+
+            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_gatheringData()));
+            long lastObjId = skCase.getLastObjectId();
+            long lastArtfID = TimeLineController.getCaseLastArtifactID(skCase);
+            boolean injestRunning = IngestManager.getInstance().isIngestRunning();
 
             //grab ids of all files
             List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");

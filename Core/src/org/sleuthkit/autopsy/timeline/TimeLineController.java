@@ -51,6 +51,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
@@ -323,18 +324,12 @@ public class TimeLineController {
                 return false;
             }
         }
-        LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
-        try {
-            closeTimelineWindow();
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            final long lastObjId = sleuthkitCase.getLastObjectId();
-            final long lastArtfID = getCaseLastArtifactID(sleuthkitCase);
-            final Boolean injestRunning = IngestManager.getInstance().isIngestRunning();
-            final Task<Void> rebuildRepository = eventsRepository.rebuildRepository(lastObjId, lastArtfID, injestRunning);
-            Platform.runLater(() -> {
-                rebuildRepository.setOnSucceeded(succeeded -> {
-                //this is run on jfx thread
-
+        SwingUtilities.invokeLater(this::closeTimelineWindow);
+        Platform.runLater(() -> {
+            final Worker<Void> rebuildRepository = eventsRepository.rebuildRepository();
+            rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
+                //this will be on JFX thread
+                if (newSate == Worker.State.SUCCEEDED) {
                     //TODO: this looks hacky.  what is going on? should this be an event?
                     needsHistogramRebuild.set(true);
                     needsHistogramRebuild.set(false);
@@ -344,14 +339,11 @@ public class TimeLineController {
                     newEventsFlag.set(false);
                     historyManager.reset(filteredEvents.zoomParametersProperty().get());
                     TimeLineController.this.showFullRange();
-                });
-                taskProgressDialog = showProgressDialogForTask(rebuildRepository);
-            });
 
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
-            return false;
-        }
+                }
+            });
+            showProgressDialog(rebuildRepository);
+        });
         return true;
     }
 
@@ -360,18 +352,19 @@ public class TimeLineController {
      * tags table and rebuild it by querying for all the tags and inserting them
      * in to the TimeLine DB.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void rebuildTagsTable() {
-        LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
-        closeTimelineWindow();
-        Task<Void> rebuildTags = eventsRepository.rebuildTags();
 
+        SwingUtilities.invokeLater(this::closeTimelineWindow);
         Platform.runLater(() -> {
-            rebuildTags.setOnSucceeded(succeeded -> {
-                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                showFullRange();;
+            Worker<Void> rebuildTags = eventsRepository.rebuildTags();
+            rebuildTags.stateProperty().addListener((stateProperty, oldState, newSate) -> {
+                //this will be on JFX thread
+                if (newSate == Worker.State.SUCCEEDED) {
+                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                    showFullRange();
+                }
             });
-            taskProgressDialog = showProgressDialogForTask(rebuildTags);
+            showProgressDialog(rebuildTags);
         });
     }
 
@@ -382,18 +375,18 @@ public class TimeLineController {
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline Data"})
-    private ProgressDialog showProgressDialogForTask(Task<Void> task) {
-        ProgressDialog progressDialog = new ProgressDialog(task);
-        progressDialog.setTitle(Bundle.Timeline_progressWindow_title());
-        DialogPane dialogPane = progressDialog.getDialogPane();
+    private void showProgressDialog(Worker<Void> task) {
+        taskProgressDialog = new ProgressDialog(task);
+        taskProgressDialog.setTitle(Bundle.Timeline_progressWindow_title());
+        DialogPane dialogPane = taskProgressDialog.getDialogPane();
         dialogPane.getButtonTypes().add(ButtonType.CANCEL);
         Stage dialogStage = (Stage) dialogPane.getScene().getWindow();
-        progressDialog.headerTextProperty().addListener(observable -> dialogStage.sizeToScene());
-        progressDialog.headerTextProperty().bind(task.titleProperty());
+        dialogPane.setPrefWidth(400);
+        taskProgressDialog.headerTextProperty().bind(task.titleProperty());
         dialogStage.getIcons().setAll(LOGO);
-        progressDialog.setOnCloseRequest(closeRequestEvent -> task.cancel(true));
-        return progressDialog;
+        taskProgressDialog.setOnCloseRequest(closeRequestEvent -> task.cancel());
     }
 
     private static final Image LOGO;
@@ -446,7 +439,6 @@ public class TimeLineController {
                         ((Stage) taskProgressDialog.getDialogPane().getScene().getWindow()).toFront();
                     }
                 });
-
                 return;
             }
 
@@ -502,7 +494,7 @@ public class TimeLineController {
         }
     }
 
-    private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
+    public static long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
