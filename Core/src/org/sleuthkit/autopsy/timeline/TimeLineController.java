@@ -52,6 +52,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javax.annotation.concurrent.GuardedBy;
@@ -103,7 +104,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * * <li>Since eventsRepository is internally synchronized, only compound
  * access to it needs external synchronization <li>
  * <li>Other state including listeningToAutopsy, mainFrame, viewMode, and the
- * listeners should only be accessed with this object's intrinsic lock held
+ * listeners should only be accessed with this object's intrinsic lock held, or
+ * on the EDT as indicated.
  * </li>
  * <ul>
  */
@@ -190,11 +192,11 @@ public class TimeLineController {
         return taskTitle.getReadOnlyProperty();
     }
 
-    @GuardedBy("this")
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private TimeLineTopComponent mainFrame;
 
     //are the listeners currently attached
-    @GuardedBy("this")
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private boolean listeningToAutopsy = false;
 
     private final PropertyChangeListener caseListener = new AutopsyCaseListener();
@@ -371,9 +373,9 @@ public class TimeLineController {
             });
             taskProgressDialog = showProgressDialogForTask(rebuildTags);
         });
-
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void closeTimelineWindow() {
         if (isWindowOpen()) {
             mainFrame.close();
@@ -383,17 +385,27 @@ public class TimeLineController {
     @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline Data"})
     private ProgressDialog showProgressDialogForTask(Task<Void> task) {
         ProgressDialog progressDialog = new ProgressDialog(task);
-        progressDialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
         progressDialog.setTitle(Bundle.Timeline_progressWindow_title());
-        progressDialog.getDialogPane().headerTextProperty().bind(task.titleProperty());
-        try {
-            Image image = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream());
-            ((Stage) progressDialog.getDialogPane().getScene().getWindow()).getIcons().setAll(image);
-        } catch (IOException iOException) {
-            LOGGER.log(Level.WARNING, "Failed to laod branded icon for progress dialog.", iOException);
-        }
+        DialogPane dialogPane = progressDialog.getDialogPane();
+        dialogPane.getButtonTypes().add(ButtonType.CANCEL);
+        Stage dialogStage = (Stage) dialogPane.getScene().getWindow();
+        progressDialog.headerTextProperty().addListener(observable -> dialogStage.sizeToScene());
+        progressDialog.headerTextProperty().bind(task.titleProperty());
+        dialogStage.getIcons().setAll(LOGO);
         progressDialog.setOnCloseRequest(closeRequestEvent -> task.cancel(true));
         return progressDialog;
+    }
+
+    private static final Image LOGO;
+
+    static {
+        Image x = null;
+        try {
+            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream());
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Failed to laod branded icon for progress dialog.", ex);
+        }
+        LOGO = x;
     }
 
     public void showFullRange() {
@@ -402,18 +414,15 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void closeTimeLine() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void closeTimeLine() {
         if (mainFrame != null) {
             listeningToAutopsy = false;
             IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
             IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
             Case.removePropertyChangeListener(caseListener);
-            SwingUtilities.invokeLater(() -> {
-                synchronized (TimeLineController.this) {
-                    mainFrame.close();
-                    mainFrame = null;
-                }
-            });
+            mainFrame.close();
+            mainFrame = null;
         }
     }
 
