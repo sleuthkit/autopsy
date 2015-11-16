@@ -57,7 +57,6 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.timeline.ProgressUpdate;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -409,8 +408,8 @@ public class EventsRepository {
         Platform.runLater(task);
         try {
             return task.get();
-        } catch (InterruptedException interruptedException) {
-        } catch (ExecutionException executionException) {
+        } catch (InterruptedException | ExecutionException exception) {
+            LOGGER.log(Level.SEVERE, "There was an error determining the state of the db population service.", exception);
         }
         return false;
     }
@@ -435,23 +434,34 @@ public class EventsRepository {
             tagsManager = autoCase.getServices().getTagsManager();
         }
 
-        /**
-         * update progress UIs
-         *
-         * @param chunk
-         */
-        final protected void update(ProgressUpdate chunk) {
-            updateProgress(chunk.getProgress(), chunk.getTotal());
-            updateMessage(chunk.getDetailMessage());
-            updateTitle(chunk.getHeaderMessage());
-
-            if (chunk.getTotal() >= 0) {
-                progressHandle.progress(chunk.getProgress());
-            }
-            progressHandle.setDisplayName(chunk.getHeaderMessage());
-            progressHandle.progress(chunk.getDetailMessage());
+        @Override
+        protected void updateTitle(String title) {
+            super.updateTitle(title);
+            progressHandle.setDisplayName(title);
         }
 
+        @Override
+        protected void updateMessage(String message) {
+            super.updateMessage(message);
+            progressHandle.progress(message);
+        }
+
+        @Override
+        protected void updateProgress(double workDone, double max) {
+            super.updateProgress(workDone, max);
+            if (workDone >= 0) {
+                progressHandle.progress((int) workDone);
+            }
+        }
+
+        @Override
+        protected void updateProgress(long workDone, long max) {
+            super.updateProgress(workDone, max);
+            super.updateProgress(workDone, max);
+            if (workDone >= 0) {
+                progressHandle.progress((int) workDone);
+            }
+        }
     }
 
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
@@ -479,6 +489,7 @@ public class EventsRepository {
             List<ContentTag> contentTags = tagsManager.getAllContentTags();
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingFileTags(), this::cancel);
+            updateTitle(Bundle.progressWindow_msg_refreshingFileTags());
             int currentWorkTotal = contentTags.size();
             progressHandle.start(currentWorkTotal);
 
@@ -486,7 +497,7 @@ public class EventsRepository {
                 if (isCancelled()) {
                     break;
                 }
-                update(new ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingFileTags()));
+                updateProgress(i, currentWorkTotal);
                 ContentTag contentTag = contentTags.get(i);
                 eventDB.addTag(contentTag.getContent().getId(), null, contentTag);
             }
@@ -495,14 +506,14 @@ public class EventsRepository {
             List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_refreshingResultTags(), this::cancel);
+            updateTitle(Bundle.progressWindow_msg_refreshingResultTags());
             currentWorkTotal = artifactTags.size();
             progressHandle.start(currentWorkTotal);
-
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelled()) {
                     break;
                 }
-                update(new ProgressUpdate(i, currentWorkTotal, Bundle.progressWindow_msg_refreshingResultTags()));
+                updateProgress(i, currentWorkTotal);
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
                 eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
             }
@@ -511,7 +522,8 @@ public class EventsRepository {
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingTags());
             progressHandle.start();
-            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingTags()));
+            updateTitle(Bundle.progressWindow_msg_commitingTags());
+            updateProgress(-.5, 1);
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
@@ -558,11 +570,12 @@ public class EventsRepository {
         protected Void call() throws Exception {
             LOGGER.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
             progressHandle.start();
-            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_reinit_db()));
+            updateProgress(-.5, 1);
+            updateTitle(Bundle.progressWindow_msg_reinit_db());
             //reset database //TODO: can we do more incremental updates? -jm
             eventDB.reInitializeDB();
 
-            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_gatheringData()));
+            updateTitle(Bundle.progressWindow_msg_gatheringData());
             long lastObjId = skCase.getLastObjectId();
             long lastArtfID = TimeLineController.getCaseLastArtifactID(skCase);
             boolean injestRunning = IngestManager.getInstance().isIngestRunning();
@@ -571,7 +584,7 @@ public class EventsRepository {
             List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
             final int numFiles = fileIDs.size();
             progressHandle.switchToDeterminate(numFiles);
-            update(new ProgressUpdate(0, numFiles, Bundle.progressWindow_msg_populateMacEventsFiles()));
+            updateTitle(Bundle.progressWindow_msg_populateMacEventsFiles());
 
             //insert file events into db
             EventDB.EventTransaction trans = eventDB.beginTransaction();
@@ -587,8 +600,8 @@ public class EventsRepository {
                             LOGGER.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                         } else {
                             insertEventsForFile(f, trans);
-                            update(new ProgressUpdate(i, numFiles,
-                                    Bundle.progressWindow_msg_populateMacEventsFiles(), f.getName()));
+                            updateProgress(i, numFiles);
+                            updateMessage(f.getName());
                         }
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.SEVERE, "Failed to insert MAC time events for file : " + fID, tskCoreException); // NON-NLS
@@ -611,7 +624,8 @@ public class EventsRepository {
             progressHandle.finish();
             progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_msg_commitingDb());
             progressHandle.start();
-            update(new ProgressUpdate(0, -1, Bundle.progressWindow_msg_commitingDb()));
+            updateProgress(-0.5, 1);
+            updateTitle(Bundle.progressWindow_msg_commitingDb());
 
             if (isCancelled()) {
                 eventDB.rollBackTransaction(trans);
@@ -702,12 +716,12 @@ public class EventsRepository {
                 progressHandle.finish();
                 progressHandle = ProgressHandleFactory.createHandle(Bundle.progressWindow_populatingXevents(type.getDisplayName()), () -> cancel(true));
                 progressHandle.start(numArtifacts);
+                updateTitle(Bundle.progressWindow_populatingXevents(type.getDisplayName()));
                 for (int i = 0; i < numArtifacts; i++) {
                     try {
                         //for each artifact, extract the relevant information for the descriptions
                         insertEventForArtifact(type, blackboardArtifacts.get(i), trans);
-                        update(new ProgressUpdate(i, numArtifacts,
-                                Bundle.progressWindow_populatingXevents(type.getDisplayName())));
+                        updateProgress(i, numArtifacts);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
                     }
