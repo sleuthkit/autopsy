@@ -31,14 +31,11 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -403,15 +400,9 @@ public class EventsRepository {
         recordWasIngestRunning(injestRunning);
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public boolean isRebuilding() {
-        FutureTask<Boolean> task = new FutureTask<>(dbPopulationService::isRunning);
-        Platform.runLater(task);
-        try {
-            return task.get();
-        } catch (InterruptedException | ExecutionException exception) {
-            LOGGER.log(Level.SEVERE, "There was an error determining the state of the db population service.", exception);
-        }
-        return false;
+        return dbPopulationService.isRunning();
     }
 
     /**
