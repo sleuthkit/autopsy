@@ -30,7 +30,6 @@ import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -52,12 +51,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.DialogEvent;
 import javafx.scene.image.Image;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
@@ -335,7 +330,7 @@ public class TimeLineController {
             final Boolean injestRunning = IngestManager.getInstance().isIngestRunning();
             final Task<Void> rebuildRepository = eventsRepository.rebuildRepository(lastObjId, lastArtfID, injestRunning);
             Platform.runLater(() -> {
-                rebuildRepository.setOnSucceeded((WorkerStateEvent event) -> {
+                rebuildRepository.setOnSucceeded(succeeded -> {
                 //this is run on jfx thread
 
                     //TODO: this looks hacky.  what is going on? should this be an event?
@@ -370,7 +365,7 @@ public class TimeLineController {
         Task<Void> rebuildTags = eventsRepository.rebuildTags();
 
         Platform.runLater(() -> {
-            rebuildTags.setOnSucceeded((WorkerStateEvent event) -> {
+            rebuildTags.setOnSucceeded(succeeded -> {
                 SwingUtilities.invokeLater(TimeLineController.this::showWindow);
                 showFullRange();;
             });
@@ -385,13 +380,10 @@ public class TimeLineController {
         }
     }
 
-    @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline data",
-        "Timeline.ProgressWindow.cancel.confdlg.msg=Not all events will be present of accurate if you cancel the timeline population.  Do you want to cancel?",
-        "Timeline.ProgressWindow.cancel.confdlg.detail=Cancel timeline population?"})
+    @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline Data"})
     private ProgressDialog showProgressDialogForTask(Task<Void> task) {
         ProgressDialog progressDialog = new ProgressDialog(task);
         progressDialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-
         progressDialog.setTitle(Bundle.Timeline_progressWindow_title());
         progressDialog.getDialogPane().headerTextProperty().bind(task.titleProperty());
         try {
@@ -400,22 +392,7 @@ public class TimeLineController {
         } catch (IOException iOException) {
             LOGGER.log(Level.WARNING, "Failed to laod branded icon for progress dialog.", iOException);
         }
-        progressDialog.setOnCloseRequest((DialogEvent event) -> {
-            Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, Bundle.Timeline_ProgressWindow_cancel_confdlg_msg(), ButtonType.YES, ButtonType.NO);
-            confirmation.setHeaderText(null);
-            confirmation.setTitle(Bundle.Timeline_ProgressWindow_cancel_confdlg_detail());
-            confirmation.initOwner(progressDialog.getDialogPane().getScene().getWindow());
-            confirmation.initModality(Modality.WINDOW_MODAL);
-            Optional<ButtonType> showAndWait = confirmation.showAndWait();
-
-            showAndWait.ifPresent(buttonType -> {
-                if (buttonType == ButtonType.YES) {
-                    task.cancel(true);
-                } else {
-                    event.consume();
-                }
-            });
-        });
+        progressDialog.setOnCloseRequest(closeRequestEvent -> task.cancel(true));
         return progressDialog;
     }
 
