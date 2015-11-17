@@ -322,7 +322,7 @@ public class TimeLineController {
             }
         }
         SwingUtilities.invokeLater(this::closeTimelineWindow);
-        final Worker<Void> rebuildRepository = eventsRepository.rebuildRepository();
+        final CancellationProgressTask<?> rebuildRepository = eventsRepository.rebuildRepository();
         rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
             //this will be on JFX thread
             if (newSate == Worker.State.SUCCEEDED) {
@@ -352,7 +352,7 @@ public class TimeLineController {
     void rebuildTagsTable() {
 
         SwingUtilities.invokeLater(this::closeTimelineWindow);
-        Worker<Void> rebuildTags = eventsRepository.rebuildTags();
+        CancellationProgressTask<?> rebuildTags = eventsRepository.rebuildTags();
         rebuildTags.stateProperty().addListener((stateProperty, oldState, newSate) -> {
             //this will be on JFX thread
             if (newSate == Worker.State.SUCCEEDED) {
