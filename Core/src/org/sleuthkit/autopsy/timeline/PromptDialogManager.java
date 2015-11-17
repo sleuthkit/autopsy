@@ -8,13 +8,11 @@ package org.sleuthkit.autopsy.timeline;
 import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
-import javafx.concurrent.Worker;
-import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.DialogEvent;
 import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
@@ -52,39 +50,49 @@ public class PromptDialogManager {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({"Timeline.progressWindow.title=Populating Timeline Data"})
-    void showProgressDialog(Worker<Void> task) {
+    public void showProgressDialog(CancellationProgressTask<?> task) {
+
         currentDialog = new ProgressDialog(task);
         currentDialog.setTitle(Bundle.Timeline_progressWindow_title());
-        DialogPane dialogPane = currentDialog.getDialogPane();
-        dialogPane.getButtonTypes().add(ButtonType.CANCEL);
-        Stage dialogStage = (Stage) dialogPane.getScene().getWindow();
-        dialogPane.setPrefWidth(400);
         currentDialog.headerTextProperty().bind(task.titleProperty());
-        dialogStage.getIcons().setAll(LOGO);
-        currentDialog.setOnCloseRequest(closeRequestEvent -> task.cancel());
-        currentDialog.setOnHidden(new EventHandler<DialogEvent>() {
 
-            @Override
-            public void handle(DialogEvent event) {
-                if (currentDialog == progressDialog) {
-                    currentDialog = null;
-                }
+        DialogPane dialogPane = currentDialog.getDialogPane();
+        dialogPane.setPrefWidth(400);
+
+        dialogPane.setPrefHeight(200);
+        task.setOnCancelled(cancelled -> currentDialog.close());
+        task.setOnSucceeded(succeeded -> currentDialog.close());
+
+        dialogPane.getButtonTypes().setAll(ButtonType.CANCEL);
+        final Node cancelButton = dialogPane.lookupButton(ButtonType.CANCEL);
+        cancelButton.disableProperty().bind(task.cancellableProperty().not());
+        currentDialog.setOnCloseRequest(closeRequest -> {
+
+            if (task.isRunning()) {
+                closeRequest.consume();
+            }
+            if (task.isCancellable() && task.isCancelRequested() == false) {
+                task.requestCancel();
             }
         });
+
+        Stage stage = (Stage) dialogPane.getScene().getWindow();
+        stage.getIcons().setAll(LOGO);
+        currentDialog.show();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean showConfirmationDialog(String title, String headerText, String contentText, ButtonType okButton, ButtonType cancelButton) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentText, okButton, cancelButton);
-        alert.initStyle(StageStyle.UTILITY);
-        alert.initModality(Modality.APPLICATION_MODAL);
+        currentDialog = new Alert(Alert.AlertType.CONFIRMATION, contentText, okButton, cancelButton);
+        currentDialog.initStyle(StageStyle.UTILITY);
+        currentDialog.initModality(Modality.APPLICATION_MODAL);
 //        alert.initOwner(mainFrame);
 
-        alert.setHeaderText(headerText);
-        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        currentDialog.setHeaderText(headerText);
+        Stage stage = (Stage) currentDialog.getDialogPane().getScene().getWindow();
         stage.setTitle(title);
 //        alert = alert;
-        return alert.showAndWait().map(okButton::equals).orElse(false);
+        return currentDialog.showAndWait().map(okButton::equals).orElse(false);
     }
 
     /**

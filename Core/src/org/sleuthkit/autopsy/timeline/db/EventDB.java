@@ -810,7 +810,10 @@ public class EventDB {
      *
      * @return the event ids that match the object/artifact pair
      */
-    Set<Long> addTag(long objectID, @Nullable Long artifactID, Tag tag) {
+    Set<Long> addTag(long objectID, @Nullable Long artifactID, Tag tag, EventTransaction transaction) {
+        if (transaction != null && transaction.isClosed()) {
+            throw new IllegalArgumentException("can't update database with closed transaction"); // NON-NLS
+        }
         DBLock.lock();
         try {
             Set<Long> eventIDs = markEventsTagged(objectID, artifactID, true);
@@ -1265,7 +1268,6 @@ public class EventDB {
             DBLock.lock();
             try {
                 con.setAutoCommit(false);
-
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex); // NON-NLS
             }
