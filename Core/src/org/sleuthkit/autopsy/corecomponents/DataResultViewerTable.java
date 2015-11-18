@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -114,8 +115,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
                     for(Node node : nodes) {
                         Action action = node.getPreferredAction();
-                        if(action != null) 
-                            action.actionPerformed(null);
+                        if(action != null)
+                            action.actionPerformed(new ActionEvent(this, 1, ""));
                     }
                 }
             }
