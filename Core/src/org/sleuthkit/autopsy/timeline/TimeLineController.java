@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -72,6 +73,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -132,9 +134,9 @@ public class TimeLineController {
 
     private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
 
-    private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(-1);
+    private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
 
-    private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
@@ -176,15 +178,15 @@ public class TimeLineController {
         return tasks.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyDoubleProperty getProgress() {
-        return progress.getReadOnlyProperty();
+    synchronized public ReadOnlyDoubleProperty taskProgressProperty() {
+        return taskProgress.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyStringProperty getMessage() {
-        return message.getReadOnlyProperty();
+    synchronized public ReadOnlyStringProperty taskMessageProperty() {
+        return taskMessage.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyStringProperty getTaskTitle() {
+    synchronized public ReadOnlyStringProperty taskTitleProperty() {
         return taskTitle.getReadOnlyProperty();
     }
 
@@ -309,18 +311,12 @@ public class TimeLineController {
     /**
      * rebuld the repo.
      *
-     * @return False if the repo was not rebuilt because of an error or because
-     *         the user aborted after prompt about ingest running. True if the
-     *         repo was rebuilt.
+     * @return False if the repo was not rebuilt because because the user
+     *         aborted after prompt about ingest running. True if the repo was
+     *         rebuilt.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean rebuildRepo() {
-        if (IngestManager.getInstance().isIngestRunning()) {
-            //confirm timeline during ingest
-            if (promptDialogManager.confirmRebuildDuringIngest() == false) {
-                return false;
-            }
-        }
+    void rebuildRepo() {
         SwingUtilities.invokeLater(this::closeTimelineWindow);
         final CancellationProgressTask<?> rebuildRepository = eventsRepository.rebuildRepository();
         rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
@@ -339,7 +335,7 @@ public class TimeLineController {
             }
         });
         promptDialogManager.showProgressDialog(rebuildRepository);
-        return true;
+
     }
 
     /**
@@ -406,61 +402,78 @@ public class TimeLineController {
                 if (promptDialogManager.bringCurrentDialogToFront()) {
                     return;
                 }
-
-                boolean repoRebuilt = false;  //has the repo been rebuilt
-                long timeLineLastObjectId = eventsRepository.getLastObjID();
-
-                //if the repo is empty rebuild it
-                if (timeLineLastObjectId == -1) {
-                    repoRebuilt = rebuildRepo();
-                }
-
-                if (repoRebuilt == false) {
-                    //if ingest was running uring last rebuild, prompt to rebuild
-                    if (eventsRepository.getWasIngestRunning()) {
-                        if (promptDialogManager.confirmLastBuiltDuringIngestRebuild()) {
-                            repoRebuilt = rebuildRepo();
-                        }
-                    }
-                }
-
-                if (repoRebuilt == false) {
-                    final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
-                    //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
-                    if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
-                            || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
-                        if (promptDialogManager.confirmOutOfDateRebuild()) {
-                            repoRebuilt = rebuildRepo();
-                        }
-                    }
-                }
-
-                if (repoRebuilt == false) {
-                    // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
-                    if (eventsRepository.hasNewColumns() == false) {
-                        if (promptDialogManager.confirmDataSourceIDsMissingRebuild()) {
-                            repoRebuilt = rebuildRepo();
-                        }
+                if (IngestManager.getInstance().isIngestRunning()) {
+                    //confirm timeline during ingest
+                    if (promptDialogManager.confirmDuringIngest() == false) {
+                        return;
                     }
                 }
 
                 /*
                  * if the repo was not rebuilt at minimum rebuild the tags which
-                 * may have been updated without our knowing it.
+                 * may have been updated without our knowing it, since we
+                 * can't/aren't checking them. This should at elast be quick.
+                 * //TODO: can we check the tags to see if we need to do this?
                  */
-                if (repoRebuilt == false) {
+                if (checkAndPromptForRebuild() == false) {
                     rebuildTagsTable();
                 }
 
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
             } catch (HeadlessException | MissingResourceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS
             }
         });
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private boolean checkAndPromptForRebuild() {
+        //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
+        if (eventsRepository.getLastObjID() == -1) {
+            rebuildRepo();
+            return true;
+        }
+
+        ArrayList<String> rebuildReasons = getRebuildReasons();
+        if (rebuildReasons.isEmpty() == false) {
+            if (promptDialogManager.confirmRebuild(rebuildReasons)) {
+                rebuildRepo();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
+    private ArrayList<String> getRebuildReasons() {
+        ArrayList<String> rebuildReasons = new ArrayList<>();
+        //if ingest was running during last rebuild, prompt to rebuild
+        if (eventsRepository.getWasIngestRunning()) {
+            rebuildReasons.add("The Timeline events database was previously populated while ingest was running:"
+                    + " Some events may be missing, incomplete, or inaccurate");
+        }
+        final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
+        try {
+            //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
+            if (sleuthkitCase.getLastObjectId() != eventsRepository.getLastObjID()
+                    || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
+                rebuildReasons.add("The event data is out of date:  Not all events will be visible.");
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error determing last object id from sleutkit case.  We will assume the timeline is out of date.", ex); // NON-NLS
+            MessageNotifyUtil.Notify.error("Timeline error.",
+                    "Error determing if the timeline is out of date.  We will assume it should be updated.  See the logs for more details.");
+            rebuildReasons.add("Could not determine if the timeline data is out of date.");
+        }
+        // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
+        if (eventsRepository.hasNewColumns() == false) {
+            rebuildReasons.add("The Timeline events database was previously populated without incomplete information:"
+                    + "  Some features may be unavailable or non-functional unless you update the events database.");
+        }
+        return rebuildReasons;
+    }
+
     public static long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
+        //TODO: push this into sleuthkitCase
         long caseLastArtfId = -1;
         String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
@@ -523,6 +536,7 @@ public class TimeLineController {
                     synchronized (TimeLineController.this) {
                         selectedTimeRange.set(get());
                         selectedEventIDs.setAll(events);
+
                     }
                 } catch (InterruptedException ex) {
                     Logger.getLogger(FilteredEventsModel.class
@@ -656,6 +670,7 @@ public class TimeLineController {
                     synchronized (TimeLineController.this) {
                         selectedTimeRange.set(timeRange);
                         selectedEventIDs.setAll(get());
+
                     }
                 } catch (InterruptedException ex) {
                     Logger.getLogger(FilteredEventsModel.class
@@ -692,16 +707,16 @@ public class TimeLineController {
                         case FAILED:
                             tasks.remove(task);
                             if (tasks.isEmpty() == false) {
-                                progress.bind(tasks.get(0).progressProperty());
-                                message.bind(tasks.get(0).messageProperty());
+                                taskProgress.bind(tasks.get(0).progressProperty());
+                                taskMessage.bind(tasks.get(0).messageProperty());
                                 taskTitle.bind(tasks.get(0).titleProperty());
                             }
                             break;
                     }
                 });
                 tasks.add(task);
-                progress.bind(task.progressProperty());
-                message.bind(task.messageProperty());
+                taskProgress.bind(task.progressProperty());
+                taskMessage.bind(task.messageProperty());
                 taskTitle.bind(task.titleProperty());
                 switch (task.getState()) {
                     case READY:
@@ -715,8 +730,8 @@ public class TimeLineController {
                     case FAILED:
                         tasks.remove(task);
                         if (tasks.isEmpty() == false) {
-                            progress.bind(tasks.get(0).progressProperty());
-                            message.bind(tasks.get(0).messageProperty());
+                            taskProgress.bind(tasks.get(0).progressProperty());
+                            taskMessage.bind(tasks.get(0).messageProperty());
                             taskTitle.bind(tasks.get(0).titleProperty());
                         }
                         break;
@@ -754,11 +769,8 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
-            Platform.runLater(() -> {
-                if (promptDialogManager.confirmOutOfDateRebuild()) {
-                    rebuildRepo();
-                }
-            });
+            Platform.runLater(this::checkAndPromptForRebuild);
+
         }
     }
 
