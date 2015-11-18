@@ -505,12 +505,11 @@ public class EventsRepository {
             LOGGER.log(Level.INFO, "committing db"); // NON-NLS
             Platform.runLater(() -> cancellable.set(false));
             restartProgressHandle(Bundle.progressWindow_msg_commitingDb(), "", -1D, 1, false);
-            if (isCancelRequested()) {
-                eventDB.rollBackTransaction(trans);
-            } else {
-                eventDB.commitTransaction(trans);
+            eventDB.commitTransaction(trans);
+            if (isCancelRequested() == false) {
                 recordDBPopulationState(lastObjId, lastArtfID, injestRunning);
             }
+
             eventDB.analyze();
             populateFilterData(skCase);
             invalidateCaches();
