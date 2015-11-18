@@ -355,14 +355,14 @@ public final class FilteredEventsModel {
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
-        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
+        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
-        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
+        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 
