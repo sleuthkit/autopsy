@@ -257,10 +257,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
             XYChart.Series<DateTime, EventStripe> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-//            Platform.runLater(() -> {
             dataSeries.add(series);
-//            });
-
             return series;
         });
     }
@@ -300,6 +297,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 Platform.runLater(new Runnable() {
 
                     public void run() {
+
                         if (isCancelled()) {
                             return;
                         }

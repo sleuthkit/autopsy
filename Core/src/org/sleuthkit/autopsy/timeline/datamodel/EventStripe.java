@@ -171,8 +171,47 @@ public final class EventStripe implements EventBundle<EventCluster> {
         return clusters.last().getEndMillis();
     }
 
+    @Override
     public SortedSet< EventCluster> getClusters() {
         return Collections.unmodifiableSortedSet(clusters);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + java.util.Objects.hashCode(this.parent);
+        hash = 37 * hash + java.util.Objects.hashCode(this.type);
+        hash = 37 * hash + java.util.Objects.hashCode(this.description);
+        hash = 37 * hash + java.util.Objects.hashCode(this.lod);
+        hash = 37 * hash + java.util.Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventStripe other = (EventStripe) obj;
+        if (!java.util.Objects.equals(this.parent, other.parent)) {
+            return false;
+        }
+        if (!java.util.Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (!java.util.Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!java.util.Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
     }
 
 }

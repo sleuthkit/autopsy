@@ -98,8 +98,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         descrLabel.setMaxWidth(w);
     }
 
-   
-
     /**
      * apply the 'effect' to visually indicate highlighted nodes
      *
@@ -178,6 +176,23 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
                 t.consume();
             }
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return getEventStripe().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventStripeNode other = (EventStripeNode) obj;
+        return getEventStripe().equals(other.getEventStripe());
     }
 
 }

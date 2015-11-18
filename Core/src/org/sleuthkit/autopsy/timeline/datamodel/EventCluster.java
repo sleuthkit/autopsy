@@ -188,4 +188,47 @@ public class EventCluster implements EventBundle<EventStripe> {
     public SortedSet< EventCluster> getClusters() {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + Objects.hashCode(this.parent);
+        hash = 89 * hash + Objects.hashCode(this.span);
+        hash = 89 * hash + Objects.hashCode(this.type);
+        hash = 89 * hash + Objects.hashCode(this.description);
+        hash = 89 * hash + Objects.hashCode(this.lod);
+        hash = 89 * hash + Objects.hashCode(this.eventIDs);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final EventCluster other = (EventCluster) obj;
+        if (!Objects.equals(this.parent, other.parent)) {
+            return false;
+        }
+        if (!Objects.equals(this.span, other.span)) {
+            return false;
+        }
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (!Objects.equals(this.description, other.description)) {
+            return false;
+        }
+        if (this.lod != other.lod) {
+            return false;
+        }
+        if (!Objects.equals(this.eventIDs, other.eventIDs)) {
+            return false;
+        }
+        return true;
+    }
+
 }

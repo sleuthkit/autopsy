@@ -30,10 +30,10 @@ import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -371,9 +371,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished((ActionEvent event) -> {
-            chart.requestChartLayout();
-        });
+        timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
         timeline.play();
     }
 }
