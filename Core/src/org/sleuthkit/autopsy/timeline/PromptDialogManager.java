@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline;
 
@@ -27,24 +40,30 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
- *
+ * Manager for the various prompts Timeline shows the user related to rebuilding
+ * the database.
  */
 public class PromptDialogManager {
 
     private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
-    private static final ButtonType SHOW_TIMELINE = new ButtonType("Show Timeline", ButtonBar.ButtonData.OK_DONE);
-    private static final ButtonType CONTINUE_NO_UPDATE = new ButtonType("Continue Without Updating", ButtonBar.ButtonData.CANCEL_CLOSE);
-    private static final ButtonType UPDATE = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
+    @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Show Timeline")
+    private static final ButtonType SHOW_TIMELINE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
+
+    @NbBundle.Messages("PrompDialogManager.buttonType.continueNoUpdate=Continue Without Updating")
+    private static final ButtonType CONTINUE_NO_UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_continueNoUpdate(), ButtonBar.ButtonData.CANCEL_CLOSE);
+
+    @NbBundle.Messages("PrompDialogManager.buttonType.update=Update")
+    private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
 
     private static final Image LOGO;
 
     static {
         Image x = null;
         try {
-            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream());
+            x = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NOI18N
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex);
+            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NOI18N
         }
         LOGO = x;
     }
@@ -65,26 +84,24 @@ public class PromptDialogManager {
         return false;
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({"PromptDialogManager.progressDialog.title=Populating Timeline Data"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void showProgressDialog(CancellationProgressTask<?> task) {
-
         currentDialog = new ProgressDialog(task);
-        currentDialog.setTitle(Bundle.PromptDialogManager_progressDialog_title());
         currentDialog.headerTextProperty().bind(task.titleProperty());
+        setDialogIcons(currentDialog);
+        currentDialog.setTitle(Bundle.PromptDialogManager_progressDialog_title());
 
         DialogPane dialogPane = currentDialog.getDialogPane();
-        dialogPane.setPrefWidth(400);
+        dialogPane.setPrefSize(400, 200); //override autosizing which fails for some reason
 
-        dialogPane.setPrefHeight(200);
+        //co-ordinate task cancelation and dialog hiding.
         task.setOnCancelled(cancelled -> currentDialog.close());
         task.setOnSucceeded(succeeded -> currentDialog.close());
-
         dialogPane.getButtonTypes().setAll(ButtonType.CANCEL);
         final Node cancelButton = dialogPane.lookupButton(ButtonType.CANCEL);
         cancelButton.disableProperty().bind(task.cancellableProperty().not());
         currentDialog.setOnCloseRequest(closeRequest -> {
-
             if (task.isRunning()) {
                 closeRequest.consume();
             }
@@ -93,9 +110,19 @@ public class PromptDialogManager {
             }
         });
 
-        Stage stage = (Stage) dialogPane.getScene().getWindow();
-        stage.getIcons().setAll(LOGO);
         currentDialog.show();
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    static private void setDialogIcons(Dialog<?> dialog) {
+        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        stage.getIcons().setAll(LOGO);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    static private void setDialogTitle(Dialog<?> dialog) {
+        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        stage.setTitle(Bundle.Timeline_confirmation_dialogs_title());
     }
 
     /**
@@ -104,32 +131,28 @@ public class PromptDialogManager {
      *
      * @return true if they want to continue anyways
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    @NbBundle.Messages({"PromptDialogManager.confirmDuringIngest.headerText=You are trying to generate a timeline before ingest has been completed."
-        + "\nThe timeline may be incomplete.",
+    @NbBundle.Messages({"PromptDialogManager.confirmDuringIngest.headerText=You are trying to show a timeline before ingest has been completed.\nThe timeline may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
-    synchronized boolean confirmDuringIngest() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    boolean confirmDuringIngest() {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.PromptDialogManager_confirmDuringIngest_contentText(), SHOW_TIMELINE, ButtonType.CANCEL);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_confirmDuringIngest_headerText());
-        brandDialog();
+        setDialogIcons(currentDialog);
+        setDialogTitle(currentDialog);
+
         return currentDialog.showAndWait().map(SHOW_TIMELINE::equals).orElse(false);
     }
 
-    private void brandDialog() {
-        Stage stage = (Stage) currentDialog.getDialogPane().getScene().getWindow();
-        stage.setTitle(Bundle.Timeline_confirmation_dialogs_title());
-        stage.getIcons().setAll(LOGO);
-    }
-
-    @NbBundle.Messages({"PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date."
-        + "\nSome events may be missing or inaccurate and some features may be unavailable.",
+    @NbBundle.Messages({"PromptDialogManager.rebuildPrompt.headerText=The Timeline database is incomplete and/or out of date.\nSome events may be missing or inaccurate and some features may be unavailable.",
         "PromptDialogManager.rebuildPrompt.details=Details:"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmRebuild(ArrayList<String> rebuildReasons) {
         currentDialog = new Alert(Alert.AlertType.CONFIRMATION, Bundle.TimeLinecontroller_updateNowQuestion(), UPDATE, CONTINUE_NO_UPDATE);
         currentDialog.initModality(Modality.APPLICATION_MODAL);
         currentDialog.setHeaderText(Bundle.PromptDialogManager_rebuildPrompt_headerText());
-        brandDialog();
+        setDialogIcons(currentDialog);
+        setDialogTitle(currentDialog);
 
         DialogPane dialogPane = currentDialog.getDialogPane();
         ListView<String> listView = new ListView<>(FXCollections.observableArrayList(rebuildReasons));

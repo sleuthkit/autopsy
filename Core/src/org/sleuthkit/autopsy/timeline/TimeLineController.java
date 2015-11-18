@@ -119,7 +119,7 @@ public class TimeLineController {
     }
 
     public static DateTimeFormatter getZonedFormatter() {
-        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone()); // NON-NLS
+        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone()); // NON-NLS //NOI18N
     }
 
     public static DateTimeZone getJodaTimeZone() {
@@ -420,7 +420,7 @@ public class TimeLineController {
                 }
 
             } catch (HeadlessException | MissingResourceException ex) {
-                LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS //NOI18N
             }
         });
     }
@@ -444,30 +444,34 @@ public class TimeLineController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
+    @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
+        "TimeLineController.outOfDate.errorMessage=Error determing if the timeline is out of date.  We will assume it should be updated.  See the logs for more details.",
+        "TimeLineController.rebuildReasons.outOfDateError=Could not determine if the timeline data is out of date.",
+        "TimeLineController.rebuildReasons.outOfDate=The event data is out of date:  Not all events will be visible.",
+        "TimeLineController.rebuildReasons.ingestWasRunning=The Timeline events database was previously populated while ingest was running:  Some events may be missing, incomplete, or inaccurate.",
+        "TimeLineController.rebuildReasons.incompleteOldSchema=The Timeline events database was previously populated without incomplete information:  Some features may be unavailable or non-functional unless you update the events database."})
     private ArrayList<String> getRebuildReasons() {
         ArrayList<String> rebuildReasons = new ArrayList<>();
         //if ingest was running during last rebuild, prompt to rebuild
         if (eventsRepository.getWasIngestRunning()) {
-            rebuildReasons.add("The Timeline events database was previously populated while ingest was running:"
-                    + " Some events may be missing, incomplete, or inaccurate");
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_ingestWasRunning());
         }
         final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
         try {
             //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
             if (sleuthkitCase.getLastObjectId() != eventsRepository.getLastObjID()
                     || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
-                rebuildReasons.add("The event data is out of date:  Not all events will be visible.");
+                rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDate());
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error determing last object id from sleutkit case.  We will assume the timeline is out of date.", ex); // NON-NLS
-            MessageNotifyUtil.Notify.error("Timeline error.",
-                    "Error determing if the timeline is out of date.  We will assume it should be updated.  See the logs for more details.");
-            rebuildReasons.add("Could not determine if the timeline data is out of date.");
+            LOGGER.log(Level.SEVERE, "Error determing last object id from sleutkit case. We will assume the timeline is out of date.", ex); // NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.TimeLineController_errorTitle(),
+                    Bundle.TimeLineController_outOfDate_errorMessage());
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDateError());
         }
         // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
         if (eventsRepository.hasNewColumns() == false) {
-            rebuildReasons.add("The Timeline events database was previously populated without incomplete information:"
-                    + "  Some features may be unavailable or non-functional unless you update the events database.");
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_incompleteOldSchema());
         }
         return rebuildReasons;
     }
@@ -475,14 +479,14 @@ public class TimeLineController {
     public static long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
         //TODO: push this into sleuthkitCase
         long caseLastArtfId = -1;
-        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
+        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS //NOI18N
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
-                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS
+                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS //NOI18N
             }
         } catch (TskCoreException | SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS //NOI18N
         }
         return caseLastArtfId;
     }
@@ -523,7 +527,7 @@ public class TimeLineController {
     }
 
     public void selectEventIDs(Collection<Long> events) {
-        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { // NON-NLS
+        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { // NON-NLS //NOI18N
             @Override
             protected Interval call() throws Exception {
                 return filteredEvents.getSpanningInterval(events);
@@ -538,12 +542,8 @@ public class TimeLineController {
                         selectedEventIDs.setAll(events);
 
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex); // NON-NLS
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex); // NON-NLS
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); // NON-NLS //NOI18N
                 }
             }
         };
@@ -587,8 +587,7 @@ public class TimeLineController {
     }
 
     @NbBundle.Messages({"# {0} - the number of events",
-        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
-        + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
+        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
         "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
     synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
@@ -655,7 +654,7 @@ public class TimeLineController {
     public void selectTimeAndType(Interval interval, EventType type) {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
-        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { // NON-NLS
+        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { // NON-NLS //NOI18N
             @Override
             protected Collection< Long> call() throws Exception {
                 synchronized (TimeLineController.this) {
@@ -672,12 +671,8 @@ public class TimeLineController {
                         selectedEventIDs.setAll(get());
 
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex);// NON-NLS
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex);// NON-NLS
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); // NON-NLS //NOI18N
                 }
             }
         };
@@ -692,6 +687,7 @@ public class TimeLineController {
      * @param task
      */
     synchronized public void monitorTask(final Task<?> task) {
+        //TODO: refactor this to use JavaFX Service? -jm
         if (task != null) {
             Platform.runLater(() -> {
 
