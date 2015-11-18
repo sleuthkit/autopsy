@@ -22,12 +22,15 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.Action;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -90,6 +93,33 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // don't show the root node
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
+        
+        /**
+         * Add mouse listener to perform action on double-click
+         * A somewhat hacky way to perform action even if the column clicked 
+         * is not the first one.
+         */
+        ov.getOutline().addMouseListener(new MouseListener() {
+            @Override
+            public void mousePressed(MouseEvent e) {}
+            @Override
+            public void mouseReleased(MouseEvent e) {}
+            @Override
+            public void mouseEntered(MouseEvent e) {}
+            @Override
+            public void mouseExited(MouseEvent e) {}
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(e.getClickCount() == 2) {
+                    Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
+                    for(Node node : nodes) {
+                        Action action = node.getPreferredAction();
+                        if(action != null) 
+                            action.actionPerformed(null);
+                    }
+                }
+            }
+        });
     }
 
     /**
