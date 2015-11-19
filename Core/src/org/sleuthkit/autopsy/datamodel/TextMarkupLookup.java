@@ -26,11 +26,11 @@ package org.sleuthkit.autopsy.datamodel;
  * org.sleuthkit.autopsy.keywordsearch.HighlightedTextMarkup class is the sole
  * implementation, so the Core code gets a default constructed instance of
  * HighlightedTextMarkup. This otherwise useless instance is then used to call
- * createInstance with parameters that will be used to use the Solr highlighting
- * capability on text indexed using the KeywordSearch NBM implementation of the
- * KeywordSearchService interface. The Core code then puts that TextMarkupLookup
- * in its Lookup for later use by the ExtractedContentViewer, a
- * DataContentViewer in the KeywordSearch NBM.
+ * createInstance with parameters that will be used to employ the Solr
+ * highlighting capability on text indexed through the KeywordSearch NBM
+ * implementation of the KeywordSearchService interface. The Core code then puts
+ * that TextMarkupLookup in its Lookup for later use by the
+ * ExtractedContentViewer, a DataContentViewer in the KeywordSearch NBM.
  */
 public interface TextMarkupLookup {
 
@@ -47,7 +47,7 @@ public interface TextMarkupLookup {
      *                      the keyword to be highlighted.
      *
      * @return An object that encapsulates indexed text marked up (HTML) to
-     *         highlight search hits for a particluar keyword.
+     *         highlight search hits for a particular keyword.
      */
     public TextMarkupLookup createInstance(long objectId, String keyword, boolean isRegex, String originalQuery);
 }
