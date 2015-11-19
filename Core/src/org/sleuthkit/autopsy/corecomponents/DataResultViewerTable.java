@@ -438,8 +438,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
     
-    // Store the column arrangements of the given Node.
+    
     private void storeProperties(Node root) {
+        // Store the selected rows
+        this.em.getSelectedNodes();
+        
+        // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
