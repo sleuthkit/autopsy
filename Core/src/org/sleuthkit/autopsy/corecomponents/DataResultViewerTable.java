@@ -545,6 +545,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Read the object from Base64 string.
      */
+    @SuppressWarnings("unchecked")
     private static ArrayList<String> stringToNames(String objectString) {
         byte[] data = Base64.getDecoder().decode(objectString);
         ArrayList<String> names = new ArrayList<>();
@@ -566,7 +567,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     // Get unique name for node and it's property.
     private String getUniqueSelName(Node root) {
-        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "."
+        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "")
                 + ".selectedNodes";
     }
 
