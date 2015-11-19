@@ -258,7 +258,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private Long getDocumentId(Node node) {
         /*
-         * If the node is a balackboard artifact node for anything other than a
+         * If the node is a Blackboard artifact node for anything other than a
          * keyword hit, the document ID for the text extracted from the artifact
          * (the concatenation of its attributes) is the artifact ID, a large,
          * negative integer.
