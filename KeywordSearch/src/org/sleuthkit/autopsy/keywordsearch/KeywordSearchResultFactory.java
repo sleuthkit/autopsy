@@ -310,7 +310,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedTextMarkup highlights = new HighlightedTextMarkup(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), false, hits);
+        HighlightedText highlights = new HighlightedText(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), false, hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 

@@ -22,27 +22,27 @@ import java.util.LinkedHashMap;
 
 /**
  * Interface to provide HTML text to display in ExtractedContentViewer. There is
- * a SOLR implementaiton of this that interfaces with SOLR to highlight the
+ * a SOLR implementation of this that interfaces with SOLR to highlight the
  * keyword hits and a version that does not do markup so that you can simply
  * view the stored text.
  */
-interface TextMarkup {
+interface IndexedText {
 
     /**
-     * @return text optionally marked up with the subsest of HTML that Swing
+     * @return text optionally marked up with the subset of HTML that Swing
      *         components can handle in their setText() method.
      *
      */
-    String getMarkup();
+    String getText();
 
     /**
      *
-     * @return true if markup is marked to be searchable
+     * @return true if text is marked to be searchable
      */
     boolean isSearchable();
 
     /**
-     * If searchable markup, returns prefix of anchor, otherwise return empty
+     * If searchable text, returns prefix of anchor, otherwise return empty
      * string
      *
      * @return
@@ -50,15 +50,15 @@ interface TextMarkup {
     String getAnchorPrefix();
 
     /**
-     * if searchable markup, returns number of hits found and encoded in the
-     * markup
+     * if searchable text, returns number of hits found and encoded in the
+     * text
      *
      * @return
      */
     int getNumberHits();
 
     /**
-     * @return title of markup source
+     * @return title of text source
      */
     @Override
     String toString();
