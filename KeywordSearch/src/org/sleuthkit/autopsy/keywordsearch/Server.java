@@ -987,7 +987,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    String getSolrContent(final long objectID) throws NoOpenCoreException {
+    public String getSolrContent(final long objectID) throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1009,7 +1009,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
+    public String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1020,7 +1020,7 @@ public class Server {
             currentCoreLock.readLock().unlock();
         }
     }
-
+    
     /**
      * Method to return ingester instance
      *
@@ -1223,7 +1223,7 @@ public class Server {
          *
          * @return
          */
-        private String getSolrContent(long contentID, int chunkID) {
+        public String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
             String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
