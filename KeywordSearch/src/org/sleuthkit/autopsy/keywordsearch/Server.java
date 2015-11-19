@@ -987,7 +987,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    String getSolrContent(final long objectID) throws NoOpenCoreException {
+    public String getSolrContent(final long objectID) throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1009,7 +1009,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
+    public String getSolrContent(final long objectID, final int chunkID) throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1020,7 +1020,7 @@ public class Server {
             currentCoreLock.readLock().unlock();
         }
     }
-
+    
     /**
      * Method to return ingester instance
      *

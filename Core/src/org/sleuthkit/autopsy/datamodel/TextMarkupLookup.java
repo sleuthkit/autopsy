@@ -27,9 +27,9 @@ package org.sleuthkit.autopsy.datamodel;
  * the Lookups of the BlackboardArtifactNodes for keyword search hit artifacts.
  * The BlackboardArtifactNode code that populates the node's Lookup asks the
  * default global Lookup for an instance of TextMarkupLookup. The
- * org.sleuthkit.autopsy.keywordsearch.HighlightedTextMarkup class is the sole
+ * org.sleuthkit.autopsy.keywordsearch.HighlightedText class is the sole
  * implementation of the interface, so the BlackboardArtifactNode gets a default
- * constructed instance of HighlightedTextMarkup. This otherwise useless
+ * constructed instance of HighlightedText. This otherwise useless
  * instance is then used to call createInstance with parameters that are used to
  * employ the Solr highlighting capability to create the markup. The
  * TextMarkupLookup object goes in the BlackboardArtifactNode Lookup for later
