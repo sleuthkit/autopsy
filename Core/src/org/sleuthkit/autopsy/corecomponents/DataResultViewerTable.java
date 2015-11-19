@@ -35,6 +35,10 @@ import javax.swing.Action;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -49,6 +53,8 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
@@ -64,6 +70,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
+    private Node currentRoot;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -87,7 +94,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        ov.setAllowedDropActions(DnDConstants.ACTION_NONE);
 
         ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -118,6 +124,30 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         if(action != null)
                             action.actionPerformed(new ActionEvent(this, 1, ""));
                     }
+                }
+            }
+        });
+        
+        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {}
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {}
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {}
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {}
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                // change the order of the column in the array/hashset
+                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+                Node.Property<?> prop = props.remove(e.getFromIndex());
+                props.add(e.getToIndex(), prop);
+                
+                propertiesAcc.clear();
+                for (int j = 0; j < props.size(); ++j) {
+                    propertiesAcc.add(props.get(j));
                 }
             }
         });
@@ -218,23 +248,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
         } else {
-            Set<Property> allProperties = new LinkedHashSet<Property>();
+            Set<Property> allProperties = new LinkedHashSet<>();
             while (firstChild != null) {
                 for (PropertySet ps : firstChild.getPropertySets()) {
-                    //if (ps.getName().equals(Sheet.PROPERTIES)) {
-                    //return ps.getProperties();
                     final Property[] props = ps.getProperties();
                     final int propsNum = props.length;
                     for (int i = 0; i < propsNum; ++i) {
                         allProperties.add(props[i]);
                     }
-                    //}
                 }
                 firstChild = firstChild.getChildren().getNodeAt(0);
             }
 
-            properties = allProperties.toArray(new Property[0]);
-            //throw new IllegalArgumentException("Child Node doesn't have the regular PropertySet.");
+            properties = allProperties.toArray(new Property<?>[0]);
         }
         return properties;
 
@@ -254,7 +280,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         int childCount = 0;
         for (Node child : children.getNodes()) {
             if (++childCount > rows) {
-                break;
+                return;
             }
             for (PropertySet ps : child.getPropertySets()) {
                 final Property<?>[] props = ps.getProperties();
@@ -329,16 +355,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         em.setRootContext(root);
 
-        final OutlineView ov = ((OutlineView) DataResultViewerTable.this.tableScrollPanel);
+        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
         if (ov == null) {
             return;
         }
-
-        propertiesAcc.clear();
-
-        DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        
+        if(currentRoot != null && !propertiesAcc.isEmpty()) {
+            storeProperties(currentRoot);
+        }
+        currentRoot = root;
+        List<Node.Property<?>> props = loadProperties(currentRoot);
 
         /*
          * OutlineView makes the first column be the result of
@@ -370,14 +397,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         ov.setPropertyColumns(propStrings);
-        // *****************************************************************
 
-        //            // set the first entry
-        //            Children test = root.getChildren();
-        //            Node firstEntryNode = test.getNodeAt(0);
-        //            try {
-        //                this.getExplorerManager().setSelectedNodes(new Node[]{firstEntryNode});
-        //            } catch (PropertyVetoException ex) {}
         // show the horizontal scroll panel and show all the content & header
         int totalColumns = props.size();
 
@@ -390,7 +410,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         // get first 100 rows values for the table
-        Object[][] content = null;
+        Object[][] content;
         content = getRowValues(root, 100);
 
         if (content != null) {
@@ -412,10 +432,44 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         // if there's no content just auto resize all columns
-        if (!(content.length > 0)) {
+        if (content == null || content.length <= 0) {
             // turn on the auto resize
             ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
+    }
+    
+    // Store the column arrangements of the given Node.
+    private void storeProperties(Node root) {
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        for (int i = 0; i < props.size(); i++) {
+            Property<?> prop = props.get(i);
+            NbPreferences.forModule(this.getClass()).put(getUniqueName(root, prop), String.valueOf(i));
+        }
+    }
+    
+    // Load the column arrangement stored for the given node if exists.
+    private List<Node.Property<?>> loadProperties(Node root) {
+        propertiesAcc.clear();
+        this.getAllChildPropertyHeadersRec(root, 100);
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
+        for (Property<?> prop : props) {
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop), "-1"));
+            if (value >= 0) {
+                orderedProps.set(value, prop);
+            }
+        }
+        propertiesAcc.clear();
+        for (int j = 0; j < props.size(); ++j) {
+            propertiesAcc.add(orderedProps.get(j));
+        }
+        return orderedProps;
+    }
+    
+    // Get unique name for node and it's property.
+    private String getUniqueName(Node root, Property<?> prop) {
+        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "." 
+                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
     // Populate a two-dimensional array with rows of property values for up 
