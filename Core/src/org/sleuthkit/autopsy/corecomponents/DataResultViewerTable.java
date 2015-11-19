@@ -486,11 +486,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         String objectString = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(currentRoot), null);
         if (objectString != null) {
             currentlySelectedNodes = stringToNames(objectString);
-
         } else {
             currentlySelectedNodes = new ArrayList<>();
         }
-
+        
         // Load the column arrangement stored for the given node if exists.
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
@@ -565,6 +564,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Get the ArrayList of names back from the object string.
      * Suppress the casting warning since object has to be of this type.
+     * @param objectString  The object string to convert
+     * @return The ArrayList of names converted from the object string
      */
     @SuppressWarnings("unchecked")
     private static ArrayList<String> stringToNames(String objectString) {
