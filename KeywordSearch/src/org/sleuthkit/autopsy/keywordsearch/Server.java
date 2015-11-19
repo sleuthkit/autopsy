@@ -1223,7 +1223,7 @@ public class Server {
          *
          * @return
          */
-        public String getSolrContent(long contentID, int chunkID) {
+        private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
             String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
