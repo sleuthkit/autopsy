@@ -134,7 +134,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     for (Node node : nodes) {
                         Action action = node.getPreferredAction();
                         if (action != null) {
-                            action.actionPerformed(new ActionEvent(this, 1, ""));
+                            action.actionPerformed(null);
                         }
                     }
                 }
