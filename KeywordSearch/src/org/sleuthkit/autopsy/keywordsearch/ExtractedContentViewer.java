@@ -174,6 +174,9 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         // see if the node has a MarkupSource object in it
         // BC @@@ This seems to be added from the upper right search.
+        /*
+         * 
+         */
         Collection<? extends TextMarkup> sources = node.getLookup().lookupAll(TextMarkup.class);
         if (sources.isEmpty() == false) {
             return true;
