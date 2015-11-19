@@ -146,12 +146,12 @@
     <Component class="javax.swing.JComboBox" name="sourceComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new javax.swing.DefaultComboBoxModel&lt;org.sleuthkit.autopsy.keywordsearch.TextMarkup&gt;()" type="code"/>
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;org.sleuthkit.autopsy.keywordsearch.IndexedText&gt;()" type="code"/>
         </Property>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;&gt;()"/>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.keywordsearch.TextMarkup&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.keywordsearch.IndexedText&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="hitLabel">

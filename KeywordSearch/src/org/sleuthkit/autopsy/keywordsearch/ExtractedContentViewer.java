@@ -48,7 +48,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private static final long INVALID_DOCUMENT_ID = 0L;
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private TextMarkup currentSource = null;
+    private IndexedText currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
 
     public ExtractedContentViewer() {
@@ -81,8 +81,8 @@ public class ExtractedContentViewer implements DataContentViewer {
          * marked up with HTML to highlight keyword hits that will be present if
          * the node is a keyword hit blakcboard artifact.
          */
-        final List<TextMarkup> sources = new ArrayList<>();
-        sources.addAll(selectedNode.getLookup().lookupAll(TextMarkup.class));
+        final List<IndexedText> sources = new ArrayList<>();
+        sources.addAll(selectedNode.getLookup().lookupAll(IndexedText.class));
 
         /*
          * Now look for the "raw" extracted text if this is a node for another
@@ -93,21 +93,18 @@ public class ExtractedContentViewer implements DataContentViewer {
             setPanel(sources);
             return;
         }
-
-        /*
-         * KDM TODO: Make RawTextMarkup able to handle artifacts as well as
-         * Content, or use RawTextMarkup as a base class for subclasses that
-         * handle artifacts and content.
-         */
+        IndexedText rawSource;
         if (documentID > INVALID_DOCUMENT_ID) {
-            /*
-             * Add a source for the raw text.
-             */
+            // Add a content item
             Content content = currentNode.getLookup().lookup(Content.class);
-            TextMarkup rawSource = new RawTextMarkup(content, content.getId());
-            currentSource = rawSource;
-            sources.add(rawSource);
+            rawSource = new RawText(content, content.getId());
+        } else {
+            // Add an artifact item
+            BlackboardArtifact blackboardArtifact = currentNode.getLookup().lookup(BlackboardArtifact.class);
+            rawSource = new RawText(blackboardArtifact, documentID);
         }
+        currentSource = rawSource;
+        sources.add(rawSource);
 
         /*
          * Initialize the pages for the sources. The first source in the list
@@ -122,7 +119,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void scrollToCurrentHit() {
-        final TextMarkup source = panel.getSelectedSource();
+        final IndexedText source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -161,7 +158,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<TextMarkup>());
+        setPanel(new ArrayList<IndexedText>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -179,7 +176,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          * by either an ad hoc keyword search result (keyword search toolbar
          * widgets) or a keyword search by the keyword search ingest module.
          */
-        Collection<? extends TextMarkup> sources = node.getLookup().lookupAll(TextMarkup.class);
+        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
         if (sources.isEmpty() == false) {
             return true;
         }
@@ -215,7 +212,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      *
      * @param sources
      */
-    private void setPanel(List<TextMarkup> sources) {
+    private void setPanel(List<IndexedText> sources) {
         if (panel != null) {
             panel.setSources(sources);
         }
@@ -291,7 +288,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TextMarkup source = panel.getSelectedSource();
+            IndexedText source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -331,7 +328,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TextMarkup source = panel.getSelectedSource();
+            IndexedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal = 0;
