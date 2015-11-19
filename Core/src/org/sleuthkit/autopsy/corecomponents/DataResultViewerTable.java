@@ -26,8 +26,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,6 +53,7 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Node.Handle;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.NodeEvent;
@@ -52,6 +61,7 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -71,6 +81,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
+    private ArrayList<Handle> currentlySelectedHandles;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -117,8 +128,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             public void mouseExited(MouseEvent e) {}
             @Override
             public void mouseClicked(MouseEvent e) {
+                Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
+                currentlySelectedHandles = serializeNodeList(nodes);
                 if(e.getClickCount() == 2) {
-                    Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
                     for(Node node : nodes) {
                         Action action = node.getPreferredAction();
                         if(action != null)
@@ -441,24 +453,87 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     private void storeProperties(Node root) {
         // Store the selected rows
-        this.em.getSelectedNodes();
+        Node[] nodes = this.em.getSelectedNodes();
+        ArrayList<Handle> handles = serializeNodeList(nodes);
+        NbPreferences.forModule(this.getClass()).put(getUniqueSelName(root), toString(currentlySelectedHandles));
         
         // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueName(root, prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueColName(root, prop), String.valueOf(i));
         }
     }
     
-    // Load the column arrangement stored for the given node if exists.
+    private ArrayList<Handle> serializeNodeList(Node[] nodes) {
+        ArrayList<Handle> handles = new ArrayList<>();
+        for(Node node : nodes) {
+            Handle handle = node.getHandle();
+            handles.add(handle);
+        }
+        return handles;
+    }
+    
+    private Node[] deserializeNodeList(ArrayList<Handle> handles) {
+        Node[] nodes = new Node[handles.size()];
+        for(int i = 0; i<handles.size(); i++) {
+            try {
+                nodes[i] = handles.get(i).getNode();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        return nodes;
+    }
+    
+     /** Read the object from Base64 string. */
+   private static Object fromString(String s) {
+        byte [] data = Base64.getDecoder().decode( s );
+        Object o = null;
+        try {
+            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
+                o = ois.readObject();
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return o;
+   }
+
+    /** Write the object to a Base64 string. */
+    private static String toString(Serializable o){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            try (ObjectOutputStream oos = new ObjectOutputStream( baos )) {
+                oos.writeObject(o);
+            }
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return Base64.getEncoder().encodeToString(baos.toByteArray()); 
+    }
+
+    
+    
     private List<Node.Property<?>> loadProperties(Node root) {
+        // Load the selected Nodes for the current root node if exist.
+        String s = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(root), null);
+        ArrayList<Handle> handles = new ArrayList<>();
+        if(s != null) 
+            currentlySelectedHandles = (ArrayList<Handle>) fromString(s);
+        try {
+            this.em.setSelectedNodes(deserializeNodeList(currentlySelectedHandles));
+        } catch (PropertyVetoException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+        // Load the column arrangement stored for the given node if exists.
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(root, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueColName(root, prop), "-1"));
             if (value >= 0) {
                 orderedProps.set(value, prop);
             }
@@ -471,9 +546,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Get unique name for node and it's property.
-    private String getUniqueName(Node root, Property<?> prop) {
+    private String getUniqueColName(Node root, Property<?> prop) {
         return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
+    }
+    
+    // Get unique name for node and it's property.
+    private String getUniqueSelName(Node root) {
+        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "." 
+                + ".selectedNodes";
     }
 
     // Populate a two-dimensional array with rows of property values for up 
