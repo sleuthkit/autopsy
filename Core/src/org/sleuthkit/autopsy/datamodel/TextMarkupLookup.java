@@ -19,32 +19,34 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- * This interface acts as a sort of circular-dependency-defeating bridge at run
- * time between the Autopsy Core NetBeans Module (NBM) and the Autopsy
- * KeywordSearch NBM. Here is how it works. Code in the Core NBM asks the
+ * This interface acts as a sort of bridge between the Autopsy Core NetBeans
+ * Module (NBM) and the Autopsy KeywordSearch NBM. It is used to get indexed
+ * text marked up with HTML to highlight search hits for a particular keyword.
+ *
+ * Here is an example of how it works. It is used to put highlighted markup into
+ * the Lookups of the BlackboardArtifactNodes for keyword search hit artifacts.
+ * The BlackboardArtifactNode code that populates the node's Lookup asks the
  * default global Lookup for an instance of TextMarkupLookup. The
  * org.sleuthkit.autopsy.keywordsearch.HighlightedTextMarkup class is the sole
- * implementation, so the Core code gets a default constructed instance of
- * HighlightedTextMarkup. This otherwise useless instance is then used to call
- * createInstance with parameters that will be used to employ the Solr
- * highlighting capability on text indexed through the KeywordSearch NBM
- * implementation of the KeywordSearchService interface. The Core code then puts
- * that TextMarkupLookup in its Lookup for later use by the
- * ExtractedContentViewer, a DataContentViewer in the KeywordSearch NBM.
+ * implementation of the interface, so the BlackboardArtifactNode gets a default
+ * constructed instance of HighlightedTextMarkup. This otherwise useless
+ * instance is then used to call createInstance with parameters that are used to
+ * employ the Solr highlighting capability to create the markup. The
+ * TextMarkupLookup object goes in the BlackboardArtifactNode Lookup for later
+ * use by the ExtractedContentViewer, a DataContentViewer in the KeywordSearch
+ * NBM.
  */
 public interface TextMarkupLookup {
 
     /**
-     * Creates an instance of a TextMarkupLookup object without knowing its
-     * actual type.
+     * Factory method for getting an object that encapsulates indexed text
+     * marked up (HTML) to highlight search hits for a particular keyword.
      *
-     * @param objectId      ID of the object (file or artifact) for which to get
-     *                      keyword search indexed text marked up (HTML) to
-     *                      highlight a particular keword search hit.
-     * @param keyword       The keyword hit to be highlighted.
+     * @param objectId      ID of the object (file or artifact) that is the
+     *                      source of the indexed text.
+     * @param keyword       The keyword to be highlighted in the text.
      * @param isRegex       Whether or not the query that follows is a regex.
-     * @param originalQuery The query that produces the indexed text containing
-     *                      the keyword to be highlighted.
+     * @param originalQuery The query that produces the keyword hit.
      *
      * @return An object that encapsulates indexed text marked up (HTML) to
      *         highlight search hits for a particular keyword.
