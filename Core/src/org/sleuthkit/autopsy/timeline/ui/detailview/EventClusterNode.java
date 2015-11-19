@@ -141,7 +141,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
         chart.setCursor(Cursor.WAIT);
-        chart.getEventBundles().removeIf(bundle ->
+        chart.getEventStripes().removeIf(bundle ->
                 subNodes.stream().anyMatch(subNode ->
                         bundle.equals(subNode.getEventStripe()))
         );
@@ -200,7 +200,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
-                        chart.getEventBundles().addAll(bundles);
+                        chart.getEventStripes().addAll(bundles);
                         subNodes.addAll(bundles.stream()
                                 .map(EventClusterNode.this::createStripeNode)
                                 .sorted(Comparator.comparing(EventStripeNode::getStartMillis))

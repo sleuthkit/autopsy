@@ -1054,8 +1054,7 @@ public class EventDB {
     }
 
     /**
-     * get a list of {@link EventCluster}s, clustered according to the given
-     * zoom paramaters.
+     * get a list of {@link EventStripe}s, clustered according to the given     * zoom paramaters.
      *
      * @param params the zoom params that determine the zooming, filtering and
      *               clustering.
@@ -1064,7 +1063,7 @@ public class EventDB {
      *         the supplied filter, aggregated according to the given event type
      *         and description zoom levels
      */
-    List<EventStripe> getClusteredEvents(ZoomParams params) {
+    List<EventStripe> getEventStripes(ZoomParams params) {
         //unpack params
         Interval timeRange = params.getTimeRange();
         RootFilter filter = params.getFilter();
@@ -1103,7 +1102,6 @@ public class EventDB {
         List<EventCluster> events = new ArrayList<>();
 
         DBLock.lock();
-
         try (Statement createStatement = con.createStatement();
                 ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {

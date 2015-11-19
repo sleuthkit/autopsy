@@ -84,7 +84,7 @@ final public class EventsTree extends BorderPane {
         this.detailViewPane = detailViewPane;
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
-        detailViewPane.getEventBundles().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
+        detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
             while (c.next()) {
                 for (EventBundle<?> bundle : c.getAddedSubList()) {
                     getRoot().insert(bundle);
@@ -114,7 +114,7 @@ final public class EventsTree extends BorderPane {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
         RootItem root = new RootItem();
-        for (EventBundle<?> bundle : detailViewPane.getEventBundles()) {
+        for (EventBundle<?> bundle : detailViewPane.getEventStripes()) {
             root.insert(bundle);
         }
         root.resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
