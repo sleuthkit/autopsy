@@ -47,12 +47,12 @@ class RawText implements IndexedText {
     private static final Logger logger = Logger.getLogger(RawText.class.getName());
 
     /**
-     * Construct a new RawText object for the given content and object id.
-     * This constructor needs both a content object and an object id because the
-     * RawText implementation attempts to provide useful messages in the
-     * text content viewer for (a) the case where a file has not been indexed
-     * because known files are being skipped and (b) the case where the file
-     * content has not yet been indexed.
+     * Construct a new RawText object for the given content and object id. This
+     * constructor needs both a content object and an object id because the
+     * RawText implementation attempts to provide useful messages in the text
+     * content viewer for (a) the case where a file has not been indexed because
+     * known files are being skipped and (b) the case where the file content has
+     * not yet been indexed.
      *
      * @param content  Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
@@ -61,27 +61,14 @@ class RawText implements IndexedText {
         this.content = content;
         this.blackboardArtifact = null;
         this.objectId = objectId;
-        final Server solrServer = KeywordSearch.getServer();
-        try {
-            //add to page tracking if not there yet
-            numPages = solrServer.queryNumFileChunks(this.objectId);
-            if (numPages == 0) {
-                numPages = 1;
-                hasChunks = false;
-            } else {
-                hasChunks = true;
-            }
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
-        }
+        initialize();
     }
 
     RawText(BlackboardArtifact bba, long objectId) {
         this.content = null;
         this.blackboardArtifact = bba;
         this.objectId = objectId;
-        numPages = 1;
-        hasChunks = false;
+        initialize();
     }
 
     /**
@@ -162,7 +149,7 @@ class RawText implements IndexedText {
     public String getText() {
         try {
             if (this.content != null) {
-                return getSolrContent(currentPage, hasChunks);
+                return getContentText(currentPage, hasChunks);
             } else if (this.blackboardArtifact != null) {
                 return KeywordSearch.getServer().getSolrContent(this.objectId, 1);
             }
@@ -203,6 +190,29 @@ class RawText implements IndexedText {
     }
 
     /**
+     * Set the internal values, such as pages and chunks
+     */
+    private void initialize() {
+        final Server solrServer = KeywordSearch.getServer();
+
+        try {
+            //add to page tracking if not there yet		
+            numPages = solrServer.queryNumFileChunks(this.objectId);
+            if (numPages == 0) {
+                numPages = 1;
+                hasChunks = false;
+            } else {
+                hasChunks = true;
+            }
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+        }
+    }
+
+    /**
      * Get extracted content for a node from Solr
      *
      * @param node        a node that has extracted content in Solr (check with
@@ -216,7 +226,7 @@ class RawText implements IndexedText {
      *
      * @throws SolrServerException if something goes wrong
      */
-    private String getSolrContent(int currentPage, boolean hasChunks) throws SolrServerException {
+    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
         final Server solrServer = KeywordSearch.getServer();
 
         if (hasChunks == false) {
