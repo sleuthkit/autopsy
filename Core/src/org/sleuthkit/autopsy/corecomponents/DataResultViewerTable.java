@@ -457,6 +457,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /**
+     * Store the  state of the table for the current root node.
+     */
     private void storeState() {
         if (currentRoot == null || propertiesAcc.isEmpty()) {
             return;
@@ -474,6 +477,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /**
+     * Load the stored state of current root if already stored.
+     * @return The loaded list of node properties to be used as columns.
+     */
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
         String objectString = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(currentRoot), null);
@@ -503,6 +510,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return orderedProps;
     }
 
+    /**
+     * Get the names of the given node list.
+     * @param nodes given list of nodes.
+     * @return the ArrayList of names extracted.
+     */
     private ArrayList<String> namesFromList(Node[] nodes) {
         ArrayList<String> names = new ArrayList<>();
         for (Node node : nodes) {
@@ -512,6 +524,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return names;
     }
 
+    /**
+     * Get a list of nodes from the current root that have names included in the
+     * given list
+     * @param names ArrayList of node names to extract from current root
+     * @return the list of nodes extracted.
+     */
     private Node[] namesToList(ArrayList<String> names) {
         Node[] nodes = new Node[names.size()];
         Node[] children = currentRoot.getChildren().getNodes(true);
@@ -528,7 +546,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Write the object to a Base64 string.
+     * Serialized and convert the ArrayList of names into an object string.
+     * @param names ArrayList of names to serialize.
+     * @return The serialized string.
      */
     private static String stringFromNames(ArrayList<String> names) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -543,7 +563,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Read the object from Base64 string.
+     * Get the ArrayList of names back from the object string.
+     * Suppress the casting warning since object has to be of this type.
      */
     @SuppressWarnings("unchecked")
     private static ArrayList<String> stringToNames(String objectString) {
