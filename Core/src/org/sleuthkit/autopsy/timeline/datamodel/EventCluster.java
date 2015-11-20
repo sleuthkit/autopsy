@@ -188,4 +188,5 @@ public class EventCluster implements EventBundle<EventStripe> {
     public SortedSet< EventCluster> getClusters() {
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
+
 }

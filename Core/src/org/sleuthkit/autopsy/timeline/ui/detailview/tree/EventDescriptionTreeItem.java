@@ -59,11 +59,22 @@ class EventDescriptionTreeItem extends NavTreeItem {
             treeItem.setExpanded(true);
             childMap.put(head.getDescription(), treeItem);
             getChildren().add(treeItem);
-            FXCollections.sort(getChildren(), TreeComparator.Description);
         }
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
+        }
+    }
+
+    void remove(Deque<EventBundle<?>> path) {
+        EventBundle<?> head = path.removeFirst();
+        EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
+        if (path.isEmpty() == false) {
+            descTreeItem.remove(path);
+        }
+        if (descTreeItem.getChildren().isEmpty()) {
+            childMap.remove(head.getDescription());
+            getChildren().remove(descTreeItem);
         }
     }
 
@@ -88,4 +99,5 @@ class EventDescriptionTreeItem extends NavTreeItem {
         }
         return null;
     }
+
 }

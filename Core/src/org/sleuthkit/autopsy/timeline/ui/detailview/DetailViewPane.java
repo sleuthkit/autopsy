@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -33,7 +33,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CustomMenuItem;
@@ -68,7 +67,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -87,7 +86,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -95,7 +94,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     private static final double PAGE_SCROLL_PERCENTAGE = .70;
 
     private final DateAxis dateAxis = new DateAxis();
-    private final Axis<EventCluster> verticalAxis = new EventAxis();
+    private final Axis<EventStripe> verticalAxis = new EventAxis();
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
 
@@ -103,23 +102,22 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     //private access to barchart data
-    private final Map<EventType, XYChart.Series<DateTime, EventCluster>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
+    private final Map<EventType, XYChart.Series<DateTime, EventStripe>> eventTypeToSeriesMap = new HashMap<>();
 
-    public ObservableList<EventBundle<?>> getEventBundles() {
-        return chart.getEventBundles();
+    public ObservableList<EventStripe> getEventStripes() {
+        return chart.getEventStripes();
     }
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
+
         setChartClickHandler(); //can we push this into chart
-        chart.setData(dataSets);
+        chart.setData(dataSeries);
         setCenter(chart);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
-
         //bind layout fo axes and spacers
         dateAxis.setTickLabelGap(0);
         dateAxis.setAutoRanging(false);
@@ -227,7 +225,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     }
 
     @Override
-    protected Axis<EventCluster> getYAxis() {
+    protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
@@ -256,11 +254,11 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
      *         EventType
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private XYChart.Series<DateTime, EventCluster> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
-            XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
-            series.setName(et.getDisplayName());
-            dataSets.add(series);
+    private XYChart.Series<DateTime, EventStripe> getSeries(final EventType et) {
+        return eventTypeToSeriesMap.computeIfAbsent(et, eventType -> {
+            XYChart.Series<DateTime, EventStripe> series = new XYChart.Series<>();
+            series.setName(eventType.getDisplayName());
+            dataSeries.add(series);
             return series;
         });
     }
@@ -276,12 +274,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                     return null;
                 }
 
-                if (isCancelled() == false) {
-                    Platform.runLater(() -> {
-                        setCursor(Cursor.WAIT);
-                    });
-                }
-
                 updateProgress(-1, 1);
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
 
@@ -292,41 +284,39 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
                 updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
 
                 Platform.runLater(() -> {
-                    if (isCancelled()) {
-                        return;
-                    }
+                    dataSeries.clear();
                     dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
                     dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
                     vertScrollBar.setValue(0);
                     eventTypeToSeriesMap.clear();
-                    dataSets.clear();
                 });
 
-                List<EventCluster> eventClusters = filteredEvents.getEventClusters();
+                List<EventStripe> eventStripes = filteredEvents.getEventStripes();
 
-                final int size = eventClusters.size();
+                final int size = eventStripes.size();
+                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
                 for (int i = 0; i < size; i++) {
                     if (isCancelled()) {
                         break;
                     }
-                    final EventCluster cluster = eventClusters.get(i);
                     updateProgress(i, size);
-                    updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
-                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getSpan().getStartMillis()), cluster);
-
-                    if (isCancelled() == false) {
-                        Platform.runLater(() -> {
-                            getSeries(cluster.getEventType()).getData().add(xyData);
-                        });
-                    }
+                    final EventStripe cluster = eventStripes.get(i);
+                    final XYChart.Data<DateTime, EventStripe> xyData = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
+                    Platform.runLater(() -> {
+                        getSeries(cluster.getEventType()).getData().add(xyData);
+                    });
                 }
 
-                Platform.runLater(() -> {
-                    setCursor(Cursor.DEFAULT);
-                    layoutDateLabels();
-                    updateProgress(1, 1);
-                });
-                return eventClusters.isEmpty() == false;
+                updateProgress(1, 1);
+
+                return eventStripes.isEmpty() == false;
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                layoutDateLabels();
+                setCursor(Cursor.DEFAULT);
             }
         };
     }

@@ -31,6 +31,7 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -56,7 +58,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
@@ -106,7 +108,7 @@ public class EventsRepository {
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<EventCluster>> eventClusterCache;
+    private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
@@ -153,10 +155,10 @@ public class EventsRepository {
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(CacheLoader.from(eventDB::countEventsByType));
-        eventClusterCache = CacheBuilder.newBuilder()
+        eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(CacheLoader.from(eventDB::getClusteredEvents));
+                ).build(CacheLoader.from(eventDB::getEventStripes));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
@@ -213,8 +215,13 @@ public class EventsRepository {
 
     }
 
-    synchronized public List<EventCluster> getEventClusters(ZoomParams params) {
-        return eventClusterCache.getUnchecked(params);
+    synchronized public List<EventStripe> getEventStripes(ZoomParams params) {
+        try {
+            return eventStripeCache.get(params);
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            return Collections.emptyList();
+        }
     }
 
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
@@ -225,7 +232,7 @@ public class EventsRepository {
         minCache.invalidateAll();
         maxCache.invalidateAll();
         eventCountsCache.invalidateAll();
-        eventClusterCache.invalidateAll();
+        eventStripeCache.invalidateAll();
         idToEventCache.invalidateAll();
     }
 
@@ -299,7 +306,7 @@ public class EventsRepository {
 
     synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
         eventCountsCache.invalidateAll();
-        eventClusterCache.invalidateAll();
+        eventStripeCache.invalidateAll();
         idToEventCache.invalidateAll(updatedEventIDs);
         try {
             tagNames.setAll(autoCase.getSleuthkitCase().getTagNamesInUse());
