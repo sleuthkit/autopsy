@@ -289,7 +289,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          * For keyword search hit artifact nodes and all other nodes, the
          * document ID for the extracted text is the ID of the associated
          * content, if any, unless there is an associated artifact, which
-         * is handled above
+         * is handled above.
          */
         Content content = node.getLookup().lookup(Content.class);
         if (content != null) {
