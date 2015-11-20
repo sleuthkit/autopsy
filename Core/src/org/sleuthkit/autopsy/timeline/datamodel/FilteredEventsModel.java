@@ -348,7 +348,7 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventStripe> getEventClusters(ZoomParams params) {
+    public List<EventStripe> getEventStripes(ZoomParams params) {
         return repo.getEventStripes(params);
     }
 

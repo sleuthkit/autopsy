@@ -42,7 +42,7 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventBundleNodeBase.c
 final public class EventStripeNode extends EventBundleNodeBase<EventStripe, EventCluster, EventClusterNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
-    final Button hideButton;
+    private Button hideButton;
     /**
      * Pane that contains EventStripeNodes for any 'subevents' if they are
      * displayed
@@ -53,16 +53,22 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 //    private final HBox clustersHBox = new HBox();
     private final ImageView eventTypeImageView = new ImageView();
 
+    @Override
+    void installActionButtons() {
+        if (hideButton == null) {
+            hideButton = ActionUtils.createButton(chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD()),
+                    ActionUtils.ActionTextBehavior.HIDE);
+            configureLoDButton(hideButton);
+
+            infoHBox.getChildren().add(hideButton);
+        }
+    }
+
     public EventStripeNode(EventDetailsChart chart, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chart, eventStripe, parentNode);
 
         setMinHeight(48);
 
-        EventDetailsChart.HideDescriptionAction hideClusterAction = chart.new HideDescriptionAction(getDescription(), eventBundle.getDescriptionLoD());
-        hideButton = ActionUtils.createButton(hideClusterAction, ActionUtils.ActionTextBehavior.HIDE);
-        configureLoDButton(hideButton);
-
-        infoHBox.getChildren().add(hideButton);
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
@@ -83,6 +89,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
     @Override
     void showHoverControls(final boolean showControls) {
         super.showHoverControls(showControls);
+        installActionButtons();
         show(hideButton, showControls);
     }
 
@@ -177,6 +184,5 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
             }
         }
     }
-
 
 }

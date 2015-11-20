@@ -30,9 +30,7 @@ import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -104,7 +102,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     protected final EventDetailsChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
     protected final BundleType eventBundle;
 
     protected final ParentNodeType parentNode;
@@ -150,9 +148,13 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         setAlignment(Pos.TOP_LEFT);
 
         setPrefHeight(USE_COMPUTED_SIZE);
-        heightProperty().addListener(heightProp -> {
-            chart.requestChartLayout();
-        });
+
+        /*
+         * This triggers the layout when a mousover causes the action buttons to
+         * interesect with another node, forcing it down.
+         */
+        heightProperty().addListener(heightProp -> chart.requestChartLayout());
+
         setMaxHeight(USE_PREF_SIZE);
         setMinWidth(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
@@ -176,11 +178,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            /*
-             * defer tooltip content creation till needed, this had a
-             * surprisingly large impact on speed of loading the chart
-             */
-            installTooltip();
+
             Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
@@ -194,11 +192,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
             }
         });
 
-        descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
-            setDescriptionVisibiltiyImpl(newValue);
-        });
-        setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
-
+        descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
+        descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -215,6 +210,17 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 : 0;
     }
 
+    /**
+     * install whatever buttons are visible on hover for this node. likes
+     * tooltips, this had a surprisingly large impact on speed of loading the
+     * chart
+     */
+    abstract void installActionButtons();
+
+    /**
+     * defer tooltip content creation till needed, this had a surprisingly large
+     * impact on speed of loading the chart
+     */
     @NbBundle.Messages({"# {0} - counts",
         "# {1} - event type",
         "# {2} - description",
@@ -307,12 +313,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
+        installTooltip();
         enableTooltip(showControls);
         if (parentNode != null) {
-            parentNode.enableTooltip(false);
             parentNode.showHoverControls(false);
         }
-
     }
 
     final EventType getEventType() {
@@ -366,12 +371,15 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
+            chart.requestChartLayout();
+
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
+        timeline.setOnFinished(finished -> chart.requestChartLayout());
         timeline.play();
     }
+
 }

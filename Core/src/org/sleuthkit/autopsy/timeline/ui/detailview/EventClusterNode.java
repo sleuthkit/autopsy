@@ -18,16 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -71,8 +70,20 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
-    final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-    final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+    private Button plusButton;
+    private Button minusButton;
+
+    @Override
+    void installActionButtons() {
+        if (plusButton == null) {
+            plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+            minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+
+            configureLoDButton(plusButton);
+            configureLoDButton(minusButton);
+            infoHBox.getChildren().addAll(minusButton, plusButton);
+        }
+    }
 
     public EventClusterNode(EventDetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
@@ -87,11 +98,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         setCursor(Cursor.HAND);
         setOnMouseClicked(new MouseClickHandler());
 
-        configureLoDButton(plusButton);
-        configureLoDButton(minusButton);
-
         setAlignment(Pos.CENTER_LEFT);
-        infoHBox.getChildren().addAll(minusButton, plusButton);
+
         getChildren().addAll(subNodePane, infoHBox);
 
     }
@@ -99,6 +107,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @Override
     void showHoverControls(final boolean showControls) {
         super.showHoverControls(showControls);
+        installActionButtons();
         show(plusButton, showControls);
         show(minusButton, showControls);
     }
@@ -141,10 +150,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
         chart.setCursor(Cursor.WAIT);
-        chart.getEventStripes().removeIf(bundle ->
-                subNodes.stream().anyMatch(subNode ->
-                        bundle.equals(subNode.getEventStripe()))
-        );
+        chart.getEventStripes().removeAll(Lists.transform(subNodes, EventStripeNode::getEventStripe));
         subNodes.clear();
 
         /*
@@ -169,29 +175,22 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
             @Override
             protected Collection<EventStripe> call() throws Exception {
-                Collection<EventStripe> bundles = null;
+                Collection<EventStripe> bundles;
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
                     loadedDescriptionLoD = next;
                     if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
                         return Collections.emptySet();
                     }
-                    bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
-                            .collect(Collectors.toMap(EventStripe::getDescription, //key
-                                            eventStripe -> eventStripe.withParent(getEventCluster()), //value
-                                            EventStripe::merge) //merge method
-                            ).values();
+                    bundles = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
                 } while (bundles.size() == 1 && nonNull(next));
-
                 // return list of AbstractEventStripeNodes representing sub-bundles
                 return bundles;
-
             }
 
             @Override
             protected void succeeded() {
-
                 try {
                     Collection<EventStripe> bundles = get();
 
@@ -203,7 +202,6 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         chart.getEventStripes().addAll(bundles);
                         subNodes.addAll(bundles.stream()
                                 .map(EventClusterNode.this::createStripeNode)
-                                .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
                                 .collect(Collectors.toList()));
                         subNodePane.getChildren().setAll(subNodes);
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
@@ -303,9 +301,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             super(Bundle.ExpandClusterAction_text());
 
             setGraphic(new ImageView(PLUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD next = descLOD.get().moreDetailed();
-                if (next != null) {
+            setEventHandler(actionEvent -> {
+                if (descLOD.get().moreDetailed() != null) {
                     loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
                 }
             });
@@ -320,9 +317,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             super(Bundle.CollapseClusterAction_text());
 
             setGraphic(new ImageView(MINUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD previous = descLOD.get().lessDetailed();
-                if (previous != null) {
+            setEventHandler(actionEvent -> {
+                if (descLOD.get().lessDetailed() != null) {
                     loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
                 }
             });
