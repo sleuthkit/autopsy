@@ -260,12 +260,14 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @return The document ID or zero, which is an invalid document ID.
      */
     private Long getDocumentId(Node node) {
-        /*
+        /**
          * If the node is a Blackboard artifact node for anything other than a
          * keyword hit, the document ID for the text extracted from the artifact
          * (the concatenation of its attributes) is the artifact ID, a large,
-         * negative integer.
-         */ // KDM update comments.
+         * negative integer. If it is a keyword hit, see if there is an
+         * associated artifact. If there is, get the associated artifact's ID
+         * and return it.
+         */
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (null != artifact) {
             if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -275,10 +277,10 @@ public class ExtractedContentViewer implements DataContentViewer {
                     // Get the associated artifact attribute and return its value as the ID
                     List<BlackboardAttribute> blackboardAttributes = artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
                     if (!blackboardAttributes.isEmpty()) {
-                        return artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT).get(0).getArtifactID();
+                        return blackboardAttributes.get(0).getValueLong();
                     }
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex); // KDM
+                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
             }
         }
@@ -286,7 +288,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         /*
          * For keyword search hit artifact nodes and all other nodes, the
          * document ID for the extracted text is the ID of the associated
-         * content, if any. KDM update comments
+         * content, if any, unless there is an associated artifact, which
+         * is handled above
          */
         Content content = node.getLookup().lookup(Content.class);
         if (content != null) {
