@@ -54,19 +54,30 @@ class RootItem extends NavTreeItem {
     /**
      * Recursive method to add a grouping at a given path.
      *
-     * @param g Group to add
+     * @param bundle bundle to add
      */
-    public void insert(EventBundle<?> g) {
+    public void insert(EventBundle<?> bundle) {
 
-        EventTypeTreeItem treeItem = childMap.computeIfAbsent(g.getEventType().getBaseType(),
+        EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
                 baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
+                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(bundle);
                     newTreeItem.setExpanded(true);
                     getChildren().add(newTreeItem);
-                    getChildren().sort(TreeComparator.Type);
                     return newTreeItem;
                 });
-        treeItem.insert(getTreePath(g));
+        treeItem.insert(getTreePath(bundle));
+    }
+
+    void remove(EventBundle<?> bundle) {
+        EventTypeTreeItem typeTreeItem = childMap.get(bundle.getEventType().getBaseType());
+        if (typeTreeItem != null) {
+            typeTreeItem.remove(getTreePath(bundle));
+
+            if (typeTreeItem.getChildren().isEmpty()) {
+                childMap.remove(bundle.getEventType().getBaseType());
+                getChildren().remove(typeTreeItem);
+            }
+        }
     }
 
     static Deque< EventBundle<?>> getTreePath(EventBundle<?> g) {
@@ -97,4 +108,5 @@ class RootItem extends NavTreeItem {
         }
         return null;
     }
+
 }

@@ -39,12 +39,12 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
  * Highlights hits for a given document. Knows about pages and such for the
  * content viewer.
  */
-class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
+class HighlightedText implements IndexedText, TextMarkupLookup {
 
-    private static final Logger logger = Logger.getLogger(HighlightedTextMarkup.class.getName());
+    private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
-    private static final String ANCHOR_PREFIX = HighlightedTextMarkup.class.getName() + "_";
+    private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_";
 
     private long objectId;
     private String keywordHitQuery;
@@ -64,7 +64,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    HighlightedTextMarkup(long objectId, String keywordHitQuery, boolean isRegex) {
+    HighlightedText(long objectId, String keywordHitQuery, boolean isRegex) {
         this.objectId = objectId;
         this.keywordHitQuery = keywordHitQuery;
         this.isRegex = isRegex;
@@ -81,17 +81,17 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     }
 
     //when the results are not known and need to requery to get hits
-    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
+    HighlightedText(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
         this(objectId, solrQuery, isRegex);
         this.originalQuery = originalQuery;
     }
 
-    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
+    HighlightedText(long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
         this(objectId, solrQuery, isRegex);
         this.hits = hits;
     }
 
-    HighlightedTextMarkup(long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
+    HighlightedText(long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
         this(objectId, solrQuery, isRegex, hits);
         this.group = group;
     }
@@ -185,7 +185,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     }
 
     //constructor for dummy singleton factory instance for Lookup
-    private HighlightedTextMarkup() {
+    private HighlightedText() {
     }
 
     long getObjectId() {
@@ -293,7 +293,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     }
 
     @Override
-    public String getMarkup() {
+    public String getText() {
         loadPageInfo(); //inits once
 
         String highLightField = null;
@@ -441,7 +441,7 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     //this instance does not actually work with Solr
     public static synchronized TextMarkupLookup getDefault() {
         if (instance == null) {
-            instance = new HighlightedTextMarkup();
+            instance = new HighlightedText();
         }
         return instance;
     }
@@ -449,6 +449,6 @@ class HighlightedTextMarkup implements TextMarkup, TextMarkupLookup {
     @Override
     // factory method to create an instance of this object
     public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        return new HighlightedTextMarkup(objectId, keywordHitQuery, isRegex, originalQuery);
+        return new HighlightedText(objectId, keywordHitQuery, isRegex, originalQuery);
     }
 }

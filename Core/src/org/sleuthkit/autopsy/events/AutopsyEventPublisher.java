@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.jms.JMSException;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -42,6 +43,7 @@ public final class AutopsyEventPublisher {
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
     private final LocalEventPublisher localPublisher;
     private RemoteEventPublisher remotePublisher;
+    private String currentChannelName;
 
     /**
      * Constructs an object for publishing events to registered subscribers on
@@ -62,6 +64,7 @@ public final class AutopsyEventPublisher {
      * @throws AutopsyEventException if the channel was not opened.
      */
     public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
+        currentChannelName = channelName;
         if (null != remotePublisher) {
             closeRemoteEventChannel();
         }
@@ -83,6 +86,7 @@ public final class AutopsyEventPublisher {
      * events from other Autopsy nodes.
      */
     public void closeRemoteEventChannel() {
+        currentChannelName = null;
         if (null != remotePublisher) {
             try {
                 remotePublisher.stop();
@@ -162,7 +166,13 @@ public final class AutopsyEventPublisher {
             try {
                 remotePublisher.publish(event);
             } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely, re-opening channel %s", event.getPropertyName(), currentChannelName), ex); //NON-NLS
+                closeRemoteEventChannel();
+                try {
+                    openRemoteEventChannel(this.currentChannelName);
+                } catch (AutopsyEventException ex1) {
+                    logger.log(Level.SEVERE, String.format("Failed re-opening channel %s", currentChannelName), ex); //NON-NLS
+                }
             }
         }
     }

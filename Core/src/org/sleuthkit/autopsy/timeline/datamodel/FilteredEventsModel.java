@@ -327,7 +327,7 @@ public final class FilteredEventsModel {
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
      */
-    public List<EventCluster> getEventClusters() {
+    public List<EventStripe> getEventStripes() {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
@@ -338,7 +338,7 @@ public final class FilteredEventsModel {
             zoom = requestedTypeZoom.get();
             lod = requestedLOD.get();
         }
-        return repo.getEventClusters(new ZoomParams(range, zoom, filter, lod));
+        return repo.getEventStripes(new ZoomParams(range, zoom, filter, lod));
     }
 
     /**
@@ -348,21 +348,21 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventCluster> getEventClusters(ZoomParams params) {
-        return repo.getEventClusters(params);
+    public List<EventStripe> getEventClusters(ZoomParams params) {
+        return repo.getEventStripes(params);
     }
 
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
-        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
+        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
-        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);;
+        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
         return postTagsUpdated(updatedEventIDs);
     }
 

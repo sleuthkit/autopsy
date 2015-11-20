@@ -25,39 +25,48 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Display content with just raw text, no markup
+ * Display content with just raw text
  *
  */
-class RawTextMarkup implements TextMarkup {
+class RawText implements IndexedText {
 
     private int numPages = 0;
     private int currentPage = 0;
     private boolean hasChunks = false;
-
     private final Content content;
+    private final BlackboardArtifact blackboardArtifact;
     private final long objectId;
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
-    private static final Logger logger = Logger.getLogger(RawTextMarkup.class.getName());
+    private static final Logger logger = Logger.getLogger(RawText.class.getName());
 
     /**
-     * Construct a new RawTextMarkup object for the given content and object id.
-     * This constructor needs both a content object and an object id because the
-     * RawTextMarkup implementation attempts to provide useful messages in the
-     * text content viewer for (a) the case where a file has not been indexed
-     * because known files are being skipped and (b) the case where the file
-     * content has not yet been indexed.
+     * Construct a new RawText object for the given content and object id. This
+     * constructor needs both a content object and an object id because the
+     * RawText implementation attempts to provide useful messages in the text
+     * content viewer for (a) the case where a file has not been indexed because
+     * known files are being skipped and (b) the case where the file content has
+     * not yet been indexed.
      *
      * @param content  Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
      */
-    RawTextMarkup(Content content, long objectId) {
+    RawText(Content content, long objectId) {
         this.content = content;
+        this.blackboardArtifact = null;
+        this.objectId = objectId;
+        initialize();
+    }
+
+    RawText(BlackboardArtifact bba, long objectId) {
+        this.content = null;
+        this.blackboardArtifact = bba;
         this.objectId = objectId;
         initialize();
     }
@@ -137,13 +146,17 @@ class RawTextMarkup implements TextMarkup {
     }
 
     @Override
-    public String getMarkup() {
+    public String getText() {
         try {
-            return getSolrContent(currentPage, hasChunks);
-        } catch (SolrServerException ex) {
+            if (this.content != null) {
+                return getContentText(currentPage, hasChunks);
+            } else if (this.blackboardArtifact != null) {
+                return KeywordSearch.getServer().getSolrContent(this.objectId, 1);
+            }
+        } catch (SolrServerException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get extracted content.", ex); //NON-NLS
-            return "";
         }
+        return "Error getting text";
     }
 
     @Override
@@ -183,7 +196,7 @@ class RawTextMarkup implements TextMarkup {
         final Server solrServer = KeywordSearch.getServer();
 
         try {
-            //add to page tracking if not there yet
+            //add to page tracking if not there yet		
             numPages = solrServer.queryNumFileChunks(this.objectId);
             if (numPages == 0) {
                 numPages = 1;
@@ -192,10 +205,10 @@ class RawTextMarkup implements TextMarkup {
                 hasChunks = true;
             }
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
 
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
@@ -213,7 +226,7 @@ class RawTextMarkup implements TextMarkup {
      *
      * @throws SolrServerException if something goes wrong
      */
-    private String getSolrContent(int currentPage, boolean hasChunks) throws SolrServerException {
+    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
         final Server solrServer = KeywordSearch.getServer();
 
         if (hasChunks == false) {
