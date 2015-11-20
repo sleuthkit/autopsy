@@ -274,9 +274,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 try {
                     // Get the associated artifact attribute and return its value as the ID
                     List<BlackboardAttribute> blackboardAttributes = artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
-                    if (blackboardAttributes.isEmpty()) {
-                        return artifact.getArtifactID();
-                    } else {
+                    if (!blackboardAttributes.isEmpty()) {
                         return artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT).get(0).getArtifactID();
                     }
                 } catch (TskCoreException ex) {
