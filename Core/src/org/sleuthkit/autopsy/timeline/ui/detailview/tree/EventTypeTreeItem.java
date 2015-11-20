@@ -52,11 +52,25 @@ class EventTypeTreeItem extends NavTreeItem {
             treeItem.setExpanded(true);
             childMap.put(head.getDescription(), treeItem);
             getChildren().add(treeItem);
-            FXCollections.sort(getChildren(), comparator);
         }
 
         if (path.isEmpty() == false) {
             treeItem.insert(path);
+        }
+    }
+
+    void remove(Deque<EventBundle<?>> path) {
+
+        EventBundle<?> head = path.removeFirst();
+        EventDescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
+        if (descTreeItem != null) {
+            if (path.isEmpty() == false) {
+                descTreeItem.remove(path);
+            } else if (descTreeItem.getChildren().isEmpty()) {
+                childMap.remove(head.getDescription());
+                getChildren().remove(descTreeItem);
+
+            }
         }
     }
 
@@ -75,7 +89,8 @@ class EventTypeTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
+    public void resort(Comparator<TreeItem<EventBundle<?>>> comp
+    ) {
         FXCollections.sort(getChildren(), comp);
     }
 }

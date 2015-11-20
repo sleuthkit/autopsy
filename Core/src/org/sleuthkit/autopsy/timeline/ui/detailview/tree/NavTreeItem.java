@@ -35,4 +35,6 @@ abstract class NavTreeItem extends TreeItem<EventBundle<?>> {
     abstract void resort(Comparator<TreeItem<EventBundle<?>>> comp);
 
     abstract NavTreeItem findTreeItemForEvent(EventBundle<?> t);
+
+
 }

@@ -141,7 +141,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
         chart.setCursor(Cursor.WAIT);
-        chart.getEventBundles().removeIf(bundle ->
+        chart.getEventStripes().removeIf(bundle ->
                 subNodes.stream().anyMatch(subNode ->
                         bundle.equals(subNode.getEventStripe()))
         );
@@ -169,7 +169,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
             @Override
             protected Collection<EventStripe> call() throws Exception {
-                Collection<EventStripe> bundles;
+                Collection<EventStripe> bundles = null;
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
                     loadedDescriptionLoD = next;
@@ -177,8 +177,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         return Collections.emptySet();
                     }
                     bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
-                            .collect(Collectors.toMap(EventCluster::getDescription, //key
-                                            (eventCluster) -> new EventStripe(eventCluster, getEventCluster()), //value
+                            .collect(Collectors.toMap(EventStripe::getDescription, //key
+                                            eventStripe -> eventStripe.withParent(getEventCluster()), //value
                                             EventStripe::merge) //merge method
                             ).values();
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
@@ -200,7 +200,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
-                        chart.getEventBundles().addAll(bundles);
+                        chart.getEventStripes().addAll(bundles);
                         subNodes.addAll(bundles.stream()
                                 .map(EventClusterNode.this::createStripeNode)
                                 .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
