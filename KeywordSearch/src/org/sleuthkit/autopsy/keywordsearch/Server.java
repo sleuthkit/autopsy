@@ -61,6 +61,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
@@ -1020,7 +1021,7 @@ public class Server {
             currentCoreLock.readLock().unlock();
         }
     }
-    
+
     /**
      * Method to return ingester instance
      *
@@ -1129,7 +1130,7 @@ public class Server {
         CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, currentSolrServer);
         Object dataDirPath = response.getCoreStatus(coreName).get("dataDir"); //NON-NLS
         if (null != dataDirPath) {
-            File indexDir = Paths.get((String)dataDirPath, "index").toFile();  //NON-NLS
+            File indexDir = Paths.get((String) dataDirPath, "index").toFile();  //NON-NLS
             return indexDir.exists();
         } else {
             return false;
@@ -1234,16 +1235,20 @@ public class Server {
             q.setFields(Schema.TEXT.toString());
             try {
                 // Get the first result. 
-                SolrDocument solrDocument = solrCore.query(q).getResults().get(0);
-                if (solrDocument != null) {
-                    Collection<Object> fieldValues = solrDocument.getFieldValues(Schema.TEXT.toString());
-                    if (fieldValues.size() == 1) // The indexed text field for artifacts will only have a single value.
-                    {
-                        return fieldValues.toArray(new String[0])[0];
-                    } else // The indexed text for files has 2 values, the file name and the file content.
-                    // We return the file content value.
-                    {
-                        return fieldValues.toArray(new String[0])[1];
+                SolrDocumentList solrDocuments = solrCore.query(q).getResults();
+
+                if (!solrDocuments.isEmpty()) {
+                    SolrDocument solrDocument = solrDocuments.get(0);
+                    if (solrDocument != null) {
+                        Collection<Object> fieldValues = solrDocument.getFieldValues(Schema.TEXT.toString());
+                        if (fieldValues.size() == 1) // The indexed text field for artifacts will only have a single value.
+                        {
+                            return fieldValues.toArray(new String[0])[0];
+                        } else // The indexed text for files has 2 values, the file name and the file content.
+                        // We return the file content value.
+                        {
+                            return fieldValues.toArray(new String[0])[1];
+                        }
                     }
                 }
             } catch (SolrServerException ex) {
