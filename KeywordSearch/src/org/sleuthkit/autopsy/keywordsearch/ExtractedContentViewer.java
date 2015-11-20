@@ -36,6 +36,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
+import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Displays the indexed text associated with a file or a blackboard artifact,
@@ -262,16 +265,30 @@ public class ExtractedContentViewer implements DataContentViewer {
          * keyword hit, the document ID for the text extracted from the artifact
          * (the concatenation of its attributes) is the artifact ID, a large,
          * negative integer.
-         */
+         */ // KDM update comments.
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if (null != artifact && artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            return artifact.getArtifactID();
+        if (null != artifact) {
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                return artifact.getArtifactID();
+            } else {
+                try {
+                    // Get the associated artifact attribute and return its value as the ID
+                    List<BlackboardAttribute> blackboardAttributes = artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
+                    if (blackboardAttributes.isEmpty()) {
+                        return artifact.getArtifactID();
+                    } else {
+                        return artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT).get(0).getArtifactID();
+                    }
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex); // KDM
+                }
+            }
         }
 
         /*
          * For keyword search hit artifact nodes and all other nodes, the
          * document ID for the extracted text is the ID of the associated
-         * content, if any.
+         * content, if any. KDM update comments
          */
         Content content = node.getLookup().lookup(Content.class);
         if (content != null) {
