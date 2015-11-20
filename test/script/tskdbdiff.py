@@ -385,9 +385,6 @@ def getAssociatedArtifactType(db_file, artifact_id):
     info = cur.fetchone()
     return "File path: " + info[0] + " Artifact Type: " + info[1]
 
-
-
-
 def build_id_table(artifact_cursor):
     """Build the map of object ids to file paths.
 
