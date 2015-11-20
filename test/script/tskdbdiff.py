@@ -221,6 +221,8 @@ class TskDbDiff(object):
 
                         try:
                             attr_value_as_string = str(attr[attr_value_index])
+                            if attr["display_name"] == "Associated Artifact":
+                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)
                             #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
                             #    attr_value_as_string = str(attr_value_as_string)
                             patrn = re.compile("[\n\0\a\b\r\f]")
@@ -274,7 +276,6 @@ class TskDbDiff(object):
         # Make a copy that we can modify
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
-        #print (backup_db_file)
         # We sometimes get situations with messed up permissions
         os.chmod (backup_db_file, 0o777)
 
@@ -369,6 +370,23 @@ def normalize_db_entry(line, table):
         return newLine
     else:
         return line
+
+def getAssociatedArtifactType(db_file, artifact_id):
+    # Make a copy that we can modify
+    backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
+    shutil.copy(db_file, backup_db_file)
+    # We sometimes get situations with messed up permissions
+    os.chmod (backup_db_file, 0o777)
+
+    conn = sqlite3.connect(backup_db_file)
+    cur = conn.cursor()
+    #artifact_cursor.execute("SELECT display_name FROM blackboard_artifact_types WHERE artifact_id=?",[artifact_id])
+    cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
+    info = cur.fetchone()
+    return "File path: " + info[0] + " Artifact Type: " + info[1]
+
+
+
 
 def build_id_table(artifact_cursor):
     """Build the map of object ids to file paths.
