@@ -37,12 +37,26 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJob {
 
+    /*
+     * An ingest job can be cancelled for various reasons.
+     */
+    public enum CancellationReason {
+
+        NOT_CANCELLED,
+        USER_CANCELLED,
+        INGEST_MODULES_STARTUP_FAILED,
+        OUT_OF_DISK_SPACE,
+        SERVICES_DOWN,
+        CASE_CLOSED
+    }
+
     private static final AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final Map<Long, DataSourceIngestJob> dataSourceJobs;
     private final AtomicInteger incompleteJobsCount;
-    private boolean started;  // Guarded by this
-    private volatile boolean cancelled;
+    private boolean started;
+    private boolean cancelled;
+    private CancellationReason cancellationReason;
 
     /**
      * Constructs an ingest job that runs a collection of data sources through a
@@ -61,6 +75,7 @@ public final class IngestJob {
             this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
         }
         incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
+        cancellationReason = CancellationReason.NOT_CANCELLED;
     }
 
     /**
@@ -108,19 +123,32 @@ public final class IngestJob {
         }
         started = true;
 
-        List<DataSourceIngestJob> startedDataSourceJobs = new ArrayList<>();
+        /*
+         * Try to start each data source ingest job. Note that there is a not
+         * unwarranted assumption here that if there is going to be a module
+         * startup failure, it will be for the first data source ingest job.
+         *
+         * TODO (RC): Consider separating module start up from pipeline startup
+         * so that no processing is done if this assumption is false.
+         */
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
-            if (errors.isEmpty()) {
-                IngestManager.getInstance().fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
-                startedDataSourceJobs.add(dataSourceJob);
-            } else {
-                startedDataSourceJobs.stream().forEach((startedDataSourceJob) -> {
-                    startedDataSourceJob.cancel();
-                });
+            if (errors.isEmpty() == false) {
                 break;
             }
         }
+
+        /*
+         * Handle start up success or failure.
+         */
+        if (errors.isEmpty()) {
+            for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
+                IngestManager.getInstance().fireDataSourceAnalysisStarted(id, dataSourceJob.getId(), dataSourceJob.getDataSource());
+            }
+        } else {
+            cancel(CancellationReason.INGEST_MODULES_STARTUP_FAILED);
+        }
+
         return errors;
     }
 
@@ -161,13 +189,37 @@ public final class IngestJob {
      * unfinished tasks and stopping the ingest pipelines. Returns immediately,
      * but there may be a delay before all of the ingest modules in the
      * pipelines respond by stopping processing.
+     *
+     * @deprecated Use cancel(CancellationReason reason) instead
      */
+    @Deprecated
     synchronized public void cancel() {
-        IngestManager ingestManager = IngestManager.getInstance();
+        cancel(CancellationReason.USER_CANCELLED);
+    }
+
+    /**
+     * Requests cancellation of this ingest job, which means discarding
+     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
+     * but there may be a delay before all of the ingest modules in the
+     * pipelines respond by stopping processing.
+     *
+     * @param reason The reason for cancellation.
+     */
+    synchronized public void cancel(CancellationReason reason) {
         this.dataSourceJobs.values().stream().forEach((job) -> {
-            job.cancel();
+            job.cancel(reason);
         });
         this.cancelled = true;
+        this.cancellationReason = reason;
+    }
+
+    /**
+     * Gets the reason this job was cancelled.
+     *
+     * @return The cancellation reason, may be not cancelled.
+     */
+    synchronized public CancellationReason getCancellationReason() {
+        return this.cancellationReason;
     }
 
     /**
@@ -176,7 +228,7 @@ public final class IngestJob {
      *
      * @return True or false.
      */
-    public boolean isCancelled() {
+    synchronized public boolean isCancelled() {
         return this.cancelled;
     }
 
@@ -208,6 +260,7 @@ public final class IngestJob {
         private boolean fileIngestRunning;
         private Date fileIngestStartTime;
         private final boolean jobCancelled;
+        private final IngestJob.CancellationReason jobCancellationReason;
 
         /**
          * A snapshot of the progress of an ingest job on the processing of a
@@ -239,6 +292,15 @@ public final class IngestJob {
              */
             public boolean isCancelled() {
                 return snapshot.isCancelled();
+            }
+
+            /**
+             * Gets the reason this job was cancelled.
+             *
+             * @return The cancellation reason, may be not cancelled.
+             */
+            synchronized public CancellationReason getCancellationReason() {
+                return snapshot.getCancellationReason();
             }
 
             /**
@@ -280,6 +342,7 @@ public final class IngestJob {
                 }
             }
             this.jobCancelled = cancelled;
+            this.jobCancellationReason = cancellationReason;
         }
 
         /**
@@ -312,13 +375,22 @@ public final class IngestJob {
         }
 
         /**
-         * Queries whether or not a cancellation request had been issued at the
-         * time the snapshot was taken.
+         * Queries whether or not an ingest job level cancellation request had
+         * been issued at the time the snapshot was taken.
          *
          * @return True or false.
          */
         public boolean isCancelled() {
             return this.jobCancelled;
+        }
+
+        /**
+         * Gets the reason this job was cancelled.
+         *
+         * @return The cancellation reason, may be not cancelled.
+         */
+        synchronized public CancellationReason getCancellationReason() {
+            return this.jobCancellationReason;
         }
 
         /**
