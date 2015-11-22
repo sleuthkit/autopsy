@@ -79,7 +79,7 @@ final class DataSourceIngestJob {
          */
         FINALIZATION
     };
-    private Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
+    private volatile Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
 
     /**
@@ -956,13 +956,19 @@ final class DataSourceIngestJob {
             }
         }
 
-        synchronized (cancellationStateMonitor) {
-            /*
-             * These fields are volatile for reading, synchronized on the
-             * monitor here for writing.
-             */
-            this.cancelled = true;
-            this.cancellationReason = reason;
+        /*
+         * If the work is not already done, show this job as cancelled for the
+         * given reason.
+         */
+        if (Stages.FINALIZATION != stage) {
+            synchronized (cancellationStateMonitor) {
+                /*
+                 * These fields are volatile for reading, synchronized on the
+                 * monitor here for writing.
+                 */
+                this.cancelled = true;
+                this.cancellationReason = reason;
+            }
         }
 
         /**
