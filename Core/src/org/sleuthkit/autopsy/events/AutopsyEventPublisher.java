@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.jms.JMSException;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,6 +40,7 @@ public final class AutopsyEventPublisher {
      * Composed of thread-safe objects.
      */
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
+    private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 3;
     private final LocalEventPublisher localPublisher;
     private RemoteEventPublisher remotePublisher;
     private String currentChannelName;
@@ -162,18 +162,27 @@ public final class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public void publishRemotely(AutopsyEvent event) {
-        if (null != remotePublisher) {
-            try {
-                remotePublisher.publish(event);
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely, re-opening channel %s", event.getPropertyName(), currentChannelName), ex); //NON-NLS
-                closeRemoteEventChannel();
+        if (null != currentChannelName) {
+            boolean published = false;
+            int tryCount = 1;
+            while (false == published && tryCount <= MAX_REMOTE_EVENT_PUBLISH_TRIES) {
                 try {
-                    openRemoteEventChannel(this.currentChannelName);
-                } catch (AutopsyEventException ex1) {
-                    logger.log(Level.SEVERE, String.format("Failed re-opening channel %s", currentChannelName), ex); //NON-NLS
+                    if (null == remotePublisher) {
+                        openRemoteEventChannel(currentChannelName);
+                    }
+                    remotePublisher.publish(event);
+                    published = true;
+                } catch (JMSException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to publish %s using channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
+                    closeRemoteEventChannel();
+                    ++tryCount;
+                } catch (AutopsyEventException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", currentChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
+                    ++tryCount;
                 }
             }
+        } else {
+            logger.log(Level.SEVERE, "Attempt to publish {0} event remotely with no open channel", event.getPropertyName()); //NON-NLS            
         }
     }
 
