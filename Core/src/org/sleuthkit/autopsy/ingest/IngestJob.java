@@ -42,12 +42,22 @@ public final class IngestJob {
      */
     public enum CancellationReason {
 
-        NOT_CANCELLED,
-        USER_CANCELLED,
-        INGEST_MODULES_STARTUP_FAILED,
-        OUT_OF_DISK_SPACE,
-        SERVICES_DOWN,
-        CASE_CLOSED
+        NOT_CANCELLED("Not cancelled"),
+        USER_CANCELLED("Cancelled by user"),
+        INGEST_MODULES_STARTUP_FAILED("Ingest modules startup failed"),
+        OUT_OF_DISK_SPACE("Out of disk space"),
+        SERVICES_DOWN("Not cancelled"),
+        CASE_CLOSED("Case closed");
+        
+        private final String displayName;
+        
+        private CancellationReason(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     private static final AtomicLong nextId = new AtomicLong(0L);
