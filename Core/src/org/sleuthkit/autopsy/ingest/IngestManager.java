@@ -357,7 +357,7 @@ public class IngestManager {
                     }
 
                     // cancel ingest if running
-                    cancelAllIngestJobs();
+                    cancelAllIngestJobs(IngestJob.CancellationReason.SERVICES_DOWN);
                 }
             }
         };
@@ -627,8 +627,21 @@ public class IngestManager {
 
     /**
      * Cancels all ingest jobs in progress.
+     *
+     * @deprecated Use cancelAllIngestJobs(IngestJob.CancellationReason reason)
+     * instead.
      */
+    @Deprecated
     public synchronized void cancelAllIngestJobs() {
+        cancelAllIngestJobs(IngestJob.CancellationReason.USER_CANCELLED);
+    }
+
+    /**
+     * Cancels all ingest jobs in progress.
+     *
+     * @param reason The cancellation reason.
+     */
+    public synchronized void cancelAllIngestJobs(IngestJob.CancellationReason reason) {
         // Stop creating new ingest jobs.
         for (Future<Void> handle : ingestJobStarters.values()) {
             handle.cancel(true);
@@ -636,7 +649,7 @@ public class IngestManager {
 
         // Cancel all the jobs already created. 
         for (IngestJob job : this.jobsById.values()) {
-            job.cancel();
+            job.cancel(reason);
         }
     }
 

@@ -118,6 +118,8 @@ final class DataSourceIngestJob {
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
+    private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
+    private final Object cancellationStateMonitor = new Object();
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
 
     /**
@@ -160,12 +162,12 @@ final class DataSourceIngestJob {
      * Constructs an object that encapsulates a data source and the ingest
      * module pipelines used to process it.
      *
-     * @param parentJob The ingest job of which this data source ingest job is a
-     * part.
-     * @param dataSource The data source to be ingested.
-     * @param settings The settings for the ingest job.
+     * @param parentJob        The ingest job of which this data source ingest
+     *                         job is a part.
+     * @param dataSource       The data source to be ingested.
+     * @param settings         The settings for the ingest job.
      * @param runInteractively Whether or not this job should use NetBeans
-     * progress handles.
+     *                         progress handles.
      */
     DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings, boolean runInteractively) {
         this.parentJob = parentJob;
@@ -252,12 +254,12 @@ final class DataSourceIngestJob {
      * collection as they are added to the output collection.
      *
      * @param ingestModuleTemplates A mapping of ingest module factory class
-     * names to ingest module templates.
-     * @param pipelineConfig An ordered list of ingest module factory class
-     * names representing an ingest pipeline.
+     *                              names to ingest module templates.
+     * @param pipelineConfig        An ordered list of ingest module factory
+     *                              class names representing an ingest pipeline.
      *
      * @return An ordered list of ingest module templates, i.e., an
-     * uninstantiated pipeline.
+     *         uninstantiated pipeline.
      */
     private static List<IngestModuleTemplate> getConfiguredIngestModuleTemplates(Map<String, IngestModuleTemplate> ingestModuleTemplates, List<String> pipelineConfig) {
         List<IngestModuleTemplate> templates = new ArrayList<>();
@@ -498,7 +500,7 @@ final class DataSourceIngestJob {
                         String dialogTitle = NbBundle.getMessage(DataSourceIngestJob.this.getClass(), "IngestJob.cancellationDialog.title");
                         JOptionPane.showConfirmDialog(null, panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
-                            DataSourceIngestJob.this.cancel();
+                            DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
                             DataSourceIngestJob.this.cancelCurrentDataSourceIngestModule();
                         }
@@ -527,7 +529,7 @@ final class DataSourceIngestJob {
                         // the cancel button on the progress bar and the OK button
                         // of a cancelation confirmation dialog supplied by 
                         // NetBeans. 
-                        DataSourceIngestJob.this.cancel();
+                        DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -672,8 +674,9 @@ final class DataSourceIngestJob {
      * @param task A file ingest task.
      *
      * @throws InterruptedException if the thread executing this code is
-     * interrupted while blocked on taking from or putting to the file ingest
-     * pipelines collection.
+     *                              interrupted while blocked on taking from or
+     *                              putting to the file ingest pipelines
+     *                              collection.
      */
     void process(FileIngestTask task) throws InterruptedException {
         try {
@@ -774,7 +777,7 @@ final class DataSourceIngestJob {
      * process the data source is known.
      *
      * @param workUnits Total number of work units for the processing of the
-     * data source.
+     *                  data source.
      */
     void switchDataSourceIngestProgressBarToDeterminate(int workUnits) {
         if (this.doUI && !this.cancelled) {
@@ -839,7 +842,7 @@ final class DataSourceIngestJob {
      * mode. The task name is the "subtitle" under the display name.
      *
      * @param currentTask The task name.
-     * @param workUnits Number of work units performed.
+     * @param workUnits   Number of work units performed.
      */
     void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
         if (this.doUI && !this.cancelled) {
@@ -910,8 +913,10 @@ final class DataSourceIngestJob {
     /**
      * Requests cancellation of ingest, i.e., a shutdown of the data source
      * level and file level ingest pipelines.
+     *
+     * @param reason The cancellation reason.
      */
-    void cancel() {
+    void cancel(IngestJob.CancellationReason reason) {
         if (this.doUI) {
             /**
              * Put a cancellation message on data source level ingest progress
@@ -951,7 +956,14 @@ final class DataSourceIngestJob {
             }
         }
 
-        this.cancelled = true;
+        synchronized (cancellationStateMonitor) {
+            /*
+             * These fields are volatile for reading, synchronized on the
+             * monitor here for writing.
+             */
+            this.cancelled = true;
+            this.cancellationReason = reason;
+        }
 
         /**
          * Tell the task scheduler to cancel all pending tasks, i.e., tasks not
@@ -964,9 +976,9 @@ final class DataSourceIngestJob {
     /**
      * Set the current module name being run and the file name it is running on.
      * To be used for more detailed cancelling.
-     * 
+     *
      * @param moduleName Name of module currently running.
-     * @param taskName  Name of file the module is running on.
+     * @param taskName   Name of file the module is running on.
      */
     void setCurrentFileIngestModule(String moduleName, String taskName) {
         this.currentFileIngestModule = moduleName;
@@ -981,6 +993,15 @@ final class DataSourceIngestJob {
      */
     boolean isCancelled() {
         return this.cancelled;
+    }
+
+    /**
+     * Gets the reason this job was cancelled.
+     *
+     * @return The cancellation reason, may be not cancelled.
+     */
+    IngestJob.CancellationReason getCancellationReason() {
+        return this.cancellationReason;
     }
 
     /**
@@ -1019,6 +1040,7 @@ final class DataSourceIngestJob {
         private final long estimatedFilesToProcess;
         private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
         private final boolean jobCancelled;
+        private final IngestJob.CancellationReason jobCancellationReason;
         private final List<String> cancelledDataSourceModules;
 
         /**
@@ -1047,6 +1069,7 @@ final class DataSourceIngestJob {
             }
 
             this.jobCancelled = cancelled;
+            this.jobCancellationReason = cancellationReason;
             this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
 
             if (getIngestTasksSnapshot) {
@@ -1069,7 +1092,7 @@ final class DataSourceIngestJob {
          * Gets time these statistics were collected.
          *
          * @return The statistics collection time as number of milliseconds
-         * since January 1, 1970, 00:00:00 GMT.
+         *         since January 1, 1970, 00:00:00 GMT.
          */
         long getSnapshotTime() {
             return snapShotTime;
@@ -1099,7 +1122,7 @@ final class DataSourceIngestJob {
          * Gets the time the ingest job was started.
          *
          * @return The start time as number of milliseconds since January 1,
-         * 1970, 00:00:00 GMT.
+         *         1970, 00:00:00 GMT.
          */
         long getJobStartTime() {
             return jobStartTime;
@@ -1186,11 +1209,20 @@ final class DataSourceIngestJob {
         }
 
         /**
+         * Gets the reason this job was cancelled.
+         *
+         * @return The cancellation reason, may be not cancelled.
+         */
+        IngestJob.CancellationReason getCancellationReason() {
+            return this.jobCancellationReason;
+        }
+
+        /**
          * Gets a list of the display names of any canceled data source level
          * ingest modules
          *
          * @return A list of canceled data source level ingest module display
-         * names, possibly empty.
+         *         names, possibly empty.
          */
         List<String> getCancelledDataSourceIngestModules() {
             return Collections.unmodifiableList(this.cancelledDataSourceModules);

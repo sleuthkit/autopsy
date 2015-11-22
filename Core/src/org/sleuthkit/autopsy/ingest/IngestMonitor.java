@@ -196,7 +196,7 @@ public final class IngestMonitor {
                 /*
                  * Shut down ingest by cancelling all ingest jobs.
                  */
-                manager.cancelAllIngestJobs();
+                manager.cancelAllIngestJobs(IngestJob.CancellationReason.OUT_OF_DISK_SPACE);
                 String diskPath = root.getAbsolutePath();
                 IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
