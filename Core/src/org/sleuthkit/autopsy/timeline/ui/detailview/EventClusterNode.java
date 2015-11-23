@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Objects.nonNull;
@@ -31,11 +32,8 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -96,7 +94,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         subNodePane.setMinWidth(1);
 
         setCursor(Cursor.HAND);
-        setOnMouseClicked(new MouseClickHandler());
+       
 
         setAlignment(Pos.CENTER_LEFT);
 
@@ -249,49 +247,15 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         return subClusterFilter;
     }
 
-    /**
-     * event handler used for mouse events on {@link EventStripeNode}s
-     */
-    private class MouseClickHandler implements EventHandler<MouseEvent> {
+    @Override
+    Collection<? extends Action> getActions() {
+        return Arrays.asList(new ExpandClusterAction(),
+                new CollapseClusterAction());
+    }
 
-        private ContextMenu contextMenu;
-
-        @Override
-        public void handle(MouseEvent t) {
-
-            if (t.getButton() == MouseButton.PRIMARY) {
-
-                if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
-                        chart.selectedNodes.add(EventClusterNode.this);
-                    }
-                } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventClusterNode.this);
-                } else if (t.getClickCount() > 1) {
-                    final DescriptionLoD next = descLOD.get().moreDetailed();
-                    if (next != null) {
-                        loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-                    }
-                } else {
-                    chart.selectedNodes.setAll(EventClusterNode.this);
-                }
-                t.consume();
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
-                if (contextMenu == null) {
-                    contextMenu = new ContextMenu();
-                    contextMenu.setAutoHide(true);
-
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
-
-                    contextMenu.getItems().add(new SeparatorMenuItem());
-                    contextMenu.getItems().addAll(chartContextMenu.getItems());
-                }
-                contextMenu.show(EventClusterNode.this, t.getScreenX(), t.getScreenY());
-                t.consume();
-            }
-        }
+    @Override
+    EventHandler<MouseEvent> getDoubleClickHandler() {
+        return mouseEvent -> new ExpandClusterAction().handle(null);
     }
 
     private class ExpandClusterAction extends Action {

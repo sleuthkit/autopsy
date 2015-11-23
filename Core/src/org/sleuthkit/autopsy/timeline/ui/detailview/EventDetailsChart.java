@@ -645,7 +645,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 DescriptionFilter descriptionFilter = getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
-                    testFilter.selectedProperty().addListener(observable -> requestChartLayout());
+                            testFilter.selectedProperty().addListener(observable -> requestChartLayout());
                             getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });

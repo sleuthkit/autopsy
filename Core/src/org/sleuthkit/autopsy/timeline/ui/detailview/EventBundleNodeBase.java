@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,17 +33,21 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -58,6 +63,8 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -191,7 +198,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
-
+        setOnMouseClicked(new ClickHandler());
         descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
         descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
     }
@@ -382,4 +389,49 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         timeline.play();
     }
 
+    /**
+     * event handler used for mouse events on {@link EventStripeNode}s
+     */
+    private class ClickHandler implements EventHandler<MouseEvent> {
+
+        private ContextMenu contextMenu;
+
+        @Override
+        public void handle(MouseEvent t) {
+
+            if (t.getButton() == MouseButton.PRIMARY) {
+
+                if (t.getClickCount() > 1) {
+                    getDoubleClickHandler().handle(t);
+                } else if (t.isShiftDown()) {
+                    if (chart.selectedNodes.contains(EventBundleNodeBase.this) == false) {
+                        chart.selectedNodes.add(EventBundleNodeBase.this);
+                    }
+                } else if (t.isShortcutDown()) {
+                    chart.selectedNodes.removeAll(EventBundleNodeBase.this);
+                } else {
+                    chart.selectedNodes.setAll(EventBundleNodeBase.this);
+                }
+                t.consume();
+            } else if (t.getButton() == MouseButton.SECONDARY) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                if (contextMenu == null) {
+                    contextMenu = new ContextMenu();
+                    contextMenu.setAutoHide(true);
+
+                    contextMenu.getItems().addAll(ActionUtils.createContextMenu(getActions()).getItems());
+
+                    contextMenu.getItems().add(new SeparatorMenuItem());
+                    contextMenu.getItems().addAll(chartContextMenu.getItems());
+                }
+                contextMenu.show(EventBundleNodeBase.this, t.getScreenX(), t.getScreenY());
+                t.consume();
+            }
+        }
+
+    }
+
+    abstract EventHandler<MouseEvent> getDoubleClickHandler();
+
+    abstract Collection<? extends Action> getActions();
 }
