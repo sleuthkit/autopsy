@@ -150,7 +150,7 @@ public class ServicesMonitor {
 
     /**
      * Updates service status and publishes the service status. If the status is
-     * changed fomr the last imte it was reported, it is logged and a user
+     * changed from the last time it was reported, it is logged and a user
      * notification message is created.
      *
      * @param serviceName Name of the service.
