@@ -85,19 +85,15 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     public EventClusterNode(EventDetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
-        setMinHeight(24);
 
         subNodePane.setBorder(clusterBorder);
         subNodePane.setBackground(defaultBackground);
-        subNodePane.setMaxHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMaxWidth(USE_PREF_SIZE);
         subNodePane.setMinWidth(1);
-
-        setCursor(Cursor.HAND);
-       
-
+        setMinHeight(24);
         setAlignment(Pos.CENTER_LEFT);
 
+        setCursor(Cursor.HAND);
+        
         getChildren().addAll(subNodePane, infoHBox);
 
     }

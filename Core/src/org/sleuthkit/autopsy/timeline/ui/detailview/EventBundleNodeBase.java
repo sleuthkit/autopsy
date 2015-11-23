@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -58,8 +59,6 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
-import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -154,32 +153,17 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
 
-        setPrefHeight(USE_COMPUTED_SIZE);
-
         /*
          * This triggers the layout when a mousover causes the action buttons to
          * interesect with another node, forcing it down.
          */
         heightProperty().addListener(heightProp -> chart.requestChartLayout());
 
-        setMaxHeight(USE_PREF_SIZE);
-        setMinWidth(USE_PREF_SIZE);
-        setMaxWidth(USE_PREF_SIZE);
         setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
 
         //initialize info hbox
-        infoHBox.setMinWidth(USE_PREF_SIZE);
-        infoHBox.setMaxWidth(USE_PREF_SIZE);
         infoHBox.setPadding(new Insets(2, 3, 2, 3));
         infoHBox.setAlignment(Pos.TOP_LEFT);
-
-        //set up subnode pane sizing contraints
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMinHeight(24);
-        subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
-        subNodePane.setMinWidth(USE_PREF_SIZE);
-        subNodePane.setMaxWidth(USE_PREF_SIZE);
 
         Tooltip.install(this, this.tooltip);
 
@@ -378,16 +362,19 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
-            chart.requestChartLayout();
-
+            Platform.runLater(chart::requestChartLayout);
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
                 new KeyValue(layoutYProperty(), yTop))
         );
-        timeline.setOnFinished(finished -> chart.requestChartLayout());
+        timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
         timeline.play();
     }
+
+    abstract EventHandler<MouseEvent> getDoubleClickHandler();
+
+    abstract Collection<? extends Action> getActions();
 
     /**
      * event handler used for mouse events on {@link EventStripeNode}s
@@ -398,15 +385,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         @Override
         public void handle(MouseEvent t) {
-
             if (t.getButton() == MouseButton.PRIMARY) {
-
                 if (t.getClickCount() > 1) {
                     getDoubleClickHandler().handle(t);
                 } else if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventBundleNodeBase.this) == false) {
-                        chart.selectedNodes.add(EventBundleNodeBase.this);
-                    }
+                    chart.selectedNodes.add(EventBundleNodeBase.this);
                 } else if (t.isShortcutDown()) {
                     chart.selectedNodes.removeAll(EventBundleNodeBase.this);
                 } else {
@@ -428,10 +411,6 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 t.consume();
             }
         }
-
     }
 
-    abstract EventHandler<MouseEvent> getDoubleClickHandler();
-
-    abstract Collection<? extends Action> getActions();
 }

@@ -71,7 +71,6 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
-        descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
 
