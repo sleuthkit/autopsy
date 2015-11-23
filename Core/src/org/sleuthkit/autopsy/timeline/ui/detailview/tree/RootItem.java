@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -56,6 +57,7 @@ class RootItem extends NavTreeItem {
      *
      * @param bundle bundle to add
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public void insert(EventBundle<?> bundle) {
 
         EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
@@ -108,5 +110,4 @@ class RootItem extends NavTreeItem {
         }
         return null;
     }
-
 }

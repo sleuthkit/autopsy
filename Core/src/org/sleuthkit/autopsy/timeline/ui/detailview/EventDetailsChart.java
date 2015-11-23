@@ -140,6 +140,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * by allowing a single translation of this group.
      */
     private final Group nodeGroup = new Group();
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<EventStripe> bundles = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> stripeNodes = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis));

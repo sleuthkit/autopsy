@@ -22,10 +22,10 @@ import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -93,7 +93,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         setAlignment(Pos.CENTER_LEFT);
 
         setCursor(Cursor.HAND);
-        
+
         getChildren().addAll(subNodePane, infoHBox);
 
     }
@@ -159,7 +159,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
         final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-        Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
+        Task<List<EventStripe>> loggedTask = new Task<List<EventStripe>>() {
 
             private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
@@ -168,25 +168,27 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             }
 
             @Override
-            protected Collection<EventStripe> call() throws Exception {
-                Collection<EventStripe> bundles;
+            protected List<EventStripe> call() throws Exception {
+                List<EventStripe> bundles;
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
                     loadedDescriptionLoD = next;
                     if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
-                        return Collections.emptySet();
+                        return Collections.emptyList();
                     }
                     bundles = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
                 } while (bundles.size() == 1 && nonNull(next));
-                // return list of AbstractEventStripeNodes representing sub-bundles
-                return bundles;
+
+                // return list of EventStripes representing sub-bundles
+                return Lists.transform(bundles, eventStripe -> eventStripe.withParent(getEventCluster()));
             }
 
             @Override
             protected void succeeded() {
                 try {
-                    Collection<EventStripe> bundles = get();
+                    List<EventStripe> bundles = get();
 
                     if (bundles.isEmpty()) {
                         subNodePane.getChildren().clear();
@@ -194,9 +196,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
                         chart.getEventStripes().addAll(bundles);
-                        subNodes.addAll(bundles.stream()
-                                .map(EventClusterNode.this::createStripeNode)
-                                .collect(Collectors.toList()));
+                        subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createStripeNode));
                         subNodePane.getChildren().setAll(subNodes);
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         descLOD.set(loadedDescriptionLoD);
