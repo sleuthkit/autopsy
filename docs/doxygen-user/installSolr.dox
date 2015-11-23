@@ -9,7 +9,7 @@ You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
 - Download the Apache Solr 4.10.3-0 installation package from https://bitnami.com/stack/solr/installer. 
 - Access to an installed version of Autopsy so that you can copy files from it. 
-
+- A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 \section install_solr_install Installation
 
@@ -107,5 +107,6 @@ If the machine is on a domain, **make sure** to select the domain with the mouse
 <br><br>
 If the service is appropriately started and you are unable to see the screenshot above, contact your network administrator to open ports in the firewall.
 <br><br>
-
+<b>Warning: The Solr process must have adequate permissions to write data to the main shared storage drive where case output will be stored.</b>
+<br><br>
 */
