@@ -176,7 +176,7 @@ public class ServicesMonitor {
          * If the status has changed, do a log message and create a user
          * notification message.
          */
-        if ((!statusByService.containsKey(serviceName)) || (statusByService.containsKey(serviceName) && !status.equals(statusByService.get(serviceName)))) {
+        if (statusByService.containsKey(serviceName) && !status.equals(statusByService.get(serviceName))) {
             if (status.equals(ServiceStatus.UP.toString())) {
                 logger.log(Level.INFO, "{0} status is up", serviceDisplayName); //NON-NLS
                 MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
@@ -382,18 +382,16 @@ public class ServicesMonitor {
             return;
         }
 
-        if (Case.isCaseOpen()) {
-            try {
-                Case currentCase = Case.getCurrentCase();
-                if (Case.CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
-                    return;
-                }
-            } catch (IllegalStateException ignored) {
-                /*
-                 * No current case, proceed to check services because multi-user
-                 * cases are enabled.
-                 */
+        try {
+            Case currentCase = Case.getCurrentCase();
+            if (Case.CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
+                return;
             }
+        } catch (IllegalArgumentException ignored) {
+            /*
+             * No current case, proceed to check services because multi-user
+             * cases are enabled.
+             */
         }
 
         for (String service : multiUserServicesList) {
