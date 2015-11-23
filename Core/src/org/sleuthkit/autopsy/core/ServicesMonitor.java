@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -42,26 +43,29 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class periodically checks availability of collaboration resources -
- * remote database, remote keyword search server, messaging service - and
- * reports status updates to the user in case of a gap in service.
+ * The services monitor actively monitors multi-user case services and stores
+ * status info for the multi-user services and any other services that choose to
+ * report their status. Whenver the status of a registered service is reported,
+ * it is published to any subscribers to events for the service. If the status
+ * is change from the last reported status, the new status is logged and a user
+ * notification message is created.
  */
 public class ServicesMonitor {
 
     private AutopsyEventPublisher eventPublisher;
     private static final Logger logger = Logger.getLogger(ServicesMonitor.class.getName());
-    private final ScheduledThreadPoolExecutor periodicTasksExecutor;
+    private final ScheduledThreadPoolExecutor multiuserServiceStatusChecksExecutor;
 
-    private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d";
-    private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
-    private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
+    private static final String MULTIUSER_SERVICES_STATUS_CHECK_THREAD_NAME = "services-monitor-multiuser-services-status-check-%d";
+    private static final int NUMBER_OF_MULTIUSER_SERVICES_STATUS_CHECK_THREADS = 1;
+    private static final long MULTIUSER_SERVICES_STATUS_CHECK_INTERVAL_MINUTES = 2;
 
-    private static final Set<String> servicesList = Stream.of(ServicesMonitor.Service.values())
+    private static final Set<String> multiUserServicesList = Stream.of(ServicesMonitor.Service.values())
             .map(Service::toString)
             .collect(Collectors.toSet());
 
     /**
-     * The service monitor maintains a mapping of each service to it's last
+     * The service monitor maintains a mapping of each service to its last
      * status update.
      */
     private final ConcurrentHashMap<String, String> statusByService;
@@ -73,9 +77,7 @@ public class ServicesMonitor {
     private static ServicesMonitor instance = new ServicesMonitor();
 
     /**
-     * List of services that are being monitored. The service names should be
-     * representative of the service functionality and readable as they get
-     * logged when service outage occurs.
+     *
      */
     public enum Service {
 
@@ -109,7 +111,7 @@ public class ServicesMonitor {
     };
 
     /**
-     * List of possible service statuses.
+     * List of predefined service statuses.
      */
     public enum ServiceStatus {
 
@@ -136,96 +138,103 @@ public class ServicesMonitor {
         this.statusByService = new ConcurrentHashMap<>();
 
         // First check is triggered immediately on current thread.
-        checkAllServices();
+        checkMultiUserServices();
 
-        /**
-         * Start periodic task that check the availability of key collaboration
+        /*
+         * Start a periodic task to check the availability of the multi-user
          * services.
          */
-        periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
-        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        multiuserServiceStatusChecksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_MULTIUSER_SERVICES_STATUS_CHECK_THREADS, new ThreadFactoryBuilder().setNameFormat(MULTIUSER_SERVICES_STATUS_CHECK_THREAD_NAME).build());
+        multiuserServiceStatusChecksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), MULTIUSER_SERVICES_STATUS_CHECK_INTERVAL_MINUTES, MULTIUSER_SERVICES_STATUS_CHECK_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 
     /**
-     * Updates service status and publishes the service status update if it is
-     * different from previous status. Event is published locally. Logs status
-     * changes.
+     * Updates service status and publishes the service status. If the status is
+     * changed from the last time it was reported, it is logged and a user
+     * notification message is created.
      *
-     * @param service Name of the service.
-     * @param status  Updated status for the service.
-     * @param details Details of the event.
+     * @param serviceName Name of the service.
+     * @param status      Service status.
+     * @param details     Service status details for publication.
      *
      */
-    public void setServiceStatus(String service, String status, String details) {
-        // if the status update is for an existing service who's status hasn't changed - do nothing.       
-        if (statusByService.containsKey(service) && status.equals(statusByService.get(service))) {
-            return;
-        }
+    public void setServiceStatus(String serviceName, String status, String details) {
 
-        // new service or status has changed - identify service's display name
+        /*
+         * Select a display name for the service. If it is one of the multi-user
+         * case services, use the service display name. Otherwise, use service
+         * name as the display name.
+         */
         String serviceDisplayName;
-        try {
-            serviceDisplayName = ServicesMonitor.Service.valueOf(service).getDisplayName();
-        } catch (IllegalArgumentException ignore) {
-            // custom service that is not listed in ServicesMonitor.Service enum. Use service name as display name.
-            serviceDisplayName = service;
-        }
-
-        if (status.equals(ServiceStatus.UP.toString())) {
-            logger.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
-            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
-        } else if (status.equals(ServiceStatus.DOWN.toString())) {
-            logger.log(Level.SEVERE, "Failed to connect to {0}", serviceDisplayName); //NON-NLS
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceDisplayName));
+        if (multiUserServicesList.contains(serviceName)) {
+            serviceDisplayName = ServicesMonitor.Service.valueOf(serviceName).getDisplayName();
         } else {
-            logger.log(Level.INFO, "Status for {0} is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
-            MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
-                    NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{serviceDisplayName, status}));
+            serviceDisplayName = serviceName;
         }
 
-        // update and publish new status
-        statusByService.put(service, status);
-        eventPublisher.publishLocally(new ServiceEvent(service, status, details));
+        /*
+         * If the status has changed, do a log message and create a user
+         * notification message.
+         */
+        if ((!statusByService.containsKey(serviceName)) || (statusByService.containsKey(serviceName) && !status.equals(statusByService.get(serviceName)))) {
+            if (status.equals(ServiceStatus.UP.toString())) {
+                logger.log(Level.INFO, "{0} status is up", serviceDisplayName); //NON-NLS
+                MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
+            } else if (status.equals(ServiceStatus.DOWN.toString())) {
+                logger.log(Level.SEVERE, "{0} status is down", serviceDisplayName); //NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceDisplayName));
+            } else {
+                logger.log(Level.INFO, "{0} status is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
+                MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.title"),
+                        NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.statusChange.notify.msg", new Object[]{serviceDisplayName, status}));
+            }
+        }
+
+        /*
+         * Update the saved status and publish it.
+         */
+        statusByService.put(serviceName, status);
+        eventPublisher.publishLocally(new ServiceEvent(serviceName, status, details));
     }
 
     /**
-     * Get last status update for a service.
+     * Get last reported status update for a service.
      *
-     * @param service Name of the service.
+     * @param serviceName Name of the service.
      *
      * @return ServiceStatus Status for the service.
      *
-     * @throws ServicesMonitorException If service name is null or service
-     *                                  doesn't exist.
+     * @throws ServicesMonitorException If the supplied service name is null or
+     *                                  if the service is not registered.
      */
-    public String getServiceStatus(String service) throws ServicesMonitorException {
+    public String getServiceStatus(String serviceName) throws ServicesMonitorException {
 
-        if (service == null) {
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.excepton.txt"));
+        if (serviceName == null) {
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.nullServiceName.exception.txt"));
         }
 
         // if request is for one of our "core" services - perform an on demand check
         // to make sure we have the latest status.
-        if (servicesList.contains(service)) {
-            checkServiceStatus(service);
+        if (multiUserServicesList.contains(serviceName)) {
+            checkMultiUserServiceStatus(serviceName);
         }
 
-        String status = statusByService.get(service);
+        String status = statusByService.get(serviceName);
         if (status == null) {
             // no such service
-            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.excepton.txt", service));
+            throw new ServicesMonitorException(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.unknownServiceName.exception.txt", serviceName));
         }
         return status;
     }
 
     /**
-     * Performs service availability status check.
+     * Performs status check for one of the multi-user services.
      *
      * @param service Name of the service.
      */
-    private void checkServiceStatus(String service) {
+    private void checkMultiUserServiceStatus(String service) {
         if (service.equals(Service.REMOTE_CASE_DATABASE.toString())) {
             checkDatabaseConnectionStatus();
         } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.toString())) {
@@ -310,7 +319,7 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.addSubscriber(servicesList, subscriber);
+        eventPublisher.addSubscriber(multiUserServicesList, subscriber);
     }
 
     /**
@@ -360,19 +369,35 @@ public class ServicesMonitor {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(PropertyChangeListener subscriber) {
-        eventPublisher.removeSubscriber(servicesList, subscriber);
+        eventPublisher.removeSubscriber(multiUserServicesList, subscriber);
     }
 
     /**
-     * Verifies connectivity to all services.
+     * Verifies connectivity to multi-user services if multi-user cases are
+     * enabled and there is no current case or the current case is a multi-user
+     * case.
      */
-    private void checkAllServices() {
+    private void checkMultiUserServices() {
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             return;
         }
 
-        for (String service : servicesList) {
-            checkServiceStatus(service);
+        if (Case.isCaseOpen()) {
+            try {
+                Case currentCase = Case.getCurrentCase();
+                if (Case.CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
+                    return;
+                }
+            } catch (IllegalStateException ignored) {
+                /*
+                 * No current case, proceed to check services because multi-user
+                 * cases are enabled.
+                 */
+            }
+        }
+
+        for (String service : multiUserServicesList) {
+            checkMultiUserServiceStatus(service);
         }
     }
 
@@ -389,7 +414,7 @@ public class ServicesMonitor {
          */
         @Override
         public void run() {
-            checkAllServices();
+            checkMultiUserServices();
         }
     }
 
