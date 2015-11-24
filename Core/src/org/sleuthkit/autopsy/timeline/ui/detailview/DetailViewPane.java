@@ -57,9 +57,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.controlsfx.control.MaskerPane;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -71,7 +74,9 @@ import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_name;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_preparing;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_updateUI;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -102,6 +107,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
     //private access to barchart data
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final Map<EventType, XYChart.Series<DateTime, EventStripe>> eventTypeToSeriesMap = new HashMap<>();
 
     public ObservableList<EventStripe> getEventStripes() {
@@ -264,9 +270,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @Override
+    @NbBundle.Messages({"DetailViewPane.loggedTask.preparing=Analyzing zoom and filter settings",
+        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
+        "DetailViewPane.loggedTask.name=Updating Details View",
+        "DetailViewPane.loggedTask.updateUI=Populating visualization"})
     protected Task<Boolean> getUpdateTask() {
 
-        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.name"), true) {
+        return new LoggedTask<Boolean>(DetailViewPane_loggedTask_name(), true) {
 
             @Override
             protected Boolean call() throws Exception {
@@ -275,26 +285,25 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 }
 
                 updateProgress(-1, 1);
-                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
-
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
-                final long lowerBound = rangeInfo.getLowerBound();
-                final long upperBound = rangeInfo.getUpperBound();
-
-                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
-
+                updateMessage(DetailViewPane_loggedTask_preparing());
+                Interval timeRange = filteredEvents.timeRangeProperty().get();
                 Platform.runLater(() -> {
+                    MaskerPane maskerPane = new MaskerPane();
+                    maskerPane.textProperty().bind(messageProperty());
+                    maskerPane.progressProperty().bind(progressProperty());
+                    setCenter(new StackPane(chart, maskerPane));
+
                     dataSeries.clear();
-                    dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
-                    dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
                     vertScrollBar.setValue(0);
                     eventTypeToSeriesMap.clear();
+                    dateAxis.setRange(timeRange, true);
                 });
 
+                updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
                 List<EventStripe> eventStripes = filteredEvents.getEventStripes();
 
                 final int size = eventStripes.size();
-                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
+                updateMessage(DetailViewPane_loggedTask_updateUI());
                 for (int i = 0; i < size; i++) {
                     if (isCancelled()) {
                         break;
@@ -302,12 +311,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                     updateProgress(i, size);
                     final EventStripe cluster = eventStripes.get(i);
                     final XYChart.Data<DateTime, EventStripe> xyData = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                    Platform.runLater(() -> {
-                        getSeries(cluster.getEventType()).getData().add(xyData);
-                    });
+                    Platform.runLater(() -> getSeries(cluster.getEventType()).getData().add(xyData));
                 }
-
-                updateProgress(1, 1);
 
                 return eventStripes.isEmpty() == false;
             }
@@ -316,6 +321,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             protected void succeeded() {
                 super.succeeded();
                 layoutDateLabels();
+                setCenter(chart);
                 setCursor(Cursor.DEFAULT);
             }
         };
@@ -402,7 +408,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
-            truncateSliderLabel.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSliderLabel.text"));
+            truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     chart.getTruncateWidth().set(truncateWidthSlider.getValue());
@@ -422,26 +428,26 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             });
 
             advancedLayoutOptionsButtonLabel.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
-            bandByTypeBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
+            bandByTypeBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBox.text"));
             bandByTypeBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBoxMenuItem.text"));
-            oneEventPerRowBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
+            oneEventPerRowBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBox.text"));
             oneEventPerRowBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
-            truncateAllBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
+            truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBox.text"));
             truncateAllBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBoxMenuItem.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
             truncateSliderLabelMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSlideLabelMenuItem.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
             descVisibilitySeparatorMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.descVisSeparatorMenuItem.text"));
-            showRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadioMenuItem.text"));
-            showRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadio.text"));
-            countsRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadioMenuItem.text"));
-            countsRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadio.text"));
-            hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
-            hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
+            showRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadioMenuItem.text"));
+            showRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadio.text"));
+            countsRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadioMenuItem.text"));
+            countsRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadio.text"));
+            hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
+            hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
         }
     }
 
