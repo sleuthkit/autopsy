@@ -229,7 +229,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
             return false;
         }
     }
@@ -553,7 +553,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
