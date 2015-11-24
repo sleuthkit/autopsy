@@ -68,13 +68,13 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         super(chart, eventStripe, parentNode);
 
         setMinHeight(48);
-
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
+
         for (EventCluster cluster : eventStripe.getClusters()) {
             subNodes.add(createChildNode(cluster));
         }
@@ -124,7 +124,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventStripe().getEventIDs().size();
+        final int size = getEventStripe().getCount();
 
         switch (descrVis) {
             case HIDDEN:

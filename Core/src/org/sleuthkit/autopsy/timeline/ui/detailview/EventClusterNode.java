@@ -143,7 +143,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventBundle().getEventIDs().size();
+        final int size = getEventCluster().getCount();
         switch (descrVis) {
             case HIDDEN:
                 countLabel.setText("");
