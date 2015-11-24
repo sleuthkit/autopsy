@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -120,7 +122,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final Background defaultBackground;
     final Color evtColor;
 
-    final List<ParentNodeType> subNodes = new ArrayList<>();
+    final ObservableList<ParentNodeType> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
     final Label descrLabel = new Label();
     final Label countLabel = new Label();
@@ -152,7 +154,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
-
+        setMaxWidth(USE_PREF_SIZE);
+        infoHBox.setMaxWidth(USE_PREF_SIZE);
+        subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
+        subNodePane.setMinWidth(USE_PREF_SIZE);
+        subNodePane.setMaxWidth(USE_PREF_SIZE);
         /*
          * This triggers the layout when a mousover causes the action buttons to
          * interesect with another node, forcing it down.
@@ -185,6 +191,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         setOnMouseClicked(new ClickHandler());
         descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
         descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
+
+        Bindings.bindContent(subNodePane.getChildren(), subNodes);
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -341,6 +349,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         chart.layoutEventBundleNodes(subNodes, 0);
         super.layoutChildren();
     }
+
+    abstract ParentNodeType createChildNode(ParentType rawChild);
 
     /**
      * @param w the maximum width the description label should have

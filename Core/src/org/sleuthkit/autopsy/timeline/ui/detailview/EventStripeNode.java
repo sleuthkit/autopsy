@@ -73,15 +73,18 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
-
+        descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
         for (EventCluster cluster : eventStripe.getClusters()) {
-            EventClusterNode clusterNode = new EventClusterNode(chart, cluster, this);
-            subNodes.add(clusterNode);
-            subNodePane.getChildren().addAll(clusterNode);
+            subNodes.add(createChildNode(cluster));
         }
 
         getChildren().addAll(new VBox(infoHBox, subNodePane));
+    }
+
+    @Override
+    EventClusterNode createChildNode(EventCluster cluster) {
+        return new EventClusterNode(chart, cluster, this);
     }
 
     @Override

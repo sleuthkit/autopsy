@@ -180,6 +180,4 @@ public final class EventStripe implements EventBundle<EventCluster> {
     public String toString() {
         return "EventStripe{" + "description=" + description + ", eventIDs=" + eventIDs.size() + '}';
     }
-
-
 }
