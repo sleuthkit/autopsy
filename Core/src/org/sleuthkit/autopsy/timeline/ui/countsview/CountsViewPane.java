@@ -69,6 +69,11 @@ import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
+import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.CountsViewPane_loggedTask_name;
+import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.CountsViewPane_loggedTask_prepUpdate;
+import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.CountsViewPane_loggedTask_resetUI;
+import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.CountsViewPane_loggedTask_updatingCounts;
+import static org.sleuthkit.autopsy.timeline.ui.countsview.Bundle.CountsViewPane_tooltip_text;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
@@ -117,8 +122,18 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
     }
 
     @Override
+    @NbBundle.Messages({"CountsViewPane.loggedTask.name=Updating Counts Graph",
+        "CountsViewPane.loggedTask.prepUpdate=preparing update",
+        "CountsViewPane.loggedTask.resetUI=resetting ui",
+        "# {0} - count",
+        "# {1} - event type displayname",
+        "# {2} - start date time",
+        "# {3} - end date time",
+        "CountsViewPane.tooltip.text={0} {1} events\nbetween {2}\nand     {3}",
+        "CountsViewPane.loggedTask.updatingCounts=updating counts",
+        "CountsViewPane.loggedTask.wrappingUp=wrapping up"})
     protected Task<Boolean> getUpdateTask() {
-        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.name"), true) {
+        return new LoggedTask<Boolean>(CountsViewPane_loggedTask_name(), true) {
 
             @Override
             protected Boolean call() throws Exception {
@@ -126,13 +141,11 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                     return null;
                 }
                 updateProgress(-1, 1);
-                updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.prepUpdate"));
-                Platform.runLater(() -> {
-                    setCursor(Cursor.WAIT);
-                });
+                updateMessage(CountsViewPane_loggedTask_prepUpdate());
+                Platform.runLater(() -> setCursor(Cursor.WAIT));
 
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
-                chart.setRangeInfo(rangeInfo);
+                chart.setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
                 //extend range to block bounderies (ie day, month, year)
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
@@ -140,29 +153,30 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
                 int max = 0;
                 int p = 0; // progress counter
-
+                updateMessage(CountsViewPane_loggedTask_resetUI());
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.resetUI"));
+
                     eventTypeMap.clear();
                     dataSeries.clear();
                     dateAxis.getCategories().clear();
-
-                    DateTime start = timeRange.getStart();
-                    while (timeRange.contains(start)) {
-                        //add bar/'category' label for the current interval
-                        final String dateString = start.toString(rangeInfo.getTickFormatter());
-                        dateAxis.getCategories().add(dateString);
-
-                        //increment for next iteration
-                        start = start.plus(rangeInfo.getPeriodSize().getPeriod());
-                    }
-
-                    //make all series to ensure they get created in consistent order
-                    EventType.allTypes.forEach(CountsViewPane.this::getSeries);
                 });
-
                 DateTime start = timeRange.getStart();
+                while (timeRange.contains(start)) {
+                    //add bar/'category' label for the current interval
+                    final String dateString = start.toString(rangeInfo.getTickFormatter());
+                    Platform.runLater(() -> {
+
+                        dateAxis.getCategories().add(dateString);
+                    });
+                    //increment for next iteration
+                    start = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                }
+
+                //make all series to ensure they get created in consistent order
+                EventType.allTypes.forEach(CountsViewPane.this::getSeries);
+
+                start = timeRange.getStart();
                 while (timeRange.contains(start)) {
 
                     final String startString = start.toString(rangeInfo.getTickFormatter());
@@ -197,8 +211,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                     node.setCursor(Cursor.HAND);
 
                                     final Tooltip tooltip = new Tooltip(
-                                            NbBundle.getMessage(this.getClass(), "CountsViewPane.tooltip.text",
-                                                    count,
+                                            CountsViewPane_tooltip_text(count,
                                                     et.getDisplayName(),
                                                     startString,
                                                     interval.getEnd().toString(rangeInfo.getTickFormatter())));
@@ -223,10 +236,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                             max = Math.max(max, dateMax);
 
                             final double fmax = max;
-
+                            updateMessage(CountsViewPane_loggedTask_updatingCounts());
+                            updateProgress(fp, rangeInfo.getPeriodsInRange());
                             Platform.runLater(() -> {
-                                updateMessage(
-                                        NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.updatingCounts"));
                                 getSeries(et).getData().add(xyData);
                                 if (scale.get().equals(ScaleType.LINEAR)) {
                                     countAxis.setTickUnit(Math.pow(10, Math.max(0, Math.floor(Math.log10(fmax)) - 1)));
@@ -235,28 +247,25 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                 }
                                 countAxis.setUpperBound(1 + fmax * 1.2);
                                 layoutDateLabels();
-                                updateProgress(fp, rangeInfo.getPeriodsInRange());
+
                             });
                         } else {
                             final double fmax = max;
-
-                            Platform.runLater(() -> {
-                                updateMessage(
-                                        NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.updatingCounts"));
-                                updateProgress(fp, rangeInfo.getPeriodsInRange());
-                            });
+                            updateMessage(CountsViewPane_loggedTask_updatingCounts());
+                            updateProgress(fp, rangeInfo.getPeriodsInRange());
                         }
                     }
                 }
-
-                Platform.runLater(() -> {
-                    updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.wrappingUp"));
-                    updateProgress(1, 1);
-                    layoutDateLabels();
-                    setCursor(Cursor.NONE);
-                });
-
+                updateProgress(1, 1);
                 return max > 0;
+            }
+
+            @Override
+
+            protected void succeeded() {
+                super.succeeded();
+                layoutDateLabels();
+                setCursor(Cursor.DEFAULT);
             }
         };
     }
@@ -337,16 +346,15 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         return eventTypeMap.computeIfAbsent(et, (EventType t) -> {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-                dataSeries.add(series);
+            dataSeries.add(series);
             return series;
         });
-        
+
 //        XYChart.Series<String, Number> series = eventTypeMap.get(et);
 //        if (series == null) {
 //
 //        }
 //        return series;
-
     }
 
     /**
@@ -393,7 +401,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                             barContextMenu = new ContextMenu();
                             barContextMenu.setAutoHide(true);
                             barContextMenu.getItems().addAll(
-                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                    new MenuItem(NbBundle.getMessage(CountsViewPane.class,
                                                     "Timeline.ui.countsview.menuItem.selectTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
@@ -410,7 +418,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             });
                                         }
                                     },
-                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                    new MenuItem(NbBundle.getMessage(CountsViewPane.class,
                                                     "Timeline.ui.countsview.menuItem.selectEventType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
@@ -424,7 +432,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                             });
                                         }
                                     },
-                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                    new MenuItem(NbBundle.getMessage(CountsViewPane.class,
                                                     "Timeline.ui.countsview.menuItem.selectTimeandType")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
@@ -434,7 +442,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                         }
                                     },
                                     new SeparatorMenuItem(),
-                                    new MenuItem(NbBundle.getMessage(this.getClass(),
+                                    new MenuItem(NbBundle.getMessage(CountsViewPane.class,
                                                     "Timeline.ui.countsview.menuItem.zoomIntoTimeRange")) {
                                         {
                                             setOnAction((ActionEvent t) -> {
@@ -514,9 +522,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 }
             });
 
-            logRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.logRadio.text"));
-            linearRadio.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.linearRadio.text"));
-            scaleLabel.setText(NbBundle.getMessage(this.getClass(), "CountsViewPane.scaleLabel.text"));
+            logRadio.setText(NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.logRadio.text"));
+            linearRadio.setText(NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.linearRadio.text"));
+            scaleLabel.setText(NbBundle.getMessage(CountsViewPane.class, "CountsViewPane.scaleLabel.text"));
         }
 
         CountsViewSettingsPane() {
