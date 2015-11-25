@@ -1,4 +1,4 @@
-TestDisk and PhotoRec v6.14 Plugin
+TestDisk and PhotoRec v7.1 Plugin
 ===================================== 
 Plugin by: Xtreme - Ahmed Hossam
 Plugin for: Christophe GRENIER (www.cgsecurity.org)

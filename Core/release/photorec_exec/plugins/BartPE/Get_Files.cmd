@@ -13,7 +13,7 @@ set INFname=Testdisk.inf
 ::SET NUMROW= 0%%                25%%               50%%               75%%              100%%
 
 echo ===================================== > "%cd%\File_Grabber.log"
-echo Testdisk and PhotoRec 6.14 Plugin >> File_Grabber.log
+echo Testdisk and PhotoRec 7.1 Plugin >> File_Grabber.log
 echo Plugin by: Xtreme (Ahmed Hossam) >> File_Grabber.log
 echo Collector by: Xtreme >> File_Grabber.log
 echo Plugin for: Windows Xpire Rd CD >> File_Grabber.log
@@ -32,7 +32,25 @@ IF NOT EXIST "%cd%\TestDisk_PE\files\63" md "TestDisk_PE\files\63"
 
 echo.&echo   -Grabbing file: Copy Testdisk files... &FOR %%A IN (
 ..\..\cygwin1.dll
+..\..\cyggcc_s-1.dll
+..\..\cygiconv-2.dll
+..\..\cygjpeg-8.dll
+..\..\cygncursesw-10.dll
+..\..\cygssp-0.dll
+..\..\cygwin1.dll
+..\..\cygz.dll
+..\..\iconv.dll
+..\..\libgcc_s_sjlj-1.dll
+..\..\libjpeg-62.dll
+..\..\libpng16-16.dll
+..\..\libssp-0.dll
+..\..\libstdc++-6.dll
+..\..\libwinpthread-1.dll
+..\..\QtCore4.dll
+..\..\QtGui4.dll
+..\..\zlib1.dll
 ..\..\photorec_win.exe
+..\..\qphotorec_win.exe
 ..\..\testdisk_win.exe
 ..\..\fidentify_win.exe
 	)DO (ECHO. Grabbing file:%%~A >>"%cd%\File_Grabber.log"
@@ -70,18 +88,18 @@ GOTO :EOF
 MODE CON: COLS=78 LINES=28 &COLOR 4F &cls
 
 echo.&echo. >> File_Grabber.log
-echo   TestDisk and PhotoRes can't be localized on your system >> File_Grabber.log
+echo   TestDisk and PhotoRec can't be localized on your system >> File_Grabber.log
 echo.  >> File_Grabber.log
-echo You can download TestDisk and PhotoRes from here  >> File_Grabber.log
+echo You can download TestDisk and PhotoRec from here  >> File_Grabber.log
 echo.&echo -TestDisk Official website:  >> File_Grabber.log
 echo   	   http://www.cgsecurity.org/wiki/TestDisk_Download/ >> File_Grabber.log
 echo. >> File_Grabber.log
 echo For help you can check Help.html >> File_Grabber.log
 
 CALL :BRANDH
-echo.&echo.	   TestDisk and PhotoRes can't be localized on your system
+echo.&echo.	   TestDisk and PhotoRec can't be localized on your system
 echo.&echo.       You need to download TestDisk and DON'T change the download folders         structure then try again
-echo.&echo.     You can download TestDisk and PhotoRes from here
+echo.&echo.     You can download TestDisk and PhotoRec from here
 echo.&echo.       -TestDisk Official website:
 echo            http://www.cgsecurity.org/wiki/TestDisk_Download/&echo.
 CALL :BRAND2
@@ -101,7 +119,7 @@ exit
 
 :done
 cls&CALL :BRANDH
-echo.&echo.	TestDisk and PhotoRes Files have been succesfully collected
+echo.&echo.	TestDisk and PhotoRec Files have been succesfully collected
 echo.&echo.		You can now start build your PE version &echo.
 CALL :BRAND2
 GOTO :END
@@ -111,7 +129,7 @@ MODE CON: COLS=75 LINES=35 &color 1e
 echo.
 ECHO          ษออออออออออออออออออออออออออออออออออออออออออออออออออออออป
 ECHO          บ                                                      บ
-ECHO          บ      TestDisk and PhotoRes plugin Files Collector    บ
+ECHO          บ      TestDisk and PhotoRec plugin Files Collector    บ
 ECHO          บ                                                      บ
 ECHO          บ      Plugin by Xtreme ( Xtremesony_xp@yahoo.com )    บ
 ECHO          บ                                                      บ 
