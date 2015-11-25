@@ -55,7 +55,7 @@ The following steps will configure Solr to run using an account that will have a
     <br><br>
     \image html javaproperties.PNG
     <br><br>
-    A fully updated _serviceinstall.bat_ is shown below, with the changes marked in yellow.
+    A portion of an updated _serviceinstall.bat_ is shown below, with the changes marked in yellow.
     <br><br>
     \image html updatedServiceInstall.PNG
     <br><br>
