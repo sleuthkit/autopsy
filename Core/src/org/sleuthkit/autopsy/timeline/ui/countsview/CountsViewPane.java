@@ -61,6 +61,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.VisualizationMode;
@@ -111,7 +112,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @Override
     protected Boolean isTickBold(String value) {
-        return dataSets.stream().flatMap((series) -> series.getData().stream())
+        return dataSeries.stream().flatMap((series) -> series.getData().stream())
                 .anyMatch((data) -> data.getXValue().equals(value) && data.getYValue().intValue() > 0);
     }
 
@@ -144,7 +145,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 Platform.runLater(() -> {
                     updateMessage(NbBundle.getMessage(this.getClass(), "CountsViewPane.loggedTask.resetUI"));
                     eventTypeMap.clear();
-                    dataSets.clear();
+                    dataSeries.clear();
                     dateAxis.getCategories().clear();
 
                     DateTime start = timeRange.getStart();
@@ -264,7 +265,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         super(controller, partPane, contextPane, spacer);
         chart = new EventCountsChart(controller, dateAxis, countAxis);
         setChartClickHandler();
-        chart.setData(dataSets);
+        chart.setData(dataSeries);
         setCenter(chart);
 
         Tooltip.install(chart, getDefaultTooltip());
@@ -331,16 +332,20 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
      * @return a Series object to contain all the events with the given
      *         EventType
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private XYChart.Series<String, Number> getSeries(final EventType et) {
-        XYChart.Series<String, Number> series = eventTypeMap.get(et);
-        if (series == null) {
-            series = new XYChart.Series<>();
+        return eventTypeMap.computeIfAbsent(et, (EventType t) -> {
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName(et.getDisplayName());
-            eventTypeMap.put(et, series);
-
-            dataSets.add(series);
-        }
-        return series;
+                dataSeries.add(series);
+            return series;
+        });
+        
+//        XYChart.Series<String, Number> series = eventTypeMap.get(et);
+//        if (series == null) {
+//
+//        }
+//        return series;
 
     }
 
@@ -395,7 +400,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                                                 controller.selectTimeAndType(interval, RootEventType.getInstance());
 
                                                 selectedNodes.clear();
-                                                for (XYChart.Series<String, Number> s : dataSets) {
+                                                for (XYChart.Series<String, Number> s : dataSeries) {
                                                     s.getData().forEach((XYChart.Data<String, Number> d) -> {
                                                         if (startDateString.contains(d.getXValue())) {
                                                             selectedNodes.add(d.getNode());
