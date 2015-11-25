@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
@@ -89,28 +89,28 @@ public class EventCluster implements EventBundle<EventStripe> {
     /**
      * the set of ids of the clustered events
      */
-    final private Set<Long> eventIDs;
+    final private ImmutableSet<Long> eventIDs;
 
     /**
      * the ids of the subset of clustered events that have at least one tag
      * applied to them
      */
-    private final Set<Long> tagged;
+    private final ImmutableSet<Long> tagged;
 
     /**
      * the ids of the subset of clustered events that have at least one hash set
      * hit
      */
-    private final Set<Long> hashHits;
+    private final ImmutableSet<Long> hashHits;
 
     private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs, Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod, EventStripe parent) {
 
         this.span = spanningInterval;
         this.type = type;
-        this.hashHits = hashHits;
-        this.tagged = tagged;
+        this.hashHits = ImmutableSet.copyOf(hashHits);
+        this.tagged = ImmutableSet.copyOf(tagged);
         this.description = description;
-        this.eventIDs = eventIDs;
+        this.eventIDs = ImmutableSet.copyOf(eventIDs);
         this.lod = lod;
         this.parent = parent;
     }
@@ -139,18 +139,21 @@ public class EventCluster implements EventBundle<EventStripe> {
     }
 
     @Override
-    public Set<Long> getEventIDs() {
-        return Collections.unmodifiableSet(eventIDs);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDs() {
+        return eventIDs;
     }
 
     @Override
-    public Set<Long> getEventIDsWithHashHits() {
-        return Collections.unmodifiableSet(hashHits);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDsWithHashHits() {
+        return hashHits;
     }
 
     @Override
-    public Set<Long> getEventIDsWithTags() {
-        return Collections.unmodifiableSet(tagged);
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    public ImmutableSet<Long> getEventIDsWithTags() {
+        return tagged;
     }
 
     @Override

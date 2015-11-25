@@ -388,7 +388,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * @return all the nodes that pass the given predicate
      */
     synchronized Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
-        //use this recursive function to flatten the tree of nodes into an iterable.
+        //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
                 new Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>>() {
                     @Override
