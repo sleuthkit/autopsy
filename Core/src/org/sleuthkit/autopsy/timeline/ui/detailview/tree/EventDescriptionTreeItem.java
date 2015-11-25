@@ -37,13 +37,15 @@ class EventDescriptionTreeItem extends NavTreeItem {
      */
     private final Map<String, EventDescriptionTreeItem> childMap = new HashMap<>();
     private final EventBundle<?> bundle;
+    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Description;
 
     public EventBundle<?> getEventBundle() {
         return bundle;
     }
 
-    EventDescriptionTreeItem(EventBundle<?> g) {
+    EventDescriptionTreeItem(EventBundle<?> g, Comparator<TreeItem<EventBundle<?>>> comp) {
         bundle = g;
+        comparator = comp;
         setValue(g);
     }
 
@@ -56,10 +58,11 @@ class EventDescriptionTreeItem extends NavTreeItem {
     public void insert(Deque<EventBundle<?>> path) {
         EventBundle<?> head = path.removeFirst();
         EventDescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(), description -> {
-            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head);
+            EventDescriptionTreeItem newTreeItem = new EventDescriptionTreeItem(head, comparator);
             newTreeItem.setExpanded(true);
             childMap.put(description, newTreeItem);
             getChildren().add(newTreeItem);
+            resort(comparator, false);
             return newTreeItem;
         });
 
@@ -81,8 +84,12 @@ class EventDescriptionTreeItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
+    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+        this.comparator = comp;
         FXCollections.sort(getChildren(), comp);
+        if (recursive) {
+            childMap.values().forEach(ti -> ti.resort(comp, true));
+        }
     }
 
     @Override
