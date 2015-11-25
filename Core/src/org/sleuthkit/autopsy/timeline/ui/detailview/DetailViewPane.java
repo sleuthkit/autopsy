@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -31,7 +29,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
-import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.CheckBox;
@@ -57,26 +54,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.controlsfx.control.MaskerPane;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_name;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_preparing;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.Bundle.DetailViewPane_loggedTask_updateUI;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -105,10 +94,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
     private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-
-    //private access to barchart data
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final Map<EventType, XYChart.Series<DateTime, EventStripe>> eventTypeToSeriesMap = new HashMap<>();
 
     public ObservableList<EventStripe> getEventStripes() {
         return chart.getEventStripes();
@@ -250,85 +235,18 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         return dateAxis.getTickMarkLabel(value);
     }
 
-    /**
-     * NOTE: Because this method modifies data directly used by the chart, this
-     * method should only be called from JavaFX thread!
-     *
-     * @param et the EventType to get the series for
-     *
-     * @return a Series object to contain all the events with the given
-     *         EventType
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private XYChart.Series<DateTime, EventStripe> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.computeIfAbsent(et, eventType -> {
-            XYChart.Series<DateTime, EventStripe> series = new XYChart.Series<>();
-            series.setName(eventType.getDisplayName());
-            dataSeries.add(series);
-            return series;
-        });
+    @Override
+    protected void resetData() {
+        super.resetData();
+        vertScrollBar.setValue(0);
     }
 
     @Override
-    @NbBundle.Messages({"DetailViewPane.loggedTask.preparing=Analyzing zoom and filter settings",
-        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
-        "DetailViewPane.loggedTask.name=Updating Details View",
-        "DetailViewPane.loggedTask.updateUI=Populating visualization"})
     protected Task<Boolean> getUpdateTask() {
-
-        return new LoggedTask<Boolean>(DetailViewPane_loggedTask_name(), true) {
-
-            @Override
-            protected Boolean call() throws Exception {
-                if (isCancelled()) {
-                    return null;
-                }
-
-                updateProgress(-1, 1);
-                updateMessage(DetailViewPane_loggedTask_preparing());
-                Interval timeRange = filteredEvents.timeRangeProperty().get();
-                Platform.runLater(() -> {
-                    MaskerPane maskerPane = new MaskerPane();
-                    maskerPane.textProperty().bind(messageProperty());
-                    maskerPane.progressProperty().bind(progressProperty());
-                    setCenter(new StackPane(chart, maskerPane));
-
-                    dataSeries.clear();
-                    vertScrollBar.setValue(0);
-                    eventTypeToSeriesMap.clear();
-                    dateAxis.setRange(timeRange, true);
-                });
-
-                updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
-                List<EventStripe> eventStripes = filteredEvents.getEventStripes();
-
-                final int size = eventStripes.size();
-                updateMessage(DetailViewPane_loggedTask_updateUI());
-                for (int i = 0; i < size; i++) {
-                    if (isCancelled()) {
-                        break;
-                    }
-                    updateProgress(i, size);
-                    final EventStripe cluster = eventStripes.get(i);
-                    final XYChart.Data<DateTime, EventStripe> xyData = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                    Platform.runLater(() -> getSeries(cluster.getEventType()).getData().add(xyData));
-                }
-
-                return eventStripes.isEmpty() == false;
-            }
-
-            @Override
-            protected void succeeded() {
-                super.succeeded();
-                layoutDateLabels();
-                setCenter(chart);
-                setCursor(Cursor.DEFAULT);
-            }
-        };
+        return new DetailsUpdateTask();
     }
 
     @Override
-
     protected Effect getSelectionEffect() {
         return null;
     }
@@ -457,5 +375,51 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
+    }
+
+    @NbBundle.Messages({
+        "DetailViewPane.loggedTask.preparing=Analyzing zoom and filter settings",
+        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
+        "DetailViewPane.loggedTask.name=Updating Details View",
+        "DetailViewPane.loggedTask.updateUI=Populating visualization"})
+    private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
+
+        DetailsUpdateTask() {
+            super(Bundle.DetailViewPane_loggedTask_name(), true);
+        }
+
+        @Override
+        protected Boolean call() throws Exception {
+            super.call();
+            if (isCancelled()) {
+                return null;
+            }
+
+            updateMessage(Bundle.DetailViewPane_loggedTask_preparing());
+
+            resetChart(getTimeRange());
+
+            updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
+            List<EventStripe> eventStripes = filteredEvents.getEventStripes();
+
+            final int size = eventStripes.size();
+            updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    return null;
+                }
+                updateProgress(i, size);
+                final EventStripe cluster = eventStripes.get(i);
+                final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
+                Platform.runLater(() -> getSeries(cluster.getEventType()).getData().add(dataItem));
+            }
+
+            return eventStripes.isEmpty() == false;
+        }
+
+        @Override
+        protected void setDateAxisValues(Interval timeRange) {
+            dateAxis.setRange(timeRange, true);
+        }
     }
 }
