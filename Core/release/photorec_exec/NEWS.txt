@@ -1,5 +1,53 @@
 Current news
-== 7.0-WIP ==
+== 7.1-WIP ==
+
+== 7.0 ==
+
+=== General Improvements ===
+Various fix including security fix, thanks to
+* Coverity scan (Static Analysis of source code)
+* afl-fuzz (security-oriented fuzzer).
+* Denis Andzakovic from Security Assessment for reporting an exploitable Stack Buffer Overflow
+
+=== TestDisk ===
+==== Improvements ====
+* exFAT: better support
+* ext4: handle 64 bit blocks or 64 KiB blocksize. Fix detection and file listing
+
+==== Bug fixes ====
+* Avoid erroneous error when writing 512 bytes on hard disk using 4k sector
+* FAT, NTFS: avoid NULL pointer dereference if localtime() returns NULL. Thanks to Graham Sutherland for reporting this bug.
+
+=== PhotoRec & QPhotoRec ===
+QPhotoRec is a Graphical User Interface (Qt based GUI) version of PhotoRec. More user friendly, it recognizes the same file formats.
+
+PhotoRec remains recommended for advanced users, it can stop a recovery and resume it later, it recovers more fragmented files when brute-force technology is enabled and expert mode is available.
+
+==== Improvements ====
+* Reduced false positives for more than 80 file formats.
+* .gif: fix filesize detection
+* .flv: add Flash filesize detection
+* .mpg: detect filesize for MPEG
+* .ra: detect filesize for RealAudio3
+* Improved algorithm to deal with data fragmentation resulting in a general speed increased
+* Speedup brute-force mode. Brute-force mode can recover more fragmented files, but it's still slow and not 100% reliable. You can enable it in PhotoRec Options menu.
+
+New file formats recovered by PhotoRec:
+* .3dm: Rhino / openNURBS
+* .ari: ARRI Raw Video
+* .camrec: Camtasia Studio
+* .dad: Micae DVR
+* .dcm: Digital Imaging and Communications in Medicine (DICOM)
+* .fp12: File Maker Pro 12
+* .kra: Krita
+* .mlv: Magic Lantern Video
+* .notebook: SMART notebook
+* .ora: Mypaint
+* .red: RED2 video format
+* .rlv: Revelation password
+* .vbm: Veeam Backup Metadata
+* .woff: Web Open Font Format
+
 
 
 == 6.14 ==
