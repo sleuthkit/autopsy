@@ -269,7 +269,11 @@ public class PlatformUtil {
      * @return OS arch string
      */
     public static String getOSArch() {
-        return System.getProperty("os.arch", OS_ARCH_UNKNOWN); //NON-NLS
+        String arch = System.getProperty("os.arch"); //NON-NLS
+        if(arch == null)
+            return OS_ARCH_UNKNOWN;
+        else
+            return arch.endsWith("64") ? "x64" : "x32"; //NON-NLS
     }
 
     /**

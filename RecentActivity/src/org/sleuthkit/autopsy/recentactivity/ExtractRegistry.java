@@ -617,18 +617,6 @@ class ExtractRegistry extends Extract {
                                     break;
 
                                 case "ProcessorArchitecture": //NON-NLS
-                                    // Architecture is now included under Profiler
-                                    //try {
-                                    //    String processorArchitecture = value;
-                                    //    if (processorArchitecture.equals("AMD64"))
-                                    //        processorArchitecture = "x86-64";
-
-                                    //    BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
-                                    //    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE.getTypeID(), parentModuleName, processorArchitecture));
-                                    //    bbart.addAttributes(bbattributes);
-                                    //} catch (TskCoreException ex) {
-                                    //    logger.log(Level.SEVERE, "Error adding os info artifact to blackboard."); //NON-NLS
-                                    //}
                                     break;
 
                                 case "ProfileList": //NON-NLS
