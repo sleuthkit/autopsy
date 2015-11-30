@@ -415,6 +415,11 @@ def main():
         print("Non blackboard database comparison failed.")
     if not bb_dump_passed:
         print("Blackboard database comparison failed.")
+    
+    try:
+        shutil.rmtree(os.environ['TMP'])
+    except:
+        print("Error deleting temp file: " + str(os.environ['TMP']))
 
     return 0
 
