@@ -49,7 +49,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -95,41 +94,41 @@ import org.sleuthkit.datamodel.TskData;
  *
  */
 public class EventsRepository {
-
+    
     private final static Logger LOGGER = Logger.getLogger(EventsRepository.class.getName());
-
+    
     private final Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build());
     private DBPopulationWorker dbWorker;
     private final EventDB eventDB;
     private final Case autoCase;
     private final FilteredEventsModel modelInstance;
-
+    
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimeLineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
-
+    
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
-
+    
     public Case getAutoCase() {
         return autoCase;
     }
-
+    
     public ObservableList<TagName> getTagNames() {
         return tagNames;
     }
-
+    
     synchronized public ObservableMap<Long, String> getDatasourcesMap() {
         return datasourcesMap;
     }
-
+    
     synchronized public ObservableMap<Long, String> getHashSetMap() {
         return hashSetMap;
     }
-
+    
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
         return eventDB.getBoundingEventsInterval(timeRange, filter);
     }
@@ -141,7 +140,7 @@ public class EventsRepository {
     public FilteredEventsModel getEventsModel() {
         return modelInstance;
     }
-
+    
     public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
@@ -179,55 +178,55 @@ public class EventsRepository {
         return minCache.getUnchecked("min"); // NON-NLS
 //        return eventDB.getMinTime();
     }
-
+    
     private void recordLastArtifactID(long lastArtfID) {
         eventDB.recordLastArtifactID(lastArtfID);
     }
-
+    
     private void recordWasIngestRunning(Boolean wasIngestRunning) {
         eventDB.recordWasIngestRunning(wasIngestRunning);
     }
-
+    
     private void recordLastObjID(Long lastObjID) {
         eventDB.recordLastObjID(lastObjID);
     }
-
+    
     public boolean getWasIngestRunning() {
         return eventDB.getWasIngestRunning();
     }
-
+    
     public Long getLastObjID() {
         return eventDB.getLastObjID();
     }
-
+    
     public long getLastArtfactID() {
         return eventDB.getLastArtfactID();
     }
-
+    
     public TimeLineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
-
+    
     synchronized public Set<TimeLineEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());
-
+        
     }
-
+    
     synchronized public List<EventStripe> getEventStripes(ZoomParams params) {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex);
             return Collections.emptyList();
         }
     }
-
+    
     synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
         return eventCountsCache.getUnchecked(params);
     }
-
+    
     private void invalidateCaches() {
         minCache.invalidateAll();
         maxCache.invalidateAll();
@@ -235,15 +234,15 @@ public class EventsRepository {
         eventStripeCache.invalidateAll();
         idToEventCache.invalidateAll();
     }
-
+    
     public Set<Long> getEventIDs(Interval timeRange, RootFilter filter) {
         return eventDB.getEventIDs(timeRange, filter);
     }
-
+    
     public Interval getSpanningInterval(Collection<Long> eventIDs) {
         return eventDB.getSpanningInterval(eventIDs);
     }
-
+    
     public boolean hasNewColumns() {
         return eventDB.hasNewColumns();
     }
@@ -267,7 +266,7 @@ public class EventsRepository {
      * @param skCase
      */
     synchronized private void populateFilterData(SleuthkitCase skCase) {
-
+        
         for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
             hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
         }
@@ -279,7 +278,7 @@ public class EventsRepository {
                 LOGGER.log(Level.SEVERE, "Failed to get datasource by ID.", ex);
             }
         }
-
+        
         try {
             //should this only be tags applied to files or event bearing artifacts?
             tagNames.setAll(skCase.getTagNamesInUse());
@@ -287,7 +286,7 @@ public class EventsRepository {
             LOGGER.log(Level.SEVERE, "Failed to get tag names in use.", ex);
         }
     }
-
+    
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag, EventDB.EventTransaction trans) {
         Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag, trans);
         if (!updatedEventIDs.isEmpty()) {
@@ -295,7 +294,7 @@ public class EventsRepository {
         }
         return updatedEventIDs;
     }
-
+    
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) {
         Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tagID, tagged);
         if (!updatedEventIDs.isEmpty()) {
@@ -303,7 +302,7 @@ public class EventsRepository {
         }
         return updatedEventIDs;
     }
-
+    
     synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
         eventCountsCache.invalidateAll();
         eventStripeCache.invalidateAll();
@@ -343,21 +342,21 @@ public class EventsRepository {
         recordLastArtifactID(lastArtfID);
         recordWasIngestRunning(injestRunning);
     }
-
+    
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
         return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public boolean isRebuilding() {
         return dbWorker.isRunning();
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildRepository() {
         return rebuildRepository(DBPopulationMode.FULL);
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildTags() {
         return rebuildRepository(DBPopulationMode.TAGS_ONLY);
@@ -377,9 +376,9 @@ public class EventsRepository {
         workerExecutor.execute(dbWorker);
         return dbWorker;
     }
-
+    
     private enum DBPopulationMode {
-
+        
         FULL,
         TAGS_ONLY;
     }
@@ -389,38 +388,38 @@ public class EventsRepository {
      * the alternatives I can think of seem even worse. -jm
      */
     private class DBPopulationWorker extends CancellationProgressTask<Void> {
-
+        
         private final ReadOnlyBooleanWrapper cancellable = new ReadOnlyBooleanWrapper(true);
-
+        
         private final DBPopulationMode dbPopulationMode;
         private final SleuthkitCase skCase;
         private final TagsManager tagsManager;
-
+        
         private ProgressHandle progressHandle;
-
+        
         @Override
         public ReadOnlyBooleanProperty cancellableProperty() {
             return cancellable.getReadOnlyProperty();
         }
-
+        
         @Override
         public boolean requestCancel() {
             Platform.runLater(() -> cancellable.set(false));
             return super.requestCancel();
         }
-
+        
         @Override
         protected void updateTitle(String title) {
             super.updateTitle(title);
             progressHandle.setDisplayName(title);
         }
-
+        
         @Override
         protected void updateMessage(String message) {
             super.updateMessage(message);
             progressHandle.progress(message);
         }
-
+        
         @Override
         protected void updateProgress(double workDone, double max) {
             super.updateProgress(workDone, max);
@@ -428,7 +427,7 @@ public class EventsRepository {
                 progressHandle.progress((int) workDone);
             }
         }
-
+        
         @Override
         protected void updateProgress(long workDone, long max) {
             super.updateProgress(workDone, max);
@@ -437,13 +436,13 @@ public class EventsRepository {
                 progressHandle.progress((int) workDone);
             }
         }
-
+        
         DBPopulationWorker(DBPopulationMode mode) {
             skCase = autoCase.getSleuthkitCase();
             tagsManager = autoCase.getServices().getTagsManager();
             this.dbPopulationMode = mode;
         }
-
+        
         void restartProgressHandle(String title, String message, Double workDone, double total, Boolean cancellable) {
             if (progressHandle != null) {
                 progressHandle.finish();
@@ -451,7 +450,7 @@ public class EventsRepository {
             progressHandle = cancellable
                     ? ProgressHandleFactory.createHandle(title, this::requestCancel)
                     : ProgressHandleFactory.createHandle(title);
-
+            
             if (workDone < 0) {
                 progressHandle.start();
             } else {
@@ -461,7 +460,7 @@ public class EventsRepository {
             updateMessage(message);
             updateProgress(workDone, total);
         }
-
+        
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
@@ -474,7 +473,7 @@ public class EventsRepository {
             long lastObjId = skCase.getLastObjectId();
             long lastArtfID = TimeLineController.getCaseLastArtifactID(skCase);
             boolean injestRunning = IngestManager.getInstance().isIngestRunning();
-
+            
             if (dbPopulationMode == DBPopulationMode.FULL) {
                 //drop old db, and add back MAC and artifact events
                 LOGGER.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
@@ -484,7 +483,7 @@ public class EventsRepository {
                 //grab ids of all files
                 List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'");
                 final int numFiles = fileIDs.size();
-
+                
                 trans = eventDB.beginTransaction();
                 insertMACTimeEvents(numFiles, fileIDs, trans);
                 insertArtifactDerivedEvents(trans);
@@ -496,19 +495,19 @@ public class EventsRepository {
                 LOGGER.log(Level.INFO, "dropping old tags"); // NON-NLS
                 eventDB.reInitializeTags();
             }
-
+            
             LOGGER.log(Level.INFO, "updating content tags"); // NON-NLS
             List<ContentTag> contentTags = tagsManager.getAllContentTags();
             int currentWorkTotal = contentTags.size();
             restartProgressHandle(Bundle.progressWindow_msg_refreshingFileTags(), "", 0D, currentWorkTotal, true);
             insertContentTags(currentWorkTotal, contentTags, trans);
-
+            
             LOGGER.log(Level.INFO, "updating artifact tags"); // NON-NLS
             List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
             currentWorkTotal = artifactTags.size();
             restartProgressHandle(Bundle.progressWindow_msg_refreshingResultTags(), "", 0D, currentWorkTotal, true);
             insertArtifactTags(currentWorkTotal, artifactTags, trans);
-
+            
             LOGGER.log(Level.INFO, "committing db"); // NON-NLS
             Platform.runLater(() -> cancellable.set(false));
             restartProgressHandle(Bundle.progressWindow_msg_commitingDb(), "", -1D, 1, false);
@@ -516,18 +515,18 @@ public class EventsRepository {
             if (isCancelRequested() == false) {
                 recordDBPopulationState(lastObjId, lastArtfID, injestRunning);
             }
-
+            
             eventDB.analyze();
             populateFilterData(skCase);
             invalidateCaches();
-
+            
             progressHandle.finish();
             if (isCancelRequested()) {
                 cancel();
             }
             return null;
         }
-
+        
         private void insertArtifactTags(int currentWorkTotal, List<BlackboardArtifactTag> artifactTags, EventDB.EventTransaction trans) {
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelRequested()) {
@@ -538,7 +537,7 @@ public class EventsRepository {
                 eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag, trans);
             }
         }
-
+        
         private void insertContentTags(int currentWorkTotal, List<ContentTag> contentTags, EventDB.EventTransaction trans) {
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelRequested()) {
@@ -549,7 +548,7 @@ public class EventsRepository {
                 eventDB.addTag(contentTag.getContent().getId(), null, contentTag, trans);
             }
         }
-
+        
         private void insertArtifactDerivedEvents(EventDB.EventTransaction trans) {
             //insert artifact based events
             //TODO: use (not-yet existing api) to grab all artifacts with timestamps, rather than the hardcoded lists in EventType -jm
@@ -563,7 +562,7 @@ public class EventsRepository {
                 }
             }
         }
-
+        
         @NbBundle.Messages("progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files")
         private void insertMACTimeEvents(final int numFiles, List<Long> fileIDs, EventDB.EventTransaction trans) {
             restartProgressHandle(Bundle.progressWindow_msg_populateMacEventsFiles(), "", 0D, numFiles, true);
@@ -574,7 +573,7 @@ public class EventsRepository {
                 long fID = fileIDs.get(i);
                 try {
                     AbstractFile f = skCase.getAbstractFileById(fID);
-
+                    
                     if (isNull(f)) {
                         LOGGER.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                     } else {
@@ -587,7 +586,7 @@ public class EventsRepository {
                 }
             }
         }
-
+        
         private void insertEventsForFile(AbstractFile f, EventDB.EventTransaction trans) throws TskCoreException {
             //gather time stamps into map
             EnumMap<FileSystemTypes, Long> timeMap = new EnumMap<>(FileSystemTypes.class);
@@ -607,16 +606,16 @@ public class EventsRepository {
                 final String parentPath = f.getParentPath();
                 long datasourceID = f.getDataSource().getId();
                 String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
-
+                
                 String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
                 String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
                 shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
                 String medDesc = datasourceName + parentPath;
-
+                
                 final TskData.FileKnown known = f.getKnown();
                 Set<String> hashSets = f.getHashSetNames();
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
-
+                
                 for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
@@ -627,7 +626,7 @@ public class EventsRepository {
                 }
             }
         }
-
+        
         @Override
         @NbBundle.Messages("msgdlg.problem.text=There was a problem populating the timeline."
                 + "  Not all events may be present or accurate.")
@@ -671,7 +670,7 @@ public class EventsRepository {
                 LOGGER.log(Level.SEVERE, "There was a problem getting events with sub type " + type.toString() + ".", ex); // NON-NLS
             }
         }
-
+        
         private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart, EventDB.EventTransaction trans) throws TskCoreException {
             ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
 

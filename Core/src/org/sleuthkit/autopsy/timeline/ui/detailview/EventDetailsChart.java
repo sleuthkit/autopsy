@@ -102,7 +102,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     private final FilteredEventsModel filteredEvents;
 
     private ContextMenu chartContextMenu;
+
     private Set<String> activeQuickHidefilters;
+    private double descriptionWidth;
 
     @Override
     public ContextMenu getChartContextMenu() {
@@ -357,6 +359,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 .map(DescriptionFilter::getDescription)
                 .collect(Collectors.toSet());
 
+        descriptionWidth = getDescriptionWidth();
+
         if (bandByType.get()) {
             sortedStripeNodes.stream()
                     .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
@@ -366,6 +370,10 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
         layoutProjectionMap();
         setCursor(null);
+    }
+
+    private double getDescriptionWidth() {
+        return truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
     }
 
     @Override
@@ -437,8 +445,12 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * greater than start position, increment y position, do check(1) again
      * until maxXatY less than start position
      *
-     * @param nodes collection of nodes to layout
-     * @param minY  the minimum y coordinate to position the nodes at.
+     * @param nodes            collection of nodes to layout
+     * @param minY             the minimum y coordinate to position the nodes
+     *                         at.
+     * @param descriptionWidth the value of descriptionWidth
+     *
+     * @return the double
      */
     double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
 
@@ -464,33 +476,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
 
                 //initial test position
-                double yTop = minY;
-
-                if (oneEventPerRow.get()) {
-                    // if onePerRow, just put it at end
-                    yTop = (localMax + MINIMUM_EVENT_NODE_GAP);
-                } else {
-                    double yBottom = yTop + h;
-
-                    //until the node is not overlapping any others try moving it down.
-                    boolean overlapping = true;
-                    while (overlapping) {
-                        overlapping = false;
-                        //check each pixel from bottom to top.
-                        for (double y = yBottom; y >= yTop; y--) {
-                            final Double maxX = treeRangeMap.get(y);
-                            if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
-                                //if that pixel is already used
-                                //jump top to this y value and repeat until free slot is found.
-                                overlapping = true;
-                                yTop = y + MINIMUM_EVENT_NODE_GAP;
-                                yBottom = yTop + h;
-                                break;
-                            }
-                        }
-                    }
-                    treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
-                }
+                double yTop = (oneEventPerRow.get())
+                        ? (localMax + MINIMUM_EVENT_NODE_GAP)
+                        : computeYTop(minY, h, treeRangeMap, xLeft, xRight); // if onePerRow, just put it at end
 
                 localMax = Math.max(yTop + h, localMax);
 
@@ -503,13 +491,41 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         return localMax; //return new max
     }
 
+    private double computeYTop(double yTop, double h, TreeRangeMap<Double, Double> treeRangeMap, double xLeft, double xRight) {
+        double yBottom = yTop + h;
+        //until the node is not overlapping any others try moving it down.
+        boolean overlapping = true;
+        while (overlapping) {
+            overlapping = false;
+            //check each pixel from bottom to top.
+            for (double y = yBottom; y >= yTop; y = y - 24) {
+                final Double maxX = treeRangeMap.get(y);
+                if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
+                    //if that pixel is already used
+                    //jump top to this y value and repeat until free slot is found.
+                    overlapping = true;
+                    yTop = y + MINIMUM_EVENT_NODE_GAP;
+                    yBottom = yTop + h;
+                    break;
+                }
+            }
+        }
+        treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
+        return yTop;
+    }
+
+    /**
+     *
+     * @param bundleNode       the value of bundleNode
+     * @param descriptionWdith the value of descriptionWdith
+     */
     private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
         //make sure it is shown
         bundleNode.setVisible(true);
         bundleNode.setManaged(true);
         //apply advanced layout description visibility options
         bundleNode.setDescriptionVisibility(descrVisibility.get());
-        bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
+        bundleNode.setDescriptionWidth(descriptionWidth);
 
         //do recursive layout
         bundleNode.layoutChildren();
@@ -522,7 +538,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
     private double getXForEpochMillis(Long millis) {
         DateTime dateTime = new DateTime(millis, TimeLineController.getJodaTimeZone());
-        return getXAxis().getDisplayPosition(new DateTime(dateTime));
+        return getXAxis().getDisplayPosition(dateTime);
     }
 
     private void layoutProjectionMap() {

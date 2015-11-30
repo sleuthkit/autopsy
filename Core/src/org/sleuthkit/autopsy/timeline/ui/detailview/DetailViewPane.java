@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.base.Stopwatch;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -400,8 +402,9 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             resetChart(getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
+            Stopwatch createStarted = Stopwatch.createStarted();
             List<EventStripe> eventStripes = filteredEvents.getEventStripes();
-
+            System.out.println(createStarted.elapsed(TimeUnit.MILLISECONDS));
             final int size = eventStripes.size();
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
             for (int i = 0; i < size; i++) {
@@ -411,7 +414,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 updateProgress(i, size);
                 final EventStripe cluster = eventStripes.get(i);
                 final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                Platform.runLater(() -> getSeries(cluster.getEventType()).getData().add(dataItem));
+                Platform.runLater(new Runnable() {
+
+                    public void run() {
+                         getSeries(cluster.getEventType()).getData().add(dataItem);
+                    }
+                });
             }
 
             return eventStripes.isEmpty() == false;
