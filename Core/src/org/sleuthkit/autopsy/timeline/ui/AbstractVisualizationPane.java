@@ -90,13 +90,16 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
+
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
+    /**
+     * access to chart data via series
+     */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
 
-    //private access to barchart data
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
+    private final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
     /**
      * NOTE: Because this method modifies data directly used by the chart, this
