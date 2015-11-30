@@ -321,6 +321,7 @@ class TestRunner(object):
         dataoutpth = make_path(gold_dir, image_name + "-BlackboardDump.txt")
         dbdumpinpth = test_data.get_db_dump_path(DBType.OUTPUT)
         dbdumpoutpth = make_path(gold_dir, image_name + "-DBDump.txt")
+        time_pth = make_path(gold_dir, image_name + "-Time.txt")
         error_pth = make_path(gold_dir, image_name + "-Exceptions.txt")
 
         # Copy files to gold
@@ -350,7 +351,7 @@ class TestRunner(object):
 
         # Rebuild the Run time report
         if(test_data.main_config.timing):
-            file = open(test_data.get_run_time_path(DBType.GOLD), "w")
+            file = open(time_pth, "w")
             file.writelines(test_data.total_ingest_time)
             file.close()
 
@@ -612,7 +613,7 @@ class TestData(object):
         """
         full_filename = self.image_name + file_name
         if(file_type == DBType.GOLD):
-            return make_path(self.main_config.gold, full_filename)
+            return make_path(self.gold_data_dir, full_filename)
         else:
             return make_path(self.output_path, full_filename)
 
