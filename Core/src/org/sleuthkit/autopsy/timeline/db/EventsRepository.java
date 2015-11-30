@@ -465,7 +465,7 @@ public class EventsRepository {
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
-            "progressWindow.msg.gatheringData=Gather event data",
+            "progressWindow.msg.gatheringData=Gathering event data",
             "progressWindow.msg.commitingDb=Committing events database"})
         protected Void call() throws Exception {
             EventDB.EventTransaction trans = null;

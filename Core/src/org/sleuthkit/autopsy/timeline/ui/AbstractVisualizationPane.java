@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.timeline.ui;
 import com.google.common.eventbus.Subscribe;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -32,6 +35,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.Chart;
@@ -45,17 +49,22 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.control.MaskerPane;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
@@ -73,6 +82,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * common history context menu items out of derived classes? -jm
  */
 public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
+
     @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
     private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
@@ -80,9 +90,40 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
     public static Tooltip getDefaultTooltip() {
         return DEFAULT_TOOLTIP;
     }
+
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
-    protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>> observableArrayList();
+    /**
+     * access to chart data via series
+     */
+    protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
+
+    /**
+     * NOTE: Because this method modifies data directly used by the chart, this
+     * method should only be called from JavaFX thread!
+     *
+     * @param et the EventType to get the series for
+     *
+     * @return a Series object to contain all the events with the given
+     *         EventType
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    protected XYChart.Series<X, Y> getSeries(final EventType et) {
+        return eventTypeToSeriesMap.computeIfAbsent(et, eventType -> {
+            XYChart.Series<X, Y> series = new XYChart.Series<>();
+            series.setName(eventType.getDisplayName());
+            dataSeries.add(series);
+            return series;
+        });
+    }
+
+    protected void resetData() {
+        eventTypeToSeriesMap.clear();
+        dataSeries.clear();
+    }
 
     protected C chart;
 
@@ -450,5 +491,49 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
                 branch = StringUtils.substring(dateString, 0, splitIndex);
             }
         }
+    }
+
+    abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
+
+        protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
+            super(taskName, logStateChanges);
+        }
+
+        protected void installMaskerPane() {
+            MaskerPane maskerPane = new MaskerPane();
+            maskerPane.textProperty().bind(messageProperty());
+            maskerPane.progressProperty().bind(progressProperty());
+            setCenter(new StackPane(chart, maskerPane));
+        }
+
+        protected Interval getTimeRange() {
+            return filteredEvents.timeRangeProperty().get();
+        }
+
+        @Override
+        protected Boolean call() throws Exception {
+            updateProgress(-1, 1);
+            Platform.runLater(() -> setCursor(Cursor.WAIT));
+
+            return true;
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
+            setCenter(chart);
+            Platform.runLater(() -> setCursor(Cursor.DEFAULT));
+        }
+
+        protected void resetChart(AxisValuesType value) {
+            Platform.runLater(() -> {
+                installMaskerPane();
+                resetData();
+                setDateAxisValues(value);
+            });
+        }
+
+        abstract protected void setDateAxisValues(AxisValuesType values);
     }
 }
