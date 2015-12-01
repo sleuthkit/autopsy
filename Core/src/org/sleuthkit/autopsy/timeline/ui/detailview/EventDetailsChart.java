@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -86,6 +87,11 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * Series help organize events for the banding by event type, we could add a
  * node to contain each band if we need a place for per band controls.
  *
+ * NOTE: It was too hard to control the threading of this chart via the
+ * complicated default listeners. Instead clients should use null {@link #addDataItem(javafx.scene.chart.XYChart.Data)
+ * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
+ * remove data.
+ *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
 public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements TimeLineChart<DateTime> {
@@ -97,6 +103,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
+    private final static int MINIMUM_ROW_HEIGHT = 24;
 
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
@@ -320,34 +327,95 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         return descrVisibility;
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     * @param i
+     */
     @Override
-    protected void dataItemAdded(Series<DateTime, EventStripe> series, int i, Data<DateTime, EventStripe> data) {
+    protected void seriesAdded(Series<DateTime, EventStripe> series, int i) {
+
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     */
+    @Override
+    protected void seriesRemoved(Series<DateTime, EventStripe> series) {
+
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     * @param itemIndex
+     * @param item
+     */
+    @Override
+    protected void dataItemAdded(Series<DateTime, EventStripe> series, int itemIndex, Data<DateTime, EventStripe> item) {
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     *
+     * @param item
+     * @param series
+     */
+    @Override
+    protected void dataItemRemoved(Data<DateTime, EventStripe> item, Series<DateTime, EventStripe> series) {
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param item
+     */
+    @Override
+    protected void dataItemChanged(Data<DateTime, EventStripe> item) {
+    }
+
+    /**
+     * add a dataitem to this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void addDataItem(Data<DateTime, EventStripe> data) {
         final EventStripe eventStripe = data.getYValue();
-        bundles.add(eventStripe);
 
         EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
-        stripeNodes.add(stripeNode);
-        nodeGroup.getChildren().add(stripeNode);
-        data.setNode(stripeNode);
 
+        Platform.runLater(() -> {
+            bundles.add(eventStripe);
+            stripeNodes.add(stripeNode);
+            nodeGroup.getChildren().add(stripeNode);
+            data.setNode(stripeNode);
+        });
     }
 
-    @Override
-    protected void dataItemChanged(Data<DateTime, EventStripe> data) {
-        //TODO: can we use this to help with local detail level adjustment -jm
-        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
-    }
+    /**
+     * remove a data item from this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void removeDataItem(Data<DateTime, EventStripe> data) {
+        Platform.runLater(() -> {
+            EventStripe removedStripe = data.getYValue();
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    @Override
-    protected void dataItemRemoved(Data<DateTime, EventStripe> data, Series<DateTime, EventStripe> series) {
-        EventStripe removedStripe = data.getYValue();
-        bundles.removeAll(removedStripe);
-        EventStripeNode removedNode = (EventStripeNode) data.getNode();
-        stripeNodes.removeAll(removedNode);
-        nodeGroup.getChildren().removeAll(removedNode);
-        data.setNode(null);
+            bundles.removeAll(removedStripe);
+            EventStripeNode removedNode = (EventStripeNode) data.getNode();
+            stripeNodes.removeAll(removedNode);
+            nodeGroup.getChildren().removeAll(removedNode);
+            data.setNode(null);
+        });
     }
 
     @Override
@@ -374,18 +442,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
     private double getDescriptionWidth() {
         return truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
-    }
-
-    @Override
-    protected void seriesAdded(Series<DateTime, EventStripe> series, int i) {
-
-    }
-
-    @Override
-    protected void seriesRemoved(Series<DateTime, EventStripe> series) {
-        for (Data<DateTime, EventStripe> data : series.getData()) {
-            dataItemRemoved(data, series);
-        }
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {
@@ -426,35 +482,39 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     }
 
     /**
-     * layout the nodes in the given list, starting form the given minimum y
-     * coordinate.
+     * Layout the nodes in the given list, starting form the given minimum y
+     * coordinate via the following algorithm:
      *
-     * Layout the nodes representing events via the following algorithm.
+     * We start with a list of nodes (each representing an event) sorted by span
+     * start time of the underlying event
      *
-     * we start with a list of nodes (each representing an event) - sort the
-     * list of nodes by span start time of the underlying event - initialize
-     * empty map (maxXatY) from y-position to max used x-value - for each node:
+     * - initialize empty map (maxXatY) from y-ranges to max used x-value
      *
-     * -- size the node based on its children (recursively)
+     * - for each node:
+     *
+     * -- size the node based on its children (use this algorithm recursively)
      *
      * -- get the event's start position from the dateaxis
      *
-     * -- to position node (1)check if maxXatY is to the left of the left x
-     * coord: if maxXatY is less than the left x coord, good, put the current
-     * node here, mark right x coord as maxXatY, go to next node ; if maxXatY
-     * greater than start position, increment y position, do check(1) again
-     * until maxXatY less than start position
+     * -- to position node: check if maxXatY is to the left of the left x coord:
+     * if maxXatY is less than the left x coord, good, put the current node
+     * here, mark right x coord as maxXatY, go to next node ; if maxXatY is
+     * greater than the left x coord, increment y position, do check again until
+     * maxXatY less than left x coord.
      *
-     * @param nodes            collection of nodes to layout
+     * @param nodes            collection of nodes to layout, sorted by event
+     *                         start time
      * @param minY             the minimum y coordinate to position the nodes
      *                         at.
-     * @param descriptionWidth the value of descriptionWidth
+     * @param descriptionWidth the value of the maximum description width to set
+     *                         for each node.
      *
-     * @return the double
+     * @return the maximum y coordinate used by any of the layed out nodes.
      */
     double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
+        // map from y-ranges to maximum x
+        TreeRangeMap<Double, Double> maxXatY = TreeRangeMap.create();
 
-        TreeRangeMap<Double, Double> treeRangeMap = TreeRangeMap.create();
         // maximum y values occupied by any of the given nodes,  updated as nodes are layed out.
         double localMax = minY;
 
@@ -467,7 +527,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 bundleNode.setVisible(false);
                 bundleNode.setManaged(false);
             } else {
-                bundleLayoutHelper(bundleNode);
+                layoutBundleHelper(bundleNode);
                 //get computed height and width
                 double h = bundleNode.getBoundsInLocal().getHeight();
                 double w = bundleNode.getBoundsInLocal().getWidth();
@@ -478,7 +538,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 //initial test position
                 double yTop = (oneEventPerRow.get())
                         ? (localMax + MINIMUM_EVENT_NODE_GAP)
-                        : computeYTop(minY, h, treeRangeMap, xLeft, xRight); // if onePerRow, just put it at end
+                        : computeYTop(minY, h, maxXatY, xLeft, xRight); // if onePerRow, just put it at end
 
                 localMax = Math.max(yTop + h, localMax);
 
@@ -491,15 +551,16 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         return localMax; //return new max
     }
 
-    private double computeYTop(double yTop, double h, TreeRangeMap<Double, Double> treeRangeMap, double xLeft, double xRight) {
+    private double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
+        double yTop = yMin;
         double yBottom = yTop + h;
         //until the node is not overlapping any others try moving it down.
         boolean overlapping = true;
         while (overlapping) {
             overlapping = false;
             //check each pixel from bottom to top.
-            for (double y = yBottom; y >= yTop; y = y - 24) {
-                final Double maxX = treeRangeMap.get(y);
+            for (double y = yBottom; y >= yTop; y -= MINIMUM_ROW_HEIGHT) {
+                final Double maxX = maxXatY.get(y);
                 if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
                     //if that pixel is already used
                     //jump top to this y value and repeat until free slot is found.
@@ -510,16 +571,18 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 }
             }
         }
-        treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
+        maxXatY.put(Range.closed(yTop, yBottom), xRight);
         return yTop;
     }
 
     /**
      *
-     * @param bundleNode       the value of bundleNode
-     * @param descriptionWdith the value of descriptionWdith
+     * Set layout paramaters on the given node and layout its children
+     *
+     * @param bundleNode       the Node to layout
+     * @param descriptionWdith the maximum width for the description text
      */
-    private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
+    private void layoutBundleHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
         //make sure it is shown
         bundleNode.setVisible(true);
         bundleNode.setManaged(true);
@@ -531,14 +594,21 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         bundleNode.layoutChildren();
     }
 
+    /**
+     * expose as public
+     */
     @Override
     public void requestChartLayout() {
         super.requestChartLayout();
     }
 
     private double getXForEpochMillis(Long millis) {
-        DateTime dateTime = new DateTime(millis, TimeLineController.getJodaTimeZone());
+        DateTime dateTime = new DateTime(millis);
         return getXAxis().getDisplayPosition(dateTime);
+    }
+
+    private double getParentXForEpochMillis(Long epochMillis) {
+        return getXAxis().localToParent(getXForEpochMillis(epochMillis), 0).getX();
     }
 
     private void layoutProjectionMap() {
@@ -552,11 +622,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
             line.setStartY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
         }
-    }
-
-    private double getParentXForEpochMillis(Long epochMillis) {
-        DateTime dateTime = new DateTime(epochMillis, TimeLineController.getJodaTimeZone());
-        return getXAxis().localToParent(getXAxis().getDisplayPosition(dateTime), 0).getX();
     }
 
     /**

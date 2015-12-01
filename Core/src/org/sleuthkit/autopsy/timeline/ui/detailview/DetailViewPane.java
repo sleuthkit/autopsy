@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.base.Stopwatch;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -101,11 +99,22 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         return chart.getEventStripes();
     }
 
+    @Override
+    protected void resetData() {
+        for (XYChart.Series<DateTime, EventStripe> s : dataSeries) {
+            s.getData().forEach(chart::removeDataItem);
+            s.getData().clear();
+        }
+        Platform.runLater(() -> {
+            vertScrollBar.setValue(0);
+        });
+
+    }
+
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
-
         setChartClickHandler(); //can we push this into chart
         chart.setData(dataSeries);
         setCenter(chart);
@@ -235,12 +244,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @Override
     protected String getTickMarkLabel(DateTime value) {
         return dateAxis.getTickMarkLabel(value);
-    }
-
-    @Override
-    protected void resetData() {
-        super.resetData();
-        vertScrollBar.setValue(0);
     }
 
     @Override
@@ -380,7 +383,6 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     }
 
     @NbBundle.Messages({
-        "DetailViewPane.loggedTask.preparing=Analyzing zoom and filter settings",
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
         "DetailViewPane.loggedTask.updateUI=Populating visualization"})
@@ -397,16 +399,13 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 return null;
             }
 
-            updateMessage(Bundle.DetailViewPane_loggedTask_preparing());
-
             resetChart(getTimeRange());
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
-            Stopwatch createStarted = Stopwatch.createStarted();
             List<EventStripe> eventStripes = filteredEvents.getEventStripes();
-            System.out.println(createStarted.elapsed(TimeUnit.MILLISECONDS));
-            final int size = eventStripes.size();
+
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
+            final int size = eventStripes.size();
             for (int i = 0; i < size; i++) {
                 if (isCancelled()) {
                     return null;
@@ -414,12 +413,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
                 updateProgress(i, size);
                 final EventStripe cluster = eventStripes.get(i);
                 final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
-                Platform.runLater(new Runnable() {
-
-                    public void run() {
-                         getSeries(cluster.getEventType()).getData().add(dataItem);
-                    }
-                });
+                getSeries(cluster.getEventType()).getData().add(dataItem);
+                chart.addDataItem(dataItem);
             }
 
             return eventStripes.isEmpty() == false;

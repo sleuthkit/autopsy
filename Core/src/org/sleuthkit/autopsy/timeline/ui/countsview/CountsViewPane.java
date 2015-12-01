@@ -99,15 +99,6 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         return new CountsUpdateTask();
     }
 
-    @Override
-    protected void resetData() {
-        super.resetData();
-        //make all series to ensure they get created in consistent order
-        for (EventType e : EventType.allTypes) {
-            getSeries(e);
-        }
-    }
-
     public CountsViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
         super(controller, partPane, contextPane, spacer);
         chart = new EventCountsChart(controller, dateAxis, countAxis, selectedNodes);
@@ -139,6 +130,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             countAxis.minorTickVisibleProperty().bind(scale.isEqualTo(ScaleType.LINEAR));
             update();
         });
+
     }
 
     @Override
@@ -209,6 +201,20 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
         }
     }
 
+    @Override
+    protected void resetData() {
+
+        Platform.runLater(() -> {
+            for (XYChart.Series<String, Number> s : dataSeries) {
+                s.getData().clear();
+            }
+
+            dataSeries.clear();
+            eventTypeToSeriesMap.clear();
+            createSeries();
+        });
+    }
+
     private static enum ScaleType implements Function<Long, Double> {
 
         LINEAR(Long::doubleValue),
@@ -228,15 +234,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
 
     @NbBundle.Messages({
         "CountsViewPane.loggedTask.name=Updating Counts View",
-        "CountsViewPane.loggedTask.prepUpdate=Analyzing zoom and filter settings",
-        "CountsViewPane.loggedTask.resetUI=resetting ui",
-        "# {0} - count",
-        "# {1} - event type displayname",
-        "# {2} - start date time",
-        "# {3} - end date time",
-        "CountsViewPane.tooltip.text={0} {1} events\nbetween {2}\nand     {3}",
-        "CountsViewPane.loggedTask.updatingCounts=updating counts",
-        "CountsViewPane.loggedTask.wrappingUp=wrapping up"})
+        "CountsViewPane.loggedTask.updatingCounts=Populating visualization"})
     private class CountsUpdateTask extends VisualizationUpdateTask<List<String>> {
 
         CountsUpdateTask() {
@@ -249,8 +247,6 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             if (isCancelled()) {
                 return null;
             }
-
-            updateMessage(Bundle.CountsViewPane_loggedTask_prepUpdate());
 
             final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(getTimeRange());
             chart.setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
@@ -285,7 +281,9 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                         final String intervalCategory = rangeInfo.formatForTick(interval);
                         final double adjustedCount = scale.get().apply(count);
 
-                        final XYChart.Data<String, Number> dataItem = new XYChart.Data<>(intervalCategory, adjustedCount, new EventCountsChart.ExtraData(interval, eventType, count));
+                        final XYChart.Data<String, Number> dataItem =
+                                new XYChart.Data<>(intervalCategory, adjustedCount,
+                                        new EventCountsChart.ExtraData(interval, eventType, count));
                         Platform.runLater(() -> getSeries(eventType).getData().add(dataItem));
                         maxPerInterval += adjustedCount;
                     }

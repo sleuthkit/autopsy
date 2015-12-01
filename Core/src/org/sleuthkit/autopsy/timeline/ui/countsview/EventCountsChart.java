@@ -228,6 +228,12 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         }
     }
 
+    @NbBundle.Messages({
+        "# {0} - count",
+        "# {1} - event type displayname",
+        "# {2} - start date time",
+        "# {3} - end date time",
+        "CountsViewPane.tooltip.text={0} {1} events\nbetween {2}\nand     {3}"})
     @Override
     protected void dataItemAdded(Series<String, Number> series, int itemIndex, Data<String, Number> item) {
         ExtraData extraValue = (ExtraData) item.getExtraValue();

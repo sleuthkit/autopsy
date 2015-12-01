@@ -71,17 +71,17 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  * Abstract base class for {@link Chart} based {@link TimeLineView}s used in the
  * main visualization area.
  *
- * @param <X> the type of data plotted along the x axis
- * @param <Y> the type of data plotted along the y axis
- * @param <N> the type of nodes used to represent data items
- * @param <C> the type of the {@link XYChart<X,Y>} this class uses to plot the
- *            data.
+ * @param <X>         the type of data plotted along the x axis
+ * @param <Y>         the type of data plotted along the y axis
+ * @param <NodeType>  the type of nodes used to represent data items
+ * @param <ChartType> the type of the {@link XYChart<X,Y>} this class uses to
+ *                    plot the * data.
  *
  * TODO: this is becoming (too?) closely tied to the notion that their is a
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
+public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
 
     @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
@@ -98,34 +98,9 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
+    abstract protected void resetData();
 
-    /**
-     * NOTE: Because this method modifies data directly used by the chart, this
-     * method should only be called from JavaFX thread!
-     *
-     * @param et the EventType to get the series for
-     *
-     * @return a Series object to contain all the events with the given
-     *         EventType
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    protected XYChart.Series<X, Y> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.computeIfAbsent(et, eventType -> {
-            XYChart.Series<X, Y> series = new XYChart.Series<>();
-            series.setName(eventType.getDisplayName());
-            dataSeries.add(series);
-            return series;
-        });
-    }
-
-    protected void resetData() {
-        eventTypeToSeriesMap.clear();
-        dataSeries.clear();
-    }
-
-    protected C chart;
+    protected ChartType chart;
 
     //// replacement axis label componenets
     private final Pane leafPane; // container for the leaf lables in the declutterd axis
@@ -143,13 +118,13 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
 
     final protected FilteredEventsModel filteredEvents;
 
-    final protected ObservableList<N> selectedNodes = FXCollections.observableArrayList();
+    final protected ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
     private InvalidationListener invalidationListener = (Observable observable) -> {
         update();
     };
 
-    public ObservableList<N> getSelectedNodes() {
+    public ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
     }
 
@@ -182,7 +157,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      * @param applied true if the effect should be applied, false if the effect
      *                should
      */
-    protected abstract void applySelectionEffect(N node, Boolean applied);
+    protected abstract void applySelectionEffect(NodeType node, Boolean applied);
 
     /**
      * @return a task to execute on a background thread to reload this
@@ -261,6 +236,16 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         invalidationListener = null;
     }
 
+    protected final void createSeries() {
+        //make all series to ensure they get created in consistent order
+        for (EventType eventType : EventType.allTypes) {
+            XYChart.Series<X, Y> series = new XYChart.Series<>();
+            series.setName(eventType.getDisplayName());
+            eventTypeToSeriesMap.put(eventType, series);
+            dataSeries.add(series);
+        }
+    }
+
     protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
         this.controller = controller;
 
@@ -270,15 +255,13 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         this.leafPane = partPane;
         this.branchPane = contextPane;
         this.spacer = spacer;
-        selectedNodes.addListener((ListChangeListener.Change<? extends N> c) -> {
-            while (c.next()) {
-                c.getRemoved().forEach((N n) -> {
-                    applySelectionEffect(n, false);
-                });
 
-                c.getAddedSubList().forEach((N c1) -> {
-                    applySelectionEffect(c1, true);
-                });
+        createSeries();
+
+        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
+            while (c.next()) {
+                c.getRemoved().forEach(n -> applySelectionEffect(n, false));
+                c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
             }
         });
 
@@ -293,8 +276,9 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
             }
         });
 
-//        update();
     }
+
+    protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
@@ -493,6 +477,19 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         }
     }
 
+    /**
+     * NOTE: Because this method modifies data directly used by the chart, this
+     * method should only be called from JavaFX thread!
+     *
+     * @param et the EventType to get the series for
+     *
+     * @return a Series object to contain all the events with the given
+     *         EventType
+     */
+    protected final XYChart.Series<X, Y> getSeries(final EventType et) {
+        return eventTypeToSeriesMap.get(et);
+    }
+
     abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
 
         protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
@@ -510,10 +507,15 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
             return filteredEvents.timeRangeProperty().get();
         }
 
+        @NbBundle.Messages({"VisualizationUpdateTask.preparing=Analyzing zoom and filter settings"})
         @Override
         protected Boolean call() throws Exception {
             updateProgress(-1, 1);
-            Platform.runLater(() -> setCursor(Cursor.WAIT));
+            updateMessage(Bundle.VisualizationUpdateTask_preparing());
+            Platform.runLater(() -> {
+                installMaskerPane();
+                setCursor(Cursor.WAIT);
+            });
 
             return true;
         }
@@ -522,16 +524,25 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         protected void succeeded() {
             super.succeeded();
             layoutDateLabels();
-            setCenter(chart);
-            Platform.runLater(() -> setCursor(Cursor.DEFAULT));
+
+            Platform.runLater(() -> {
+                setCenter(chart);
+                setCursor(Cursor.DEFAULT);
+            });
         }
 
-        protected void resetChart(AxisValuesType value) {
+        /**
+         * for use within the derived impementation of {@link #call() }
+         *
+         * @param axisValues
+         */
+        @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
+        protected void resetChart(AxisValuesType axisValues) {
+            resetData();
             Platform.runLater(() -> {
-                installMaskerPane();
-                resetData();
-                setDateAxisValues(value);
+                setDateAxisValues(axisValues);
             });
+
         }
 
         abstract protected void setDateAxisValues(AxisValuesType values);

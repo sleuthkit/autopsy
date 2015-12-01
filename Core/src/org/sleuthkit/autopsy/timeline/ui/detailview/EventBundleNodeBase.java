@@ -164,8 +164,9 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
          * interesect with another node, forcing it down.
          */
         heightProperty().addListener(heightProp -> chart.requestChartLayout());
-
-        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
+        Platform.runLater(() ->
+                setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation())
+        );
 
         //initialize info hbox
         infoHBox.setPadding(new Insets(2, 3, 2, 3));
