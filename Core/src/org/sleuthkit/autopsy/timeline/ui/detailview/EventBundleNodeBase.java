@@ -356,7 +356,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     /**
      * @param w the maximum width the description label should have
      */
-    abstract void setDescriptionWidth(double w);
+    abstract void setMaxDescriptionWidth(double w);
 
     void setDescriptionVisibility(DescriptionVisibility get) {
         descVisibility.set(get);

@@ -151,7 +151,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     private final Group nodeGroup = new Group();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<EventStripe> bundles = FXCollections.observableArrayList();
+    private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> stripeNodes = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis));
     private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
@@ -248,7 +248,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     }
 
     ObservableList<EventStripe> getEventStripes() {
-        return bundles;
+        return eventStripes;
     }
 
     @Override
@@ -392,7 +392,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
 
         Platform.runLater(() -> {
-            bundles.add(eventStripe);
+            eventStripes.add(eventStripe);
             stripeNodes.add(stripeNode);
             nodeGroup.getChildren().add(stripeNode);
             data.setNode(stripeNode);
@@ -408,10 +408,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      */
     void removeDataItem(Data<DateTime, EventStripe> data) {
         Platform.runLater(() -> {
-            EventStripe removedStripe = data.getYValue();
-
-            bundles.removeAll(removedStripe);
             EventStripeNode removedNode = (EventStripeNode) data.getNode();
+            eventStripes.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
             stripeNodes.removeAll(removedNode);
             nodeGroup.getChildren().removeAll(removedNode);
             data.setNode(null);
@@ -466,10 +464,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         return sortedStripeNodes.stream()
                 .flatMap(stripeFlattener)
                 .filter(p).collect(Collectors.toList());
-    }
-
-    Iterable<EventBundleNodeBase<?, ?, ?>> getAllNodes() {
-        return getNodes(x -> true);
     }
 
     synchronized void setVScroll(double vScrollValue) {
@@ -588,7 +582,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         bundleNode.setManaged(true);
         //apply advanced layout description visibility options
         bundleNode.setDescriptionVisibility(descrVisibility.get());
-        bundleNode.setDescriptionWidth(descriptionWidth);
+        bundleNode.setMaxDescriptionWidth(descriptionWidth);
 
         //do recursive layout
         bundleNode.layoutChildren();

@@ -102,7 +102,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
      * @param w the maximum width the description label should have
      */
     @Override
-    public void setDescriptionWidth(double w) {
+    public void setMaxDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
 
