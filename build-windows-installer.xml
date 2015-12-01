@@ -55,11 +55,11 @@
                message="Enter the location of AdvancedInstaller.com"/>
     </target>
 
-    <target name="run-advanced-installer-32" depends="setup-aip-files" if="create32BitInstaller">
+    <target name="run-advanced-installer-32" depends="setup-aip-files" unless="DoNotCreate32BitInstaller">
         <antcall target="build32"  inheritAll="true" />
     </target> 
     
-    <target name="run-advanced-installer-64" depends="setup-aip-files" if="create64BitInstaller">
+    <target name="run-advanced-installer-64" depends="setup-aip-files" unless="DoNotCreate64BitInstaller">
         <antcall target="build64"  inheritAll="true" />
     </target> 
         
