@@ -26,7 +26,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -53,7 +52,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -1113,18 +1111,11 @@ public class EventDB {
         List<EventCluster> events = new ArrayList<>();
 
         DBLock.lock();
-        try (Statement createStatement = con.createStatement();) {
-            createStatement.setQueryTimeout(1);
-            try (ResultSet rs = createStatement.executeQuery(query)) {
-
-                
-                while (rs.next()) {
-                    events.add(eventClusterHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
-                }
-                
+        try (Statement createStatement = con.createStatement();
+                ResultSet rs = createStatement.executeQuery(query)) {
+            while (rs.next()) {
+                events.add(eventClusterHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
             }
-        } catch (SQLTimeoutException timeout) {
-            Exceptions.printStackTrace(timeout);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get events with query: " + query, ex); // NON-NLS
         } finally {
