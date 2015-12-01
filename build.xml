@@ -254,6 +254,8 @@
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
     <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
+        <property name="create32BitInstaller" value="true"/> <!-- Enables building 32-bit MSI installer -->
+        <property name="create64BitInstaller" value="true"/> <!-- Enables building 64-bit MSI installer -->
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
         <antcall target="build-installer-${os.family}" />
