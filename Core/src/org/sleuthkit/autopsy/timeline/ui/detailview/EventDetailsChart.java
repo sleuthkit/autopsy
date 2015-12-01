@@ -110,7 +110,9 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
     private ContextMenu chartContextMenu;
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private double descriptionWidth;
 
     @Override
@@ -420,12 +422,15 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
         maxY.set(0);
+
+        //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
         activeQuickHidefilters = getController().getQuickHideFilters().stream()
                 .filter(AbstractFilter::isActive)
                 .map(DescriptionFilter::getDescription)
                 .collect(Collectors.toSet());
 
-        descriptionWidth = getDescriptionWidth();
+        //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
+        descriptionWidth = truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
 
         if (bandByType.get()) {
             sortedStripeNodes.stream()
@@ -436,10 +441,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         }
         layoutProjectionMap();
         setCursor(null);
-    }
-
-    private double getDescriptionWidth() {
-        return truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {
@@ -531,8 +532,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
                 //initial test position
                 double yTop = (oneEventPerRow.get())
-                        ? (localMax + MINIMUM_EVENT_NODE_GAP)
-                        : computeYTop(minY, h, maxXatY, xLeft, xRight); // if onePerRow, just put it at end
+                        ? (localMax + MINIMUM_EVENT_NODE_GAP)// if onePerRow, just put it at end
+                        : computeYTop(minY, h, maxXatY, xLeft, xRight);
 
                 localMax = Math.max(yTop + h, localMax);
 
@@ -545,6 +546,23 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
         return localMax; //return new max
     }
 
+    /**
+     * Given information about the current layout pass so far and about a
+     * particular node, compute the y position of that node.
+     *
+     *
+     * @param yMin    the smallest (towards the top of the screen) y position to
+     *                consider
+     * @param h       the height of the node we are trying to position
+     * @param maxXatY a map from y ranges to the max x within that range. NOTE:
+     *                This map will be updated to include the node in question.
+     * @param xLeft   the left x-cord of the node to position
+     * @param xRight  the left x-cord of the node to position
+     *
+     * @return the y position for the node in question.
+     *
+     *
+     */
     private double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
         double yTop = yMin;
         double yBottom = yTop + h;
@@ -589,10 +607,10 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
     }
 
     /**
-     * expose as public
+     * expose as protected
      */
     @Override
-    public void requestChartLayout() {
+    protected void requestChartLayout() {
         super.requestChartLayout();
     }
 

@@ -252,20 +252,30 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
             chart.setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
 
             List<Interval> intervals = rangeInfo.getIntervals();
-            //clear old data, and reset ranges and series
             List<String> categories = Lists.transform(intervals, rangeInfo::formatForTick);
+
+            //clear old data, and reset ranges and series
             resetChart(categories);
 
             updateMessage(Bundle.CountsViewPane_loggedTask_updatingCounts());
             int chartMax = 0;
             int numIntervals = intervals.size();
+            /*
+             * for each interval query database for event counts and add to
+             * chart.
+             *
+             * Doing this in chunks might seem inefficient but it lets us reuse
+             * more cached results as the user navigates to overlapping viewws
+             *
+             * //TODO: implement similar chunked caching in DetailsView -jm
+             */
             for (int i = 0; i < numIntervals; i++) {
                 if (isCancelled()) {
                     return null;
                 }
                 updateProgress(i, numIntervals);
                 final Interval interval = intervals.get(i);
-                int maxPerInterval = 0; //used in total max tracking
+                int maxPerInterval = 0;
 
                 //query for current interval
                 Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(interval);
@@ -290,6 +300,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 }
                 chartMax = Math.max(chartMax, maxPerInterval);
             }
+            //adjust vertical axis according to scale type and max counts
             double countAxisUpperbound = 1 + chartMax * 1.2;
             double tickUnit = ScaleType.LINEAR.equals(scale.get())
                     ? Math.pow(10, Math.max(0, Math.floor(Math.log10(chartMax)) - 1))
@@ -298,7 +309,7 @@ public class CountsViewPane extends AbstractVisualizationPane<String, Number, No
                 countAxis.setTickUnit(tickUnit);
                 countAxis.setUpperBound(countAxisUpperbound);
             });
-            return chartMax > 0;
+            return chartMax > 0;  // are there events
         }
 
         @Override
