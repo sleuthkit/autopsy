@@ -85,6 +85,7 @@ final public class EventsTree extends BorderPane {
         detailViewPane.setSelectionModel(eventsTree.getSelectionModel());
 
         detailViewPane.getEventStripes().addListener((ListChangeListener.Change<? extends EventBundle<?>> c) -> {
+            //on jfx thread
             while (c.next()) {
                 for (EventBundle<?> bundle : c.getAddedSubList()) {
                     getRoot().insert(bundle);
@@ -93,7 +94,6 @@ final public class EventsTree extends BorderPane {
                     getRoot().remove(bundle);
                 }
             }
-            getRoot().resort(sortByBox.getSelectionModel().getSelectedItem());
         });
 
         setRoot();
@@ -113,11 +113,10 @@ final public class EventsTree extends BorderPane {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void setRoot() {
-        RootItem root = new RootItem();
+        RootItem root = new RootItem(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
         for (EventBundle<?> bundle : detailViewPane.getEventStripes()) {
             root.insert(bundle);
         }
-        root.resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
         eventsTree.setRoot(root);
 
     }
@@ -130,10 +129,11 @@ final public class EventsTree extends BorderPane {
         sortByBox.getItems().setAll(Arrays.asList(TreeComparator.Description, TreeComparator.Count));
         sortByBox.getSelectionModel().select(TreeComparator.Description);
         sortByBox.getSelectionModel().selectedItemProperty().addListener((Observable o) -> {
-            getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()));
+            getRoot().resort(TreeComparator.Type.reversed().thenComparing(sortByBox.getSelectionModel().getSelectedItem()), true);
         });
         eventsTree.setShowRoot(false);
-        eventsTree.setCellFactory((TreeView<EventBundle<?>> p) -> new EventBundleTreeCell());
+
+        eventsTree.setCellFactory(treeView -> new EventBundleTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
@@ -179,7 +179,9 @@ final public class EventsTree extends BorderPane {
                 String text;
                 if (getTreeItem() instanceof EventTypeTreeItem) {
                     text = item.getEventType().getDisplayName();
+                    setDisable(true);
                 } else {
+                    setDisable(false);
                     text = item.getDescription() + " (" + item.getCount() + ")"; // NON-NLS
                     TreeItem<EventBundle<?>> parent = getTreeItem().getParent();
                     if (parent != null && parent.getValue() != null && (parent instanceof EventDescriptionTreeItem)) {

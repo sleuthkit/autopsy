@@ -18,25 +18,25 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -48,7 +48,9 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
@@ -66,32 +68,57 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 final public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
+    /**
+     * Use this recursive function to flatten a tree of nodes into an single
+     * stream. More specifically it takes an EventStripeNode and produces a
+     * stream of EventStripes conaiting the stripes for the given node and all
+     * child eventStripes, ignoring intervening EventCluster nodes.
+     *
+     * @see
+     * #loadSubBundles(org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.RelativeDetail)
+     * for usage
+     */
+    private final static Function<EventStripeNode, Stream<EventStripe>> stripeFlattener = new Function<EventStripeNode, Stream<EventStripe>>() {
+        @Override
+        public Stream<EventStripe> apply(EventStripeNode node) {
+            return Stream.concat(
+                    Stream.of(node.getEventStripe()),
+                    node.getSubNodes().stream().flatMap(clusterNode -> clusterNode.getSubNodes().stream().flatMap(this)));
+        }
+    };
+
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
     private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
     private final Border clusterBorder = new Border(new BorderStroke(evtColor.deriveColor(0, 1, 1, .4), BorderStrokeStyle.SOLID, CORNER_RADII_1, CLUSTER_BORDER_WIDTHS));
 
-    final Button plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
-    final Button minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+    private Button plusButton;
+    private Button minusButton;
+
+    @Override
+    void installActionButtons() {
+        if (plusButton == null) {
+            plusButton = ActionUtils.createButton(new ExpandClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+            minusButton = ActionUtils.createButton(new CollapseClusterAction(), ActionUtils.ActionTextBehavior.HIDE);
+
+            configureLoDButton(plusButton);
+            configureLoDButton(minusButton);
+            infoHBox.getChildren().addAll(minusButton, plusButton);
+        }
+    }
 
     public EventClusterNode(EventDetailsChart chart, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chart, eventCluster, parentNode);
-        setMinHeight(24);
 
         subNodePane.setBorder(clusterBorder);
         subNodePane.setBackground(defaultBackground);
-        subNodePane.setMaxHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMaxWidth(USE_PREF_SIZE);
         subNodePane.setMinWidth(1);
+        subNodePane.setMaxWidth(USE_PREF_SIZE);
+        setMinHeight(24);
+        setAlignment(Pos.CENTER_LEFT);
 
         setCursor(Cursor.HAND);
-        setOnMouseClicked(new MouseClickHandler());
 
-        configureLoDButton(plusButton);
-        configureLoDButton(minusButton);
-
-        setAlignment(Pos.CENTER_LEFT);
-        infoHBox.getChildren().addAll(minusButton, plusButton);
         getChildren().addAll(subNodePane, infoHBox);
 
     }
@@ -99,6 +126,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     @Override
     void showHoverControls(final boolean showControls) {
         super.showHoverControls(showControls);
+        installActionButtons();
         show(plusButton, showControls);
         show(minusButton, showControls);
     }
@@ -115,7 +143,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventBundle().getEventIDs().size();
+        final int size = getEventCluster().getCount();
         switch (descrVis) {
             case HIDDEN:
                 countLabel.setText("");
@@ -139,13 +167,10 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
      * @param expand
      */
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
         chart.setCursor(Cursor.WAIT);
-        chart.getEventStripes().removeIf(bundle ->
-                subNodes.stream().anyMatch(subNode ->
-                        bundle.equals(subNode.getEventStripe()))
-        );
-        subNodes.clear();
+
 
         /*
          * make new ZoomParams to query with
@@ -159,53 +184,45 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
         final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-        Task<Collection<EventStripe>> loggedTask = new Task<Collection<EventStripe>>() {
+        Task<List<EventStripe>> loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventStripeNode_loggedTask_name(), false) {
 
             private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
 
-            {
-                updateTitle(Bundle.EventStripeNode_loggedTask_name());
-            }
-
             @Override
-            protected Collection<EventStripe> call() throws Exception {
-                Collection<EventStripe> bundles = null;
+            protected List<EventStripe> call() throws Exception {
+                List<EventStripe> bundles;
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
                     loadedDescriptionLoD = next;
                     if (loadedDescriptionLoD == getEventBundle().getDescriptionLoD()) {
-                        return Collections.emptySet();
+                        return Collections.emptyList();
                     }
-                    bundles = eventsModel.getEventClusters(zoomParams.withDescrLOD(loadedDescriptionLoD)).stream()
-                            .collect(Collectors.toMap(EventStripe::getDescription, //key
-                                            eventStripe -> eventStripe.withParent(getEventCluster()), //value
-                                            EventStripe::merge) //merge method
-                            ).values();
+                    bundles = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
                 } while (bundles.size() == 1 && nonNull(next));
 
-                // return list of AbstractEventStripeNodes representing sub-bundles
-                return bundles;
-
+                // return list of EventStripes representing sub-bundles
+                return bundles.stream()
+                        .map(eventStripe -> eventStripe.withParent(getEventCluster()))
+                        .collect(Collectors.toList());
             }
 
             @Override
             protected void succeeded() {
-
                 try {
-                    Collection<EventStripe> bundles = get();
+                    List<EventStripe> bundles = get();
 
+                    //clear the existing subnodes
+                    List<EventStripe> transform = subNodes.stream().flatMap(stripeFlattener).collect(Collectors.toList());
+                    chart.getEventStripes().removeAll(transform);
+                    subNodes.clear();
                     if (bundles.isEmpty()) {
-                        subNodePane.getChildren().clear();
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
                         chart.getEventStripes().addAll(bundles);
-                        subNodes.addAll(bundles.stream()
-                                .map(EventClusterNode.this::createStripeNode)
-                                .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
-                                .collect(Collectors.toList()));
-                        subNodePane.getChildren().setAll(subNodes);
+                        subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         descLOD.set(loadedDescriptionLoD);
                     }
@@ -222,7 +239,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         chart.getController().monitorTask(loggedTask);
     }
 
-    private EventStripeNode createStripeNode(EventStripe stripe) {
+    @Override
+    EventStripeNode createChildNode(EventStripe stripe) {
         return new EventStripeNode(chart, stripe, this);
     }
 
@@ -251,49 +269,15 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         return subClusterFilter;
     }
 
-    /**
-     * event handler used for mouse events on {@link EventStripeNode}s
-     */
-    private class MouseClickHandler implements EventHandler<MouseEvent> {
+    @Override
+    Collection<? extends Action> getActions() {
+        return Arrays.asList(new ExpandClusterAction(),
+                new CollapseClusterAction());
+    }
 
-        private ContextMenu contextMenu;
-
-        @Override
-        public void handle(MouseEvent t) {
-
-            if (t.getButton() == MouseButton.PRIMARY) {
-
-                if (t.isShiftDown()) {
-                    if (chart.selectedNodes.contains(EventClusterNode.this) == false) {
-                        chart.selectedNodes.add(EventClusterNode.this);
-                    }
-                } else if (t.isShortcutDown()) {
-                    chart.selectedNodes.removeAll(EventClusterNode.this);
-                } else if (t.getClickCount() > 1) {
-                    final DescriptionLoD next = descLOD.get().moreDetailed();
-                    if (next != null) {
-                        loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
-                    }
-                } else {
-                    chart.selectedNodes.setAll(EventClusterNode.this);
-                }
-                t.consume();
-            } else if (t.getButton() == MouseButton.SECONDARY) {
-                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
-                if (contextMenu == null) {
-                    contextMenu = new ContextMenu();
-                    contextMenu.setAutoHide(true);
-
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new ExpandClusterAction()));
-                    contextMenu.getItems().add(ActionUtils.createMenuItem(new CollapseClusterAction()));
-
-                    contextMenu.getItems().add(new SeparatorMenuItem());
-                    contextMenu.getItems().addAll(chartContextMenu.getItems());
-                }
-                contextMenu.show(EventClusterNode.this, t.getScreenX(), t.getScreenY());
-                t.consume();
-            }
-        }
+    @Override
+    EventHandler<MouseEvent> getDoubleClickHandler() {
+        return mouseEvent -> new ExpandClusterAction().handle(null);
     }
 
     private class ExpandClusterAction extends Action {
@@ -303,9 +287,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             super(Bundle.ExpandClusterAction_text());
 
             setGraphic(new ImageView(PLUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD next = descLOD.get().moreDetailed();
-                if (next != null) {
+            setEventHandler(actionEvent -> {
+                if (descLOD.get().moreDetailed() != null) {
                     loadSubBundles(DescriptionLoD.RelativeDetail.MORE);
                 }
             });
@@ -320,9 +303,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             super(Bundle.CollapseClusterAction_text());
 
             setGraphic(new ImageView(MINUS));
-            setEventHandler((ActionEvent t) -> {
-                final DescriptionLoD previous = descLOD.get().lessDetailed();
-                if (previous != null) {
+            setEventHandler(actionEvent -> {
+                if (descLOD.get().lessDetailed() != null) {
                     loadSubBundles(DescriptionLoD.RelativeDetail.LESS);
                 }
             });

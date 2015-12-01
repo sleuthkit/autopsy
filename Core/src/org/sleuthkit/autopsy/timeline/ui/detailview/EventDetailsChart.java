@@ -140,6 +140,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * by allowing a single translation of this group.
      */
     private final Group nodeGroup = new Group();
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<EventStripe> bundles = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> stripeNodes = FXCollections.observableArrayList();
     private final ObservableList< EventStripeNode> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis));
@@ -386,7 +388,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
      * @return all the nodes that pass the given predicate
      */
     synchronized Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
-        //use this recursive function to flatten the tree of nodes into an iterable.
+        //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
                 new Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>>() {
                     @Override
@@ -493,9 +495,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 localMax = Math.max(yTop + h, localMax);
 
                 if ((xLeft != bundleNode.getLayoutX()) || (yTop != bundleNode.getLayoutY())) {
-//                    bundleNode.relocate(xLeft, yTop);
-//                    requestChartLayout();
-//                    //animate node to new position
+                    //animate node to new position
                     bundleNode.animateTo(xLeft, yTop);
                 }
             }
@@ -517,7 +517,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
 
     @Override
     public void requestChartLayout() {
-        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
+        super.requestChartLayout();
     }
 
     private double getXForEpochMillis(Long millis) {
@@ -647,9 +647,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventStripe> impl
                 DescriptionFilter descriptionFilter = getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener((Observable observable) -> {
-                                requestChartLayout();
-                            });
+                            testFilter.selectedProperty().addListener(observable -> requestChartLayout());
                             getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });

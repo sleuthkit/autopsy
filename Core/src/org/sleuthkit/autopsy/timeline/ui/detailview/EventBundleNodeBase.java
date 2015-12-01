@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,20 +31,26 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -55,11 +61,11 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
-import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -104,7 +110,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
     protected final EventDetailsChart chart;
     final SimpleObjectProperty<DescriptionLoD> descLOD = new SimpleObjectProperty<>();
-    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>(DescriptionVisibility.SHOWN);
+    final SimpleObjectProperty<DescriptionVisibility> descVisibility = new SimpleObjectProperty<>();
     protected final BundleType eventBundle;
 
     protected final ParentNodeType parentNode;
@@ -116,7 +122,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     final Background defaultBackground;
     final Color evtColor;
 
-    final List<ParentNodeType> subNodes = new ArrayList<>();
+    final ObservableList<ParentNodeType> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
     final Label descrLabel = new Label();
     final Label countLabel = new Label();
@@ -148,39 +154,28 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
 
         setBackground(defaultBackground);
         setAlignment(Pos.TOP_LEFT);
-
-        setPrefHeight(USE_COMPUTED_SIZE);
-        heightProperty().addListener(heightProp -> {
-            chart.requestChartLayout();
-        });
-        setMaxHeight(USE_PREF_SIZE);
-        setMinWidth(USE_PREF_SIZE);
         setMaxWidth(USE_PREF_SIZE);
-        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
-
-        //initialize info hbox
-        infoHBox.setMinWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
-        infoHBox.setPadding(new Insets(2, 3, 2, 3));
-        infoHBox.setAlignment(Pos.TOP_LEFT);
-
-        //set up subnode pane sizing contraints
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setPrefHeight(USE_COMPUTED_SIZE);
-        subNodePane.setMinHeight(24);
         subNodePane.setPrefWidth(USE_COMPUTED_SIZE);
         subNodePane.setMinWidth(USE_PREF_SIZE);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
+        /*
+         * This triggers the layout when a mousover causes the action buttons to
+         * interesect with another node, forcing it down.
+         */
+        heightProperty().addListener(heightProp -> chart.requestChartLayout());
+
+        setLayoutX(chart.getXAxis().getDisplayPosition(new DateTime(eventBundle.getStartMillis())) - getLayoutXCompensation());
+
+        //initialize info hbox
+        infoHBox.setPadding(new Insets(2, 3, 2, 3));
+        infoHBox.setAlignment(Pos.TOP_LEFT);
 
         Tooltip.install(this, this.tooltip);
 
         //set up mouse hover effect and tooltip
         setOnMouseEntered((MouseEvent e) -> {
-            /*
-             * defer tooltip content creation till needed, this had a
-             * surprisingly large impact on speed of loading the chart
-             */
-            installTooltip();
+
             Tooltip.uninstall(chart, AbstractVisualizationPane.getDefaultTooltip());
             showHoverControls(true);
             toFront();
@@ -193,12 +188,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 Tooltip.install(chart, AbstractVisualizationPane.getDefaultTooltip());
             }
         });
+        setOnMouseClicked(new ClickHandler());
+        descVisibility.addListener(observable -> setDescriptionVisibiltiyImpl(descVisibility.get()));
+        descVisibility.set(DescriptionVisibility.SHOWN); //trigger listener for initial value
 
-        descVisibility.addListener((ObservableValue<? extends DescriptionVisibility> observable, DescriptionVisibility oldValue, DescriptionVisibility newValue) -> {
-            setDescriptionVisibiltiyImpl(newValue);
-        });
-        setDescriptionVisibiltiyImpl(DescriptionVisibility.SHOWN);
-
+        Bindings.bindContent(subNodePane.getChildren(), subNodes);
     }
 
     final DescriptionLoD getDescriptionLoD() {
@@ -215,6 +209,17 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
                 : 0;
     }
 
+    /**
+     * install whatever buttons are visible on hover for this node. likes
+     * tooltips, this had a surprisingly large impact on speed of loading the
+     * chart
+     */
+    abstract void installActionButtons();
+
+    /**
+     * defer tooltip content creation till needed, this had a surprisingly large
+     * impact on speed of loading the chart
+     */
     @NbBundle.Messages({"# {0} - counts",
         "# {1} - event type",
         "# {2} - description",
@@ -307,12 +312,11 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
                 eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
+        installTooltip();
         enableTooltip(showControls);
         if (parentNode != null) {
-            parentNode.enableTooltip(false);
             parentNode.showHoverControls(false);
         }
-
     }
 
     final EventType getEventType() {
@@ -346,6 +350,8 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         super.layoutChildren();
     }
 
+    abstract ParentNodeType createChildNode(ParentType rawChild);
+
     /**
      * @param w the maximum width the description label should have
      */
@@ -366,6 +372,7 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
     void animateTo(double xLeft, double yTop) {
         if (timeline != null) {
             timeline.stop();
+            Platform.runLater(chart::requestChartLayout);
         }
         timeline = new Timeline(new KeyFrame(Duration.millis(100),
                 new KeyValue(layoutXProperty(), xLeft),
@@ -374,4 +381,46 @@ public abstract class EventBundleNodeBase<BundleType extends EventBundle<ParentT
         timeline.setOnFinished(finished -> Platform.runLater(chart::requestChartLayout));
         timeline.play();
     }
+
+    abstract EventHandler<MouseEvent> getDoubleClickHandler();
+
+    abstract Collection<? extends Action> getActions();
+
+    /**
+     * event handler used for mouse events on {@link EventStripeNode}s
+     */
+    private class ClickHandler implements EventHandler<MouseEvent> {
+
+        private ContextMenu contextMenu;
+
+        @Override
+        public void handle(MouseEvent t) {
+            if (t.getButton() == MouseButton.PRIMARY) {
+                if (t.getClickCount() > 1) {
+                    getDoubleClickHandler().handle(t);
+                } else if (t.isShiftDown()) {
+                    chart.selectedNodes.add(EventBundleNodeBase.this);
+                } else if (t.isShortcutDown()) {
+                    chart.selectedNodes.removeAll(EventBundleNodeBase.this);
+                } else {
+                    chart.selectedNodes.setAll(EventBundleNodeBase.this);
+                }
+                t.consume();
+            } else if (t.getButton() == MouseButton.SECONDARY) {
+                ContextMenu chartContextMenu = chart.getChartContextMenu(t);
+                if (contextMenu == null) {
+                    contextMenu = new ContextMenu();
+                    contextMenu.setAutoHide(true);
+
+                    contextMenu.getItems().addAll(ActionUtils.createContextMenu(getActions()).getItems());
+
+                    contextMenu.getItems().add(new SeparatorMenuItem());
+                    contextMenu.getItems().addAll(chartContextMenu.getItems());
+                }
+                contextMenu.show(EventBundleNodeBase.this, t.getScreenX(), t.getScreenY());
+                t.consume();
+            }
+        }
+    }
+
 }

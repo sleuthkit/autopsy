@@ -162,6 +162,9 @@ public final class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public void publishRemotely(AutopsyEvent event) {
+        /*
+         * This is a no-op if a remote channel has not been opened.
+         */
         if (null != currentChannelName) {
             boolean published = false;
             int tryCount = 1;
@@ -181,9 +184,7 @@ public final class AutopsyEventPublisher {
                     ++tryCount;
                 }
             }
-        } else {
-            logger.log(Level.SEVERE, "Attempt to publish {0} event remotely with no open channel", event.getPropertyName()); //NON-NLS            
-        }
+        } 
     }
 
 }
