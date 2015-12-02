@@ -127,6 +127,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
         dateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
 
+        verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
         bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
