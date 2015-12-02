@@ -28,7 +28,5 @@ It is up to the user to distinguish between the paths when adding to this file.
 <Properties>
     <!-- Path to input directory -->
     <!-- example: -->
-    <image value="\\STOREVI\forensics\general\xp-sp3-v4\xp-sp3-v4.001" />
-    <!--<image value="C:\Users\mohammad\Kuroi\datasources\small2.img"/>-->
-    <build value="..\..\build.xml"/>
+    <!--<image value="path-to-img" />-->
 </Properties>
