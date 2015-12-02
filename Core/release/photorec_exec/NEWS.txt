@@ -1,6 +1,4 @@
 Current news
-== 7.1-WIP ==
-
 == 7.0 ==
 
 === General Improvements ===

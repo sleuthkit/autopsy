@@ -1,5 +1,5 @@
 ; Testdisk.inf
-; PE Builder v3 plugin INF file for Testdisk and PhotoRec 7.1
+; PE Builder v3 plugin INF file for Testdisk and PhotoRec 6.14
 ; Plugin by Ahmed Hossam/Xtreme <Xtremesony_xp@yahoo.com>
 ; Made For Christophe GRENIER (www.cgsecurity.org)
 ; © Windows Xpire Tech Center
@@ -22,31 +22,13 @@ b="Programs\testdisk\63",2
 [SourceDisksFiles]
 files\testdisk_win.exe=a,,1
 files\photorec_win.exe=a,,1
-files\qphotorec_win.exe=a,,1
 files\fidentify_win.exe=a,,1
-files\cyggcc_s-1.dll=a,,1
-files\cygiconv-2.dll=a,,1
-files\cygjpeg-8.dll=a,,1
-files\cygncursesw-10.dll=a,,1
-files\cygssp-0.dll=a,,1
 files\cygwin1.dll=a,,1
-files\cygz.dll=a,,1
-files\iconv.dll=a,,1
-files\libgcc_s_sjlj-1.dll=a,,1
-files\libjpeg-62.dll=a,,1
-files\libpng16-16.dll=a,,1
-files\libssp-0.dll=a,,1
-files\libstdc++-6.dll=a,,1
-files\libwinpthread-1.dll=a,,1
-files\QtCore4.dll=a,,1
-files\QtGui4.dll=a,,1
-files\zlib1.dll=a,,1
 files\63\cygwin=b,,1
 
 [Software.AddReg]
 0x2, "Sherpya\XPEinit\Programs","Disk Tools\TestDisk - Fix MBR and Recover lost partitions","%systemdrive%\Programs\testdisk\testdisk_win.exe"
 0x2, "Sherpya\XPEinit\Programs","Disk Tools\PhotoRec - Recover lost files (Doc, Pic and Video)","%systemdrive%\Programs\testdisk\photorec_win.exe"
-0x2, "Sherpya\XPEinit\Programs","Disk Tools\QPhotoRec - GUI to recover lost files (Doc, Pic and Video)","%systemdrive%\Programs\testdisk\qphotorec_win.exe"
 0x2, "Sherpya\XPEinit\Programs","Disk Tools\files Identify","%systemdrive%\Programs\testdisk\fidentify_win.exe"
 
 ; Remove the comment ";" from the below lines if you are going to use NU2 menu

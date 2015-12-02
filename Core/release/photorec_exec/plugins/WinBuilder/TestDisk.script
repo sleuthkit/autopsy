@@ -1,5 +1,5 @@
 [main]
-Title=TestDisk & PhotoRec 7.1
+Title=TestDisk & PhotoRec 6.14
 Description=A powerful free data recovery software utility.
 Selected=True
 Level=5
@@ -26,33 +26,15 @@ StrFormat,CTrim,"%two_folders_up%","\",%two_folders_up%
 If,NotExistFile,"%two_folders_up%\testdisk_win.exe",Run,%ScriptFile%,Halt
 DirMake,"%Target_Prog%\%ProgramFolder%"
 DirMake,"%Target_Prog%\%ProgramFolder%\63"
-FileCopy,"%two_folders_up%\cyggcc_s-1.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygiconv-2.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygjpeg-8.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygncursesw-10.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygssp-0.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygwin1.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\cygz.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\iconv.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libgcc_s_sjlj-1.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libjpeg-62.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libpng16-16.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libssp-0.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libstdc++-6.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\libwinpthread-1.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\QtCore4.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\QtGui4.dll","%Target_Prog%%ProgramFolder%"
-FileCopy,"%two_folders_up%\zlib1.dll","%Target_Prog%%ProgramFolder%"
+FileCopy,"%two_folders_up%\cygwin1.dll","%Target_Prog%\%ProgramFolder%"
 FileCopy,"%two_folders_up%\fidentify_win.exe","%Target_Prog%\%ProgramFolder%"
 FileCopy,"%two_folders_up%\photorec_win.exe","%Target_Prog%\%ProgramFolder%"
-FileCopy,"%two_folders_up%\qphotorec_win.exe","%Target_Prog%\%ProgramFolder%"
 FileCopy,"%two_folders_up%\readme.txt","%Target_Prog%\%ProgramFolder%"
 FileCopy,"%two_folders_up%\testdisk_win.exe","%Target_Prog%\%ProgramFolder%"
 DirCopy,"%two_folders_up%\63\*.*","%Target_Prog%\%ProgramFolder%\63"
 ::DirCopy,"%two_folders_up%\TestDisk\*.*","%Target_Prog%\%ProgramFolder%"
 Add_Shortcut,StartMenu,"%TestDisk & PhotoRec"
 Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\photorec_win.exe","PhotoRec"
-Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\qphotorec_win.exe","QPhotoRec"
 Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\testdisk_win.exe","Testdisk"
 Add_Shortcut,StartMenu,"TestDisk & PhotoRec","%PE_Programs%\%ProgramFolder%\fidentify_win.exe","Files Identify"
 
