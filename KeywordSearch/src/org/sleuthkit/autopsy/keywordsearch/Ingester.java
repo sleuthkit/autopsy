@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -300,7 +299,7 @@ class Ingester {
                 try {
                     s = new String(docChunkContentBuf, 0, read, docContentEncoding);
                 } catch (UnsupportedEncodingException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.SEVERE, "Unsupported encoding", ex); //NON-NLS
                 }
                 updateDoc.addField(Server.Schema.CONTENT.toString(), s);
             } else {

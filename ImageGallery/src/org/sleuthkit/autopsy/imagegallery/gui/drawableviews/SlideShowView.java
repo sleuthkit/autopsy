@@ -56,7 +56,6 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Text;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
@@ -142,7 +141,7 @@ public class SlideShowView extends DrawableTileBase {
             try {
                 GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSplitButton, getController()).getOnAction().handle(t);
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "failed to create tag menu item", ex);
             }
         });
 

@@ -49,7 +49,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -219,7 +218,7 @@ public class EventsRepository {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Failed to get event stripes", ex); //NON-NLS
             return Collections.emptyList();
         }
     }
