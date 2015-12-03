@@ -394,6 +394,8 @@ class SevenZipExtractor {
                         String ext = archName.substring(dotI);
                         int colonIndex = ext.lastIndexOf(":");
                         if (colonIndex != -1) {
+                            // If alternate data stream is found, fix the name 
+                            // so Windows doesn't choke on the colon character.
                             useName = base + ext.substring(0, colonIndex);
                         } else {
                             switch (ext) {
