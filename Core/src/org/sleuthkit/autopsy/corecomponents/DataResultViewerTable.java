@@ -425,12 +425,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop), "-1"));
             if (value >= 0) {
+                /**
+                 * The original contents of orderedProps do not matter when setting the new ordered values. The reason
+                 * we copy propertiesAcc into it first is to give it the currect size so we can set() in any index.
+                 */
                 orderedProps.set(value, prop);
             }
         }
         propertiesAcc.clear();
-        for (int j = 0; j < props.size(); ++j) {
-            propertiesAcc.add(orderedProps.get(j));
+        for (Property<?> prop : orderedProps) {
+            propertiesAcc.add(prop);
         }
         return orderedProps;
     }
