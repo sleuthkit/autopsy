@@ -415,8 +415,7 @@ class SevenZipExtractor {
                 }
                 archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
-                logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
-
+               
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
                     continue; //skip the item
@@ -484,7 +483,7 @@ class SevenZipExtractor {
                             try {
                                 localFile.createNewFile();
                             } catch (IOException e) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), e); //NON-NLS
+                                logger.log(Level.WARNING, "Unable to create extracted file: {0}", localFile.getAbsolutePath()); //NON-NLS
                             }
                         }
                     } catch (SecurityException e) {
