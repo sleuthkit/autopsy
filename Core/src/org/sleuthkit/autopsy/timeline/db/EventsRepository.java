@@ -218,7 +218,7 @@ public class EventsRepository {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get event stripes", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex);
             return Collections.emptyList();
         }
     }
@@ -464,7 +464,7 @@ public class EventsRepository {
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
-            "progressWindow.msg.gatheringData=Gather event data",
+            "progressWindow.msg.gatheringData=Gathering event data",
             "progressWindow.msg.commitingDb=Committing events database"})
         protected Void call() throws Exception {
             EventDB.EventTransaction trans = null;
