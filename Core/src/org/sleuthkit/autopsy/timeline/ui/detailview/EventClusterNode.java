@@ -25,10 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -68,24 +66,6 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 final public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
-    /**
-     * Use this recursive function to flatten a tree of nodes into an single
-     * stream. More specifically it takes an EventStripeNode and produces a
-     * stream of EventStripes conaiting the stripes for the given node and all
-     * child eventStripes, ignoring intervening EventCluster nodes.
-     *
-     * @see
-     * #loadSubBundles(org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.RelativeDetail)
-     * for usage
-     */
-    private final static Function<EventStripeNode, Stream<EventStripe>> stripeFlattener = new Function<EventStripeNode, Stream<EventStripe>>() {
-        @Override
-        public Stream<EventStripe> apply(EventStripeNode node) {
-            return Stream.concat(
-                    Stream.of(node.getEventStripe()),
-                    node.getSubNodes().stream().flatMap(clusterNode -> clusterNode.getSubNodes().stream().flatMap(this)));
-        }
-    };
 
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
     private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
@@ -137,7 +117,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    void setDescriptionWidth(double max) {
+    void setMaxDescriptionWidth(double max) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -214,7 +194,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                     List<EventStripe> bundles = get();
 
                     //clear the existing subnodes
-                    List<EventStripe> transform = subNodes.stream().flatMap(stripeFlattener).collect(Collectors.toList());
+                    List<EventStripe> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
                     chart.getEventStripes().removeAll(transform);
                     subNodes.clear();
                     if (bundles.isEmpty()) {
@@ -311,4 +291,5 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
         }
     }
+
 }

@@ -49,7 +49,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -219,7 +218,7 @@ public class EventsRepository {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex);
             return Collections.emptyList();
         }
     }
@@ -465,7 +464,7 @@ public class EventsRepository {
         @Override
         @NbBundle.Messages({"progressWindow.msg.refreshingFileTags=Refreshing file tags",
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
-            "progressWindow.msg.gatheringData=Gather event data",
+            "progressWindow.msg.gatheringData=Gathering event data",
             "progressWindow.msg.commitingDb=Committing events database"})
         protected Void call() throws Exception {
             EventDB.EventTransaction trans = null;
