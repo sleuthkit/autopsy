@@ -916,7 +916,7 @@ class ReportGenerator {
         // hits.  If no keyord hits are tagged, then we make the page for nothing.
         String orderByClause;
         if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(list, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
             orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
@@ -954,11 +954,11 @@ class ReportGenerator {
         }
 
         if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(list, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(keyword, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(preview, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+            orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }

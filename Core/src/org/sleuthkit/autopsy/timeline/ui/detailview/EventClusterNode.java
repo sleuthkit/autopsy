@@ -26,6 +26,7 @@ import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -45,7 +46,9 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
@@ -63,6 +66,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 final public class EventClusterNode extends EventBundleNodeBase<EventCluster, EventStripe, EventStripeNode> {
 
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
+
     private static final BorderWidths CLUSTER_BORDER_WIDTHS = new BorderWidths(2, 1, 2, 1);
     private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
     private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
@@ -89,6 +93,7 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         subNodePane.setBorder(clusterBorder);
         subNodePane.setBackground(defaultBackground);
         subNodePane.setMinWidth(1);
+        subNodePane.setMaxWidth(USE_PREF_SIZE);
         setMinHeight(24);
         setAlignment(Pos.CENTER_LEFT);
 
@@ -112,13 +117,13 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
     }
 
     @Override
-    void setDescriptionWidth(double max) {
+    void setMaxDescriptionWidth(double max) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventBundle().getEventIDs().size();
+        final int size = getEventCluster().getCount();
         switch (descrVis) {
             case HIDDEN:
                 countLabel.setText("");
@@ -142,10 +147,10 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
      * @param expand
      */
     @NbBundle.Messages(value = "EventStripeNode.loggedTask.name=Load sub clusters")
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private synchronized void loadSubBundles(DescriptionLoD.RelativeDetail relativeDetail) {
         chart.setCursor(Cursor.WAIT);
-        chart.getEventStripes().removeAll(Lists.transform(subNodes, EventStripeNode::getEventStripe));
-        subNodes.clear();
+
 
         /*
          * make new ZoomParams to query with
@@ -159,13 +164,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
         final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
-        Task<List<EventStripe>> loggedTask = new Task<List<EventStripe>>() {
+        Task<List<EventStripe>> loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventStripeNode_loggedTask_name(), false) {
 
             private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
-
-            {
-                updateTitle(Bundle.EventStripeNode_loggedTask_name());
-            }
 
             @Override
             protected List<EventStripe> call() throws Exception {
@@ -182,7 +183,9 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 } while (bundles.size() == 1 && nonNull(next));
 
                 // return list of EventStripes representing sub-bundles
-                return Lists.transform(bundles, eventStripe -> eventStripe.withParent(getEventCluster()));
+                return bundles.stream()
+                        .map(eventStripe -> eventStripe.withParent(getEventCluster()))
+                        .collect(Collectors.toList());
             }
 
             @Override
@@ -190,14 +193,16 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
                 try {
                     List<EventStripe> bundles = get();
 
+                    //clear the existing subnodes
+                    List<EventStripe> transform = subNodes.stream().flatMap(new StripeFlattener()).collect(Collectors.toList());
+                    chart.getEventStripes().removeAll(transform);
+                    subNodes.clear();
                     if (bundles.isEmpty()) {
-                        subNodePane.getChildren().clear();
                         getChildren().setAll(subNodePane, infoHBox);
                         descLOD.set(getEventBundle().getDescriptionLoD());
                     } else {
                         chart.getEventStripes().addAll(bundles);
-                        subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createStripeNode));
-                        subNodePane.getChildren().setAll(subNodes);
+                        subNodes.addAll(Lists.transform(bundles, EventClusterNode.this::createChildNode));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                         descLOD.set(loadedDescriptionLoD);
                     }
@@ -214,7 +219,8 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
         chart.getController().monitorTask(loggedTask);
     }
 
-    private EventStripeNode createStripeNode(EventStripe stripe) {
+    @Override
+    EventStripeNode createChildNode(EventStripe stripe) {
         return new EventStripeNode(chart, stripe, this);
     }
 
@@ -285,4 +291,5 @@ final public class EventClusterNode extends EventBundleNodeBase<EventCluster, Ev
             disabledProperty().bind(Bindings.createBooleanBinding(() -> nonNull(getEventCluster()) && descLOD.get() == getEventCluster().getDescriptionLoD(), descLOD));
         }
     }
+
 }

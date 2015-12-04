@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
 
-    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occured when talking to server";
+    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server";
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection";
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 

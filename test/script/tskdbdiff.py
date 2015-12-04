@@ -383,6 +383,11 @@ def getAssociatedArtifactType(db_file, artifact_id):
     #artifact_cursor.execute("SELECT display_name FROM blackboard_artifact_types WHERE artifact_id=?",[artifact_id])
     cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
     info = cur.fetchone()
+    
+    conn.close()
+    # cleanup the backup
+    os.remove(backup_db_file)
+
     return "File path: " + info[0] + " Artifact Type: " + info[1]
 
 def build_id_table(artifact_cursor):
@@ -404,7 +409,7 @@ def main():
         gold_db = sys.argv.pop(0)
     except:
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
-        sys.exit()
+        sys.exit(1)
 
     db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
     dump_passed, bb_dump_passed = db_diff.run_diff()
@@ -416,7 +421,7 @@ def main():
     if not bb_dump_passed:
         print("Blackboard database comparison failed.")
 
-    return 0
+    sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -424,5 +429,5 @@ if __name__ == "__main__":
         print("Python 3 required")
         sys.exit(1)
 
-    sys.exit(main())
+    main()
 

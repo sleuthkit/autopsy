@@ -42,9 +42,10 @@ class RootItem extends NavTreeItem {
     /**
      * the comparator if any used to sort the children of this item
      */
-//    private TreeNodeComparators comp;
-    RootItem() {
+    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Type.reversed();
 
+    RootItem(Comparator<TreeItem<EventBundle<?>>> comp) {
+        comp = comp;
     }
 
     @Override
@@ -62,12 +63,13 @@ class RootItem extends NavTreeItem {
 
         EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
                 baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(bundle);
+                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(bundle, comparator);
                     newTreeItem.setExpanded(true);
                     getChildren().add(newTreeItem);
                     return newTreeItem;
                 });
         treeItem.insert(getTreePath(bundle));
+
     }
 
     void remove(EventBundle<?> bundle) {
@@ -96,8 +98,9 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
-        childMap.values().forEach(ti -> ti.resort(comp));
+    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+        comparator = comp;
+        childMap.values().forEach(ti -> ti.resort(comp, true));
     }
 
     @Override

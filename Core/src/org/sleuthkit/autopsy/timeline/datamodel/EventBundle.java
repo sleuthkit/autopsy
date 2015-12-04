@@ -47,7 +47,7 @@ public interface EventBundle<ParentType extends EventBundle<?>> {
 
     Optional<ParentType> getParentBundle();
 
-    default long getCount() {
+    default int getCount() {
         return getEventIDs().size();
     }
 

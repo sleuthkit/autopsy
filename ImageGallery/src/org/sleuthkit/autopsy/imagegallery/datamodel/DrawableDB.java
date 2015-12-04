@@ -44,7 +44,6 @@ import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
@@ -509,7 +508,8 @@ public final class DrawableDB {
                 }
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName());
+            LOGGER.log(Level.WARNING, msg, ex);
         } finally {
             dbReadUnlock();
         }
@@ -652,7 +652,8 @@ public final class DrawableDB {
                 return analyzedQuery.getBoolean(ANALYZED);
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Failed to determine if file %s is finalized", String.valueOf(fileId));
+            LOGGER.log(Level.WARNING, msg, ex);
         } finally {
             dbReadUnlock();
         }

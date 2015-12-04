@@ -68,20 +68,23 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
         super(chart, eventStripe, parentNode);
 
         setMinHeight(48);
-
         //setup description label
         eventTypeImageView.setImage(getEventType().getFXImage());
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
-
+        descrLabel.setPrefWidth(USE_COMPUTED_SIZE);
         setAlignment(subNodePane, Pos.BOTTOM_LEFT);
+
         for (EventCluster cluster : eventStripe.getClusters()) {
-            EventClusterNode clusterNode = new EventClusterNode(chart, cluster, this);
-            subNodes.add(clusterNode);
-            subNodePane.getChildren().addAll(clusterNode);
+            subNodes.add(createChildNode(cluster));
         }
 
         getChildren().addAll(new VBox(infoHBox, subNodePane));
+    }
+
+    @Override
+    EventClusterNode createChildNode(EventCluster cluster) {
+        return new EventClusterNode(chart, cluster, this);
     }
 
     @Override
@@ -99,7 +102,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
      * @param w the maximum width the description label should have
      */
     @Override
-    public void setDescriptionWidth(double w) {
+    public void setMaxDescriptionWidth(double w) {
         descrLabel.setMaxWidth(w);
     }
 
@@ -121,7 +124,7 @@ final public class EventStripeNode extends EventBundleNodeBase<EventStripe, Even
 
     @Override
     void setDescriptionVisibiltiyImpl(DescriptionVisibility descrVis) {
-        final int size = getEventStripe().getEventIDs().size();
+        final int size = getEventStripe().getCount();
 
         switch (descrVis) {
             case HIDDEN:
