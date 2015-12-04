@@ -106,6 +106,8 @@ public class FileTypesNode extends DisplayableItemNode {
 
     @Override
     public String getNodeType() {
+        if(filter == null)
+            return "FileTypes";
         if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
             return "DocFileTypes";
         if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
