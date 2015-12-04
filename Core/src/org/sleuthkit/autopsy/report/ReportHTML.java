@@ -42,7 +42,6 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -382,7 +381,7 @@ class ReportHTML implements TableReportModule {
         try {
             out.write("</div>\n</body>\n</html>\n"); //NON-NLS
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Failed to write end of HTML report.", ex); //NON-NLS
         } finally {
             if (out != null) {
                 try {

@@ -820,10 +820,6 @@
                 <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/platform-3.4.0.jar</binary-origin>
             </class-path-extension>
@@ -902,6 +898,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-metadata-3.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-metadata-3.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.40.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.40.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pict-3.1.1.jar</runtime-relative-path>

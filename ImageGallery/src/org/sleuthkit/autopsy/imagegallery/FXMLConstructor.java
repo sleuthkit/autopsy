@@ -21,11 +21,11 @@ package org.sleuthkit.autopsy.imagegallery;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.logging.Level;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
-
+import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * This class supports programmer productivity by abstracting frequently used
  * code to load FXML-defined GUI components,
@@ -35,10 +35,11 @@ import org.openide.util.Exceptions;
  * http://stackoverflow.com/questions/11734885/javafx2-very-poor-performance-when-adding-custom-made-fxmlpanels-to-gridpane.
  */
 public class FXMLConstructor {
+    
+    private static Logger logger = Logger.getLogger(FXMLConstructor.class.getName());
 
     static public void construct(Node n, String fxmlFileName) {
         final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
-//        System.out.println(name);
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
@@ -52,11 +53,13 @@ public class FXMLConstructor {
                     fxmlLoader.setClassLoader(FXMLLoader.getDefaultClassLoader());
                     fxmlLoader.load();
                 } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
+                    String msg = String.format("Failed to load fxml file %s", fxmlFileName);
+                    logger.log(Level.SEVERE, msg, ex);
                 }
             }
         } catch (MalformedURLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Malformed URL %s", name);
+            logger.log(Level.SEVERE, msg, ex);
         }
 
     }

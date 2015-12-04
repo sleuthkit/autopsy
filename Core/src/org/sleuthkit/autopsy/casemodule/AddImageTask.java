@@ -170,7 +170,7 @@ class AddImageTask implements Runnable {
         try {
             imageId = addImageProcess.commit();
         } catch (TskCoreException e) {
-            logger.log(Level.WARNING, "Errors occured while committing the image", e); //NON-NLS
+            logger.log(Level.WARNING, "Errors occurred while committing the image", e); //NON-NLS
             errorList.add(e.getMessage());
         } finally {
             if (imageId != 0) {
@@ -208,7 +208,7 @@ class AddImageTask implements Runnable {
         }
 
         if (!errorList.isEmpty()) {
-            logger.log(Level.INFO, "There were errors that occured in add image process"); //NON-NLS
+            logger.log(Level.INFO, "There were errors that occurred in add image process"); //NON-NLS
         }
 
         // When everything happens without an error:
