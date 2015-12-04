@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.corecomponents;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 
 /**
