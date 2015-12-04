@@ -83,8 +83,8 @@ public class FileTypeNode extends DisplayableItemNode {
     }
 
     @Override
-    public String getNodeType() {
-        return "FileType";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.FILE_TYPE;
     }
 
     // update the display name when new events are fired

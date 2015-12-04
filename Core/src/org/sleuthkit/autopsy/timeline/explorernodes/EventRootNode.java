@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.TypeOfNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -71,8 +72,8 @@ public class EventRootNode extends DisplayableItemNode {
     }
 
     @Override
-    public String getNodeType() {
-        return "EventRoot";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.EVENT_ROOT;
     }
 
     /**

@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.TypeOfNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -169,15 +170,15 @@ public class DataResultFilterNode extends FilterNode {
         return propertySets;
     }
 
-    public String getNodeType() {
+    public TypeOfNode getNodeType() {
         Node orig = getOriginal();
         if(orig instanceof DisplayableItemNode) {
             DisplayableItemNode node = (DisplayableItemNode) orig;
             return node.getNodeType();
         }
         else {
-            System.out.println("this is not a DisplayItemNode");
-            return "generic";
+            Logger.getLogger(DataResultFilterNode.class.getName()).log(Level.WARNING, "Wrapped node is not DisplayItemNode");
+            return TypeOfNode.GENERIC;
         }
     }
 

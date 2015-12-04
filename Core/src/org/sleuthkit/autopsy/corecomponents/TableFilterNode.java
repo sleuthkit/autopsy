@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.util.logging.Level;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
+import org.sleuthkit.autopsy.datamodel.TypeOfNode;
 
 /**
  * This class is used to filter the nodes that we want to show on the
@@ -57,15 +60,15 @@ public class TableFilterNode extends FilterNode {
         }
     }
     
-    public String getNodeType() {
+    public TypeOfNode getNodeType() {
         Node orig = getOriginal();
         if(orig instanceof KnownFileFilterNode) {
             KnownFileFilterNode node = (KnownFileFilterNode) orig;
             return node.getNodeType();
         }
         else {
-            System.out.println("this is not a KnownFilefilterNode");
-            return "generic";
+            Logger.getLogger(TableFilterNode.class.getName()).log(Level.WARNING, "Wrapped node is not KnownFilefilterNode");
+            return TypeOfNode.GENERIC;
         }
     }
 }

@@ -150,7 +150,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     }
 
     @Override
-    public String getNodeType() {
-        return "VirtualDirectory";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.VIRTUAL_DIRECTORY;
     }
 }

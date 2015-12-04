@@ -164,8 +164,8 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "InterestingHitsRoot";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.INTERESTING_HITS_ROOT;
         }
     }
 
@@ -315,8 +315,8 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "InterstingHitsSetName";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.INTERESTING_HITS_SET_NAME;
         }
     }
 

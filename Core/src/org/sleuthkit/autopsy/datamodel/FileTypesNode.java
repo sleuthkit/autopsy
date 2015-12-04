@@ -105,14 +105,14 @@ public class FileTypesNode extends DisplayableItemNode {
     }
 
     @Override
-    public String getNodeType() {
+    public TypeOfNode getNodeType() {
         if(filter == null)
-            return "FileTypes";
+            return TypeOfNode.FILE_TYPES;
         if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
-            return "DocFileTypes";
+            return TypeOfNode.FILE_TYPES_DOC;
         if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
-            return "ExecFiletypes";
-        return "FileTypes";
+            return TypeOfNode.FILE_TYPES_EXE;
+        return TypeOfNode.FILE_TYPES;
     }
 
     /**

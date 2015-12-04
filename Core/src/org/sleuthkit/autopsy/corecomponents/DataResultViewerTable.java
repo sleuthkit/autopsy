@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -52,6 +53,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.TypeOfNode;
 
 /**
  * DataResult sortable table viewer
@@ -441,16 +444,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     // Get unique name for node and it's property.
     private String getUniqueName(Node root, Property<?> prop) {
-        String type = "generic";
+        TypeOfNode type = TypeOfNode.GENERIC;
         if(root instanceof TableFilterNode) {
             TableFilterNode filterNode = (TableFilterNode) root;
             type =  filterNode.getNodeType();
         }
         else {
-            System.out.println("somehow not tablefilter");
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.WARNING, "Node is not TableFilterNode");
         }
         
-        return Case.getCurrentCase().getName() + "." + type.replaceAll("[^a-zA-Z0-9_]", "") + "." 
+        return Case.getCurrentCase().getName() + "." + type + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 

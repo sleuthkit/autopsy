@@ -90,8 +90,8 @@ public final class Reports implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "ReportsList";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.REPORTS_LIST;
         }
     }
 
@@ -215,8 +215,8 @@ public final class Reports implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "Reports";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.REPORTS;
         }
 
         private static class DeleteReportAction extends AbstractAction {

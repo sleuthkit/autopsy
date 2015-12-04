@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.TypeOfNode;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -122,8 +123,8 @@ class EventNode extends DisplayableItemNode {
     }
 
     @Override
-    public String getNodeType() {
-        return "Event";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.EVENT;
     }
 
     /**

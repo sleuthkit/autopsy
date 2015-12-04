@@ -145,8 +145,8 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "FileSizeRoot";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.FILE_SIZE_ROOT;
         }
     }
 
@@ -287,8 +287,8 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             @Override
-            public String getNodeType() {
-                return "FileSize";
+            public TypeOfNode getNodeType() {
+                return TypeOfNode.FILE_SIZE;
             }
 
             // update the display name when new events are fired

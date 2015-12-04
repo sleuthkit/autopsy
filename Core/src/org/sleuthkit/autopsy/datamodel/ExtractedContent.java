@@ -120,8 +120,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "ExtractedContentRoot";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.EXTRACTED_CONTENT_ROOT;
         }
     }
 
@@ -374,59 +374,59 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
+        public TypeOfNode getNodeType() {
             switch (type) {
                 case TSK_WEB_BOOKMARK:
-                    return "ExtractedBookmarksType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_BOOKMARKS;
                 case TSK_WEB_COOKIE:
-                    return "ExtractedCookiesType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_COOKIES;
                 case TSK_WEB_HISTORY:
-                    return "ExtractedHistoryType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_HISTORY;
                 case TSK_WEB_DOWNLOAD:
-                    return "ExtractedDownloadsType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_DOWNLOADS;
                 case TSK_INSTALLED_PROG:
-                    return "ExtractedPorgramsType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_PROGRAMS;
                 case TSK_RECENT_OBJECT:
-                    return "ExtractedRecentType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_RECENT;
                 case TSK_DEVICE_ATTACHED:
-                    return "ExtractedAttachedDeviceType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_ATTACHED_DEVICES;
                 case TSK_WEB_SEARCH_QUERY:
-                    return "ExtractedSearchType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_SEARCH;
                 case TSK_METADATA_EXIF:
-                    return "ExtractedMetadataExifType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_METADATA_EXIF;
                 case TSK_EMAIL_MSG:
-                    return "ExtractedEmailMsgType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_EMAIL_MSG;
                 case TSK_CONTACT:
-                    return "ExtractedContactsType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_CONTACTS;
                 case TSK_MESSAGE:
-                    return "ExtractedMessagesType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_MESSAGES;
                 case TSK_CALLLOG:
-                    return "ExtractedCallLogType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_CALL_LOG;
                 case TSK_CALENDAR_ENTRY:
-                    return "extractedCalendarType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_CALENDAR;
                 case TSK_SPEED_DIAL_ENTRY:
-                    return "ExtractedSpeedDialType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_SPEED_DIAL;
                 case TSK_BLUETOOTH_PAIRING:
-                    return "ExtractedBluetoothType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_BLUETOOTH;
                 case TSK_GPS_BOOKMARK:
-                    return "ExtractedGPSBookmarkType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_GPS_BOOKMARKS;
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                    return "ExtractedGPSLastLocationType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_GPS_LAST_LOCATION;
                 case TSK_GPS_SEARCH:
-                    return "ExtractedGPSSearchType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_GPS_SEARCH;
                 case TSK_SERVICE_ACCOUNT:
-                    return "ExtractedServiceAccountType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_SERVICE_ACCOUNT;
                 case TSK_ENCRYPTION_DETECTED:
-                    return "ExtractedEncryptionType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_ENCRYPTION;
                 case TSK_EXT_MISMATCH_DETECTED:
-                    return "ExtractedExtMismatchType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_EXT_MISMATCH;
                 case TSK_OS_INFO:
-                    return "ExtractedOSType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_OS;
                 case TSK_FACE_DETECTED:
-                    return "ExtractedFaceDetectedType"; //NON-NLS
+                    return TypeOfNode.EXTRACTED_FACE_DETECTED;
 
             }
-            return "ExtractedContentType";
+            return TypeOfNode.EXTRACTED_CONTENT_TYPE;
         }
     }
 

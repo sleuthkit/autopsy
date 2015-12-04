@@ -123,7 +123,7 @@ class ContentTagNode extends DisplayableItemNode {
     }
 
     @Override
-    public String getNodeType() {
-        return "ContentTag";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.CONTENT_TAG;
     }
 }

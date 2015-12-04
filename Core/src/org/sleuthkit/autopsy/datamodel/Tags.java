@@ -110,8 +110,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "TagsRoot";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.TAGS_ROOT;
         }
     }
 
@@ -272,8 +272,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "TagName";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.TAGS_NAME;
         }
     }
 
@@ -372,8 +372,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "TagsContentType";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.TAGS_CONTENT_TYPE;
         }
     }
 
@@ -470,8 +470,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public String getNodeType() {
-            return "BlackboardArtifactTagType";
+        public TypeOfNode getNodeType() {
+            return TypeOfNode.TAGS_BLACKBOARD_ARTIFACT;
         }
     }
 

@@ -185,7 +185,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     }
 
     @Override
-    public String getNodeType() {
-        return "File";
+    public TypeOfNode getNodeType() {
+        return TypeOfNode.FILE;
     }
 }

@@ -41,5 +41,5 @@ public abstract class DisplayableItemNode extends AbstractNode {
 
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
     
-    public abstract String getNodeType();
+    public abstract TypeOfNode getNodeType();
 }
