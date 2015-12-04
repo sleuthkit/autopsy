@@ -24,6 +24,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -55,6 +56,18 @@ public class KnownFileFilterNode extends FilterNode {
                 }
             }
         });
+    }
+
+    public String getNodeType() {
+        Node orig = getOriginal();
+        if(orig instanceof DataResultFilterNode) {
+            DataResultFilterNode node = (DataResultFilterNode) orig;
+            return node.getNodeType();
+        }
+        else {
+            System.out.println("this is not a DataResultFilterNode");
+            return "generic";
+        }
     }
 
     public enum SelectionContext {

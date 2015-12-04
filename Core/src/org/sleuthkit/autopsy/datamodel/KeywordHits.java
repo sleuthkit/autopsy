@@ -239,6 +239,11 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             return s;
         }
+
+        @Override
+        public String getNodeType() {
+            return "KeywordRoot";
+        }
     }
 
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -389,6 +394,11 @@ public class KeywordHits implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        public String getNodeType() {
+            return "KeywordList";
+        }
     }
 
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -481,6 +491,11 @@ public class KeywordHits implements AutopsyVisitableItem {
                     keywordResults.getArtifactIds(setName, keyword).size()));
 
             return s;
+        }
+
+        @Override
+        public String getNodeType() {
+            return "KeywordTerm";
         }
     }
 

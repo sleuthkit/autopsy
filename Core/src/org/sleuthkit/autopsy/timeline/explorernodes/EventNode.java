@@ -121,6 +121,11 @@ class EventNode extends DisplayableItemNode {
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public String getNodeType() {
+        return "Event";
+    }
+
     /**
      * We use TimeProperty instead of a normal NodeProperty to correctly display
      * the date/time when the user changes the timezone setting.

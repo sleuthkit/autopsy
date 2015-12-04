@@ -118,6 +118,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public String getNodeType() {
+            return "ExtractedContentRoot";
+        }
     }
 
     /**
@@ -366,6 +371,62 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public boolean isLeafTypeNode() {
             return true;
+        }
+
+        @Override
+        public String getNodeType() {
+            switch (type) {
+                case TSK_WEB_BOOKMARK:
+                    return "ExtractedBookmarksType"; //NON-NLS
+                case TSK_WEB_COOKIE:
+                    return "ExtractedCookiesType"; //NON-NLS
+                case TSK_WEB_HISTORY:
+                    return "ExtractedHistoryType"; //NON-NLS
+                case TSK_WEB_DOWNLOAD:
+                    return "ExtractedDownloadsType"; //NON-NLS
+                case TSK_INSTALLED_PROG:
+                    return "ExtractedPorgramsType"; //NON-NLS
+                case TSK_RECENT_OBJECT:
+                    return "ExtractedRecentType"; //NON-NLS
+                case TSK_DEVICE_ATTACHED:
+                    return "ExtractedAttachedDeviceType"; //NON-NLS
+                case TSK_WEB_SEARCH_QUERY:
+                    return "ExtractedSearchType"; //NON-NLS
+                case TSK_METADATA_EXIF:
+                    return "ExtractedMetadataExifType"; //NON-NLS
+                case TSK_EMAIL_MSG:
+                    return "ExtractedEmailMsgType"; //NON-NLS
+                case TSK_CONTACT:
+                    return "ExtractedContactsType"; //NON-NLS
+                case TSK_MESSAGE:
+                    return "ExtractedMessagesType"; //NON-NLS
+                case TSK_CALLLOG:
+                    return "ExtractedCallLogType"; //NON-NLS
+                case TSK_CALENDAR_ENTRY:
+                    return "extractedCalendarType"; //NON-NLS
+                case TSK_SPEED_DIAL_ENTRY:
+                    return "ExtractedSpeedDialType"; //NON-NLS
+                case TSK_BLUETOOTH_PAIRING:
+                    return "ExtractedBluetoothType"; //NON-NLS
+                case TSK_GPS_BOOKMARK:
+                    return "ExtractedGPSBookmarkType"; //NON-NLS
+                case TSK_GPS_LAST_KNOWN_LOCATION:
+                    return "ExtractedGPSLastLocationType"; //NON-NLS
+                case TSK_GPS_SEARCH:
+                    return "ExtractedGPSSearchType"; //NON-NLS
+                case TSK_SERVICE_ACCOUNT:
+                    return "ExtractedServiceAccountType"; //NON-NLS
+                case TSK_ENCRYPTION_DETECTED:
+                    return "ExtractedEncryptionType"; //NON-NLS
+                case TSK_EXT_MISMATCH_DETECTED:
+                    return "ExtractedExtMismatchType"; //NON-NLS
+                case TSK_OS_INFO:
+                    return "ExtractedOSType"; //NON-NLS
+                case TSK_FACE_DETECTED:
+                    return "ExtractedFaceDetectedType"; //NON-NLS
+
+            }
+            return "ExtractedContentType";
         }
     }
 

@@ -486,4 +486,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return true;
     }
+
+    @Override
+    public String getNodeType() {
+        return "BlackboardArtifact";
+    }
 }

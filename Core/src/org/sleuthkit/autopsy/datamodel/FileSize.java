@@ -143,6 +143,11 @@ public class FileSize implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public String getNodeType() {
+            return "FileSizeRoot";
+        }
     }
 
     /*
@@ -279,6 +284,11 @@ public class FileSize implements AutopsyVisitableItem {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
 
                 updateDisplayName();
+            }
+
+            @Override
+            public String getNodeType() {
+                return "FileSize";
             }
 
             // update the display name when new events are fired

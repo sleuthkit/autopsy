@@ -82,6 +82,11 @@ public class FileTypeNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
     }
 
+    @Override
+    public String getNodeType() {
+        return "FileType";
+    }
+
     // update the display name when new events are fired
     private class FileTypeNodeObserver implements Observer {
 

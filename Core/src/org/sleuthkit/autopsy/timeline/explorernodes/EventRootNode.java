@@ -70,6 +70,11 @@ public class EventRootNode extends DisplayableItemNode {
         return childCount;
     }
 
+    @Override
+    public String getNodeType() {
+        return "EventRoot";
+    }
+
     /**
      * The node factories used to make lists of files to send to the result
      * viewer using the lazy loading (rather than background) loading option to

@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.corecomponents;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 
 /**
  * This class is used to filter the nodes that we want to show on the
@@ -53,6 +55,18 @@ public class TableFilterNode extends FilterNode {
             return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
+        }
+    }
+    
+    public String getNodeType() {
+        Node orig = getOriginal();
+        if(orig instanceof KnownFileFilterNode) {
+            KnownFileFilterNode node = (KnownFileFilterNode) orig;
+            return node.getNodeType();
+        }
+        else {
+            System.out.println("this is not a KnownFilefilterNode");
+            return "generic";
         }
     }
 }

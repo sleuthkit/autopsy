@@ -441,7 +441,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     // Get unique name for node and it's property.
     private String getUniqueName(Node root, Property<?> prop) {
-        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "." 
+        String type = "generic";
+        if(root instanceof TableFilterNode) {
+            TableFilterNode filterNode = (TableFilterNode) root;
+            type =  filterNode.getNodeType();
+        }
+        else {
+            System.out.println("somehow not tablefilter");
+        }
+        
+        return Case.getCurrentCase().getName() + "." + type.replaceAll("[^a-zA-Z0-9_]", "") + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 

@@ -189,4 +189,9 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+
+    @Override
+    public String getNodeType() {
+        return "Volume";
+    }
 }

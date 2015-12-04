@@ -169,6 +169,18 @@ public class DataResultFilterNode extends FilterNode {
         return propertySets;
     }
 
+    public String getNodeType() {
+        Node orig = getOriginal();
+        if(orig instanceof DisplayableItemNode) {
+            DisplayableItemNode node = (DisplayableItemNode) orig;
+            return node.getNodeType();
+        }
+        else {
+            System.out.println("this is not a DisplayItemNode");
+            return "generic";
+        }
+    }
+
     /**
      * Uses the default nodes actions per node, adds some custom ones and
      * returns them per visited node type
