@@ -38,7 +38,6 @@ public class FXMLConstructor {
 
     static public void construct(Node n, String fxmlFileName) {
         final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName;
-//        System.out.println(name);
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
