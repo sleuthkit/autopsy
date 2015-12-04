@@ -334,6 +334,7 @@ def normalize_db_entry(line, table):
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
     report_index = line.find('INSERT INTO "reports"')
+    layout_index = line.find('INSERT INTO "tsk_file_layout"')
     parens = line[line.find('(') + 1 : line.find(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -349,7 +350,13 @@ def normalize_db_entry(line, table):
         path = table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
         return newLine
-    #remove object ID
+    # remove object ID
+    elif (layout_index != -1):
+        obj_id = fields_list[0]
+        path= table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    # remove object ID
     elif (object_index != -1):
         obj_id = fields_list[0]
         parent_id = fields_list[1]
