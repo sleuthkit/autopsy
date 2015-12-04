@@ -405,6 +405,9 @@ class SevenZipExtractor {
                                 case ".tgz": //NON-NLS
                                     useName = base + ".tar"; //NON-NLS
                                     break;
+                                case ".bz2": //NON-NLS
+                                    useName = base + ".bz2"; //NON-NLS
+                                    break;
                             }
                         }
                     }
