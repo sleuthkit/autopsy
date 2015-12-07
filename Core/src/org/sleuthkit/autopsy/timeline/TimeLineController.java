@@ -23,11 +23,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.NumberFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -54,7 +52,6 @@ import javafx.concurrent.Worker;
 import javafx.scene.control.Dialog;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -572,6 +569,7 @@ public class TimeLineController {
         }
     }
 
+    @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
     synchronized public boolean pushTimeRange(Interval timeRange) {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
@@ -589,35 +587,18 @@ public class TimeLineController {
     @NbBundle.Messages({"# {0} - the number of events",
         "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
         "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
-    synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
-        Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
-        final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
-
-        boolean shouldContinue = true;
-        if ((newLOD == DescriptionLoD.FULL || newLOD == DescriptionLoD.MEDIUM) && count > 10_000) {
-            String format = NumberFormat.getInstance().format(count);
-
-            int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
-                    Bundle.Timeline_pushDescrLOD_confdlg_msg(format),
-                    Bundle.Timeline_pushDescrLOD_confdlg_title(),
-                    JOptionPane.YES_NO_OPTION);
-
-            shouldContinue = (showConfirmDialog == JOptionPane.YES_OPTION);
+    synchronized public void pushDescrLOD(DescriptionLoD newLOD) {
+        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        if (currentZoom == null) {
+            advance(InitialZoomState.withDescrLOD(newLOD));
+        } else if (currentZoom.hasDescrLOD(newLOD) == false) {
+            advance(currentZoom.withDescrLOD(newLOD));
         }
-
-        if (shouldContinue) {
-            ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
-            if (currentZoom == null) {
-                advance(InitialZoomState.withDescrLOD(newLOD));
-            } else if (currentZoom.hasDescrLOD(newLOD) == false) {
-                advance(currentZoom.withDescrLOD(newLOD));
-            }
-        }
-        return shouldContinue;
     }
 
+    @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
-//        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
