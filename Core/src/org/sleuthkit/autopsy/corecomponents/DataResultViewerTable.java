@@ -424,12 +424,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                 }
             }
-        }
-
-        // if there's no content just auto resize all columns
-        if (content == null || content.length <= 0) {
-            // turn on the auto resize
-            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            
+            // if there's no content just auto resize all columns
+            if (content.length <= 0) {
+                // turn on the auto resize
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            }
         }
     }
     
