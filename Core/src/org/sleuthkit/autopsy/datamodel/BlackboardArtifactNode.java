@@ -488,7 +488,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     }
 
     @Override
-    public TypeOfNode getNodeType() {
-        return TypeOfNode.BLACKBOARD_ARTIFACT;
+    public ItemType getItemType() {
+        return ItemType.BLACKBOARD_ARTIFACT;
     }
 }

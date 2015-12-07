@@ -120,8 +120,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
-            return TypeOfNode.EXTRACTED_CONTENT_ROOT;
+        public ItemType getItemType() {
+            return ItemType.EXTRACTED_CONTENT_ROOT;
         }
     }
 
@@ -374,59 +374,59 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
+        public ItemType getItemType() {
             switch (type) {
                 case TSK_WEB_BOOKMARK:
-                    return TypeOfNode.EXTRACTED_BOOKMARKS;
+                    return ItemType.EXTRACTED_BOOKMARKS;
                 case TSK_WEB_COOKIE:
-                    return TypeOfNode.EXTRACTED_COOKIES;
+                    return ItemType.EXTRACTED_COOKIES;
                 case TSK_WEB_HISTORY:
-                    return TypeOfNode.EXTRACTED_HISTORY;
+                    return ItemType.EXTRACTED_HISTORY;
                 case TSK_WEB_DOWNLOAD:
-                    return TypeOfNode.EXTRACTED_DOWNLOADS;
+                    return ItemType.EXTRACTED_DOWNLOADS;
                 case TSK_INSTALLED_PROG:
-                    return TypeOfNode.EXTRACTED_PROGRAMS;
+                    return ItemType.EXTRACTED_PROGRAMS;
                 case TSK_RECENT_OBJECT:
-                    return TypeOfNode.EXTRACTED_RECENT;
+                    return ItemType.EXTRACTED_RECENT;
                 case TSK_DEVICE_ATTACHED:
-                    return TypeOfNode.EXTRACTED_ATTACHED_DEVICES;
+                    return ItemType.EXTRACTED_ATTACHED_DEVICES;
                 case TSK_WEB_SEARCH_QUERY:
-                    return TypeOfNode.EXTRACTED_SEARCH;
+                    return ItemType.EXTRACTED_SEARCH;
                 case TSK_METADATA_EXIF:
-                    return TypeOfNode.EXTRACTED_METADATA_EXIF;
+                    return ItemType.EXTRACTED_METADATA_EXIF;
                 case TSK_EMAIL_MSG:
-                    return TypeOfNode.EXTRACTED_EMAIL_MSG;
+                    return ItemType.EXTRACTED_EMAIL_MSG;
                 case TSK_CONTACT:
-                    return TypeOfNode.EXTRACTED_CONTACTS;
+                    return ItemType.EXTRACTED_CONTACTS;
                 case TSK_MESSAGE:
-                    return TypeOfNode.EXTRACTED_MESSAGES;
+                    return ItemType.EXTRACTED_MESSAGES;
                 case TSK_CALLLOG:
-                    return TypeOfNode.EXTRACTED_CALL_LOG;
+                    return ItemType.EXTRACTED_CALL_LOG;
                 case TSK_CALENDAR_ENTRY:
-                    return TypeOfNode.EXTRACTED_CALENDAR;
+                    return ItemType.EXTRACTED_CALENDAR;
                 case TSK_SPEED_DIAL_ENTRY:
-                    return TypeOfNode.EXTRACTED_SPEED_DIAL;
+                    return ItemType.EXTRACTED_SPEED_DIAL;
                 case TSK_BLUETOOTH_PAIRING:
-                    return TypeOfNode.EXTRACTED_BLUETOOTH;
+                    return ItemType.EXTRACTED_BLUETOOTH;
                 case TSK_GPS_BOOKMARK:
-                    return TypeOfNode.EXTRACTED_GPS_BOOKMARKS;
+                    return ItemType.EXTRACTED_GPS_BOOKMARKS;
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                    return TypeOfNode.EXTRACTED_GPS_LAST_LOCATION;
+                    return ItemType.EXTRACTED_GPS_LAST_LOCATION;
                 case TSK_GPS_SEARCH:
-                    return TypeOfNode.EXTRACTED_GPS_SEARCH;
+                    return ItemType.EXTRACTED_GPS_SEARCH;
                 case TSK_SERVICE_ACCOUNT:
-                    return TypeOfNode.EXTRACTED_SERVICE_ACCOUNT;
+                    return ItemType.EXTRACTED_SERVICE_ACCOUNT;
                 case TSK_ENCRYPTION_DETECTED:
-                    return TypeOfNode.EXTRACTED_ENCRYPTION;
+                    return ItemType.EXTRACTED_ENCRYPTION;
                 case TSK_EXT_MISMATCH_DETECTED:
-                    return TypeOfNode.EXTRACTED_EXT_MISMATCH;
+                    return ItemType.EXTRACTED_EXT_MISMATCH;
                 case TSK_OS_INFO:
-                    return TypeOfNode.EXTRACTED_OS;
+                    return ItemType.EXTRACTED_OS;
                 case TSK_FACE_DETECTED:
-                    return TypeOfNode.EXTRACTED_FACE_DETECTED;
+                    return ItemType.EXTRACTED_FACE_DETECTED;
 
             }
-            return TypeOfNode.EXTRACTED_CONTENT_TYPE;
+            return ItemType.EXTRACTED_CONTENT_TYPE;
         }
     }
 

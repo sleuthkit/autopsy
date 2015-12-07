@@ -148,8 +148,8 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
-            return TypeOfNode.DELETED_CONTENT;
+        public ItemType getItemType() {
+            return ItemType.DELETED_CONTENT;
         }
     }
 
@@ -281,8 +281,8 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            public TypeOfNode getNodeType() {
-                return TypeOfNode.DELETED_CONTENT_CHILDREN;
+            public ItemType getItemType() {
+                return ItemType.DELETED_CONTENT_CHILDREN;
             }
 
             // update the display name when new events are fired

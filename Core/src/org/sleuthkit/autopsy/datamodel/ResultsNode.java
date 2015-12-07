@@ -70,7 +70,7 @@ public class ResultsNode extends DisplayableItemNode {
     }
 
     @Override
-    public TypeOfNode getNodeType() {
-        return TypeOfNode.RESULTS;
+    public ItemType getItemType() {
+        return ItemType.RESULTS;
     }
 }

@@ -18,15 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -58,18 +55,6 @@ public class KnownFileFilterNode extends FilterNode {
                 }
             }
         });
-    }
-
-    public TypeOfNode getNodeType() {
-        Node orig = getOriginal();
-        if(orig instanceof DataResultFilterNode) {
-            DataResultFilterNode node = (DataResultFilterNode) orig;
-            return node.getNodeType();
-        }
-        else {
-            Logger.getLogger(KnownFileFilterNode.class.getName()).log(Level.WARNING, "Wrapped node is not DataResultFilterNode");
-            return TypeOfNode.GENERIC;
-        }
     }
 
     public enum SelectionContext {

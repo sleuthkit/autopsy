@@ -191,7 +191,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     }
 
     @Override
-    public TypeOfNode getNodeType() {
-        return TypeOfNode.VOLUME;
+    public ItemType getItemType() {
+        return ItemType.VOLUME;
     }
 }

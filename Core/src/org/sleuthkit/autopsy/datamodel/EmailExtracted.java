@@ -192,8 +192,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
-            return TypeOfNode.EMAIL_EXTRACTED_ROOT;
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_ROOT;
         }
     }
 
@@ -347,8 +347,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
-            return TypeOfNode.EMAIL_EXTRACTED_ACCOUNT;
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_ACCOUNT;
         }
     }
 
@@ -438,8 +438,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public TypeOfNode getNodeType() {
-            return TypeOfNode.EMAIL_EXTRACTED_FOLDER;
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_FOLDER;
         }
     }
 

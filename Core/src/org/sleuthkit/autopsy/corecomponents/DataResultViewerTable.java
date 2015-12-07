@@ -54,7 +54,7 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.TypeOfNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.ItemType;
 
 /**
  * DataResult sortable table viewer
@@ -318,12 +318,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
-        //wrap to filter out children
-        //note: this breaks the tree view mode in this generic viewer,
-        //so wrap nodes earlier if want 1 level view
-        //if (!(root instanceof TableFilterNode)) {
-        ///    root = new TableFilterNode(root, true);
-        //}
 
         em.setRootContext(root);
 
@@ -444,13 +438,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     // Get unique name for node and it's property.
     private String getUniqueName(Node root, Property<?> prop) {
-        TypeOfNode type = TypeOfNode.GENERIC;
+        ItemType type = ItemType.GENERIC;
         if(root instanceof TableFilterNode) {
             TableFilterNode filterNode = (TableFilterNode) root;
-            type =  filterNode.getNodeType();
+            type =  filterNode.getItemType();
         }
         else {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.WARNING, "Node is not TableFilterNode");
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Node is not TableFilterNode");
         }
         
         return Case.getCurrentCase().getName() + "." + type + "." 
