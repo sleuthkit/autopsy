@@ -29,10 +29,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -517,10 +515,17 @@ class ExtractIE extends Extract {
                                 "ExtractIE.parentModuleName.noSpace"), user));
                 bbart.addAttributes(bbattributes);
 
+                // index the artifact for keyword search
+                this.indexArtifact(bbart);
+
                 if ((!user.isEmpty()) && (!reportedUserAccounts.contains(user))) {
                     BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                     osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME.getTypeID(),
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));
+
+                    // index the artifact for keyword search
+                    this.indexArtifact(osAttr);
+
                     reportedUserAccounts.add(user);
                 }
             } catch (TskCoreException ex) {

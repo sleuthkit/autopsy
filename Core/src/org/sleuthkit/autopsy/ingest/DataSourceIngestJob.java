@@ -79,7 +79,7 @@ final class DataSourceIngestJob {
          */
         FINALIZATION
     };
-    private Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
+    private volatile Stages stage = DataSourceIngestJob.Stages.INITIALIZATION;
     private final Object stageCompletionCheckLock = new Object();
 
     /**
@@ -118,6 +118,8 @@ final class DataSourceIngestJob {
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private volatile boolean cancelled;
+    private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
+    private final Object cancellationStateMonitor = new Object();
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
 
     /**
@@ -148,6 +150,8 @@ final class DataSourceIngestJob {
     private long estimatedFilesToProcess;
     private long processedFiles;
     private ProgressHandle fileIngestProgress;
+    private String currentFileIngestModule = "";
+    private String currentFileIngestTask = "";
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -496,7 +500,7 @@ final class DataSourceIngestJob {
                         String dialogTitle = NbBundle.getMessage(DataSourceIngestJob.this.getClass(), "IngestJob.cancellationDialog.title");
                         JOptionPane.showConfirmDialog(null, panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
-                            DataSourceIngestJob.this.cancel();
+                            DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
                             DataSourceIngestJob.this.cancelCurrentDataSourceIngestModule();
                         }
@@ -525,7 +529,7 @@ final class DataSourceIngestJob {
                         // the cancel button on the progress bar and the OK button
                         // of a cancelation confirmation dialog supplied by 
                         // NetBeans. 
-                        DataSourceIngestJob.this.cancel();
+                        DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -909,8 +913,10 @@ final class DataSourceIngestJob {
     /**
      * Requests cancellation of ingest, i.e., a shutdown of the data source
      * level and file level ingest pipelines.
+     *
+     * @param reason The cancellation reason.
      */
-    void cancel() {
+    void cancel(IngestJob.CancellationReason reason) {
         if (this.doUI) {
             /**
              * Put a cancellation message on data source level ingest progress
@@ -940,11 +946,30 @@ final class DataSourceIngestJob {
                     this.fileIngestProgress.setDisplayName(
                             NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
                                     displayName));
+                    if (!this.currentFileIngestModule.isEmpty() && !this.currentFileIngestTask.isEmpty()) {
+                        this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
+                                "IngestJob.progress.fileIngest.cancelMessage",
+                                this.currentFileIngestModule, this.currentFileIngestTask));
+                    }
+
                 }
             }
         }
 
-        this.cancelled = true;
+        /*
+         * If the work is not already done, show this job as cancelled for the
+         * given reason.
+         */
+        if (Stages.FINALIZATION != stage) {
+            synchronized (cancellationStateMonitor) {
+                /*
+                 * These fields are volatile for reading, synchronized on the
+                 * monitor here for writing.
+                 */
+                this.cancelled = true;
+                this.cancellationReason = reason;
+            }
+        }
 
         /**
          * Tell the task scheduler to cancel all pending tasks, i.e., tasks not
@@ -955,6 +980,18 @@ final class DataSourceIngestJob {
     }
 
     /**
+     * Set the current module name being run and the file name it is running on.
+     * To be used for more detailed cancelling.
+     *
+     * @param moduleName Name of module currently running.
+     * @param taskName   Name of file the module is running on.
+     */
+    void setCurrentFileIngestModule(String moduleName, String taskName) {
+        this.currentFileIngestModule = moduleName;
+        this.currentFileIngestTask = taskName;
+    }
+
+    /**
      * Queries whether or not cancellation, i.e., a shutdown of the data source
      * level and file level ingest pipelines for this job, has been requested.
      *
@@ -962,6 +999,15 @@ final class DataSourceIngestJob {
      */
     boolean isCancelled() {
         return this.cancelled;
+    }
+
+    /**
+     * Gets the reason this job was cancelled.
+     *
+     * @return The cancellation reason, may be not cancelled.
+     */
+    IngestJob.CancellationReason getCancellationReason() {
+        return this.cancellationReason;
     }
 
     /**
@@ -1000,6 +1046,7 @@ final class DataSourceIngestJob {
         private final long estimatedFilesToProcess;
         private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
         private final boolean jobCancelled;
+        private final IngestJob.CancellationReason jobCancellationReason;
         private final List<String> cancelledDataSourceModules;
 
         /**
@@ -1028,6 +1075,7 @@ final class DataSourceIngestJob {
             }
 
             this.jobCancelled = cancelled;
+            this.jobCancellationReason = cancellationReason;
             this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
 
             if (getIngestTasksSnapshot) {
@@ -1164,6 +1212,15 @@ final class DataSourceIngestJob {
 
         boolean isCancelled() {
             return this.jobCancelled;
+        }
+
+        /**
+         * Gets the reason this job was cancelled.
+         *
+         * @return The cancellation reason, may be not cancelled.
+         */
+        IngestJob.CancellationReason getCancellationReason() {
+            return this.jobCancellationReason;
         }
 
         /**

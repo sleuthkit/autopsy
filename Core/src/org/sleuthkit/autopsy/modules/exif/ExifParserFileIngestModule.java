@@ -38,7 +38,10 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -73,6 +76,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private FileTypeDetector fileTypeDetector;
     private final HashSet<String> supportedMimeTypes = new HashSet<>();
     private TimeZone timeZone = null;
+    private Blackboard blackboard;
 
     ExifParserFileIngestModule() {
         supportedMimeTypes.add("audio/x-wav");
@@ -93,6 +97,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile content) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         //skip unalloc
         if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             return ProcessResult.OK;
@@ -192,6 +198,15 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (!attributes.isEmpty()) {
                 BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(bba);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bba.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bba.getDisplayName());
+                }
                 filesToFire = true;
             }
 

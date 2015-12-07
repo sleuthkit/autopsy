@@ -55,9 +55,12 @@ from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
-from org.sleuthkit.autopsy.datamodel import ContentUtils
+# This will work in 4.0.1 and beyond
+# from org.sleuthkit.autopsy.casemodule.services import Blackboard
+
 
 
 # Factory that defines the name and details of the module and allows Autopsy
@@ -107,10 +110,14 @@ class ContactsDbIngestModule(DataSourceIngestModule):
     # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
     # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     def process(self, dataSource, progressBar):
-        
+
         # we don't know how much work there is yet
         progressBar.switchToIndeterminate()
-        
+
+        # This will work in 4.0.1 and beyond
+        # Use blackboard class to index blackboard artifacts for keyword search
+        # blackboard = Case.getCurrentCase().getServices().getBlackboard()
+
         # Find files named contacts.db, regardless of parent path
         fileManager = Case.getCurrentCase().getServices().getFileManager()
         files = fileManager.findFiles(dataSource, "contacts.db")
@@ -168,8 +175,15 @@ class ContactsDbIngestModule(DataSourceIngestModule):
 
                 art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, phone))
+
+                # This will work in 4.0.1 and beyond
+                #try:
+                #    # index the artifact for keyword search
+                #    blackboard.indexArtifact(art)
+                #except Blackboard.BlackboardException as e:
+                #    self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
                 
-            # Fire an event to notify the UI and others that there are new artifacts  
+            # Fire an event to notify the UI and others that there are new artifacts
             IngestServices.getInstance().fireModuleDataEvent(
                 ModuleDataEvent(ContactsDbIngestModuleFactory.moduleName, 
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, None))
@@ -184,5 +198,5 @@ class ContactsDbIngestModule(DataSourceIngestModule):
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
             "ContactsDb Analyzer", "Found %d files" % fileCount)
         IngestServices.getInstance().postMessage(message)
-        
+
         return IngestModule.ProcessResult.OK

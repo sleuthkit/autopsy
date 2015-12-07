@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -327,7 +328,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             });
-            IngestManager.getInstance().cancelAllIngestJobs();
+            IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
             doCaseChange(null); //closes windows, etc   
             if (null != oldCase.tskErrorReporter) {
                 oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
@@ -469,6 +470,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+            SwingUtilities.invokeLater(() -> {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            });            
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }

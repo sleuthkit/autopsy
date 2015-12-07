@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +20,25 @@ package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.BarChart;
 import javafx.scene.chart.Chart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
@@ -45,52 +50,61 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
+import org.controlsfx.control.MaskerPane;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
  * Abstract base class for {@link Chart} based {@link TimeLineView}s used in the
  * main visualization area.
  *
- * @param <X> the type of data plotted along the x axis
- * @param <Y> the type of data plotted along the y axis
- * @param <N> the type of nodes used to represent data items
- * @param <C> the type of the {@link XYChart<X,Y>} this class uses to plot the
- *            data.
+ * @param <X>         the type of data plotted along the x axis
+ * @param <Y>         the type of data plotted along the y axis
+ * @param <NodeType>  the type of nodes used to represent data items
+ * @param <ChartType> the type of the {@link XYChart<X,Y>} this class uses to
+ *                    plot the data.
  *
  * TODO: this is becoming (too?) closely tied to the notion that their is a
  * {@link XYChart} doing the rendering. Is this a good idea? -jm TODO: pull up
  * common history context menu items out of derived classes? -jm
  */
-public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
+public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, ChartType extends XYChart<X, Y> & TimeLineChart<X>> extends BorderPane {
 
-    @NbBundle.Messages("AbstractVisualization.Drag_Tooltip.text=Drag the mouse to select a time interval to zoom into.")
-    private static final Tooltip DRAG_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Drag_Tooltip_text());
+    @NbBundle.Messages("AbstractVisualization.Default_Tooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
+    private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractVisualization_Default_Tooltip_text());
     private static final Logger LOGGER = Logger.getLogger(AbstractVisualizationPane.class.getName());
 
-    public static Tooltip getDragTooltip() {
-        return DRAG_TOOLTIP;
+    public static Tooltip getDefaultTooltip() {
+        return DEFAULT_TOOLTIP;
     }
+
     protected final SimpleBooleanProperty hasEvents = new SimpleBooleanProperty(true);
 
-    protected final ObservableList<BarChart.Series<X, Y>> dataSets = FXCollections.<BarChart.Series<X, Y>>observableArrayList();
+    /**
+     * access to chart data via series
+     */
+    protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
+    protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
-    protected C chart;
+    protected ChartType chart;
 
     //// replacement axis label componenets
     private final Pane leafPane; // container for the leaf lables in the declutterd axis
-
     private final Pane branchPane;// container for the branch lables in the declutterd axis
-
     protected final Region spacer;
 
     /**
@@ -102,13 +116,13 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
 
     final protected FilteredEventsModel filteredEvents;
 
-    final protected ObservableList<N> selectedNodes = FXCollections.observableArrayList();
+    final protected ObservableList<NodeType> selectedNodes = FXCollections.observableArrayList();
 
     private InvalidationListener invalidationListener = (Observable observable) -> {
         update();
     };
 
-    public ObservableList<N> getSelectedNodes() {
+    public ObservableList<NodeType> getSelectedNodes() {
         return selectedNodes;
     }
 
@@ -132,7 +146,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      * @return true if the tick label for the given value should be bold ( has
      *         relevant data), false* otherwise
      */
-    protected abstract Boolean isTickBold(X value);
+    abstract protected Boolean isTickBold(X value);
 
     /**
      * apply this visualization's 'selection effect' to the given node
@@ -141,27 +155,27 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      * @param applied true if the effect should be applied, false if the effect
      *                should
      */
-    protected abstract void applySelectionEffect(N node, Boolean applied);
+    abstract protected void applySelectionEffect(NodeType node, Boolean applied);
 
     /**
      * @return a task to execute on a background thread to reload this
      *         visualization with different data.
      */
-    protected abstract Task<Boolean> getUpdateTask();
+    abstract protected Task<Boolean> getUpdateTask();
 
     /**
      * @return return the {@link Effect} applied to 'selected nodes' in this
      *         visualization, or null if selection is visualized via another
      *         mechanism
      */
-    protected abstract Effect getSelectionEffect();
+    abstract protected Effect getSelectionEffect();
 
     /**
      * @param tickValue
      *
      * @return a String to use for a tick mark label given a tick value
      */
-    protected abstract String getTickMarkLabel(X tickValue);
+    abstract protected String getTickMarkLabel(X tickValue);
 
     /**
      * the spacing (in pixels) between tick marks of the horizontal axis. This
@@ -169,22 +183,27 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      *
      * @return the spacing in pixels between tick marks of the horizontal axis
      */
-    protected abstract double getTickSpacing();
+    abstract protected double getTickSpacing();
 
     /**
      * @return the horizontal axis used by this Visualization's chart
      */
-    protected abstract Axis<X> getXAxis();
+    abstract protected Axis<X> getXAxis();
 
     /**
      * @return the vertical axis used by this Visualization's chart
      */
-    protected abstract Axis<Y> getYAxis();
+    abstract protected Axis<Y> getYAxis();
+
+    abstract protected void resetData();
 
     /**
      * update this visualization based on current state of zoom / filters.
-     * Primarily this invokes the background {@link Task} returned by
-     * {@link #getUpdateTask()} which derived classes must implement.
+     * Primarily this invokes the background {@link VisualizationUpdateTask}
+     * returned by {@link #getUpdateTask()}, which derived classes must
+     * implement.
+     *
+     * TODO: replace this logic with a {@link Service} ? -jm
      */
     final synchronized public void update() {
         if (updateTask != null) {
@@ -220,39 +239,52 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         invalidationListener = null;
     }
 
+    /**
+     * make a series for each event type in a consistent order
+     */
+    protected final void createSeries() {
+        for (EventType eventType : EventType.allTypes) {
+            XYChart.Series<X, Y> series = new XYChart.Series<>();
+            series.setName(eventType.getDisplayName());
+            eventTypeToSeriesMap.put(eventType, series);
+            dataSeries.add(series);
+        }
+    }
+
+    /**
+     *
+     * @param et the EventType to get the series for
+     *
+     * @return a Series object to contain all the events with the given
+     *         EventType
+     */
+    protected final XYChart.Series<X, Y> getSeries(final EventType et) {
+        return eventTypeToSeriesMap.get(et);
+    }
+
     protected AbstractVisualizationPane(TimeLineController controller, Pane partPane, Pane contextPane, Region spacer) {
         this.controller = controller;
-
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
         this.filteredEvents.zoomParametersProperty().addListener(invalidationListener);
         this.leafPane = partPane;
         this.branchPane = contextPane;
         this.spacer = spacer;
-        selectedNodes.addListener((ListChangeListener.Change<? extends N> c) -> {
-            while (c.next()) {
-                c.getRemoved().forEach((N n) -> {
-                    applySelectionEffect(n, false);
-                });
 
-                c.getAddedSubList().forEach((N c1) -> {
-                    applySelectionEffect(c1, true);
-                });
+        createSeries();
+
+        selectedNodes.addListener((ListChangeListener.Change<? extends NodeType> c) -> {
+            while (c.next()) {
+                c.getRemoved().forEach(n -> applySelectionEffect(n, false));
+                c.getAddedSubList().forEach(n -> applySelectionEffect(n, true));
             }
         });
 
         TimeLineController.getTimeZone().addListener(invalidationListener);
-        
+
         //show tooltip text in status bar
-        hoverProperty().addListener((observable, oldActivated, newActivated) -> {
-            if (newActivated) {
-                controller.setStatus(DRAG_TOOLTIP.getText());
-            } else {
-                controller.setStatus("");
-            }
-        });
-        
-        update();
+        hoverProperty().addListener(observable -> controller.setStatus(isHover() ? DEFAULT_TOOLTIP.getText() : ""));
+
     }
 
     @Subscribe
@@ -275,9 +307,8 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
      *
      * _________october___________|_____________september___________
      *
-     *
-     * NOTE: This method should only be invoked on the JFX thread
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public synchronized void layoutDateLabels() {
 
         //clear old labels
@@ -286,7 +317,7 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
         //since the tickmarks aren't necessarily in value/position order,
         //make a clone of the list sorted by position along axis
         ObservableList<Axis.TickMark<X>> tickMarks = FXCollections.observableArrayList(getXAxis().getTickMarks());
-        tickMarks.sort((Axis.TickMark<X> t, Axis.TickMark<X> t1) -> Double.compare(t.getPosition(), t1.getPosition()));
+        tickMarks.sort(Comparator.comparing(Axis.TickMark::getPosition));
 
         if (tickMarks.isEmpty() == false) {
             //get the spacing between ticks in the underlying axis
@@ -451,5 +482,74 @@ public abstract class AbstractVisualizationPane<X, Y, N, C extends XYChart<X, Y>
                 branch = StringUtils.substring(dateString, 0, splitIndex);
             }
         }
+    }
+
+    protected Interval getTimeRange() {
+        return filteredEvents.timeRangeProperty().get();
+    }
+
+    abstract protected class VisualizationUpdateTask<AxisValuesType> extends LoggedTask<Boolean> {
+
+        protected VisualizationUpdateTask(String taskName, boolean logStateChanges) {
+            super(taskName, logStateChanges);
+        }
+
+        /**
+         * Sets initial progress value and message and shows blocking progress
+         * indicator over the visualization. Derived Tasks should be sure to
+         * call this as part of their call() implementation.
+         *
+         * @return true
+         *
+         * @throws Exception
+         */
+        @NbBundle.Messages({"VisualizationUpdateTask.preparing=Analyzing zoom and filter settings"})
+        @Override
+        protected Boolean call() throws Exception {
+            updateProgress(-1, 1);
+            updateMessage(Bundle.VisualizationUpdateTask_preparing());
+            Platform.runLater(() -> {
+                MaskerPane maskerPane = new MaskerPane();
+                maskerPane.textProperty().bind(messageProperty());
+                maskerPane.progressProperty().bind(progressProperty());
+                setCenter(new StackPane(chart, maskerPane));
+                setCursor(Cursor.WAIT);
+            });
+
+            return true;
+        }
+
+        /**
+         * updates the horisontal axis and removes the blocking progress
+         * indicator. Derived Tasks should be sure to call this as part of their
+         * succeeded() implementation.
+         */
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            layoutDateLabels();
+
+            Platform.runLater(() -> {
+                setCenter(chart);
+                setCursor(Cursor.DEFAULT);
+            });
+        }
+
+        /**
+         * Clears the chart data and sets the horisontal axis range. For use
+         * within the derived impementation of {@link #call() }
+         *
+         * @param axisValues
+         */
+        @ThreadConfined(type = ThreadConfined.ThreadType.NOT_UI)
+        protected void resetChart(AxisValuesType axisValues) {
+            resetData();
+            Platform.runLater(() -> {
+                setDateAxisValues(axisValues);
+            });
+
+        }
+
+        abstract protected void setDateAxisValues(AxisValuesType values);
     }
 }

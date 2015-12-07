@@ -31,6 +31,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
@@ -58,8 +59,8 @@ public class OpenTimelineAction extends CallableSystemAction {
     }
 
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-
         //check case
         if (!Case.isCaseOpen()) {
             return;
@@ -72,14 +73,14 @@ public class OpenTimelineAction extends CallableSystemAction {
             LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
             return;
         }
-        synchronized (OpenTimelineAction.class) {
-            if (timeLineController == null) {
-                timeLineController = new TimeLineController(currentCase);
-            } else if (timeLineController.getAutopsyCase() != currentCase) {
-                timeLineController.closeTimeLine();
-                timeLineController = new TimeLineController(currentCase);
-            }
+
+        if (timeLineController == null) {
+            timeLineController = new TimeLineController(currentCase);
+        } else if (timeLineController.getAutopsyCase() != currentCase) {
+            timeLineController.closeTimeLine();
+            timeLineController = new TimeLineController(currentCase);
         }
+
         timeLineController.openTimeLine();
     }
 

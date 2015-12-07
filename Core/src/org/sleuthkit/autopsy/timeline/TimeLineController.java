@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -49,6 +50,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
+import javafx.scene.control.Dialog;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.JOptionPane;
@@ -70,6 +73,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
@@ -97,11 +101,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * * <li>Since eventsRepository is internally synchronized, only compound
  * access to it needs external synchronization <li>
  * <li>Other state including listeningToAutopsy, mainFrame, viewMode, and the
- * listeners should only be accessed with this object's intrinsic lock held
+ * listeners should only be accessed with this object's intrinsic lock held, or
+ * on the EDT as indicated.
  * </li>
  * <ul>
  */
-@NbBundle.Messages({"Timeline.confirmation.dialogs.title=Update Timeline database?"})
+@NbBundle.Messages({"Timeline.confirmation.dialogs.title=Update Timeline database?",
+    "TimeLinecontroller.updateNowQuestion=Do you want to update the events database now?"})
 public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
@@ -113,7 +119,7 @@ public class TimeLineController {
     }
 
     public static DateTimeFormatter getZonedFormatter() {
-        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone()); // NON-NLS
+        return DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss").withZone(getJodaTimeZone()); // NON-NLS //NOI18N
     }
 
     public static DateTimeZone getJodaTimeZone() {
@@ -128,13 +134,16 @@ public class TimeLineController {
 
     private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
 
-    private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(-1);
+    private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
 
-    private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper status = new ReadOnlyStringWrapper();
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private Dialog<?> currentDialog;
 
     /**
      * status is a string that will be displayed in the status bar as a kind of
@@ -169,23 +178,23 @@ public class TimeLineController {
         return tasks.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyDoubleProperty getProgress() {
-        return progress.getReadOnlyProperty();
+    synchronized public ReadOnlyDoubleProperty taskProgressProperty() {
+        return taskProgress.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyStringProperty getMessage() {
-        return message.getReadOnlyProperty();
+    synchronized public ReadOnlyStringProperty taskMessageProperty() {
+        return taskMessage.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyStringProperty getTaskTitle() {
+    synchronized public ReadOnlyStringProperty taskTitleProperty() {
         return taskTitle.getReadOnlyProperty();
     }
 
-    @GuardedBy("this")
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private TimeLineTopComponent mainFrame;
 
     //are the listeners currently attached
-    @GuardedBy("this")
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private boolean listeningToAutopsy = false;
 
     private final PropertyChangeListener caseListener = new AutopsyCaseListener();
@@ -202,7 +211,6 @@ public class TimeLineController {
     @GuardedBy("filteredEvents")
     private final FilteredEventsModel filteredEvents;
 
-    @GuardedBy("eventsRepository")
     private final EventsRepository eventsRepository;
 
     @GuardedBy("this")
@@ -255,6 +263,8 @@ public class TimeLineController {
     }
     private final ReadOnlyBooleanWrapper newEventsFlag = new ReadOnlyBooleanWrapper(false);
 
+    private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
+
     public TimeLineController(Case autoCase) {
         this.autoCase = autoCase;
 
@@ -301,81 +311,58 @@ public class TimeLineController {
     /**
      * rebuld the repo.
      *
-     * @return False if the repo was not rebuilt because of an error or because
-     *         the user aborted after prompt about ingest running. True if the
-     *         repo was rebuilt.
+     * @return False if the repo was not rebuilt because because the user
+     *         aborted after prompt about ingest running. True if the repo was
+     *         rebuilt.
      */
-    boolean rebuildRepo() {
-        if (IngestManager.getInstance().isIngestRunning()) {
-            //confirm timeline during ingest
-            if (confirmRebuildDuringIngest() == false) {
-                return false;
-            }
-        }
-        LOGGER.log(Level.INFO, "Beginning generation of timeline"); // NON-NLS
-        try {
-            SwingUtilities.invokeLater(() -> {
-                synchronized (TimeLineController.this) {
-                    if (isWindowOpen()) {
-                        mainFrame.close();
-                    }
-                }
-            });
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            final long lastObjId = sleuthkitCase.getLastObjectId();
-            final long lastArtfID = getCaseLastArtifactID(sleuthkitCase);
-            final Boolean injestRunning = IngestManager.getInstance().isIngestRunning();
-            //TODO: verify this locking is correct? -jm
-            synchronized (eventsRepository) {
-                eventsRepository.rebuildRepository(() -> {
-                    synchronized (eventsRepository) {
-                        eventsRepository.recordLastObjID(lastObjId);
-                        eventsRepository.recordLastArtifactID(lastArtfID);
-                        eventsRepository.recordWasIngestRunning(injestRunning);
-                    }
-                    synchronized (TimeLineController.this) {
-                        //TODO: this looks hacky.  what is going on? should this be an event?
-                        needsHistogramRebuild.set(true);
-                        needsHistogramRebuild.set(false);
-                        showWindow();
-                    }
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    void rebuildRepo() {
+        SwingUtilities.invokeLater(this::closeTimelineWindow);
+        final CancellationProgressTask<?> rebuildRepository = eventsRepository.rebuildRepository();
+        rebuildRepository.stateProperty().addListener((stateProperty, oldState, newSate) -> {
+            //this will be on JFX thread
+            if (newSate == Worker.State.SUCCEEDED) {
+                //TODO: this looks hacky.  what is going on? should this be an event?
+                needsHistogramRebuild.set(true);
+                needsHistogramRebuild.set(false);
+                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
 
-                    Platform.runLater(() -> {
-                        //TODO: should this be an event?
-                        newEventsFlag.set(false);
-                        historyManager.reset(filteredEvents.zoomParametersProperty().get());
-                        TimeLineController.this.showFullRange();
-                    });
-                });
+                //TODO: should this be an event?
+                newEventsFlag.set(false);
+                historyManager.reset(filteredEvents.zoomParametersProperty().get());
+                TimeLineController.this.showFullRange();
+
             }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
-            return false;
-        }
-        return true;
+        });
+        promptDialogManager.showProgressDialog(rebuildRepository);
+
     }
 
     /**
      * Since tags might have changed while TimeLine wasn't listening, drop the
      * tags table and rebuild it by querying for all the tags and inserting them
      * in to the TimeLine DB.
+     *
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void rebuildTagsTable() {
-        LOGGER.log(Level.INFO, "starting to rebuild tags table"); // NON-NLS
-        SwingUtilities.invokeLater(() -> {
-            synchronized (TimeLineController.this) {
-                if (isWindowOpen()) {
-                    mainFrame.close();
-                }
+
+        SwingUtilities.invokeLater(this::closeTimelineWindow);
+        CancellationProgressTask<?> rebuildTags = eventsRepository.rebuildTags();
+        rebuildTags.stateProperty().addListener((stateProperty, oldState, newSate) -> {
+            //this will be on JFX thread
+            if (newSate == Worker.State.SUCCEEDED) {
+                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                showFullRange();
             }
         });
-        synchronized (eventsRepository) {
-            eventsRepository.rebuildTags(() -> {
-                showWindow();
-                Platform.runLater(() -> {
-                    showFullRange();
-                });
-            });
+        promptDialogManager.showProgressDialog(rebuildTags);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void closeTimelineWindow() {
+        if (isWindowOpen()) {
+            mainFrame.close();
         }
     }
 
@@ -385,24 +372,22 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void closeTimeLine() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void closeTimeLine() {
         if (mainFrame != null) {
             listeningToAutopsy = false;
             IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
             IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
             Case.removePropertyChangeListener(caseListener);
-            SwingUtilities.invokeLater(() -> {
-                synchronized (TimeLineController.this) {
-                    mainFrame.close();
-                    mainFrame = null;
-                }
-            });
+            mainFrame.close();
+            mainFrame = null;
         }
     }
 
     /**
      * show the timeline window and prompt for rebuilding database if necessary.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void openTimeLine() {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
@@ -412,69 +397,96 @@ public class TimeLineController {
             listeningToAutopsy = true;
         }
 
-        try {
-            boolean repoRebuilt = false;  //has the repo been rebuilt
-            long timeLineLastObjectId = eventsRepository.getLastObjID();
-
-            //if the repo is empty rebuild it
-            if (timeLineLastObjectId == -1) {
-                repoRebuilt = rebuildRepo();
-            }
-
-            if (repoRebuilt == false) {
-                //if ingest was running uring last rebuild, prompt to rebuild
-                if (eventsRepository.getWasIngestRunning()) {
-                    if (confirmLastBuiltDuringIngestRebuild()) {
-                        repoRebuilt = rebuildRepo();
+        Platform.runLater(() -> {
+            try {
+                if (promptDialogManager.bringCurrentDialogToFront()) {
+                    return;
+                }
+                if (IngestManager.getInstance().isIngestRunning()) {
+                    //confirm timeline during ingest
+                    if (promptDialogManager.confirmDuringIngest() == false) {
+                        return;
                     }
                 }
-            }
 
-            if (repoRebuilt == false) {
-                final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
-                //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
-                if (sleuthkitCase.getLastObjectId() != timeLineLastObjectId
-                        || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
-                    if (confirmOutOfDateRebuild()) {
-                        repoRebuilt = rebuildRepo();
-                    }
+                /*
+                 * if the repo was not rebuilt at minimum rebuild the tags which
+                 * may have been updated without our knowing it, since we
+                 * can't/aren't checking them. This should at elast be quick.
+                 * //TODO: can we check the tags to see if we need to do this?
+                 */
+                if (checkAndPromptForRebuild() == false) {
+                    rebuildTagsTable();
                 }
-            }
 
-            if (repoRebuilt == false) {
-                // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
-                if (eventsRepository.hasNewColumns() == false) {
-                    if (confirmDataSourceIDsMissingRebuild()) {
-                        repoRebuilt = rebuildRepo();
-                    }
-                }
+            } catch (HeadlessException | MissingResourceException ex) {
+                LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS //NOI18N
             }
-
-            /*
-             * if the repo was not rebuilt at minimum rebuild the tags which may
-             * have been updated without our knowing it.
-             */
-            if (repoRebuilt == false) {
-                rebuildTagsTable();
-            }
-
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error when generating timeline, ", ex); // NON-NLS
-        } catch (HeadlessException | MissingResourceException ex) {
-            LOGGER.log(Level.SEVERE, "Unexpected error when generating timeline, ", ex); // NON-NLS
-        }
+        });
     }
 
-    private long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private boolean checkAndPromptForRebuild() {
+        //if the repo is empty just (r)ebuild it with out asking,  they can always cancel part way through;
+        if (eventsRepository.getLastObjID() == -1) {
+            rebuildRepo();
+            return true;
+        }
+
+        ArrayList<String> rebuildReasons = getRebuildReasons();
+        if (rebuildReasons.isEmpty() == false) {
+            if (promptDialogManager.confirmRebuild(rebuildReasons)) {
+                rebuildRepo();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
+    @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
+        "TimeLineController.outOfDate.errorMessage=Error determing if the timeline is out of date.  We will assume it should be updated.  See the logs for more details.",
+        "TimeLineController.rebuildReasons.outOfDateError=Could not determine if the timeline data is out of date.",
+        "TimeLineController.rebuildReasons.outOfDate=The event data is out of date:  Not all events will be visible.",
+        "TimeLineController.rebuildReasons.ingestWasRunning=The Timeline events database was previously populated while ingest was running:  Some events may be missing, incomplete, or inaccurate.",
+        "TimeLineController.rebuildReasons.incompleteOldSchema=The Timeline events database was previously populated without incomplete information:  Some features may be unavailable or non-functional unless you update the events database."})
+    private ArrayList<String> getRebuildReasons() {
+        ArrayList<String> rebuildReasons = new ArrayList<>();
+        //if ingest was running during last rebuild, prompt to rebuild
+        if (eventsRepository.getWasIngestRunning()) {
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_ingestWasRunning());
+        }
+        final SleuthkitCase sleuthkitCase = autoCase.getSleuthkitCase();
+        try {
+            //if the last artifact and object ids don't match between skc and tldb, prompt to rebuild
+            if (sleuthkitCase.getLastObjectId() != eventsRepository.getLastObjID()
+                    || getCaseLastArtifactID(sleuthkitCase) != eventsRepository.getLastArtfactID()) {
+                rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDate());
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error determing last object id from sleutkit case. We will assume the timeline is out of date.", ex); // NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.TimeLineController_errorTitle(),
+                    Bundle.TimeLineController_outOfDate_errorMessage());
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDateError());
+        }
+        // if the TLDB schema has been upgraded since last time TL ran, prompt for rebuild
+        if (eventsRepository.hasNewColumns() == false) {
+            rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_incompleteOldSchema());
+        }
+        return rebuildReasons;
+    }
+
+    public static long getCaseLastArtifactID(final SleuthkitCase sleuthkitCase) {
+        //TODO: push this into sleuthkitCase
         long caseLastArtfId = -1;
-        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS
+        String query = "select Max(artifact_id) as max_id from blackboard_artifacts"; // NON-NLS //NOI18N
         try (CaseDbQuery dbQuery = sleuthkitCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             while (resultSet.next()) {
-                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS
+                caseLastArtfId = resultSet.getLong("max_id"); // NON-NLS //NOI18N
             }
         } catch (TskCoreException | SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting last artifact id: ", ex); // NON-NLS //NOI18N
         }
         return caseLastArtfId;
     }
@@ -515,7 +527,7 @@ public class TimeLineController {
     }
 
     public void selectEventIDs(Collection<Long> events) {
-        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { // NON-NLS
+        final LoggedTask<Interval> selectEventIDsTask = new LoggedTask<Interval>("Select Event IDs", true) { // NON-NLS //NOI18N
             @Override
             protected Interval call() throws Exception {
                 return filteredEvents.getSpanningInterval(events);
@@ -528,13 +540,10 @@ public class TimeLineController {
                     synchronized (TimeLineController.this) {
                         selectedTimeRange.set(get());
                         selectedEventIDs.setAll(events);
+
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex); // NON-NLS
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex); // NON-NLS
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); // NON-NLS //NOI18N
                 }
             }
         };
@@ -545,16 +554,13 @@ public class TimeLineController {
     /**
      * private method to build gui if necessary and make it visible.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     synchronized private void showWindow() {
-        SwingUtilities.invokeLater(() -> {
-            synchronized (TimeLineController.this) {
-                if (mainFrame == null) {
-                    mainFrame = new TimeLineTopComponent(this);
-                }
-                mainFrame.open();
-                mainFrame.toFront();
-            }
-        });
+        if (mainFrame == null) {
+            mainFrame = new TimeLineTopComponent(this);
+        }
+        mainFrame.open();
+        mainFrame.toFront();
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
@@ -575,22 +581,20 @@ public class TimeLineController {
         } else if (currentZoom.hasTimeRange(timeRange) == false) {
             advance(currentZoom.withTimeRange(timeRange));
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }
 
     @NbBundle.Messages({"# {0} - the number of events",
-        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events."
-        + " This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
+        "Timeline.pushDescrLOD.confdlg.msg=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?",
         "Timeline.pushDescrLOD.confdlg.title=Change description level of detail?"})
     synchronized public boolean pushDescrLOD(DescriptionLoD newLOD) {
         Map<EventType, Long> eventCounts = filteredEvents.getEventCounts(filteredEvents.zoomParametersProperty().get().getTimeRange());
         final Long count = eventCounts.values().stream().reduce(0l, Long::sum);
 
         boolean shouldContinue = true;
-        if ((newLOD == DescriptionLoD.FULL|| newLOD ==DescriptionLoD.MEDIUM )&& count > 10_000) {
+        if ((newLOD == DescriptionLoD.FULL || newLOD == DescriptionLoD.MEDIUM) && count > 10_000) {
             String format = NumberFormat.getInstance().format(count);
 
             int showConfirmDialog = JOptionPane.showConfirmDialog(mainFrame,
@@ -650,7 +654,7 @@ public class TimeLineController {
     public void selectTimeAndType(Interval interval, EventType type) {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
-        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { // NON-NLS
+        final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { // NON-NLS //NOI18N
             @Override
             protected Collection< Long> call() throws Exception {
                 synchronized (TimeLineController.this) {
@@ -665,13 +669,10 @@ public class TimeLineController {
                     synchronized (TimeLineController.this) {
                         selectedTimeRange.set(timeRange);
                         selectedEventIDs.setAll(get());
+
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " interrupted unexpectedly", ex);// NON-NLS
-                } catch (ExecutionException ex) {
-                    Logger.getLogger(FilteredEventsModel.class
-                            .getName()).log(Level.SEVERE, getTitle() + " unexpectedly threw " + ex.getCause(), ex);// NON-NLS
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); // NON-NLS //NOI18N
                 }
             }
         };
@@ -686,6 +687,7 @@ public class TimeLineController {
      * @param task
      */
     synchronized public void monitorTask(final Task<?> task) {
+        //TODO: refactor this to use JavaFX Service? -jm
         if (task != null) {
             Platform.runLater(() -> {
 
@@ -701,16 +703,16 @@ public class TimeLineController {
                         case FAILED:
                             tasks.remove(task);
                             if (tasks.isEmpty() == false) {
-                                progress.bind(tasks.get(0).progressProperty());
-                                message.bind(tasks.get(0).messageProperty());
+                                taskProgress.bind(tasks.get(0).progressProperty());
+                                taskMessage.bind(tasks.get(0).messageProperty());
                                 taskTitle.bind(tasks.get(0).titleProperty());
                             }
                             break;
                     }
                 });
                 tasks.add(task);
-                progress.bind(task.progressProperty());
-                message.bind(task.messageProperty());
+                taskProgress.bind(task.progressProperty());
+                taskMessage.bind(task.messageProperty());
                 taskTitle.bind(task.titleProperty());
                 switch (task.getState()) {
                     case READY:
@@ -724,8 +726,8 @@ public class TimeLineController {
                     case FAILED:
                         tasks.remove(task);
                         if (tasks.isEmpty() == false) {
-                            progress.bind(tasks.get(0).progressProperty());
-                            message.bind(tasks.get(0).messageProperty());
+                            taskProgress.bind(tasks.get(0).progressProperty());
+                            taskMessage.bind(tasks.get(0).messageProperty());
                             taskTitle.bind(tasks.get(0).titleProperty());
                         }
                         break;
@@ -748,7 +750,8 @@ public class TimeLineController {
      *
      * @return true if the timeline window is open
      */
-    synchronized private boolean isWindowOpen() {
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private boolean isWindowOpen() {
         return mainFrame != null && mainFrame.isOpened() && mainFrame.isVisible();
     }
 
@@ -762,77 +765,9 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void confirmOutOfDateRebuildIfWindowOpen() throws MissingResourceException, HeadlessException {
         if (isWindowOpen()) {
-            if (confirmOutOfDateRebuild()) {
-                rebuildRepo();
-            }
+            Platform.runLater(this::checkAndPromptForRebuild);
+
         }
-    }
-
-    /**
-     * prompt the user to rebuild the db because that datasource_ids are missing
-     * from the database and that the datasource filter will not work
-     *
-     * @return true if they agree to rebuild
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @NbBundle.Messages({"datasource.missing.confirmation=The Timeline events database was previously populated with an old version of Autopsy."
-        + "\nThe data source filter will be unavailable unless you update the events database."
-        + "\nDo you want to update the events database now?"})
-    synchronized boolean confirmDataSourceIDsMissingRebuild() {
-        return JOptionPane.showConfirmDialog(mainFrame,
-                Bundle.datasource_missing_confirmation(),
-                Bundle.Timeline_confirmation_dialogs_title(),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
-    }
-
-    /**
-     * prompt the user to rebuild the db because the db was last build during
-     * ingest and may be incomplete
-     *
-     * @return true if they agree to rebuild
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @NbBundle.Messages({"Timeline.do_repopulate.msg=The Timeline events database was previously populated while ingest was running."
-        + "\nSome events may not have been populated or may have been populated inaccurately."
-        + "\nDo you want to repopulate the events database now?"})
-    synchronized boolean confirmLastBuiltDuringIngestRebuild() {
-        return JOptionPane.showConfirmDialog(mainFrame,
-                Bundle.Timeline_do_repopulate_msg(),
-                Bundle.Timeline_confirmation_dialogs_title(),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
-    }
-
-    /**
-     * prompt the user to rebuild the db because the db is out of date and
-     * doesn't include things from subsequent ingests
-     *
-     * @return true if they agree to rebuild
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @NbBundle.Messages({"Timeline.propChg.confDlg.timelineOOD.msg=The event data is out of date. Would you like to regenerate it?",})
-    synchronized boolean confirmOutOfDateRebuild() throws MissingResourceException, HeadlessException {
-        return JOptionPane.showConfirmDialog(mainFrame,
-                Bundle.Timeline_propChg_confDlg_timelineOOD_msg(),
-                Bundle.Timeline_confirmation_dialogs_title(),
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-    }
-
-    /**
-     * prompt the user that ingest is running and the db may not end up
-     * complete.
-     *
-     * @return true if they want to continue anyways
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @NbBundle.Messages({"Timeline.initTimeline.confDlg.genBeforeIngest.msg=You are trying to generate a timeline before ingest has been completed. "
-        + "The timeline may be incomplete. Do you want to continue?"})
-    synchronized boolean confirmRebuildDuringIngest() throws MissingResourceException, HeadlessException {
-        return JOptionPane.showConfirmDialog(mainFrame,
-                Bundle.Timeline_initTimeline_confDlg_genBeforeIngest_msg(),
-                Bundle.Timeline_confirmation_dialogs_title(),
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     private class AutopsyIngestModuleListener implements PropertyChangeListener {

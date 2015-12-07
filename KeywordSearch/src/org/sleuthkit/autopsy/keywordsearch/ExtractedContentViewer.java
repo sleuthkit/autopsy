@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,44 +32,45 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Displays marked-up (HTML) content for a Node. The sources are all the
- * MarkupSource items in the selected Node's lookup, plus the content that Solr
- * extracted (if there is any).
+ * Displays the indexed text associated with a file or a blackboard artifact,
+ * possibly marked up with HTML to highlight keyword hits.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final long INVALID_DOCUMENT_ID = 0L;
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private TextMarkup currentSource = null;
+    private IndexedText currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
 
     public ExtractedContentViewer() {
-        logger.log(Level.INFO, "Created TextView instance: " + this); //NON-NLS
     }
 
     @Override
     public void setNode(final Node selectedNode) {
-        // to clear the viewer
+        /*
+         * Clear the viewer.
+         */
         if (selectedNode == null) {
             currentNode = null;
             resetComponent();
             return;
         }
 
-        //TODO why setNode() is called twice for the same node sometimes (when selected in dir tree first)
-        //for now, do not update second time
+        /*
+         * This deals with the known bug with an unknown cause where setNode is
+         * sometimes called twice for the same node.
+         */
         if (selectedNode == currentNode) {
             return;
         } else {
@@ -77,51 +78,50 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
-         * Sources contain implementations that will markup the text in
-         * different ways. The original behavior for this was a source for the
-         * text markedup by SOLR and another that just displayed raw text.
+         * Assemble a collection of all of the "sources" of extracted and
+         * indexed text to present in a paged display. First look for the text
+         * marked up with HTML to highlight keyword hits that will be present if
+         * the node is a keyword hit blakcboard artifact.
          */
-        final List<TextMarkup> sources = new ArrayList<TextMarkup>();
+        final List<IndexedText> sources = new ArrayList<>();
+        sources.addAll(selectedNode.getLookup().lookupAll(IndexedText.class));
 
-        // See if the node has any sources attached to it and add them to our
-        // internal list
-        sources.addAll(selectedNode.getLookup().lookupAll(TextMarkup.class));
-
-        // Q: Can this be moved up? Is is possible to have "sources" when the
-        // node doesn't have a content object or the content size is 0?
-        Content content = selectedNode.getLookup().lookup(Content.class);
-        if (content == null || content.getSize() == 0) {
+        /*
+         * Now look for the "raw" extracted text if this is a node for another
+         * type of artifact or for content.
+         */
+        long documentID = getDocumentId(currentNode);
+        if (INVALID_DOCUMENT_ID == documentID) {
             setPanel(sources);
             return;
         }
-
-        long objectId = getDocumentId(selectedNode);
-        boolean isDir = content.accept(isDirVisitor);
-
-        if (!isDir && solrHasContent(objectId) == false) {
-            setPanel(sources);
-            return;
+        IndexedText rawSource;
+        if (documentID > INVALID_DOCUMENT_ID) {
+            // Add a content item
+            Content content = currentNode.getLookup().lookup(Content.class);
+            rawSource = new RawText(content, content.getId());
+        } else {
+            // Add an artifact item
+            BlackboardArtifact blackboardArtifact = currentNode.getLookup().lookup(BlackboardArtifact.class);
+            rawSource = new RawText(blackboardArtifact, documentID);
         }
-
-        // make a new source for the raw content
-        TextMarkup rawSource = new RawTextMarkup(content, objectId);
-
         currentSource = rawSource;
         sources.add(rawSource);
 
-        //init pages
+        /*
+         * Initialize the pages for the sources. The first source in the list
+         * of sources will be displayed.
+         */
         int currentPage = currentSource.getCurrentPage();
         if (currentPage == 0 && currentSource.hasNextPage()) {
             currentSource.nextPage();
         }
         updatePageControls();
-
-        // first source will be the default displayed
         setPanel(sources);
     }
 
     private void scrollToCurrentHit() {
-        final TextMarkup source = panel.getSelectedSource();
+        final IndexedText source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -160,7 +160,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<TextMarkup>());
+        setPanel(new ArrayList<IndexedText>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -172,20 +172,27 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        // see if the node has a MarkupSource object in it
-        // BC @@@ This seems to be added from the upper right search.
-        Collection<? extends TextMarkup> sources = node.getLookup().lookupAll(TextMarkup.class);
+        /**
+         * Is there any marked up indexed text in the look up of this node? This
+         * will be the case if the node is for a keyword hit artifact produced
+         * by either an ad hoc keyword search result (keyword search toolbar
+         * widgets) or a keyword search by the keyword search ingest module.
+         */
+        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
         if (sources.isEmpty() == false) {
             return true;
         }
 
-        // see if the node has a Highlight object in it.  
-        // BC @@@ This seems to be added by BlackboardArtifactNode from the tree
-        if (node.getLookup().lookup(TextMarkupLookup.class) != null) {
-            return true;
+        /*
+         * No highlighted text for a keyword hit, so is there any indexed text
+         * at all for this node?
+         */
+        long documentID = getDocumentId(node);
+        if (INVALID_DOCUMENT_ID == documentID) {
+            return false;
         }
 
-        return solrHasContent(getDocumentId(node));
+        return solrHasContent(documentID);
     }
 
     @Override
@@ -207,7 +214,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      *
      * @param sources
      */
-    private void setPanel(List<TextMarkup> sources) {
+    private void setPanel(List<IndexedText> sources) {
         if (panel != null) {
             panel.setSources(sources);
         }
@@ -235,40 +242,62 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
-
         try {
             return solrServer.queryIsIndexed(objectId);
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
-            return false;
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex); //NON-NLS
+        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+            logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
             return false;
         }
     }
 
     /**
-     * Get the correct document id for the given node. If the node contains a
-     * HighlightedTextMarkup object, its object id will have been set. Otherwise
-     * the document id is obtained from the Content object.
+     * Gets the object ID to use as the document ID for accessing any indexed
+     * text for the given node.
      *
-     * @param node
+     * @param node The node.
      *
-     * @return Either the artifact id, file id or 0.
+     * @return The document ID or zero, which is an invalid document ID.
      */
     private Long getDocumentId(Node node) {
-        HighlightedTextMarkup markup = node.getLookup().lookup(HighlightedTextMarkup.class);
-
-        if (markup != null) {
-            return markup.getObjectId();
+        /**
+         * If the node is a Blackboard artifact node for anything other than a
+         * keyword hit, the document ID for the text extracted from the artifact
+         * (the concatenation of its attributes) is the artifact ID, a large,
+         * negative integer. If it is a keyword hit, see if there is an
+         * associated artifact. If there is, get the associated artifact's ID
+         * and return it.
+         */
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        if (null != artifact) {
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                return artifact.getArtifactID();
+            } else {
+                try {
+                    // Get the associated artifact attribute and return its value as the ID
+                    List<BlackboardAttribute> blackboardAttributes = artifact.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
+                    if (!blackboardAttributes.isEmpty()) {
+                        return blackboardAttributes.get(0).getValueLong();
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
+                }
+            }
         }
 
+        /*
+         * For keyword search hit artifact nodes and all other nodes, the
+         * document ID for the extracted text is the ID of the associated
+         * content, if any, unless there is an associated artifact, which
+         * is handled above.
+         */
         Content content = node.getLookup().lookup(Content.class);
-
         if (content != null) {
             return content.getId();
         }
 
+        /*
+         * No extracted text, return an invalid docuemnt ID.
+         */
         return 0L;
     }
 
@@ -276,7 +305,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TextMarkup source = panel.getSelectedSource();
+            IndexedText source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -316,7 +345,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TextMarkup source = panel.getSelectedSource();
+            IndexedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal = 0;

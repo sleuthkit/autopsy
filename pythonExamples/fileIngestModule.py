@@ -53,6 +53,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
+# This will work in 4.0.1 and beyond
+# from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -113,6 +115,10 @@ class SampleJythonFileIngestModule(FileIngestModule):
             (file.isFile() == False)):
             return IngestModule.ProcessResult.OK
 
+        # This will work in 4.0.1 and beyond
+        # Use blackboard class to index blackboard artifacts for keyword search
+        # blackboard = Case.getCurrentCase().getServices().getBlackboard()
+
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().lower().endswith(".txt"):
 
@@ -125,8 +131,15 @@ class SampleJythonFileIngestModule(FileIngestModule):
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), 
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
-  
-            # Fire an event to notify the UI and others that there is a new artifact  
+
+            # This will work in 4.0.1 and beyond
+            #try:
+            #    # index the artifact for keyword search
+            #    blackboard.indexArtifact(art)
+            #except Blackboard.BlackboardException as e:
+            #    self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+
+            # Fire an event to notify the UI and others that there is a new artifact
             IngestServices.getInstance().fireModuleDataEvent(
                 ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName, 
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None));

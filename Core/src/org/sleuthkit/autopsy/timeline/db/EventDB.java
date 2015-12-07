@@ -48,13 +48,16 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
@@ -446,7 +449,7 @@ public class EventDB {
         try (Statement createStatement = con.createStatement()) {
             boolean b = createStatement.execute("analyze; analyze sqlite_master;");
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to analyze db.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to analyze events db.", ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
@@ -810,7 +813,10 @@ public class EventDB {
      *
      * @return the event ids that match the object/artifact pair
      */
-    Set<Long> addTag(long objectID, @Nullable Long artifactID, Tag tag) {
+    Set<Long> addTag(long objectID, @Nullable Long artifactID, Tag tag, EventTransaction transaction) {
+        if (transaction != null && transaction.isClosed()) {
+            throw new IllegalArgumentException("can't update database with closed transaction"); // NON-NLS
+        }
         DBLock.lock();
         try {
             Set<Long> eventIDs = markEventsTagged(objectID, artifactID, true);
@@ -1049,40 +1055,40 @@ public class EventDB {
     }
 
     /**
-     * get a list of {@link EventCluster}s, clustered according to the given
-     * zoom paramaters.
+     * get a list of {@link EventStripe}s, clustered according to the given zoom
+     * paramaters.
      *
-     * @param params the zoom params that determine the zooming, filtering and
-     *               clustering.
+     * @param params the {@link ZoomParams} that determine the zooming,
+     *               filtering and clustering.
      *
      * @return a list of aggregate events within the given timerange, that pass
      *         the supplied filter, aggregated according to the given event type
      *         and description zoom levels
      */
-    List<EventCluster> getClusteredEvents(ZoomParams params) {
+    List<EventStripe> getEventStripes(ZoomParams params) {
         //unpack params
         Interval timeRange = params.getTimeRange();
         RootFilter filter = params.getFilter();
         DescriptionLoD descriptionLOD = params.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 
-        //ensure length of querried interval is not 0
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;
-        if (start == end) {
-            end++;
-        }
+
+        //ensure length of querried interval is not 0
+        end = Math.max(end, start + 1);
+
         //get some info about the time range requested
         RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange);
 
         //build dynamic parts of query
-        String strfTimeFormat = SQLHelper.getStrfTimeFormat(rangeInfo);
+        String strfTimeFormat = SQLHelper.getStrfTimeFormat(rangeInfo.getPeriodSize());
         String descriptionColumn = SQLHelper.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String timeZone = TimeLineController.getTimeZone().get().equals(TimeZone.getDefault()) ? ", 'localtime'" : "";  // NON-NLS
         String typeColumn = typeColumnHelper(useSubTypes);
 
-        //compose query string, new-lines only for nicer formatting if printing the entire query
+        //compose query string, the new-lines are only for nicer formatting if printing the entire query
         String query = "SELECT strftime('" + strfTimeFormat + "',time , 'unixepoch'" + timeZone + ") AS interval," // NON-NLS
                 + "\n group_concat(events.event_id) as event_ids,"
                 + "\n group_concat(CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END) as hash_hits,"
@@ -1093,25 +1099,30 @@ public class EventDB {
                 + "\n GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                 + "\n ORDER BY min(time)"; // NON-NLS
 
-        System.out.println(query);
+        switch (Version.getBuildType()) {
+            case DEVELOPMENT:
+                LOGGER.log(Level.INFO, "executing timeline query: {0}", query);
+                break;
+            case RELEASE:
+            default:
+        }
+
         // perform query and map results to AggregateEvent objects
         List<EventCluster> events = new ArrayList<>();
 
         DBLock.lock();
-
         try (Statement createStatement = con.createStatement();
                 ResultSet rs = createStatement.executeQuery(query)) {
             while (rs.next()) {
-
                 events.add(eventClusterHelper(rs, useSubTypes, descriptionLOD, filter.getTagsFilter()));
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get aggregate events with query: " + query, ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get events with query: " + query, ex); // NON-NLS
         } finally {
             DBLock.unlock();
         }
 
-        return mergeEventClusters(rangeInfo.getPeriodSize().getPeriod(), events);
+        return mergeClustersToStripes(rangeInfo.getPeriodSize().getPeriod(), events);
     }
 
     /**
@@ -1154,7 +1165,7 @@ public class EventDB {
      *
      * @return
      */
-    static private List<EventCluster> mergeEventClusters(Period timeUnitLength, List<EventCluster> preMergedEvents) {
+    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, List<EventCluster> preMergedEvents) {
 
         //effectively map from type to (map from description to events)
         Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
@@ -1193,7 +1204,16 @@ public class EventDB {
                 aggEvents.add(current);
             }
         }
-        return aggEvents;
+
+        //merge clusters to stripes
+        Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
+
+        for (EventCluster eventCluster : aggEvents) {
+            stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
+                    new EventStripe(eventCluster, null), EventStripe::merge);
+        }
+
+        return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
     }
 
     private static String typeColumnHelper(final boolean useSubTypes) {
@@ -1265,7 +1285,6 @@ public class EventDB {
             DBLock.lock();
             try {
                 con.setAutoCommit(false);
-
             } catch (SQLException ex) {
                 LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex); // NON-NLS
             }

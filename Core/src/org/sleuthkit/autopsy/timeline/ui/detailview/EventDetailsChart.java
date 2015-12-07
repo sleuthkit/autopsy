@@ -24,18 +24,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -50,6 +47,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -57,23 +55,19 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.util.Duration;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
@@ -93,22 +87,35 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * Series help organize events for the banding by event type, we could add a
  * node to contain each band if we need a place for per band controls.
  *
+ * NOTE: It was too hard to control the threading of this chart via the
+ * complicated default listeners. Instead clients should use null {@link #addDataItem(javafx.scene.chart.XYChart.Data)
+ * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
+ * remove data.
+ *
  * //TODO: refactor the projected lines to a separate class. -jm
  */
-public final class EventDetailsChart extends XYChart<DateTime, EventCluster> implements TimeLineChart<DateTime> {
+public final class EventDetailsChart extends XYChart<DateTime, EventStripe> implements TimeLineChart<DateTime> {
 
+    private static final String styleSheet = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm();
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
     private static final Image MARKER = new Image("/org/sleuthkit/autopsy/timeline/images/marker.png", 16, 16, true, true, true);
     private static final int PROJECTED_LINE_Y_OFFSET = 5;
     private static final int PROJECTED_LINE_STROKE_WIDTH = 5;
     private static final int MINIMUM_EVENT_NODE_GAP = 4;
+    private final static int MINIMUM_ROW_HEIGHT = 24;
 
     private final TimeLineController controller;
     private final FilteredEventsModel filteredEvents;
 
     private ContextMenu chartContextMenu;
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
+    private Set<String> activeQuickHidefilters;
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
+    private double descriptionWidth;
+
+    @Override
     public ContextMenu getChartContextMenu() {
         return chartContextMenu;
     }
@@ -116,6 +123,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     /**
      * a user positionable vertical line to help compare events
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Line guideLine;
 
     /**
@@ -143,18 +151,12 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      * by allowing a single translation of this group.
      */
     private final Group nodeGroup = new Group();
-    private final ObservableList<EventBundle<?>> bundles = FXCollections.observableArrayList();
-    private final Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
-    private final Map<EventStripe, EventStripeNode> stripeNodeMap = new HashMap<>();
-    private final Map<EventCluster, Line> projectionMap = new HashMap<>();
 
-    /**
-     * list of series of data added to this chart
-     *
-     * TODO: replace this with a map from name to series? -jm
-     */
-    private final ObservableList<Series<DateTime, EventCluster>> seriesList =
-            FXCollections.<Series<DateTime, EventCluster>>observableArrayList();
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private final ObservableList<EventStripe> eventStripes = FXCollections.observableArrayList();
+    private final ObservableList< EventStripeNode> stripeNodes = FXCollections.observableArrayList();
+    private final ObservableList< EventStripeNode> sortedStripeNodes = stripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis));
+    private final Map<EventCluster, Line> projectionMap = new ConcurrentHashMap<>();
 
     /**
      * true == layout each event type in its own band, false == mix all the
@@ -188,10 +190,18 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
      */
     final SimpleDoubleProperty truncateWidth = new SimpleDoubleProperty(200.0);
 
-    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventCluster> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
+    EventDetailsChart(TimeLineController controller, DateAxis dateAxis, final Axis<EventStripe> verticalAxis, ObservableList<EventBundleNodeBase<?, ?, ?>> selectedNodes) {
         super(dateAxis, verticalAxis);
+
         this.controller = controller;
         this.filteredEvents = this.controller.getEventsModel();
+
+        sceneProperty().addListener(observable -> {
+            Scene scene = getScene();
+            if (scene != null && scene.getStylesheets().contains(styleSheet) == false) {
+                scene.getStylesheets().add(styleSheet);
+            }
+        });
 
         filteredEvents.zoomParametersProperty().addListener(o -> {
             clearGuideLine();
@@ -200,15 +210,14 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             projectionMap.clear();
             controller.selectEventIDs(Collections.emptyList());
         });
-        Tooltip.install(this, AbstractVisualizationPane.getDragTooltip());
+
+        Tooltip.install(this, AbstractVisualizationPane.getDefaultTooltip());
 
         dateAxis.setAutoRanging(false);
-
         verticalAxis.setVisible(false);//TODO: why doesn't this hide the vertical axis, instead we have to turn off all parts individually? -jm
         verticalAxis.setTickLabelsVisible(false);
         verticalAxis.setTickMarkVisible(false);
         setLegendVisible(false);
-
         setPadding(Insets.EMPTY);
         setAlternativeColumnFillVisible(true);
 
@@ -240,8 +249,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         this.selectedNodes.addListener(new SelectionChangeHandler());
     }
 
-    ObservableList<EventBundle<?>> getEventBundles() {
-        return bundles;
+    ObservableList<EventStripe> getEventStripes() {
+        return eventStripes;
     }
 
     @Override
@@ -256,7 +265,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         }
 
         chartContextMenu = ActionUtils.createContextMenu(Arrays.asList(new PlaceMarkerAction(clickEvent),
-                //                new StartIntervalSelectionAction(clickEvent, dragHandler),
                 TimeLineChart.newZoomHistoyActionGroup(controller)));
         chartContextMenu.setAutoHide(true);
         return chartContextMenu;
@@ -321,80 +329,118 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
         return descrVisibility;
     }
 
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     * @param i
+     */
     @Override
-    protected synchronized void dataItemAdded(Series<DateTime, EventCluster> series, int i, Data<DateTime, EventCluster> data) {
-        final EventCluster eventCluster = data.getYValue();
-        bundles.add(eventCluster);
-        EventStripe eventStripe = stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
-                new EventStripe(eventCluster, null),
-                (EventStripe u, EventStripe v) -> {
-                    EventStripeNode remove = stripeNodeMap.remove(u);
-                    nodeGroup.getChildren().remove(remove);
-                    remove = stripeNodeMap.remove(v);
-                    nodeGroup.getChildren().remove(remove);
-                    return EventStripe.merge(u, v);
-                }
-        );
+    protected void seriesAdded(Series<DateTime, EventStripe> series, int i) {
+
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     */
+    @Override
+    protected void seriesRemoved(Series<DateTime, EventStripe> series) {
+
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param series
+     * @param itemIndex
+     * @param item
+     */
+    @Override
+    protected void dataItemAdded(Series<DateTime, EventStripe> series, int itemIndex, Data<DateTime, EventStripe> item) {
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     *
+     * @param item
+     * @param series
+     */
+    @Override
+    protected void dataItemRemoved(Data<DateTime, EventStripe> item, Series<DateTime, EventStripe> series) {
+    }
+
+    /**
+     * @see note in main section of class JavaDoc
+     *
+     * @param item
+     */
+    @Override
+    protected void dataItemChanged(Data<DateTime, EventStripe> item) {
+    }
+
+    /**
+     * add a dataitem to this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void addDataItem(Data<DateTime, EventStripe> data) {
+        final EventStripe eventStripe = data.getYValue();
+
         EventStripeNode stripeNode = new EventStripeNode(EventDetailsChart.this, eventStripe, null);
-        stripeNodeMap.put(eventStripe, stripeNode);
-        nodeGroup.getChildren().add(stripeNode);
-        data.setNode(stripeNode);
+
+        Platform.runLater(() -> {
+            eventStripes.add(eventStripe);
+            stripeNodes.add(stripeNode);
+            nodeGroup.getChildren().add(stripeNode);
+            data.setNode(stripeNode);
+        });
+    }
+
+    /**
+     * remove a data item from this chart
+     *
+     * @see note in main section of class JavaDoc
+     *
+     * @param data
+     */
+    void removeDataItem(Data<DateTime, EventStripe> data) {
+        Platform.runLater(() -> {
+            EventStripeNode removedNode = (EventStripeNode) data.getNode();
+            eventStripes.removeAll(new StripeFlattener().apply(removedNode).collect(Collectors.toList()));
+            stripeNodes.removeAll(removedNode);
+            nodeGroup.getChildren().removeAll(removedNode);
+            data.setNode(null);
+        });
     }
 
     @Override
-    protected synchronized void dataItemChanged(Data<DateTime, EventCluster> data) {
-        //TODO: can we use this to help with local detail level adjustment -jm
-        throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected synchronized void dataItemRemoved(Data<DateTime, EventCluster> data, Series<DateTime, EventCluster> series) {
-        EventCluster eventCluster = data.getYValue();
-        bundles.removeAll(eventCluster);
-        EventStripe removedStripe = stripeDescMap.remove(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()));
-        EventStripeNode removedNode = stripeNodeMap.remove(removedStripe);
-        nodeGroup.getChildren().remove(removedNode);
-        data.setNode(null);
-    }
-
-    @Override
-    protected synchronized void layoutPlotChildren() {
+    protected void layoutPlotChildren() {
         setCursor(Cursor.WAIT);
         maxY.set(0);
-        if (bandByType.get()) {
-            stripeNodeMap.values().stream()
-                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
-                    .forEach(inputNodes -> {
-                        List<EventStripeNode> stripeNodes = inputNodes.stream()
-                        .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
-                        .collect(Collectors.toList());
 
-                        maxY.set(layoutEventBundleNodes(stripeNodes, maxY.get()));
-                    });
+        //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
+        activeQuickHidefilters = getController().getQuickHideFilters().stream()
+                .filter(AbstractFilter::isActive)
+                .map(DescriptionFilter::getDescription)
+                .collect(Collectors.toSet());
+
+        //This dosn't change during a layout pass and is expensive to compute per node.  So we do it once at the start
+        descriptionWidth = truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE;
+
+        if (bandByType.get()) {
+            sortedStripeNodes.stream()
+                    .collect(Collectors.groupingBy(EventStripeNode::getEventType)).values()
+                    .forEach(inputNodes -> maxY.set(layoutEventBundleNodes(inputNodes, maxY.get())));
         } else {
-            List<EventStripeNode> stripeNodes = stripeNodeMap.values().stream()
-                    .sorted(Comparator.comparing(EventStripeNode::getStartMillis))
-                    .collect(Collectors.toList());
-            maxY.set(layoutEventBundleNodes(stripeNodes, 0));
+            maxY.set(layoutEventBundleNodes(sortedStripeNodes.sorted(Comparator.comparing(EventStripeNode::getStartMillis)), 0));
         }
         layoutProjectionMap();
         setCursor(null);
-    }
-
-    @Override
-    protected synchronized void seriesAdded(Series<DateTime, EventCluster> series, int i) {
-        for (int j = 0; j < series.getData().size(); j++) {
-            dataItemAdded(series, j, series.getData().get(j));
-        }
-        seriesList.add(series);
-    }
-
-    @Override
-    protected synchronized void seriesRemoved(Series<DateTime, EventCluster> series) {
-        for (int j = 0; j < series.getData().size(); j++) {
-            dataItemRemoved(series.getData().get(j), series);
-        }
-        seriesList.remove(series);
     }
 
     ReadOnlyDoubleProperty maxVScrollProperty() {
@@ -404,8 +450,8 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
     /**
      * @return all the nodes that pass the given predicate
      */
-    Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
-        //use this recursive function to flatten the tree of nodes into an iterable.
+    synchronized Iterable<EventBundleNodeBase<?, ?, ?>> getNodes(Predicate<EventBundleNodeBase<?, ?, ?>> p) {
+        //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>> stripeFlattener =
                 new Function<EventBundleNodeBase<?, ?, ?>, Stream<EventBundleNodeBase<?, ?, ?>>>() {
                     @Override
@@ -416,58 +462,57 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                     }
                 };
 
-        return stripeNodeMap.values().stream()
+        return sortedStripeNodes.stream()
                 .flatMap(stripeFlattener)
                 .filter(p).collect(Collectors.toList());
     }
 
-    Iterable<EventBundleNodeBase<?, ?, ?>> getAllNodes() {
-        return getNodes(x -> true);
+    synchronized void setVScroll(double vScrollValue) {
+        nodeGroup.setTranslateY(-vScrollValue);
     }
 
-    synchronized void setVScroll(double d) {
-        final double h = maxY.get() - (getHeight() * .9);
-        nodeGroup.setTranslateY(-d * h);
-    }
-
-    private void clearGuideLine() {
+    void clearGuideLine() {
         getChartChildren().remove(guideLine);
         guideLine = null;
     }
 
     /**
-     * layout the nodes in the given list, starting form the given minimum y
-     * coordinate.
+     * Layout the nodes in the given list, starting form the given minimum y
+     * coordinate via the following algorithm:
      *
-     * Layout the nodes representing events via the following algorithm.
+     * We start with a list of nodes (each representing an event) sorted by span
+     * start time of the underlying event
      *
-     * we start with a list of nodes (each representing an event) - sort the
-     * list of nodes by span start time of the underlying event - initialize
-     * empty map (maxXatY) from y-position to max used x-value - for each node:
+     * - initialize empty map (maxXatY) from y-ranges to max used x-value
      *
-     * -- size the node based on its children (recursively)
+     * - for each node:
+     *
+     * -- size the node based on its children (use this algorithm recursively)
      *
      * -- get the event's start position from the dateaxis
      *
-     * -- to position node (1)check if maxXatY is to the left of the left x
-     * coord: if maxXatY is less than the left x coord, good, put the current
-     * node here, mark right x coord as maxXatY, go to next node ; if maxXatY
-     * greater than start position, increment y position, do check(1) again
-     * until maxXatY less than start position
+     * -- to position node: check if maxXatY is to the left of the left x coord:
+     * if maxXatY is less than the left x coord, good, put the current node
+     * here, mark right x coord as maxXatY, go to next node ; if maxXatY is
+     * greater than the left x coord, increment y position, do check again until
+     * maxXatY less than left x coord.
      *
-     * @param nodes collection of nodes to layout
-     * @param minY  the minimum y coordinate to position the nodes at.
+     * @param nodes            collection of nodes to layout, sorted by event
+     *                         start time
+     * @param minY             the minimum y coordinate to position the nodes
+     *                         at.
+     * @param descriptionWidth the value of the maximum description width to set
+     *                         for each node.
+     *
+     * @return the maximum y coordinate used by any of the layed out nodes.
      */
     double layoutEventBundleNodes(final Collection<? extends EventBundleNodeBase<?, ?, ?>> nodes, final double minY) {
+        // map from y-ranges to maximum x
+        TreeRangeMap<Double, Double> maxXatY = TreeRangeMap.create();
 
-        TreeRangeMap<Double, Double> treeRangeMap = TreeRangeMap.create();
         // maximum y values occupied by any of the given nodes,  updated as nodes are layed out.
         double localMax = minY;
 
-        Set<String> activeQuickHidefilters = getController().getQuickHideFilters().stream()
-                .filter(AbstractFilter::isActive)
-                .map(DescriptionFilter::getDescription)
-                .collect(Collectors.toSet());
         //for each node do a recursive layout to size it and then position it in first available slot
         for (EventBundleNodeBase<?, ?, ?> bundleNode : nodes) {
             //is the node hiden by a quick hide filter?
@@ -477,7 +522,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                 bundleNode.setVisible(false);
                 bundleNode.setManaged(false);
             } else {
-                bundleLayoutHelper(bundleNode);
+                layoutBundleHelper(bundleNode);
                 //get computed height and width
                 double h = bundleNode.getBoundsInLocal().getHeight();
                 double w = bundleNode.getBoundsInLocal().getWidth();
@@ -486,73 +531,96 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                 double xRight = xLeft + w + MINIMUM_EVENT_NODE_GAP;
 
                 //initial test position
-                double yTop = minY;
-
-                if (oneEventPerRow.get()) {
-                    // if onePerRow, just put it at end
-                    yTop = (localMax + MINIMUM_EVENT_NODE_GAP);
-                } else {
-                    double yBottom = yTop + h;
-
-                    //until the node is not overlapping any others try moving it down.
-                    boolean overlapping = true;
-                    while (overlapping) {
-                        overlapping = false;
-                        //check each pixel from bottom to top.
-                        for (double y = yBottom; y >= yTop; y--) {
-                            final Double maxX = treeRangeMap.get(y);
-                            if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
-                                //if that pixel is already used
-                                //jump top to this y value and repeat until free slot is found.
-                                overlapping = true;
-                                yTop = y + MINIMUM_EVENT_NODE_GAP;
-                                yBottom = yTop + h;
-                                break;
-                            }
-                        }
-                    }
-                    treeRangeMap.put(Range.closed(yTop, yBottom), xRight);
-                }
+                double yTop = (oneEventPerRow.get())
+                        ? (localMax + MINIMUM_EVENT_NODE_GAP)// if onePerRow, just put it at end
+                        : computeYTop(minY, h, maxXatY, xLeft, xRight);
 
                 localMax = Math.max(yTop + h, localMax);
 
                 if ((xLeft != bundleNode.getLayoutX()) || (yTop != bundleNode.getLayoutY())) {
-
                     //animate node to new position
-                    Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                            new KeyValue(bundleNode.layoutXProperty(), xLeft),
-                            new KeyValue(bundleNode.layoutYProperty(), yTop))
-                    );
-                    timeline.setOnFinished((ActionEvent event) -> {
-                        requestChartLayout();
-                    });
-                    timeline.play();
+                    bundleNode.animateTo(xLeft, yTop);
                 }
             }
         }
         return localMax; //return new max
     }
 
-    private void bundleLayoutHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
+    /**
+     * Given information about the current layout pass so far and about a
+     * particular node, compute the y position of that node.
+     *
+     *
+     * @param yMin    the smallest (towards the top of the screen) y position to
+     *                consider
+     * @param h       the height of the node we are trying to position
+     * @param maxXatY a map from y ranges to the max x within that range. NOTE:
+     *                This map will be updated to include the node in question.
+     * @param xLeft   the left x-cord of the node to position
+     * @param xRight  the left x-cord of the node to position
+     *
+     * @return the y position for the node in question.
+     *
+     *
+     */
+    private double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
+        double yTop = yMin;
+        double yBottom = yTop + h;
+        //until the node is not overlapping any others try moving it down.
+        boolean overlapping = true;
+        while (overlapping) {
+            overlapping = false;
+            //check each pixel from bottom to top.
+            for (double y = yBottom; y >= yTop; y -= MINIMUM_ROW_HEIGHT) {
+                final Double maxX = maxXatY.get(y);
+                if (maxX != null && maxX >= xLeft - MINIMUM_EVENT_NODE_GAP) {
+                    //if that pixel is already used
+                    //jump top to this y value and repeat until free slot is found.
+                    overlapping = true;
+                    yTop = y + MINIMUM_EVENT_NODE_GAP;
+                    yBottom = yTop + h;
+                    break;
+                }
+            }
+        }
+        maxXatY.put(Range.closed(yTop, yBottom), xRight);
+        return yTop;
+    }
+
+    /**
+     *
+     * Set layout paramaters on the given node and layout its children
+     *
+     * @param bundleNode       the Node to layout
+     * @param descriptionWdith the maximum width for the description text
+     */
+    private void layoutBundleHelper(final EventBundleNodeBase<?, ?, ?> bundleNode) {
         //make sure it is shown
         bundleNode.setVisible(true);
         bundleNode.setManaged(true);
         //apply advanced layout description visibility options
         bundleNode.setDescriptionVisibility(descrVisibility.get());
-        bundleNode.setDescriptionWidth(truncateAll.get() ? truncateWidth.get() : USE_PREF_SIZE);
+        bundleNode.setMaxDescriptionWidth(descriptionWidth);
 
         //do recursive layout
         bundleNode.layoutChildren();
     }
 
+    /**
+     * expose as protected
+     */
     @Override
-    public void requestChartLayout() {
-        super.requestChartLayout(); //To change body of generated methods, choose Tools | Templates.
+    protected void requestChartLayout() {
+        super.requestChartLayout();
     }
 
     private double getXForEpochMillis(Long millis) {
-        DateTime dateTime = new DateTime(millis, TimeLineController.getJodaTimeZone());
-        return getXAxis().getDisplayPosition(new DateTime(dateTime));
+        DateTime dateTime = new DateTime(millis);
+        return getXAxis().getDisplayPosition(dateTime);
+    }
+
+    private double getParentXForEpochMillis(Long epochMillis) {
+        return getXAxis().localToParent(getXForEpochMillis(epochMillis), 0).getX();
     }
 
     private void layoutProjectionMap() {
@@ -566,11 +634,6 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             line.setStartY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
         }
-    }
-
-    private double getParentXForEpochMillis(Long epochMillis) {
-        DateTime dateTime = new DateTime(epochMillis, TimeLineController.getJodaTimeZone());
-        return getXAxis().localToParent(getXAxis().getDisplayPosition(dateTime), 0).getX();
     }
 
     /**
@@ -612,16 +675,10 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             setGraphic(new ImageView(MARKER)); // NON-NLS
             setEventHandler(actionEvent -> {
                 if (guideLine == null) {
-                    guideLine = new GuideLine(0, 0, 0, getHeight(), getXAxis());
+                    guideLine = new GuideLine(EventDetailsChart.this);
                     guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
-                    guideLine.endYProperty().bind(heightProperty().subtract(getXAxis().heightProperty().subtract(getXAxis().tickLengthProperty())));
                     getChartChildren().add(guideLine);
-                    guideLine.setOnMouseClicked(mouseEvent -> {
-                        if (mouseEvent.getButton() == MouseButton.SECONDARY) {
-                            clearGuideLine();
-                            mouseEvent.consume();
-                        }
-                    });
+
                 } else {
                     guideLine.relocate(sceneToLocal(clickEvent.getSceneX(), 0).getX(), 0);
                 }
@@ -683,9 +740,7 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
                 DescriptionFilter descriptionFilter = getController().getQuickHideFilters().stream()
                         .filter(testFilter::equals)
                         .findFirst().orElseGet(() -> {
-                            testFilter.selectedProperty().addListener((Observable observable) -> {
-                                requestChartLayout();
-                            });
+                            testFilter.selectedProperty().addListener(observable -> requestChartLayout());
                             getController().getQuickHideFilters().add(testFilter);
                             return testFilter;
                         });
@@ -707,5 +762,4 @@ public final class EventDetailsChart extends XYChart<DateTime, EventCluster> imp
             );
         }
     }
-
 }

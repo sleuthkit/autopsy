@@ -25,8 +25,10 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -56,6 +58,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private IngestServices services = IngestServices.getInstance();
     private FileManager fileManager;
     private IngestJobContext context;
+    private Blackboard blackboard;
 
     ThunderbirdMboxFileIngestModule() {
     }
@@ -69,6 +72,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
 
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         // skip known
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
@@ -149,6 +154,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             try {
                 BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
                 artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
+
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                }
+               
                 services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
@@ -394,6 +409,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             BlackboardArtifact bbart;
             bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
+
+            try {
+                // index the artifact for keyword search
+                blackboard.indexArtifact(bbart);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", bbart.getDisplayName()), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), bbart.getDisplayName());
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, null, ex);
         }

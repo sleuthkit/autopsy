@@ -24,7 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -47,6 +51,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     private static final Map<Long, List<FilesSet>> interestingFileSetsByJob = new ConcurrentHashMap<>();
     private final FilesIdentifierIngestJobSettings settings;
     private IngestJobContext context;
+    private Blackboard blackboard;
 
     /**
      * Construct an interesting files identifier ingest module for an ingest
@@ -87,6 +92,8 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
      */
     @Override
     public ProcessResult process(AbstractFile file) {
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());
         for (FilesSet filesSet : filesSets) {
@@ -110,7 +117,16 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // interesting files set membership rule that was satisfied.
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(), moduleName, ruleSatisfied);
                     artifact.addAttribute(ruleNameAttribute);
-
+                    
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                    }
+                    
                     IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
                 } catch (TskCoreException ex) {

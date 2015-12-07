@@ -32,8 +32,11 @@ public class ResetFilters extends Action {
 
     private FilteredEventsModel eventsModel;
 
+    @NbBundle.Messages({"ResetFilters.text=Reset all filters",
+        "RestFilters.longText=Reset all filters to their default state."})
     public ResetFilters(final TimeLineController controller) {
-        super(NbBundle.getMessage(ResetFilters.class, "DefaultFilters.action.name.text"));
+        super(Bundle.ResetFilters_text());
+        setLongText(Bundle.RestFilters_longText());
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {

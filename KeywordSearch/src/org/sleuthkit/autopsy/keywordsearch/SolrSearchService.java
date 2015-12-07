@@ -25,6 +25,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
 import org.openide.util.lookup.ServiceProvider;
@@ -45,7 +46,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 @ServiceProvider(service = KeywordSearchService.class)
 public class SolrSearchService implements KeywordSearchService {
 
-    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occured when talking to server";
+    private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server";
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection";
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 
@@ -145,6 +146,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
 
         // Next create the index entry for the document content.
@@ -160,6 +162,7 @@ public class SolrSearchService implements KeywordSearchService {
         try {
             Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
 
@@ -176,7 +179,8 @@ public class SolrSearchService implements KeywordSearchService {
      * @param host the remote hostname or IP address of the Solr server
      * @param port the remote port for Solr
      *
-     * @throws org.sleuthkit.autopsy.keywordsearch.KeywordSearchServiceException
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
      *
      */
     @Override

@@ -23,14 +23,15 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -101,7 +102,7 @@ class ThumbnailViewNode extends FilterNode {
                                 timer = null;
                             }
                         } catch (InterruptedException | ExecutionException ex) {
-                            Exceptions.printStackTrace(ex);
+                            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon", ex); //NON-NLS
                         }
                         swingWorker = null;
                     }

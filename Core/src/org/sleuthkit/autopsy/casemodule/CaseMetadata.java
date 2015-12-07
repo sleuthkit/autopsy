@@ -31,6 +31,8 @@ public final class CaseMetadata {
      */
     public final static class CaseMetadataException extends Exception {
 
+        private static final long serialVersionUID = 1L;
+
         private CaseMetadataException(String message) {
             super(message);
         }
@@ -51,13 +53,14 @@ public final class CaseMetadata {
     /**
      * Constructs an object that provides access to case metadata.
      *
-     * @param metadataFilePath
+     * @param metadataFilePath Path to the metadata (.aut) file for a case.
      */
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
         try {
-            // NOTE: This class will eventually replace XMLCaseManagement.
-            // This constructor should parse all of the metadata. In the future,
-            // case metadata may be moved into the case database.
+            /*
+             * TODO (RC): This class should eventually replace the non-public
+             * XMLCaseManagement class altogether.
+             */
             XMLCaseManagement metadata = new XMLCaseManagement();
             metadata.open(metadataFilePath.toString());
             caseType = metadata.getCaseType();
@@ -134,7 +137,7 @@ public final class CaseMetadata {
     public String getCaseDatabaseName() {
         return caseDatabaseName;
     }
-    
+
     /**
      * Gets the text index name.
      *
