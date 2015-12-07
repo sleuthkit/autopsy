@@ -118,6 +118,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.EXTRACTED_CONTENT_ROOT;
+        }
     }
 
     /**
@@ -366,6 +371,62 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public boolean isLeafTypeNode() {
             return true;
+        }
+
+        @Override
+        public ItemType getItemType() {
+            switch (type) {
+                case TSK_WEB_BOOKMARK:
+                    return ItemType.EXTRACTED_BOOKMARKS;
+                case TSK_WEB_COOKIE:
+                    return ItemType.EXTRACTED_COOKIES;
+                case TSK_WEB_HISTORY:
+                    return ItemType.EXTRACTED_HISTORY;
+                case TSK_WEB_DOWNLOAD:
+                    return ItemType.EXTRACTED_DOWNLOADS;
+                case TSK_INSTALLED_PROG:
+                    return ItemType.EXTRACTED_PROGRAMS;
+                case TSK_RECENT_OBJECT:
+                    return ItemType.EXTRACTED_RECENT;
+                case TSK_DEVICE_ATTACHED:
+                    return ItemType.EXTRACTED_ATTACHED_DEVICES;
+                case TSK_WEB_SEARCH_QUERY:
+                    return ItemType.EXTRACTED_SEARCH;
+                case TSK_METADATA_EXIF:
+                    return ItemType.EXTRACTED_METADATA_EXIF;
+                case TSK_EMAIL_MSG:
+                    return ItemType.EXTRACTED_EMAIL_MSG;
+                case TSK_CONTACT:
+                    return ItemType.EXTRACTED_CONTACTS;
+                case TSK_MESSAGE:
+                    return ItemType.EXTRACTED_MESSAGES;
+                case TSK_CALLLOG:
+                    return ItemType.EXTRACTED_CALL_LOG;
+                case TSK_CALENDAR_ENTRY:
+                    return ItemType.EXTRACTED_CALENDAR;
+                case TSK_SPEED_DIAL_ENTRY:
+                    return ItemType.EXTRACTED_SPEED_DIAL;
+                case TSK_BLUETOOTH_PAIRING:
+                    return ItemType.EXTRACTED_BLUETOOTH;
+                case TSK_GPS_BOOKMARK:
+                    return ItemType.EXTRACTED_GPS_BOOKMARKS;
+                case TSK_GPS_LAST_KNOWN_LOCATION:
+                    return ItemType.EXTRACTED_GPS_LAST_LOCATION;
+                case TSK_GPS_SEARCH:
+                    return ItemType.EXTRACTED_GPS_SEARCH;
+                case TSK_SERVICE_ACCOUNT:
+                    return ItemType.EXTRACTED_SERVICE_ACCOUNT;
+                case TSK_ENCRYPTION_DETECTED:
+                    return ItemType.EXTRACTED_ENCRYPTION;
+                case TSK_EXT_MISMATCH_DETECTED:
+                    return ItemType.EXTRACTED_EXT_MISMATCH;
+                case TSK_OS_INFO:
+                    return ItemType.EXTRACTED_OS;
+                case TSK_FACE_DETECTED:
+                    return ItemType.EXTRACTED_FACE_DETECTED;
+
+            }
+            return ItemType.EXTRACTED_CONTENT_TYPE;
         }
     }
 

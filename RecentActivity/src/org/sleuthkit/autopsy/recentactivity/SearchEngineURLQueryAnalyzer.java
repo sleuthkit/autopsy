@@ -185,7 +185,6 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             }
 
             SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, keys);
-            //System.out.println("Search Engine: " + Se.toString());
             listEngines[i] = Se;
         }
         engines = listEngines;

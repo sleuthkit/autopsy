@@ -88,6 +88,11 @@ public final class Reports implements AutopsyVisitableItem {
             // - ShowItemVisitor.visit() returns true.
             return visitor.visit(this);
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.REPORTS_LIST;
+        }
     }
 
     /**
@@ -207,6 +212,11 @@ public final class Reports implements AutopsyVisitableItem {
         @Override
         public AbstractAction getPreferredAction() {
             return new OpenReportAction();
+        }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.REPORTS;
         }
 
         private static class DeleteReportAction extends AbstractAction {

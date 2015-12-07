@@ -56,6 +56,11 @@ public class DataSourcesNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
 
+    @Override
+    public ItemType getItemType() {
+        return ItemType.DATA_SOURCES;
+    }
+
     /*
      * Custom Keys implementation that listens for new data sources being added.
      */

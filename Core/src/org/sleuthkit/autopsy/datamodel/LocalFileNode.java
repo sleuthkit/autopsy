@@ -115,4 +115,9 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         // not will check if it has children using the Content API
         return true; //!this.hasContentChildren();
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.LOCAL_FILE;
+    }
 }

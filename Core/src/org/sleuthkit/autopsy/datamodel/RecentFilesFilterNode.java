@@ -82,4 +82,9 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return true;
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.RECENT_FILES_FILTER;
+    }
 }

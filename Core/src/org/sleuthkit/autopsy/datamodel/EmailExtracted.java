@@ -190,6 +190,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
             return s;
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_ROOT;
+        }
     }
 
     /**
@@ -340,6 +345,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_ACCOUNT;
+        }
     }
 
     /**
@@ -425,6 +435,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             updateDisplayName();
+        }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.EMAIL_EXTRACTED_FOLDER;
         }
     }
 

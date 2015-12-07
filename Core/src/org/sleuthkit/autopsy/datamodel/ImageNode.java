@@ -109,4 +109,9 @@ public class ImageNode extends AbstractContentNode<Image> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.IMAGE;
+    }
 }

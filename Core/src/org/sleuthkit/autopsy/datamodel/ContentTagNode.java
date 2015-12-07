@@ -121,4 +121,9 @@ class ContentTagNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return true;
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.CONTENT_TAG;
+    }
 }

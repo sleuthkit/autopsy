@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.util.logging.Level;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.ItemType;
 
 /**
  * This class is used to filter the nodes that we want to show on the
@@ -32,6 +36,7 @@ import org.openide.util.NbBundle;
 public class TableFilterNode extends FilterNode {
 
     private boolean createChild;
+    private ItemType itemType;
 
     /**
      * the constructor
@@ -39,6 +44,13 @@ public class TableFilterNode extends FilterNode {
     public TableFilterNode(Node arg, boolean crChild) {
         super(arg, TableFilterChildren.createInstance(arg, crChild));
         this.createChild = crChild;
+        this.itemType = ItemType.GENERIC;
+    }
+    
+    public TableFilterNode(Node arg, boolean crChild, ItemType itemType) {
+        super(arg, TableFilterChildren.createInstance(arg, crChild));
+        this.createChild = crChild;
+        this.itemType = itemType;
     }
 
     /**
@@ -54,5 +66,9 @@ public class TableFilterNode extends FilterNode {
         } else {
             return super.getDisplayName();
         }
+    }
+    
+    public ItemType getItemType() {
+        return itemType;
     }
 }

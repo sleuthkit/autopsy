@@ -108,6 +108,11 @@ public class Tags implements AutopsyVisitableItem {
             properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.displayName"), "", getName()));
             return propertySheet;
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.TAGS_ROOT;
+        }
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
@@ -265,6 +270,11 @@ public class Tags implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.TAGS_NAME;
+        }
     }
 
     /**
@@ -360,6 +370,11 @@ public class Tags implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.TAGS_CONTENT_TYPE;
+        }
     }
 
     private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
@@ -452,6 +467,11 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             updateDisplayName();
+        }
+
+        @Override
+        public ItemType getItemType() {
+            return ItemType.TAGS_BLACKBOARD_ARTIFACT;
         }
     }
 

@@ -100,4 +100,9 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     public boolean isLeafTypeNode() {
         return false;
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.DIRECTORY;
+    }
 }

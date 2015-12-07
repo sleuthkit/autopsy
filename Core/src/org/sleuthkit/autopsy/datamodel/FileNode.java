@@ -183,4 +183,9 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         // not will check if it has children using the Content API
         return true;
     }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.FILE;
+    }
 }

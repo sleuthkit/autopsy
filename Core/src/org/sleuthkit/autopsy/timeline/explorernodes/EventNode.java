@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.ItemType;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -119,6 +120,11 @@ class EventNode extends DisplayableItemNode {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> dinv) {
         throw new UnsupportedOperationException("Not supported yet."); // NON-NLS //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public ItemType getItemType() {
+        return ItemType.EVENT;
     }
 
     /**
