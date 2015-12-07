@@ -116,6 +116,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
             return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
         }
         String ext = name.substring(dotIndex).toLowerCase();
+        int colonIndex = ext.lastIndexOf(":");
+        if (colonIndex != -1) {
+            // If alternate data stream is found, fix the name so Windows 
+            // does not choke on the colon character.
+            ext = ext.substring(0, colonIndex);
+        }
 
         // Images
         for (String s : FileTypeExtensions.getImageExtensions()) {
