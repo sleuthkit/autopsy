@@ -87,14 +87,14 @@
      
                 <ToolBar id="headToolBar" fx:id="headerToolBar" maxHeight="-Infinity" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER" VBox.vgrow="NEVER">
                     <items>
-                        <Label text="Apply to Group:" />
-                        <SplitMenuButton fx:id="grpTagSplitMenu" mnemonicParsing="false" text="Follow Up">
+                        <Label text="Apply to Selected Files:" />
+                        <SplitMenuButton fx:id="tagSelectedSplitMenu" mnemonicParsing="false" text="Follow Up">
                             <items>
                                 <MenuItem mnemonicParsing="false" text="Action 1" />
                                 <MenuItem mnemonicParsing="false" text="Action 2" />
                             </items>
                         </SplitMenuButton>
-                        <SplitMenuButton fx:id="grpCatSplitMenu" mnemonicParsing="false" text="Cat-0">
+                        <SplitMenuButton fx:id="catSelectedSplitMenu" mnemonicParsing="false" text="Cat-0">
                             <items>
                                 <MenuItem mnemonicParsing="false" text="Action 1" />
                                 <MenuItem mnemonicParsing="false" text="Action 2" />

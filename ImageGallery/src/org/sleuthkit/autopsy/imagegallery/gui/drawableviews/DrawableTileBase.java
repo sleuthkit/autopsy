@@ -52,15 +52,16 @@ import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
@@ -94,17 +95,23 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
     private static ContextMenu contextMenu;
 
-    /** displays the icon representing video files */
+    /**
+     * displays the icon representing video files
+     */
     @FXML
     private ImageView fileTypeImageView;
 
-    /** displays the icon representing hash hits */
+    /**
+     * displays the icon representing hash hits
+     */
     @FXML
     private ImageView hashHitImageView;
 
     @FXML
     protected ImageView undisplayableImageView;
-    /** displays the icon representing follow up tag */
+    /**
+     * displays the icon representing follow up tag
+     */
     @FXML
     private ImageView followUpImageView;
 
@@ -114,7 +121,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     BorderPane imageBorder;
 
-    /** the label that shows the name of the represented file */
+    /**
+     * the label that shows the name of the represented file
+     */
     @FXML
     Label nameLabel;
 
@@ -127,13 +136,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
     volatile private boolean registered = false;
 
-    protected DrawableTileBase(GroupPane groupPane) {
-        super(groupPane.getController());
+    /**
+     *
+     * @param groupPane  the value of groupPane
+     * @param controller the value of controller
+     */
+    protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
+        super(controller);
 
         this.groupPane = groupPane;
-        globalSelectionModel.getSelected().addListener((Observable observable) -> {
-            updateSelectionState();
-        });
+        globalSelectionModel.getSelected().addListener((Observable observable) -> updateSelectionState());
 
         //set up mouse listener
         //TODO: split this between DrawableTile and SingleDrawableViewBase
@@ -328,9 +340,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected void updateSelectionState() {
         getFile().ifPresent(file -> {
             final boolean selected = globalSelectionModel.isSelected(file.getId());
-            Platform.runLater(() -> {
-                setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER);
-            });
+            Platform.runLater(() -> setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER));
         });
     }
 
@@ -383,40 +393,4 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             followUpToggle.setSelected(hasFollowUp);
         });
     }
-
-//    @Override
-//    Node getContentNode() {
-//        if (getFile().isPresent() == false) {
-//            imageCache = null;
-//            Platform.runLater(() -> {
-//                imageView.setImage(null);
-//            });
-//            return null;
-//        } else {
-//            Image thumbnail = isNull(imageCache) ? null : imageCache.get();
-//
-//            if (nonNull(thumbnail)) {
-//                Platform.runLater(() -> {
-//                    imageView.setImage(thumbnail);
-//                });
-//                return imageView;
-//            } else {
-//                DrawableFile<?> file = getFile().get();
-//
-//                if (isNull(imageTask) || imageTask.isDone()) {
-//                    imageTask = new ImageLoadTask(file) {
-//
-//                        @Override
-//                        void saveToCache(Image result) {
-//                            synchronized (DrawableTileBase.this) {
-//                                imageCache = new SoftReference<>(result);
-//                            }
-//                        }
-//                    };
-//                    new Thread(imageTask).start();
-//                }
-//                return getLoadingProgressIndicator();
-//            }
-//        }
-//    }
 }

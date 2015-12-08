@@ -19,18 +19,17 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -39,6 +38,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -107,16 +107,18 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
+import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -128,8 +130,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * TODO: Extract the The GridView instance to a separate class analogous to the
  * SlideShow.
  *
- * TODO: Move selection model into controlsfx GridView and submit pull
- * request to them.
+ * TODO: Move selection model into controlsfx GridView and submit pull request
+ * to them.
  * https://bitbucket.org/controlsfx/controlsfx/issue/4/add-a-multipleselectionmodel-to-gridview
  */
 public class GroupPane extends BorderPane {
@@ -151,10 +153,10 @@ public class GroupPane extends BorderPane {
     private final Forward forwardAction;
 
     @FXML
-    private SplitMenuButton grpCatSplitMenu;
+    private SplitMenuButton catSelectedSplitMenu;
 
     @FXML
-    private SplitMenuButton grpTagSplitMenu;
+    private SplitMenuButton tagSelectedSplitMenu;
 
     @FXML
     private ToolBar headerToolBar;
@@ -202,7 +204,9 @@ public class GroupPane extends BorderPane {
         return groupViewMode.get();
     }
 
-    /** the current GroupViewMode of this GroupPane */
+    /**
+     * the current GroupViewMode of this GroupPane
+     */
     private final SimpleObjectProperty<GroupViewMode> groupViewMode = new SimpleObjectProperty<>(GroupViewMode.TILE);
 
     /**
@@ -243,7 +247,7 @@ public class GroupPane extends BorderPane {
 
         //make a new slideShowPane if necessary
         if (slideShowPane == null) {
-            slideShowPane = new SlideShowView(this);
+            slideShowPane = new SlideShowView(this, controller);
         }
 
         //assign last selected file or if none first file in group
@@ -273,41 +277,13 @@ public class GroupPane extends BorderPane {
         return grouping.get();
     }
 
-    private MenuItem createGrpCatMenuItem(final Category cat) {
-        final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
-        menuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<>(getGroup().fileIds());
-                new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
-
-                grpCatSplitMenu.setText(cat.getDisplayName());
-                grpCatSplitMenu.setOnAction(this);
-            }
-        });
-        return menuItem;
-    }
-
-    private MenuItem createGrpTagMenuItem(final TagName tn) {
-        final MenuItem menuItem = new MenuItem(tn.getDisplayName(), new ImageView(DrawableAttribute.TAGS.getIcon()));
-        menuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                Set<Long> fileIdSet = new HashSet<>(getGroup().fileIds());
-                new AddDrawableTagAction(controller).addTagsToFiles(tn, "", fileIdSet);
-
-                grpTagSplitMenu.setText(tn.getDisplayName());
-                grpTagSplitMenu.setOnAction(this);
-            }
-        });
-        return menuItem;
-    }
-
     private void selectAllFiles() {
         globalSelectionModel.clearAndSelectAll(getGroup().fileIds());
     }
 
-    /** create the string to display in the group header */
+    /**
+     * create the string to display in the group header
+     */
     protected String getHeaderString() {
         return isNull(getGroup()) ? ""
                 : StringUtils.defaultIfBlank(getGroup().getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()) + " -- "
@@ -330,8 +306,8 @@ public class GroupPane extends BorderPane {
     @FXML
     void initialize() {
         assert gridView != null : "fx:id=\"tilePane\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert grpCatSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert grpTagSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
+        assert catSelectedSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
+        assert tagSelectedSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert headerToolBar != null : "fx:id=\"headerToolBar\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert segButton != null : "fx:id=\"previewList\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
@@ -350,33 +326,42 @@ public class GroupPane extends BorderPane {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
+        FileIDSelectionModel.getInstance().getSelected().addListener((Observable o) -> {
+            Platform.runLater(() -> {
+                catSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
+                tagSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
+            });
+        });
+
         try {
-            grpTagSplitMenu.setText(getController().getTagsManager().getFollowUpTagName().getDisplayName());
-            grpTagSplitMenu.setOnAction(createGrpTagMenuItem(getController().getTagsManager().getFollowUpTagName()).getOnAction());
+            tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
-        grpTagSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        grpTagSplitMenu.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
-                ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
-                    MenuItem menuItem = createGrpTagMenuItem(tn);
-                    selTagMenues.add(menuItem);
-                }
-                grpTagSplitMenu.getItems().setAll(selTagMenues);
+        tagSelectedSplitMenu.setOnAction(actionEvent -> {
+            try {
+                new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
             }
         });
 
-        ArrayList<MenuItem> grpCategoryMenues = new ArrayList<>();
-        for (final Category cat : Category.values()) {
-            MenuItem menuItem = createGrpCatMenuItem(cat);
-            grpCategoryMenues.add(menuItem);
-        }
-        grpCatSplitMenu.setText(Category.FIVE.getDisplayName());
-        grpCatSplitMenu.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
-        grpCatSplitMenu.getItems().setAll(grpCategoryMenues);
-        grpCatSplitMenu.setOnAction(createGrpCatMenuItem(Category.FIVE).getOnAction());
+        tagSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+        tagSelectedSplitMenu.showingProperty().addListener(showing -> {
+            if (tagSelectedSplitMenu.isShowing()) {
+                List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
+                        tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
+                tagSelectedSplitMenu.getItems().setAll(selTagMenues);
+            }
+        });
+
+        List<MenuItem> grpCategoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                cat -> GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
+
+        catSelectedSplitMenu.setText(Category.FIVE.getDisplayName());
+        catSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        catSelectedSplitMenu.getItems().setAll(grpCategoryMenues);
+        catSelectedSplitMenu.setOnAction(GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(Category.FIVE, controller)).getOnAction());
 
         Runnable syncMode = () -> {
             switch (groupViewMode.get()) {
@@ -657,15 +642,11 @@ public class GroupPane extends BorderPane {
         }
     }
 
-    ImageGalleryController getController() {
-        return controller;
-    }
-
     private class DrawableCell extends GridCell<Long> {
 
-        private final DrawableTile tile = new DrawableTile(GroupPane.this);
+        private final DrawableTile tile = new DrawableTile(GroupPane.this, controller);
 
-        public DrawableCell() {
+        DrawableCell() {
             itemProperty().addListener((ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
                 if (oldValue != null) {
                     cellMap.remove(oldValue, DrawableCell.this);
