@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -110,8 +111,8 @@ public class SlideShowView extends DrawableTileBase {
     private BorderPane footer;
     private Task<Node> mediaTask;
 
-    SlideShowView(GroupPane gp) {
-        super(gp);
+    SlideShowView(GroupPane gp, ImageGalleryController controller) {
+        super(gp, controller);
         FXMLConstructor.construct(this, "SlideShowView.fxml");
     }
 

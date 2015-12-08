@@ -5,7 +5,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
   <items>
     <Label text="Group By:">
       <labelFor>
@@ -51,14 +51,14 @@
     </HBox>
     <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
     <CheckBox fx:id="onlyAnalyzedCheckBox" allowIndeterminate="false" indeterminate="false" mnemonicParsing="false" prefWidth="16.0" selected="true" text="only analyzed groups" underline="false" visible="false" />
-    <Label contentDisplay="RIGHT" text="Apply to Selected Files:" textOverrun="ELLIPSIS" />
-    <SplitMenuButton id="tagSplitMenu" fx:id="tagSelectedMenuButton" disable="true" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
+    <Label contentDisplay="RIGHT" text="Apply to Group:" textOverrun="ELLIPSIS" />
+    <SplitMenuButton id="tagSplitMenu" fx:id="tagGroupMenuButton" disable="true" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
       <items>
         <MenuItem mnemonicParsing="false" text="Action 1" />
         <MenuItem mnemonicParsing="false" text="Action 2" />
       </items>
     </SplitMenuButton>
-    <SplitMenuButton id="catSplitMenu" fx:id="catSelectedMenuButton" disable="true" mnemonicParsing="false" text="Cat-0">
+    <SplitMenuButton id="catSplitMenu" fx:id="catGroupMenuButton" disable="true" mnemonicParsing="false" text="Cat-0">
       <items>
         <MenuItem mnemonicParsing="false" text="Action 1" />
         <MenuItem mnemonicParsing="false" text="Action 2" />

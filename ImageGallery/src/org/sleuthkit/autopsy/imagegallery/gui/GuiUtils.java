@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
@@ -66,6 +68,52 @@ public class GuiUtils {
                 new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
                 catSelectedMenuButton.setText(cat.getDisplayName());
                 catSelectedMenuButton.setOnAction(this);
+            }
+        });
+        return menuItem;
+    }
+
+    /**
+     *
+     * @param cat             the value of cat
+     * @param grpCatSplitMenu the value of grpCatSplitMenu
+     * @param controller      the value of controller
+     */
+    public static MenuItem createGrpCatMenuItem(final Category cat, SplitMenuButton grpCatSplitMenu, final ImageGalleryController controller) {
+
+        final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        menuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+
+                Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().fileIds());
+                new CategorizeAction(controller).addTagsToFiles(controller.getTagsManager().getTagName(cat), "", fileIdSet);
+
+                grpCatSplitMenu.setText(cat.getDisplayName());
+                grpCatSplitMenu.setOnAction(this);
+            }
+        });
+        return menuItem;
+    }
+
+    /**
+     *
+     * @param tn              the value of tn
+     * @param grpTagSplitMenu the value of grpTagSplitMenu
+     * @param controller      the value of controller
+     */
+    public static MenuItem createGrpTagMenuItem(final TagName tn, SplitMenuButton grpTagSplitMenu, final ImageGalleryController controller) {
+
+        final MenuItem menuItem = new MenuItem(tn.getDisplayName(), new ImageView(DrawableAttribute.TAGS.getIcon()));
+        menuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+
+                Set<Long> fileIdSet = ImmutableSet.copyOf(controller.viewState().get().getGroup().fileIds());
+                new AddDrawableTagAction(controller).addTagsToFiles(tn, "", fileIdSet);
+
+                grpTagSplitMenu.setText(tn.getDisplayName());
+                grpTagSplitMenu.setOnAction(this);
             }
         });
         return menuItem;
