@@ -71,8 +71,8 @@ public class EventRootNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.EVENT_ROOT;
+    public String getItemType() {
+        return "EventRoot";
     }
 
     /**
