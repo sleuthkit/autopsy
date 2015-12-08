@@ -27,10 +27,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -47,6 +44,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
+import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -146,29 +145,30 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        try {
-            EventHandler<ActionEvent> action = GuiUtils.createGrpTagMenuItem(IGController.getTagsManager().getFollowUpTagName(), tagGroupMenuButton, IGController).getOnAction();
-            tagGroupMenuButton.setOnAction(action);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex);
-        }
+        tagGroupMenuButton.setOnAction(actionEvent -> {
+            try {
+                new TagGroupAction(IGController.getTagsManager().getFollowUpTagName(), IGController).handle(actionEvent);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex);
+            }
+        });
 
         tagGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(IGController.getTagsManager().getNonCategoryTagNames(),
-                        tn -> GuiUtils.createGrpTagMenuItem(tn, tagGroupMenuButton, IGController));
+                        tn -> GuiUtils.createAutoAssigningSplitMenuItem(tagGroupMenuButton, new TagGroupAction(tn, IGController)));
                 tagGroupMenuButton.getItems().setAll(selTagMenues);
             }
         });
 
-        catGroupMenuButton.setOnAction(GuiUtils.createGrpCatMenuItem(Category.FIVE, catGroupMenuButton, IGController).getOnAction());
+        catGroupMenuButton.setOnAction(new CategorizeGroupAction(Category.FIVE, IGController));
         catGroupMenuButton.setText(Category.FIVE.getDisplayName());
         catGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
-        catGroupMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
+        catGroupMenuButton.showingProperty().addListener(showing -> {
+            if (catGroupMenuButton.isShowing()) {
                 List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
-                        cat -> GuiUtils.createGrpCatMenuItem(cat, catGroupMenuButton, IGController));
+                        cat -> GuiUtils.createAutoAssigningSplitMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, IGController)));
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }
         });

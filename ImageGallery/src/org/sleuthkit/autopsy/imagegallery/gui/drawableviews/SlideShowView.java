@@ -18,9 +18,10 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
+import java.util.List;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.logging.Level;
@@ -63,6 +64,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -138,22 +140,18 @@ public class SlideShowView extends DrawableTileBase {
         imageView.fitWidthProperty().bind(imageBorder.widthProperty().subtract(CAT_BORDER_WIDTH * 2));
         imageView.fitHeightProperty().bind(heightProperty().subtract(CAT_BORDER_WIDTH * 4).subtract(footer.heightProperty()).subtract(toolBar.heightProperty()));
 
-        tagSplitButton.setOnAction((ActionEvent t) -> {
-            try {
-                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSplitButton, getController()).getOnAction().handle(t);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "failed to create tag menu item", ex);
-            }
-        });
+        try {
+            TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
+            tagSplitButton.setOnAction(GuiUtils.createAutoAssigningSplitMenuItem(tagSplitButton, new TagSelectedFilesAction(followUpTagName, getController())).getOnAction());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "failed to create tag menu item", ex);
+        }
 
         tagSplitButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        tagSplitButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
-                ArrayList<MenuItem> selTagMenues = new ArrayList<>();
-                for (final TagName tn : getController().getTagsManager().getNonCategoryTagNames()) {
-                    MenuItem menuItem = GuiUtils.createSelTagMenuItem(tn, tagSplitButton, getController());
-                    selTagMenues.add(menuItem);
-                }
+        tagSplitButton.showingProperty().addListener(showing -> {
+            if (tagSplitButton.isShowing()) {
+                List<MenuItem> selTagMenues = Lists.transform(getController().getTagsManager().getNonCategoryTagNames(),
+                        tagName -> GuiUtils.createAutoAssigningSplitMenuItem(tagSplitButton, new TagSelectedFilesAction(tagName, getController())));
                 tagSplitButton.getItems().setAll(selTagMenues);
             }
         });
@@ -239,7 +237,9 @@ public class SlideShowView extends DrawableTileBase {
         }
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
@@ -262,7 +262,9 @@ public class SlideShowView extends DrawableTileBase {
     }
     private SoftReference<Node> mediaCache;
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     Node getContentNode() {
         if (getFile().isPresent() == false) {
@@ -288,7 +290,9 @@ public class SlideShowView extends DrawableTileBase {
         }
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     protected String getTextForLabel() {
         return getFile().map(file -> file.getName()).orElse("") + " " + getSupplementalText();
@@ -298,9 +302,8 @@ public class SlideShowView extends DrawableTileBase {
      * cycle the image displayed in thes SlideShowview, to the next/previous one
      * in the group.
      *
-     * @param direction the direction to cycle:
-     *                  -1 => left / back
-     *                  1 => right / forward
+     * @param direction the direction to cycle: -1 => left / back 1 => right /
+     *                  forward
      */
     @ThreadConfined(type = ThreadType.JFX)
     synchronized private void cycleSlideShowImage(int direction) {
@@ -325,7 +328,9 @@ public class SlideShowView extends DrawableTileBase {
 
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategory() {

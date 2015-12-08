@@ -106,9 +106,11 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Back;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.Forward;
 import org.sleuthkit.autopsy.imagegallery.actions.NextUnseenGroup;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
+import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
@@ -325,28 +327,33 @@ public class GroupPane extends BorderPane {
 
         try {
             tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
-            tagSelectedSplitMenu.setOnAction(GuiUtils.createSelTagMenuItem(controller.getTagsManager().getFollowUpTagName(), tagSelectedSplitMenu, controller).getOnAction());
         } catch (TskCoreException tskCoreException) {
             LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
         }
+        tagSelectedSplitMenu.setOnAction(actionEvent -> {
+            try {
+                new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException);
+            }
+        });
+
         tagSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
         tagSelectedSplitMenu.showingProperty().addListener(showing -> {
             if (tagSelectedSplitMenu.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                        tagName -> GuiUtils.createSelTagMenuItem(tagName, tagSelectedSplitMenu, controller));
+                        tagName -> GuiUtils.createAutoAssigningSplitMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
                 tagSelectedSplitMenu.getItems().setAll(selTagMenues);
             }
         });
 
-        ArrayList<MenuItem> grpCategoryMenues = new ArrayList<>();
-        for (final Category cat : Category.values()) {
-            MenuItem menuItem = GuiUtils.createSelCatMenuItem(cat, catSelectedSplitMenu, controller);
-            grpCategoryMenues.add(menuItem);
-        }
+        List<MenuItem> grpCategoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                cat -> GuiUtils.createAutoAssigningSplitMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
+
         catSelectedSplitMenu.setText(Category.FIVE.getDisplayName());
         catSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         catSelectedSplitMenu.getItems().setAll(grpCategoryMenues);
-        catSelectedSplitMenu.setOnAction(GuiUtils.createSelCatMenuItem(Category.FIVE, catSelectedSplitMenu, controller).getOnAction());
+        catSelectedSplitMenu.setOnAction(GuiUtils.createAutoAssigningSplitMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(Category.FIVE, controller)).getOnAction());
 
         Runnable syncMode = () -> {
             switch (groupViewMode.get()) {
