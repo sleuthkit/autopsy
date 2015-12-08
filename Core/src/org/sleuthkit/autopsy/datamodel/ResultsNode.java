@@ -68,4 +68,9 @@ public class ResultsNode extends DisplayableItemNode {
                 NAME));
         return s;
     }
+
+    @Override
+    public String getItemType() {
+        return "Results";
+    }
 }

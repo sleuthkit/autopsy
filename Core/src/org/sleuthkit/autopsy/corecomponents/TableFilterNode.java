@@ -32,6 +32,7 @@ import org.openide.util.NbBundle;
 public class TableFilterNode extends FilterNode {
 
     private boolean createChild;
+    private String itemType;
 
     /**
      * the constructor
@@ -39,6 +40,13 @@ public class TableFilterNode extends FilterNode {
     public TableFilterNode(Node arg, boolean crChild) {
         super(arg, TableFilterChildren.createInstance(arg, crChild));
         this.createChild = crChild;
+        this.itemType = "Generic";
+    }
+    
+    public TableFilterNode(Node arg, boolean crChild, String itemType) {
+        super(arg, TableFilterChildren.createInstance(arg, crChild));
+        this.createChild = crChild;
+        this.itemType = itemType;
     }
 
     /**
@@ -54,5 +62,9 @@ public class TableFilterNode extends FilterNode {
         } else {
             return super.getDisplayName();
         }
+    }
+    
+    public String getItemType() {
+        return itemType;
     }
 }

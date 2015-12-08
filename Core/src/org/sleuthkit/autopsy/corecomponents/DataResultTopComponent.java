@@ -105,7 +105,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         setTitle(title); // set the title
         setName(title);
 
-        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isMain)); // set option to close compoment in GUI
+        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain); // set option to close compoment in GUI
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
 
@@ -249,7 +249,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     private void setCustomMode() {
         if (customModeName != null) {
-            //putClientProperty("TopComponentAllowDockAnywhere", Boolean.TRUE);
             Mode mode = WindowManager.getDefault().findMode(customModeName);
             if (mode != null) {
                 StringBuilder message = new StringBuilder("Found custom mode, setting: "); //NON-NLS

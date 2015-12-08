@@ -118,6 +118,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public String getItemType() {
+            return "ExtractedContentRoot";
+        }
     }
 
     /**
@@ -366,6 +371,62 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public boolean isLeafTypeNode() {
             return true;
+        }
+
+        @Override
+        public String getItemType() {
+            switch (type) {
+                case TSK_WEB_BOOKMARK:
+                    return "ExtractedBookmarks";
+                case TSK_WEB_COOKIE:
+                    return "ExtractedCookies";
+                case TSK_WEB_HISTORY:
+                    return "ExtractedHistory";
+                case TSK_WEB_DOWNLOAD:
+                    return "ExtractedDownloads";
+                case TSK_INSTALLED_PROG:
+                    return "ExtractedPrograms";
+                case TSK_RECENT_OBJECT:
+                    return "ExtractedRecent";
+                case TSK_DEVICE_ATTACHED:
+                    return "ExtractedAttachedDevices";
+                case TSK_WEB_SEARCH_QUERY:
+                    return "ExtractedSearch";
+                case TSK_METADATA_EXIF:
+                    return "ExtractedMetadataExif";
+                case TSK_EMAIL_MSG:
+                    return "ExtractedEmailMsg";
+                case TSK_CONTACT:
+                    return "ExtractedContants";
+                case TSK_MESSAGE:
+                    return "ExtractedMessages";
+                case TSK_CALLLOG:
+                    return "ExtractedCallLog";
+                case TSK_CALENDAR_ENTRY:
+                    return "ExtractedCalendar";
+                case TSK_SPEED_DIAL_ENTRY:
+                    return "ExtractedSpeedDial";
+                case TSK_BLUETOOTH_PAIRING:
+                    return "ExtractedBluetooth";
+                case TSK_GPS_BOOKMARK:
+                    return "ExtractedGPSBookmarks";
+                case TSK_GPS_LAST_KNOWN_LOCATION:
+                    return "ExtractedGPSLastLocation";
+                case TSK_GPS_SEARCH:
+                    return "ExtractedGPSSearch";
+                case TSK_SERVICE_ACCOUNT:
+                    return "ExtractedServiceAccount";
+                case TSK_ENCRYPTION_DETECTED:
+                    return "ExtractedEncryption";
+                case TSK_EXT_MISMATCH_DETECTED:
+                    return "ExtractedExtMismatch";
+                case TSK_OS_INFO:
+                    return "ExtractedOS";
+                case TSK_FACE_DETECTED:
+                    return "ExtractedFaceDetected";
+
+            }
+            return "ExtractedContentType";
         }
     }
 

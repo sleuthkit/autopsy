@@ -79,7 +79,11 @@ The added part is highlighted in yellow below. Ensure that it is inside the <i>\
 <br><br>
 \image html autoPurge.PNG
 <br><br>
-8. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
+8. Install _ZkJanitor_ by right clicking on _InstallJanitor.bat_, and selecting "Run as administrator". You should see a confirmation that ZkJanitor is installed, as shown in the screenshot below.
+<br><br>
+\image html InstallZkJanitor.PNG
+<br><br>
+9. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
     - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB. 
     - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
 <br><br>
@@ -89,9 +93,9 @@ The log file should end up looking like this (modified lines are highlighted in 
 <br><br>
 \image html log4j.PNG
 <br><br>
-9. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
-10. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
-11. Start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service:
+10. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
+11. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-4.0\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
+12. Start a Windows command prompt as administrator by pressing _Start_, typing _command_, right clicking on _Command Prompt_, and clicking on _Run as administrator_. Then run the following command to install the _solrJetty_ service:
     <br><br>
     <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
     <br><br>
@@ -99,13 +103,13 @@ The log file should end up looking like this (modified lines are highlighted in 
 <br><br>
 \image html solrinstall1.PNG
 <br><br>
-12. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
+13. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
 <br><br>
 \image html solrinstall2.PNG
 <br>
 If the machine is on a domain, **make sure** to select the domain with the mouse by going to the _Log On_ tab, clicking _Browse_, then clicking _Locations_ and selecting the domain of interest. Then enter the user name desired and press _Check Names_. When that completes, press _OK_, type in the password once for each box and press _OK_. You may see "The user has been granted the log on as a service right."
 
-13. You should be able to see the Solr service in a web browser via the URL <i>http://localhost:8983/solr/#/</i> as shown in the screenshot below.
+14. You should be able to see the Solr service in a web browser via the URL <i>http://localhost:8983/solr/#/</i> as shown in the screenshot below.
 <br><br>
 \image html solrinstall3.PNG
 <br><br>

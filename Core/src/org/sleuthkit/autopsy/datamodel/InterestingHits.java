@@ -161,6 +161,11 @@ public class InterestingHits implements AutopsyVisitableItem {
 
             return s;
         }
+
+        @Override
+        public String getItemType() {
+            return "InterestingHitsRoot";
+        }
     }
 
     private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -306,6 +311,11 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             updateDisplayName();
+        }
+
+        @Override
+        public String getItemType() {
+            return "InterestingHitsSetName";
         }
     }
 

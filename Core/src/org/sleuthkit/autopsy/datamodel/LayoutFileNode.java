@@ -38,6 +38,11 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
+    @Override
+    public String getItemType() {
+        return "LayoutFile";
+    }
+
     public static enum LayoutContentPropertyType {
 
         PARTS {
