@@ -30,6 +30,7 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -42,6 +43,7 @@ import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -77,7 +79,12 @@ import static javafx.scene.input.KeyCode.RIGHT;
 import static javafx.scene.input.KeyCode.UP;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -114,6 +121,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
@@ -160,6 +168,19 @@ public class GroupPane extends BorderPane {
 
     @FXML
     private ToolBar headerToolBar;
+
+    @FXML
+    private ToggleButton cat0Toggle;
+    @FXML
+    private ToggleButton cat1Toggle;
+    @FXML
+    private ToggleButton cat2Toggle;
+    @FXML
+    private ToggleButton cat3Toggle;
+    @FXML
+    private ToggleButton cat4Toggle;
+    @FXML
+    private ToggleButton cat5Toggle;
 
     @FXML
     private SegmentedButton segButton;
@@ -232,6 +253,8 @@ public class GroupPane extends BorderPane {
             groupLabel.setText(header);
         });
     };
+    @FXML
+    private HBox catSegmentedContainer;
 
     public GroupPane(ImageGalleryController controller) {
         this.controller = controller;
@@ -244,7 +267,10 @@ public class GroupPane extends BorderPane {
     @ThreadConfined(type = ThreadType.JFX)
     public void activateSlideShowViewer(Long slideShowFileID) {
         groupViewMode.set(GroupViewMode.SLIDE_SHOW);
-
+        catSelectedSplitMenu.setVisible(false);
+        catSelectedSplitMenu.setManaged(false);
+        catSegmentedContainer.setVisible(true);
+        catSegmentedContainer.setManaged(true);
         //make a new slideShowPane if necessary
         if (slideShowPane == null) {
             slideShowPane = new SlideShowView(this, controller);
@@ -256,14 +282,26 @@ public class GroupPane extends BorderPane {
         } else {
             slideShowPane.setFile(slideShowFileID);
         }
+
+        slideShowPane.getFile().ifPresent(new Consumer<DrawableFile<?>>() {
+            @Override
+            public void accept(DrawableFile<?> t) {
+                ToggleButton toggleForCategory = getToggleForCategory(t.getCategory());
+                toggleForCategory.setSelected(true);
+            }
+        });
+
         setCenter(slideShowPane);
         slideShowPane.requestFocus();
 
     }
 
     public void activateTileViewer() {
-
         groupViewMode.set(GroupViewMode.TILE);
+        catSelectedSplitMenu.setVisible(true);
+        catSelectedSplitMenu.setManaged(true);
+        catSegmentedContainer.setVisible(false);
+        catSegmentedContainer.setManaged(false);
         setCenter(gridView);
         gridView.requestFocus();
         if (slideShowPane != null) {
@@ -298,6 +336,44 @@ public class GroupPane extends BorderPane {
         return grouping.getReadOnlyProperty();
     }
 
+    private ToggleButton getToggleForCategory(Category category) {
+        switch (category) {
+            case ZERO:
+                return cat0Toggle;
+            case ONE:
+                return cat1Toggle;
+            case TWO:
+                return cat2Toggle;
+            case THREE:
+                return cat3Toggle;
+            case FOUR:
+                return cat4Toggle;
+            case FIVE:
+                return cat5Toggle;
+            default:
+                throw new IllegalArgumentException(category.name());
+        }
+    }
+
+    private class CategorizeToggleHandler implements ChangeListener<Boolean> {
+
+        private final Category cat;
+
+        public CategorizeToggleHandler(Category cat) {
+            this.cat = cat;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
+            slideShowPane.getFileID().ifPresent(fileID -> {
+                if (t1) {
+                    FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                    new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
+                }
+            });
+        }
+    }
+
     /**
      * called automatically during constructor by FXMLConstructor.
      *
@@ -305,6 +381,12 @@ public class GroupPane extends BorderPane {
      */
     @FXML
     void initialize() {
+        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
         assert gridView != null : "fx:id=\"tilePane\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert catSelectedSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert tagSelectedSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
@@ -312,6 +394,29 @@ public class GroupPane extends BorderPane {
         assert segButton != null : "fx:id=\"previewList\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
+
+        //configure category toggles
+        cat0Toggle.setBorder(new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+        cat1Toggle.setBorder(new Border(new BorderStroke(Category.ONE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+        cat2Toggle.setBorder(new Border(new BorderStroke(Category.TWO.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+        cat3Toggle.setBorder(new Border(new BorderStroke(Category.THREE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+        cat4Toggle.setBorder(new Border(new BorderStroke(Category.FOUR.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+        cat5Toggle.setBorder(new Border(new BorderStroke(Category.FIVE.getColor(), BorderStrokeStyle.SOLID, new CornerRadii(1), new BorderWidths(1))));
+
+        cat0Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.ZERO));
+        cat1Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.ONE));
+        cat2Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.TWO));
+        cat3Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.THREE));
+        cat4Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.FOUR));
+        cat5Toggle.selectedProperty().addListener(new CategorizeToggleHandler(Category.FIVE));
+
+        cat0Toggle.toggleGroupProperty().addListener((o, oldGroup, newGroup) -> {
+            newGroup.selectedToggleProperty().addListener((ov, oldToggle, newToggle) -> {
+                if (newToggle == null) {
+                    oldToggle.setSelected(true);
+                }
+            });
+        });
 
         //configure flashing glow animation on next unseen group button
         flashAnimation.setCycleCount(Timeline.INDEFINITE);

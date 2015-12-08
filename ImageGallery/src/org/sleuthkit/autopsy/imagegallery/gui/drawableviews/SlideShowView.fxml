@@ -26,53 +26,6 @@
                     </children>
                 </HBox>
                 <BorderPane fx:id="internalBorderPane" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
-                    <top>
-                        <ToolBar fx:id="toolBar" maxHeight="-Infinity">
-                            <items>
-                                <Region fx:id="spring" prefHeight="-1.0" prefWidth="-1.0" />
-                                <Label text="Apply to File:" />
-                                <SplitMenuButton id="tagSplitMenu" fx:id="tagSplitButton" disable="false" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" text="Action 1" />
-                                        <MenuItem mnemonicParsing="false" text="Action 2" />
-                                    </items>
-                                </SplitMenuButton>
-                                <Region prefHeight="-1.0" prefWidth="10.0" />
-                                <Label text="Category:">
-                                    <graphic>
-                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@../../images/category-icon.png" />
-                                            </image>
-                                        </ImageView>
-                                    </graphic>
-                                </Label>
-                                <HBox id="HBox" alignment="CENTER" spacing="0.0" styleClass="segmented-button-bar">
-                                    <children>
-                                       
-                                        <Region prefHeight="-1.0" prefWidth="5.0" />
-                                        <org.controlsfx.control.SegmentedButton>
-                                            <buttons>
-                                                <ToggleButton fx:id="cat0Toggle" mnemonicParsing="false" text="0" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton fx:id="cat1Toggle" mnemonicParsing="false" style="" styleClass="button" text="1" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton id="Cat2Toggle" fx:id="cat2Toggle" mnemonicParsing="false" styleClass="button" text="2" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton fx:id="cat3Toggle" mnemonicParsing="false" styleClass="button" text="3" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton fx:id="cat4Toggle" mnemonicParsing="false" styleClass="button" text="4" HBox.hgrow="ALWAYS" />
-                                                <ToggleButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" HBox.hgrow="ALWAYS">
-                                       <toggleGroup>
-                                          <ToggleGroup fx:id="cat" />
-                                       </toggleGroup></ToggleButton>                                          
-                                            </buttons>
-                                        
-                                        </org.controlsfx.control.SegmentedButton>
-                                        <Region prefHeight="-1.0" prefWidth="5.0" />
-                                      
-                                    </children>
-                                  
-                                </HBox>
-                            </items>
-                        </ToolBar>
-                    </top>
                     <center>
                         <AnchorPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-Infinity" minWidth="-Infinity" opacity="1.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-border-width: 1; -fx-border-color: darkgray; -fx-border-radius: 2; -fx-background-color: linear-gradient(to bottom, derive(-fx-base,-30%), derive(-fx-base,-60%)),        linear-gradient(to bottom, derive(-fx-base,65%) 2%, derive(-fx-base,-20%) 95%); -fx-background-radius: 2;" BorderPane.alignment="CENTER">
                             <children>
