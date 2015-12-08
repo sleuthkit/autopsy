@@ -52,12 +52,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         int dotIndex = name.lastIndexOf(".");
         if (dotIndex > 0) {
             String ext = name.substring(dotIndex).toLowerCase();
-            int colonIndex = ext.lastIndexOf(":");
-            if (colonIndex != -1) {
-                // If alternate data stream is found, fix the name so Windows 
-                // does not choke on the colon character.
-                ext = ext.substring(0, colonIndex);
-            }
             
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
