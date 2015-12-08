@@ -122,8 +122,8 @@ class EventNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.EVENT;
+    public String getItemType() {
+        return "Event";
     }
 
     /**
