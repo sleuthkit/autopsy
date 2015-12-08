@@ -652,16 +652,16 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-bmp-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-bmp-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-bmp-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-pcx-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-pcx-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-pcx-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-pcx-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-jpeg-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-jpeg-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-jpeg-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-jpeg-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
@@ -716,16 +716,16 @@
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-tiff-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-tiff-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-tiff-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-tiff-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-pnm-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-pnm-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-pnm-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-pnm-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/common-lang-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/common-lang-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/common-lang-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/common-lang-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/guava-18.0.jar</runtime-relative-path>
@@ -764,8 +764,8 @@
                 <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/common-image-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/common-image-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/common-image-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
@@ -804,8 +804,8 @@
                 <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/common-io-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/common-io-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/common-io-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/common-io-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
@@ -840,8 +840,8 @@
                 <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-icns-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-icns-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-icns-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-icns-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
@@ -852,40 +852,40 @@
                 <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-psd-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-psd-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-psd-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-sgi-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-sgi-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-sgi-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-thumbsdb-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-thumbsdb-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-thumbsdb-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-thumbsdb-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-iff-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-iff-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-iff-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-iff-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-tga-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-tga-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-tga-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-tga-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-core-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-core-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-core-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-core-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
@@ -896,16 +896,16 @@
                 <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-metadata-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-metadata-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-metadata-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-metadata-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.10.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-8.40.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imageio-pict-3.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-pict-3.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/imageio-pict-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/imageio-pict-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
