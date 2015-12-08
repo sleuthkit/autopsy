@@ -142,7 +142,7 @@ public class SlideShowView extends DrawableTileBase {
 
         try {
             TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
-            tagSplitButton.setOnAction(GuiUtils.createAutoAssigningSplitMenuItem(tagSplitButton, new TagSelectedFilesAction(followUpTagName, getController())).getOnAction());
+            tagSplitButton.setOnAction(GuiUtils.createAutoAssigningMenuItem(tagSplitButton, new TagSelectedFilesAction(followUpTagName, getController())).getOnAction());
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "failed to create tag menu item", ex);
         }
@@ -151,7 +151,7 @@ public class SlideShowView extends DrawableTileBase {
         tagSplitButton.showingProperty().addListener(showing -> {
             if (tagSplitButton.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(getController().getTagsManager().getNonCategoryTagNames(),
-                        tagName -> GuiUtils.createAutoAssigningSplitMenuItem(tagSplitButton, new TagSelectedFilesAction(tagName, getController())));
+                        tagName -> GuiUtils.createAutoAssigningMenuItem(tagSplitButton, new TagSelectedFilesAction(tagName, getController())));
                 tagSplitButton.getItems().setAll(selTagMenues);
             }
         });

@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitMenuButton;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.control.action.ActionUtils;
 
 /**
  * Static utility methods for working with GUI components
@@ -32,21 +31,24 @@ public class GuiUtils {
     }
 
     /**
+     * create a MenuItem that performs the given action and also set the Action
+     * as the action for the given Button. Usefull to have a SplitMenuButton
+     * remember the last chosen menu item as its action.
      *
-     * @param splitMenuButton
+     * @param button
      * @param action
      *
      * @return
      */
-    public static MenuItem createAutoAssigningSplitMenuItem(SplitMenuButton splitMenuButton, Action action) {
+    public static MenuItem createAutoAssigningMenuItem(ButtonBase button, Action action) {
 
         MenuItem menuItem = new MenuItem(action.getText(), action.getGraphic());
         menuItem.setOnAction(actionEvent -> {
             action.handle(actionEvent);
-            ActionUtils.configureButton(action, splitMenuButton);
+            button.setText(action.getText());
+            button.setGraphic(action.getGraphic());
+            button.setOnAction(action);
         });
-
         return menuItem;
     }
-
 }

@@ -38,6 +38,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -325,6 +326,13 @@ public class GroupPane extends BorderPane {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
+        FileIDSelectionModel.getInstance().getSelected().addListener((Observable o) -> {
+            Platform.runLater(() -> {
+                catSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
+                tagSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
+            });
+        });
+
         try {
             tagSelectedSplitMenu.setText(controller.getTagsManager().getFollowUpTagName().getDisplayName());
         } catch (TskCoreException tskCoreException) {
@@ -342,18 +350,18 @@ public class GroupPane extends BorderPane {
         tagSelectedSplitMenu.showingProperty().addListener(showing -> {
             if (tagSelectedSplitMenu.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                        tagName -> GuiUtils.createAutoAssigningSplitMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
+                        tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
                 tagSelectedSplitMenu.getItems().setAll(selTagMenues);
             }
         });
 
         List<MenuItem> grpCategoryMenues = Lists.transform(Arrays.asList(Category.values()),
-                cat -> GuiUtils.createAutoAssigningSplitMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
+                cat -> GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
 
         catSelectedSplitMenu.setText(Category.FIVE.getDisplayName());
         catSelectedSplitMenu.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
         catSelectedSplitMenu.getItems().setAll(grpCategoryMenues);
-        catSelectedSplitMenu.setOnAction(GuiUtils.createAutoAssigningSplitMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(Category.FIVE, controller)).getOnAction());
+        catSelectedSplitMenu.setOnAction(GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(Category.FIVE, controller)).getOnAction());
 
         Runnable syncMode = () -> {
             switch (groupViewMode.get()) {
