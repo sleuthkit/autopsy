@@ -120,8 +120,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.EXTRACTED_CONTENT_ROOT;
+        public String getItemType() {
+            return "ExtractedContentRoot";
         }
     }
 
@@ -374,59 +374,59 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
+        public String getItemType() {
             switch (type) {
                 case TSK_WEB_BOOKMARK:
-                    return ItemType.EXTRACTED_BOOKMARKS;
+                    return "ExtractedBookmarks";
                 case TSK_WEB_COOKIE:
-                    return ItemType.EXTRACTED_COOKIES;
+                    return "ExtractedCookies";
                 case TSK_WEB_HISTORY:
-                    return ItemType.EXTRACTED_HISTORY;
+                    return "ExtractedHistory";
                 case TSK_WEB_DOWNLOAD:
-                    return ItemType.EXTRACTED_DOWNLOADS;
+                    return "ExtractedDownloads";
                 case TSK_INSTALLED_PROG:
-                    return ItemType.EXTRACTED_PROGRAMS;
+                    return "ExtractedPrograms";
                 case TSK_RECENT_OBJECT:
-                    return ItemType.EXTRACTED_RECENT;
+                    return "ExtractedRecent";
                 case TSK_DEVICE_ATTACHED:
-                    return ItemType.EXTRACTED_ATTACHED_DEVICES;
+                    return "ExtractedAttachedDevices";
                 case TSK_WEB_SEARCH_QUERY:
-                    return ItemType.EXTRACTED_SEARCH;
+                    return "ExtractedSearch";
                 case TSK_METADATA_EXIF:
-                    return ItemType.EXTRACTED_METADATA_EXIF;
+                    return "ExtractedMetadataExif";
                 case TSK_EMAIL_MSG:
-                    return ItemType.EXTRACTED_EMAIL_MSG;
+                    return "ExtractedEmailMsg";
                 case TSK_CONTACT:
-                    return ItemType.EXTRACTED_CONTACTS;
+                    return "ExtractedContants";
                 case TSK_MESSAGE:
-                    return ItemType.EXTRACTED_MESSAGES;
+                    return "ExtractedMessages";
                 case TSK_CALLLOG:
-                    return ItemType.EXTRACTED_CALL_LOG;
+                    return "ExtractedCallLog";
                 case TSK_CALENDAR_ENTRY:
-                    return ItemType.EXTRACTED_CALENDAR;
+                    return "ExtractedCalendar";
                 case TSK_SPEED_DIAL_ENTRY:
-                    return ItemType.EXTRACTED_SPEED_DIAL;
+                    return "ExtractedSpeedDial";
                 case TSK_BLUETOOTH_PAIRING:
-                    return ItemType.EXTRACTED_BLUETOOTH;
+                    return "ExtractedBluetooth";
                 case TSK_GPS_BOOKMARK:
-                    return ItemType.EXTRACTED_GPS_BOOKMARKS;
+                    return "ExtractedGPSBookmarks";
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                    return ItemType.EXTRACTED_GPS_LAST_LOCATION;
+                    return "ExtractedGPSLastLocation";
                 case TSK_GPS_SEARCH:
-                    return ItemType.EXTRACTED_GPS_SEARCH;
+                    return "ExtractedGPSSearch";
                 case TSK_SERVICE_ACCOUNT:
-                    return ItemType.EXTRACTED_SERVICE_ACCOUNT;
+                    return "ExtractedServiceAccount";
                 case TSK_ENCRYPTION_DETECTED:
-                    return ItemType.EXTRACTED_ENCRYPTION;
+                    return "ExtractedEncryption";
                 case TSK_EXT_MISMATCH_DETECTED:
-                    return ItemType.EXTRACTED_EXT_MISMATCH;
+                    return "ExtractedExtMismatch";
                 case TSK_OS_INFO:
-                    return ItemType.EXTRACTED_OS;
+                    return "ExtractedOS";
                 case TSK_FACE_DETECTED:
-                    return ItemType.EXTRACTED_FACE_DETECTED;
+                    return "ExtractedFaceDetected";
 
             }
-            return ItemType.EXTRACTED_CONTENT_TYPE;
+            return "ExtractedContentType";
         }
     }
 

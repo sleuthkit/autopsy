@@ -111,7 +111,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.IMAGE;
+    public String getItemType() {
+        return "Image";
     }
 }

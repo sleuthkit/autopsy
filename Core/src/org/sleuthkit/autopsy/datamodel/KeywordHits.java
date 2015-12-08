@@ -241,8 +241,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.KEYWORD_ROOT;
+        public String getItemType() {
+            return "KeywordRoot";
         }
     }
 
@@ -396,8 +396,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.KEYWORD_LIST;
+        public String getItemType() {
+            return "KeywordList";
         }
     }
 
@@ -494,8 +494,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.KEYWORD_TERM;
+        public String getItemType() {
+            return "KeywordTerm";
         }
     }
 

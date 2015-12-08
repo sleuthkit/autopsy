@@ -90,8 +90,8 @@ public final class Reports implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.REPORTS_LIST;
+        public String getItemType() {
+            return "ReportsList";
         }
     }
 
@@ -215,8 +215,8 @@ public final class Reports implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.REPORTS;
+        public String getItemType() {
+            return "Reports";
         }
 
         private static class DeleteReportAction extends AbstractAction {

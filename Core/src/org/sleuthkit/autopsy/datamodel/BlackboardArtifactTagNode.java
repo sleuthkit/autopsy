@@ -109,7 +109,7 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.BLACKBOARD_ARTIFACT_TAG;
+    public String getItemType() {
+        return "BlackboardArtifactTag";
     }
 }

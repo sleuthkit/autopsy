@@ -102,7 +102,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.DIRECTORY;
+    public String getItemType() {
+        return "Directory";
     }
 }

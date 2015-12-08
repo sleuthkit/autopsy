@@ -84,7 +84,7 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.RECENT_FILES_FILTER;
+    public String getItemType() {
+        return "RecentFilesFilter";
     }
 }

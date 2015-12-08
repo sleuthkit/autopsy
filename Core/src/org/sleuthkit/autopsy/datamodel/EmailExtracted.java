@@ -192,8 +192,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.EMAIL_EXTRACTED_ROOT;
+        public String getItemType() {
+            return "EmailExtractedRoot";
         }
     }
 
@@ -347,8 +347,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.EMAIL_EXTRACTED_ACCOUNT;
+        public String getItemType() {
+            return "EmailExtractedAccount";
         }
     }
 
@@ -438,8 +438,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.EMAIL_EXTRACTED_FOLDER;
+        public String getItemType() {
+            return "EmailExtractedFolder";
         }
     }
 
