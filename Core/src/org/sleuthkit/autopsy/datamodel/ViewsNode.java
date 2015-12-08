@@ -74,7 +74,7 @@ public class ViewsNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.VIEWS;
+    public String getItemType() {
+        return "Views";
     }
 }

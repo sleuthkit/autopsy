@@ -145,8 +145,8 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.FILE_SIZE_ROOT;
+        public String getItemType() {
+            return "FileSizeRoot";
         }
     }
 
@@ -287,8 +287,8 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             @Override
-            public ItemType getItemType() {
-                return ItemType.FILE_SIZE;
+            public String getItemType() {
+                return "FileSize";
             }
 
             // update the display name when new events are fired

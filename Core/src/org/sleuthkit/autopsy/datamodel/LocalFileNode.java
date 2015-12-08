@@ -117,7 +117,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.LOCAL_FILE;
+    public String getItemType() {
+        return "LocalFile";
     }
 }

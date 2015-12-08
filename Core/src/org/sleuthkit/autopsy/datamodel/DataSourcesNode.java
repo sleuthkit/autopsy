@@ -57,8 +57,8 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.DATA_SOURCES;
+    public String getItemType() {
+        return "DataSources";
     }
 
     /*

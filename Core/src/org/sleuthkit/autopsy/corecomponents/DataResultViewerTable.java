@@ -57,7 +57,6 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode.ItemType;
 
 /**
  * DataResult sortable table viewer
@@ -467,7 +466,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     // Get unique name for node and it's property.
     private String getUniqueName(Node root, Property<?> prop) {
-        ItemType type = ItemType.GENERIC;
+        String type = "Generic";
         if(root instanceof TableFilterNode) {
             TableFilterNode filterNode = (TableFilterNode) root;
             type =  filterNode.getItemType();

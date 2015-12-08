@@ -170,8 +170,8 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.HASHSET_ROOT;
+        public String getItemType() {
+            return "HashsetRoot";
         }
     }
 
@@ -328,8 +328,8 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public ItemType getItemType() {
-            return ItemType.HASHSET_NAME;
+        public String getItemType() {
+            return "HashsetName";
         }
     }
 

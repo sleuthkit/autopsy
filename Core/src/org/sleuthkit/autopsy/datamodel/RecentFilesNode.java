@@ -67,7 +67,7 @@ public class RecentFilesNode extends DisplayableItemNode {
     }
 
     @Override
-    public ItemType getItemType() {
-        return ItemType.RECENT_FILES;
+    public String getItemType() {
+        return "RecentFiles";
     }
 }
