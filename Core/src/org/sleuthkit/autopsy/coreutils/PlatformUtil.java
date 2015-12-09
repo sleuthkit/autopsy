@@ -276,6 +276,10 @@ public class PlatformUtil {
             return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
     }
     
+    /**
+     * Gets the absolute path to the lib folder
+     * @return Lib path string
+     */
     public static String getLibsPath() {
         return new File(".").getAbsolutePath() + "\\build\\cluster\\modules\\lib\\" + getOSArch() + "\\";
     }
