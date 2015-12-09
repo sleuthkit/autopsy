@@ -100,6 +100,40 @@
                                 <MenuItem mnemonicParsing="false" text="Action 2" />
                             </items>
                         </SplitMenuButton>
+                  <HBox fx:id="catSegmentedContainer" alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Label text="Category:">
+                           <graphic>
+                              <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../images/category-icon.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Label>
+                        <HBox id="HBox" alignment="CENTER" spacing="0.0" styleClass="segmented-button-bar">
+                           <children>
+                              <SegmentedButton fx:id="catSegmentedButton">
+                                 <buttons>
+                                    <ToggleButton fx:id="cat0Toggle" mnemonicParsing="false" text="0" HBox.hgrow="ALWAYS" />
+                                    <ToggleButton fx:id="cat1Toggle" mnemonicParsing="false" style="" styleClass="button" text="1" HBox.hgrow="ALWAYS" />
+                                    <ToggleButton id="Cat2Toggle" fx:id="cat2Toggle" mnemonicParsing="false" styleClass="button" text="2" HBox.hgrow="ALWAYS" />
+                                    <ToggleButton fx:id="cat3Toggle" mnemonicParsing="false" styleClass="button" text="3" HBox.hgrow="ALWAYS" />
+                                    <ToggleButton fx:id="cat4Toggle" mnemonicParsing="false" styleClass="button" text="4" HBox.hgrow="ALWAYS" />
+                                    <ToggleButton fx:id="cat5Toggle" mnemonicParsing="false" text="5" HBox.hgrow="ALWAYS">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="cat" />
+                                       </toggleGroup>
+                                    </ToggleButton>
+                                 </buttons>
+                              </SegmentedButton>
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets left="5.0" />
+                     </padding>
+                  </HBox>
                         <Region fx:id="spacer" prefHeight="-1.0" prefWidth="-1.0" />
                         <Separator prefWidth="30.0" />
                         <SegmentedButton fx:id="segButton">

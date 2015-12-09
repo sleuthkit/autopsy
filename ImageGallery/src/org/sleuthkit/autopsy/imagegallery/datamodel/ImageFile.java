@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
 import javafx.embed.swing.SwingFXUtils;
@@ -49,7 +48,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     }
 
-
     @Override
     public Image getFullSizeImage() {
         Image image = (imageRef != null) ? imageRef.get() : null;
@@ -63,8 +61,8 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
             try (BufferedInputStream readContentInputStream = new BufferedInputStream(new ReadContentInputStream(this.getAbstractFile()))) {
                 BufferedImage read = ImageIO.read(readContentInputStream);
                 image = SwingFXUtils.toFXImage(read, null);
-            } catch (IOException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "unable to read file " + getName());
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "unable to read file " + getName(), ex.getMessage());
                 return null;
             }
         }
