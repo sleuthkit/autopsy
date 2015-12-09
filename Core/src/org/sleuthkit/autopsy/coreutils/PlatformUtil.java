@@ -275,6 +275,10 @@ public class PlatformUtil {
         else
             return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
     }
+    
+    public static String getLibsPath() {
+        return new File(".").getAbsolutePath() + "\\build\\cluster\\modules\\lib\\" + getOSArch() + "\\";
+    }
 
     /**
      * Check if running on Windows OS

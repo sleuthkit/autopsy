@@ -95,7 +95,7 @@ public class ImageUtils {
 
         //load opencv libraries
         boolean openCVLoadedTemp;
-        String path = new File("..").getAbsolutePath() +"\\build\\cluster\\modules\\lib\\x86_64\\";
+        String path = PlatformUtil.getLibsPath();
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
             if (System.getProperty("os.arch").endsWith("64")) { 

@@ -60,11 +60,7 @@ public class Installer extends ModuleInstall {
          * and loadable (i.e. a 'make install' was done).
          */
         if (PlatformUtil.isWindowsOS()) {
-            logger.log(Level.INFO, System.getProperty("java.library.path"));
-            logger.log(Level.INFO, "MY INFO {0}", System.getProperty("java.library.path"));
-            logger.log(Level.INFO, "MY INFO {0}", PlatformUtil.getOSArch());
-            logger.log(Level.INFO, "MY INFO {0}", new File(".").getAbsolutePath());
-            String path = new File("..").getAbsolutePath() +"\\build\\cluster\\modules\\lib\\x86_64\\";
+            String path = PlatformUtil.getLibsPath();
             try {
                 //Note: if shipping with a different CRT version, this will only print a warning
                 //and try to use linker mechanism to find the correct versions of libs.
