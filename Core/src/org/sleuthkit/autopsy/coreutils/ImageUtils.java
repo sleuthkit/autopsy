@@ -95,12 +95,13 @@ public class ImageUtils {
 
         //load opencv libraries
         boolean openCVLoadedTemp;
+        String path = new File("..").getAbsolutePath() +"\\build\\cluster\\modules\\lib\\x86_64\\";
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
             if (System.getProperty("os.arch").endsWith("64")) { 
-                System.loadLibrary("opencv_ffmpeg248_64");
+                System.load(path + "opencv_ffmpeg248_64.dll");
             } else {
-                System.loadLibrary("opencv_ffmpeg248");
+                System.load(path + "opencv_ffmpeg248.dll");
             }
 
             openCVLoadedTemp = true;

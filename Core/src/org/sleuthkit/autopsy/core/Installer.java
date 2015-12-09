@@ -60,6 +60,11 @@ public class Installer extends ModuleInstall {
          * and loadable (i.e. a 'make install' was done).
          */
         if (PlatformUtil.isWindowsOS()) {
+            logger.log(Level.INFO, System.getProperty("java.library.path"));
+            logger.log(Level.INFO, "MY INFO {0}", System.getProperty("java.library.path"));
+            logger.log(Level.INFO, "MY INFO {0}", PlatformUtil.getOSArch());
+            logger.log(Level.INFO, "MY INFO {0}", new File(".").getAbsolutePath());
+            String path = new File("..").getAbsolutePath() +"\\build\\cluster\\modules\\lib\\x86_64\\";
             try {
                 //Note: if shipping with a different CRT version, this will only print a warning
                 //and try to use linker mechanism to find the correct versions of libs.
@@ -73,14 +78,14 @@ public class Installer extends ModuleInstall {
             }
 
             try {
-                System.loadLibrary("zlib"); //NON-NLS
+                System.load(path + "zlib.dll"); //NON-NLS
                 logger.log(Level.INFO, "ZLIB library loaded loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading ZLIB library, ", e); //NON-NLS
             }
 
             try {
-                System.loadLibrary("libewf"); //NON-NLS
+                System.load(path + "libewf.dll"); //NON-NLS
                 logger.log(Level.INFO, "EWF library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading EWF library, ", e); //NON-NLS
@@ -88,40 +93,40 @@ public class Installer extends ModuleInstall {
 
             /* PostgreSQL */
             try {
-                System.loadLibrary("msvcr120"); //NON-NLS
+                System.load(path + "msvcr120.dll"); //NON-NLS
                 logger.log(Level.INFO, "MSVCR 120 library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading MSVCR120 library, ", e); //NON-NLS
             }
             
             try {
-                System.loadLibrary("libeay32"); //NON-NLS
+                System.load(path + "libeay32.dll"); //NON-NLS
                 logger.log(Level.INFO, "LIBEAY32 library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading LIBEAY32 library, ", e); //NON-NLS
             }
 
             try {
-                System.loadLibrary("ssleay32"); //NON-NLS
+                System.load(path + "ssleay32.dll"); //NON-NLS
                 logger.log(Level.INFO, "SSLEAY32 library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
             }
 
             // This library name is different in 32-bit versus 64-bit
-            String libintlName = "libintl-8";
+            String libintlName = "libintl-8.dll";
             if (PlatformUtil.is64BitJVM() == false) {
-                libintlName = "intl";
+                libintlName = "intl.dll";
             }
             try {
-                System.loadLibrary(libintlName); //NON-NLS
+                System.load(path + libintlName); //NON-NLS
                 logger.log(Level.INFO, libintlName + " library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading " + libintlName + " library, ", e); //NON-NLS
             }
 
             try {
-                System.loadLibrary("libpq"); //NON-NLS
+                System.load(path + "libpq.dll"); //NON-NLS
                 logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
