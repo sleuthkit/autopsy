@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
@@ -630,7 +631,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
-                        dataResult.setNode(new TableFilterNode(kffn, true));
+                        if(originNode instanceof DisplayableItemNode) {
+                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
+                        } else {
+                            dataResult.setNode(new TableFilterNode(kffn, true));
+                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);

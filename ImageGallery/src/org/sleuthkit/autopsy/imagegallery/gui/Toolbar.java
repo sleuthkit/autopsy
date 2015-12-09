@@ -18,19 +18,16 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -43,12 +40,15 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javax.swing.SortOrder;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
-import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
+import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -85,10 +85,10 @@ public class Toolbar extends ToolBar {
     private HBox sortControlGroup;
 
     @FXML
-    private SplitMenuButton catSelectedMenuButton;
+    private SplitMenuButton catGroupMenuButton;
 
     @FXML
-    private SplitMenuButton tagSelectedMenuButton;
+    private SplitMenuButton tagGroupMenuButton;
 
     private static Toolbar instance;
 
@@ -123,7 +123,7 @@ public class Toolbar extends ToolBar {
     @FXML
     void initialize() {
         assert ascRadio != null : "fx:id=\"ascRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert catSelectedMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
+        assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert descRadio != null : "fx:id=\"descRadio\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert onlyAnalyzedCheckBox != null : "fx:id=\"onlyAnalyzedCheckBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -131,47 +131,38 @@ public class Toolbar extends ToolBar {
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sortByBox != null : "fx:id=\"sortByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sortControlGroup != null : "fx:id=\"sortControlGroup\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert tagSelectedMenuButton != null : "fx:id=\"tagSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
+        assert tagGroupMenuButton != null : "fx:id=\"tagSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
 
-        FileIDSelectionModel.getInstance().getSelected().addListener((Observable o) -> {
-            Runnable r = () -> {
-                tagSelectedMenuButton.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
-                catSelectedMenuButton.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
-            };
-            if (Platform.isFxApplicationThread()) {
-                r.run();
-            } else {
-                Platform.runLater(r);
-            }
+        controller.viewState().addListener((observable, oldViewState, newViewState) -> {
+            Platform.runLater(() -> syncGroupControlsEnabledState(newViewState));
         });
+        syncGroupControlsEnabledState(controller.viewState().get());
 
-        tagSelectedMenuButton.setOnAction((ActionEvent t) -> {
+        tagGroupMenuButton.setOnAction(actionEvent -> {
             try {
-                GuiUtils.createSelTagMenuItem(getController().getTagsManager().getFollowUpTagName(), tagSelectedMenuButton, getController()).getOnAction().handle(t);
+                new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller).handle(actionEvent);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex);
             }
         });
 
-        tagSelectedMenuButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
-        tagSelectedMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
-                List<MenuItem> selTagMenues = getController().getTagsManager().getNonCategoryTagNames().stream()
-                        .map(tn -> GuiUtils.createSelTagMenuItem(tn, tagSelectedMenuButton, getController()))
-                        .collect(Collectors.toList());
-                tagSelectedMenuButton.getItems().setAll(selTagMenues);
+        tagGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+        tagGroupMenuButton.showingProperty().addListener(showing -> {
+            if (tagGroupMenuButton.isShowing()) {
+                List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
+                        tn -> GuiUtils.createAutoAssigningMenuItem(tagGroupMenuButton, new TagGroupAction(tn, controller)));
+                tagGroupMenuButton.getItems().setAll(selTagMenues);
             }
         });
 
-        catSelectedMenuButton.setOnAction(GuiUtils.createSelCatMenuItem(Category.FIVE, catSelectedMenuButton, getController()).getOnAction());
-        catSelectedMenuButton.setText(Category.FIVE.getDisplayName());
-        catSelectedMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
-        catSelectedMenuButton.showingProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) -> {
-            if (t1) {
-                List<MenuItem> categoryMenues = Stream.of(Category.values())
-                        .map((cat) -> GuiUtils.createSelCatMenuItem(cat, catSelectedMenuButton, getController()))
-                        .collect(Collectors.toList());
-                catSelectedMenuButton.getItems().setAll(categoryMenues);
+        catGroupMenuButton.setOnAction(new CategorizeGroupAction(Category.FIVE, controller));
+        catGroupMenuButton.setText(Category.FIVE.getDisplayName());
+        catGroupMenuButton.setGraphic(new ImageView(DrawableAttribute.CATEGORY.getIcon()));
+        catGroupMenuButton.showingProperty().addListener(showing -> {
+            if (catGroupMenuButton.isShowing()) {
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                        cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
+                catGroupMenuButton.getItems().setAll(categoryMenues);
             }
         });
 
@@ -179,10 +170,10 @@ public class Toolbar extends ToolBar {
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
         groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
         groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
-        groupByBox.setCellFactory((listView) -> new AttributeListCell());
+        groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
 
-        sortByBox.setCellFactory((listView) -> new SortByListCell());
+        sortByBox.setCellFactory(listView -> new SortByListCell());
         sortByBox.setButtonCell(new SortByListCell());
         sortByBox.setItems(GroupSortBy.getValues());
 
@@ -200,7 +191,15 @@ public class Toolbar extends ToolBar {
 
         orderGroup.selectedToggleProperty().addListener(queryInvalidationListener);
 
+    }
 
+    private void syncGroupControlsEnabledState(GroupViewState newViewState) {
+        boolean noGroupSelected = newViewState == null
+                ? true
+                : newViewState.getGroup() == null;
+
+        tagGroupMenuButton.setDisable(noGroupSelected);
+        catGroupMenuButton.setDisable(noGroupSelected);
     }
 
     public void reset() {
@@ -217,7 +216,4 @@ public class Toolbar extends ToolBar {
         FXMLConstructor.construct(this, "Toolbar.fxml");
     }
 
-    private ImageGalleryController getController() {
-        return controller;
-    }
 }

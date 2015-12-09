@@ -181,7 +181,6 @@ class EvalURLHistoryObj extends EvaluatableObject {
                             }
                             if ((attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE.getTypeID())
                                     && (havePageTitle)) {
-                                //System.out.println("Page title: " + attr.getValueString() + " " + entry.getPageTitle());
                                 foundPageTitleMatch = compareStringObject(entry.getPageTitle(),
                                         attr.getValueString());
                             }

@@ -530,7 +530,7 @@ public abstract class AbstractVisualizationPane<X, Y, NodeType extends Node, Cha
             layoutDateLabels();
 
             Platform.runLater(() -> {
-                setCenter(chart);
+                setCenter(chart); //clear masker pane
                 setCursor(Cursor.DEFAULT);
             });
         }

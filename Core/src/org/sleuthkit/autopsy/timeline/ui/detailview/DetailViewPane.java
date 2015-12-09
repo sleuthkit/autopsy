@@ -31,6 +31,9 @@ import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
@@ -55,6 +58,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -386,7 +390,8 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
     @NbBundle.Messages({
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
-        "DetailViewPane.loggedTask.updateUI=Populating visualization"})
+        "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
     private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
 
         DetailsUpdateTask() {
@@ -404,7 +409,28 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
             List<EventStripe> eventStripes = filteredEvents.getEventStripes();
+            if (eventStripes.size() > 2000) {
+                Task<ButtonType> task = new Task<ButtonType>() {
 
+                    @Override
+                    protected ButtonType call() throws Exception {
+                        ButtonType ContinueButtonType = new ButtonType("Continue", ButtonBar.ButtonData.OK_DONE);
+                        ButtonType back = new ButtonType("Back (Cancel)", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.DetailViewPane_loggedTask_prompt(eventStripes.size()), ContinueButtonType, back);
+                        alert.setHeaderText("");
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.initOwner(getScene().getWindow());
+                        ButtonType orElse = alert.showAndWait().orElse(back);
+                        if (orElse == back) {
+                            DetailsUpdateTask.this.cancel();
+                        }
+                        return orElse;
+                    }
+                };
+                Platform.runLater(task);
+                ButtonType get = task.get();
+            }
             updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
             final int size = eventStripes.size();
             for (int i = 0; i < size; i++) {
@@ -419,6 +445,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
             }
 
             return eventStripes.isEmpty() == false;
+        }
+
+        @Override
+        protected void cancelled() {
+            super.cancelled();
+            controller.retreat();
         }
 
         @Override

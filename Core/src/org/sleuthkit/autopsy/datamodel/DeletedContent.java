@@ -146,6 +146,11 @@ public class DeletedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public String getItemType() {
+            return "DeletedContent";
+        }
     }
 
     public static class DeletedContentsChildren extends ChildFactory<DeletedContent.DeletedContentFilter> {
@@ -273,6 +278,11 @@ public class DeletedContent implements AutopsyVisitableItem {
                 this.setShortDescription(tooltip);
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
                 updateDisplayName();
+            }
+
+            @Override
+            public String getItemType() {
+                return "DeletedContentChildren";
             }
 
             // update the display name when new events are fired

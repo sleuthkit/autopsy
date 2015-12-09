@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
@@ -71,8 +72,8 @@ public class DrawableTile extends DrawableTileBase {
         });
     }
 
-    public DrawableTile(GroupPane gp) {
-        super(gp);
+    public DrawableTile(GroupPane gp, ImageGalleryController controller) {
+        super(gp, controller);
 
         FXMLConstructor.construct(this, "DrawableTile.fxml");
     }
