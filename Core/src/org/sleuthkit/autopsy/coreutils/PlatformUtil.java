@@ -273,7 +273,7 @@ public class PlatformUtil {
         if(arch == null)
             return OS_ARCH_UNKNOWN;
         else
-            return arch.endsWith("64") ? "x64" : "x32"; //NON-NLS
+            return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
     }
 
     /**
