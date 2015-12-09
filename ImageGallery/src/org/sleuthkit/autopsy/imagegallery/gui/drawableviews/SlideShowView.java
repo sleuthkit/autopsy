@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -149,10 +150,8 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
-
-        getFileID().ifPresent((Long id) -> {
-            getGroupPane().makeSelection(false, id);
-        });
+        getFileID().ifPresent(id -> getGroupPane().makeSelection(false, id));
+        getFile().ifPresent(getGroupPane()::syncCatToggle);
     }
 
     @Override
@@ -219,8 +218,8 @@ public class SlideShowView extends DrawableTileBase {
             final int currentIndex = getGroupPane().getGroup().fileIds().indexOf(fileID);
             return (currentIndex + direction + groupSize) % groupSize;
         }).orElse(0);
-        setFile(getGroupPane().getGroup().fileIds().get(nextIndex)
-        );
+        setFile(getGroupPane().getGroup().fileIds().get(nextIndex));
+
     }
 
     /**
@@ -240,9 +239,11 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public Category updateCategory() {
-        if (getFile().isPresent()) {
-            final Category category = super.updateCategory();
-            return category;
+        Optional<DrawableFile<?>> file = getFile();
+        if (file.isPresent()) {
+            Category updateCategory = super.updateCategory();
+            Platform.runLater(() -> getGroupPane().syncCatToggle(file.get()));
+            return updateCategory;
         } else {
             return Category.ZERO;
         }

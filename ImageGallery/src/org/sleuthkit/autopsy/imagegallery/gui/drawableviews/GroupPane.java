@@ -30,7 +30,6 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -283,17 +282,13 @@ public class GroupPane extends BorderPane {
             slideShowPane.setFile(slideShowFileID);
         }
 
-        slideShowPane.getFile().ifPresent(new Consumer<DrawableFile<?>>() {
-            @Override
-            public void accept(DrawableFile<?> t) {
-                ToggleButton toggleForCategory = getToggleForCategory(t.getCategory());
-                toggleForCategory.setSelected(true);
-            }
-        });
-
         setCenter(slideShowPane);
         slideShowPane.requestFocus();
 
+    }
+
+    void syncCatToggle(DrawableFile<?> file) {
+        getToggleForCategory(file.getCategory()).setSelected(true);
     }
 
     public void activateTileViewer() {
@@ -364,13 +359,15 @@ public class GroupPane extends BorderPane {
         }
 
         @Override
-        public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-            slideShowPane.getFileID().ifPresent(fileID -> {
-                if (t1) {
-                    FileIDSelectionModel.getInstance().clearAndSelect(fileID);
-                    new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
-                }
-            });
+        public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
+            if (slideShowPane != null) {
+                slideShowPane.getFileID().ifPresent(fileID -> {
+                    if (newValue) {
+                        FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                        new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
+                    }
+                });
+            }
         }
     }
 
@@ -871,7 +868,6 @@ public class GroupPane extends BorderPane {
                     }
                 }
             }
-
         }
 
         private void handleArrows(KeyEvent t) {
