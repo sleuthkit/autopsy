@@ -54,6 +54,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -473,6 +475,32 @@ public final class DrawableDB {
             return true;
         }
         return con.isClosed();
+    }
+
+    /**
+     * get the names of the hashsets that the given fileID belongs to
+     *
+     * @param fileID the fileID to get all the Hashset names for
+     *
+     * @return a set of hash set names, each of which the given file belongs to
+     *
+     * @throws TskCoreException
+     *
+     *
+     * //TODO: this is mostly a cut and paste from *
+     * AbstractContent.getHashSetNames, is there away to dedupe?
+     */
+    Set<String> getHashSetsForFile(long fileID) throws TskCoreException {
+        Set<String> hashNames = new HashSet<>();
+        ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+
+        for (BlackboardArtifact a : artifacts) {
+            List<BlackboardAttribute> attributes = a.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for (BlackboardAttribute attr : attributes) {
+                hashNames.add(attr.getValueString());
+            }
+        }
+        return Collections.unmodifiableSet(hashNames);
     }
 
     /**
