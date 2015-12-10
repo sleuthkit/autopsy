@@ -2,11 +2,24 @@
 <!-- 
 This file is an example configuration file for regression.py. 
 
+List of tags:
+image: An image to be ingested
+build: the path to the build.xml file
+indir: the path to input directory
+outdir: the path to output directory
+global_csv: path to global csv file
+golddir: the path to gold directory
+jenkins: can be set to True or False. If enabled, check for diffdir
+diffdir: (only if jenkins tag is true) the diff directory
+timing: can be set to True or False. If enabled, record the timing.
+
+NOTE: Make sure to use windows style for paths!
+
 None of these tags are mandatory, and if nothing is provided the file will be
 looked over and ignored.
 
-If the -i tag is not set as an argument, images from the input directory will
-be tested after the images provided in this file are.
+If the -i flag is not set as an argument to regression.py, images from 
+the input directory willbe tested after the images provided in this file are.
 By default the input directory will be ./input, however if the indir tag
 is set, that value will become the new input directory. This directory must
 have the required hash/keyword search files, and if -i is not set, this
@@ -23,6 +36,7 @@ All paths given to the script have to be full paths from the root directoy.
 NOTE: Some image formats can only be parsed by Autopsy using a Windows path
 (i.e. X:\this\is\a\windows\path /this/is/not/a/windows/path)
 It is up to the user to distinguish between the paths when adding to this file.
+
 -->
 
 <Properties>

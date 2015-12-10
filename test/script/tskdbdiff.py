@@ -44,8 +44,8 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = True
-        self._generate_gold_bb_dump = True
+        self._generate_gold_dump = False
+        self._generate_gold_bb_dump = False
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
