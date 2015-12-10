@@ -43,7 +43,7 @@
     </target>
     
     <target name="autoAIPath" description="Attempt to find the AI path based on standard installation location">
-        <property name="AI.path" value="C:\Program Files (x86)\Caphyon\Advanced Installer 10.3\bin\x86\AdvancedInstaller.com" />
+        <property name="AI.path" value="C:\Program Files (x86)\Caphyon\Advanced Installer 12.4.2\bin\x86\advinst.exe" />
         <available file="${AI.path}"
                    property="ai-exe-path"
                    value="${AI.path}"/>
