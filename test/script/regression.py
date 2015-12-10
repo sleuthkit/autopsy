@@ -103,10 +103,12 @@ def main():
     parse_result = args.parse()
     # The arguments were given wrong:
     if not parse_result:
-        return
+        Errors.print_error("The arguments were given wrong")
+        exit(1)
     test_config = TestConfiguration(args)
 
     TestRunner.run_tests(test_config)
+    exit(0)
 
 
 class TestRunner(object):
@@ -125,6 +127,7 @@ class TestRunner(object):
         Reports.html_add_images(test_config.html_log, test_config.images)
 
         # Test each image
+        gold_exists = False
         logres =[]
         for test_data in test_data_list:
             Errors.clear_print_logs()
@@ -133,6 +136,11 @@ class TestRunner(object):
                 Errors.print_error(msg)
                 Errors.print_error(test_data.gold_archive)
                 continue
+                
+            # At least one test has gold
+            gold_exists = True
+
+            
 
             # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
@@ -152,13 +160,15 @@ class TestRunner(object):
             time.sleep(10)
             TestRunner._cleanup(test_data)
 
-        if all([ test_data.overall_passed for test_data in test_data_list ]):
-            pass
-        else:
+        if not gold_exists:
+            Errors.print_error("No image had any gold; Regression did not run")
+            exit(1)
+
+        if not all([ test_data.overall_passed for test_data in test_data_list ]):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
-            sys.exit(1)
+            sys.exit(0) # Even if we have some errors, the script exits successfully
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
@@ -179,13 +189,17 @@ class TestRunner(object):
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
+        # exit if .db was not created
+        if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
+            Errors.print_error("Autopsy did not run properly; No .db file was created")
+            sys.exit(1)
+
         try:
             # Dump the database before we diff or use it for rebuild
             TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
             test_data.get_sorted_data_path(DBType.OUTPUT))
         except sqlite3.OperationalError as e:
-            print("Ingest did not run properly.",
-            "Make sure no other instances of Autopsy are open and try again.")
+            Errors.print_error("Ingest did not run properly.\nMake sure no other instances of Autopsy are open and try again.")
             sys.exit(1)
 
         # merges logs into a single log for later diff / rebuild
@@ -396,8 +410,7 @@ class TestRunner(object):
         test_data.ant.append("-Dkeyword_path=" + test_config.keyword_path)
         test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_data.ant.append("-Dgold_path=" + test_config.gold)
-        test_data.ant.append("-Dout_path=" +
-        make_local_path(test_data.output_path))
+        test_data.ant.append("-Dout_path=" + make_local_path(test_data.output_path))
         if test_config.jenkins:
             test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
@@ -657,6 +670,7 @@ class TestConfiguration(object):
         """
         self.args = args
         # Paths:
+        self.output_parent_dir = make_path("..", "output", "results")
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")
@@ -703,17 +717,19 @@ class TestConfiguration(object):
             counts = {}
             if parsed_config.getElementsByTagName("indir"):
                 self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("outdir"):
+                self.output_parent_dir = parsed_config.getElementsByTagName("outdir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("global_csv"):
                 self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("jenkins"):
-                self.jenkins = True
-                if parsed_config.getElementsByTagName("diffdir"):
+                self.jenkins = parsed_config.getElementsByTagName("jenkins")[0].getAttribute("value").encode().decode("utf_8")
+                if self.jenkins and parsed_config.getElementsByTagName("diffdir"):
                     self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
-            else:
-                self.jenkins = False
+                else:
+                    self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
@@ -727,9 +743,9 @@ class TestConfiguration(object):
 
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
-        if(not dir_exists(make_path("..", "output", "results"))):
-            os.makedirs(make_path("..", "output", "results",))
-        self.output_dir = make_path("..", "output", "results", time.strftime("%Y.%m.%d-%H.%M.%S"))
+        if not dir_exists(self.output_parent_dir):
+            os.makedirs(self.output_parent_dir)
+        self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
@@ -757,6 +773,9 @@ class TestConfiguration(object):
         image_count = len(self.images)
 
         # Sanity check to see if there are obvious gold images that we are not testing
+        if not dir_exists(self.gold):
+            Errors.print_error("Gold folder does not exist")
+            sys.exit(1)
         gold_count = 0
         for file in os.listdir(self.gold):
             if not(file == 'tmp'):
@@ -885,7 +904,7 @@ class TestResultsDiffer(object):
             (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
                                       'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
                                       '\|Examiner:', gold_report_path, output_report_path]))
-            print_report("", "REPORT COMPARISON", "The test reports matched the gold reports")
+            print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
             return True
         except subprocess.CalledProcessError as e:
             if e.returncode == 1:
@@ -1709,7 +1728,7 @@ class Args(object):
             elif arg == "-o" or arg == "--output":
                 try:
                     arg = sys.argv.pop(0)
-                    if not os.path.exists(arg):
+                    if not dir_exists(arg):
                         print("Invalid output folder given.\n")
                         return False
                     nxtproc.append(arg)
@@ -1995,3 +2014,4 @@ if __name__ == "__main__":
         main()
     else:
         print("We only support Windows and Cygwin at this time.")
+        sys.exit(1)
