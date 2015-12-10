@@ -774,7 +774,7 @@ class TestConfiguration(object):
 
         # Sanity check to see if there are obvious gold images that we are not testing
         if not dir_exists(self.gold):
-            Errors.print_error("Gold folder does not exists")
+            Errors.print_error("Gold folder does not exist")
             sys.exit(1)
         gold_count = 0
         for file in os.listdir(self.gold):
