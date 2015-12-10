@@ -725,7 +725,7 @@ class TestConfiguration(object):
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("jenkins"):
-                self.jenkins = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
+                self.jenkins = parsed_config.getElementsByTagName("jenkins")[0].getAttribute("value").encode().decode("utf_8")
                 if self.jenkins and parsed_config.getElementsByTagName("diffdir"):
                     self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
                 else:

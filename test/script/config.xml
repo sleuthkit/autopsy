@@ -19,7 +19,7 @@ None of these tags are mandatory, and if nothing is provided the file will be
 looked over and ignored.
 
 If the -i flag is not set as an argument to regression.py, images from 
-the input directory willbe tested after the images provided in this file are.
+the input directory will be tested after the images provided in this file are.
 By default the input directory will be ./input, however if the indir tag
 is set, that value will become the new input directory. This directory must
 have the required hash/keyword search files, and if -i is not set, this
