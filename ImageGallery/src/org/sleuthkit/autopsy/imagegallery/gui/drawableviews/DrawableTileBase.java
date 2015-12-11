@@ -20,10 +20,8 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
-import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -49,9 +47,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -205,25 +203,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final MenuItem extractMenuItem = new MenuItem("Extract File(s)");
                 extractMenuItem.setOnAction((ActionEvent t) -> {
                     SwingUtilities.invokeLater(() -> {
-                        ImageGalleryTopComponent etc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
-                        try {
-                            FileNode[] toArray = FileIDSelectionModel.getInstance().getSelected().stream()
-                                    .map((Long t1) -> {
-                                        try {
-                                            return new FileNode(controller.getSleuthKitCase().getAbstractFileById(t1));
-                                        } catch (TskCoreException ex) {
-                                            return null;
-                                        }
-                                    }).filter(Objects::nonNull)
-                                    .toArray(FileNode[]::new);
-
-                            FileNode fileNode = new FileNode(file);
-                            etc.getExplorerManager().setRootContext(fileNode);
-                            etc.getExplorerManager().setSelectedNodes(toArray);
-                            ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
-                        } catch (PropertyVetoException ex) {
-                            Exceptions.printStackTrace(ex);
-                        }
+                        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                        ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                     });
                 });
                 menuItems.add(extractMenuItem);

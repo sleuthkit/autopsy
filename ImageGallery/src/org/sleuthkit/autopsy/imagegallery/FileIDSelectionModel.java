@@ -18,15 +18,28 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import com.google.common.collect.ImmutableSet;
+import java.beans.PropertyVetoException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javax.swing.SwingUtilities;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.datamodel.TskCoreException;
 
-/** Singleton that manages set of fileIds, as well as last selected fileID.
+/**
+ * Singleton that manages set of fileIds, as well as last selected fileID.
  *
  * NOTE: When we had synchronization on selected and lastSelectedProp we got
  * deadlocks with the tiles during selection
@@ -53,6 +66,33 @@ public class FileIDSelectionModel {
 
     public FileIDSelectionModel() {
         super();
+        selected.addListener((Observable observable) -> {
+
+            Set<Long> fileIDs = ImmutableSet.copyOf(selected);
+            SwingUtilities.invokeLater(() -> {
+
+                ArrayList<FileNode> fileNodes = new ArrayList<>();
+                for (Long id : fileIDs) {
+                    try {
+                        fileNodes.add(new FileNode(ImageGalleryController.getDefault().getSleuthKitCase().getAbstractFileById(id)));
+                    } catch (TskCoreException ex) {
+                    }
+                }
+                FileNode[] fileNodeArray = fileNodes.stream().toArray(FileNode[]::new);
+
+                Children.Array children = new Children.Array();
+                children.add(fileNodeArray);
+
+                ImageGalleryTopComponent etc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+
+                etc.getExplorerManager().setRootContext(new AbstractNode(children));
+                try {
+                    etc.getExplorerManager().setSelectedNodes(fileNodeArray);
+                } catch (PropertyVetoException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            });
+        });
     }
 
     public void toggleSelection(Long id) {
