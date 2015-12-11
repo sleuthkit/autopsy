@@ -22,34 +22,46 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.event.IIOReadProgressListener;
+import javax.imageio.stream.ImageInputStream;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import org.openide.util.NbBundle;
+import org.controlsfx.control.MaskerPane;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
@@ -64,14 +76,16 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     private JFXPanel fxPanel;
     private ImageView fxImageView;
     private BorderPane borderpane;
-
+    private final ProgressBar progressBar = new ProgressBar();
+    private final MaskerPane maskerPane = new MaskerPane();
     private final Label errorLabel = new Label("Could not load file into media view.");
-    private final Label tooLargeLabel = new Label("Could not load file into media view (too large).");
+    private final Button externalViewerButton = new Button("Open in External Viewer");
+    private final VBox errorNode = new VBox(10, errorLabel, externalViewerButton);
 
     static {
         ImageIO.scanForPlugins();
-
     }
+
     /**
      * mime types we should be able to display. if the mimetype is unknown we
      * will fall back on extension and jpg/png header
@@ -85,6 +99,8 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             .map("."::concat)
             .collect(Collectors.toList());
 
+    private LoadImageTask readImageTask;
+
     /**
      * Creates new form MediaViewImagePanel
      */
@@ -93,6 +109,8 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
         if (fxInited) {
             Platform.runLater(() -> {
+
+                errorNode.setAlignment(Pos.CENTER);
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
@@ -137,63 +155,23 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
      * @param file image file to show
      * @param dims dimension of the parent window (ignored)
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showImageFx(final AbstractFile file, final Dimension dims) {
         if (!fxInited) {
             return;
         }
 
-        //hide the panel during loading/transformations
-        //TODO: repalce this with a progress indicator
-        fxPanel.setVisible(false);
-
-        // load the image
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                if (!Case.isCaseOpen()) {
-                    /*
-                     * handle in-between condition when case is being closed and
-                     * an image was previously selected
-                     */
-                    return;
-                }
-                try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-
-                    BufferedImage bufferedImage = ImageIO.read(inputStream);
-                    if (bufferedImage == null) {
-                        LOGGER.log(Level.WARNING, "Image reader not found for file: {0}", file.getName()); //NON-NLS
-                        borderpane.setCenter(errorLabel);
-                    } else {
-                        Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
-                        if (fxImage.isError()) {
-                            LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), fxImage.getException()); //NON-NLS
-                            borderpane.setCenter(errorLabel);
-                            return;
-                        } else {
-                            fxImageView.setImage(fxImage);
-                            borderpane.setCenter(fxImageView);
-                        }
-                    }
-                } catch (EOFException ex) {
-                    LOGGER.log(Level.WARNING, "Could not load image file into media view (EOF): {0}", file.getName()); //NON-NLS
-                    borderpane.setCenter(errorLabel);
-                } catch (IllegalArgumentException | IOException ex) {
-                    LOGGER.log(Level.WARNING, "Could not load image file into media view: " + file.getName(), ex); //NON-NLS
-                    borderpane.setCenter(errorLabel);
-                } catch (OutOfMemoryError ex) {  // this might be redundant since we are not attempting to rescale the image anymore
-                    LOGGER.log(Level.WARNING, "Could not load image file into media view (too large): " + file.getName(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.warn(
-                            NbBundle.getMessage(this.getClass(), "MediaViewImagePanel.imgFileTooLarge.msg", file.getName()),
-                            ex.getMessage());
-                    borderpane.setCenter(tooLargeLabel);
-                }
-
-                SwingUtilities.invokeLater(() -> {
-                    //show the panel after fully loaded
-                    fxPanel.setVisible(true);
-                });
+        Platform.runLater(() -> {
+            if (readImageTask != null) {
+                readImageTask.cancel();
             }
+            readImageTask = new LoadImageTask(file);
+
+            maskerPane.setProgressNode(progressBar);
+            progressBar.progressProperty().bind(readImageTask.progressProperty());
+            maskerPane.textProperty().bind(readImageTask.messageProperty());
+            borderpane.setCenter(maskerPane);
+            borderpane.setCursor(Cursor.WAIT);
+            new Thread(readImageTask).start();
         });
     }
 
@@ -243,4 +221,157 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+    private class LoadImageTask extends Task<Image> implements IIOReadProgressListener {
+
+        private final AbstractFile file;
+        volatile private BufferedImage bufferedImage = null;
+
+        LoadImageTask(AbstractFile file) {
+            this.file = file;
+        }
+
+        @Override
+        protected Image call() throws Exception {
+            updateMessage("Reading image: " + file.getName());
+            try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
+                ImageInputStream input = ImageIO.createImageInputStream(inputStream); // TODO: null check
+                if (input == null) {
+                    throw new IIOException("Could not create ImageInputStream.");
+                }
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(input); // TODO: hasNext check
+
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.addIIOReadProgressListener(this);
+                    reader.setInput(input);
+                    /*
+                     * This is the important part, get or create a ReadParam,
+                     * create a destination image to hold the decoded result,
+                     * then pass that image with the param.
+                     */
+                    ImageReadParam param = reader.getDefaultReadParam();
+
+                    bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
+                    param.setDestination(bufferedImage);
+                    try {
+                        reader.read(0, param);
+                    } catch (IOException iOException) {
+                        logError(iOException);
+                    }
+                    reader.removeIIOReadProgressListener(this);
+                    return SwingFXUtils.toFXImage(bufferedImage, null);
+                } else {
+                    throw new IIOException("No ImageReader found for file.");
+                }
+            }
+        }
+
+        private void logError(Throwable e) {
+            String message = e != null ? "  It may be unsupported or corrupt: " + e.getLocalizedMessage() : "";
+            // Ignore this exception or display a warning or similar, for exceptions happening during decoding
+            try {
+                LOGGER.log(Level.WARNING, "There was a problem loading " + file.getUniquePath() + "." + message, e);
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.WARNING, "There was a problem loading " + file.getName() + "." + message, e);
+                LOGGER.log(Level.SEVERE, "Failes to get unique path for file", tskCoreException);
+            }
+        }
+
+        @Override
+        protected void failed() {
+            super.failed();
+            if (!Case.isCaseOpen()) {
+                /*
+                 * handle in-between condition when case is being closed and an
+                 * image was previously selected
+                 */
+                reset();
+                return;
+            }
+
+            handleError(getException());
+
+            borderpane.setCursor(Cursor.DEFAULT);
+        }
+
+        private void handleError(Throwable e) {
+            logError(e);
+            externalViewerButton.setOnAction(actionEvent ->
+                    new ExternalViewerAction("", new FileNode(file)).actionPerformed(new java.awt.event.ActionEvent(this, java.awt.event.ActionEvent.ACTION_PERFORMED, ""))
+            );
+            borderpane.setCenter(errorNode);
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            if (!Case.isCaseOpen()) {
+                /*
+                 * handle in-between condition when case is being closed and an
+                 * image was previously selected
+                 */
+                reset();
+                return;
+            }
+
+            try {
+                Image fxImage = get();
+                if (fxImage == null) {
+                    handleError(null);
+                } else {
+                    //we have non-null image show it
+
+                    fxImageView.setImage(fxImage);
+                    borderpane.setCenter(fxImageView);
+                    if (fxImage.isError()) {
+                        //if there was somekind of error, log it
+                        logError(fxImage.getException());
+                    }
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                handleError(ex.getCause());
+            }
+            borderpane.setCursor(Cursor.DEFAULT);
+        }
+
+        @Override
+        public void imageProgress(ImageReader source, float percentageDone) {
+            //update this task with the progress reported by ImageReader.read
+            updateProgress(percentageDone, 100);
+        }
+
+        @Override
+        public void sequenceStarted(ImageReader source, int minIndex) {
+        }
+
+        @Override
+        public void sequenceComplete(ImageReader source) {
+        }
+
+        @Override
+        public void imageStarted(ImageReader source, int imageIndex) {
+        }
+
+        @Override
+        public void imageComplete(ImageReader source) {
+        }
+
+        @Override
+        public void thumbnailStarted(ImageReader source, int imageIndex, int thumbnailIndex) {
+        }
+
+        @Override
+        public void thumbnailProgress(ImageReader source, float percentageDone) {
+        }
+
+        @Override
+        public void thumbnailComplete(ImageReader source) {
+        }
+
+        @Override
+        public void readAborted(ImageReader source) {
+        }
+    }
+
 }
