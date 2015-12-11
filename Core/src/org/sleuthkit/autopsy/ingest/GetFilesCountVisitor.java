@@ -59,7 +59,6 @@ final class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
         //queryB.append(")");
         try {
             final String query = queryB.toString();
-            logger.log(Level.INFO, "Executing count files query: {0}", query); //NON-NLS
             return sc.countFilesWhere(query);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get count of all files in FileSystem", ex); //NON-NLS

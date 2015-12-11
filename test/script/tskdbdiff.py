@@ -44,8 +44,6 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = True
-        self._generate_gold_bb_dump = True
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
@@ -60,12 +58,6 @@ class TskDbDiff(object):
         """
 
         self._init_diff()
-
-        # generate the gold database dumps if necessary
-        if self._generate_gold_dump:
-            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump)
-        if self._generate_gold_bb_dump:
-            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump)
 
         # generate the output database dumps (both DB and BB)
         TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump)
@@ -221,6 +213,8 @@ class TskDbDiff(object):
 
                         try:
                             attr_value_as_string = str(attr[attr_value_index])
+                            if attr["display_name"] == "Associated Artifact":
+                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)
                             #if((type(attr_value_as_string) != 'unicode') or (type(attr_value_as_string) != 'str')):
                             #    attr_value_as_string = str(attr_value_as_string)
                             patrn = re.compile("[\n\0\a\b\r\f]")
@@ -274,7 +268,6 @@ class TskDbDiff(object):
         # Make a copy that we can modify
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
-        #print (backup_db_file)
         # We sometimes get situations with messed up permissions
         os.chmod (backup_db_file, 0o777)
 
@@ -333,6 +326,7 @@ def normalize_db_entry(line, table):
     path_index = line.find('INSERT INTO "tsk_files_path"')
     object_index = line.find('INSERT INTO "tsk_objects"')
     report_index = line.find('INSERT INTO "reports"')
+    layout_index = line.find('INSERT INTO "tsk_file_layout"')
     parens = line[line.find('(') + 1 : line.find(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -348,7 +342,13 @@ def normalize_db_entry(line, table):
         path = table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
         return newLine
-    #remove object ID
+    # remove object ID
+    elif (layout_index != -1):
+        obj_id = fields_list[0]
+        path= table[int(obj_id)]
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    # remove object ID
     elif (object_index != -1):
         obj_id = fields_list[0]
         parent_id = fields_list[1]
@@ -370,6 +370,25 @@ def normalize_db_entry(line, table):
     else:
         return line
 
+def getAssociatedArtifactType(db_file, artifact_id):
+    # Make a copy that we can modify
+    backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
+    shutil.copy(db_file, backup_db_file)
+    # We sometimes get situations with messed up permissions
+    os.chmod (backup_db_file, 0o777)
+
+    conn = sqlite3.connect(backup_db_file)
+    cur = conn.cursor()
+    #artifact_cursor.execute("SELECT display_name FROM blackboard_artifact_types WHERE artifact_id=?",[artifact_id])
+    cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
+    info = cur.fetchone()
+    
+    conn.close()
+    # cleanup the backup
+    os.remove(backup_db_file)
+
+    return "File path: " + info[0] + " Artifact Type: " + info[1]
+
 def build_id_table(artifact_cursor):
     """Build the map of object ids to file paths.
 
@@ -389,7 +408,7 @@ def main():
         gold_db = sys.argv.pop(0)
     except:
         print("usage: tskdbdiff [OUPUT DB PATH] [GOLD DB PATH]")
-        sys.exit()
+        sys.exit(1)
 
     db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
     dump_passed, bb_dump_passed = db_diff.run_diff()
@@ -401,7 +420,7 @@ def main():
     if not bb_dump_passed:
         print("Blackboard database comparison failed.")
 
-    return 0
+    sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -409,5 +428,5 @@ if __name__ == "__main__":
         print("Python 3 required")
         sys.exit(1)
 
-    sys.exit(main())
+    main()
 

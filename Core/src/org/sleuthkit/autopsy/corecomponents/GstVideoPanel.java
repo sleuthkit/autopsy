@@ -349,7 +349,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             }
             playbin.getState();
 
-            //System.out.println("Seeking to " + timeStamp + "milliseconds.");
             if (!playbin.seek(timeStamp, unit)) {
                 logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase()); //NON-NLS
             }

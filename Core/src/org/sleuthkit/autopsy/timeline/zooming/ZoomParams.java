@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.Objects;
 import org.joda.time.Interval;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.filters.RootFilter;
 
 /**
@@ -131,7 +130,7 @@ public class ZoomParams {
 
     @Override
     public String toString() {
-        return NbBundle.getMessage(this.getClass(), "ZoomParams.toString", getTimeRange().toString());
+        return "ZoomParams{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}';
     }
 
 }

@@ -42,10 +42,10 @@ import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
 import org.sleuthkit.autopsy.timeline.filters.TextFilter;
 import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.filters.UnionFilter;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.FULL;
 import static org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD.MEDIUM;
+import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.DAYS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.HOURS;
 import static org.sleuthkit.autopsy.timeline.zooming.TimeUnits.MINUTES;
@@ -260,14 +260,15 @@ class SQLHelper {
      * requested period size. That is, with all info more granular that that
      * requested dropped (replaced with zeros).
      *
-     * @param info the {@link RangeDivisionInfo} with the requested period size
+     * @param timeUnit the {@link TimeUnits} instance describing what
+     *                 granularity to build a strftime string for
      *
      * @return a String formatted according to the sqlite strftime spec
      *
      * @see https://www.sqlite.org/lang_datefunc.html
      */
-    static String getStrfTimeFormat(@Nonnull RangeDivisionInfo info) {
-        switch (info.getPeriodSize()) {
+    static String getStrfTimeFormat(@Nonnull TimeUnits timeUnit) {
+        switch (timeUnit) {
             case YEARS:
                 return "%Y-01-01T00:00:00"; // NON-NLS
             case MONTHS:

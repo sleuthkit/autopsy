@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,10 +56,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -455,88 +456,8 @@ public final class ImageGalleryController {
         LOGGER.info("setting up ImageGallery listeners");
         //TODO can we do anything usefull in an InjestJobEventListener?
         //IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {});
-        IngestManager.getInstance().addIngestModuleEventListener((PropertyChangeEvent evt) -> {
-            switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
-                case CONTENT_CHANGED:
-                //TODO: do we need to do anything here?  -jm
-                case DATA_ADDED:
-                    /*
-                     * we could listen to DATA events and progressivly update
-                     * files, and get data from DataSource ingest modules, but
-                     * given that most modules don't post new artifacts in the
-                     * events and we would have to query for them, without
-                     * knowing which are the new ones, we just ignore these
-                     * events for now. The relevant data should all be captured
-                     * by file done event, anyways -jm
-                     */
-                    break;
-                case FILE_DONE:
-                    /**
-                     * getOldValue has fileID getNewValue has
-                     * {@link Abstractfile}
-                     */
-
-                    AbstractFile file = (AbstractFile) evt.getNewValue();
-
-                    if (isListeningEnabled()) {
-                        if (file.isFile()) {
-                            try {
-                                if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
-                                    //this file should be included and we don't already know about it from hash sets (NSRL)
-                                    queueDBWorkerTask(new UpdateFileTask(file, db));
-                                } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                                    //doing this check results in fewer tasks queued up, and faster completion of db update
-                                    //this file would have gotten scooped up in initial grab, but actually we don't need it
-                                    queueDBWorkerTask(new RemoveFileTask(file, db));
-                                }
-                            } catch (TskCoreException ex) {
-                                //TODO: What to do here?
-                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex);
-                                throw new RuntimeException(ex);
-                            }
-                        }
-                    } else {   //TODO: keep track of what we missed for later
-                        setStale(true);
-                    }
-                    break;
-            }
-        });
-        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            switch (Case.Events.valueOf(evt.getPropertyName())) {
-                case CURRENT_CASE:
-                    Case newCase = (Case) evt.getNewValue();
-                    if (newCase != null) { // case has been opened
-                        setCase(newCase);    //connect db, groupmanager, start worker thread
-                    } else { // case is closing
-                        //close window, reset everything
-                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
-                        reset();
-                    }
-                    break;
-                case DATA_SOURCE_ADDED:
-                    //copy all file data to drawable databse
-                    Content newDataSource = (Content) evt.getNewValue();
-                    if (isListeningEnabled()) {
-                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource));
-                    } else {//TODO: keep track of what we missed for later
-                        setStale(true);
-                    }
-                    break;
-                case CONTENT_TAG_ADDED:
-                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
-                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                    }
-                    break;
-                case CONTENT_TAG_DELETED:
-                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                    }
-                    break;
-
-            }
-        });
+        IngestManager.getInstance().addIngestModuleEventListener(new IngestModuleEventListener());
+        Case.addPropertyChangeListener(new CaseEventListener());
     }
 
     public HashSetManager getHashSetManager() {
@@ -612,7 +533,7 @@ public final class ImageGalleryController {
                     });
 
                 } catch (InterruptedException ex) {
-                    Exceptions.printStackTrace(ex);
+                    LOGGER.log(Level.SEVERE, "Failed to run DB worker thread", ex);
                 }
             }
         }
@@ -975,6 +896,116 @@ public final class ImageGalleryController {
             }
 
             progressHandle.finish();
+        }
+    }
+
+    private class IngestModuleEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (RuntimeProperties.coreComponentsAreActive() == false) {
+                /*
+                 * Running in "headless" mode, no need to process any events.
+                 * This cannot be done earlier because the switch to core
+                 * components inactive may not have been made at start up.
+                 */
+                IngestManager.getInstance().removeIngestModuleEventListener(this);
+                return;
+            }
+            switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
+                case CONTENT_CHANGED:
+                //TODO: do we need to do anything here?  -jm
+                case DATA_ADDED:
+                    /*
+                     * we could listen to DATA events and progressivly update
+                     * files, and get data from DataSource ingest modules, but
+                     * given that most modules don't post new artifacts in the
+                     * events and we would have to query for them, without
+                     * knowing which are the new ones, we just ignore these
+                     * events for now. The relevant data should all be captured
+                     * by file done event, anyways -jm
+                     */
+                    break;
+                case FILE_DONE:
+                    /**
+                     * getOldValue has fileID getNewValue has
+                     * {@link Abstractfile}
+                     */
+
+                    AbstractFile file = (AbstractFile) evt.getNewValue();
+
+                    if (isListeningEnabled()) {
+                        if (file.isFile()) {
+                            try {
+                                if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
+                                    //this file should be included and we don't already know about it from hash sets (NSRL)
+                                    queueDBWorkerTask(new UpdateFileTask(file, db));
+                                } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                                    //doing this check results in fewer tasks queued up, and faster completion of db update
+                                    //this file would have gotten scooped up in initial grab, but actually we don't need it
+                                    queueDBWorkerTask(new RemoveFileTask(file, db));
+                                }
+                            } catch (TskCoreException ex) {
+                                //TODO: What to do here?
+                                LOGGER.log(Level.WARNING, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex);
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    } else {   //TODO: keep track of what we missed for later
+                        setStale(true);
+                    }
+                    break;
+            }
+        }
+    }
+
+    private class CaseEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (RuntimeProperties.coreComponentsAreActive() == false) {
+                /*
+                 * Running in "headless" mode, no need to process any events.
+                 * This cannot be done earlier because the switch to core
+                 * components inactive may not have been made at start up.
+                 */
+                Case.removePropertyChangeListener(this);
+                return;
+            }
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    Case newCase = (Case) evt.getNewValue();
+                    if (newCase != null) { // case has been opened
+                        setCase(newCase);    //connect db, groupmanager, start worker thread
+                    } else { // case is closing
+                        //close window, reset everything
+                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
+                        reset();
+                    }
+                    break;
+                case DATA_SOURCE_ADDED:
+                    //copy all file data to drawable databse
+                    Content newDataSource = (Content) evt.getNewValue();
+                    if (isListeningEnabled()) {
+                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource));
+                    } else {//TODO: keep track of what we missed for later
+                        setStale(true);
+                    }
+                    break;
+                case CONTENT_TAG_ADDED:
+                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+                    if (getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
+                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                    }
+                    break;
+                case CONTENT_TAG_DELETED:
+                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                    if (getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                    }
+                    break;
+
+            }
         }
     }
 }

@@ -107,11 +107,11 @@ class AddLocalFilesTask implements Runnable {
     private void postProcess() {
 
         if (cancelRequested() || hasCritError) {
-            logger.log(Level.WARNING, "Handling errors or interruption that occured in logical files process");  //NON-NLS
+            logger.log(Level.WARNING, "Handling errors or interruption that occurred in logical files process");  //NON-NLS
         }
         if (!errorList.isEmpty()) {
             //data error (non-critical)
-            logger.log(Level.WARNING, "Handling non-critical errors that occured in logical files process"); //NON-NLS
+            logger.log(Level.WARNING, "Handling non-critical errors that occurred in logical files process"); //NON-NLS
         }
 
         if (!(cancelRequested() || hasCritError)) {

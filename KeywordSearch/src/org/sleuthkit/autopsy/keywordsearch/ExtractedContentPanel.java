@@ -130,13 +130,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    TextMarkup source = (TextMarkup) e.getItem();
+                    IndexedText source = (IndexedText) e.getItem();
                     setMarkup(source);
                 }
             }
         });
 
-        setSources(new ArrayList<TextMarkup>());
+        setSources(new ArrayList<IndexedText>());
 
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
@@ -204,7 +204,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             extractedTextPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(extractedTextPane);
 
-            sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<TextMarkup>());
+            sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<IndexedText>());
 
             hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
             hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
@@ -357,11 +357,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JComboBox<TextMarkup> sourceComboBox;
+    private javax.swing.JComboBox<IndexedText> sourceComboBox;
     // End of variables declaration//GEN-END:variables
 
     void refreshCurrentMarkup() {
-        TextMarkup ms = (TextMarkup) sourceComboBox.getSelectedItem();
+        IndexedText ms = (IndexedText) sourceComboBox.getSelectedItem();
         setMarkup(ms);
     }
 
@@ -371,11 +371,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param sources
      */
-    void setSources(List<TextMarkup> sources) {
+    void setSources(List<IndexedText> sources) {
         sourceComboBox.removeAllItems();
         setPanelText(null, false);
 
-        for (TextMarkup ms : sources) {
+        for (IndexedText ms : sources) {
             sourceComboBox.addItem(ms);
         }
 
@@ -390,8 +390,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @return currently available sources on the panel
      */
-    public List<TextMarkup> getSources() {
-        ArrayList<TextMarkup> sources = new ArrayList<>();
+    public List<IndexedText> getSources() {
+        ArrayList<IndexedText> sources = new ArrayList<>();
         for (int i = 0; i < sourceComboBox.getItemCount(); ++i) {
             sources.add(sourceComboBox.getItemAt(i));
         }
@@ -403,8 +403,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @return currently selected Source
      */
-    public TextMarkup getSelectedSource() {
-        return (TextMarkup) sourceComboBox.getSelectedItem();
+    public IndexedText getSelectedSource() {
+        return (IndexedText) sourceComboBox.getSelectedItem();
     }
 
     private void setPanelText(String text, boolean detectDirection) {
@@ -565,7 +565,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param source the selected source
      */
-    void updateControls(TextMarkup source) {
+    void updateControls(IndexedText source) {
         updatePageControls(source);
         updateSearchControls(source);
     }
@@ -575,7 +575,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param source selected source
      */
-    void updatePageControls(TextMarkup source) {
+    void updatePageControls(IndexedText source) {
         if (source == null) {
             enableNextPageControl(false);
             enablePrevPageControl(false);
@@ -612,7 +612,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param source selected source
      */
-    void updateSearchControls(TextMarkup source) {
+    void updateSearchControls(IndexedText source) {
         //setup search controls
         if (source != null && source.isSearchable()) {
 
@@ -644,7 +644,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param source
      */
-    private void scrollToCurrentHit(final TextMarkup source) {
+    private void scrollToCurrentHit(final IndexedText source) {
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -664,7 +664,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * text). Updates GUI in GUI thread and gets markup in background thread. To
      * be invoked from GUI thread only.
      */
-    private void setMarkup(TextMarkup source) {
+    private void setMarkup(IndexedText source) {
         setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
         new SetMarkupWorker(source).execute();
     }
@@ -676,11 +676,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      */
     private final class SetMarkupWorker extends SwingWorker<Object, Void> {
 
-        private TextMarkup source;
+        private IndexedText source;
         private String markup;
         private ProgressHandle progress;
 
-        SetMarkupWorker(TextMarkup source) {
+        SetMarkupWorker(IndexedText source) {
             this.source = source;
         }
 
@@ -693,7 +693,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             progress.start();
             progress.switchToIndeterminate();
 
-            markup = source.getMarkup();
+            markup = source.getText();
             return null;
         }
 

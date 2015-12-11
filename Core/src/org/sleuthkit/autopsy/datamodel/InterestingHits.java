@@ -36,7 +36,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -161,6 +160,11 @@ public class InterestingHits implements AutopsyVisitableItem {
                     getName()));
 
             return s;
+        }
+
+        @Override
+        public String getItemType() {
+            return "InterestingHitsRoot";
         }
     }
 
@@ -308,6 +312,11 @@ public class InterestingHits implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        public String getItemType() {
+            return "InterestingHitsSetName";
+        }
     }
 
     private class HitFactory extends ChildFactory<Long> implements Observer {
@@ -336,7 +345,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             try {
                 return new BlackboardArtifactNode(skCase.getBlackboardArtifact(l));
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error creating new Blackboard Artifact node", ex); //NON-NLS
                 return null;
             }
         }

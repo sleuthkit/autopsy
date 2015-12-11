@@ -18,31 +18,38 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.datamodel.Content;
-
 /**
- * BC debugging notes: This seems to represent a combination of the content,
- * query, isRegexp and origialQuery that can be passed around. It is used by
- * BlackboardArtifactNode.getHighlightLookup and getLookups to add the markup
- * concept to the node.
+ * This interface acts as a sort of bridge between the Autopsy Core NetBeans
+ * Module (NBM) and the Autopsy KeywordSearch NBM. It is used to get indexed
+ * text marked up with HTML to highlight search hits for a particular keyword.
  *
- * I find this very confusing. It doesn't seem to need lookup in its current
- * form, but (I think) exists because BlackboardArtifactNode is in Autopsy core
- * and the SOLR highlighter is in KeywordSearch module.
+ * Here is an example of how it works. It is used to put highlighted markup into
+ * the Lookups of the BlackboardArtifactNodes for keyword search hit artifacts.
+ * The BlackboardArtifactNode code that populates the node's Lookup asks the
+ * default global Lookup for an instance of TextMarkupLookup. The
+ * org.sleuthkit.autopsy.keywordsearch.HighlightedText class is the sole
+ * implementation of the interface, so the BlackboardArtifactNode gets a default
+ * constructed instance of HighlightedText. This otherwise useless
+ * instance is then used to call createInstance with parameters that are used to
+ * employ the Solr highlighting capability to create the markup. The
+ * TextMarkupLookup object goes in the BlackboardArtifactNode Lookup for later
+ * use by the ExtractedContentViewer, a DataContentViewer in the KeywordSearch
+ * NBM.
  */
 public interface TextMarkupLookup {
 
     /**
-     * Create an instance of the given TextMarkupLookup object.
+     * Factory method for getting an object that encapsulates indexed text
+     * marked up (HTML) to highlight search hits for a particular keyword.
      *
-     * @param objectId        Id of the object (file or artifact) for which to
-     *                        get highlights
-     * @param keywordHitQuery keyword hit that needs to be highlighted
-     * @param isRegex         whether the original query was a regex query
-     * @param originalQuery   (regex or literal) that may need to be performed
-     *                        again to get all ContentHit results
+     * @param objectId      ID of the object (file or artifact) that is the
+     *                      source of the indexed text.
+     * @param keyword       The keyword to be highlighted in the text.
+     * @param isRegex       Whether or not the query that follows is a regex.
+     * @param originalQuery The query that produces the keyword hit.
      *
-     * @return
+     * @return An object that encapsulates indexed text marked up (HTML) to
+     *         highlight search hits for a particular keyword.
      */
-    public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery);
+    public TextMarkupLookup createInstance(long objectId, String keyword, boolean isRegex, String originalQuery);
 }

@@ -19,9 +19,9 @@
          Services
         ======================================================= -->
     <folder name="Services">
-        <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedTextMarkup.instance">
+        <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedText.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.TextMarkupLookup"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedTextMarkup.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedText.getDefault"/>
             <attr name="position" intvalue="250"/>
         </file>
     </folder>

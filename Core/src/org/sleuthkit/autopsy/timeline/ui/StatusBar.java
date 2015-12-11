@@ -76,9 +76,9 @@ public class StatusBar extends ToolBar {
 
         refreshLabel.visibleProperty().bind(this.controller.getNewEventsFlag());
         refreshLabel.managedProperty().bind(this.controller.getNewEventsFlag());
-        taskLabel.textProperty().bind(this.controller.getTaskTitle());
-        messageLabel.textProperty().bind(this.controller.getMessage());
-        progressBar.progressProperty().bind(this.controller.getProgress());
+        taskLabel.textProperty().bind(this.controller.taskTitleProperty());
+        messageLabel.textProperty().bind(this.controller.taskMessageProperty());
+        progressBar.progressProperty().bind(this.controller.taskProgressProperty());
         taskLabel.visibleProperty().bind(this.controller.getTasks().emptyProperty().not());
 
         statusLabel.textProperty().bind(this.controller.getStatusProperty());

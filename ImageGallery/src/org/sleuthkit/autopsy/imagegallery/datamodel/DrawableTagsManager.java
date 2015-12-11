@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -29,10 +28,10 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -140,7 +139,7 @@ public class DrawableTagsManager {
      *         up from the db.
      */
     @Nonnull
-    public Collection<TagName> getNonCategoryTagNames() {
+    public List<TagName> getNonCategoryTagNames() {
         synchronized (autopsyTagsManagerLock) {
             try {
                 return autopsyTagsManager.getAllTagNames().stream()
@@ -150,7 +149,7 @@ public class DrawableTagsManager {
             } catch (TskCoreException | IllegalStateException ex) {
                 LOGGER.log(Level.WARNING, "couldn't access case", ex);
             }
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
     }
 

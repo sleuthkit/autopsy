@@ -242,7 +242,7 @@ final class DateAxis extends Axis<DateTime> {
     }
 
     @Override
-    protected Object autoRange(double length) {
+    protected Interval autoRange(double length) {
         if (isAutoRanging()) {
             return new Interval(minDate, maxDate);
         } else {
@@ -310,8 +310,7 @@ final class DateAxis extends Axis<DateTime> {
     }
 
     @Override
-    protected Object getRange() {
-
+    protected Interval getRange() {
         return new Interval(getLowerBound(), getUpperBound());
     }
 
@@ -325,13 +324,16 @@ final class DateAxis extends Axis<DateTime> {
         super.layoutChildren();
     }
 
+    /**
+     *
+     * @param range     an {@link Interval}
+     * @param animating ignored
+     */
     @Override
     protected void setRange(Object range, boolean animating) {
-
         rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range);
-
-        setLowerBound(new DateTime(rangeDivisionInfo.getLowerBound()));
-        setUpperBound(new DateTime(rangeDivisionInfo.getUpperBound()));
+        setLowerBound(new DateTime(rangeDivisionInfo.getLowerBound(), TimeLineController.getJodaTimeZone()));
+        setUpperBound(new DateTime(rangeDivisionInfo.getUpperBound(), TimeLineController.getJodaTimeZone()));
     }
 
     ReadOnlyDoubleProperty getTickSpacing() {

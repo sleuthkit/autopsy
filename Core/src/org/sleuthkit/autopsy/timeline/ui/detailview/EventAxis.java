@@ -22,21 +22,21 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass
  * AggregateEvent as the second member of {@link XYChart.Data} objects
  */
-class EventAxis extends Axis<EventCluster> {
+class EventAxis extends Axis<EventStripe> {
 
     @Override
-    public double getDisplayPosition(EventCluster value) {
+    public double getDisplayPosition(EventStripe value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EventCluster getValueForDisplay(double displayPosition) {
+    public EventStripe getValueForDisplay(double displayPosition) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -46,17 +46,17 @@ class EventAxis extends Axis<EventCluster> {
     }
 
     @Override
-    public boolean isValueOnAxis(EventCluster value) {
+    public boolean isValueOnAxis(EventStripe value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public double toNumericValue(EventCluster value) {
+    public double toNumericValue(EventStripe value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public EventCluster toRealValue(double value) {
+    public EventStripe toRealValue(double value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -66,17 +66,17 @@ class EventAxis extends Axis<EventCluster> {
     }
 
     @Override
-    protected List<EventCluster> calculateTickValues(double length, Object range) {
+    protected List<EventStripe> calculateTickValues(double length, Object range) {
         return Collections.emptyList();
     }
 
     @Override
     protected Object getRange() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new Object();
     }
 
     @Override
-    protected String getTickMarkLabel(EventCluster value) {
+    protected String getTickMarkLabel(EventStripe value) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
