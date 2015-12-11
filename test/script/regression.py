@@ -172,7 +172,7 @@ class TestRunner(object):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
-            sys.exit(0) # Even if we have some errors, the script exits successfully
+            sys.exit(1)
 
     def _run_autopsy_ingest(test_data):
         """Run Autopsy ingest for the image in the given TestData.
