@@ -30,7 +30,6 @@ import javafx.scene.control.Menu;
 import javax.swing.SwingWorker;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
@@ -66,7 +65,7 @@ public class AddDrawableTagAction extends AddTagAction {
 
     @Override
     public void addTag(TagName tagName, String comment) {
-        Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
+        Set<Long> selectedFiles = new HashSet<>(controller.getSelectionModel().getSelected());
         addTagsToFiles(tagName, comment, selectedFiles);
     }
 
