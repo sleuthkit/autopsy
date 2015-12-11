@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -32,7 +31,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -54,7 +52,6 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Node.Handle;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.NodeEvent;
@@ -375,7 +372,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         currentRoot = root;
         List<Node.Property<?>> props = loadState();
 
-        Node[] selected = this.em.getSelectedNodes();
         /*
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
