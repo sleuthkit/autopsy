@@ -27,7 +27,6 @@ import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -52,6 +51,7 @@ import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
@@ -166,7 +166,7 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    protected synchronized void setFileHelper(Long newFileID) {
+    synchronized protected void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
         if (newFileID == null) {
             Platform.runLater(() -> {
@@ -177,25 +177,24 @@ public class MetaDataPane extends DrawableUIBase {
             });
         } else {
             disposeContent();
-            updateUI();
+            updateAttributesTable();
+            updateCategory();
             updateContent();
         }
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+    CachedLoaderTask<Image, DrawableFile<?>> newReadImageTask(DrawableFile<?> file) {
         return new ThumbnailLoaderTask(file);
     }
 
-    public void updateUI() {
+    public void updateAttributesTable() {
         getFile().ifPresent(file -> {
             final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
             Platform.runLater(() -> {
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });
-
-            updateCategory();
         });
     }
 
@@ -204,13 +203,15 @@ public class MetaDataPane extends DrawableUIBase {
         return imageBorder;
     }
 
-    /** {@inheritDoc } */
+    /**
+     * {@inheritDoc }
+     */
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryManager.CategoryChangeEvent evt) {
         getFileID().ifPresent(fileID -> {
             if (evt.getFileIDs().contains(fileID)) {
-                updateUI();
+                updateAttributesTable();
             }
         });
     }
@@ -220,7 +221,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void handleTagAdded(ContentTagAddedEvent evt) {
         getFileID().ifPresent((fileID) -> {
             if (Objects.equals(evt.getAddedTag().getContent().getId(), fileID)) {
-                updateUI();
+                updateAttributesTable();
             }
         });
     }
@@ -229,7 +230,7 @@ public class MetaDataPane extends DrawableUIBase {
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         getFileID().ifPresent((fileID) -> {
             if (Objects.equals(evt.getDeletedTagInfo().getContentID(), fileID)) {
-                updateUI();
+                updateAttributesTable();
             }
         });
     }
@@ -241,4 +242,5 @@ public class MetaDataPane extends DrawableUIBase {
                     getValueDisplayString(selectedItem)));
         }
     }
+
 }

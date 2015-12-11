@@ -30,7 +30,6 @@ import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.logging.Level;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.embed.swing.SwingFXUtils;
@@ -99,7 +98,7 @@ public enum ThumbnailCache {
         try {
             return cache.get(file.getId(), () -> load(file)).orElse(null);
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-            LOGGER.log(Level.WARNING, "failed to load icon for file: " + file.getName(), ex.getCause());
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + file.getName(), ex.getCause());
             return null;
         }
     }
@@ -109,7 +108,7 @@ public enum ThumbnailCache {
         try {
             return get(ImageGalleryController.getDefault().getFileFromId(fileID));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "failed to load icon for file id : " + fileID, ex.getCause());
+            LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause());
             return null;
         }
     }
@@ -130,27 +129,24 @@ public enum ThumbnailCache {
             return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
         }
 
-        BufferedImage thumbnail = getCacheFile(file).map(new Function<File, BufferedImage>() {
-            @Override
-            public BufferedImage apply(File cachFile) {
-                if (cachFile.exists()) {
-                    // If a thumbnail file is already saved locally, load it
-                    try {
-                        BufferedImage cachedThumbnail = ImageIO.read(cachFile);
+        BufferedImage thumbnail = getCacheFile(file).map((File cachFile) -> {
+            if (cachFile.exists()) {
+                // If a thumbnail file is already saved locally, load it
+                try {
+                    BufferedImage cachedThumbnail = ImageIO.read(cachFile);
 
-                        if (cachedThumbnail.getWidth() < MAX_THUMBNAIL_SIZE) {
-                            return cachedThumbnail;
-                        }
-                    } catch (MalformedURLException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
+                    if (cachedThumbnail.getWidth() < MAX_THUMBNAIL_SIZE) {
+                        return cachedThumbnail;
                     }
+                } catch (MalformedURLException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to parse cache file path: " + cachFile.getPath(), ex);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to read cache file " + cachFile.getPath(), ex);
                 }
-                return null;
             }
+            return null;
         }).orElseGet(() -> {
-            return (BufferedImage) ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+            return ImageUtils.getThumbnail(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
         });
 
         WritableImage jfxthumbnail;
@@ -176,7 +172,7 @@ public enum ThumbnailCache {
         try {
             return Optional.of(ImageUtils.getCachedThumbnailFile(file.getAbstractFile(), MAX_THUMBNAIL_SIZE));
 
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
         }

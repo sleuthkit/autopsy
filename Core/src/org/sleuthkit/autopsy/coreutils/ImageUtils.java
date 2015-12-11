@@ -27,28 +27,37 @@ import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.event.IIOReadProgressListener;
+import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.opencv.core.Core;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -141,8 +150,8 @@ public class ImageUtils {
     /**
      * thread that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("icon saver-%d").build());
 
     public static List<String> getSupportedImageExtensions() {
@@ -319,7 +328,7 @@ public class ImageUtils {
      * @return a thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
      */
-    public static Image getThumbnail(Content content, int iconSize) {
+    public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
             // If a thumbnail file is already saved locally
@@ -333,7 +342,7 @@ public class ImageUtils {
                         return thumbnail;
                     }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "Error while reading image: " + content.getName(), ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: {1}", new Object[]{content.getName(), ex.getLocalizedMessage()}); //NON-NLS
                     return generateAndSaveThumbnail(file, iconSize, cacheFile);
                 }
             } else {
@@ -490,7 +499,7 @@ public class ImageUtils {
      *
      * @return Generated icon or null on error
      */
-    private static Image generateAndSaveThumbnail(AbstractFile file, int iconSize, File cacheFile) {
+    private static BufferedImage generateAndSaveThumbnail(AbstractFile file, int iconSize, File cacheFile) {
         BufferedImage thumbnail = null;
         try {
             if (VideoUtils.isVideoThumbnailSupported(file)) {
@@ -537,13 +546,15 @@ public class ImageUtils {
      *         there was a problem.
      */
     @Nullable
-    private static BufferedImage generateImageThumbnail(Content content, int iconSize) {
+    private static BufferedImage generateImageThumbnail(AbstractFile content, int iconSize) {
 
-        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(content));) {
-            BufferedImage bi = ImageIO.read(inputStream);
+        try {
+            final ReadImageTask readImageTask = new ReadImageTask(content);
+
+            readImageTask.run();
+            BufferedImage bi = SwingFXUtils.fromFXImage(readImageTask.get(), null);
 
             if (bi == null) {
-                LOGGER.log(Level.WARNING, "No image reader for file: {0}", content.getName()); //NON-NLS
                 return null;
             }
             try {
@@ -554,13 +565,191 @@ public class ImageUtils {
                 return ScalrWrapper.cropImage(bi, Math.min(iconSize, bi.getWidth()), Math.min(iconSize, bi.getHeight()));
             }
         } catch (OutOfMemoryError e) {
-            LOGGER.log(Level.WARNING, "Could not scale image (too large) " + content.getName(), e); //NON-NLS
-        } catch (EOFException e) {
-            LOGGER.log(Level.WARNING, "Could not load image (EOF) {0}", content.getName()); //NON-NLS
+            LOGGER.log(Level.WARNING, "Could not scale image (too large) " + content.getName() + ": " + e.getLocalizedMessage()); //NON-NLS
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not load image " + content.getName(), e); //NON-NLS
+            LOGGER.log(Level.WARNING, "ImageIO could not load image " + content.getName() + ": " + e.getLocalizedMessage()); //NON-NLS
         }
         return null;
     }
 
+    static public int getWidth(AbstractFile file) throws IIOException, IOException {
+
+        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
+
+            try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+                if (input == null) {
+                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
+                }
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.setInput(input);
+                    return reader.getWidth(0);
+                } else {
+                    throw new IIOException("No ImageReader found for file." + file.getName()); //NOI18N
+                }
+            }
+        }
+    }
+
+    static public int getHeight(AbstractFile file) throws IIOException, IOException {
+        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
+
+            try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+                if (input == null) {
+                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
+                }
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.setInput(input);
+
+                    return reader.getHeight(0);
+                } else {
+                    throw new IIOException("No ImageReader found for file." + file.getName()); //NOI18N
+                }
+            }
+
+        }
+    }
+
+    public static Task<javafx.scene.image.Image> newReadImageTask(AbstractFile file) {
+        return new ReadImageTask(file);
+    }
+
+    static private class ReadImageTask extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
+
+        private final AbstractFile file;
+        volatile private BufferedImage bufferedImage = null;
+
+        ReadImageTask(AbstractFile file) {
+            this.file = file;
+        }
+
+        @Override
+        @NbBundle.Messages({
+            "# {0} - file name",
+            "LoadImageTask.mesageText=Reading image: {0}"})
+        protected javafx.scene.image.Image call() throws Exception {
+            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
+            try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
+
+                if (ImageUtils.isGIF(file)) {
+                    //directly read GIF to preserve potential animation,
+                    javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(inputStream));
+                    if (image.isError() == false) {
+                        return image;
+                    }
+                    //fall through to default iamge reading code if there was an error
+                }
+
+                try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+                    if (input == null) {
+                        throw new IIOException("Could not create ImageInputStream."); //NOI18N
+                    }
+                    Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+                    if (readers.hasNext()) {
+                        ImageReader reader = readers.next();
+                        reader.addIIOReadProgressListener(this);
+                        reader.setInput(input);
+                        /*
+                         * This is the important part, get or create a
+                         * ReadParam, create a destination image to hold the
+                         * decoded result, then pass that image with the param.
+                         */
+                        ImageReadParam param = reader.getDefaultReadParam();
+
+                        bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
+                        param.setDestination(bufferedImage);
+                        try {
+                            reader.read(0, param);
+                        } catch (IOException iOException) {
+                            // Ignore this exception or display a warning or similar, for exceptions happening during decoding
+                            logError(iOException);
+                        }
+                        reader.removeIIOReadProgressListener(this);
+                        return SwingFXUtils.toFXImage(bufferedImage, null);
+                    } else {
+                        throw new IIOException("No ImageReader found for file."); //NOI18N
+                    }
+                }
+            }
+        }
+
+        public void logError(@Nullable Throwable e) {
+            String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
+            try {
+                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
+                LOGGER.log(Level.SEVERE, "Failed to get unique path for file", tskCoreException); //NOI18N
+            }
+        }
+
+        @Override
+        protected void failed() {
+            super.failed();
+            logError(getException());
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            try {
+                javafx.scene.image.Image fxImage = get();
+                if (fxImage == null) {
+                    logError(null);
+                } else {
+                    if (fxImage.isError()) {
+                        //if there was somekind of error, log it
+                        logError(fxImage.getException());
+                    }
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                logError(ex.getCause());
+            }
+        }
+
+        @Override
+        public void imageProgress(ImageReader source, float percentageDone) {
+            //update this task with the progress reported by ImageReader.read
+            updateProgress(percentageDone, 100);
+        }
+
+        @Override
+        public void imageStarted(ImageReader source, int imageIndex) {
+        }
+
+        @Override
+        public void imageComplete(ImageReader source) {
+            updateProgress(100, 100);
+        }
+
+        @Override
+        public void sequenceStarted(ImageReader source, int minIndex) {
+        }
+
+        @Override
+        public void sequenceComplete(ImageReader source) {
+        }
+
+        @Override
+        public void thumbnailStarted(ImageReader source, int imageIndex, int thumbnailIndex) {
+        }
+
+        @Override
+        public void thumbnailProgress(ImageReader source, float percentageDone) {
+        }
+
+        @Override
+        public void thumbnailComplete(ImageReader source) {
+        }
+
+        @Override
+        public void readAborted(ImageReader source) {
+        }
+    }
 }

@@ -90,7 +90,7 @@ public class DrawableTile extends DrawableTileBase {
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> getNewImageLoadTask(DrawableFile<?> file) {
+    CachedLoaderTask<Image, DrawableFile<?>> newReadImageTask(DrawableFile<?> file) {
         return new ThumbnailLoaderTask(file);
     }
 
@@ -98,5 +98,7 @@ public class DrawableTile extends DrawableTileBase {
     protected String getTextForLabel() {
         return getFile().map(AbstractContent::getName).orElse("");
     }
+
+
 
 }

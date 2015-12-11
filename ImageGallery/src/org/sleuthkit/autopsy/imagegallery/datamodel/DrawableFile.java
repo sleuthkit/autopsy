@@ -25,10 +25,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import javax.annotation.Nonnull;
@@ -91,12 +93,36 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     private String model;
 
     protected DrawableFile(T file, Boolean analyzed) {
-        /* @TODO: the two 'new Integer(0).shortValue()' values and null are
+        /*
+         * @TODO: the two 'new Integer(0).shortValue()' values and null are
          * placeholders because the super constructor expects values i can't get
          * easily at the moment. I assume this is related to why
-         * ReadContentInputStream can't read from DrawableFiles. */
+         * ReadContentInputStream can't read from DrawableFiles.
+         */
 
-        super(file.getSleuthkitCase(), file.getId(), file.getAttrType(), file.getAttrId(), file.getName(), file.getType(), file.getMetaAddr(), (int) file.getMetaSeq(), file.getDirType(), file.getMetaType(), null, new Integer(0).shortValue(), file.getSize(), file.getCtime(), file.getCrtime(), file.getAtime(), file.getMtime(), new Integer(0).shortValue(), file.getUid(), file.getGid(), file.getMd5Hash(), file.getKnown(), file.getParentPath());
+        super(file.getSleuthkitCase(),
+                file.getId(),
+                file.getAttrType(),
+                file.getAttrId(),
+                file.getName(),
+                file.getType(),
+                file.getMetaAddr(),
+                (int) file.getMetaSeq(),
+                file.getDirType(),
+                file.getMetaType(),
+                null,
+                new Integer(0).shortValue(),
+                file.getSize(),
+                file.getCtime(),
+                file.getCrtime(),
+                file.getAtime(),
+                file.getMtime(),
+                new Integer(0).shortValue(),
+                file.getUid(),
+                file.getGid(),
+                file.getMd5Hash(),
+                file.getKnown(),
+                file.getParentPath());
         this.analyzed = new SimpleBooleanProperty(analyzed);
         this.file = file;
     }
@@ -213,7 +239,9 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return category;
     }
 
-    /** set the category property to the most severe one found */
+    /**
+     * set the category property to the most severe one found
+     */
     private void updateCategory() {
         try {
             category.set(getSleuthkitCase().getContentTagsByContent(this).stream()
@@ -224,7 +252,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                     .orElse(Category.ZERO)
             );
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName(), ex);
+            LOGGER.log(Level.WARNING, "problem looking up category for file " + this.getName() + ex.getLocalizedMessage());
         } catch (IllegalStateException ex) {
             // We get here many times if the case is closed during ingest, so don't print out a ton of warnings.
         }
@@ -234,7 +262,17 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         return ThumbnailCache.getDefault().get(this);
     }
 
-    public abstract Image getFullSizeImage();
+    @Deprecated
+
+    public Image getFullSizeImage() {
+        try {
+            return getReadFullSizeImageTask().get();
+        } catch (InterruptedException | ExecutionException ex) {
+            return null;
+        }
+    }
+
+    public abstract Task<Image> getReadFullSizeImageTask();
 
     public void setAnalyzed(Boolean analyzed) {
         this.analyzed.set(analyzed);

@@ -391,6 +391,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStr
         "DetailViewPane.loggedTask.queryDb=Retreiving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
         "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "# {0} - the numner of events",
         "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
     private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
 

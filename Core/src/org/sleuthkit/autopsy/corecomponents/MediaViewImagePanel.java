@@ -21,23 +21,16 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.JFXPanel;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -49,13 +42,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javax.annotation.Nullable;
-import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.event.IIOReadProgressListener;
-import javax.imageio.stream.ImageInputStream;
 import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
@@ -66,8 +53,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
@@ -113,7 +98,7 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             .map("."::concat) //NOI18N
             .collect(Collectors.toList());
 
-    private ReadImageTask readImageTask;
+    private Task<Image> readImageTask;
 
     /**
      * Creates new form MediaViewImagePanel
@@ -186,36 +171,31 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             if (readImageTask != null) {
                 readImageTask.cancel();
             }
-            readImageTask = new ReadImageTask(file);
-            readImageTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-
-                @Override
-                public void handle(WorkerStateEvent event) {
-                    //Note that all error conditions are allready logged in readImageTask.succeeded()
-                    if (!Case.isCaseOpen()) {
-                        /*
-                         * handle in-between condition when case is being closed
-                         * and an image was previously selected
-                         */
-                        reset();
-                        return;
-                    }
-
-                    try {
-                        Image fxImage = readImageTask.get();
-                        if (nonNull(fxImage)) {
-                            //we have non-null image show it
-                            fxImageView.setImage(fxImage);
-                            borderpane.setCenter(fxImageView);
-                        } else {
-                            showErrorNode(file);
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        showErrorNode(file);
-                    }
-                    borderpane.setCursor(Cursor.DEFAULT);
+            readImageTask = ImageUtils.newReadImageTask(file);
+            readImageTask.setOnSucceeded((WorkerStateEvent event) -> {
+                //Note that all error conditions are allready logged in readImageTask.succeeded()
+                if (!Case.isCaseOpen()) {
+                    /*
+                     * handle in-between condition when case is being closed and
+                     * an image was previously selected
+                     */
+                    reset();
+                    return;
                 }
 
+                try {
+                    Image fxImage = readImageTask.get();
+                    if (nonNull(fxImage)) {
+                        //we have non-null image show it
+                        fxImageView.setImage(fxImage);
+                        borderpane.setCenter(fxImageView);
+                    } else {
+                        showErrorNode(file);
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    showErrorNode(file);
+                }
+                borderpane.setCursor(Cursor.DEFAULT);
             });
             readImageTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
 
@@ -230,11 +210,7 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                         return;
                     }
 
-                    externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
-                            new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                            .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
-                    );
-                    borderpane.setCenter(errorNode);
+                    showErrorNode(file);
                     borderpane.setCursor(Cursor.DEFAULT);
                 }
             });
@@ -294,137 +270,5 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
-    static private class ReadImageTask extends Task<Image> implements IIOReadProgressListener {
-
-        private final AbstractFile file;
-        volatile private BufferedImage bufferedImage = null;
-
-        ReadImageTask(AbstractFile file) {
-            this.file = file;
-        }
-
-        @Override
-        @NbBundle.Messages({
-            "# {0} - file name",
-            "LoadImageTask.mesageText=Reading image: {0}"})
-        protected Image call() throws Exception {
-            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
-            try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-
-                if (ImageUtils.isGIF(file)) {
-                    //directly read GIF to preserve potential animation,
-                    Image image = new Image(new BufferedInputStream(inputStream));
-                    if (image.isError() == false) {
-                        return image;
-                    }
-                    //fall through to default iamge reading code if there was an error
-                }
-
-                ImageInputStream input = ImageIO.createImageInputStream(inputStream);
-                if (input == null) {
-                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
-                }
-                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-
-                if (readers.hasNext()) {
-                    ImageReader reader = readers.next();
-                    reader.addIIOReadProgressListener(this);
-                    reader.setInput(input);
-                    /*
-                     * This is the important part, get or create a ReadParam,
-                     * create a destination image to hold the decoded result,
-                     * then pass that image with the param.
-                     */
-                    ImageReadParam param = reader.getDefaultReadParam();
-
-                    bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
-                    param.setDestination(bufferedImage);
-                    try {
-                        reader.read(0, param);
-                    } catch (IOException iOException) {
-                        // Ignore this exception or display a warning or similar, for exceptions happening during decoding
-                        logError(iOException);
-                    }
-                    reader.removeIIOReadProgressListener(this);
-                    return SwingFXUtils.toFXImage(bufferedImage, null);
-                } else {
-                    throw new IIOException("No ImageReader found for file."); //NOI18N
-                }
-            }
-        }
-
-        public void logError(@Nullable Throwable e) {
-            String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
-            try {
-                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
-                LOGGER.log(Level.SEVERE, "Failed to get unique path for file", tskCoreException); //NOI18N
-            }
-        }
-
-        @Override
-        protected void failed() {
-            super.failed();
-            logError(getException());
-        }
-
-        @Override
-        protected void succeeded() {
-            super.succeeded();
-            try {
-                Image fxImage = get();
-                if (fxImage == null) {
-                    logError(null);
-                } else {
-                    if (fxImage.isError()) {
-                        //if there was somekind of error, log it
-                        logError(fxImage.getException());
-                    }
-                }
-            } catch (InterruptedException | ExecutionException ex) {
-                logError(ex.getCause());
-            }
-        }
-
-        @Override
-        public void imageProgress(ImageReader source, float percentageDone) {
-            //update this task with the progress reported by ImageReader.read
-            updateProgress(percentageDone, 100);
-        }
-
-        @Override
-        public void sequenceStarted(ImageReader source, int minIndex) {
-        }
-
-        @Override
-        public void sequenceComplete(ImageReader source) {
-        }
-
-        @Override
-        public void imageStarted(ImageReader source, int imageIndex) {
-        }
-
-        @Override
-        public void imageComplete(ImageReader source) {
-        }
-
-        @Override
-        public void thumbnailStarted(ImageReader source, int imageIndex, int thumbnailIndex) {
-        }
-
-        @Override
-        public void thumbnailProgress(ImageReader source, float percentageDone) {
-        }
-
-        @Override
-        public void thumbnailComplete(ImageReader source) {
-        }
-
-        @Override
-        public void readAborted(ImageReader source) {
-        }
-    }
 
 }

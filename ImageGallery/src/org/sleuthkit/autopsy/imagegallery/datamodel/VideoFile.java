@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.beans.Observable;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
@@ -51,16 +54,43 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Image getFullSizeImage() {
-        Image image = (null == imageRef) ? null : imageRef.get();
+    public Task<Image> getReadFullSizeImageTask() {
+        Image image = (imageRef != null) ? imageRef.get() : null;
+        if (image == null || image.isError()) {
+            Task<Image> newReadImageTask = new Task<Image>() {
 
-        if (image == null) {
-            final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
-            image = (bufferedImage == ImageUtils.getDefaultThumbnail()) ? null : SwingFXUtils.toFXImage(bufferedImage, null);
-            imageRef = new SoftReference<>(image);
+                @Override
+                protected Image call() throws Exception {
+                    final BufferedImage bufferedImage = (BufferedImage) ImageUtils.getThumbnail(getAbstractFile(), 1024);
+                    return (bufferedImage == ImageUtils.getDefaultThumbnail())
+                            ? null
+                            : SwingFXUtils.toFXImage(bufferedImage, null);
+                }
+            };
+
+            newReadImageTask.stateProperty().addListener((Observable observable) -> {
+                switch (newReadImageTask.getState()) {
+                    case CANCELLED:
+                        break;
+                    case FAILED:
+                        break;
+                    case SUCCEEDED:
+                        try {
+                            imageRef = new SoftReference<>(newReadImageTask.get());
+                        } catch (InterruptedException | ExecutionException interruptedException) {
+                        }
+                        break;
+                }
+            });
+            return newReadImageTask;
+        } else {
+            return new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    return image;
+                }
+            };
         }
-
-        return image;
     }
 
     private SoftReference<Media> mediaRef;
