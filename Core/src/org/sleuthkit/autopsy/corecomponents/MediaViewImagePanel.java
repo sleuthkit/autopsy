@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -45,6 +46,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javax.annotation.Nullable;
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -53,6 +55,7 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
 import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
+import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -78,8 +81,16 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     private BorderPane borderpane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
-    private final Label errorLabel = new Label("Could not load file into media view.");
-    private final Button externalViewerButton = new Button("Open in External Viewer");
+
+    @NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not load file into Media view."})
+    private final Label errorLabel = new Label(Bundle.MediaViewImagePanel_errorLabel_text());
+
+    /**
+     * TODO: why is this passed to the action? it means we duplciate this string
+     * all over the place -jm
+     */
+    @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer"})
+    private final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text());
     private final VBox errorNode = new VBox(10, errorLabel, externalViewerButton);
 
     static {
@@ -96,7 +107,7 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
      * extensions we should be able to display
      */
     static private final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
-            .map("."::concat)
+            .map("."::concat) //NOI18N
             .collect(Collectors.toList());
 
     private LoadImageTask readImageTask;
@@ -115,10 +126,10 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
                 borderpane = new BorderPane(fxImageView); // centers and sizes imageview
-                borderpane.getStyleClass().add("bg");
+                borderpane.getStyleClass().add("bg"); //NOI18N
                 fxPanel = new JFXPanel(); // bridge jfx-swing
                 Scene scene = new Scene(borderpane); //root of jfx tree
-                scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm());
+                scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                 fxPanel.setScene(scene);
 
                 //bind size of image to that of scene, while keeping proportions
@@ -232,14 +243,17 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         }
 
         @Override
+        @NbBundle.Messages({
+            "# {0} - file name",
+            "LoadImageTask.mesageText=Reading image: {0}"})
         protected Image call() throws Exception {
-            updateMessage("Reading image: " + file.getName());
+            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
             try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-                ImageInputStream input = ImageIO.createImageInputStream(inputStream); // TODO: null check
+                ImageInputStream input = ImageIO.createImageInputStream(inputStream);
                 if (input == null) {
-                    throw new IIOException("Could not create ImageInputStream.");
+                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
                 }
-                Iterator<ImageReader> readers = ImageIO.getImageReaders(input); // TODO: hasNext check
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
 
                 if (readers.hasNext()) {
                     ImageReader reader = readers.next();
@@ -257,24 +271,24 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                     try {
                         reader.read(0, param);
                     } catch (IOException iOException) {
+                        // Ignore this exception or display a warning or similar, for exceptions happening during decoding
                         logError(iOException);
                     }
                     reader.removeIIOReadProgressListener(this);
                     return SwingFXUtils.toFXImage(bufferedImage, null);
                 } else {
-                    throw new IIOException("No ImageReader found for file.");
+                    throw new IIOException("No ImageReader found for file."); //NOI18N
                 }
             }
         }
 
-        private void logError(Throwable e) {
-            String message = e != null ? "  It may be unsupported or corrupt: " + e.getLocalizedMessage() : "";
-            // Ignore this exception or display a warning or similar, for exceptions happening during decoding
+        private void logError(@Nullable Throwable e) {
+            String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
             try {
-                LOGGER.log(Level.WARNING, "There was a problem loading " + file.getUniquePath() + "." + message, e);
+                LOGGER.log(Level.WARNING, "The MediaView tab could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
             } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "There was a problem loading " + file.getName() + "." + message, e);
-                LOGGER.log(Level.SEVERE, "Failes to get unique path for file", tskCoreException);
+                LOGGER.log(Level.WARNING, "The MediaView tab could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
+                LOGGER.log(Level.SEVERE, "Failes to get unique path for file", tskCoreException); //NOI18N
             }
         }
 
@@ -297,8 +311,9 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
 
         private void handleError(Throwable e) {
             logError(e);
-            externalViewerButton.setOnAction(actionEvent ->
-                    new ExternalViewerAction("", new FileNode(file)).actionPerformed(new java.awt.event.ActionEvent(this, java.awt.event.ActionEvent.ACTION_PERFORMED, ""))
+            externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
+                    new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                    .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
             );
             borderpane.setCenter(errorNode);
         }

@@ -48,6 +48,7 @@ import javafx.scene.paint.Color;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -80,7 +81,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * since they share a similar node tree and many behaviors, other implementors
  * of {@link DrawableView}s should implement the interface directly
  *
+ *
+ * TODO: refactor ExternalViewerAction to supply its own name
  */
+@NbBundle.Messages({"DrawableTileBase.externalViewerAction.text=Open in External Viewer"})
 public abstract class DrawableTileBase extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(DrawableTileBase.class.getName());
@@ -217,8 +221,8 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 });
                 menuItems.add(contentViewer);
 
-                MenuItem externalViewer = new MenuItem("Open in External Viewer");
-                final ExternalViewerAction externalViewerAction = new ExternalViewerAction("Open in External Viewer", new FileNode(file.getAbstractFile()));
+                MenuItem externalViewer = new MenuItem(Bundle.DrawableTileBase_externalViewerAction_text());
+                final ExternalViewerAction externalViewerAction = new ExternalViewerAction(Bundle.DrawableTileBase_externalViewerAction_text(), new FileNode(file.getAbstractFile()));
 
                 externalViewer.setDisable(externalViewerAction.isEnabled() == false);
                 externalViewer.setOnAction((ActionEvent t) -> {

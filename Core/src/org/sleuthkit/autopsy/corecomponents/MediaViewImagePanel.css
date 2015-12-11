@@ -29,13 +29,5 @@
 
 .masker-pane .masker-text {
     -fx-text-fill: white;
-    -fx-font-weight: bold;
     -fx-font-size: 1.5em;
-}
-
-.masker-pane .masker-center {
-    -fx-background-color: rgba(0, 0, 0, .6);
-    -fx-max-height: 1.50in;
-    -fx-padding: .25in;
-    -fx-background-radius: .1in;
 }
