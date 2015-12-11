@@ -43,5 +43,4 @@ It is up to the user to distinguish between the paths when adding to this file.
     <!-- Path to input directory -->
     <!-- example: -->
     <!--<image value="path-to-img" />-->
-    <image value="\\STOREVI\forensics\general\fe_test_4.img" /> 
 </Properties>
