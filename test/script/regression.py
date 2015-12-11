@@ -84,15 +84,16 @@ Day = 0
 
 
 def usage():
-	print ("-f PATH single file")
-	print ("-r rebuild")
-	print ("-l PATH path to config file")
-	print ("-u Ignore unallocated space")
-	print ("-k Do not delete SOLR index")
-	print ("-o PATH path to output folder for Diff files")
-	print ("-v verbose mode")
-	print ("-e ARG Enable exception mode with given string")
-	print ("-h help")
+    print ("-f PATH single file")
+    print ("-r rebuild")
+    print ("-b run both compare and rebuild")
+    print ("-l PATH path to config file")
+    print ("-u Ignore unallocated space")
+    print ("-k Do not delete SOLR index")
+    print ("-o PATH path to output folder for Diff files")
+    print ("-v verbose mode")
+    print ("-e ARG Enable exception mode with given string")
+    print ("-h help")
 
 #----------------------#
 #        Main          #
@@ -148,8 +149,11 @@ class TestRunner(object):
             # Generate HTML report
             Reports.write_html_foot(test_config.html_log)
 
-            # Either copy the data or compare the data
+            # Either copy the data or compare the data or both
             if test_config.args.rebuild:
+                TestRunner.rebuild(test_data)
+            elif test_config.args.both:
+                logres.append(TestRunner._compare_results(test_data))
                 TestRunner.rebuild(test_data)
             else:
                 logres.append(TestRunner._compare_results(test_data))
@@ -1663,6 +1667,7 @@ class Args(object):
         self.single = False
         self.single_file = ""
         self.rebuild = False
+        self.both = False
         self.list = False
         self.config_file = ""
         self.unallocated = False
@@ -1691,6 +1696,9 @@ class Args(object):
             elif(arg == "-r" or arg == "--rebuild"):
                 print("Running in rebuild mode.\n")
                 self.rebuild = True
+            elif(arg == "-b" or arg == "--both"):
+                print("Comparing then creating gold")
+                self.both = True
             elif(arg == "-l" or arg == "--list"):
                 try:
                     arg = sys.argv.pop(0)
