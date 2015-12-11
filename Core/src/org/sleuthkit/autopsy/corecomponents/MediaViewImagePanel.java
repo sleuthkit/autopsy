@@ -249,6 +249,16 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         protected Image call() throws Exception {
             updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
             try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
+
+                if (ImageUtils.isGIF(file)) {
+                    //directly read GIF to preserve potential animation,
+                    Image image = new Image(new BufferedInputStream(inputStream));
+                    if (image.isError() == false) {
+                        return image;
+                    }
+                    //fall through to default iamge reading code if there was an error
+                }
+
                 ImageInputStream input = ImageIO.createImageInputStream(inputStream);
                 if (input == null) {
                     throw new IIOException("Could not create ImageInputStream."); //NOI18N
