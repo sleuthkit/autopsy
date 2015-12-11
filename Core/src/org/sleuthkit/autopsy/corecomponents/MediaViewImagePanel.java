@@ -28,14 +28,17 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
@@ -110,7 +113,7 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             .map("."::concat) //NOI18N
             .collect(Collectors.toList());
 
-    private LoadImageTask readImageTask;
+    private ReadImageTask readImageTask;
 
     /**
      * Creates new form MediaViewImagePanel
@@ -160,6 +163,14 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
         });
     }
 
+    private void showErrorNode(AbstractFile file) {
+        externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
+                new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
+        );
+        borderpane.setCenter(errorNode);
+    }
+
     /**
      * Show the contents of the given AbstractFile as a visual image.
      *
@@ -175,7 +186,58 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             if (readImageTask != null) {
                 readImageTask.cancel();
             }
-            readImageTask = new LoadImageTask(file);
+            readImageTask = new ReadImageTask(file);
+            readImageTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+
+                @Override
+                public void handle(WorkerStateEvent event) {
+                    //Note that all error conditions are allready logged in readImageTask.succeeded()
+                    if (!Case.isCaseOpen()) {
+                        /*
+                         * handle in-between condition when case is being closed
+                         * and an image was previously selected
+                         */
+                        reset();
+                        return;
+                    }
+
+                    try {
+                        Image fxImage = readImageTask.get();
+                        if (nonNull(fxImage)) {
+                            //we have non-null image show it
+                            fxImageView.setImage(fxImage);
+                            borderpane.setCenter(fxImageView);
+                        } else {
+                            showErrorNode(file);
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        showErrorNode(file);
+                    }
+                    borderpane.setCursor(Cursor.DEFAULT);
+                }
+
+            });
+            readImageTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+
+                @Override
+                public void handle(WorkerStateEvent event) {
+                    if (!Case.isCaseOpen()) {
+                        /*
+                         * handle in-between condition when case is being closed
+                         * and an image was previously selected
+                         */
+                        reset();
+                        return;
+                    }
+
+                    externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
+                            new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                            .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
+                    );
+                    borderpane.setCenter(errorNode);
+                    borderpane.setCursor(Cursor.DEFAULT);
+                }
+            });
 
             maskerPane.setProgressNode(progressBar);
             progressBar.progressProperty().bind(readImageTask.progressProperty());
@@ -233,12 +295,12 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 
-    private class LoadImageTask extends Task<Image> implements IIOReadProgressListener {
+    static private class ReadImageTask extends Task<Image> implements IIOReadProgressListener {
 
         private final AbstractFile file;
         volatile private BufferedImage bufferedImage = null;
 
-        LoadImageTask(AbstractFile file) {
+        ReadImageTask(AbstractFile file) {
             this.file = file;
         }
 
@@ -292,72 +354,38 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             }
         }
 
-        private void logError(@Nullable Throwable e) {
+        public void logError(@Nullable Throwable e) {
             String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
             try {
-                LOGGER.log(Level.WARNING, "The MediaView tab could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
+                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
             } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "The MediaView tab could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
-                LOGGER.log(Level.SEVERE, "Failes to get unique path for file", tskCoreException); //NOI18N
+                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
+                LOGGER.log(Level.SEVERE, "Failed to get unique path for file", tskCoreException); //NOI18N
             }
         }
 
         @Override
         protected void failed() {
             super.failed();
-            if (!Case.isCaseOpen()) {
-                /*
-                 * handle in-between condition when case is being closed and an
-                 * image was previously selected
-                 */
-                reset();
-                return;
-            }
-
-            handleError(getException());
-
-            borderpane.setCursor(Cursor.DEFAULT);
-        }
-
-        private void handleError(Throwable e) {
-            logError(e);
-            externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
-                    new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                    .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent //NOI18N
-            );
-            borderpane.setCenter(errorNode);
+            logError(getException());
         }
 
         @Override
         protected void succeeded() {
             super.succeeded();
-            if (!Case.isCaseOpen()) {
-                /*
-                 * handle in-between condition when case is being closed and an
-                 * image was previously selected
-                 */
-                reset();
-                return;
-            }
-
             try {
                 Image fxImage = get();
                 if (fxImage == null) {
-                    handleError(null);
+                    logError(null);
                 } else {
-                    //we have non-null image show it
-
-                    fxImageView.setImage(fxImage);
-                    borderpane.setCenter(fxImageView);
                     if (fxImage.isError()) {
                         //if there was somekind of error, log it
                         logError(fxImage.getException());
                     }
                 }
             } catch (InterruptedException | ExecutionException ex) {
-                handleError(ex.getCause());
+                logError(ex.getCause());
             }
-            borderpane.setCursor(Cursor.DEFAULT);
         }
 
         @Override
