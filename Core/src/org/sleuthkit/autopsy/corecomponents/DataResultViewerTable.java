@@ -34,8 +34,10 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -59,7 +61,6 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -80,7 +81,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
-    private ArrayList<String> currentlySelectedNodes;
+    private List<String> currentlySelectedNodes;
+    private Map<String, String> savedSelectionMap;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -102,6 +104,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
+        savedSelectionMap = new HashMap<>();
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
 
@@ -446,7 +449,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         try {
             this.em.setSelectedNodes(namesToList(currentlySelectedNodes));
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
+            /**
+             * ignore exception since when we call setup table for the first time, the node's children
+             * might have not been initialized.
+             * Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
+             */
         }
     }
 
@@ -459,7 +466,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         // Store the selected rows
-        NbPreferences.forModule(this.getClass()).put(getUniqueSelName(currentRoot), stringFromNames(currentlySelectedNodes));
+        savedSelectionMap.put(getUniqueSelName(currentRoot), stringFromNames(currentlySelectedNodes));
         currentlySelectedNodes.clear();
 
         // Store the column arrangements of the given Node.
@@ -476,7 +483,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
-        String objectString = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(currentRoot), null);
+        String objectString = savedSelectionMap.get(getUniqueSelName(currentRoot));
         if (objectString != null) {
             currentlySelectedNodes = stringToNames(objectString);
         } else {
@@ -526,12 +533,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param names ArrayList of node names to extract from current root
      * @return the list of nodes extracted.
      */
-    private Node[] namesToList(ArrayList<String> names) {
+    private Node[] namesToList(List<String> names) {
         Node[] nodes = new Node[names.size()];
-        Node[] children = currentRoot.getChildren().getNodes(true);
+        if(names.isEmpty())
+            return nodes;
+        Node[] children = currentRoot.getChildren().getNodes(false);
         int i = 0;
-        for (Node child : children) {
-            for (String name : names) {
+        for (String name : names) {
+            for (Node child : children) {
                 if (child.getName().equals(name)) {
                     nodes[i] = child;
                     i++;
@@ -542,18 +551,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Serialized and convert the ArrayList of names into an object string.
+     * Serialize and convert the ArrayList of names into an object string.
      * @param names ArrayList of names to serialize.
      * @return The serialized string.
      */
-    private static String stringFromNames(ArrayList<String> names) {
+    private static String stringFromNames(List<String> names) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.writeObject(names);
             }
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Could not create output stream from names", ex);
         }
         return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
@@ -573,7 +582,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 names = (ArrayList<String>) ois.readObject();
             }
         } catch (IOException | ClassNotFoundException ex) {
-            Exceptions.printStackTrace(ex);
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Could not convert serialized string to array", ex);
         }
         return names;
     }
