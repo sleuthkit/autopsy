@@ -587,7 +587,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return names;
     }
 
-    // Get unique name for node and it's property.
+    // Get unique name for node to be used for saving column orderings.
     private String getUniqueColName(Node root, Property<?> prop) {
         String type = "Generic";
         if(root instanceof TableFilterNode) {
@@ -602,7 +602,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
-    // Get unique name for node and it's property.
+    // Get unique name for node to be used for saving selection.
     private String getUniqueSelName(Node root) {
         return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "")
                 + ".selectedNodes";
