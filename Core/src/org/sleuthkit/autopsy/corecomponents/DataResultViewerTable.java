@@ -72,6 +72,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
+    private String currentRootItemType;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -347,12 +348,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private void setupTable(final Node root) {
         
-        String type = "";
         if(root instanceof TableFilterNode) {
             TableFilterNode filterNode = (TableFilterNode) root;
-            type =  filterNode.getItemType();
+            currentRootItemType =  filterNode.getItemType();
         }
         else {
+            currentRootItemType = "";
             Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
                     "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
         }
@@ -366,10 +367,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
         
         if(currentRoot != null && !propertiesAcc.isEmpty()) {
-            storeProperties(currentRoot, type);
+            storeProperties();
         }
         currentRoot = root;
-        List<Node.Property<?>> props = loadProperties(currentRoot, type);
+        List<Node.Property<?>> props = loadProperties();
 
         /*
          * OutlineView makes the first column be the result of
@@ -443,29 +444,29 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Store the column arrangements of the given Node.
-    private void storeProperties(Node root, String type) {
-        if(type.isEmpty())
+    private void storeProperties() {
+        if(currentRootItemType.isEmpty())
             return;
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueName(root, prop, type), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueName(prop), String.valueOf(i));
         }
     }
     
     // Load the column arrangement stored for the given node if exists.
-    private List<Node.Property<?>> loadProperties(Node root, String type) {
+    private List<Node.Property<?>> loadProperties() {
         propertiesAcc.clear();
-        this.getAllChildPropertyHeadersRec(root, 100);
+        this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         
         // If type is not defined, use default order for columns
-        if(type.isEmpty())
+        if(currentRootItemType.isEmpty())
             return props;
         
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop, type), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(prop), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -482,8 +483,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Get unique name for node and it's property.
-    private String getUniqueName(Node root, Property<?> prop, String type) {
-        return Case.getCurrentCase().getName() + "." + type + "." 
+    private String getUniqueName(Property<?> prop) {
+        return Case.getCurrentCase().getName() + "." + currentRootItemType + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
