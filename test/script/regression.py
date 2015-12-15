@@ -415,8 +415,6 @@ class TestRunner(object):
         test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_data.ant.append("-Dgold_path=" + test_config.gold)
         test_data.ant.append("-Dout_path=" + make_local_path(test_data.output_path))
-        if test_config.jenkins:
-            test_data.ant.append("-Ddiff_dir="+ test_config.diff_dir)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
@@ -728,12 +726,6 @@ class TestConfiguration(object):
                 self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed_config.getElementsByTagName("jenkins"):
-                self.jenkins = parsed_config.getElementsByTagName("jenkins")[0].getAttribute("value").encode().decode("utf_8")
-                if self.jenkins and parsed_config.getElementsByTagName("diffdir"):
-                    self.diff_dir = parsed_config.getElementsByTagName("diffdir")[0].getAttribute("value").encode().decode("utf_8")
-                else:
-                    self.jenkins = False
             if parsed_config.getElementsByTagName("timing"):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
@@ -1972,31 +1964,6 @@ def find_file_in_dir(dir, name, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
-
-
-def copyErrorFiles(attachments, test_config):
-    """Move email attachments to the location specified in the config file.
-       Used for Jenkins build.
-
-    Args:
-       attachments: a listof_String, the files to be moved
-       test_config: TestConfiguration, used to determine where to move the files to
-    """
-    call = ['pwd']
-    subprocess.call(call)
-
-    # remove old diff files
-    filelist = [f for f in os.listdir(test_config.diff_dir) if (f.endswith(".txt") or f.endswith(".html"))]
-    for f in filelist:
-        if os.path.isfile(test_config.diff_dir + "/" + f):
-            os.remove(test_config.diff_dir + "/" + f)
-
-    # move in the new diff files
-    for file in attachments:
-        filename = ntpath.basename(file)
-        destination = os.path.join(test_config.diff_dir, filename)
-        call = ['cp', file, destination]
-        subprocess.call(call)
 
 
 class OS:
