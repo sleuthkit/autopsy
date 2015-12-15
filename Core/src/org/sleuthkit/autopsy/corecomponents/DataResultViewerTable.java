@@ -346,6 +346,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
+        
+        String type = "";
+        if(root instanceof TableFilterNode) {
+            TableFilterNode filterNode = (TableFilterNode) root;
+            type =  filterNode.getItemType();
+        }
+        else {
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
+        }
 
         em.setRootContext(root);
 
@@ -356,10 +366,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
         
         if(currentRoot != null && !propertiesAcc.isEmpty()) {
-            storeProperties(currentRoot);
+            storeProperties(currentRoot, type);
         }
         currentRoot = root;
-        List<Node.Property<?>> props = loadProperties(currentRoot);
+        List<Node.Property<?>> props = loadProperties(currentRoot, type);
 
         /*
          * OutlineView makes the first column be the result of
@@ -433,22 +443,29 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Store the column arrangements of the given Node.
-    private void storeProperties(Node root) {
+    private void storeProperties(Node root, String type) {
+        if(type.isEmpty())
+            return;
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueName(root, prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueName(root, prop, type), String.valueOf(i));
         }
     }
     
     // Load the column arrangement stored for the given node if exists.
-    private List<Node.Property<?>> loadProperties(Node root) {
+    private List<Node.Property<?>> loadProperties(Node root, String type) {
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(root, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        
+        // If type is not defined, use default order for columns
+        if(type.isEmpty())
+            return props;
+        
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(root, prop, type), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -465,16 +482,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Get unique name for node and it's property.
-    private String getUniqueName(Node root, Property<?> prop) {
-        String type = "Generic";
-        if(root instanceof TableFilterNode) {
-            TableFilterNode filterNode = (TableFilterNode) root;
-            type =  filterNode.getItemType();
-        }
-        else {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Node is not TableFilterNode");
-        }
-        
+    private String getUniqueName(Node root, Property<?> prop, String type) {
         return Case.getCurrentCase().getName() + "." + type + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
