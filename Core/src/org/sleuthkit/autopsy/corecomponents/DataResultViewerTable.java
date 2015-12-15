@@ -82,7 +82,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
     private List<String> currentlySelectedNodes;
-    private Map<String, String> savedSelectionMap;
+    private Map<String, List<String>> savedSelectionMap;
     private String currentRootItemType;
 
     /**
@@ -477,7 +477,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         // Store the selected rows
-        savedSelectionMap.put(getUniqueSelName(), stringFromNames(currentlySelectedNodes));
+        savedSelectionMap.put(getUniqueSelName(), currentlySelectedNodes);
         currentlySelectedNodes.clear();
 
         if(currentRootItemType.isEmpty())
@@ -497,9 +497,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
-        String objectString = savedSelectionMap.get(getUniqueSelName());
-        if (objectString != null) {
-            currentlySelectedNodes = stringToNames(objectString);
+        List<String> selectedNodes = savedSelectionMap.get(getUniqueSelName());
+        if (selectedNodes != null) {
+            currentlySelectedNodes = selectedNodes;
         } else {
             currentlySelectedNodes = new ArrayList<>();
         }
@@ -566,43 +566,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
         }
         return nodes;
-    }
-
-    /**
-     * Serialize and convert the ArrayList of names into an object string.
-     * @param names ArrayList of names to serialize.
-     * @return The serialized string.
-     */
-    private static String stringFromNames(List<String> names) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-                oos.writeObject(names);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Could not create output stream from names", ex);
-        }
-        return Base64.getEncoder().encodeToString(baos.toByteArray());
-    }
-
-    /**
-     * Get the ArrayList of names back from the object string.
-     * Suppress the casting warning since object has to be of this type.
-     * @param objectString  The object string to convert
-     * @return The ArrayList of names converted from the object string
-     */
-    @SuppressWarnings("unchecked")
-    private static ArrayList<String> stringToNames(String objectString) {
-        byte[] data = Base64.getDecoder().decode(objectString);
-        ArrayList<String> names = new ArrayList<>();
-        try {
-            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
-                names = (ArrayList<String>) ois.readObject();
-            }
-        } catch (IOException | ClassNotFoundException ex) {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Could not convert serialized string to array", ex);
-        }
-        return names;
     }
 
     // Get unique name for node to be used for saving column orderings.
