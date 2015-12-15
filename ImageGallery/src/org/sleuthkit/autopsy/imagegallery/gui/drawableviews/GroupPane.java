@@ -151,7 +151,7 @@ public class GroupPane extends BorderPane {
             new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 15, Interpolator.LINEAR))
     );
 
-    private static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
+    private final FileIDSelectionModel selectionModel;
     private static final List<KeyCode> categoryKeyCodes = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
             KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
 
@@ -257,6 +257,7 @@ public class GroupPane extends BorderPane {
 
     public GroupPane(ImageGalleryController controller) {
         this.controller = controller;
+        this.selectionModel = controller.getSelectionModel();
         nextGroupAction = new NextUnseenGroup(controller);
         backAction = new Back(controller);
         forwardAction = new Forward(controller);
@@ -303,7 +304,7 @@ public class GroupPane extends BorderPane {
             slideShowPane.disposeContent();
         }
         slideShowPane = null;
-        this.scrollToFileID(globalSelectionModel.lastSelectedProperty().get());
+        this.scrollToFileID(selectionModel.lastSelectedProperty().get());
     }
 
     public DrawableGroup getGroup() {
@@ -311,7 +312,7 @@ public class GroupPane extends BorderPane {
     }
 
     private void selectAllFiles() {
-        globalSelectionModel.clearAndSelectAll(getGroup().fileIds());
+        selectionModel.clearAndSelectAll(getGroup().fileIds());
     }
 
     /**
@@ -363,7 +364,7 @@ public class GroupPane extends BorderPane {
             if (slideShowPane != null) {
                 slideShowPane.getFileID().ifPresent(fileID -> {
                     if (newValue) {
-                        FileIDSelectionModel.getInstance().clearAndSelect(fileID);
+                        selectionModel.clearAndSelect(fileID);
                         new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
                     }
                 });
@@ -428,10 +429,10 @@ public class GroupPane extends BorderPane {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         spacer.setMinWidth(Region.USE_PREF_SIZE);
 
-        FileIDSelectionModel.getInstance().getSelected().addListener((Observable o) -> {
+        selectionModel.getSelected().addListener((Observable o) -> {
             Platform.runLater(() -> {
-                catSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
-                tagSelectedSplitMenu.setDisable(FileIDSelectionModel.getInstance().getSelected().isEmpty());
+                catSelectedSplitMenu.setDisable(selectionModel.getSelected().isEmpty());
+                tagSelectedSplitMenu.setDisable(selectionModel.getSelected().isEmpty());
             });
         });
 
@@ -491,7 +492,7 @@ public class GroupPane extends BorderPane {
 
         //listen to toggles and update view state
         slideShowToggle.setOnAction((ActionEvent t) -> {
-            activateSlideShowViewer(globalSelectionModel.lastSelectedProperty().get());
+            activateSlideShowViewer(selectionModel.lastSelectedProperty().get());
         });
 
         tileToggle.setOnAction((ActionEvent t) -> {
@@ -543,7 +544,7 @@ public class GroupPane extends BorderPane {
                 switch (t.getButton()) {
                     case PRIMARY:
                         if (t.getClickCount() == 1) {
-                            globalSelectionModel.clearSelection();
+                            selectionModel.clearSelection();
                             if (contextMenu != null) {
                                 contextMenu.hide();
                             }
@@ -554,7 +555,7 @@ public class GroupPane extends BorderPane {
                         if (t.getClickCount() == 1) {
                             selectAllFiles();
                         }
-                        if (globalSelectionModel.getSelected().isEmpty() == false) {
+                        if (selectionModel.getSelected().isEmpty() == false) {
                             if (contextMenu == null) {
                                 contextMenu = buildContextMenu();
                             }
@@ -590,7 +591,7 @@ public class GroupPane extends BorderPane {
 
         //listen to tile selection and make sure it is visible in scroll area
         //TODO: make sure we are testing complete visability not just bounds intersection
-        globalSelectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
+        selectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW) {
                 slideShowPane.setFile(newFileId);
             } else {
@@ -736,11 +737,11 @@ public class GroupPane extends BorderPane {
             endIndex = IntStream.of(0, selectionAnchorIndex, endIndex).max().getAsInt();
             List<Long> subList = grouping.get().fileIds().subList(Math.max(0, startIndex), Math.min(endIndex, grouping.get().fileIds().size()) + 1);
 
-            globalSelectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
-            globalSelectionModel.select(newFileID);
+            selectionModel.clearAndSelectAll(subList.toArray(new Long[subList.size()]));
+            selectionModel.select(newFileID);
         } else {
             selectionAnchorIndex = null;
-            globalSelectionModel.clearAndSelect(newFileID);
+            selectionModel.clearAndSelect(newFileID);
         }
     }
 
@@ -796,7 +797,7 @@ public class GroupPane extends BorderPane {
                 switch (t.getCode()) {
                     case SHIFT:
                         if (selectionAnchorIndex == null) {
-                            selectionAnchorIndex = grouping.get().fileIds().indexOf(globalSelectionModel.lastSelectedProperty().get());
+                            selectionAnchorIndex = grouping.get().fileIds().indexOf(selectionModel.lastSelectedProperty().get());
                         }
                         t.consume();
                         break;
@@ -827,7 +828,7 @@ public class GroupPane extends BorderPane {
                         break;
                     case SPACE:
                         if (groupViewMode.get() == GroupViewMode.TILE) {
-                            activateSlideShowViewer(globalSelectionModel.lastSelectedProperty().get());
+                            activateSlideShowViewer(selectionModel.lastSelectedProperty().get());
                         } else {
                             activateTileViewer();
                         }
@@ -839,7 +840,7 @@ public class GroupPane extends BorderPane {
                     selectAllFiles();
                     t.consume();
                 }
-                if (globalSelectionModel.getSelected().isEmpty() == false) {
+                if (selectionModel.getSelected().isEmpty() == false) {
                     switch (t.getCode()) {
                         case NUMPAD0:
                         case DIGIT0:
@@ -871,7 +872,7 @@ public class GroupPane extends BorderPane {
         }
 
         private void handleArrows(KeyEvent t) {
-            Long lastSelectFileId = globalSelectionModel.lastSelectedProperty().get();
+            Long lastSelectFileId = selectionModel.lastSelectedProperty().get();
 
             int lastSelectedIndex = lastSelectFileId != null
                     ? grouping.get().fileIds().indexOf(lastSelectFileId)
