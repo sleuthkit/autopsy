@@ -30,7 +30,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -69,13 +68,12 @@ public class CategorizeAction extends AddTagAction {
 
     @Override
     public void addTag(TagName tagName, String comment) {
-        Set<Long> selectedFiles = new HashSet<>(FileIDSelectionModel.getInstance().getSelected());
+        Set<Long> selectedFiles = new HashSet<>(controller.getSelectionModel().getSelected());
         addTagsToFiles(tagName, comment, selectedFiles);
     }
 
     @Override
     public void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
-
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{selectedFiles.toString(), tagName.getDisplayName()});
 
         for (Long fileID : selectedFiles) {
@@ -128,7 +126,6 @@ public class CategorizeAction extends AddTagAction {
         public void run() {
             final CategoryManager categoryManager = controller.getCategoryManager();
             final DrawableTagsManager tagsManager = controller.getTagsManager();
-
 
             try {
                 DrawableFile<?> file = controller.getFileFromId(fileID);   //drawable db

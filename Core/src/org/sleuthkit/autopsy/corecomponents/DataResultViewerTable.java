@@ -83,6 +83,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private Node currentRoot;
     private List<String> currentlySelectedNodes;
     private Map<String, String> savedSelectionMap;
+    private String currentRootItemType;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -362,6 +363,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
+        
+        if(root instanceof TableFilterNode) {
+            TableFilterNode filterNode = (TableFilterNode) root;
+            currentRootItemType =  filterNode.getItemType();
+        }
+        else {
+            currentRootItemType = "";
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
+        }
 
         em.setRootContext(root);
 
@@ -466,14 +477,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         // Store the selected rows
-        savedSelectionMap.put(getUniqueSelName(currentRoot), stringFromNames(currentlySelectedNodes));
+        savedSelectionMap.put(getUniqueSelName(), stringFromNames(currentlySelectedNodes));
         currentlySelectedNodes.clear();
 
+        if(currentRootItemType.isEmpty())
+            return;
+        
         // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueColName(currentRoot, prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop), String.valueOf(i));
         }
     }
 
@@ -483,21 +497,25 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
-        String objectString = savedSelectionMap.get(getUniqueSelName(currentRoot));
+        String objectString = savedSelectionMap.get(getUniqueSelName());
         if (objectString != null) {
             currentlySelectedNodes = stringToNames(objectString);
         } else {
             currentlySelectedNodes = new ArrayList<>();
         }
-        
-        // Load the column arrangement stored for the given node if exists.
+            
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        
+        // If type is not defined, use default order for columns
+        if(currentRootItemType.isEmpty())
+            return props;
+        
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass())
-                    .get(getUniqueColName(currentRoot, prop), "-1"));
+                    .get(getUniqueColName(prop), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -588,23 +606,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     // Get unique name for node to be used for saving column orderings.
-    private String getUniqueColName(Node root, Property<?> prop) {
-        String type = "Generic";
-        if(root instanceof TableFilterNode) {
-            TableFilterNode filterNode = (TableFilterNode) root;
-            type =  filterNode.getItemType();
-        }
-        else {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Node is not TableFilterNode");
-        }
-        
-        return Case.getCurrentCase().getName() + "." + type + "." 
+    private String getUniqueColName(Property<?> prop) {   
+        return Case.getCurrentCase().getName() + "." + currentRootItemType + "."
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
     // Get unique name for node to be used for saving selection.
-    private String getUniqueSelName(Node root) {
-        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "")
+    private String getUniqueSelName() {
+        return Case.getCurrentCase().getName() + "." + currentRoot.getName().replaceAll("[^a-zA-Z0-9_]", "")
                 + ".selectedNodes";
     }
 

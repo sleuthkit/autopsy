@@ -18,41 +18,76 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import com.google.common.collect.ImmutableSet;
+import java.beans.PropertyVetoException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.logging.Level;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javax.swing.SwingUtilities;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.datamodel.TskCoreException;
 
-/** Singleton that manages set of fileIds, as well as last selected fileID.
+/**
+ * Manages set of selected fileIds, as well as last selected fileID. Since some
+ * actions (e.g. {@link ExtractAction} ) invoked through Image Gallery depend on
+ * what is available in the Utilities.actionsGlobalContext() lookup, we maintain
+ * that in sync with the local ObservableList based selection, via the
+ * ImageGalleryTopComponent's ExplorerManager.
  *
  * NOTE: When we had synchronization on selected and lastSelectedProp we got
  * deadlocks with the tiles during selection
- *
- * TODO: should this be singleton? selections are only within a single group
- * now... -jm
  */
 public class FileIDSelectionModel {
 
     private static final Logger LOGGER = Logger.getLogger(FileIDSelectionModel.class.getName());
 
-    private static FileIDSelectionModel instance;
-
     private final ObservableSet<Long> selected = FXCollections.observableSet();
 
     private final ReadOnlyObjectWrapper<Long> lastSelectedProp = new ReadOnlyObjectWrapper<>();
 
-    public static synchronized FileIDSelectionModel getInstance() {
-        if (instance == null) {
-            instance = new FileIDSelectionModel();
-        }
-        return instance;
-    }
+    public FileIDSelectionModel(ImageGalleryController controller) {
+        /**
+         * Since some actions (e.g. {@link ExtractAction} ) invoked through
+         * Image Gallery depend on what is available in the
+         * Utilities.actionsGlobalContext() lookup, we maintain that in sync
+         * with the local ObservableList based selection, via the
+         * ImageGalleryTopComponent's ExplorerManager.
+         */
+        selected.addListener((Observable observable) -> {
+            Set<Long> fileIDs = ImmutableSet.copyOf(selected);
+            SwingUtilities.invokeLater(() -> {
+                ArrayList<FileNode> fileNodes = new ArrayList<>();
+                for (Long id : fileIDs) {
+                    try {
+                        fileNodes.add(new FileNode(controller.getSleuthKitCase().getAbstractFileById(id)));
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex);
+                    }
+                }
+                FileNode[] fileNodeArray = fileNodes.stream().toArray(FileNode[]::new);
+                Children.Array children = new Children.Array();
+                children.add(fileNodeArray);
 
-    public FileIDSelectionModel() {
-        super();
+                ImageGalleryTopComponent etc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                etc.getExplorerManager().setRootContext(new AbstractNode(children));
+                try {
+                    etc.getExplorerManager().setSelectedNodes(fileNodeArray);
+                } catch (PropertyVetoException ex) {
+                    LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex);
+                }
+            });
+        });
     }
 
     public void toggleSelection(Long id) {
@@ -110,6 +145,10 @@ public class FileIDSelectionModel {
         lastSelectedProp.set(id);
     }
 
+    /**
+     * expose the list of selected ids so that clients can listen for changes
+     */
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableSet<Long> getSelected() {
         return selected;
     }

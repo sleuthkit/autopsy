@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
-import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableTileBase.globalSelectionModel;
 import org.sleuthkit.datamodel.AbstractContent;
 
 /**
@@ -63,7 +62,7 @@ public class DrawableTile extends DrawableTileBase {
         imageView.fitHeightProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
         imageView.fitWidthProperty().bind(Toolbar.getDefault(getController()).sizeSliderValue());
 
-        globalSelectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
+        selectionModel.lastSelectedProperty().addListener((observable, oldValue, newValue) -> {
             try {
                 setEffect(Objects.equals(newValue, getFileID()) ? LAST_SELECTED_EFFECT : null);
             } catch (java.lang.IllegalStateException ex) {
@@ -84,7 +83,7 @@ public class DrawableTile extends DrawableTileBase {
     @Override
     protected void updateSelectionState() {
         super.updateSelectionState();
-        final boolean lastSelected = Objects.equals(globalSelectionModel.lastSelectedProperty().get(), getFileID());
+        final boolean lastSelected = Objects.equals(selectionModel.lastSelectedProperty().get(), getFileID());
         Platform.runLater(() -> {
             setEffect(lastSelected ? LAST_SELECTED_EFFECT : null);
         });

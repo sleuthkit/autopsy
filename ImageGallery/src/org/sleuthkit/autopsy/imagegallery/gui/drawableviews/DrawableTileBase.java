@@ -92,7 +92,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected static final Image followUpIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
     protected static final Image followUpGray = new Image("org/sleuthkit/autopsy/imagegallery/images/flag_gray.png");
 
-    protected static final FileIDSelectionModel globalSelectionModel = FileIDSelectionModel.getInstance();
+    protected final FileIDSelectionModel selectionModel;
     private static ContextMenu contextMenu;
 
     /**
@@ -143,9 +143,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      */
     protected DrawableTileBase(GroupPane groupPane, final ImageGalleryController controller) {
         super(controller);
-
         this.groupPane = groupPane;
-        globalSelectionModel.getSelected().addListener((Observable observable) -> updateSelectionState());
+        selectionModel = controller.getSelectionModel();
+        selectionModel.getSelected().addListener((Observable observable) -> updateSelectionState());
 
         //set up mouse listener
         //TODO: split this between DrawableTile and SingleDrawableViewBase
@@ -159,7 +159,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                         case PRIMARY:
                             if (t.getClickCount() == 1) {
                                 if (t.isControlDown()) {
-                                    globalSelectionModel.toggleSelection(fileID);
+                                    selectionModel.toggleSelection(fileID);
                                 } else {
                                     groupPane.makeSelection(t.isShiftDown(), fileID);
                                 }
@@ -173,7 +173,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                             break;
                         case SECONDARY:
                             if (t.getClickCount() == 1) {
-                                if (globalSelectionModel.isSelected(fileID) == false) {
+                                if (selectionModel.isSelected(fileID) == false) {
                                     groupPane.makeSelection(false, fileID);
                                 }
                             }
@@ -257,7 +257,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
             getFile().ifPresent(file -> {
                 if (followUpToggle.isSelected() == true) {
                     try {
-                        globalSelectionModel.clearAndSelect(file.getId());
+                        selectionModel.clearAndSelect(file.getId());
                         new AddDrawableTagAction(getController()).addTag(getController().getTagsManager().getFollowUpTagName(), "");
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex);
@@ -339,7 +339,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
      */
     protected void updateSelectionState() {
         getFile().ifPresent(file -> {
-            final boolean selected = globalSelectionModel.isSelected(file.getId());
+            final boolean selected = selectionModel.isSelected(file.getId());
             Platform.runLater(() -> setBorder(selected ? SELECTED_BORDER : UNSELECTED_BORDER));
         });
     }
