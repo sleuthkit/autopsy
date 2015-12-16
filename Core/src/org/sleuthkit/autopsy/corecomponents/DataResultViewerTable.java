@@ -347,16 +347,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
-        
-        if(root instanceof TableFilterNode) {
-            TableFilterNode filterNode = (TableFilterNode) root;
-            currentRootItemType =  filterNode.getItemType();
-        }
-        else {
-            currentRootItemType = "";
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
-                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
-        }
 
         em.setRootContext(root);
 
@@ -366,11 +356,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
         }
         
-        if(currentRoot != null && !propertiesAcc.isEmpty()) {
-            storeProperties();
-        }
+        storeState();
+        
+        // set the new root and its type.
         currentRoot = root;
-        List<Node.Property<?>> props = loadProperties();
+        if(root instanceof TableFilterNode) {
+            TableFilterNode filterNode = (TableFilterNode) root;
+            currentRootItemType =  filterNode.getItemType();
+        }
+        else {
+            currentRootItemType = "";
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
+        }
+        List<Node.Property<?>> props = loadState();
 
         /*
          * OutlineView makes the first column be the result of
@@ -443,9 +442,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
     
-    // Store the column arrangements of the given Node.
-    private void storeProperties() {
-        if(currentRootItemType.isEmpty())
+    // Store the state of current root Node.
+    private void storeState() {
+        if(currentRoot == null || propertiesAcc.isEmpty()
+            || currentRootItemType.isEmpty())
             return;
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
@@ -454,8 +454,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
     
-    // Load the column arrangement stored for the given node if exists.
-    private List<Node.Property<?>> loadProperties() {
+    // Load the state of current root Node if exists. 
+    private List<Node.Property<?>> loadState() {
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
