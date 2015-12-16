@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
@@ -108,7 +109,7 @@ class KeywordSearchUtil {
             messageType = JOptionPane.INFORMATION_MESSAGE;
         }
 
-        final Component parentComponent = null; // Use default window frame.
+        final Component parentComponent = WindowManager.getDefault().getMainWindow();
         JOptionPane.showMessageDialog(
                 parentComponent,
                 message,

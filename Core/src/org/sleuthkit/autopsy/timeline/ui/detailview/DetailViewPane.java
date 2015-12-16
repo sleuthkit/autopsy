@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -31,10 +29,11 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
-import javafx.scene.Cursor;
 import javafx.scene.chart.Axis;
-import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
@@ -59,20 +58,18 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import org.controlsfx.control.action.Action;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractVisualizationPane;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
@@ -87,7 +84,7 @@ import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
  * EventTypeMap, and dataSets is all linked directly to the ClusterChart which
  * must only be manipulated on the JavaFx thread.
  */
-public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventCluster, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
+public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventStripe, EventBundleNodeBase<?, ?, ?>, EventDetailsChart> {
 
     private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -95,31 +92,38 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     private static final double PAGE_SCROLL_PERCENTAGE = .70;
 
     private final DateAxis dateAxis = new DateAxis();
-    private final Axis<EventCluster> verticalAxis = new EventAxis();
+    private final Axis<EventStripe> verticalAxis = new EventAxis();
     private final ScrollBar vertScrollBar = new ScrollBar();
     private final Region scrollBarSpacer = new Region();
 
     private MultipleSelectionModel<TreeItem<EventBundle<?>>> treeSelectionModel;
     private final ObservableList<EventBundleNodeBase<?, ?, ?>> highlightedNodes = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 
-    //private access to barchart data
-    private final Map<EventType, XYChart.Series<DateTime, EventCluster>> eventTypeToSeriesMap = new ConcurrentHashMap<>();
+    public ObservableList<EventStripe> getEventStripes() {
+        return chart.getEventStripes();
+    }
 
-    public ObservableList<EventBundle<?>> getEventBundles() {
-        return chart.getEventBundles();
+    @Override
+    protected void resetData() {
+        for (XYChart.Series<DateTime, EventStripe> s : dataSeries) {
+            s.getData().forEach(chart::removeDataItem);
+            s.getData().clear();
+        }
+        Platform.runLater(() -> {
+            vertScrollBar.setValue(0);
+        });
+
     }
 
     public DetailViewPane(TimeLineController controller, Pane partPane, Pane contextPane, Region bottomLeftSpacer) {
         super(controller, partPane, contextPane, bottomLeftSpacer);
-
         //initialize chart;
         chart = new EventDetailsChart(controller, dateAxis, verticalAxis, selectedNodes);
         setChartClickHandler(); //can we push this into chart
-        chart.setData(dataSets);
+        chart.setData(dataSeries);
         setCenter(chart);
 
         settingsNodes = new ArrayList<>(new DetailViewSettingsPane().getChildrenUnmodifiable());
-
         //bind layout fo axes and spacers
         dateAxis.setTickLabelGap(0);
         dateAxis.setAutoRanging(false);
@@ -127,6 +131,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         dateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
         dateAxis.getTickSpacing().addListener(observable -> layoutDateLabels());
 
+        verticalAxis.setAutoRanging(false); //prevent XYChart.updateAxisRange() from accessing dataSeries on JFX thread causing ConcurrentModificationException
         bottomLeftSpacer.minWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.prefWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
         bottomLeftSpacer.maxWidthProperty().bind(verticalAxis.widthProperty().add(verticalAxis.tickLengthProperty()));
@@ -227,7 +232,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
     }
 
     @Override
-    protected Axis<EventCluster> getYAxis() {
+    protected Axis<EventStripe> getYAxis() {
         return verticalAxis;
     }
 
@@ -246,93 +251,12 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
         return dateAxis.getTickMarkLabel(value);
     }
 
-    /**
-     * NOTE: Because this method modifies data directly used by the chart, this
-     * method should only be called from JavaFX thread!
-     *
-     * @param et the EventType to get the series for
-     *
-     * @return a Series object to contain all the events with the given
-     *         EventType
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private XYChart.Series<DateTime, EventCluster> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.computeIfAbsent(et, (EventType t) -> {
-            XYChart.Series<DateTime, EventCluster> series = new XYChart.Series<>();
-            series.setName(et.getDisplayName());
-            dataSets.add(series);
-            return series;
-        });
-    }
-
     @Override
     protected Task<Boolean> getUpdateTask() {
-
-        return new LoggedTask<Boolean>(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.name"), true) {
-
-            @Override
-            protected Boolean call() throws Exception {
-                if (isCancelled()) {
-                    return null;
-                }
-
-                if (isCancelled() == false) {
-                    Platform.runLater(() -> {
-                        setCursor(Cursor.WAIT);
-                    });
-                }
-
-                updateProgress(-1, 1);
-                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.preparing"));
-
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.timeRangeProperty().get());
-                final long lowerBound = rangeInfo.getLowerBound();
-                final long upperBound = rangeInfo.getUpperBound();
-
-                updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.queryDb"));
-
-                Platform.runLater(() -> {
-                    if (isCancelled()) {
-                        return;
-                    }
-                    dateAxis.setLowerBound(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()));
-                    dateAxis.setUpperBound(new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
-                    vertScrollBar.setValue(0);
-                    eventTypeToSeriesMap.clear();
-                    dataSets.clear();
-                });
-
-                List<EventCluster> eventClusters = filteredEvents.getEventClusters();
-
-                final int size = eventClusters.size();
-                for (int i = 0; i < size; i++) {
-                    if (isCancelled()) {
-                        break;
-                    }
-                    final EventCluster cluster = eventClusters.get(i);
-                    updateProgress(i, size);
-                    updateMessage(NbBundle.getMessage(this.getClass(), "DetailViewPane.loggedTask.updateUI"));
-                    final XYChart.Data<DateTime, EventCluster> xyData = new BarChart.Data<>(new DateTime(cluster.getSpan().getStartMillis()), cluster);
-
-                    if (isCancelled() == false) {
-                        Platform.runLater(() -> {
-                            getSeries(cluster.getEventType()).getData().add(xyData);
-                        });
-                    }
-                }
-
-                Platform.runLater(() -> {
-                    setCursor(Cursor.DEFAULT);
-                    layoutDateLabels();
-                    updateProgress(1, 1);
-                });
-                return eventClusters.isEmpty() == false;
-            }
-        };
+        return new DetailsUpdateTask();
     }
 
     @Override
-
     protected Effect getSelectionEffect() {
         return null;
     }
@@ -412,7 +336,7 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
             truncateAllBox.selectedProperty().bindBidirectional(chart.truncateAllProperty());
             oneEventPerRowBox.selectedProperty().bindBidirectional(chart.oneEventPerRowProperty());
             truncateSliderLabel.disableProperty().bind(truncateAllBox.selectedProperty().not());
-            truncateSliderLabel.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSliderLabel.text"));
+            truncateSliderLabel.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSliderLabel.text"));
             final InvalidationListener sliderListener = o -> {
                 if (truncateWidthSlider.isValueChanging() == false) {
                     chart.getTruncateWidth().set(truncateWidthSlider.getValue());
@@ -432,26 +356,26 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
             });
 
             advancedLayoutOptionsButtonLabel.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
-            bandByTypeBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.advancedLayoutOptionsButtonLabel.text"));
+            bandByTypeBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBox.text"));
             bandByTypeBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.bandByTypeBoxMenuItem.text"));
-            oneEventPerRowBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.bandByTypeBoxMenuItem.text"));
+            oneEventPerRowBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBox.text"));
             oneEventPerRowBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
-            truncateAllBox.setText(NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBox.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.oneEventPerRowBoxMenuItem.text"));
+            truncateAllBox.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBox.text"));
             truncateAllBoxMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPan.truncateAllBoxMenuItem.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPan.truncateAllBoxMenuItem.text"));
             truncateSliderLabelMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.truncateSlideLabelMenuItem.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.truncateSlideLabelMenuItem.text"));
             descVisibilitySeparatorMenuItem.setText(
-                    NbBundle.getMessage(this.getClass(), "DetailViewPane.descVisSeparatorMenuItem.text"));
-            showRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadioMenuItem.text"));
-            showRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.showRadio.text"));
-            countsRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadioMenuItem.text"));
-            countsRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.countsRadio.text"));
-            hiddenRadioMenuItem.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadioMenuItem.text"));
-            hiddenRadio.setText(NbBundle.getMessage(this.getClass(), "DetailViewPane.hiddenRadio.text"));
+                    NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.descVisSeparatorMenuItem.text"));
+            showRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadioMenuItem.text"));
+            showRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.showRadio.text"));
+            countsRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadioMenuItem.text"));
+            countsRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.countsRadio.text"));
+            hiddenRadioMenuItem.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadioMenuItem.text"));
+            hiddenRadio.setText(NbBundle.getMessage(DetailViewPane.class, "DetailViewPane.hiddenRadio.text"));
         }
     }
 
@@ -461,5 +385,77 @@ public class DetailViewPane extends AbstractVisualizationPane<DateTime, EventClu
 
     public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
         return chart.new HideDescriptionAction(description, descriptionLoD);
+    }
+
+    @NbBundle.Messages({
+        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
+        "DetailViewPane.loggedTask.name=Updating Details View",
+        "DetailViewPane.loggedTask.updateUI=Populating visualization",
+        "DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow or even crash Autopsy.\n\nDo you want to continue?"})
+    private class DetailsUpdateTask extends VisualizationUpdateTask<Interval> {
+
+        DetailsUpdateTask() {
+            super(Bundle.DetailViewPane_loggedTask_name(), true);
+        }
+
+        @Override
+        protected Boolean call() throws Exception {
+            super.call();
+            if (isCancelled()) {
+                return null;
+            }
+
+            resetChart(getTimeRange());
+
+            updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
+            List<EventStripe> eventStripes = filteredEvents.getEventStripes();
+            if (eventStripes.size() > 2000) {
+                Task<ButtonType> task = new Task<ButtonType>() {
+
+                    @Override
+                    protected ButtonType call() throws Exception {
+                        ButtonType ContinueButtonType = new ButtonType("Continue", ButtonBar.ButtonData.OK_DONE);
+                        ButtonType back = new ButtonType("Back (Cancel)", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.DetailViewPane_loggedTask_prompt(eventStripes.size()), ContinueButtonType, back);
+                        alert.setHeaderText("");
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.initOwner(getScene().getWindow());
+                        ButtonType orElse = alert.showAndWait().orElse(back);
+                        if (orElse == back) {
+                            DetailsUpdateTask.this.cancel();
+                        }
+                        return orElse;
+                    }
+                };
+                Platform.runLater(task);
+                ButtonType get = task.get();
+            }
+            updateMessage(Bundle.DetailViewPane_loggedTask_updateUI());
+            final int size = eventStripes.size();
+            for (int i = 0; i < size; i++) {
+                if (isCancelled()) {
+                    return null;
+                }
+                updateProgress(i, size);
+                final EventStripe cluster = eventStripes.get(i);
+                final XYChart.Data<DateTime, EventStripe> dataItem = new XYChart.Data<>(new DateTime(cluster.getStartMillis()), cluster);
+                getSeries(cluster.getEventType()).getData().add(dataItem);
+                chart.addDataItem(dataItem);
+            }
+
+            return eventStripes.isEmpty() == false;
+        }
+
+        @Override
+        protected void cancelled() {
+            super.cancelled();
+            controller.retreat();
+        }
+
+        @Override
+        protected void setDateAxisValues(Interval timeRange) {
+            dateAxis.setRange(timeRange, true);
+        }
     }
 }

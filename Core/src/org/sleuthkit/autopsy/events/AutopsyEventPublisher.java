@@ -40,8 +40,10 @@ public final class AutopsyEventPublisher {
      * Composed of thread-safe objects.
      */
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
+    private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 3;
     private final LocalEventPublisher localPublisher;
     private RemoteEventPublisher remotePublisher;
+    private String currentChannelName;
 
     /**
      * Constructs an object for publishing events to registered subscribers on
@@ -62,6 +64,7 @@ public final class AutopsyEventPublisher {
      * @throws AutopsyEventException if the channel was not opened.
      */
     public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
+        currentChannelName = channelName;
         if (null != remotePublisher) {
             closeRemoteEventChannel();
         }
@@ -83,6 +86,7 @@ public final class AutopsyEventPublisher {
      * events from other Autopsy nodes.
      */
     public void closeRemoteEventChannel() {
+        currentChannelName = null;
         if (null != remotePublisher) {
             try {
                 remotePublisher.stop();
@@ -158,13 +162,29 @@ public final class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public void publishRemotely(AutopsyEvent event) {
-        if (null != remotePublisher) {
-            try {
-                remotePublisher.publish(event);
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to publish %s event remotely", event.getPropertyName()), ex); //NON-NLS
+        /*
+         * This is a no-op if a remote channel has not been opened.
+         */
+        if (null != currentChannelName) {
+            boolean published = false;
+            int tryCount = 1;
+            while (false == published && tryCount <= MAX_REMOTE_EVENT_PUBLISH_TRIES) {
+                try {
+                    if (null == remotePublisher) {
+                        openRemoteEventChannel(currentChannelName);
+                    }
+                    remotePublisher.publish(event);
+                    published = true;
+                } catch (JMSException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to publish %s using channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
+                    closeRemoteEventChannel();
+                    ++tryCount;
+                } catch (AutopsyEventException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to reopen channel %s to publish %s event (tryCount = %s)", currentChannelName, event.getPropertyName(), tryCount), ex); //NON-NLS
+                    ++tryCount;
+                }
             }
-        }
+        } 
     }
 
 }

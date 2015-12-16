@@ -114,26 +114,20 @@ public class ZoomSettingsPane extends TitledPane {
                 () -> {
                     RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(this.filteredEvents.timeRangeProperty().get());
                     ChronoUnit chronoUnit = rangeInfo.getPeriodSize().getChronoUnit();
-
                     timeUnitSlider.setValue(TimeUnits.fromChronoUnit(chronoUnit).ordinal() - 1);
                 });
-        initializeSlider(descrLODSlider, () -> {
-            DescriptionLoD newLOD = DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())];
-            if (controller.pushDescrLOD(newLOD) == false) {
-                descrLODSlider.setValue(new DescrLODConverter().fromString(controller.getEventsModel().getDescriptionLOD().toString()));
-            }
-        }, this.filteredEvents.descriptionLODProperty(), () -> {
-            descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
-        });
-        initializeSlider(typeZoomSlider,
-                () -> {
-                    EventTypeZoomLevel newZoomLevel = EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())];
-                    controller.pushEventTypeZoom(newZoomLevel);
-                },
-                this.filteredEvents.eventTypeZoomProperty(),
-                () -> {
-                    typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal());
+
+        initializeSlider(descrLODSlider,
+                () -> controller.pushDescrLOD(DescriptionLoD.values()[Math.round(descrLODSlider.valueProperty().floatValue())]),
+                this.filteredEvents.descriptionLODProperty(), () -> {
+                    descrLODSlider.setValue(this.filteredEvents.descriptionLODProperty().get().ordinal());
                 });
+
+        initializeSlider(typeZoomSlider,
+                () -> controller.pushEventTypeZoom(EventTypeZoomLevel.values()[Math.round(typeZoomSlider.valueProperty().floatValue())]),
+                this.filteredEvents.eventTypeZoomProperty(),
+                () -> typeZoomSlider.setValue(this.filteredEvents.eventTypeZoomProperty().get().ordinal()));
+
         descrLODSlider.disableProperty().bind(controller.viewModeProperty().isEqualTo(VisualizationMode.COUNTS));
         Back back = new Back(controller);
         backButton.disableProperty().bind(back.disabledProperty());

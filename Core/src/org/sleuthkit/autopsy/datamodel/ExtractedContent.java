@@ -118,6 +118,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     NAME));
             return s;
         }
+
+        @Override
+        public String getItemType() {
+            return "ExtractedContentRoot";
+        }
     }
 
     /**
@@ -366,6 +371,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public boolean isLeafTypeNode() {
             return true;
+        }
+
+        @Override
+        public String getItemType() {
+            return type.getDisplayName();
         }
     }
 

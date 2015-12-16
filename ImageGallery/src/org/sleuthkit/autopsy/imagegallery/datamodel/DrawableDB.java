@@ -44,7 +44,6 @@ import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
@@ -55,6 +54,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.GROUP_BY_VALUE;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -477,6 +478,32 @@ public final class DrawableDB {
     }
 
     /**
+     * get the names of the hashsets that the given fileID belongs to
+     *
+     * @param fileID the fileID to get all the Hashset names for
+     *
+     * @return a set of hash set names, each of which the given file belongs to
+     *
+     * @throws TskCoreException
+     *
+     *
+     * //TODO: this is mostly a cut and paste from *
+     * AbstractContent.getHashSetNames, is there away to dedupe?
+     */
+    Set<String> getHashSetsForFile(long fileID) throws TskCoreException {
+        Set<String> hashNames = new HashSet<>();
+        ArrayList<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, fileID);
+
+        for (BlackboardArtifact a : artifacts) {
+            List<BlackboardAttribute> attributes = a.getAttributes(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for (BlackboardAttribute attr : attributes) {
+                hashNames.add(attr.getValueString());
+            }
+        }
+        return Collections.unmodifiableSet(hashNames);
+    }
+
+    /**
      * get all the hash set names used in the db
      *
      * @return a set of the names of all the hash sets that have hash set hits
@@ -509,7 +536,8 @@ public final class DrawableDB {
                 }
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName());
+            LOGGER.log(Level.WARNING, msg, ex);
         } finally {
             dbReadUnlock();
         }
@@ -652,7 +680,8 @@ public final class DrawableDB {
                 return analyzedQuery.getBoolean(ANALYZED);
             }
         } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            String msg = String.format("Failed to determine if file %s is finalized", String.valueOf(fileId));
+            LOGGER.log(Level.WARNING, msg, ex);
         } finally {
             dbReadUnlock();
         }

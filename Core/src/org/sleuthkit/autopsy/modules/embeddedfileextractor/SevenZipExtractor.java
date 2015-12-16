@@ -87,7 +87,7 @@ class SevenZipExtractor {
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
-    
+
     private Blackboard blackboard;
 
     private String getLocalRootAbsPath(String uniqueArchiveFileName) {
@@ -151,7 +151,7 @@ class SevenZipExtractor {
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
-     * supported. Else it returns false.
+     *         supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
@@ -185,7 +185,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName the parent archive
+     * @param archiveName     the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -229,7 +229,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting archive item size and cannot detect if zipbomb. ", ex); //NON-NLS
             return false;
         }
     }
@@ -284,7 +284,7 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param pipelineContext current ingest context
-     * @param archiveFile file to unpack
+     * @param archiveFile     file to unpack
      *
      * @return list of unpacked derived files
      */
@@ -357,7 +357,7 @@ class SevenZipExtractor {
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
-            final String uniqueArchiveFileName = EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile);
+            final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
             final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
             final File localRoot = new File(localRootAbsPath);
             if (!localRoot.exists()) {
@@ -392,12 +392,21 @@ class SevenZipExtractor {
                     if (dotI != -1) {
                         String base = archName.substring(0, dotI);
                         String ext = archName.substring(dotI);
+                        int colonIndex = ext.lastIndexOf(":");
+                        if (colonIndex != -1) {
+                            // If alternate data stream is found, fix the name 
+                            // so Windows doesn't choke on the colon character.
+                            ext = ext.substring(0, colonIndex);
+                        }
                         switch (ext) {
                             case ".gz": //NON-NLS
                                 useName = base;
                                 break;
                             case ".tgz": //NON-NLS
                                 useName = base + ".tar"; //NON-NLS
+                                break;
+                            case ".bz2": //NON-NLS
+                                useName = base;
                                 break;
                         }
                     }
@@ -415,7 +424,6 @@ class SevenZipExtractor {
                 }
                 archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
-                logger.log(Level.INFO, "Extracted item path: {0}", pathInArchive); //NON-NLS
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
@@ -466,7 +474,7 @@ class SevenZipExtractor {
                     }
                 }
 
-                final String uniqueExtractedName = uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName();
+                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName());
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
@@ -509,10 +517,11 @@ class SevenZipExtractor {
                 SevenZipExtractor.UnpackStream unpackStream = null;
                 if (!isDir) {
                     try {
-                        if (size != null)
+                        if (size != null) {
                             unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, size);
-                        else
+                        } else {
                             unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
+                        }
                         item.extractSlow(unpackStream);
                     } catch (Exception e) {
                         //could be something unexpected with this file, move on
@@ -553,7 +562,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.SEVERE, "Error unpacking file: {0}", archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Error unpacking file: {0}", archiveFile); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
@@ -594,16 +603,16 @@ class SevenZipExtractor {
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
-                
+
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.error.msg", artifact.getDisplayName()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
-                        NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
+                            NbBundle.getMessage(Blackboard.class, "Blackboard.unableToIndexArtifact.exception.msg"), artifact.getDisplayName());
                 }
-                    
+
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFilePath, ex); //NON-NLS
@@ -643,11 +652,11 @@ class SevenZipExtractor {
         }
 
         public abstract long getSize();
-        
+
         OutputStream getOutput() {
             return output;
         }
-        
+
         String getLocalAbsPath() {
             return localAbsPath;
         }
@@ -772,8 +781,8 @@ class SevenZipExtractor {
         /**
          *
          * @param localPathRoot Path in module output folder that files will be
-         * saved to
-         * @param archiveFile Archive file being extracted
+         *                      saved to
+         * @param archiveFile   Archive file being extracted
          * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
@@ -1032,7 +1041,7 @@ class SevenZipExtractor {
         /**
          * Add a new archive to track of depth
          *
-         * @param parent parent archive or null
+         * @param parent   parent archive or null
          * @param objectId object id of the new archive
          *
          * @return the archive added

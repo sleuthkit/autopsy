@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
+import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.concurrent.Immutable;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
@@ -35,7 +38,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 
 /**
- * * bundles up the results of analyzing a time range for the appropriate
+ * Bundles up the results of analyzing a time range for the appropriate
  * {@link TimeUnits} to use to visualize it. Partly, this class exists so I
  * don't have to have more member variables in other places , and partly because
  * I can only return a single value from a function. This might only be a
@@ -76,6 +79,7 @@ public class RangeDivisionInfo {
      * the time range this {@link RangeDivisionInfo} describes
      */
     private final Interval timeRange;
+    private ImmutableList<Interval> intervals;
 
     public Interval getTimeRange() {
         return timeRange;
@@ -160,5 +164,29 @@ public class RangeDivisionInfo {
 
     public long getLowerBound() {
         return lowerBound;
+    }
+
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
+    synchronized public List<Interval> getIntervals() {
+        if (intervals == null) {
+            ArrayList<Interval> tempList = new ArrayList<>();
+            //extend range to block bounderies (ie day, month, year)
+            final Interval range = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
+
+            DateTime start = range.getStart();
+            while (range.contains(start)) {
+                //increment for next iteration
+                DateTime end = start.plus(getPeriodSize().getPeriod());
+                final Interval interval = new Interval(start, end);
+                tempList.add(interval);
+                start = end;
+            }
+            intervals = ImmutableList.copyOf(tempList);
+        }
+        return intervals;
+    }
+
+    public String formatForTick(Interval interval) {
+        return interval.getStart().toString(tickFormatter);
     }
 }

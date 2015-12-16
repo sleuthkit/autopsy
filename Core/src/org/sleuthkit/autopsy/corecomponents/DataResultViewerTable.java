@@ -39,6 +39,7 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -66,6 +67,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * DataResult sortable table viewer
@@ -82,6 +84,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
     private ArrayList<String> currentlySelectedNodes;
+    private String currentRootItemType;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -112,10 +115,35 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
+        
+        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {}
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {}
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {}
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {}
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                // change the order of the column in the array/hashset
+                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+                Node.Property<?> prop = props.remove(e.getFromIndex());
+                props.add(e.getToIndex(), prop);
+
+                propertiesAcc.clear();
+                for (int j = 0; j < props.size(); ++j) {
+                    propertiesAcc.add(props.get(j));
+                }
+            }
+        });
+        
         /**
-         * Add mouse listener to perform action on double-click A somewhat hacky
-         * way to perform action even if the column clicked is not the first
-         * one.
+         * Add mouse listener to perform action on double-click
+         * A somewhat hacky way to perform action even if the column clicked 
+         * is not the first one.
          */
         ov.getOutline().addMouseListener(new MouseListener() {
             @Override
@@ -137,30 +165,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             action.actionPerformed(null);
                         }
                     }
-                }
-            }
-        });
-
-        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-            @Override
-            public void columnAdded(TableColumnModelEvent e) {}
-            @Override
-            public void columnRemoved(TableColumnModelEvent e) {}
-            @Override
-            public void columnMarginChanged(ChangeEvent e) {}
-            @Override
-            public void columnSelectionChanged(ListSelectionEvent e) {}
-
-            @Override
-            public void columnMoved(TableColumnModelEvent e) {
-                // change the order of the column in the array/hashset
-                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-                Node.Property<?> prop = props.remove(e.getFromIndex());
-                props.add(e.getToIndex(), prop);
-
-                propertiesAcc.clear();
-                for (int j = 0; j < props.size(); ++j) {
-                    propertiesAcc.add(props.get(j));
                 }
             }
         });
@@ -359,12 +363,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
-        //wrap to filter out children
-        //note: this breaks the tree view mode in this generic viewer,
-        //so wrap nodes earlier if want 1 level view
-        //if (!(root instanceof TableFilterNode)) {
-        ///    root = new TableFilterNode(root, true);
-        //}
 
         em.setRootContext(root);
 
@@ -373,12 +371,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (ov == null) {
             return;
         }
-
+        
         storeState();
+        
+        // set the new root and its type.
         currentRoot = root;
+        if(root instanceof TableFilterNode) {
+            TableFilterNode filterNode = (TableFilterNode) root;
+            currentRootItemType =  filterNode.getItemType();
+        }
+        else {
+            currentRootItemType = "";
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
+        }
         List<Node.Property<?>> props = loadState();
 
-        Node[] selected = this.em.getSelectedNodes();
         /*
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -441,12 +449,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                 }
             }
-        }
-
-        // if there's no content just auto resize all columns
-        if (content == null || content.length <= 0) {
-            // turn on the auto resize
-            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            
+            // if there's no content just auto resize all columns
+            if (content.length <= 0) {
+                // turn on the auto resize
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            }
         }
         
         // Select loaded nodes
@@ -461,9 +469,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Store the  state of the table for the current root node.
      */
     private void storeState() {
-        if (currentRoot == null || propertiesAcc.isEmpty()) {
+        if (currentRoot == null || propertiesAcc.isEmpty()
+            || currentRootItemType.isEmpty())
             return;
-        }
 
         // Store the selected rows
         NbPreferences.forModule(this.getClass()).put(getUniqueSelName(currentRoot), stringFromNames(currentlySelectedNodes));
@@ -473,14 +481,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueColName(currentRoot, prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop), String.valueOf(i));
         }
     }
-
-    /**
-     * Load the stored state of current root if already stored.
-     * @return The loaded list of node properties to be used as columns.
-     */
+            
+    // Load the state of current root Node if exists. 
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
         String objectString = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(currentRoot), null);
@@ -490,21 +495,30 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             currentlySelectedNodes = new ArrayList<>();
         }
         
-        // Load the column arrangement stored for the given node if exists.
+        // Load the column order
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+        
+        // If type is not defined, use default order for columns
+        if(currentRootItemType.isEmpty())
+            return props;
+        
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass())
-                    .get(getUniqueColName(currentRoot, prop), "-1"));
+                    .get(getUniqueColName(prop), "-1"));
             if (value >= 0) {
+                /**
+                 * The original contents of orderedProps do not matter when setting the new ordered values. The reason
+                 * we copy propertiesAcc into it first is to give it the currect size so we can set() in any index.
+                 */
                 orderedProps.set(value, prop);
             }
         }
         propertiesAcc.clear();
-        for (int j = 0; j < props.size(); ++j) {
-            propertiesAcc.add(orderedProps.get(j));
+        for (Property<?> prop : orderedProps) {
+            propertiesAcc.add(prop);
         }
         return orderedProps;
     }
@@ -582,8 +596,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     // Get unique name for node and it's property.
-    private String getUniqueColName(Node root, Property<?> prop) {
-        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "") + "."
+    private String getUniqueColName(Property<?> prop) {
+        return Case.getCurrentCase().getName() + "." + currentRootItemType + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 

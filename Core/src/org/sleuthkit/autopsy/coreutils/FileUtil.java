@@ -68,7 +68,7 @@ public class FileUtil {
             hadErrors = true;
         }
 
-        return hadErrors;
+        return !hadErrors;
     }
 
     /**

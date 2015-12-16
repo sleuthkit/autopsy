@@ -73,12 +73,14 @@ public class OpenTimelineAction extends CallableSystemAction {
             LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
             return;
         }
-            if (timeLineController == null) {
-                timeLineController = new TimeLineController(currentCase);
-            } else if (timeLineController.getAutopsyCase() != currentCase) {
-                timeLineController.closeTimeLine();
-                timeLineController = new TimeLineController(currentCase);
-            }
+
+        if (timeLineController == null) {
+            timeLineController = new TimeLineController(currentCase);
+        } else if (timeLineController.getAutopsyCase() != currentCase) {
+            timeLineController.closeTimeLine();
+            timeLineController = new TimeLineController(currentCase);
+        }
+
         timeLineController.openTimeLine();
     }
 

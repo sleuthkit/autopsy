@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.datamodel.EventBundle;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
@@ -41,9 +42,10 @@ class RootItem extends NavTreeItem {
     /**
      * the comparator if any used to sort the children of this item
      */
-//    private TreeNodeComparators comp;
-    RootItem() {
+    private Comparator<TreeItem<EventBundle<?>>> comparator = TreeComparator.Type.reversed();
 
+    RootItem(Comparator<TreeItem<EventBundle<?>>> comp) {
+        comp = comp;
     }
 
     @Override
@@ -54,19 +56,32 @@ class RootItem extends NavTreeItem {
     /**
      * Recursive method to add a grouping at a given path.
      *
-     * @param g Group to add
+     * @param bundle bundle to add
      */
-    public void insert(EventBundle<?> g) {
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public void insert(EventBundle<?> bundle) {
 
-        EventTypeTreeItem treeItem = childMap.computeIfAbsent(g.getEventType().getBaseType(),
+        EventTypeTreeItem treeItem = childMap.computeIfAbsent(bundle.getEventType().getBaseType(),
                 baseType -> {
-                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(g);
+                    EventTypeTreeItem newTreeItem = new EventTypeTreeItem(bundle, comparator);
                     newTreeItem.setExpanded(true);
                     getChildren().add(newTreeItem);
-                    getChildren().sort(TreeComparator.Type);
                     return newTreeItem;
                 });
-        treeItem.insert(getTreePath(g));
+        treeItem.insert(getTreePath(bundle));
+
+    }
+
+    void remove(EventBundle<?> bundle) {
+        EventTypeTreeItem typeTreeItem = childMap.get(bundle.getEventType().getBaseType());
+        if (typeTreeItem != null) {
+            typeTreeItem.remove(getTreePath(bundle));
+
+            if (typeTreeItem.getChildren().isEmpty()) {
+                childMap.remove(bundle.getEventType().getBaseType());
+                getChildren().remove(typeTreeItem);
+            }
+        }
     }
 
     static Deque< EventBundle<?>> getTreePath(EventBundle<?> g) {
@@ -83,8 +98,9 @@ class RootItem extends NavTreeItem {
     }
 
     @Override
-    public void resort(Comparator<TreeItem<EventBundle<?>>> comp) {
-        childMap.values().forEach(ti -> ti.resort(comp));
+    void resort(Comparator<TreeItem<EventBundle<?>>> comp, Boolean recursive) {
+        comparator = comp;
+        childMap.values().forEach(ti -> ti.resort(comp, true));
     }
 
     @Override

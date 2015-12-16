@@ -918,7 +918,7 @@ class ReportGenerator {
         if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
-            orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
+            orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
         String keywordListQuery
                 = "SELECT att.value_text AS list " + //NON-NLS
@@ -957,9 +957,10 @@ class ReportGenerator {
             orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
-            orderByClause = "ORDER BY att3.value_text ASC, att1.value_text ASC, f.parent_path ASC, f.name ASC"; //NON-NLS
+            orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
         // Query for keywords, grouped by list
         String keywordsQuery

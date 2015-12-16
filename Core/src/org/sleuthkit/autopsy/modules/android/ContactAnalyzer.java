@@ -139,7 +139,6 @@ class ContactAnalyzer {
                 name = resultSet.getString("display_name"); //NON-NLS
                 data1 = resultSet.getString("data1"); //NON-NLS
                 mimetype = resultSet.getString("mimetype"); //NON-NLS
-//                    System.out.println(resultSet.getString("data1") + resultSet.getString("mimetype") + resultSet.getString("display_name")); //Test code
                 if (name.equals(oldName) == false) {
                     bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                     bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), moduleName, name));

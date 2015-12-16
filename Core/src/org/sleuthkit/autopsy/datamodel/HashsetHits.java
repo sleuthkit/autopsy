@@ -168,6 +168,11 @@ public class HashsetHits implements AutopsyVisitableItem {
 
             return s;
         }
+
+        @Override
+        public String getItemType() {
+            return "HashsetRoot";
+        }
     }
 
     /**
@@ -320,6 +325,11 @@ public class HashsetHits implements AutopsyVisitableItem {
         @Override
         public void update(Observable o, Object arg) {
             updateDisplayName();
+        }
+
+        @Override
+        public String getItemType() {
+            return "HashsetName";
         }
     }
 
