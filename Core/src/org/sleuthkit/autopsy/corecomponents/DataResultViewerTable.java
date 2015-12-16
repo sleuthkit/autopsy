@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -32,12 +31,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -54,7 +54,6 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Node.Handle;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.NodeEvent;
@@ -62,7 +61,6 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -83,7 +81,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
-    private ArrayList<String> currentlySelectedNodes;
+    private List<String> currentlySelectedNodes;
+    private Map<String, List<String>> savedSelectionMap;
     private String currentRootItemType;
 
     /**
@@ -106,6 +105,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
+        savedSelectionMap = new HashMap<>();
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
 
@@ -115,7 +115,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
-        
         ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {}
@@ -461,7 +460,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         try {
             this.em.setSelectedNodes(namesToList(currentlySelectedNodes));
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
+            /**
+             * ignore exception since when we call setup table for the first time, the node's children
+             * might have not been initialized.
+             * Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
+             */
         }
     }
 
@@ -474,9 +477,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
 
         // Store the selected rows
-        NbPreferences.forModule(this.getClass()).put(getUniqueSelName(currentRoot), stringFromNames(currentlySelectedNodes));
+        savedSelectionMap.put(getUniqueSelName(), currentlySelectedNodes);
         currentlySelectedNodes.clear();
 
+        if(currentRootItemType.isEmpty())
+            return;
+        
         // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
@@ -488,13 +494,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // Load the state of current root Node if exists. 
     private List<Node.Property<?>> loadState() {
         // Load the selected Nodes for the current root node if exist.
-        String objectString = NbPreferences.forModule(this.getClass()).get(getUniqueSelName(currentRoot), null);
-        if (objectString != null) {
-            currentlySelectedNodes = stringToNames(objectString);
+        List<String> selectedNodes = savedSelectionMap.get(getUniqueSelName());
+        if (selectedNodes != null) {
+            currentlySelectedNodes = selectedNodes;
         } else {
             currentlySelectedNodes = new ArrayList<>();
-        }
-        
+        }        
         // Load the column order
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
@@ -543,12 +548,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param names ArrayList of node names to extract from current root
      * @return the list of nodes extracted.
      */
-    private Node[] namesToList(ArrayList<String> names) {
+    private Node[] namesToList(List<String> names) {
         Node[] nodes = new Node[names.size()];
-        Node[] children = currentRoot.getChildren().getNodes(true);
+        if(names.isEmpty())
+            return nodes;
+        Node[] children = currentRoot.getChildren().getNodes(false);
         int i = 0;
-        for (Node child : children) {
-            for (String name : names) {
+        for (String name : names) {
+            for (Node child : children) {
                 if (child.getName().equals(name)) {
                     nodes[i] = child;
                     i++;
@@ -558,52 +565,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return nodes;
     }
 
-    /**
-     * Serialized and convert the ArrayList of names into an object string.
-     * @param names ArrayList of names to serialize.
-     * @return The serialized string.
-     */
-    private static String stringFromNames(ArrayList<String> names) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-                oos.writeObject(names);
-            }
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return Base64.getEncoder().encodeToString(baos.toByteArray());
-    }
-
-    /**
-     * Get the ArrayList of names back from the object string.
-     * Suppress the casting warning since object has to be of this type.
-     * @param objectString  The object string to convert
-     * @return The ArrayList of names converted from the object string
-     */
-    @SuppressWarnings("unchecked")
-    private static ArrayList<String> stringToNames(String objectString) {
-        byte[] data = Base64.getDecoder().decode(objectString);
-        ArrayList<String> names = new ArrayList<>();
-        try {
-            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
-                names = (ArrayList<String>) ois.readObject();
-            }
-        } catch (IOException | ClassNotFoundException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        return names;
-    }
-
-    // Get unique name for node and it's property.
-    private String getUniqueColName(Property<?> prop) {
-        return Case.getCurrentCase().getName() + "." + currentRootItemType + "." 
+    // Get unique name for node to be used for saving column orderings.
+    private String getUniqueColName(Property<?> prop) {   
+        return Case.getCurrentCase().getName() + "." + currentRootItemType + "."
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
-    // Get unique name for node and it's property.
-    private String getUniqueSelName(Node root) {
-        return Case.getCurrentCase().getName() + "." + root.getName().replaceAll("[^a-zA-Z0-9_]", "")
+    // Get unique name for node to be used for saving selection.
+    private String getUniqueSelName() {
+        return Case.getCurrentCase().getName() + "." + currentRoot.getName().replaceAll("[^a-zA-Z0-9_]", "")
                 + ".selectedNodes";
     }
 
