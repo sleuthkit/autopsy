@@ -66,12 +66,14 @@ public class ImageDSProcessor implements DataSourceProcessor {
 
     static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
     static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+    static final GeneralFilter virtualMachineFilter = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
 
     static final List<String> allExt = new ArrayList<>();
 
     static {
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
     }
     static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
@@ -82,6 +84,7 @@ public class ImageDSProcessor implements DataSourceProcessor {
         filtersList.add(allFilter);
         filtersList.add(rawFilter);
         filtersList.add(encaseFilter);
+        filtersList.add(virtualMachineFilter);
     }
 
     /*

@@ -113,6 +113,7 @@
             <fileset dir="${zip-tmp}/${app.name}/autopsy/modules/lib">
                 <include name="libtsk_jni.dll" />
                 <include name="libewf.dll" />
+                <include name="libvmdk.dll"/>
                 <include name="zlib.dll" />
                 <include name="libintl-8.dll"/>
                 <include name="ssleay32.dll"/>

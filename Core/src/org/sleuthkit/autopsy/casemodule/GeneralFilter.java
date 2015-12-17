@@ -37,6 +37,10 @@ public class GeneralFilter extends FileFilter {
     public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"}); //NON-NLS
     public static final String ENCASE_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class,
             "GeneralFilter.encaseImageDesc.text");
+    
+    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(new String[]{".vmdk"}); //NON-NLS
+    public static final String VIRTUAL_MACHINE_DESC = NbBundle.getMessage(GeneralFilter.class,
+            "GeneralFilter.virtualMachineImageDesc.text");    
 
     private List<String> extensions;
     private String desc;
