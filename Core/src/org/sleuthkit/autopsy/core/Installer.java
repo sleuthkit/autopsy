@@ -69,7 +69,7 @@ public class Installer extends ModuleInstall {
                 
                 logger.log(Level.INFO, "MSVCR100 and MSVCP100 libraries loaded"); //NON-NLS
             } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading MSVCR100 and MSVCP100 libraries, ", e); //NON-NLS
+                logger.log(Level.WARNING, "Error loading MSVCR100 and MSVCP100 libraries"); //NON-NLS
             }
 
             try {

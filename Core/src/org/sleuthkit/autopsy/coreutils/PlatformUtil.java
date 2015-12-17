@@ -201,14 +201,9 @@ public class PlatformUtil {
      * @return Lib path string
      */
     public static String getLibsPath() {
-        System.out.println(PlatformUtil.getInstallPath());
-        System.out.println(PlatformUtil.getInstallModulesPath());
-        System.out.println(PlatformUtil.getLogDirectory());
-        System.out.println(PlatformUtil.getUserModulesPath());
-        System.out.println(PlatformUtil.getUserDirectory());
-        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
-        File rootPath = coreFolder.getParentFile().getParentFile();
-        return new File(".").getAbsolutePath() + ".\\build\\cluster\\modules\\lib\\" + getOSArch() + "\\";
+        // locate uses "/" regardless of format
+        File libFolder = InstalledFileLocator.getDefault().locate("modules/lib/" + getOSArch(), PlatformUtil.class.getPackage().getName(), false); //NON-NLS
+        return libFolder.getAbsolutePath();
     }
 
     public static String getDefaultPlatformFileEncoding() {
@@ -292,8 +287,13 @@ public class PlatformUtil {
             return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
     }
     
+    /**
+     * load library from library path (hardcoded .dll for now).
+     * 
+     * @param libName name of library to be loaded
+     */
     public static void loadLibrary(String libName) {
-        String path = getLibsPath();
+        String path = getLibsPath() + File.separator;
         String ext = ".dll";
         System.load(path + libName + ext);
     }
