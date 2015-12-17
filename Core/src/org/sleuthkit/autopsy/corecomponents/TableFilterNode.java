@@ -40,7 +40,7 @@ public class TableFilterNode extends FilterNode {
     public TableFilterNode(Node arg, boolean crChild) {
         super(arg, TableFilterChildren.createInstance(arg, crChild));
         this.createChild = crChild;
-        this.itemType = "Generic";
+        this.itemType = "";
     }
     
     public TableFilterNode(Node arg, boolean crChild, String itemType) {
