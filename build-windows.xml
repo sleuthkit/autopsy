@@ -1,23 +1,15 @@
 <project name="AutopsyTSKTargets">
     
     <!-- Directory paths -->
-    <property name="amd64" location="${basedir}/Core/release/modules/lib/amd64" />
     <property name="x86" location="${basedir}/Core/release/modules/lib/x86" />
     <property name="x86_64" location="${basedir}/Core/release/modules/lib/x86_64" />
-    <property name="i386" location="${basedir}/Core/release/modules/lib/i386" />
-    <property name="i586" location="${basedir}/Core/release/modules/lib/i586" />
-    <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
     <property name="crt" location="${basedir}/thirdparty/crt" />
  
     <import file="build-windows-installer.xml" />
     
     <target name="makeBaseLibDirs" description="Set up folder hierarchy under release/modules/lib">
-        <mkdir dir="${amd64}"/>
         <mkdir dir="${x86_64}"/>
         <mkdir dir="${x86}"/>
-        <mkdir dir="${i386}"/>
-        <mkdir dir="${i586}"/>
-        <mkdir dir="${i686}"/>
     </target>
     
     <target name="checkTskLibDirs">
@@ -55,11 +47,6 @@
             <include name="msvcr120.dll"/>
         </fileset>
 
-        <copy todir="${amd64}" overwrite="true">
-            <fileset refid="win64dlls" />
-            <fileset refid="postgres64dlls" />
-        </copy>
-
         <copy todir="${x86_64}" overwrite="true">
             <fileset refid="win64dlls" />
             <fileset refid="postgres64dlls" />
@@ -81,22 +68,7 @@
             <include name="msvcr120.dll"/>
         </fileset>
 
-        <copy todir="${i386}" overwrite="true">
-            <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
-        </copy>
-
         <copy todir="${x86}" overwrite="true">
-            <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
-        </copy>
-
-        <copy todir="${i586}" overwrite="true">
-            <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
-        </copy>	
-
-        <copy todir="${i686}" overwrite="true">
             <fileset refid="win32dlls" />
             <fileset refid="postgres32dlls" />
         </copy>
@@ -128,18 +100,6 @@
         <copy todir="${zip-lib-path}/x86" overwrite="true">
             <fileset refid="crt32dlls"/>
         </copy>
-        
-        <copy todir="${zip-lib-path}/i386" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/i586" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/i686" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
     </target>
     
     <target name="copyCRT64ToZIP">
@@ -155,10 +115,6 @@
         </fileset>
 
         <copy todir="${zip-lib-path}/x86_64" overwrite="true">
-            <fileset refid="crt64dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/amd64" overwrite="true">
             <fileset refid="crt64dlls"/>
         </copy>
     </target>

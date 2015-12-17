@@ -42,12 +42,6 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
 
     private static final Logger logger = Logger.getLogger(MediaViewVideoPanel.class.getName());
 
-    // 64 bit architectures
-    private static final String[] ARCH64 = new String[]{"amd64", "x86_64"}; //NON-NLS NON-NLS
-
-    // 32 bit architectures
-    private static final String[] ARCH32 = new String[]{"x86"}; //NON-NLS
-
     /**
      * Factory Method to create a MediaViewVideoPanel.
      *
@@ -71,8 +65,11 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
      * @return
      */
     private static boolean is64BitJVM() {
+//        String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+//        String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+//        String realArch = arch.endsWith("64") || wow64Arch != null && wow64Arch.endsWith("64") ? "64" : "32";
         String arch = System.getProperty("os.arch");
-        return Arrays.asList(ARCH64).contains(arch);
+        return arch.endsWith("64");
     }
 
     /**

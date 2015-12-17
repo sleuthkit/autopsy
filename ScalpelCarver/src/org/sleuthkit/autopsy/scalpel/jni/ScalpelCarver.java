@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
+import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.scalpel.jni.ScalpelOutputParser.CarvedFileMeta;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -75,7 +76,7 @@ public class ScalpelCarver {
         boolean success = false;
         try {
             //rely on netbeans / jna to locate the lib variation for architecture/OS
-            System.loadLibrary(id);
+            loadLibrary(id);
             success = true;
         } catch (UnsatisfiedLinkError ex) {
             String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib", id);
@@ -88,6 +89,41 @@ public class ScalpelCarver {
         }
 
         return success;
+    }
+    
+    /**
+     * load library from library path (hardcoded .dll for now).
+     * 
+     * @param libName name of library to be loaded
+     */
+    private static void loadLibrary(String libName) {
+        String path = getLibsPath() + File.separator;
+        String ext = ".dll";
+        System.load(path + libName + ext);
+    }
+    
+    /**
+     * Gets the absolute path to the lib folder
+     * 
+     * @return Lib path string
+     */
+    public static String getLibsPath() {
+        // locate uses "/" regardless of format
+        File libFolder = InstalledFileLocator.getDefault().locate("modules/lib/" + getOSArch(), ScalpelCarver.class.getPackage().getName(), false); //NON-NLS
+        return libFolder.getAbsolutePath();
+    }
+    
+    /**
+     * Get OS arch details, or OS_ARCH_UNKNOWN
+     *
+     * @return OS arch string
+     */
+    private static String getOSArch() {
+        String arch = System.getProperty("os.arch"); //NON-NLS
+        if(arch == null)
+            return NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.archUnknown");
+        else
+            return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
     }
 
 

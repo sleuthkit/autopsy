@@ -101,11 +101,11 @@ public class ImageUtils {
         //load opencv libraries
         boolean openCVLoadedTemp;
         try {
-            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) {
-                System.loadLibrary("opencv_ffmpeg248_64");
+            PlatformUtil.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+            if (System.getProperty("os.arch").endsWith("64")) { 
+                PlatformUtil.loadLibrary("opencv_ffmpeg248_64");
             } else {
-                System.loadLibrary("opencv_ffmpeg248");
+                PlatformUtil.loadLibrary("opencv_ffmpeg248");
             }
 
             openCVLoadedTemp = true;

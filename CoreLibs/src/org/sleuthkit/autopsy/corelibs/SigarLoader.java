@@ -44,9 +44,9 @@ public class SigarLoader {
                     try {
                         //rely on netbeans / jna to locate the lib variation for architecture/OS
                         if (PlatformUtil.isWindows()) {
-                            System.loadLibrary("libsigar"); //NON-NLS
+                            LibsPathUtil.loadLibrary("libsigar"); //NON-NLS
                         } else {
-                            System.loadLibrary("sigar"); //NON-NLS
+                            LibsPathUtil.loadLibrary("sigar"); //NON-NLS
                         }
                         sigar = new Sigar();
                         sigar.enableLogging(false); //forces a test

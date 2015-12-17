@@ -194,6 +194,17 @@ public class PlatformUtil {
         return Places.getUserDirectory().getAbsolutePath() + File.separator
                 + "var" + File.separator + "log" + File.separator; //NON-NLS
     }
+    
+    /**
+     * Gets the absolute path to the lib folder
+     * 
+     * @return Lib path string
+     */
+    public static String getLibsPath() {
+        // locate uses "/" regardless of format
+        File libFolder = InstalledFileLocator.getDefault().locate("modules/lib/" + getOSArch(), PlatformUtil.class.getPackage().getName(), false); //NON-NLS
+        return libFolder.getAbsolutePath();
+    }
 
     public static String getDefaultPlatformFileEncoding() {
         return System.getProperty("file.encoding");
@@ -269,7 +280,22 @@ public class PlatformUtil {
      * @return OS arch string
      */
     public static String getOSArch() {
-        return System.getProperty("os.arch", OS_ARCH_UNKNOWN); //NON-NLS
+        String arch = System.getProperty("os.arch"); //NON-NLS
+        if(arch == null)
+            return OS_ARCH_UNKNOWN;
+        else
+            return arch.endsWith("64") ? "x86_64" : "x86"; //NON-NLS
+    }
+    
+    /**
+     * load library from library path (hardcoded .dll for now).
+     * 
+     * @param libName name of library to be loaded
+     */
+    public static void loadLibrary(String libName) {
+        String path = getLibsPath() + File.separator;
+        String ext = ".dll";
+        System.load(path + libName + ext);
     }
 
     /**
