@@ -26,14 +26,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,7 +77,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private Node currentRoot;
     private List<String> currentlySelectedNodes;
     private Map<String, List<String>> savedSelectionMap;
-    private String currentRootItemType;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -363,16 +356,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param root The parent Node of the ContentNodes
      */
     private void setupTable(final Node root) {
-        
-        if(root instanceof TableFilterNode) {
-            TableFilterNode filterNode = (TableFilterNode) root;
-            currentRootItemType =  filterNode.getItemType();
-        }
-        else {
-            currentRootItemType = "";
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
-                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
-        }
 
         em.setRootContext(root);
 
@@ -381,8 +364,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (ov == null) {
             return;
         }
-
+        
         storeState();
+        
+        // set the new root as current
         currentRoot = root;
         List<Node.Property<?>> props = loadState();
 
@@ -480,14 +465,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         savedSelectionMap.put(getUniqueSelName(), currentlySelectedNodes);
         currentlySelectedNodes.clear();
 
-        if(currentRootItemType.isEmpty())
+        TableFilterNode tfn;
+        if(currentRoot instanceof TableFilterNode)
+            tfn = (TableFilterNode) currentRoot;
+        else
             return;
         
         // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop, tfn.getItemType()), String.valueOf(i));
         }
     }
 
@@ -503,19 +491,26 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         } else {
             currentlySelectedNodes = new ArrayList<>();
         }
-            
+        
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         
-        // If type is not defined, use default order for columns
-        if(currentRootItemType.isEmpty())
+        // If node is not table filter node, use default order for columns
+        TableFilterNode tfn;
+        if(currentRoot instanceof TableFilterNode) {
+            tfn = (TableFilterNode) currentRoot;
+        }
+        else {
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", currentRoot.getName());
             return props;
+        }
         
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass())
-                    .get(getUniqueColName(prop), "-1"));
+                    .get(getUniqueColName(prop, tfn.getItemType()), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -569,8 +564,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     // Get unique name for node to be used for saving column orderings.
-    private String getUniqueColName(Property<?> prop) {   
-        return Case.getCurrentCase().getName() + "." + currentRootItemType + "."
+    private String getUniqueColName(Property<?> prop, String type) {
+        return Case.getCurrentCase().getName() + "." + type + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
