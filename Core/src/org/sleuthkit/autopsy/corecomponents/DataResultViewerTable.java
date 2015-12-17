@@ -72,7 +72,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
-    private String currentRootItemType;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -358,17 +357,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         
         storeState();
         
-        // set the new root and its type.
+        // set the new root as current
         currentRoot = root;
-        if(root instanceof TableFilterNode) {
-            TableFilterNode filterNode = (TableFilterNode) root;
-            currentRootItemType =  filterNode.getItemType();
-        }
-        else {
-            currentRootItemType = "";
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
-                    "Node {0} is not TableFilterNode, columns are going to be in default order", root.getName());
-        }
         List<Node.Property<?>> props = loadState();
 
         /*
@@ -444,13 +434,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     
     // Store the state of current root Node.
     private void storeState() {
-        if(currentRoot == null || propertiesAcc.isEmpty()
-            || currentRootItemType.isEmpty())
+        if(currentRoot == null || propertiesAcc.isEmpty())
             return;
+        
+        TableFilterNode tfn;
+        if(currentRoot instanceof TableFilterNode)
+            tfn = (TableFilterNode) currentRoot;
+        else
+            return;
+        
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getUniqueName(prop), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop, tfn.getItemType()), String.valueOf(i));
         }
     }
     
@@ -460,13 +456,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         
-        // If type is not defined, use default order for columns
-        if(currentRootItemType.isEmpty())
+        // If node is not table filter node, use default order for columns
+        TableFilterNode tfn;
+        if(currentRoot instanceof TableFilterNode) {
+            tfn = (TableFilterNode) currentRoot;
+        }
+        else {
+            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO, 
+                    "Node {0} is not TableFilterNode, columns are going to be in default order", currentRoot.getName());
             return props;
+        }
         
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueName(prop), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueColName(prop, tfn.getItemType()), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -483,8 +486,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
     
     // Get unique name for node and it's property.
-    private String getUniqueName(Property<?> prop) {
-        return Case.getCurrentCase().getName() + "." + currentRootItemType + "." 
+    private String getUniqueColName(Property<?> prop, String type) {
+        return Case.getCurrentCase().getName() + "." + type + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
     }
 
