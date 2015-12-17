@@ -16,18 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.sleuthkit.autopsy.imagegallery.actions;
 
-.label {
-    -fx-wrap-text:true;
-    -fx-text-fill: red;
-    -fx-font-size: 2em;
-}
+import javafx.scene.image.ImageView;
+import org.controlsfx.control.action.Action;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.datamodel.TagName;
 
-.bg {
-    -fx-background-color: rgba(0, 0, 0, .8);
-}
+/**
+ *
+ */
+public class TagSelectedFilesAction extends Action {
 
-.masker-pane .masker-text {
-    -fx-text-fill: white;
-    -fx-font-size: 1.5em;
+    public TagSelectedFilesAction(final TagName tagName, ImageGalleryController controller) {
+        super(tagName.getDisplayName(), actionEvent -> new AddDrawableTagAction(controller).addTag(tagName, ""));
+        setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
+    }
 }

@@ -127,7 +127,7 @@ public final class ImageGalleryController {
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
 
-    private final FileIDSelectionModel selectionModel = FileIDSelectionModel.getInstance();
+    private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
     private DBWorkerThread dbWorkerThread;
 
@@ -167,7 +167,6 @@ public final class ImageGalleryController {
     }
 
     public synchronized FileIDSelectionModel getSelectionModel() {
-
         return selectionModel;
     }
 

@@ -396,19 +396,18 @@ class SevenZipExtractor {
                         if (colonIndex != -1) {
                             // If alternate data stream is found, fix the name 
                             // so Windows doesn't choke on the colon character.
-                            useName = base + ext.substring(0, colonIndex);
-                        } else {
-                            switch (ext) {
-                                case ".gz": //NON-NLS
-                                    useName = base;
-                                    break;
-                                case ".tgz": //NON-NLS
-                                    useName = base + ".tar"; //NON-NLS
-                                    break;
-                                case ".bz2": //NON-NLS
-                                    useName = base + ".bz2"; //NON-NLS
-                                    break;
-                            }
+                            ext = ext.substring(0, colonIndex);
+                        }
+                        switch (ext) {
+                            case ".gz": //NON-NLS
+                                useName = base;
+                                break;
+                            case ".tgz": //NON-NLS
+                                useName = base + ".tar"; //NON-NLS
+                                break;
+                            case ".bz2": //NON-NLS
+                                useName = base;
+                                break;
                         }
                     }
 

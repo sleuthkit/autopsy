@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
@@ -76,8 +78,11 @@ public class ImageUtils {
     private static final Logger logger = LOGGER;
     private static final BufferedImage DEFAULT_THUMBNAIL;
 
+    private static final String IMAGE_GIF_MIME = "image/gif";
+    private static final SortedSet<String> GIF_MIME_SET = ImmutableSortedSet.copyOf(new String[]{IMAGE_GIF_MIME});
+
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS;
-    private static final TreeSet<String> SUPPORTED_IMAGE_MIME_TYPES;
+    private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
     private static final List<String> CONDITIONAL_MIME_TYPES = Arrays.asList("audio/x-aiff", "application/octet-stream");
 
     private static final boolean openCVLoaded;
@@ -124,7 +129,7 @@ public class ImageUtils {
                 "image/x-ms-bmp",
                 "image/x-portable-graymap",
                 "image/x-portable-bitmap",
-                "application/x-123"));
+                "application/x-123")); //TODO: is this correct? -jm
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals);
     }
 
@@ -198,6 +203,30 @@ public class ImageUtils {
 
         return isMediaThumbnailSupported(file, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS, CONDITIONAL_MIME_TYPES)
                 || hasImageFileHeader(file);
+    }
+
+    public static boolean isGIF(AbstractFile file) {
+        try {
+            final FileTypeDetector fileTypeDetector = getFileTypeDetector();
+            if (nonNull(fileTypeDetector)) {
+                String fileType = fileTypeDetector.getFileType(file);
+                return IMAGE_GIF_MIME.equalsIgnoreCase(fileType);
+            }
+        } catch (TskCoreException | FileTypeDetectorInitException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get mime type with FileTypeDetector.", ex);
+        }
+        LOGGER.log(Level.WARNING, "Falling back on direct mime type check.");
+        switch (file.isMimeType(GIF_MIME_SET)) {
+
+            case TRUE:
+                return true;
+            case UNDEFINED:
+                LOGGER.log(Level.WARNING, "Falling back on extension check.");
+                return "gif".equals(file.getNameExtension());
+            case FALSE:
+            default:
+                return false;
+        }
     }
 
     /**

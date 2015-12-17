@@ -89,7 +89,7 @@ To this:
 Note the removal of the leading number symbol-this uncomments that entry.
 <br><br>
 
-8. Still in <i>"C:\Program Files\PostgreSQL\9.4\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network. More information is available at 5.1.1. See the screenshot below.
+8. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.4\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network. More information is available at 5.1.1. See the screenshot below.
 <br><br>
 \image html maxConnections.PNG
 <br><br>

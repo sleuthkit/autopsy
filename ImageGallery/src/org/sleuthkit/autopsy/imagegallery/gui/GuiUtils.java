@@ -18,60 +18,37 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitMenuButton;
-import javafx.scene.image.ImageView;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.actions.AddDrawableTagAction;
-import org.sleuthkit.autopsy.imagegallery.actions.CategorizeAction;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
-import org.sleuthkit.datamodel.TagName;
+import org.controlsfx.control.action.Action;
 
 /**
  * Static utility methods for working with GUI components
  */
 public class GuiUtils {
 
-    /**
-     * make a new menu item that when clicked, tags the selected files with the
-     * given tagname
-     *
-     * @param tagName
-     * @param tagSelectedMenuButton
-     * @param controller
-     *
-     * @return
-     */
-    public static MenuItem createSelTagMenuItem(final TagName tagName, final SplitMenuButton tagSelectedMenuButton, ImageGalleryController controller) {
-        final MenuItem menuItem = new MenuItem(tagName.getDisplayName(), new ImageView(DrawableAttribute.TAGS.getIcon()));
-        menuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                new AddDrawableTagAction(controller).addTag(tagName, "");
-                tagSelectedMenuButton.setText(tagName.getDisplayName());
-                tagSelectedMenuButton.setOnAction(this);
-            }
-        });
-        return menuItem;
-    }
-
-    public static MenuItem createSelCatMenuItem(Category cat, final SplitMenuButton catSelectedMenuButton, ImageGalleryController controller) {
-        final MenuItem menuItem = new MenuItem(cat.getDisplayName(), new ImageView(DrawableAttribute.CATEGORY.getIcon()));
-        menuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                new CategorizeAction(controller).addTag(controller.getTagsManager().getTagName(cat), "");
-                catSelectedMenuButton.setText(cat.getDisplayName());
-                catSelectedMenuButton.setOnAction(this);
-            }
-        });
-        return menuItem;
-    }
-
     private GuiUtils() {
     }
 
+    /**
+     * create a MenuItem that performs the given action and also set the Action
+     * as the action for the given Button. Usefull to have a SplitMenuButton
+     * remember the last chosen menu item as its action.
+     *
+     * @param button
+     * @param action
+     *
+     * @return
+     */
+    public static MenuItem createAutoAssigningMenuItem(ButtonBase button, Action action) {
+
+        MenuItem menuItem = new MenuItem(action.getText(), action.getGraphic());
+        menuItem.setOnAction(actionEvent -> {
+            action.handle(actionEvent);
+            button.setText(action.getText());
+            button.setGraphic(action.getGraphic());
+            button.setOnAction(action);
+        });
+        return menuItem;
+    }
 }

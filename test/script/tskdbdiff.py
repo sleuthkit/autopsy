@@ -44,8 +44,6 @@ class TskDbDiff(object):
         self.output_dir = output_dir
         self.gold_bb_dump = gold_bb_dump
         self.gold_dump = gold_dump
-        self._generate_gold_dump = True
-        self._generate_gold_bb_dump = True
         self._bb_dump_diff = ""
         self._dump_diff = ""
         self._bb_dump = ""
@@ -60,12 +58,6 @@ class TskDbDiff(object):
         """
 
         self._init_diff()
-
-        # generate the gold database dumps if necessary
-        if self._generate_gold_dump:
-            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump)
-        if self._generate_gold_bb_dump:
-            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump)
 
         # generate the output database dumps (both DB and BB)
         TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump)
@@ -259,7 +251,7 @@ class TskDbDiff(object):
             conn.close()
         
         # Now sort the file
-        srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
+        srtcmdlst = ["sort", "--ignore-case", unsorted_dump, "-o", bb_dump_file]
         subprocess.call(srtcmdlst)
 
 
@@ -294,7 +286,7 @@ class TskDbDiff(object):
                 db_log.write('%s\n' % line)
             # Now sort the file    
             
-        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        srtcmdlst = ["sort", "--ignore-case", dump_file, "-o", dump_file]
         subprocess.call(srtcmdlst)
 
         conn.close()
