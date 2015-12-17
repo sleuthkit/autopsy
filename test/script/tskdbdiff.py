@@ -251,7 +251,7 @@ class TskDbDiff(object):
             conn.close()
         
         # Now sort the file
-        srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
+        srtcmdlst = ["sort", "--ignore-case", unsorted_dump, "-o", bb_dump_file]
         subprocess.call(srtcmdlst)
 
 
@@ -286,7 +286,7 @@ class TskDbDiff(object):
                 db_log.write('%s\n' % line)
             # Now sort the file    
             
-        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        srtcmdlst = ["sort", "--ignore-case", dump_file, "-o", dump_file]
         subprocess.call(srtcmdlst)
 
         conn.close()

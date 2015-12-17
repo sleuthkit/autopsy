@@ -1297,7 +1297,7 @@ class Logs(object):
                 log.close()
             common_log.write("\n")
             common_log.close()
-            srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
+            srtcmdlst = ["sort", "--ignore-case", test_data.common_log_path, "-o", test_data.common_log_path]
             subprocess.call(srtcmdlst)
         except (OSError, IOError) as e:
             Errors.print_error("Error: Unable to generate the common log.")
