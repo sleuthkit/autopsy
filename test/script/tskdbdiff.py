@@ -87,6 +87,7 @@ class TskDbDiff(object):
             self._dump = os.path.join(self.output_dir, "DBDump.txt")
             self._dump_diff = os.path.join(self.output_dir, "DBDump-Diff.txt")
 
+        # Sorting gold before comparing (sort behaves differently in different environments)
         if self.gold_bb_dump is not None:
             srtcmdlst = ["sort", self.gold_bb_dump, "-o", TskDbDiff._get_tmp_file("GoldBlackboardDump", ".txt")]
             subprocess.call(srtcmdlst)
