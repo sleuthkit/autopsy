@@ -108,11 +108,34 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
+        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {}
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {}
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {}
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {}
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                // change the order of the column in the array/hashset
+                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+                Node.Property<?> prop = props.remove(e.getFromIndex());
+                props.add(e.getToIndex(), prop);
+
+                propertiesAcc.clear();
+                for (int j = 0; j < props.size(); ++j) {
+                    propertiesAcc.add(props.get(j));
+                }
+            }
+        });
+        
         /**
-         * Add mouse listener to perform action on double-click A somewhat hacky
-         * way to perform action even if the column clicked is not the first
-         * one.
-         * This also saves selected node.
+         * Add mouse listener to perform action on double-click
+         * A somewhat hacky way to perform action even if the column clicked 
+         * is not the first one.
          */
         ov.getOutline().addMouseListener(new MouseListener() {
             @Override
@@ -134,30 +157,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             action.actionPerformed(null);
                         }
                     }
-                }
-            }
-        });
-
-        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-            @Override
-            public void columnAdded(TableColumnModelEvent e) {}
-            @Override
-            public void columnRemoved(TableColumnModelEvent e) {}
-            @Override
-            public void columnMarginChanged(ChangeEvent e) {}
-            @Override
-            public void columnSelectionChanged(ListSelectionEvent e) {}
-
-            @Override
-            public void columnMoved(TableColumnModelEvent e) {
-                // change the order of the column in the array/hashset
-                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-                Node.Property<?> prop = props.remove(e.getFromIndex());
-                props.add(e.getToIndex(), prop);
-
-                propertiesAcc.clear();
-                for (int j = 0; j < props.size(); ++j) {
-                    propertiesAcc.add(props.get(j));
                 }
             }
         });
@@ -457,9 +456,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Store the  state of the table for the current root node.
      */
     private void storeState() {
-        if (currentRoot == null || propertiesAcc.isEmpty()) {
+        if (currentRoot == null || propertiesAcc.isEmpty())
             return;
-        }
 
         // Store the selected rows
         savedSelectionMap.put(getUniqueSelName(), currentlySelectedNodes);
@@ -490,8 +488,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             currentlySelectedNodes = selectedNodes;
         } else {
             currentlySelectedNodes = new ArrayList<>();
-        }
-        
+        }        
+        // Load the column order
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
