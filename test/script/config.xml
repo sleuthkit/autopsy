@@ -9,8 +9,6 @@ indir: the path to input directory
 outdir: the path to output directory
 global_csv: path to global csv file
 golddir: the path to gold directory
-jenkins: can be set to True or False. If enabled, check for diffdir
-diffdir: (only if jenkins tag is true) the diff directory
 timing: can be set to True or False. If enabled, record the timing.
 
 NOTE: Make sure to use windows style for paths!
