@@ -25,10 +25,15 @@ import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -72,6 +77,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
+    private Map<String, Node[]> cachedSelectionMap;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -93,6 +99,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
+        cachedSelectionMap = new HashMap<>();
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
 
@@ -101,7 +108,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // don't show the root node
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
-        
+
         ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {}
@@ -118,13 +125,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
                 Node.Property<?> prop = props.remove(e.getFromIndex());
                 props.add(e.getToIndex(), prop);
-                
+
                 propertiesAcc.clear();
                 for (int j = 0; j < props.size(); ++j) {
                     propertiesAcc.add(props.get(j));
                 }
             }
         });
+        
         /**
          * Add mouse listener to perform action on double-click
          * A somewhat hacky way to perform action even if the column clicked 
@@ -141,12 +149,25 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             public void mouseExited(MouseEvent e) {}
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) {
-                    Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
-                    for(Node node : nodes) {
+                Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
+                if (e.getClickCount() == 2) {
+                    for (Node node : nodes) {
                         Action action = node.getPreferredAction();
-                        if(action != null) 
+                        if (action != null) {
                             action.actionPerformed(null);
+                        }
+                    }
+                }
+            }
+        });
+        
+        em.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(ExplorerManager.PROP_SELECTED_NODES.equals(evt.getPropertyName())) {
+                    Node[] nodes = (Node[]) evt.getNewValue();
+                    if(DataResultViewerTable.this.em.getRootContext().equals(currentRoot)) {
+                        DataResultViewerTable.this.cachedSelectionMap.put(getUniqueSelName(), nodes);
                     }
                 }
             }
@@ -430,28 +451,48 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             }
         }
-    }
-    
-    // Store the state of current root Node.
-    private void storeState() {
-        if(currentRoot == null || propertiesAcc.isEmpty())
-            return;
         
+        // Select loaded nodes
+        try {
+            Node[] nodes = this.cachedSelectionMap.get(getUniqueSelName());
+            if(nodes != null)
+                this.em.setSelectedNodes(getListFromList(nodes));
+        } catch (PropertyVetoException ex) {
+            /**
+             * ignore exception since when we call setup table for the first time, the node's children
+             * might have not been initialized.
+             * Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
+             */
+        }
+    }
+
+    /**
+     * Store the  state of the table for the current root node.
+     */
+    private void storeState() {
+        if (currentRoot == null || propertiesAcc.isEmpty())
+            return;
+
         TableFilterNode tfn;
         if(currentRoot instanceof TableFilterNode)
             tfn = (TableFilterNode) currentRoot;
         else
             return;
         
+        // Store the column arrangements of the given Node.
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
             NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop, tfn.getItemType()), String.valueOf(i));
         }
     }
-    
-    // Load the state of current root Node if exists. 
-    private List<Node.Property<?>> loadState() {
+
+    /**
+     * Load the stored state of current root if already stored.
+     * @return The loaded list of node properties to be used as columns.
+     */
+    private List<Node.Property<?>> loadState() {       
+        // Load the column order
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
@@ -469,7 +510,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         
         List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueColName(prop, tfn.getItemType()), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass())
+                    .get(getUniqueColName(prop, tfn.getItemType()), "-1"));
             if (value >= 0) {
                 /**
                  * The original contents of orderedProps do not matter when setting the new ordered values. The reason
@@ -485,10 +527,39 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return orderedProps;
     }
     
-    // Get unique name for node and it's property.
+    /**
+     * Get a list of nodes from the current root that have names included in the
+     * given list
+     * @param names list of node names to extract from current root
+     * @return the list of nodes extracted.
+     */
+    private Node[] getListFromList(Node[] names) {
+        Node[] nodes = new Node[names.length];
+        if(names.length == 0)
+            return nodes;
+        Node[] children = currentRoot.getChildren().getNodes(false);
+        int i = 0;
+        for (Node name : names) {
+            for (Node child : children) {
+                if (child.getName().equals(name.getName())) {
+                    nodes[i] = child;
+                    i++;
+                }
+            }
+        }
+        return nodes;
+    }
+
+    // Get unique name for node to be used for saving column orderings.
     private String getUniqueColName(Property<?> prop, String type) {
         return Case.getCurrentCase().getName() + "." + type + "." 
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
+    }
+
+    // Get unique name for node to be used for saving selection.
+    private String getUniqueSelName() {
+        return Case.getCurrentCase().getName() + "." + currentRoot.getName().replaceAll("[^a-zA-Z0-9_]", "")
+                + ".selectedNodes";
     }
 
     // Populate a two-dimensional array with rows of property values for up 
