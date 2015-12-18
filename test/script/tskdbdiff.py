@@ -87,9 +87,16 @@ class TskDbDiff(object):
             self._dump = os.path.join(self.output_dir, "DBDump.txt")
             self._dump_diff = os.path.join(self.output_dir, "DBDump-Diff.txt")
 
-        if self.gold_bb_dump is None:
-            self.gold_bb_dump = TskDbDiff._get_tmp_file("GoldBlackboardDump", ".txt")
-            self.gold_dump = TskDbDiff._get_tmp_file("GoldDBDump", ".txt")
+        # Sorting gold before comparing (sort behaves differently in different environments)
+        new_bb = TskDbDiff._get_tmp_file("GoldBlackboardDump", ".txt")
+        new_db = TskDbDiff._get_tmp_file("GoldDBDump", ".txt")
+        if self.gold_bb_dump is not None:
+            srtcmdlst = ["sort", self.gold_bb_dump, "-o", new_bb]
+            subprocess.call(srtcmdlst)
+            srtcmdlst = ["sort", self.gold_dump, "-o", new_db]
+            subprocess.call(srtcmdlst)
+        self.gold_bb_dump = new_bb
+        self.gold_dump = new_db
 
 
     def _cleanup_diff(self):
