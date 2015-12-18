@@ -446,9 +446,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         } catch (PropertyVetoException ex) {
             /**
              * ignore exception since when we call setup table for the first time, the node's children
-             * might have not been initialized.
-             * Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
-             */
+             * might have not been initialized. */
+             Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
         }
     }
 
@@ -460,7 +459,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
 
         // Store the selected rows
-        savedSelectionMap.put(getUniqueSelName(), currentlySelectedNodes);
+        savedSelectionMap.put(getUniqueSelName(), new ArrayList<>(currentlySelectedNodes));
         currentlySelectedNodes.clear();
 
         TableFilterNode tfn;
