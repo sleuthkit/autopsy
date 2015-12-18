@@ -25,9 +25,11 @@ import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -75,8 +77,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
-    private List<String> currentlySelectedNodes;
-    private Map<String, List<String>> savedSelectionMap;
+    private Map<String, Node[]> cachedSelectionMap;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -98,7 +99,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        savedSelectionMap = new HashMap<>();
+        cachedSelectionMap = new HashMap<>();
         OutlineView ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
 
@@ -149,13 +150,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             @Override
             public void mouseClicked(MouseEvent e) {
                 Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
-                currentlySelectedNodes = namesFromList(nodes);
                 if (e.getClickCount() == 2) {
                     for (Node node : nodes) {
                         Action action = node.getPreferredAction();
                         if (action != null) {
                             action.actionPerformed(null);
                         }
+                    }
+                }
+            }
+        });
+        
+        em.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(ExplorerManager.PROP_SELECTED_NODES.equals(evt.getPropertyName())) {
+                    Node[] nodes = (Node[]) evt.getNewValue();
+                    if(DataResultViewerTable.this.em.getRootContext().equals(currentRoot)) {
+                        DataResultViewerTable.this.cachedSelectionMap.put(getUniqueSelName(), nodes);
                     }
                 }
             }
@@ -442,12 +454,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         
         // Select loaded nodes
         try {
-            this.em.setSelectedNodes(namesToList(currentlySelectedNodes));
+            Node[] nodes = this.cachedSelectionMap.get(getUniqueSelName());
+            if(nodes != null)
+                this.em.setSelectedNodes(getListFromList(nodes));
         } catch (PropertyVetoException ex) {
             /**
              * ignore exception since when we call setup table for the first time, the node's children
-             * might have not been initialized. */
-             Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
+             * might have not been initialized.
+             * Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.SEVERE, "Cannot select nodes", ex);
+             */
         }
     }
 
@@ -457,10 +472,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void storeState() {
         if (currentRoot == null || propertiesAcc.isEmpty())
             return;
-
-        // Store the selected rows
-        savedSelectionMap.put(getUniqueSelName(), new ArrayList<>(currentlySelectedNodes));
-        currentlySelectedNodes.clear();
 
         TableFilterNode tfn;
         if(currentRoot instanceof TableFilterNode)
@@ -480,14 +491,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Load the stored state of current root if already stored.
      * @return The loaded list of node properties to be used as columns.
      */
-    private List<Node.Property<?>> loadState() {
-        // Load the selected Nodes for the current root node if exist.
-        List<String> selectedNodes = savedSelectionMap.get(getUniqueSelName());
-        if (selectedNodes != null) {
-            currentlySelectedNodes = selectedNodes;
-        } else {
-            currentlySelectedNodes = new ArrayList<>();
-        }        
+    private List<Node.Property<?>> loadState() {       
         // Load the column order
         propertiesAcc.clear();
         this.getAllChildPropertyHeadersRec(currentRoot, 100);
@@ -522,36 +526,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
         return orderedProps;
     }
-
-    /**
-     * Get the names of the given node list.
-     * @param nodes given list of nodes.
-     * @return the ArrayList of names extracted.
-     */
-    private ArrayList<String> namesFromList(Node[] nodes) {
-        ArrayList<String> names = new ArrayList<>();
-        for (Node node : nodes) {
-            String name = node.getName();
-            names.add(name);
-        }
-        return names;
-    }
-
+    
     /**
      * Get a list of nodes from the current root that have names included in the
      * given list
-     * @param names ArrayList of node names to extract from current root
+     * @param names list of node names to extract from current root
      * @return the list of nodes extracted.
      */
-    private Node[] namesToList(List<String> names) {
-        Node[] nodes = new Node[names.size()];
-        if(names.isEmpty())
+    private Node[] getListFromList(Node[] names) {
+        Node[] nodes = new Node[names.length];
+        if(names.length == 0)
             return nodes;
         Node[] children = currentRoot.getChildren().getNodes(false);
         int i = 0;
-        for (String name : names) {
+        for (Node name : names) {
             for (Node child : children) {
-                if (child.getName().equals(name)) {
+                if (child.getName().equals(name.getName())) {
                     nodes[i] = child;
                     i++;
                 }
