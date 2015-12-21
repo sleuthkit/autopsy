@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Control;
@@ -90,8 +91,8 @@ public class DrawableTile extends DrawableTileBase {
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> newReadImageTask(DrawableFile<?> file) {
-        return new ThumbnailLoaderTask(file);
+    Task<Image> newReadImageTask(DrawableFile<?> file) {
+        return file.getThumbnailTask();
     }
 
     @Override

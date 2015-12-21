@@ -28,6 +28,7 @@ import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -46,6 +47,34 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     ImageFile(T f, Boolean analyzed) {
         super(f, analyzed);
 
+    }
+
+    @Override
+    public Task<Image> getThumbnailTask() {
+        return ThumbnailCache.getDefault().getThumbnailTask(this);
+//            newGetThumbTask.stateProperty().addListener((Observable observable) -> {
+//                switch (newGetThumbTask.getState()) {
+//                    case CANCELLED:
+//                        break;
+//                    case FAILED:
+//                        break;
+//                    case SUCCEEDED:
+//                        try {
+//                            thumbref = new SoftReference<>(newGetThumbTask.get());
+//                        } catch (InterruptedException | ExecutionException interruptedException) {
+//                        }
+//                        break;
+//                }
+//            });
+//            return newGetThumbTask;
+//        } else {
+//            return new Task<Image>() {
+//                @Override
+//                protected Image call() throws Exception {
+//                    return thumbnail;
+//                }
+//            };
+//        }
     }
 
     @Override

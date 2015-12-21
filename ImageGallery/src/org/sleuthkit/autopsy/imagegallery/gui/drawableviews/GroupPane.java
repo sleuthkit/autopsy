@@ -774,12 +774,10 @@ public class GroupPane extends BorderPane {
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-
             tile.setFile(item);
         }
 
         void resetItem() {
-//            updateItem(null, true);
             tile.setFile(null);
         }
     }

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -184,8 +185,8 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     @Override
-    CachedLoaderTask<Image, DrawableFile<?>> newReadImageTask(DrawableFile<?> file) {
-        return new ThumbnailLoaderTask(file);
+    Task<Image> newReadImageTask(DrawableFile<?> file) {
+        return file.getThumbnailTask();
     }
 
     public void updateAttributesTable() {

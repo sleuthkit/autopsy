@@ -31,12 +31,15 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -165,7 +168,7 @@ public enum ThumbnailCache {
      *
      * @param id the obj id of the file to get a cache file for
      *
-     * @return a Optional containing a File to store the cahced icon in or an
+     * @return a Optional containing a File to store the cached icon in or an
      *         empty optional if there was a problem.
      */
     private static Optional<File> getCacheFile(DrawableFile<?> file) {
@@ -176,5 +179,29 @@ public enum ThumbnailCache {
             LOGGER.log(Level.WARNING, "Failed to create cache file.{0}", e.getLocalizedMessage());
             return Optional.empty();
         }
+    }
+
+    public Task<Image> getThumbnailTask(DrawableFile<?> file) {
+        final Optional<Image> option = cache.getIfPresent(file.getId());
+        if (option != null && option.isPresent()) {
+            return new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    return option.get();
+                }
+            };
+        }
+        final Task<Image> newGetThumbnailTask = ImageUtils.newGetThumbnailTask(file.getAbstractFile(), MAX_THUMBNAIL_SIZE);
+        newGetThumbnailTask.stateProperty().addListener((Observable observable) -> {
+            switch (newGetThumbnailTask.getState()) {
+                case SUCCEEDED:
+                    try {
+                        cache.put(Long.MIN_VALUE, Optional.of(newGetThumbnailTask.get()));
+                    } catch (InterruptedException | ExecutionException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+            }
+        });
+        return newGetThumbnailTask;
     }
 }

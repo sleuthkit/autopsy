@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not load file."})
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
-    static final Executor exec = Executors.newWorkStealingPool();
+    static final Executor exec = Executors.newSingleThreadExecutor();
 
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
 
@@ -158,7 +158,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     synchronized protected void disposeContent() {
         if (imageTask != null) {
-            imageTask.cancel(true);
+            imageTask.cancel();
         }
         imageTask = null;
         Platform.runLater(() -> imageView.setImage(null));
@@ -244,20 +244,20 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         abstract void saveToCache(X result);
     }
 
-    class ThumbnailLoaderTask extends CachedLoaderTask<Image, DrawableFile<?>> {
-
-        ThumbnailLoaderTask(DrawableFile<?> file) {
-            super(file);
-        }
-
-        @Override
-        Image load() {
-            return isCancelled() ? null : file.getThumbnail();
-        }
-
-        @Override
-        void saveToCache(Image result) {
-//            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-    }
+//    class ThumbnailLoaderTask extends CachedLoaderTask<Image, DrawableFile<?>> {
+//
+//        ThumbnailLoaderTask(DrawableFile<?> file) {
+//            super(file);
+//        }
+//
+//        @Override
+//        Image load() {
+//            return isCancelled() ? null : file.getThumbnail();
+//        }
+//
+//        @Override
+//        void saveToCache(Image result) {
+////            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        }
+//    }
 }

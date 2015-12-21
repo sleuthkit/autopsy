@@ -71,7 +71,6 @@ import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -112,8 +111,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @FXML
     private ImageView hashHitImageView;
 
-    @FXML
-    protected ImageView undisplayableImageView;
+
     /**
      * displays the icon representing follow up tag
      */
@@ -316,7 +314,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         getFile().ifPresent(file -> {
             final boolean isVideo = file.isVideo();
             final boolean hasHashSetHits = hasHashHit();
-            final boolean isUndisplayable = (isVideo ? ((VideoFile<?>) file).isDisplayableAsMedia() : file.isDisplayableAsImage()) == false;
+     
             final String text = getTextForLabel();
 
             Platform.runLater(() -> {
@@ -324,8 +322,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 fileTypeImageView.setVisible(isVideo);
                 hashHitImageView.setManaged(hasHashSetHits);
                 hashHitImageView.setVisible(hasHashSetHits);
-                undisplayableImageView.setManaged(isUndisplayable);
-                undisplayableImageView.setVisible(isUndisplayable);
+        
                 nameLabel.setText(text);
                 nameLabel.setTooltip(new Tooltip(text));
             });

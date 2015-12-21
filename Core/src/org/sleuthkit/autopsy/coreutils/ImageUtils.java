@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import javafx.beans.Observable;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javax.annotation.Nonnull;
@@ -57,6 +58,7 @@ import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.opencv.core.Core;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -409,6 +411,7 @@ public class ImageUtils {
     }
 
     /**
+     *
      * Get a file object for where the cached icon should exist. The returned
      * file may not exist.
      *
@@ -615,17 +618,119 @@ public class ImageUtils {
         }
     }
 
-    public static Task<javafx.scene.image.Image> newReadImageTask(AbstractFile file) {
-        return new ReadImageTask(file);
+    public static Task<javafx.scene.image.Image> newGetThumbnailTask(AbstractFile file, int iconSize) {
+        return new GetOrGenerateThumbnailTask(file, iconSize);
     }
 
-    static private class ReadImageTask extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
+    static private class GetOrGenerateThumbnailTask extends ReadImageTaskBase {
 
-        private final AbstractFile file;
+        private final int iconSize;
+
+        private GetOrGenerateThumbnailTask(AbstractFile file, int iconSize) {
+            super(file);
+            this.iconSize = iconSize;
+        }
+
+        @Override
+        protected javafx.scene.image.Image call() throws Exception {
+
+            // If a thumbnail file is already saved locally, just read that.
+            File cacheFile = getCachedThumbnailLocation(file.getId());
+            if (cacheFile.exists()) {
+                try {
+                    BufferedImage cachedThumbnail = ImageIO.read(cacheFile);
+                    if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
+                        return SwingFXUtils.toFXImage(cachedThumbnail, null);
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: {1}", new Object[]{file.getName(), ex.getMessage()}); //NON-NLS
+                }
+            }
+
+            //no cached thumbnail so read the image from the datasource using the ReadImageTask
+            final ReadImageTask readImageTask = new ReadImageTask(file);
+            readImageTask.progressProperty().addListener((Observable observable)
+                    -> updateProgress(readImageTask.getWorkDone(), readImageTask.getTotalWork()));
+            readImageTask.messageProperty().addListener((Observable observable)
+                    -> updateMessage(readImageTask.getMessage()));
+            readImageTask.run();
+            try {
+                BufferedImage bufferedImage = readImageTask.getBufferedImage();
+                if (isNull(bufferedImage)) {
+                    LOGGER.log(Level.WARNING, "Failed to read image for thumbnail generation.");
+                    throw new IIOException("Failed to read image for thumbnail generation.");
+                }
+
+                updateMessage("scaling image");
+                updateProgress(-1, 1);
+
+                BufferedImage thumbnail;
+                try {
+                    thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
+                } catch (IllegalArgumentException | OutOfMemoryError e) {
+                    // if resizing does not work due to extreme aspect ratio, crop the image instead.
+                    try {
+                        LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}.\nAttemptying to crop {0} instead", new Object[]{file.getUniquePath(), e.getLocalizedMessage()}); //NON-NLS
+                    } catch (TskCoreException tskCoreException) {
+                        LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}.\nAttemptying to crop {0} instead", new Object[]{file.getName(), e.getLocalizedMessage()}); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to get unique path for file: " + file.getName(), tskCoreException); //NOI18N
+                    }
+                    final int cropHeight = Math.min(iconSize, bufferedImage.getHeight());
+                    final int cropWidth = Math.min(iconSize, bufferedImage.getWidth());
+                    try {
+                        thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
+                    } catch (Exception e2) {
+                        LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}", new Object[]{file.getName(), e2.getLocalizedMessage()}); //NON-NLS
+                        throw e2;
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}", new Object[]{file.getName(), e.getLocalizedMessage()}); //NON-NLS
+                    throw e;
+                }
+                updateProgress(-1, 1);
+
+                saveThumbnail(thumbnail, cacheFile);
+                return SwingFXUtils.toFXImage(thumbnail, null);
+            } catch (InterruptedException | ExecutionException e) {
+//                 try {
+//                    LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}.\nAttemptying to crop {0} instead", new Object[]{file.getUniquePath(), e.getLocalizedMessage()}); //NON-NLS
+//                } catch (TskCoreException tskCoreException) {
+//                    LOGGER.log(Level.WARNING, "Could not scale image {0}: {1}.\nAttemptying to crop {0} instead", new Object[]{file.getName(), e.getLocalizedMessage()}); //NON-NLS
+//                    LOGGER.log(Level.SEVERE, "Failed to get unique path for file: " + file.getName(), tskCoreException); //NOI18N
+//                }
+                throw e;
+            }
+
+        }
+
+        private void saveThumbnail(BufferedImage thumbnail, File cacheFile) {
+            if (nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
+                imageSaver.execute(() -> {
+                    try {
+                        Files.createParentDirs(cacheFile);
+                        if (cacheFile.exists()) {
+                            cacheFile.delete();
+                        }
+                        ImageIO.write(thumbnail, FORMAT, cacheFile);
+                    } catch (IllegalArgumentException | IOException ex1) {
+                        LOGGER.log(Level.WARNING, "Could not write cache thumbnail: " + file.getName(), ex1); //NON-NLS
+                    }
+                });
+            }
+        }
+    }
+
+    public static Task<javafx.scene.image.Image> newReadImageTask(AbstractFile file) {
+        return new ReadImageTask(file);
+
+    }
+
+    static private class ReadImageTask extends ReadImageTaskBase {
+
         volatile private BufferedImage bufferedImage = null;
 
         ReadImageTask(AbstractFile file) {
-            this.file = file;
+            super(file);
         }
 
         @Override
@@ -635,7 +740,6 @@ public class ImageUtils {
         protected javafx.scene.image.Image call() throws Exception {
             updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
             try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-
                 if (ImageUtils.isGIF(file)) {
                     //directly read GIF to preserve potential animation,
                     javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(inputStream));
@@ -657,8 +761,9 @@ public class ImageUtils {
                         reader.setInput(input);
                         /*
                          * This is the important part, get or create a
-                         * ReadParam, create a destination image to hold the
-                         * decoded result, then pass that image with the param.
+                         * ImageReadParam, create a destination image to hold
+                         * the decoded result, then pass that image with the
+                         * param.
                          */
                         ImageReadParam param = reader.getDefaultReadParam();
 
@@ -679,20 +784,36 @@ public class ImageUtils {
             }
         }
 
-        public void logError(@Nullable Throwable e) {
-            String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
-            try {
-                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "Could not read the image: {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
-                LOGGER.log(Level.SEVERE, "Failed to get unique path for file", tskCoreException); //NOI18N
-            }
+        public BufferedImage getBufferedImage() throws InterruptedException, ExecutionException {
+            get();
+            return bufferedImage;
+        }
+
+    }
+
+    static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
+
+        protected final AbstractFile file;
+
+        public ReadImageTaskBase(AbstractFile file) {
+            this.file = file;
         }
 
         @Override
-        protected void failed() {
-            super.failed();
-            logError(getException());
+        public void imageProgress(ImageReader source, float percentageDone) {
+            //update this task with the progress reported by ImageReader.read
+            updateProgress(percentageDone, 100);
+        }
+
+        public void logError(@Nullable Throwable e) {
+            Exceptions.printStackTrace(e);
+            String message = e == null ? "" : "It may be unsupported or corrupt: " + e.getLocalizedMessage(); //NOI18N
+            try {
+                LOGGER.log(Level.WARNING, "ImageIO could not read {0}.  {1}", new Object[]{file.getUniquePath(), message}); //NOI18N
+            } catch (TskCoreException tskCoreException) {
+                LOGGER.log(Level.WARNING, "ImageIO could not read {0}.  {1}", new Object[]{file.getName(), message}); //NOI18N
+                LOGGER.log(Level.SEVERE, "Failed to get unique path for file: " + file.getName(), tskCoreException); //NOI18N
+            }
         }
 
         @Override
@@ -714,18 +835,18 @@ public class ImageUtils {
         }
 
         @Override
-        public void imageProgress(ImageReader source, float percentageDone) {
-            //update this task with the progress reported by ImageReader.read
-            updateProgress(percentageDone, 100);
-        }
-
-        @Override
-        public void imageStarted(ImageReader source, int imageIndex) {
+        protected void failed() {
+            super.failed();
+            logError(getException());
         }
 
         @Override
         public void imageComplete(ImageReader source) {
             updateProgress(100, 100);
+        }
+
+        @Override
+        public void imageStarted(ImageReader source, int imageIndex) {
         }
 
         @Override

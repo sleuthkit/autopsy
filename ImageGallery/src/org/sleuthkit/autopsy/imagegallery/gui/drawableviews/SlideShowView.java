@@ -331,13 +331,9 @@ public class SlideShowView extends DrawableTileBase {
                     Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "Failed to initialize VideoPlayer for file {0} : {1}", new Object[]{file.getName(), ex.getLocalizedMessage()});
                 }
 
-                if (file.isDisplayableAsImage()) {
+              
                     return doReadImageTask(file);
-                }
-
-                //if we couldn't even show it as an image. rethrow exception.
-                throw ex;
-            }
+                          }
         }
     }
 }

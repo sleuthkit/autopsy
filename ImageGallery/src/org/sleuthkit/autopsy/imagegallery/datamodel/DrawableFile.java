@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -39,7 +38,6 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -79,6 +77,7 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
     }
 
     SoftReference<Image> imageRef;
+//    SoftReference<Image> thumbref;
 
     private String drawablePath;
 
@@ -258,12 +257,19 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
         }
     }
 
+    @Deprecated
     public Image getThumbnail() {
-        return ThumbnailCache.getDefault().get(this);
+        try {
+            return getThumbnailTask().get();
+        } catch (InterruptedException | ExecutionException ex) {
+            return null;
+        }
+
     }
 
-    @Deprecated
+    public abstract Task<Image> getThumbnailTask();
 
+    @Deprecated //use non-blocking getReadFullSizeImageTask  instead for most cases
     public Image getFullSizeImage() {
         try {
             return getReadFullSizeImageTask().get();
@@ -302,11 +308,6 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
                 return "";
             }
         }
-    }
-
-    public boolean isDisplayableAsImage() {
-        Image thumbnail = getThumbnail();
-        return Objects.nonNull(thumbnail) && thumbnail.errorProperty().get() == false;
     }
 
     @Nonnull
