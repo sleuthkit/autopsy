@@ -64,7 +64,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         // set name, display name, and icon
         String volName = nameForVolume(vol);
 
-        long end = vol.getStart() + (vol.getSize() - 1);
+        long end = vol.getStart() + (vol.getLength() - 1);
         String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
         this.setDisplayName(tempVolName);
 
