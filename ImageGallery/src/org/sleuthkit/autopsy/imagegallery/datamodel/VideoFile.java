@@ -36,7 +36,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
@@ -49,12 +48,6 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
 
     public static Image getGenericVideoThumbnail() {
         return VIDEO_ICON;
-    }
-
-    @Override
-    public Task<Image> getThumbnailTask() {
-        return ThumbnailCache.getDefault().getThumbnailTask(VideoFile.this);
-
     }
 
     @Override

@@ -132,7 +132,7 @@ public enum ThumbnailCache {
             return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
         }
 
-        BufferedImage thumbnail = getCacheFile(file).map((File cachFile) -> {
+        BufferedImage thumbnail = getCacheFile(file).map(cachFile -> {
             if (cachFile.exists()) {
                 // If a thumbnail file is already saved locally, load it
                 try {

@@ -38,6 +38,7 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
+import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -267,7 +268,9 @@ public abstract class DrawableFile<T extends AbstractFile> extends AbstractFile 
 
     }
 
-    public abstract Task<Image> getThumbnailTask();
+    public Task<Image> getThumbnailTask() {
+        return ThumbnailCache.getDefault().getThumbnailTask(this);
+    }
 
     @Deprecated //use non-blocking getReadFullSizeImageTask  instead for most cases
     public Image getFullSizeImage() {

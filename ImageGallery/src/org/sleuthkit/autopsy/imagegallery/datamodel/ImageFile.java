@@ -28,8 +28,8 @@ import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * ImageGallery data model object that represents an image file. It is a
@@ -49,33 +49,8 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
 
     }
 
-    @Override
-    public Task<Image> getThumbnailTask() {
-        return ThumbnailCache.getDefault().getThumbnailTask(this);
-//            newGetThumbTask.stateProperty().addListener((Observable observable) -> {
-//                switch (newGetThumbTask.getState()) {
-//                    case CANCELLED:
-//                        break;
-//                    case FAILED:
-//                        break;
-//                    case SUCCEEDED:
-//                        try {
-//                            thumbref = new SoftReference<>(newGetThumbTask.get());
-//                        } catch (InterruptedException | ExecutionException interruptedException) {
-//                        }
-//                        break;
-//                }
-//            });
-//            return newGetThumbTask;
-//        } else {
-//            return new Task<Image>() {
-//                @Override
-//                protected Image call() throws Exception {
-//                    return thumbnail;
-//                }
-//            };
-//        }
-    }
+  
+   
 
     @Override
     public Task<Image> getReadFullSizeImageTask() {
@@ -112,7 +87,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) ImageUtils.getWidth(this.getAbstractFile());
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "getWidth", ex);
+            logError("ImageIO could not determine width of {0}: {1}", ex.toString());
             return -1.0;
         }
     }
@@ -122,8 +97,17 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) ImageUtils.getHeight(this.getAbstractFile());
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "getHeight", ex);
+            logError("ImageIO could not determine height of {0}: {1}", ex.toString());
             return -1.0;
+        }
+    }
+
+    private void logError(final String message, String exceptionString) {
+        try {
+            LOGGER.log(Level.WARNING, message, new Object[]{this.getUniquePath(), exceptionString});
+        } catch (TskCoreException tskCoreException) {
+            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + this.getName(), tskCoreException);
+            LOGGER.log(Level.WARNING, message, new Object[]{this.getName(), exceptionString});
         }
     }
 
