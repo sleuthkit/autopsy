@@ -22,6 +22,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import org.openide.filesystems.FileObject;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * File and dir utilities
@@ -29,6 +34,8 @@ import org.openide.filesystems.FileObject;
 public class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
+    private static String TEST_STRING = "Testing";
+    private static String TEMP_FILE_PREFIX = "Autopsy";
 
     /**
      * Recursively delete all of the files and sub-directories in a directory.
@@ -166,5 +173,37 @@ public class FileUtil {
         //for now escaping /:"*?<>| (not valid in file name, at least on Windows)
         //with underscores. We are only keeping \ as it could be part of the path.
         return fileName.replaceAll("[/:\"*?<>|]+", "_");
+    }
+
+    /**
+     * Test if the current user has read and write access to the path.
+     *
+     * @param path The path to test for read and write access.
+     *
+     * @return True if we have both read and write access, false otherwise.
+     */
+    public static boolean arePermissionsAppropriate(Path path) {
+        Path p = null;
+        try {
+            p = Files.createTempFile(path, TEMP_FILE_PREFIX, null);
+            try (FileWriter fw = new FileWriter(p.toFile(), false)) {
+                fw.write(TEST_STRING);
+            }
+
+            String result;
+            try (BufferedReader br = new BufferedReader(new FileReader(p.toFile()))) {
+                result = br.readLine();
+            }
+            return result.compareTo(TEST_STRING) == 0;
+        } catch (Exception ex) {
+            return false;
+        } finally {
+            if (p != null) {
+                try {
+                    p.toFile().delete();
+                } catch (Exception ignored) {
+                }
+            }
+        }
     }
 }

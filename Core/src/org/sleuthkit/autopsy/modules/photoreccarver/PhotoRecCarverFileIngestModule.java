@@ -77,6 +77,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
     private static final String LOG_FILE = "run_log.txt"; //NON-NLS
     private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
+    private static final String SEP = System.getProperty("line.separator");
     private static final Logger logger = Logger.getLogger(PhotoRecCarverFileIngestModule.class.getName());
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -382,6 +383,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             path = uncPathUtilities.ipToHostName(path);
             if (path == null) {
                 throw new IngestModule.IngestModuleException(NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.nonHostnameUNCPathUsed"));
+            }
+            if (false == FileUtil.arePermissionsAppropriate(path)) {
+                throw new IngestModule.IngestModuleException(
+                        NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficient")
+                        + SEP + path.toString()+ SEP +
+                        NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficientSeeReference"));
             }
         }
         try {
