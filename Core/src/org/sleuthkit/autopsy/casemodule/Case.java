@@ -472,7 +472,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
             SwingUtilities.invokeLater(() -> {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            });            
+            });
             throw new CaseActionException(
                     NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
@@ -1590,12 +1590,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
             if (RuntimeProperties.coreComponentsAreActive()) {
                 // enable these menus
-                SwingUtilities.invokeLater(() -> {
                     CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                     CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                     CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                     CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
-                });
 
                 if (toChangeTo.hasData()) {
                     // open all top components
