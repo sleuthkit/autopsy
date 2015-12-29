@@ -34,7 +34,6 @@ import java.nio.file.Path;
 public class FileUtil {
 
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
-    private static String TEST_STRING = "Testing";
     private static String TEMP_FILE_PREFIX = "Autopsy";
 
     /**
@@ -186,16 +185,8 @@ public class FileUtil {
         Path p = null;
         try {
             p = Files.createTempFile(path, TEMP_FILE_PREFIX, null);
-            try (FileWriter fw = new FileWriter(p.toFile(), false)) {
-                fw.write(TEST_STRING);
-            }
-
-            String result;
-            try (BufferedReader br = new BufferedReader(new FileReader(p.toFile()))) {
-                result = br.readLine();
-            }
-            return result.compareTo(TEST_STRING) == 0;
-        } catch (Exception ex) {
+            return (p.toFile().canRead() && p.toFile().canWrite());
+        } catch (IOException ex) {
             return false;
         } finally {
             if (p != null) {
