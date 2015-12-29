@@ -38,7 +38,7 @@ public class GeneralFilter extends FileFilter {
     public static final String ENCASE_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class,
             "GeneralFilter.encaseImageDesc.text");
     
-    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(new String[]{".vmdk"}); //NON-NLS
+    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(new String[]{".vmdk", ".vhd"}); //NON-NLS
     public static final String VIRTUAL_MACHINE_DESC = NbBundle.getMessage(GeneralFilter.class,
             "GeneralFilter.virtualMachineImageDesc.text");    
 

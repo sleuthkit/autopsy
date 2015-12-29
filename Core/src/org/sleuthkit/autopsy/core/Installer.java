@@ -92,6 +92,13 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading VMDK library, ", e); //NON-NLS
             }
+            
+            try {
+                System.loadLibrary("libvhdi"); //NON-NLS
+                logger.log(Level.INFO, "VHDI library loaded"); //NON-NLS
+            } catch (UnsatisfiedLinkError e) {
+                logger.log(Level.SEVERE, "Error loading VHDI library, ", e); //NON-NLS
+            }
 
             /* PostgreSQL */
             try {
