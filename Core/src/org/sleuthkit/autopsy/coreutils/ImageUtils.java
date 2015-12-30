@@ -655,36 +655,45 @@ public class ImageUtils {
                 }
             }
 
-            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
-            if (isNull(bufferedImage)) {
-                LOGGER.log(Level.WARNING, "Failed to read image for thumbnail generation.");
-                throw new IIOException("Failed to read image for thumbnail generation.");
-            }
-            updateMessage("scaling image");
-            updateProgress(-1, 1);
             BufferedImage thumbnail = null;
-            try {
-                thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
-            } catch (IllegalArgumentException | OutOfMemoryError e) {
-                // if resizing does not work due to extreme aspect ratio, crop the image instead.
-                logError("Could not scale image {0}: " + e.toString() + "\nAttemptying to crop {0} instead"); //NON-NLS
-
-                final int height = bufferedImage.getHeight();
-                final int width = bufferedImage.getWidth();
-                if (iconSize < height || iconSize < width) {
-                    final int cropHeight = Math.min(iconSize, height);
-                    final int cropWidth = Math.min(iconSize, width);
-
-                    try {
-                        thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
-                    } catch (Exception cropException) {
-                        logError("Could not crop image {0}: " + cropException.toString()); //NON-NLS
-                        throw cropException;
-                    }
+            if (VideoUtils.isVideoThumbnailSupported(file)) {
+                if (openCVLoaded) {
+                    thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
+                } else {
+                    thumbnail = DEFAULT_THUMBNAIL;
                 }
-            } catch (Exception e) {
-                logError("Could not scale image {0}: " + e.toString()); //NON-NLS
-                throw e;
+            } else {
+                BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
+                if (isNull(bufferedImage)) {
+                    LOGGER.log(Level.WARNING, "Failed to read image for thumbnail generation.");
+                    throw new IIOException("Failed to read image for thumbnail generation.");
+                }
+                updateMessage("scaling image");
+                updateProgress(-1, 1);
+
+                try {
+                    thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
+                } catch (IllegalArgumentException | OutOfMemoryError e) {
+                    // if resizing does not work due to extreme aspect ratio, crop the image instead.
+                    logError("Could not scale image {0}: " + e.toString() + "\nAttemptying to crop {0} instead"); //NON-NLS
+
+                    final int height = bufferedImage.getHeight();
+                    final int width = bufferedImage.getWidth();
+                    if (iconSize < height || iconSize < width) {
+                        final int cropHeight = Math.min(iconSize, height);
+                        final int cropWidth = Math.min(iconSize, width);
+
+                        try {
+                            thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
+                        } catch (Exception cropException) {
+                            logError("Could not crop image {0}: " + cropException.toString()); //NON-NLS
+                            throw cropException;
+                        }
+                    }
+                } catch (Exception e) {
+                    logError("Could not scale image {0}: " + e.toString()); //NON-NLS
+                    throw e;
+                }
             }
             updateProgress(-1, 1);
             if (nonNull(thumbnail) && DEFAULT_THUMBNAIL != thumbnail) {
