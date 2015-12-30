@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
@@ -29,7 +28,6 @@ import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * ImageGallery data model object that represents an image file. It is a
@@ -48,9 +46,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         super(f, analyzed);
 
     }
-
-  
-   
 
     @Override
     public Task<Image> getReadFullSizeImageTask() {
@@ -87,7 +82,6 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) ImageUtils.getWidth(this.getAbstractFile());
         } catch (IOException ex) {
-            logError("ImageIO could not determine width of {0}: {1}", ex.toString());
             return -1.0;
         }
     }
@@ -97,17 +91,7 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
         try {
             return (double) ImageUtils.getHeight(this.getAbstractFile());
         } catch (IOException ex) {
-            logError("ImageIO could not determine height of {0}: {1}", ex.toString());
             return -1.0;
-        }
-    }
-
-    private void logError(final String message, String exceptionString) {
-        try {
-            LOGGER.log(Level.WARNING, message, new Object[]{this.getUniquePath(), exceptionString});
-        } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.SEVERE, "Failed to get unique path for " + this.getName(), tskCoreException);
-            LOGGER.log(Level.WARNING, message, new Object[]{this.getName(), exceptionString});
         }
     }
 

@@ -60,9 +60,9 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
 
     @FXML
-    private BorderPane imageBorder;
+     BorderPane imageBorder;
     @FXML
-    private ImageView imageView;
+     ImageView imageView;
 
     private final ImageGalleryController controller;
 

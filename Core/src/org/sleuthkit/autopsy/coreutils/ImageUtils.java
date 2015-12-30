@@ -76,6 +76,11 @@ public class ImageUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ImageUtils.class.getName());
 
+    private static final String NO_IMAGE_READER_FOUND_FOR = "No ImageReader found for ";
+    private static final String IMAGE_IO_COULD_NOT_DETERMINE_WIDTH = "ImageIO could not determine width of {0}: ";
+    private static final String IMAGE_IO_COULD_NOT_DETERMINE_HEIGHT = "ImageIO could not determine height of {0}: ";
+    private static final String COULD_NOT_CREATE_IMAGE_INPUT_STREAM = "Could not create ImageInputStream.";
+
     /**
      * save thumbnails to disk as this format
      */
@@ -575,21 +580,59 @@ public class ImageUtils {
     }
 
     static public int getWidth(AbstractFile file) throws IIOException, IOException {
+        return getIntProperty(file,
+                IMAGE_IO_COULD_NOT_DETERMINE_WIDTH,
+                imageReader -> imageReader.getWidth(0)
+        );
+    }
 
+    static public int getHeight(AbstractFile file) throws IIOException, IOException {
+        return getIntProperty(file,
+                IMAGE_IO_COULD_NOT_DETERMINE_HEIGHT,
+                imageReader -> imageReader.getHeight(0)
+        );
+    }
+
+    private interface PropertyExctractor<T> {
+
+        public T extract(ImageReader reader) throws IOException;
+    }
+
+    /**
+     *
+     * @param file          the value of file
+     * @param errorTemplate the value of errorTemplate
+     *
+     * @return the int
+     *
+     * @throws IIOException
+     * @throws IOException
+     */
+    private static int getIntProperty(AbstractFile file, final String errorTemplate, PropertyExctractor<Integer> propertyExtractor) throws IOException {
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
             try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
                 if (input == null) {
-                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
+                    IIOException iioException = new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
+                    ImageUtils.logContentError(LOGGER, Level.WARNING, errorTemplate + iioException.toString(), file);
+                    throw iioException;
                 }
                 Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
 
                 if (readers.hasNext()) {
                     ImageReader reader = readers.next();
                     reader.setInput(input);
-                    return reader.getWidth(0);
+                    try {
+                        return propertyExtractor.extract(reader);
+                    } catch (IOException ex) {
+                        ImageUtils.logContentError(LOGGER, Level.WARNING, errorTemplate + ex.toString(), file);
+                        throw ex;
+                    }
                 } else {
-                    throw newImageReaderException(file);
+                    IIOException iioException = newImageReaderException(file);
+                    ImageUtils.logContentError(LOGGER, Level.WARNING, errorTemplate + iioException.toString(), file);
+
+                    throw iioException;
                 }
             }
         }
@@ -597,31 +640,9 @@ public class ImageUtils {
 
     private static IIOException newImageReaderException(AbstractFile file) {
         try {
-            return new IIOException("No ImageReader found for file." + file.getUniquePath()); //NOI18N
+            return new IIOException(NO_IMAGE_READER_FOUND_FOR + file.getUniquePath());
         } catch (TskCoreException ex) {
-            return new IIOException("No ImageReader found for file." + file.getName()); //NOI18N
-        }
-    }
-
-    static public int getHeight(AbstractFile file) throws IIOException, IOException {
-        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-
-            try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
-                if (input == null) {
-                    throw new IIOException("Could not create ImageInputStream."); //NOI18N
-                }
-                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-
-                if (readers.hasNext()) {
-                    ImageReader reader = readers.next();
-                    reader.setInput(input);
-
-                    return reader.getHeight(0);
-                } else {
-                    throw newImageReaderException(file);
-                }
-            }
-
+            return new IIOException(NO_IMAGE_READER_FOUND_FOR + file.getName()); //NOI18N
         }
     }
 
@@ -652,7 +673,7 @@ public class ImageUtils {
                         return SwingFXUtils.toFXImage(cachedThumbnail, null);
                     }
                 } catch (Exception ex) {
-                    logError("ImageIO had a problem reading thumbnail for image {0}: " + ex.toString()); //NON-NLS
+                    logContentError(logger, Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: " + ex.toString(), file);
                 }
             }
 
@@ -676,7 +697,7 @@ public class ImageUtils {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio, crop the image instead.
-                    logError("Could not scale image {0}: " + e.toString() + ".  Attemptying to crop {0} instead"); //NON-NLS
+                    logContentError(logger, Level.WARNING, "Could not scale image {0}: " + e.toString() + ".  Attemptying to crop {0} instead", file);
 
                     final int height = bufferedImage.getHeight();
                     final int width = bufferedImage.getWidth();
@@ -687,12 +708,12 @@ public class ImageUtils {
                         try {
                             thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
                         } catch (Exception cropException) {
-                            logError("Could not crop image {0}: " + cropException.toString()); //NON-NLS
+                            logContentError(logger, Level.WARNING, "Could not crop image {0}: " + cropException.toString(), file);
                             throw cropException;
                         }
                     }
                 } catch (Exception e) {
-                    logError("Could not scale image {0}: " + e.toString()); //NON-NLS
+                    logContentError(logger, Level.WARNING, "Could not scale image {0}: " + e.toString(), file);
                     throw e;
                 }
             }
@@ -712,7 +733,7 @@ public class ImageUtils {
                     }
                     ImageIO.write(thumbnail, FORMAT, cacheFile);
                 } catch (IllegalArgumentException | IOException ex) {
-                    logError("Could not write thumbnail for {0}: " + ex.toString());
+                    logContentError(logger, Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), file);
                 }
             });
         }
@@ -766,7 +787,7 @@ public class ImageUtils {
 
                 try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
                     if (input == null) {
-                        throw new IIOException("Could not create ImageInputStream."); //NOI18N
+                        throw new IIOException(COULD_NOT_CREATE_IMAGE_INPUT_STREAM);
                     }
                     Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
 
@@ -791,13 +812,14 @@ public class ImageUtils {
                             }
                         } catch (IOException iOException) {
                             // Ignore this exception or display a warning or similar, for exceptions happening during decoding
-                            logError("ImageIO could not read {0}.  It may be unsupported or corrupt: " + iOException.toString());
+                            logContentError(logger, Level.WARNING, "ImageIO could not read {0}.  It may be unsupported or corrupt: " + iOException.toString(), file);
                         }
                         reader.removeIIOReadProgressListener(this);
                         reader.dispose();
                         return SwingFXUtils.toFXImage(bufferedImage, null);
                     } else {
-                        throw new IIOException("No ImageReader found for file."); //NOI18N
+                        throw newImageReaderException(file);
+
                     }
                 }
             }
@@ -813,26 +835,17 @@ public class ImageUtils {
             }
         }
 
-        public void logError(String template) {
-            try {
-                LOGGER.log(Level.WARNING, template, file.getUniquePath()); //NOI18N
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, template, file.getName()); //NOI18N
-                LOGGER.log(Level.SEVERE, "Failed to get unique path for file: " + file.getName(), tskCoreException); //NOI18N
-            }
-        }
-
         @Override
         protected void succeeded() {
             super.succeeded();
             try {
                 javafx.scene.image.Image fxImage = get();
                 if (fxImage == null) {
-                    logError("ImageIO could not read {0}.  It may be unsupported or corrupt");
+                    logContentError(logger, Level.WARNING, "ImageIO could not read {0}.  It may be unsupported or corrupt", file);
                 } else {
                     if (fxImage.isError()) {
                         //if there was somekind of error, log it
-                        logError("ImageIO could not read {0}.  It may be unsupported or corrupt:" + ObjectUtils.toString(fxImage.getException()));
+                        logContentError(logger, Level.WARNING, "ImageIO could not read {0}.  It may be unsupported or corrupt:" + ObjectUtils.toString(fxImage.getException()), file);
                     }
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -843,7 +856,7 @@ public class ImageUtils {
         @Override
         protected void failed() {
             super.failed();
-            logError("ImageIO could not read {0}.  It may be unsupported or corrupt: " + ObjectUtils.toString(getException()));
+            logContentError(logger, Level.WARNING, "ImageIO could not read {0}.  It may be unsupported or corrupt: " + ObjectUtils.toString(getException()), file);
         }
 
         @Override
@@ -877,6 +890,21 @@ public class ImageUtils {
 
         @Override
         public void readAborted(ImageReader source) {
+        }
+    }
+
+    /**
+     * @param logger   the value of logger
+     * @param template the value of template
+     * @param file     the value of file
+     * @param level    the value of level
+     */
+    public static void logContentError(Logger logger, final Level level, final String template, Content file) {
+        try {
+            logger.log(level, template, file.getUniquePath());
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Failed to get unique path for " + file.getName(), tskCoreException);
+            logger.log(level, template, file.getName());
         }
     }
 }

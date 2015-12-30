@@ -45,6 +45,7 @@ import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
@@ -56,7 +57,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.VideoFile;
 import org.sleuthkit.autopsy.imagegallery.gui.VideoPlayer;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableUIBase.exec;
 import static org.sleuthkit.autopsy.imagegallery.gui.drawableviews.DrawableView.CAT_BORDER_WIDTH;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the files of a group one at a time. Designed to be embedded in a
@@ -316,17 +316,8 @@ public class SlideShowView extends DrawableTileBase {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                logError("Failed to initialize VideoPlayer for {0} : " + ex.toString());
+                ImageUtils.logContentError(LOGGER, Level.WARNING, "Failed to initialize VideoPlayer for {0} : " + ex.toString(), file);
                 return doReadImageTask(file);
-            }
-        }
-
-        private void logError(final String message) {
-            try {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, message, file.getUniquePath());
-            } catch (TskCoreException tskCoreException) {
-                Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "Failed to get unique path for " + file.getName(), tskCoreException);
-                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, message, file.getName());
             }
         }
     }
