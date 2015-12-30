@@ -137,15 +137,16 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     synchronized Node doReadImageTask(DrawableFile<?> file) {
         disposeContent();
-        imageTask = newReadImageTask(file);
-        Node progressNode = newProgressIndicator(imageTask);
+        Task<Image> myTask = newReadImageTask(file);
+        imageTask = myTask;
+        Node progressNode = newProgressIndicator(myTask);
         Platform.runLater(() -> imageBorder.setCenter(progressNode));
 
         //called on fx thread
-        imageTask.setOnSucceeded(succeeded -> showImage(file, imageTask));
+        imageTask.setOnSucceeded(succeeded -> showImage(file, myTask));
         imageTask.setOnFailed(failed -> showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file));
 
-        exec.execute(imageTask);
+        exec.execute(myTask);
         return progressNode;
     }
 

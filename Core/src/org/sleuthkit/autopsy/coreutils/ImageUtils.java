@@ -275,7 +275,7 @@ public class ImageUtils {
                         || (conditionalMimes.contains(mimeType.toLowerCase()) && supportedExtension.contains(extension));
             }
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+            logContentError(logger, Level.WARNING, "Failed to look up mimetype for {0} using FileTypeDetector: " + ex.toString() + "\nFallingback on AbstractFile.isMimeType", file);
 
             AbstractFile.MimeMatchEnum mimeMatch = file.isMimeType(supportedMimeTypes);
             if (mimeMatch == AbstractFile.MimeMatchEnum.TRUE) {
@@ -608,7 +608,7 @@ public class ImageUtils {
      * @throws IIOException
      * @throws IOException
      */
-    private static int getIntProperty(AbstractFile file, final String errorTemplate, PropertyExctractor<Integer> propertyExtractor) throws IOException {
+    private static <T> T getIntProperty(AbstractFile file, final String errorTemplate, PropertyExctractor<T> propertyExtractor) throws IOException {
         try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
 
             try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
