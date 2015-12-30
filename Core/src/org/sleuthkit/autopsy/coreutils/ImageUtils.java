@@ -623,10 +623,13 @@ public class ImageUtils {
                     ImageReader reader = readers.next();
                     reader.setInput(input);
                     try {
+
                         return propertyExtractor.extract(reader);
                     } catch (IOException ex) {
                         ImageUtils.logContentError(LOGGER, Level.WARNING, errorTemplate + ex.toString(), file);
                         throw ex;
+                    } finally {
+                        reader.dispose();
                     }
                 } else {
                     IIOException iioException = newImageReaderException(file);
@@ -672,7 +675,7 @@ public class ImageUtils {
                     if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
                         return SwingFXUtils.toFXImage(cachedThumbnail, null);
                     }
-                } catch (Exception ex) {
+                } catch (IOException ex) {
                     logContentError(logger, Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: " + ex.toString(), file);
                 }
             }
@@ -747,6 +750,7 @@ public class ImageUtils {
 
         ReadImageTask(AbstractFile file) {
             super(file);
+            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
         }
 
         @Override
@@ -754,7 +758,7 @@ public class ImageUtils {
             "# {0} - file name",
             "LoadImageTask.mesageText=Reading image: {0}"})
         protected javafx.scene.image.Image call() throws Exception {
-            updateMessage(Bundle.LoadImageTask_mesageText(file.getName()));
+
             return readImage();
         }
     }
@@ -762,16 +766,10 @@ public class ImageUtils {
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
         final AbstractFile file;
-        private volatile BufferedImage bufferedImage = null;
         private ImageReader reader;
 
         ReadImageTaskBase(AbstractFile file) {
             this.file = file;
-        }
-
-        public BufferedImage getBufferedImage() throws InterruptedException, ExecutionException {
-            get();
-            return bufferedImage;
         }
 
         protected javafx.scene.image.Image readImage() throws IOException {
@@ -803,23 +801,23 @@ public class ImageUtils {
                          */
                         ImageReadParam param = reader.getDefaultReadParam();
 
-                        bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
+                        BufferedImage bufferedImage = reader.getImageTypes(0).next().createBufferedImage(reader.getWidth(0), reader.getHeight(0));
                         param.setDestination(bufferedImage);
                         try {
-                            reader.read(0, param);
+                            bufferedImage = reader.read(0, param);
                             if (isCancelled()) {
                                 return null;
                             }
                         } catch (IOException iOException) {
                             // Ignore this exception or display a warning or similar, for exceptions happening during decoding
                             logContentError(logger, Level.WARNING, "ImageIO could not read {0}.  It may be unsupported or corrupt: " + iOException.toString(), file);
+                        } finally {
+                            reader.removeIIOReadProgressListener(this);
+                            reader.dispose();
                         }
-                        reader.removeIIOReadProgressListener(this);
-                        reader.dispose();
                         return SwingFXUtils.toFXImage(bufferedImage, null);
                     } else {
                         throw newImageReaderException(file);
-
                     }
                 }
             }

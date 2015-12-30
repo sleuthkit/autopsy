@@ -169,19 +169,21 @@ public class MetaDataPane extends DrawableUIBase {
     @Override
     synchronized protected void setFileHelper(Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
-        if (newFileID == null) {
-            Platform.runLater(() -> {
-                imageView.setImage(null);
-                imageBorder.setCenter(null);
-                tableView.getItems().clear();
-                getCategoryBorderRegion().setBorder(null);
-            });
-        } else {
-            disposeContent();
+        disposeContent();
+        if (nonNull(newFileID)) {
             updateAttributesTable();
             updateCategory();
             updateContent();
         }
+    }
+
+    @Override
+    protected synchronized void disposeContent() {
+        super.disposeContent();
+        Platform.runLater(() -> {
+            tableView.getItems().clear();
+            getCategoryBorderRegion().setBorder(null);
+        });
     }
 
     @Override

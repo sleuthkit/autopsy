@@ -60,9 +60,9 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
 
     @FXML
-     BorderPane imageBorder;
+    BorderPane imageBorder;
     @FXML
-     ImageView imageView;
+    ImageView imageView;
 
     private final ImageGalleryController controller;
 
@@ -118,33 +118,41 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     synchronized public void setFile(Long newFileID) {
         if (getFileID().isPresent()) {
             if (Objects.equals(newFileID, getFileID().get()) == false) {
-//                if (Objects.nonNull(newFileID)) {
                 setFileHelper(newFileID);
-//                }
             }
-        } else {//if (Objects.nonNull(newFileID)) {
+        } else {
             setFileHelper(newFileID);
         }
     }
 
     synchronized protected void updateContent() {
-        if (getFile().isPresent() == false) {
-            Platform.runLater(() -> imageBorder.setCenter(null));
-        } else {
+        if (getFile().isPresent()) {
             doReadImageTask(getFile().get());
         }
     }
 
     synchronized Node doReadImageTask(DrawableFile<?> file) {
-        disposeContent();
         Task<Image> myTask = newReadImageTask(file);
         imageTask = myTask;
         Node progressNode = newProgressIndicator(myTask);
         Platform.runLater(() -> imageBorder.setCenter(progressNode));
 
         //called on fx thread
-        imageTask.setOnSucceeded(succeeded -> showImage(file, myTask));
-        imageTask.setOnFailed(failed -> showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file));
+        myTask.setOnSucceeded(succeeded -> {
+            showImage(file, myTask);
+            synchronized (DrawableUIBase.this) {
+                imageTask = null;
+            }
+        });
+        myTask.setOnFailed(failed -> {
+            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
+            synchronized (DrawableUIBase.this) {
+                imageTask = null;
+            }
+        });
+        myTask.setOnCancelled(cancelled -> {
+            disposeContent();
+        });
 
         exec.execute(myTask);
         return progressNode;
@@ -155,8 +163,10 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
             imageTask.cancel();
         }
         imageTask = null;
-        Platform.runLater(() -> imageView.setImage(null));
-
+        Platform.runLater(() -> {
+            imageView.setImage(null);
+            imageBorder.setCenter(null);
+        });
     }
 
     /**
@@ -171,7 +181,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void showImage(DrawableFile<?> file, Task<Image> imageTask) {
+    private void showImage(DrawableFile<?> file, Task<Image> imageTask) {
         //Note that all error conditions are allready logged in readImageTask.succeeded()
         try {
             Image fxImage = imageTask.get();
@@ -201,57 +211,4 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     abstract Task<Image> newReadImageTask(DrawableFile<?> file);
-
-    abstract class CachedLoaderTask<X, Y extends DrawableFile<?>> extends Task<X> {
-
-        protected final Y file;
-
-        public CachedLoaderTask(Y file) {
-            this.file = file;
-        }
-
-        @Override
-        protected X call() throws Exception {
-            return (isCancelled() == false) ? load() : null;
-        }
-
-        abstract X load() throws Exception;
-
-        @Override
-        protected void succeeded() {
-            super.succeeded();
-            if (isCancelled() == false) {
-                try {
-                    saveToCache(get());
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.WARNING, "Failed to cache content for" + file.getName(), ex);
-                }
-            }
-        }
-
-        @Override
-        protected void failed() {
-            super.failed();
-            LOGGER.log(Level.SEVERE, "Failed to cache content for" + file.getName(), getException());
-        }
-
-        abstract void saveToCache(X result);
-    }
-
-//    class ThumbnailLoaderTask extends CachedLoaderTask<Image, DrawableFile<?>> {
-//
-//        ThumbnailLoaderTask(DrawableFile<?> file) {
-//            super(file);
-//        }
-//
-//        @Override
-//        Image load() {
-//            return isCancelled() ? null : file.getThumbnail();
-//        }
-//
-//        @Override
-//        void saveToCache(Image result) {
-////            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//        }
-//    }
 }

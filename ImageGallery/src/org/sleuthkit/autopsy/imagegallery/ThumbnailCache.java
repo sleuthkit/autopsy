@@ -66,7 +66,7 @@ public enum ThumbnailCache {
      * in memory cache. keeps at most 1000 items each for up to 10 minutes.
      * items may be garbage collected if there are no strong references to them.
      */
-    private final Cache<Long, Optional<Image>> cache = CacheBuilder.newBuilder()
+    private final Cache<Long, Image> cache = CacheBuilder.newBuilder()
             .maximumSize(1000)
             .softValues()
             .expireAfterAccess(10, TimeUnit.MINUTES).build();
@@ -99,7 +99,7 @@ public enum ThumbnailCache {
     @Nullable
     public Image get(DrawableFile<?> file) {
         try {
-            return cache.get(file.getId(), () -> load(file)).orElse(null);
+            return cache.get(file.getId(), () -> load(file));
         } catch (UncheckedExecutionException | CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
             LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + file.getName(), ex.getCause());
             return null;
@@ -124,12 +124,12 @@ public enum ThumbnailCache {
      *
      * @return an (possibly empty) optional containing a thumbnail
      */
-    private Optional<Image> load(DrawableFile<?> file) {
+    private Image load(DrawableFile<?> file) {
 
         if (FileTypeUtils.isGIF(file)) {
             //directly read gif to preserve potential animation,
             //NOTE: not saved to disk!
-            return Optional.of(new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true));
+            return new Image(new BufferedInputStream(new ReadContentInputStream(file.getAbstractFile())), MAX_THUMBNAIL_SIZE, MAX_THUMBNAIL_SIZE, true, true);
         }
 
         BufferedImage thumbnail = getCacheFile(file).map(cachFile -> {
@@ -160,7 +160,7 @@ public enum ThumbnailCache {
             jfxthumbnail = SwingFXUtils.toFXImage(thumbnail, null);
         }
 
-        return Optional.ofNullable(jfxthumbnail); //return icon, or null if generation failed
+        return jfxthumbnail; //return icon, or null if generation failed
     }
 
     /**
@@ -182,12 +182,12 @@ public enum ThumbnailCache {
     }
 
     public Task<Image> getThumbnailTask(DrawableFile<?> file) {
-        final Optional<Image> option = cache.getIfPresent(file.getId());
-        if (option != null && option.isPresent()) {
+        final Image thumbnail = cache.getIfPresent(file.getId());
+        if (thumbnail != null) {
             return new Task<Image>() {
                 @Override
                 protected Image call() throws Exception {
-                    return option.get();
+                    return thumbnail;
                 }
             };
         }
@@ -196,7 +196,7 @@ public enum ThumbnailCache {
             switch (newGetThumbnailTask.getState()) {
                 case SUCCEEDED:
                     try {
-                        cache.put(Long.MIN_VALUE, Optional.of(newGetThumbnailTask.get()));
+                        cache.put(Long.MIN_VALUE, newGetThumbnailTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
                         Exceptions.printStackTrace(ex);
                     }

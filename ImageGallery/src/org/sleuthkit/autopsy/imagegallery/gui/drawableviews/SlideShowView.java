@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -75,6 +73,8 @@ public class SlideShowView extends DrawableTileBase {
 
     @FXML
     private BorderPane footer;
+
+    private volatile MediaLoadTask mediaTask;
 
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
@@ -160,47 +160,56 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @Override
-    protected void disposeContent() {
+    synchronized protected void disposeContent() {
         stopVideo();
 
+        if (mediaTask != null) {
+            mediaTask.cancel(true);
+        }
+        mediaTask = null;
         super.disposeContent();
-//        if (mediaTask != null) {
-//            mediaTask.cancel(true);
-//        }
-//        mediaTask = null;
-        mediaCache = null;
     }
-    private SoftReference<Node> mediaCache;
 
     @Override
     synchronized protected void updateContent() {
-        if (getFile().isPresent() == false) {
-            mediaCache = null;
-            Platform.runLater(() -> imageBorder.setCenter(null));
-
-        } else {
+        disposeContent();
+        if (getFile().isPresent()) {
             DrawableFile<?> file = getFile().get();
             if (file.isVideo()) {
-                //specially handling for videos
-                Node mediaNode = (isNull(mediaCache)) ? null : mediaCache.get();
-                if (nonNull(mediaNode)) {
-                    Platform.runLater(() -> imageBorder.setCenter(mediaNode));
-                } else {
-
-                    MediaLoadTask mediaTask = new MediaLoadTask(((VideoFile<?>) file));
-                    Node progressNode = newProgressIndicator(mediaTask);
-                    Platform.runLater(() -> imageBorder.setCenter(progressNode));
-
-                    //called on fx thread
-                    mediaTask.setOnSucceeded(succedded -> showMedia(file, mediaTask));
-                    mediaTask.setOnFailed(failed -> showErrorNode(getMediaLoadErrorLabel(mediaTask), file));
-
-                    exec.execute(mediaTask);
-                }
+                doMediaLoadTask((VideoFile<?>) file);
             } else {
-                super.updateContent();
+                doReadImageTask(file);
             }
         }
+    }
+
+    synchronized private Node doMediaLoadTask(VideoFile<?> file) {
+
+        //specially handling for videos
+        MediaLoadTask myTask = new MediaLoadTask(file);
+        mediaTask = myTask;
+        Node progressNode = newProgressIndicator(myTask);
+        Platform.runLater(() -> imageBorder.setCenter(progressNode));
+
+        //called on fx thread
+        mediaTask.setOnSucceeded(succeedded -> {
+            showMedia(file, myTask);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        mediaTask.setOnFailed(failed -> {
+            showErrorNode(getMediaLoadErrorLabel(myTask), file);
+            synchronized (SlideShowView.this) {
+                mediaTask = null;
+            }
+        });
+        mediaTask.setOnCancelled(cancelled -> {
+            disposeContent();
+        });
+
+        exec.execute(myTask);
+        return progressNode;
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
