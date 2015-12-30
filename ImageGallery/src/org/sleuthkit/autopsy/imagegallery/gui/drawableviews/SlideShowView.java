@@ -29,7 +29,6 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -76,7 +75,6 @@ public class SlideShowView extends DrawableTileBase {
 
     @FXML
     private BorderPane footer;
-    
 
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
@@ -188,22 +186,16 @@ public class SlideShowView extends DrawableTileBase {
                 if (nonNull(mediaNode)) {
                     Platform.runLater(() -> imageBorder.setCenter(mediaNode));
                 } else {
-//                    if (isNull(mediaTask)) {
-                    MediaLoadTask mediaTask = new MediaLoadTask(((VideoFile<?>) file));
-                        Node progressNode = newProgressIndicator(mediaTask);
 
-                        mediaTask.setOnSucceeded((WorkerStateEvent event) -> {
-                            showMedia(file, mediaTask);//on fx thread already
-                        });
-                        mediaTask.setOnFailed((WorkerStateEvent event) -> {
-                            showErrorNode(getMediaLoadErrorLabel(mediaTask), file);//on fx thread already
-                        });
-                        Platform.runLater(() -> imageBorder.setCenter(progressNode));
-                        exec.execute(mediaTask);
-//                    } else {
-//                        //not on fx thread;
-//                        Platform.runLater(() -> showMedia(file));
-//                    }
+                    MediaLoadTask mediaTask = new MediaLoadTask(((VideoFile<?>) file));
+                    Node progressNode = newProgressIndicator(mediaTask);
+                    Platform.runLater(() -> imageBorder.setCenter(progressNode));
+
+                    //called on fx thread
+                    mediaTask.setOnSucceeded(succedded -> showMedia(file, mediaTask));
+                    mediaTask.setOnFailed(failed -> showErrorNode(getMediaLoadErrorLabel(mediaTask), file));
+
+                    exec.execute(mediaTask);
                 }
             } else {
                 super.updateContent();
@@ -308,32 +300,34 @@ public class SlideShowView extends DrawableTileBase {
     }
 
     @NbBundle.Messages({"# {0} - file name",
-        "MediaLoadTask.messageText=Reading media: {0}"})
+        "MediaLoadTask.messageText=Reading video: {0}"})
     private class MediaLoadTask extends Task<Node> {
 
         private final VideoFile<?> file;
 
         MediaLoadTask(VideoFile<?> file) {
+            updateMessage(Bundle.MediaLoadTask_messageText(file.getName()));
             this.file = file;
         }
 
         @Override
         protected Node call() throws Exception {
-            updateMessage(Bundle.MediaLoadTask_messageText(file.getName()));
             try {
                 final Media media = file.getMedia();
                 return new VideoPlayer(new MediaPlayer(media), file);
             } catch (MediaException | IOException | OutOfMemoryError ex) {
-                try {
-                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "Failed to initialize VideoPlayer for file {0} : {1}", new Object[]{file.getUniquePath(), ex.getLocalizedMessage()});
-                } catch (TskCoreException tskCoreException) {
-                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "Failed to get unique path  " + file.getName(), tskCoreException);
-                    Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, "Failed to initialize VideoPlayer for file {0} : {1}", new Object[]{file.getName(), ex.getLocalizedMessage()});
-                }
+                logError("Failed to initialize VideoPlayer for {0} : " + ex.toString());
+                return doReadImageTask(file);
+            }
+        }
 
-              
-                    return doReadImageTask(file);
-                          }
+        private void logError(final String message) {
+            try {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, message, file.getUniquePath());
+            } catch (TskCoreException tskCoreException) {
+                Logger.getLogger(VideoFile.class.getName()).log(Level.SEVERE, "Failed to get unique path for " + file.getName(), tskCoreException);
+                Logger.getLogger(VideoFile.class.getName()).log(Level.WARNING, message, file.getName());
+            }
         }
     }
 }

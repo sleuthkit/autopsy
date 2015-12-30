@@ -101,13 +101,11 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
-
             Files.createParentDirs(cacheFile);
             ProgressHandle progressHandle = ProgressHandleFactory.createHandle("writing temporary file to disk");
             progressHandle.start(100);
             ContentUtils.writeToFile(this.getAbstractFile(), cacheFile, progressHandle, null, true);
             progressHandle.finish();
-
         }
 
         media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());

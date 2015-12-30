@@ -636,6 +636,7 @@ public class ImageUtils {
 
         private GetOrGenerateThumbnailTask(AbstractFile file, int iconSize) {
             super(file);
+            updateMessage("Loading thumbnail for " + file.getName());
             this.iconSize = iconSize;
             cacheFile = getCachedThumbnailLocation(file.getId());
         }
@@ -658,6 +659,7 @@ public class ImageUtils {
             BufferedImage thumbnail = null;
             if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (openCVLoaded) {
+                    updateMessage("Generating preview for " + file.getName());
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
                 } else {
                     thumbnail = DEFAULT_THUMBNAIL;
@@ -668,14 +670,13 @@ public class ImageUtils {
                     LOGGER.log(Level.WARNING, "Failed to read image for thumbnail generation.");
                     throw new IIOException("Failed to read image for thumbnail generation.");
                 }
-                updateMessage("scaling image");
                 updateProgress(-1, 1);
 
                 try {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio, crop the image instead.
-                    logError("Could not scale image {0}: " + e.toString() + "\nAttemptying to crop {0} instead"); //NON-NLS
+                    logError("Could not scale image {0}: " + e.toString() + ".  Attemptying to crop {0} instead"); //NON-NLS
 
                     final int height = bufferedImage.getHeight();
                     final int width = bufferedImage.getWidth();
@@ -719,7 +720,6 @@ public class ImageUtils {
 
     public static Task<javafx.scene.image.Image> newReadImageTask(AbstractFile file) {
         return new ReadImageTask(file);
-
     }
 
     static private class ReadImageTask extends ReadImageTaskBase {
@@ -740,11 +740,11 @@ public class ImageUtils {
 
     static private abstract class ReadImageTaskBase extends Task<javafx.scene.image.Image> implements IIOReadProgressListener {
 
-        protected final AbstractFile file;
+        final AbstractFile file;
         private volatile BufferedImage bufferedImage = null;
         private ImageReader reader;
 
-        public ReadImageTaskBase(AbstractFile file) {
+        ReadImageTaskBase(AbstractFile file) {
             this.file = file;
         }
 
@@ -816,7 +816,7 @@ public class ImageUtils {
         public void logError(String template) {
             try {
                 LOGGER.log(Level.WARNING, template, file.getUniquePath()); //NOI18N
-            } catch (Exception tskCoreException) {
+            } catch (TskCoreException tskCoreException) {
                 LOGGER.log(Level.WARNING, template, file.getName()); //NOI18N
                 LOGGER.log(Level.SEVERE, "Failed to get unique path for file: " + file.getName(), tskCoreException); //NOI18N
             }

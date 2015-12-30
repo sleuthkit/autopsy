@@ -28,7 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -53,24 +52,24 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-@NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not load file."})
+@NbBundle.Messages({"MediaViewImagePanel.errorLabel.text=Could not read file."})
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
-    static final Executor exec = Executors.newSingleThreadExecutor();
+    static final Executor exec = Executors.newWorkStealingPool();
 
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
 
     @FXML
-    protected BorderPane imageBorder;
+    private BorderPane imageBorder;
     @FXML
-    protected ImageView imageView;
+    private ImageView imageView;
 
     private final ImageGalleryController controller;
 
     private Optional<DrawableFile<?>> fileOpt = Optional.empty();
 
     private Optional<Long> fileIDOpt = Optional.empty();
-    protected volatile Task<Image> imageTask;
+    private volatile Task<Image> imageTask;
 
     public DrawableUIBase(ImageGalleryController controller) {
         this.controller = controller;
@@ -132,27 +131,21 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         if (getFile().isPresent() == false) {
             Platform.runLater(() -> imageBorder.setCenter(null));
         } else {
-            DrawableFile<?> file = getFile().get();
-            //is an image
-            doReadImageTask(file);
+            doReadImageTask(getFile().get());
         }
     }
 
     synchronized Node doReadImageTask(DrawableFile<?> file) {
         disposeContent();
-        final Task<Image> myTask = newReadImageTask(file);
-        imageTask = myTask;
-        Node progressNode = newProgressIndicator(myTask);
+        imageTask = newReadImageTask(file);
+        Node progressNode = newProgressIndicator(imageTask);
         Platform.runLater(() -> imageBorder.setCenter(progressNode));
 
-        imageTask.setOnSucceeded((WorkerStateEvent event) -> {
-            showImage(file, myTask);//on fx thread already
-        });
-        imageTask.setOnFailed((WorkerStateEvent event) -> {
-            showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);//on fx thread already
-        });
+        //called on fx thread
+        imageTask.setOnSucceeded(succeeded -> showImage(file, imageTask));
+        imageTask.setOnFailed(failed -> showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file));
 
-        exec.execute(myTask);
+        exec.execute(imageTask);
         return progressNode;
     }
 
