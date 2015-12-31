@@ -348,7 +348,7 @@ public class ImageUtils {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
 
-            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize);
+            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
             thumbnailTask.run();
             try {
                 return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
@@ -716,6 +716,7 @@ public class ImageUtils {
 
         private final int iconSize;
         private final File cacheFile;
+        private final boolean defaultOnFailure;
 
         @NbBundle.Messages({"# {0} - file name",
             "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}", "# {0} - file name",
@@ -724,7 +725,8 @@ public class ImageUtils {
             super(file);
             updateMessage(Bundle.GetOrGenerateThumbnailTask_loadingThumbnailFor(file.getName()));
             this.iconSize = iconSize;
-            cacheFile = getCachedThumbnailLocation(file.getId());
+            this.defaultOnFailure = defaultOnFailure;
+            this.cacheFile = getCachedThumbnailLocation(file.getId());
         }
 
         @Override
@@ -747,8 +749,10 @@ public class ImageUtils {
                 if (openCVLoaded) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
-                } else {
+                } else if (defaultOnFailure) {
                     thumbnail = DEFAULT_THUMBNAIL;
+                } else {
+                    throw new IIOException("Failed to read image for thumbnail generation.");
                 }
 
             } else {

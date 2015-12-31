@@ -19,26 +19,25 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.io.Files;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutionException;
-import javafx.beans.Observable;
 import javafx.concurrent.Task;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
 public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
+
+    private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
 
     private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png");
 
@@ -50,44 +49,16 @@ public class VideoFile<T extends AbstractFile> extends DrawableFile<T> {
         return VIDEO_ICON;
     }
 
+    
+
     @Override
-    public Task<Image> getReadFullSizeImageTask() {
-        Image image = (imageRef != null) ? imageRef.get() : null;
-        if (image == null || image.isError()) {
-            Task<Image> newReadImageTask = new Task<Image>() {
+    String getMessageTemplate(final Exception exception) {
+        return "Failed to get image preview for video {0}: " + exception.toString();
+    }
 
-                @Override
-                protected Image call() throws Exception {
-                    final BufferedImage bufferedImage = ImageUtils.getThumbnail(getAbstractFile(), 1024);
-                    return (bufferedImage == ImageUtils.getDefaultThumbnail())
-                            ? null
-                            : SwingFXUtils.toFXImage(bufferedImage, null);
-                }
-            };
-
-            newReadImageTask.stateProperty().addListener((Observable observable) -> {
-                switch (newReadImageTask.getState()) {
-                    case CANCELLED:
-                        break;
-                    case FAILED:
-                        break;
-                    case SUCCEEDED:
-                        try {
-                            imageRef = new SoftReference<>(newReadImageTask.get());
-                        } catch (InterruptedException | ExecutionException interruptedException) {
-                        }
-                        break;
-                }
-            });
-            return newReadImageTask;
-        } else {
-            return new Task<Image>() {
-                @Override
-                protected Image call() throws Exception {
-                    return image;
-                }
-            };
-        }
+    @Override
+    Task<Image> getReadFullSizeImageTaskHelper() {
+        return ImageUtils.newGetThumbnailTask(getAbstractFile(), 1024, false);
     }
 
     private SoftReference<Media> mediaRef;

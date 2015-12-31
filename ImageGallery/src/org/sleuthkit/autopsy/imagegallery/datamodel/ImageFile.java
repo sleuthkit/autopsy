@@ -19,9 +19,6 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.util.concurrent.ExecutionException;
-import javafx.beans.Observable;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
@@ -48,33 +45,13 @@ public class ImageFile<T extends AbstractFile> extends DrawableFile<T> {
     }
 
     @Override
-    public Task<Image> getReadFullSizeImageTask() {
-        Image image = (imageRef != null) ? imageRef.get() : null;
-        if (image == null || image.isError()) {
-            final Task<Image> newReadImageTask = ImageUtils.newReadImageTask(this.getAbstractFile());
-            newReadImageTask.stateProperty().addListener((Observable observable) -> {
-                switch (newReadImageTask.getState()) {
-                    case CANCELLED:
-                        break;
-                    case FAILED:
-                        break;
-                    case SUCCEEDED:
-                        try {
-                            imageRef = new SoftReference<>(newReadImageTask.get());
-                        } catch (InterruptedException | ExecutionException interruptedException) {
-                        }
-                        break;
-                }
-            });
-            return newReadImageTask;
-        } else {
-            return new Task<Image>() {
-                @Override
-                protected Image call() throws Exception {
-                    return image;
-                }
-            };
-        }
+    String getMessageTemplate(final Exception exception) {
+        return "Failed to read image {0}: " + exception.toString();
+    }
+
+    @Override
+    Task<Image> getReadFullSizeImageTaskHelper() {
+        return ImageUtils.newReadImageTask(this.getAbstractFile());
     }
 
     @Override
