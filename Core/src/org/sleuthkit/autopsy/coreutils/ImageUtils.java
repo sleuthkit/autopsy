@@ -347,22 +347,14 @@ public class ImageUtils {
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
-            // If a thumbnail file is already saved locally
-            File cacheFile = getCachedThumbnailLocation(content.getId());
-            if (cacheFile.exists()) {
-                try {
-                    BufferedImage thumbnail = ImageIO.read(cacheFile);
-                    if (isNull(thumbnail) || thumbnail.getWidth() != iconSize) {
-                        return generateAndSaveThumbnail(file, iconSize, cacheFile);
-                    } else {
-                        return thumbnail;
-                    }
-                } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "ImageIO had a problem reading thumbnail for image {0}: {1}", new Object[]{content.getName(), ex.getLocalizedMessage()}); //NON-NLS //NOI18N
-                    return generateAndSaveThumbnail(file, iconSize, cacheFile);
-                }
-            } else {
-                return generateAndSaveThumbnail(file, iconSize, cacheFile);
+
+            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize);
+            thumbnailTask.run();
+            try {
+                return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
+            } catch (InterruptedException | ExecutionException ex) {
+                logContentError(logger, Level.WARNING, "Failed to get thumbnail for {0}: " + ex.toString(), content);
+                return DEFAULT_THUMBNAIL;
             }
         } else {
             return DEFAULT_THUMBNAIL;
