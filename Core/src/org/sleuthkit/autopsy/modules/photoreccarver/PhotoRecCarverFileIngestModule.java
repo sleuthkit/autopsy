@@ -389,7 +389,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 if (false == FileUtil.arePermissionsAppropriate(path)) {
                     throw new IngestModule.IngestModuleException(
                             NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficient")
-                            + SEP + path.toString() + SEP
+                            + SEP + path.toString() + SEP // SEP breaks lines to the dialog displays nicely.
                             + NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.PermissionsNotSufficientSeeReference"));
                 }
             }
